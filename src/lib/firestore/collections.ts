@@ -14,6 +14,8 @@ import {
   SessionOccurrence,
   MissionPlan,
   MissionAttempt,
+  AccountabilityCycle,
+  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   PortfolioItem,
@@ -39,6 +41,8 @@ export const attendanceCollection = createCollection<Attendance>('attendanceReco
 export const missionPlansCollection = createCollection<MissionPlan>('missionPlans');
 export const missionAttemptsCollection = createCollection<MissionAttempt>('missionAttempts');
 export const reflectionsCollection = createCollection<Reflection>('reflections');
+export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
+export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');
 export const accountabilityCommitmentsCollection = createCollection<AccountabilityCommitment>('accountabilityCommitments');
 export const accountabilityReviewsCollection = createCollection<AccountabilityReview>('accountabilityReviews');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');

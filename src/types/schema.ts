@@ -125,6 +125,23 @@ export interface Reflection {
   cycleId?: string;
 }
 
+export interface AccountabilityCycle {
+  id: string;
+  startDate: Timestamp;
+  endDate: Timestamp;
+  siteId: string;
+  name: string; // e.g., "Week 1 - Term 2"
+}
+
+export interface AccountabilityKPI {
+  id: string;
+  cycleId: string;
+  learnerId: string;
+  attendancePct: number;
+  missionsCompleted: number;
+  pillarScores: Record<PillarCode, number>;
+}
+
 export interface AccountabilityCommitment {
   id: string;
   learnerId: string;

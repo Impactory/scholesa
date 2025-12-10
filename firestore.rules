@@ -22,8 +22,6 @@ service cloud.firestore {
 
     function isParentOf(learnerId) {
       // Check if the current user's profile has the learnerId in their linkedLearnerIds array
-      // Note: This relies on the parent's user doc being secure and correct.
-      // A more robust check might involve a separate family/relationship collection.
       return hasRole('parent') && 
              (learnerId in getUserData().linkedLearnerIds);
     }
@@ -34,11 +32,10 @@ service cloud.firestore {
                      hasRole('educator') || 
                      hasRole('hq') || 
                      hasRole('siteLead');
-      // Parents can read if they are linked? - kept simple for now
       allow write: if isOwner(userId) || hasRole('hq'); 
     }
 
-    // Sites & Rooms (Public read for authenticated, write for HQ/SiteLead)
+    // Sites & Rooms
     match /sites/{siteId} {
       allow read: if isAuthenticated();
       allow write: if hasRole('hq') || hasRole('siteLead');
@@ -48,7 +45,7 @@ service cloud.firestore {
       allow write: if hasRole('hq') || hasRole('siteLead');
     }
 
-    // Programs, Courses, Missions (Publicly readable for authenticated users, writable by HQ/Educator)
+    // Programs, Courses, Missions
     match /programs/{programId} {
       allow read: if isAuthenticated();
       allow write: if hasRole('hq');
@@ -104,7 +101,6 @@ service cloud.firestore {
                      isParentOf(resource.data.learnerId) ||
                      hasRole('educator') || 
                      hasRole('hq');
-      // Learners can create/update their own attempts
       allow create: if isOwner(request.resource.data.learnerId);
       allow update: if isOwner(resource.data.learnerId); 
     }
@@ -116,6 +112,21 @@ service cloud.firestore {
                      hasRole('hq');
       allow create: if isOwner(request.resource.data.userId);
       allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // Accountability Cycles
+    match /accountabilityCycles/{cycleId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq');
+    }
+
+    // Accountability KPIs
+    match /accountabilityKPIs/{kpiId} {
+      allow read: if isOwner(resource.data.learnerId) || 
+                     isParentOf(resource.data.learnerId) ||
+                     hasRole('educator') || 
+                     hasRole('hq');
+      allow write: if hasRole('hq'); // System/HQ driven
     }
 
     // Accountability Commitments & Reviews
@@ -147,7 +158,7 @@ service cloud.firestore {
     // Pillars (Read-only for all authenticated)
     match /pillars/{pillarId} {
       allow read: if isAuthenticated();
-      allow write: if false; // System managed or HQ only via admin sdk
+      allow write: if false; 
     }
 
     // Default deny
