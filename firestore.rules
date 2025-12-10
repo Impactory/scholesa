@@ -1,0 +1,158 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isParentOf(learnerId) {
+      // Check if the current user's profile has the learnerId in their linkedLearnerIds array
+      // Note: This relies on the parent's user doc being secure and correct.
+      // A more robust check might involve a separate family/relationship collection.
+      return hasRole('parent') && 
+             (learnerId in getUserData().linkedLearnerIds);
+    }
+    
+    // Users
+    match /users/{userId} {
+      allow read: if isOwner(userId) || 
+                     hasRole('educator') || 
+                     hasRole('hq') || 
+                     hasRole('siteLead');
+      // Parents can read if they are linked? - kept simple for now
+      allow write: if isOwner(userId) || hasRole('hq'); 
+    }
+
+    // Sites & Rooms (Public read for authenticated, write for HQ/SiteLead)
+    match /sites/{siteId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq') || hasRole('siteLead');
+    }
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq') || hasRole('siteLead');
+    }
+
+    // Programs, Courses, Missions (Publicly readable for authenticated users, writable by HQ/Educator)
+    match /programs/{programId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq');
+    }
+    match /courses/{courseId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq');
+    }
+    match /missions/{missionId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq') || hasRole('educator');
+    }
+
+    // Sessions & SessionOccurrences
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq') || hasRole('siteLead');
+    }
+    match /sessionOccurrences/{occurrenceId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('hq') || hasRole('siteLead') || hasRole('educator');
+    }
+
+    // Enrolments
+    match /enrolments/{enrolmentId} {
+      allow read: if isOwner(resource.data.userId) || 
+                     isParentOf(resource.data.userId) ||
+                     hasRole('educator') || 
+                     hasRole('hq') ||
+                     hasRole('siteLead');
+      allow write: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
+    }
+
+    // Attendance Records
+    match /attendanceRecords/{attendanceId} {
+      allow read: if isOwner(resource.data.userId) || 
+                     isParentOf(resource.data.userId) ||
+                     hasRole('educator') || 
+                     hasRole('hq') || 
+                     hasRole('siteLead');
+      allow write: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
+    }
+
+    // Mission Plans
+    match /missionPlans/{planId} {
+      allow read: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
+      allow write: if hasRole('educator') || hasRole('hq');
+    }
+
+    // Mission Attempts
+    match /missionAttempts/{attemptId} {
+      allow read: if isOwner(resource.data.learnerId) || 
+                     isParentOf(resource.data.learnerId) ||
+                     hasRole('educator') || 
+                     hasRole('hq');
+      // Learners can create/update their own attempts
+      allow create: if isOwner(request.resource.data.learnerId);
+      allow update: if isOwner(resource.data.learnerId); 
+    }
+
+    // Reflections
+    match /reflections/{reflectionId} {
+      allow read: if isOwner(resource.data.userId) || 
+                     hasRole('educator') || 
+                     hasRole('hq');
+      allow create: if isOwner(request.resource.data.userId);
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // Accountability Commitments & Reviews
+    match /accountabilityCommitments/{docId} {
+       allow read: if isOwner(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
+       allow write: if isOwner(request.resource.data.learnerId);
+    }
+    match /accountabilityReviews/{docId} {
+       allow read: if isOwner(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
+       allow write: if isOwner(request.resource.data.learnerId);
+    }
+
+    // Portfolios
+    match /portfolioItems/{itemId} {
+       allow read: if isOwner(resource.data.learnerId) || 
+                      isParentOf(resource.data.learnerId) ||
+                      hasRole('educator') || 
+                      hasRole('hq') || 
+                      hasRole('partner');
+       allow write: if isOwner(request.resource.data.learnerId);
+    }
+    
+    // Alerts (HQ/Educator/SiteLead)
+    match /alerts/{alertId} {
+      allow read: if hasRole('hq') || hasRole('educator') || hasRole('siteLead');
+      allow write: if hasRole('hq') || hasRole('educator') || hasRole('siteLead');
+    }
+
+    // Pillars (Read-only for all authenticated)
+    match /pillars/{pillarId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // System managed or HQ only via admin sdk
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

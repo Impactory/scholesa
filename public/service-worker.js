@@ -1,5 +1,12 @@
-// This is a placeholder for the service worker.
-// You should implement a proper service worker here.
+
 self.addEventListener('install', (event) => {
-  console.log('Service worker installed');
+  console.log('Service Worker installing.');
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating.');
+});
+
+self.addEventListener('fetch', (event) => {
+  // Add custom fetch handling here if needed
 });

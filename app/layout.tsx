@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
-import { PageTransition } from '@/components/layout/PageTransition';
+import { PageTransition } from '@/src/components/layout/PageTransition';
+import { AuthProvider } from '@/src/lib/auth/useUser';
 
 const inter = Inter({ subsets: ['latin'] });
 

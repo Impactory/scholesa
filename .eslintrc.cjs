@@ -1,8 +1,7 @@
 module.exports = {
   root: true,
-  extends: ["next/core-web-vitals", "prettier"],
-  plugins: ["prettier"],
+  extends: ["eslint:recommended", "next/core-web-vitals"],
   rules: {
-    "prettier/prettier": "error",
+    // Add any custom rules here
   },
 };

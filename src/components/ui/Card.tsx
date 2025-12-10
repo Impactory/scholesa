@@ -1,14 +1,10 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const card = cva('rounded-lg border bg-white text-gray-900 shadow-sm', {
-  variants: {},
-  defaultVariants: {},
-});
-
-export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof card> {}
-
-export const Card = ({ className, ...props }: CardProps) => {
-  return <div className={card({ className })} {...props} />;
-};
+export function Card({ className, ...props }: CardProps) {
+  return (
+    <div
+      className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}
+      {...props}
+    />
+  );
+}

@@ -1,21 +1,35 @@
 import Link from 'next/link';
+import { Button } from '@/src/components/ui/Button';
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold text-gray-900">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="text-center max-w-2xl">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl mb-6">
           Scholesa – Future Skills Academy
         </h1>
-        <p className="mt-4 text-lg text-gray-600">
-          The future of learning starts here.
+        <p className="text-lg leading-8 text-gray-600 mb-10">
+          The operating system for K–9 learning studios and schools.
         </p>
-        <div className="mt-8 space-x-4">
-          <Link href="/login" className="rounded-md bg-blue-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-blue-700">
-            Login
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link href="/login">
+            <Button className="w-full sm:w-auto">Login as Learner</Button>
           </Link>
-          <Link href="/register" className="rounded-md bg-white px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm ring-1 ring-inset ring-blue-600 hover:bg-blue-50">
-            Register
+          <Link href="/login">
+            <Button className="w-full sm:w-auto" variant="outline">Login as Educator</Button>
+          </Link>
+          <Link href="/login">
+            <Button className="w-full sm:w-auto" variant="secondary">Login as Parent</Button>
+          </Link>
+          <Link href="/login">
+            <Button className="w-full sm:w-auto" variant="ghost">Login as Admin</Button>
+          </Link>
+        </div>
+        
+        <div className="mt-10">
+           <Link href="/register" className="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+            Don't have an account? Register <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>

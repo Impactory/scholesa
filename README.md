@@ -1,36 +1,59 @@
 # Scholesa Platform
 
-This is a Next.js project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is the repository for the Scholesa Platform, an Education 2.0 operating system for K-9 learning studios and schools.
 
 ## Getting Started
 
-First, install the dependencies:
+### Prerequisites
 
-```bash
-npm install
-cd functions && npm install && cd ..
-```
+- Node.js (v18 or later)
+- npm, yarn, or pnpm
+- Firebase CLI
 
-Then, run the development server:
+### Installation
+
+1.  Install root dependencies:
+
+    ```bash
+    npm install
+    ```
+
+2.  Install Firebase Functions dependencies:
+
+    ```bash
+    cd functions && npm install && cd ..
+    ```
+
+### Running the Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Running Emulators
-
-To run the Firebase emulators, use the following command:
+### Running the Firebase Emulators
 
 ```bash
 firebase emulators:start
 ```
 
-## Deployment
+### Building for Production
 
-To deploy the application, use the following command:
+```bash
+npm run build
+```
+
+### Deployment
+
+To deploy the application to Firebase:
 
 ```bash
 firebase deploy
+```
+
+To deploy only the Firebase Functions:
+
+```bash
+cd functions
+npm run build
+firebase deploy --only functions
 ```

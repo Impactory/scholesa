@@ -1,11 +1,11 @@
-export const Skeleton = ({
+export function Skeleton({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={`animate-pulse rounded-md bg-gray-200 ${className}`}
       {...props}
     />
   );
-};
+}
