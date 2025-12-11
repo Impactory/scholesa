@@ -25,7 +25,7 @@ export function LearnerDashboard() {
         </Card>
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">AI Coach</h2>
-          <p className="text-gray-600">"Great job on the last quiz! Focus on 'Impact & Innovation' next."</p>
+          <p className="text-gray-600">&quot;Great job on the last quiz! Focus on &apos;Impact &amp; Innovation&apos; next.&quot;</p>
         </Card>
       </div>
 

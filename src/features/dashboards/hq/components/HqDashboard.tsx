@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { pillarsCollection } from '@/src/firebase/firestore/collections';
 import { Card } from '@/src/components/ui/Card';
 
 export function HqDashboard() {

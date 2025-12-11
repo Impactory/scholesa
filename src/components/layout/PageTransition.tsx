@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useRef } from 'react';
+import { ReactNode } from 'react';
 
 const variants = {
   initial: {

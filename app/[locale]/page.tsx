@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { Button } from '@/src/components/ui/Button';
 
-export default function Home({ params }: { params: { locale: string } }) {
+type HomePageProps = {
+  params: { locale: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default function Home({ params }: HomePageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       <div className="text-center max-w-2xl">
@@ -29,7 +34,7 @@ export default function Home({ params }: { params: { locale: string } }) {
         
         <div className="mt-10">
            <Link href={`/${params.locale}/register`} className="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
-            Don't have an account? Register <span aria-hidden="true">→</span>
+            Don&apos;t have an account? Register <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
