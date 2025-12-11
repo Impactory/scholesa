@@ -1,15 +1,8 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-import { User } from 'firebase/auth';
+import React, { useContext } from 'react';
 import { useAuth } from '@/src/firebase/auth/useAuth';
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+import { AuthContext } from '@/src/firebase/auth/AuthContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

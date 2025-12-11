@@ -143,3 +143,91 @@ Use this structure:
       auth/
       analytics/
 ```
+## DEPENDENCY & COMPONENT VERSION GOVERNANCE
+
+> Goal: All core framework and UI component versions stay **current, compatible, and consistent** across the platform, without random drift or version conflicts.
+
+You must treat **dependencies and shared components** as first-class citizens, not an afterthought.
+
+### 1. Single Source of Truth for Versions
+
+1. Create and maintain a doc at the repo root:
+
+   - `DEPENDENCY_BASELINE_SCHOLESA.md`
+
+   It must list the **minimum and target versions** for all core libraries, for example (examples only):
+
+   - Next.js
+   - React / ReactDOM
+   - TypeScript
+   - Firebase SDKs (`firebase`, `firebase-admin`)
+   - TailwindCSS
+   - Testing libs (Jest / Vitest / Playwright / Cypress, etc.)
+   - PWA / SW helpers (e.g. `next-pwa` if used)
+   - Any internal design system / UI library packages
+
+2. For each key package, specify:
+
+   - **Current locked version** in `package.json` (e.g. `next: 15.0.5`).
+   - **Supported range** if applicable (e.g. “15.x only; do not jump to 16.x without a migration plan”).
+
+3. This doc is the **authority**.  
+   Whenever you change versions in `package.json`, you must update this doc.
+
+---
+
+### 2. Version Rules for Core Dependencies
+
+You must obey these rules:
+
+1. **No mixed majors** for core frameworks:
+
+   - Never have multiple major versions of React, Next, Firebase, or the main UI library in the same repo.
+   - If you upgrade Next.js or React:
+     - Upgrade all dependent packages that require a specific peer version.
+     - Update the baseline doc.
+
+2. **Stay on latest stable within the chosen major:**
+
+   - For each core lib, you should target the **latest stable** version within your chosen major that is supported by:
+     - Next.js + React ecosystem,
+     - Firebase tooling / hosting,
+     - Your PWA setup.
+   - Example: If the baseline says “Next 15.x”, you should aim to keep to the latest `15.*` that is stable and supported.
+
+3. **Respect peer dependencies:**
+
+   - Before installing or updating a package, inspect its `peerDependencies`.
+   - Do **not** create peer conflicts and then “fix” them with `--force` or `--legacy-peer-deps`.
+   - Instead, adjust the root dependencies to a compatible set or choose another version of the package that fits.
+
+---
+
+### 3. Component Library & Design System Versions
+
+If you use a component library (e.g., internal `@scholesa/ui` or external `@shadcn/ui` etc.):
+
+1. Maintain a section in `DEPENDENCY_BASELINE_SCHOLESA.md` for **UI components**:
+
+   - Library name.
+   - Version.
+   - Notes (e.g., “v1 tokens, do not mix with v0”).
+
+2. You must **never mix** components from different major versions of the same design system.
+
+3. When upgrading the component library:
+
+   - Plan the migration (breaking changes, tokens, themes).
+   - Update all affected imports.
+   - Update baseline doc and run the full build + tests.
+
+---
+
+### 4. “Before You Start Work” Version Check
+
+For any substantial platform task (not just one-line fixes), you must:
+
+1. Run:
+
+   ```bash
+   npm outdated

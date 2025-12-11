@@ -1,0 +1,23 @@
+{
+  "landing": {
+    "title": "Scholesa – Future Skills Academy",
+    "subtitle": "The operating system for K–9 learning studios and schools.",
+    "login": "Login",
+    "register": "Register",
+    "pillars": {
+      "title": "The 3 Pillars of Scholesa",
+      "future_skills": "Future Skills",
+      "leadership_agency": "Leadership & Agency",
+      "impact_innovation": "Impact & Innovation"
+    },
+    "stakeholders": {
+      "title": "One Platform for Every Stakeholder",
+      "learners": "Learners",
+      "educators": "Educators",
+      "parents": "Parents & Guardians",
+      "site_leads": "Site Leads & Principals",
+      "partners": "Partners",
+      "hq": "HQ & Network"
+    }
+  }
+}
