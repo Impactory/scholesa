@@ -2,6 +2,8 @@
   "name": "Scholesa – Future Skills Academy",
   "short_name": "Scholesa",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

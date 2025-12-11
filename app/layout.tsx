@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { PageTransition } from '@/src/components/layout/PageTransition';
 import { AuthProvider } from '@/src/lib/auth/useUser';
+import { OfflineIndicator } from '@/src/components/ui/OfflineIndicator';
+import { ServiceWorkerRegister } from '@/src/components/pwa/ServiceWorkerRegister';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <ServiceWorkerRegister />
         <AuthProvider>
+          <OfflineIndicator />
           <PageTransition>{children}</PageTransition>
         </AuthProvider>
       </body>

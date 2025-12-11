@@ -4,15 +4,28 @@ import { useState } from 'react';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { useAuth } from '@/src/lib/auth/useUser';
+import { useRouter, useParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signInWithGoogle } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string || 'en';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle registration logic here if needed, or rely on Google Sign-In
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      router.push(`/${locale}/dashboard`);
+    } catch (error) {
+      console.error("Registration failed", error);
+    }
   };
 
   return (
@@ -58,7 +71,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mt-6">
-               <Button onClick={signInWithGoogle} className="w-full" variant="outline">
+               <Button onClick={handleGoogleSignIn} className="w-full" variant="outline">
                 Google
               </Button>
             </div>

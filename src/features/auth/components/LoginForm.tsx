@@ -4,16 +4,28 @@ import { useState } from 'react';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { useAuth } from '@/src/lib/auth/useUser';
+import { useRouter, useParams } from 'next/navigation';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signInWithGoogle } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string || 'en';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle email/password login logic here if implemented, or rely on Google Sign-In
     console.log("Email/password login not fully implemented yet, use Google Sign-In");
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      router.push(`/${locale}/dashboard`);
+    } catch (error) {
+      console.error("Login failed", error);
+    }
   };
 
   return (
@@ -60,7 +72,7 @@ export function LoginForm() {
             </div>
 
             <div className="mt-6">
-               <Button onClick={signInWithGoogle} className="w-full" variant="outline">
+               <Button onClick={handleGoogleSignIn} className="w-full" variant="outline">
                 Google
               </Button>
             </div>
