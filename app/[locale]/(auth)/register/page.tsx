@@ -1,22 +1,28 @@
-"use client";
+'use client';
+import React from 'react';
 
 import { useState } from 'react';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
-import { useAuth } from '@/src/lib/auth/useUser';
+import { useAuth } from '@/src/firebase/auth/useAuth';
 import { useRouter, useParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signUp } = useAuth();
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string || 'en';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here if needed, or rely on Google Sign-In
+    try {
+      await signUp(email, password);
+      router.push(`/${locale}/dashboard`);
+    } catch (error) {
+      console.error("Registration failed", error);
+    }
   };
 
   const handleGoogleSignIn = async () => {

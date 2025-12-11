@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/src/lib/auth/useUser';
+import { useAuth } from '@/src/firebase/auth/useAuth';
 import { Button } from '@/src/components/ui/Button';
 import { useRouter } from 'next/navigation';
 

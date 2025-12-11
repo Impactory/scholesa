@@ -1,6 +1,7 @@
 'use client';
+import React from 'react';
 
-import { useAuth } from '@/src/lib/auth/useUser';
+import { useAuth } from '@/src/firebase/auth/useAuth';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';

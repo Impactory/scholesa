@@ -1,8 +1,9 @@
+import React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { PageTransition } from '@/src/components/layout/PageTransition';
-import { AuthProvider } from '@/src/lib/auth/useUser';
+import { AuthProvider } from '@/src/firebase/auth/AuthProvider';
 import { OfflineIndicator } from '@/src/components/ui/OfflineIndicator';
 import { ServiceWorkerRegister } from '@/src/components/pwa/ServiceWorkerRegister';
 

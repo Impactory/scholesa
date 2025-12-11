@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/src/lib/auth/useUser';
+import { useAuth } from '@/src/firebase/auth/useAuth';
 import { Spinner } from '@/src/components/ui/Spinner';
 
 export default function DashboardRedirect() {

@@ -88,7 +88,7 @@ export interface SessionOccurrence {
 export interface Attendance {
   id: string;
   userId: string; // learnerId
-  learnerId?: string; // Alias for userId for clarity in context
+  learnerId?: string; // Alias for clarity in context
   sessionOccurrenceId: string;
   studioId: string; // siteId
   date: Timestamp;
