@@ -2,14 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/src/firebase/auth/useAuth';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Spinner } from '@/src/components/ui/Spinner';
 
 export default function DashboardRedirect() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading } = useAuthContext();
   const router = useRouter();
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = params ? params.locale as string : 'en';
 
   useEffect(() => {
     if (!loading) {

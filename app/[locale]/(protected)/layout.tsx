@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useAuth } from '@/src/firebase/auth/useAuth';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -12,10 +12,10 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuthContext();
   const router = useRouter();
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = params ? params.locale as string : 'en';
 
   useEffect(() => {
     if (!loading && !user) {

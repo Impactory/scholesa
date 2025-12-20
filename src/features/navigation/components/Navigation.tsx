@@ -1,11 +1,11 @@
 'use client';
 
-import { useAuth } from '@/src/firebase/auth/useAuth';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Button } from '@/src/components/ui/Button';
 import { useRouter } from 'next/navigation';
 
 export function Navigation() {
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useAuthContext();
   const router = useRouter();
 
   const handleSignOut = async () => {

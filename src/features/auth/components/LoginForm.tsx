@@ -3,16 +3,16 @@
 import React, { useState } from 'react';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
-import { useAuth } from '@/src/firebase/auth/useAuth';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useRouter, useParams } from 'next/navigation';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuthContext();
   const router = useRouter();
   const params = useParams();
-  const locale = params.locale as string || 'en';
+  const locale = params ? ((params as any).locale as string) || 'en' : 'en';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

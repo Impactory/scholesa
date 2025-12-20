@@ -1,11 +1,10 @@
 import 'server-only';
-import { initializeServerApp } from '@/src/firebase/admin-init';
+import { admin } from '@/src/firebase/admin-init';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
 
 export async function getCurrentUserServer() {
-  const { app } = initializeServerApp();
-  const auth = getAuth(app);
+  const auth = getAuth(admin.app());
   
   const sessionCookie = cookies().get('__session')?.value;
 
