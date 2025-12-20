@@ -1,0 +1,43 @@
+[debug] [2025-12-20T06:52:39.852Z] ----------------------------------------------------------------------
+[debug] [2025-12-20T06:52:39.854Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\simon\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\bin\firebase.js init dataconnect --project scholesa-dev
+[debug] [2025-12-20T06:52:39.854Z] CLI Version:   15.1.0
+[debug] [2025-12-20T06:52:39.854Z] Platform:      win32
+[debug] [2025-12-20T06:52:39.854Z] Node Version:  v24.12.0
+[debug] [2025-12-20T06:52:39.854Z] Time:          Fri Dec 19 2025 22:52:39 GMT-0800 (Pacific Standard Time)
+[debug] [2025-12-20T06:52:39.854Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2025-12-20T06:52:45.491Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-20T06:52:45.491Z] > authorizing via signed-in user (simon.luke@impactoryinstitute.com)
+[debug] [2025-12-20T06:52:45.492Z] Checked if tokens are valid: true, expires at: 1766216785223
+[debug] [2025-12-20T06:52:45.492Z] Checked if tokens are valid: true, expires at: 1766216785223
+[debug] [2025-12-20T06:52:45.493Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/scholesa-dev [none]
+[debug] [2025-12-20T06:52:45.935Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/scholesa-dev 403
+[debug] [2025-12-20T06:52:45.935Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/scholesa-dev {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-12-20T06:52:45.935Z] Request to https://firebase.googleapis.com/v1beta1/projects/scholesa-dev had HTTP Error: 403, The caller does not have permission
+[debug] [2025-12-20T06:52:45.984Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/scholesa-dev had HTTP Error: 403, The caller does not have permission
+    at responseToError (C:\Users\simon\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\responseToError.js:53:12)
+    at RetryOperation._fn (C:\Users\simon\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\apiv2.js:322:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: Failed to get Firebase project scholesa-dev. Please make sure the project exists and your account has permission to access it.
