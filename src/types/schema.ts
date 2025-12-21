@@ -113,6 +113,8 @@ export interface MissionAttempt {
   status: 'started' | 'submitted' | 'completed';
   content?: string; // Artifacts or submission text
   submittedAt: Timestamp;
+  feedback?: string;
+  gradedBy?: string;
 }
 
 export interface Reflection {
