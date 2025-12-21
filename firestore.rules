@@ -1,135 +1,99 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
+    
+    // --- Helper Functions ---
+    
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function hasRole(role) {
-      return isAuthenticated() && getUserData().role == role;
-    }
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-
-    function isParentOf(learnerId) {
-      return hasRole('parent') && (learnerId in getUserData().linkedLearnerIds);
+    
+    // Fetch user profile to check role (costs 1 read)
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    // Users
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    function isEducator() {
+      return hasRole('educator') || hasRole('siteLead') || hasRole('hq');
+    }
+    
+    function isHQ() {
+      return hasRole('hq');
+    }
+
+    // --- Collection Rules ---
+
+    // Users: 
+    // - Users can read/write their own profile.
+    // - Educators/HQ can read profiles (to view learners).
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
-      allow read: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
+      allow read: if isOwner(userId) || isEducator();
+      allow create: if isOwner(userId); // Needed for AuthProvider.signUp
+      allow update: if isOwner(userId) || isHQ();
     }
 
-    // Sites & Rooms
-    match /sites/{siteId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq') || hasRole('siteLead');
+    // Content (Sites, Rooms, Programs, Courses, Missions):
+    // - Read: All authenticated users.
+    // - Write: HQ or Site Leads (depending on scope, defaulting to HQ/Educator for simplicity).
+    match /sites/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /rooms/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+
+    // Operational (Sessions, Occurrences):
+    // - Read: All authenticated users (could be scoped to site).
+    // - Write: Educators.
+    match /sessions/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /sessionOccurrences/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+
+    // Student Data (Enrolments, Attendance):
+    // - Read: Owner or Educator.
+    // - Write: Educator.
+    match /enrolments/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
+      allow write: if isEducator();
     }
-    match /rooms/{roomId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq') || hasRole('siteLead');
+    match /attendance/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
+      allow write: if isEducator();
     }
 
-    // Programs, Courses, Missions
-    match /programs/{programId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq');
-    }
-    match /courses/{courseId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq');
-    }
-    match /missions/{missionId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq') || hasRole('educator');
-    }
-
-    // Sessions & SessionOccurrences
-    match /sessions/{sessionId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq') || hasRole('siteLead');
-    }
-    match /sessionOccurrences/{occurrenceId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq') || hasRole('siteLead') || hasRole('educator');
-    }
-
-    // Enrolments
-    match /enrolments/{enrolmentId} {
-      allow read: if isOwner(resource.data.userId) || isParentOf(resource.data.userId) || hasRole('educator') || hasRole('hq') || hasRole('siteLead');
-      allow write: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
-    }
-
-    // Attendance Records
-    match /attendanceRecords/{attendanceId} {
-      allow read: if isOwner(resource.data.userId) || isParentOf(resource.data.userId) || hasRole('educator') || hasRole('hq') || hasRole('siteLead');
-      allow write: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
-    }
-
-    // Mission Plans
-    match /missionPlans/{planId} {
-      allow read, write: if hasRole('educator') || hasRole('hq') || hasRole('siteLead');
-    }
-
-    // Mission Attempts
-    match /missionAttempts/{attemptId} {
-      allow read: if isOwner(resource.data.learnerId) || isParentOf(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
-      allow create, update: if isOwner(request.resource.data.learnerId);
-    }
-
-    // Reflections
-    match /reflections/{reflectionId} {
-      allow read: if isOwner(resource.data.userId) || hasRole('educator') || hasRole('hq');
-      allow create, update, delete: if isOwner(request.resource.data.userId);
-    }
-
-    // Accountability Cycles
-    match /accountabilityCycles/{cycleId} {
-      allow read: if isAuthenticated();
-      allow write: if hasRole('hq');
-    }
-
-    // Accountability KPIs
-    match /accountabilityKPIs/{kpiId} {
-      allow read: if isOwner(resource.data.learnerId) || isParentOf(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
-      allow write: if hasRole('hq');
-    }
-
-    // Accountability Commitments & Reviews
-    match /accountabilityCommitments/{docId} {
-       allow read: if isOwner(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
-       allow write: if isOwner(request.resource.data.learnerId);
-    }
-    match /accountabilityReviews/{docId} {
-       allow read: if isOwner(resource.data.learnerId) || hasRole('educator') || hasRole('hq');
-       allow write: if isOwner(request.resource.data.learnerId);
-    }
-
-    // Portfolios
-    match /portfolioItems/{itemId} {
-       allow read: if isOwner(resource.data.learnerId) || isParentOf(resource.data.learnerId) || hasRole('educator') || hasRole('hq') || hasRole('partner');
-       allow write: if isOwner(request.resource.data.learnerId);
+    // Learning Artifacts (MissionAttempts, Reflections):
+    // - Read: Owner or Educator.
+    // - Create: Owner (Learner).
+    // - Update: Owner or Educator (for grading/feedback).
+    match /missionAttempts/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
     }
     
-    // Alerts (HQ/Educator/SiteLead)
-    match /alerts/{alertId} {
-      allow read, write: if hasRole('hq') || hasRole('educator') || hasRole('siteLead');
+    match /reflections/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Pillars (Read-only for all authenticated)
-    match /pillars/{pillarId} {
-      allow read: if isAuthenticated();
-      allow write: if false; 
+    // Accountability & Portfolios
+    match /accountabilityCycles/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /accountabilityKPIs/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /portfolioItems/{id} {
+      allow read: if isAuthenticated(); // Portfolios might be public within school?
+      allow write: if isOwner(resource.data.learnerId) || isEducator();
+    }
+    
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

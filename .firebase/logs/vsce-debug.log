@@ -1689,3 +1689,39 @@ E1220 15:35:38.230123   20412 watch.go:40] Failed to load config from "c:\\Users
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E1220 15:35:48.229724   20412 watch.go:40] Failed to load config from \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\": could not find dataconnect.yaml in `c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect`\n"}}
 [info] [Firebase Plugin] Stopping Data Connect toolkit
 [warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-12-20T23:38:24.347Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2025-12-20T23:38:27.961Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-20T23:38:27.965Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-20T23:38:27.965Z] > authorizing via signed-in user (simon.luke@impactoryinstitute.com)
+[debug] [2025-12-20T23:38:27.969Z] Checked if tokens are valid: false, expires at: 1766216785223
+[debug] [2025-12-20T23:38:27.969Z] Checked if tokens are valid: false, expires at: 1766216785223
+[debug] [2025-12-20T23:38:27.970Z] > refreshing access token with scopes: []
+[debug] [2025-12-20T23:38:27.972Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-12-20T23:38:27.972Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-20T23:38:27.987Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.0.0) on port 50001
+[debug] [2025-12-20T23:38:28.660Z] 'fdc build' failed with error: Unable to build your Data Connect schema and connectors (exit code 1): E1220 15:38:28.654222   21512 cmd.go:43] Error loading data connect config: could not find dataconnect.yaml in `c:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2\dataconnect`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Unable to build your Data Connect schema and connectors (exit code 1): E1220 15:38:28.654222   21512 cmd.go:43] Error loading data connect config: could not find dataconnect.yaml in `c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect`\n"}}
+[debug] [2025-12-20T23:38:28.661Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-12-20T23:38:28.661Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-12-20T23:38:28.662Z] Starting Data Connect Emulator with command {"binary":"C:\\Users\\simon\\.cache\\firebase\\emulators\\dataconnect-emulator-3.0.0.exe","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"C:\\\\Users\\\\simon\\\\.cache\\\\firebase\\\\emulators\\\\dataconnect-emulator-3.0.0.exe\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to \u001b[1mdataconnect-debug.log\u001b[22m"}}
+[debug] [2025-12-20T23:38:28.779Z] E1220 15:38:28.736428    3128 dev.go:83] Failed to load initial config from "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect": could not find dataconnect.yaml in `c:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2\dataconnect`
+E1220 15:38:28.738450    3128 watch.go:116] watchAllDir unable to walk dir `c:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2\dataconnect`: CreateFile c:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2\dataconnect: The system cannot find the file specified.
+I1220 15:38:28.752566    3128 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E1220 15:38:28.736428    3128 dev.go:83] Failed to load initial config from \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\": could not find dataconnect.yaml in `c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect`\nE1220 15:38:28.738450    3128 watch.go:116] watchAllDir unable to walk dir `c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect`: CreateFile c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect: The system cannot find the file specified.\nI1220 15:38:28.752566    3128 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[debug] [2025-12-20T23:38:28.810Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2025-12-20T23:38:28.810Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] [Firebase Plugin] requireAuth error: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] [Firebase Plugin] error:  {}
+[debug] [2025-12-20T23:38:38.741Z] E1220 15:38:38.741141    3128 watch.go:40] Failed to load config from "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect": could not find dataconnect.yaml in `c:\Users\simon\OneDrive\Desktop\My codes\scholesa-edu-2\dataconnect`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E1220 15:38:38.741141    3128 watch.go:40] Failed to load config from \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\": could not find dataconnect.yaml in `c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect`\n"}}

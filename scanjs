@@ -1,0 +1,24 @@
+const fs = require('fs');
+const path = require('path');
+
+const filesToRead = [
+  // Corrected paths based on your directory tree
+  'src/types/schema.ts',
+  'src/firebase/firestore/collections.ts',
+  'src/firebase/auth/AuthProvider.tsx',
+  'src/firebase/auth/getUserRoleServer.ts' 
+];
+
+console.log('--- SCHOLESA SCHEMA & AUTH SCAN ---');
+
+filesToRead.forEach(relativePath => {
+  const fullPath = path.join(process.cwd(), relativePath);
+  console.log(`\n📄 READING: ${relativePath}`);
+  if (fs.existsSync(fullPath)) {
+    console.log('---------------------------------------------------');
+    console.log(fs.readFileSync(fullPath, 'utf8'));
+    console.log('---------------------------------------------------');
+  } else {
+    console.log('❌ File not found.');
+  }
+});

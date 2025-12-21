@@ -10,8 +10,9 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/src/firebase/client-init';
+import { UserProfile, UserRole } from '@/src/types/schema';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading: false,
       profile: null,
       signInWithGoogle: async () => {},
-      signUp: async (_email: string, _password: string) => {},
+      signUp: async (_email: string, _password: string, _displayName: string, _role: UserRole) => {},
       signOut: async () => {},
     } as any;
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -31,11 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = React.useMemo(() => getAuth(app as any), []);
   const db = React.useMemo(() => getFirestore(app as any), []);
   const [user, loading] = useAuthState(auth);
-  const [profile, setProfile] = React.useState<any>(null);
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
     if (user) {
-      const unsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+      const unsub = onSnapshot(doc(db, 'users', user.uid), (snap: any) => {
         setProfile(snap.data() ?? null);
       });
       return () => unsub();
@@ -51,9 +52,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      
+      const newUserProfile: UserProfile = {
+        uid: res.user.uid,
+        email,
+        displayName,
+        role,
+        createdAt: serverTimestamp() as any,
+        updatedAt: serverTimestamp() as any,
+      };
+
+      await setDoc(doc(db, 'users', res.user.uid), newUserProfile);
     } catch (error) {
       console.error(error);
     }
