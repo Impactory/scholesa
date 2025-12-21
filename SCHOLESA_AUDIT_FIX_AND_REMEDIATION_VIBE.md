@@ -71,6 +71,9 @@ These rules apply in **both** modes:
    - No unhandled errors in main flows in dev/staging.
    - No SW registration errors (no “unsupported protocol” errors).
 
+5. **Continuous Verification**
+   - After any major implementation work using this spec, you must run the full SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md process and update the Audit Report.
+
 ---
 
 # PART A – AUDIT MODE (Pass 1)

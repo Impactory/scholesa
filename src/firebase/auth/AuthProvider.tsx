@@ -1,91 +1,63 @@
 'use client';
-/* eslint-disable react-hooks/rules-of-hooks, react-hooks/exhaustive-deps, no-unused-vars */
 
-import React, { useContext } from 'react';
-import { AuthContext } from './AuthContext';
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-} from 'firebase/auth';
-import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
-import { app } from '@/src/firebase/client-init';
-import { UserProfile, UserRole } from '@/src/types/schema';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, firestore } from '@/src/firebase/client-init';
+import type { User as UserProfile } from '@/schema';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const isBrowser = typeof window !== 'undefined';
-  if (!isBrowser) {
-    const value = {
-      user: null,
-      loading: false,
-      profile: null,
-      signInWithGoogle: async () => {},
-      signUp: async (_email: string, _password: string, _displayName: string, _role: UserRole) => {},
-      signOut: async () => {},
-    } as any;
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-  }
+interface AuthContextType {
+  user: FirebaseUser | null;
+  profile: UserProfile | null;
+  loading: boolean;
+}
 
-  const auth = React.useMemo(() => getAuth(app as any), []);
-  const db = React.useMemo(() => getFirestore(app as any), []);
-  const [user, loading] = useAuthState(auth);
-  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  profile: null,
+  loading: true,
+});
 
-  React.useEffect(() => {
-    if (user) {
-      const unsub = onSnapshot(doc(db, 'users', user.uid), (snap: any) => {
-        setProfile(snap.data() ?? null);
-      });
-      return () => unsub();
-    }
-  }, [user]);
+export const useAuthContext = () => useContext(AuthContext);
 
-  const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-      
-      const newUserProfile: UserProfile = {
-        uid: res.user.uid,
-        email,
-        displayName,
-        role,
-        createdAt: serverTimestamp() as any,
-        updatedAt: serverTimestamp() as any,
-      };
+  useEffect(() => {
+    let unsubscribeProfile: (() => void) | null = null;
 
-      await setDoc(doc(db, 'users', res.user.uid), newUserProfile);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
 
-  const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+      // Clean up previous profile listener if it exists
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
 
-  const value = { user: user ?? null, loading, profile, signInWithGoogle, signUp, signOut };
+      if (currentUser) {
+        const userRef = doc(firestore, 'users', currentUser.uid);
+        unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+          setProfile(docSnap.exists() ? (docSnap.data() as UserProfile) : null);
+          setLoading(false);
+        });
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
+  }, []);
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, profile, loading }}>
+      {children}
     </AuthContext.Provider>
   );
 }
-
-export const useAuthContext = () => useContext(AuthContext);
