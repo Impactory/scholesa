@@ -1,3 +1,5 @@
 {
-    "vscode-edge-devtools.browserFlavor": "Default"
+    "vscode-edge-devtools.browserFlavor": "Default",
+    "geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyAYMo6e8sRQYgzuZtAdZvhwyMFPOm8JAWQ",
+    "geminicodeassist.agentDebugMode": true
 }
