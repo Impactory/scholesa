@@ -17,7 +17,6 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   profile: null,
   signInWithGoogle: async () => {},
-  // eslint-disable-next-line no-unused-vars
-  signUp: async (email: string, password: string) => {},
+  signUp: async () => {},
   signOut: async () => {},
 });

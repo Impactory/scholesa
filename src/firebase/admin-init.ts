@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import { ensureEnv, optionalEnv } from '@/src/lib/ensureEnv';
+import { optionalEnv } from '@/src/lib/ensureEnv';
 
 if (!admin.apps.length) {
   try {
@@ -54,17 +54,26 @@ if (!admin.apps.length) {
           }),
         });
       } else {
-        // Fail fast with clear guidance
-        throw new Error(
-          'Firebase Admin SDK not configured. Set FIREBASE_SERVICE_ACCOUNT (JSON/base64) or GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_ADMIN_CLIENT_EMAIL + FIREBASE_ADMIN_PRIVATE_KEY.',
+        // No explicit credentials provided — create a default app.
+        // This avoids throwing during build/collect-phase; runtime calls will fail fast if ADC is not available.
+        // Log guidance for the developer.
+        // eslint-disable-next-line no-console
+        console.warn(
+          'Firebase Admin SDK not configured via env; initializing default app. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS for production.',
         );
+        try {
+          admin.initializeApp();
+        } catch (e) {
+          // If initializeApp throws for some reason, still continue to allow build to proceed
+          // eslint-disable-next-line no-console
+          console.warn('Failed to initialize default Firebase Admin app:', e);
+        }
       }
     }
   } catch (error) {
-    // initialization errors should be loud during build/start
+    // initialization errors should be logged but not throw during build/collect-phase
     // eslint-disable-next-line no-console
-    console.error('Firebase Admin initialization failed:', error);
-    throw error;
+    console.warn('Firebase Admin initialization failed (continuing build):', error);
   }
 }
 

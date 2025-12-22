@@ -27,7 +27,7 @@ export function FeedbackForm({ attemptId, onSuccess, onCancel }: Props) {
       });
       onSuccess();
     } catch (error) {
-      console.error("Error grading submission:", error);
+      console.error('Error grading submission:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -43,7 +43,7 @@ export function FeedbackForm({ attemptId, onSuccess, onCancel }: Props) {
         rows={3}
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
-        placeholder="Great job! / Please add more details..."
+        placeholder='Great job! / Please add more details...'
       />
       <div className="mt-3 flex justify-end gap-2">
         <button 

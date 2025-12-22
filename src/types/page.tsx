@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { SessionManager } from '@/src/features/educator/components/SessionManager';
-import { AttendanceTaker } from '@/src/features/educator/components/AttendanceTaker';
-import { SubmissionGrader } from '@/src/features/educator/components/SubmissionGrader';
+import { SessionManager } from '@/SessionManager';
+import { AttendanceTaker } from '@/AttendanceTaker';
+import { SubmissionGrader } from '@/src/types/SubmissionGrader';
 
 export default function EducatorDashboard() {
   return (
