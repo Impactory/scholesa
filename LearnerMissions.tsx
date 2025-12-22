@@ -6,9 +6,11 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { query, where, addDoc, Timestamp } from 'firebase/firestore';
 import { enrolmentsCollection, missionsCollection, missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import { Mission, MissionAttempt } from '@/src/types/schema';
+import { UserProfile } from '@/src/types/user';
 
 export function LearnerMissions() {
-  const { user, profile } = useAuthContext();
+  const { user, profile: authProfile } = useAuthContext();
+  const profile = authProfile as UserProfile | null;
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

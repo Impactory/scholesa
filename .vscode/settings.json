@@ -1,5 +1,7 @@
 {
     "vscode-edge-devtools.browserFlavor": "Default",
     "geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyAYMo6e8sRQYgzuZtAdZvhwyMFPOm8JAWQ",
-    "geminicodeassist.agentDebugMode": true
+    "geminicodeassist.agentDebugMode": true,
+    "geminicodeassist.project": "621500700254",
+    "cloudcode.project": "scholesa"
 }

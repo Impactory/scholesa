@@ -5,7 +5,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { query, where, Timestamp } from 'firebase/firestore';
 import { sessionsCollection } from '@/src/firebase/firestore/collections';
-import { createSessionWithOccurrences } from '../logic/scheduler';
+import { createSessionWithOccurrences } from '@/scheduler';
 import { Session } from '@/src/types/schema';
 
 export function SessionManager() {

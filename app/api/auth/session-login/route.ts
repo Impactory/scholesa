@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { admin } from '@/src/firebase/admin-init';
+import admin from '@/src/firebase/admin-init';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
