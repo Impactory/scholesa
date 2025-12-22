@@ -5,6 +5,7 @@ import { query, where, getDocs } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { usersCollection } from '@/src/lib/firestore/collections';
 import type { User } from '@/schema';
+import Link from 'next/link';
 
 export default function ParentDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
@@ -63,9 +64,12 @@ export default function ParentDashboard() {
             <section>
               <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">My Children</h2>
               {learners.length === 0 ? (
-                <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  <p>No children linked to your account yet.</p>
-                  <p className="mt-2 text-sm">Please contact your Site Lead to link your children.</p>
+                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+                  <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">Welcome Parent</h1>
+                  <p className="mt-4 text-lg text-gray-600">You don&apos;t have any learners associated with your account yet.</p>
+                  <Link href="/learner-registration" className="mt-8 px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                    Register a Learner
+                  </Link>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">

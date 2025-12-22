@@ -12,11 +12,21 @@ export function registerServiceWorker(): void {
       return;
     }
 
+    // Only register in production by default unless explicitly enabled
+    const enable = (process.env.NEXT_PUBLIC_ENABLE_SW || 'false').toLowerCase() === 'true';
+    const isProd = process.env.NODE_ENV === 'production';
+    if (!isProd && !enable) return;
+
+    if (!('serviceWorker' in navigator)) return;
+
+    // Allow overriding SW path at build time
+    const swPath = process.env.NEXT_PUBLIC_SW_PATH || '/sw.js';
+
     // Fallback to plain navigator registration
     navigator.serviceWorker
-      .register('/sw.js')
+      .register(swPath)
       .catch(() => {
-        // swallow errors during registration to avoid breaking client render
+        // swallow registration errors to avoid breaking client render
       });
   } catch (err) {
     // silent catch

@@ -7,9 +7,11 @@ import { query, where, Timestamp } from 'firebase/firestore';
 import { sessionsCollection } from '@/src/firebase/firestore/collections';
 import { createSessionWithOccurrences } from '@/scheduler';
 import { Session } from '@/src/types/schema';
+import { UserProfile } from '@/src/types/user';
 
 export function SessionManager() {
-  const { user, profile } = useAuthContext();
+  const { user, profile: authProfile } = useAuthContext();
+  const profile = authProfile as UserProfile | null;
   const [isCreating, setIsCreating] = useState(false);
 
   // Fetch sessions for this educator

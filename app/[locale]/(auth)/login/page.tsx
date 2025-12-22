@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           <div className="text-center text-sm">
             <a href={`/${locale}/register`} className="font-medium text-indigo-600 hover:text-indigo-500">
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </a>
           </div>
         </form>

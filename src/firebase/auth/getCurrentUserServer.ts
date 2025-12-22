@@ -1,5 +1,5 @@
 import 'server-only';
-import { admin } from '@/src/firebase/admin-init';
+import admin from '@/src/firebase/admin-init';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
 

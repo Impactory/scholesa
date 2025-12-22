@@ -9,7 +9,7 @@ import {
 export const getUsersByRole = async (role: string) => {
   const q = query(usersCollection, where('role', '==', role));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 };
 
 export const getActivePrograms = async (studioId: string) => {
@@ -19,7 +19,7 @@ export const getActivePrograms = async (studioId: string) => {
     where('active', '==', true)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 };
 
 export const getStudentEnrolments = async (userId: string) => {

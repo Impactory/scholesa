@@ -1,13 +1,14 @@
 /* eslint-disable no-unused-vars */
 import { createContext } from 'react';
 import { User } from 'firebase/auth';
+import { UserProfile } from '@/src/types/user';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  profile: { role: string } | null;
+  profile: UserProfile | null;
   signInWithGoogle: () => Promise<void>;
-    signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

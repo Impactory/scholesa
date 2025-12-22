@@ -1,5 +1,5 @@
 import 'server-only';
-import { admin } from '@/src/firebase/admin-init';
+import admin from '@/src/firebase/admin-init';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getCurrentUserServer } from './getCurrentUserServer';
 

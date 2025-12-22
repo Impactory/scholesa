@@ -8,6 +8,8 @@ export interface UserProfile {
   displayName: string;
   role: UserRole;
   studioId?: string;
+  siteIds?: string[];
+  organizationId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

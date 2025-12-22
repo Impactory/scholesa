@@ -4,18 +4,22 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, firestore } from '@/src/firebase/client-init';
-import type { User as UserProfile } from '@/schema';
+import { UserProfile } from '@/src/types/user';
 
 interface AuthContextType {
   user: FirebaseUser | null;
   profile: UserProfile | null;
   loading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  signInWithGoogle: async () => {},
+  signOut: async () => {},
 });
 
 export const useAuthContext = () => useContext(AuthContext);
@@ -55,8 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const signInWithGoogle = async () => {
+    // Implement Google Sign-In logic here
+  };
+
+  const signOut = async () => {
+    // Implement Sign-Out logic here
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
