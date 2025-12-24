@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { AccountabilityCycle, AccountabilityKPI, UserProfile, PillarCode } from '@/src/types/schema';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { query, where, orderBy, limit } from 'firebase/firestore';
 import { accountabilityCyclesCollection, accountabilityKPIsCollection } from '@/src/firebase/firestore/collections';
-import { PillarCode } from '@/src/types/schema';
 
 const PILLAR_LABELS: Record<PillarCode, string> = {
   FUTURE_SKILLS: 'Future Skills',
@@ -15,7 +15,7 @@ const PILLAR_LABELS: Record<PillarCode, string> = {
 
 export function SiteStats() {
   const { profile } = useAuthContext();
-  const siteId = profile?.studioId;
+  const siteId = (profile as UserProfile)?.studioId;
 
   // 1. Fetch Latest Cycle for Site
   // Note: This query requires a composite index on [siteId, endDate]. 

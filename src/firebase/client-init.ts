@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -12,19 +12,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Only initialize the client Firebase SDK when running in a browser and a public API key is present.
-const isClient = typeof window !== 'undefined' && Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-const app = isClient ? (!getApps().length ? initializeApp(firebaseConfig) : getApp()) : (undefined as unknown as ReturnType<typeof getApp>);
+// Initialize Firebase (Isomorphic: works on client and server/build)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export { app };
 
-export const auth = isClient ? getAuth(app) : (undefined as any);
+export const auth = getAuth(app);
 
-// Initialize Firestore only on the client for offline persistence; server should use the Admin SDK.
-export const db = isClient
-  ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })
-  : (undefined as any);
+// Initialize Firestore
+// Client: Enable offline persistence
+// Server: Use standard instance (avoids build errors)
+export const db = typeof window !== 'undefined'
+  ? initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    })
+  : getFirestore(app);
 
 export const firestore = db;
-export const storage = isClient ? getStorage(app) : (undefined as any);
-export const googleProvider = isClient ? new GoogleAuthProvider() : (undefined as any);
+export const storage = getStorage(app);
+export const googleProvider = new GoogleAuthProvider();

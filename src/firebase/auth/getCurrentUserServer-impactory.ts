@@ -1,5 +1,5 @@
 import 'server-only';
-import { admin } from '@/src/firebase/admin-init';
+import admin from '@/src/firebase/admin-init';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
 
@@ -17,7 +17,7 @@ export async function getCurrentUserServer() {
     const user = await auth.getUser(decodedIdToken.uid);
     return user;
   } catch (error) {
-    console.error("Error verifying session cookie:", error);
+    console.error('Error verifying session cookie:', error);
     return null;
   }
 }

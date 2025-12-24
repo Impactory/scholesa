@@ -1,0 +1,33 @@
+name: Post Audit Report
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'AUDIT_REPORT.md'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  post_audit_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Post Audit Report to PR
+        if: hashFiles('AUDIT_REPORT.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Find existing comment by the bot (viewer) containing the report header
+          COMMENT_ID=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json comments --jq '.comments[] | select(.viewerDidAuthor and (.body | startswith("# Audit Report"))) | .id' | head -n 1)
+          
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/$REPO/issues/comments/$COMMENT_ID" -X PATCH -F body=@AUDIT_REPORT.md
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file AUDIT_REPORT.md
+          fi
