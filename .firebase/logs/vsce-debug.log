@@ -9160,3 +9160,203 @@ Generated sources: index.d.ts [3684B] esm\index.esm.js [1364B] esm\package.json 
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1223 22:02:41.749499   28716 installsdk.go:86] Running command: C:\\Program Files\\nodejs\\npm.cmd install file:src\\dataconnect-admin-generated\n"}}
 [debug] [2025-12-24T06:02:46.489Z] I1223 22:02:46.489845   28716 load.go:109] Finished reloading
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1223 22:02:46.489845   28716 load.go:109] Finished reloading\n"}}
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-12-24T18:52:29.086Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2025-12-24T18:52:36.324Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-24T18:52:36.326Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-24T18:52:36.327Z] > authorizing via signed-in user (simon.luke@theone.id)
+[debug] [2025-12-24T18:52:36.331Z] Checked if tokens are valid: false, expires at: 1766559530269
+[debug] [2025-12-24T18:52:36.331Z] Checked if tokens are valid: false, expires at: 1766559530269
+[debug] [2025-12-24T18:52:36.331Z] > refreshing access token with scopes: []
+[debug] [2025-12-24T18:52:36.333Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-12-24T18:52:36.333Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-24T18:52:36.341Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.0.0) on port 50001
+[debug] [2025-12-24T18:52:37.042Z] I1224 10:52:37.019211    2664 control.go:94] [/emulator/scholesa-edu-2 688b] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.019211    2664 control.go:94] [/emulator/scholesa-edu-2 688b] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T18:52:37.043Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-12-24T18:52:37.043Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-12-24T18:52:37.044Z] Starting Data Connect Emulator with command {"binary":"C:\\Users\\simon\\.cache\\firebase\\emulators\\dataconnect-emulator-3.0.0.exe","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"C:\\\\Users\\\\simon\\\\.cache\\\\firebase\\\\emulators\\\\dataconnect-emulator-3.0.0.exe\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to \u001b[1mdataconnect-debug.log\u001b[22m"}}
+[debug] [2025-12-24T18:52:37.122Z] I1224 10:52:37.103922    9804 load.go:31] Reloading schema and connectors...
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.103922    9804 load.go:31] Reloading schema and connectors...\n"}}
+[debug] [2025-12-24T18:52:37.175Z] I1224 10:52:37.173709    9804 control.go:94] [/emulator/scholesa-edu-2 ca48] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.173709    9804 control.go:94] [/emulator/scholesa-edu-2 ca48] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T18:52:37.247Z] I1224 10:52:37.240566    9804 codegen.go:80] [connector "example" javascriptSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.240566    9804 codegen.go:80] [connector \"example\" javascriptSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\n"}}
+[debug] [2025-12-24T18:52:37.273Z] I1224 10:52:37.274015    9804 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.274015    9804 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\n"}}
+[debug] [2025-12-24T18:52:37.275Z] I1224 10:52:37.275527    9804 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.275527    9804 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\n"}}
+[debug] [2025-12-24T18:52:37.283Z] I1224 10:52:37.282616    9804 collector.go:107] schema extensions wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect\\.dataconnect\\schema"
+Generated sources: prelude.gql [73219B] main\relation.gql [29084B] main\query.gql [7452B] main\mutation.gql [20173B] main\implicit.gql [2751B] main\input.gql [56748B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.282616    9804 collector.go:107] schema extensions wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\\\\.dataconnect\\\\schema\"\nGenerated sources: prelude.gql [73219B] main\\relation.gql [29084B] main\\query.gql [7452B] main\\mutation.gql [20173B] main\\implicit.gql [2751B] main\\input.gql [56748B] \n"}}
+[debug] [2025-12-24T18:52:37.289Z] I1224 10:52:37.289257    9804 collector.go:107] connector "example" javascriptSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+Generated sources: package.json [863B] react\esm\package.json [17B] react\README.md [26952B] .guides/config.json [236B] react\index.cjs.js [1685B] esm\index.esm.js [1698B] README.md [19803B] react\index.d.ts [2017B] react\package.json [460B] react\esm\index.esm.js [1588B] index.d.ts [3819B] esm\package.json [17B] index.cjs.js [1989B] .guides/usage.md [2251B] .guides/setup.md [1682B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.289257    9804 collector.go:107] connector \"example\" javascriptSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\nGenerated sources: package.json [863B] react\\esm\\package.json [17B] react\\README.md [26952B] .guides/config.json [236B] react\\index.cjs.js [1685B] esm\\index.esm.js [1698B] README.md [19803B] react\\index.d.ts [2017B] react\\package.json [460B] react\\esm\\index.esm.js [1588B] index.d.ts [3819B] esm\\package.json [17B] index.cjs.js [1989B] .guides/usage.md [2251B] .guides/setup.md [1682B] \n"}}
+[debug] [2025-12-24T18:52:37.336Z] I1224 10:52:37.335750    9804 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.335750    9804 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation\n"}}
+[debug] [2025-12-24T18:52:37.354Z] I1224 10:52:37.350232    9804 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+Generated sources: index.d.ts [3684B] esm\index.esm.js [1364B] esm\package.json [17B] index.cjs.js [1551B] package.json [632B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.350232    9804 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: index.d.ts [3684B] esm\\index.esm.js [1364B] esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] \n"}}
+[debug] [2025-12-24T18:52:37.385Z] I1224 10:52:37.384708    9804 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.384708    9804 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\n"}}
+[debug] [2025-12-24T18:52:37.388Z] I1224 10:52:37.388342    9804 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+Generated sources: esm\index.esm.js [1364B] esm\package.json [17B] index.cjs.js [1551B] package.json [632B] index.d.ts [3684B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.388342    9804 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: esm\\index.esm.js [1364B] esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] index.d.ts [3684B] \n"}}
+[debug] [2025-12-24T18:52:37.437Z] I1224 10:52:37.437139    9804 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.437139    9804 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\n"}}
+[debug] [2025-12-24T18:52:37.481Z] I1224 10:52:37.437139    9804 load.go:109] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.437139    9804 load.go:109] Finished reloading\n"}}
+[debug] [2025-12-24T18:52:37.506Z] I1224 10:52:37.507014    9804 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:37.507014    9804 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[debug] [2025-12-24T18:52:40.712Z] I1224 10:52:40.712659    9804 engine.go:179] [/emulator/scholesa-edu-2 ca48] ExecuteGraphqlRead IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:52:40.712659    9804 engine.go:179] [/emulator/scholesa-edu-2 ca48] ExecuteGraphqlRead IntrospectionQuery: succeeded. \n"}}
+[debug] [2025-12-24T18:52:42.719Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-12-24T18:52:42.720Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-24T18:52:42.746Z] [Firebase Plugin] User found:  simon.luke@theone.id
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-12-24T18:52:42.748Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:52:42.749Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-12-24T18:52:53.509Z] *** [apiv2] error from fetch(https://firebase.googleapis.com/v1beta1/projects?pageSize=1000, {"headers":{},"method":"GET","signal":{"reason":""}}): FetchError: request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 failed, reason: getaddrinfo ENOTFOUND firebase.googleapis.com
+[debug] [2025-12-24T18:52:53.509Z] Failed to make request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000
+[debug] [2025-12-24T18:54:52.898Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2025-12-24T18:54:52.898Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-24T18:54:52.900Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-24T18:54:52.900Z] > authorizing via signed-in user (simon.luke@theone.id)
+[debug] [2025-12-24T18:54:52.901Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:54:52.901Z] [Firebase Plugin] User found:  simon.luke@theone.id
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-12-24T18:54:52.903Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:54:52.904Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-12-24T18:54:52.912Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2025-12-24T18:54:52.912Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-24T18:54:52.913Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-24T18:54:52.913Z] > authorizing via signed-in user (simon.luke@theone.id)
+[debug] [2025-12-24T18:54:52.914Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:54:52.914Z] [Firebase Plugin] User found:  simon.luke@theone.id
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-12-24T18:54:52.915Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:54:52.916Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-12-24T18:54:52.924Z] Emulator locator file path: C:\Users\simon\AppData\Local\Temp\hub-studio-3328096157-e3f79.json
+[debug] [2025-12-24T18:54:53.479Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-12-24T18:54:53.479Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2025-12-24T18:54:53.481Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-12-24T18:54:53.481Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-12-24T18:59:28.592Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2025-12-24T18:59:31.464Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-24T18:59:31.466Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-24T18:59:31.466Z] > authorizing via signed-in user (simon.luke@theone.id)
+[debug] [2025-12-24T18:59:31.469Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:59:31.470Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:59:31.470Z] [Firebase Plugin] User found:  simon.luke@theone.id
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-12-24T18:59:31.471Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T18:59:31.472Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-12-24T18:59:31.478Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.0.0) on port 50001
+[debug] [2025-12-24T18:59:31.814Z] I1224 10:59:31.789591   32532 control.go:94] [/emulator/scholesa-edu-2 bd1f] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:59:31.789591   32532 control.go:94] [/emulator/scholesa-edu-2 bd1f] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T18:59:31.815Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-12-24T18:59:31.815Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-12-24T18:59:31.816Z] Starting Data Connect Emulator with command {"binary":"C:\\Users\\simon\\.cache\\firebase\\emulators\\dataconnect-emulator-3.0.0.exe","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"C:\\\\Users\\\\simon\\\\.cache\\\\firebase\\\\emulators\\\\dataconnect-emulator-3.0.0.exe\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to \u001b[1mdataconnect-debug.log\u001b[22m"}}
+[debug] [2025-12-24T18:59:31.925Z] I1224 10:59:31.857495   31752 load.go:31] Reloading schema and connectors...
+I1224 10:59:31.907404   31752 control.go:94] [/emulator/scholesa-edu-2 9c25] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:59:31.857495   31752 load.go:31] Reloading schema and connectors...\nI1224 10:59:31.907404   31752 control.go:94] [/emulator/scholesa-edu-2 9c25] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T18:59:32.046Z] I1224 10:59:31.945307   31752 codegen.go:80] [connector "example" javascriptSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+I1224 10:59:31.953533   31752 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+I1224 10:59:31.955040   31752 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+I1224 10:59:31.960047   31752 collector.go:107] schema extensions wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect\\.dataconnect\\schema"
+Generated sources: main\mutation.gql [20173B] prelude.gql [73219B] main\implicit.gql [2751B] main\input.gql [56748B] main\relation.gql [29084B] main\query.gql [7452B] 
+I1224 10:59:31.964497   31752 collector.go:107] connector "example" javascriptSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+Generated sources: esm\package.json [17B] react\index.cjs.js [1685B] .guides/config.json [236B] index.d.ts [3819B] esm\index.esm.js [1698B] package.json [863B] react\index.d.ts [2017B] .guides/setup.md [1682B] react\esm\index.esm.js [1588B] react\README.md [26952B] .guides/usage.md [2251B] index.cjs.js [1989B] README.md [19803B] react\package.json [460B] react\esm\package.json [17B] 
+I1224 10:59:31.966633   31752 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation
+I1224 10:59:31.968216   31752 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+Generated sources: esm\package.json [17B] index.cjs.js [1551B] package.json [632B] index.d.ts [3684B] esm\index.esm.js [1364B] 
+I1224 10:59:31.974092   31752 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+I1224 10:59:31.975633   31752 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+Generated sources: index.d.ts [3684B] esm\index.esm.js [1364B] esm\package.json [17B] index.cjs.js [1551B] package.json [632B] 
+I1224 10:59:31.976159   31752 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+I1224 10:59:31.976159   31752 load.go:109] Finished reloading
+I1224 10:59:31.985729   31752 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:59:31.945307   31752 codegen.go:80] [connector \"example\" javascriptSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\nI1224 10:59:31.953533   31752 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\nI1224 10:59:31.955040   31752 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\nI1224 10:59:31.960047   31752 collector.go:107] schema extensions wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\\\\.dataconnect\\\\schema\"\nGenerated sources: main\\mutation.gql [20173B] prelude.gql [73219B] main\\implicit.gql [2751B] main\\input.gql [56748B] main\\relation.gql [29084B] main\\query.gql [7452B] \nI1224 10:59:31.964497   31752 collector.go:107] connector \"example\" javascriptSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\nGenerated sources: esm\\package.json [17B] react\\index.cjs.js [1685B] .guides/config.json [236B] index.d.ts [3819B] esm\\index.esm.js [1698B] package.json [863B] react\\index.d.ts [2017B] .guides/setup.md [1682B] react\\esm\\index.esm.js [1588B] react\\README.md [26952B] .guides/usage.md [2251B] index.cjs.js [1989B] README.md [19803B] react\\package.json [460B] react\\esm\\package.json [17B] \nI1224 10:59:31.966633   31752 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation\nI1224 10:59:31.968216   31752 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] index.d.ts [3684B] esm\\index.esm.js [1364B] \nI1224 10:59:31.974092   31752 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\nI1224 10:59:31.975633   31752 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: index.d.ts [3684B] esm\\index.esm.js [1364B] esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] \nI1224 10:59:31.976159   31752 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\nI1224 10:59:31.976159   31752 load.go:109] Finished reloading\nI1224 10:59:31.985729   31752 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[debug] [2025-12-24T18:59:32.373Z] I1224 10:59:32.373190   31752 engine.go:179] [/emulator/scholesa-edu-2 9c25] ExecuteGraphqlRead IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 10:59:32.373190   31752 engine.go:179] [/emulator/scholesa-edu-2 9c25] ExecuteGraphqlRead IntrospectionQuery: succeeded. \n"}}
+[debug] [2025-12-24T18:59:32.738Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-12-24T18:59:32.738Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-12-24T19:01:33.832Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2025-12-24T19:01:35.864Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-12-24T19:01:35.866Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-24T19:01:35.866Z] > authorizing via signed-in user (simon.luke@theone.id)
+[debug] [2025-12-24T19:01:35.869Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T19:01:35.869Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T19:01:35.869Z] [Firebase Plugin] User found:  simon.luke@theone.id
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-12-24T19:01:35.870Z] Checked if tokens are valid: true, expires at: 1766605961720
+[debug] [2025-12-24T19:01:35.871Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-12-24T19:01:35.878Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.0.0) on port 50001
+[debug] [2025-12-24T19:01:36.202Z] I1224 11:01:36.181586   11824 control.go:94] [/emulator/scholesa-edu-2 0cb6] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.181586   11824 control.go:94] [/emulator/scholesa-edu-2 0cb6] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T19:01:36.202Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-12-24T19:01:36.203Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-12-24T19:01:36.203Z] Starting Data Connect Emulator with command {"binary":"C:\\Users\\simon\\.cache\\firebase\\emulators\\dataconnect-emulator-3.0.0.exe","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"C:\\\\Users\\\\simon\\\\.cache\\\\firebase\\\\emulators\\\\dataconnect-emulator-3.0.0.exe\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to \u001b[1mdataconnect-debug.log\u001b[22m"}}
+[debug] [2025-12-24T19:01:36.251Z] I1224 11:01:36.242297   25420 load.go:31] Reloading schema and connectors...
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.242297   25420 load.go:31] Reloading schema and connectors...\n"}}
+[debug] [2025-12-24T19:01:36.295Z] I1224 11:01:36.295146   25420 control.go:94] [/emulator/scholesa-edu-2 98ed] UpdateResources(): done
+Main schema: sources: schema\schema.gql [929B] 
+Connector "example": sources: example\queries.gql [696B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.295146   25420 control.go:94] [/emulator/scholesa-edu-2 98ed] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [929B] \nConnector \"example\": sources: example\\queries.gql [696B] \n"}}
+[debug] [2025-12-24T19:01:36.333Z] I1224 11:01:36.333372   25420 codegen.go:80] [connector "example" javascriptSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.333372   25420 codegen.go:80] [connector \"example\" javascriptSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\n"}}
+[debug] [2025-12-24T19:01:36.343Z] I1224 11:01:36.342430   25420 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.342430   25420 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\n"}}
+[debug] [2025-12-24T19:01:36.345Z] I1224 11:01:36.344945   25420 codegen.go:80] [connector "example" adminSdk] Generating sources into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.344945   25420 codegen.go:80] [connector \"example\" adminSdk] Generating sources into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\n"}}
+[debug] [2025-12-24T19:01:36.349Z] I1224 11:01:36.349633   25420 collector.go:107] schema extensions wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\dataconnect\\.dataconnect\\schema"
+Generated sources: prelude.gql [73219B] main\input.gql [56748B] main\relation.gql [29084B] main\query.gql [7452B] main\mutation.gql [20173B] main\implicit.gql [2751B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.349633   25420 collector.go:107] schema extensions wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\dataconnect\\\\.dataconnect\\\\schema\"\nGenerated sources: prelude.gql [73219B] main\\input.gql [56748B] main\\relation.gql [29084B] main\\query.gql [7452B] main\\mutation.gql [20173B] main\\implicit.gql [2751B] \n"}}
+[debug] [2025-12-24T19:01:36.354Z] I1224 11:01:36.354024   25420 collector.go:107] connector "example" javascriptSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-generated"
+Generated sources: index.d.ts [3819B] react\package.json [460B] react\esm\package.json [17B] .guides/usage.md [2251B] .guides/config.json [236B] esm\index.esm.js [1698B] react\index.d.ts [2017B] react\esm\index.esm.js [1588B] react\README.md [26952B] .guides/setup.md [1682B] esm\package.json [17B] index.cjs.js [1989B] README.md [19803B] react\index.cjs.js [1685B] package.json [863B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.354024   25420 collector.go:107] connector \"example\" javascriptSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-generated\"\nGenerated sources: index.d.ts [3819B] react\\package.json [460B] react\\esm\\package.json [17B] .guides/usage.md [2251B] .guides/config.json [236B] esm\\index.esm.js [1698B] react\\index.d.ts [2017B] react\\esm\\index.esm.js [1588B] react\\README.md [26952B] .guides/setup.md [1682B] esm\\package.json [17B] index.cjs.js [1989B] README.md [19803B] react\\index.cjs.js [1685B] package.json [863B] \n"}}
+[debug] [2025-12-24T19:01:36.357Z] I1224 11:01:36.357512   25420 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.357512   25420 installsdk.go:55] Package @dataconnect/generated is already installed. Skipping installation\n"}}
+[debug] [2025-12-24T19:01:36.360Z] I1224 11:01:36.359564   25420 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\src\\dataconnect-admin-generated"
+Generated sources: index.d.ts [3684B] esm\index.esm.js [1364B] esm\package.json [17B] index.cjs.js [1551B] package.json [632B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.359564   25420 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: index.d.ts [3684B] esm\\index.esm.js [1364B] esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] \n"}}
+[debug] [2025-12-24T19:01:36.363Z] I1224 11:01:36.363050   25420 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.363050   25420 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\n"}}
+[debug] [2025-12-24T19:01:36.366Z] I1224 11:01:36.365497   25420 collector.go:107] connector "example" adminSdk wrote into "c:\\Users\\simon\\OneDrive\\Desktop\\My codes\\scholesa-edu-2\\functions\\src\\dataconnect-admin-generated"
+Generated sources: index.d.ts [3684B] esm\index.esm.js [1364B] esm\package.json [17B] index.cjs.js [1551B] package.json [632B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.365497   25420 collector.go:107] connector \"example\" adminSdk wrote into \"c:\\\\Users\\\\simon\\\\OneDrive\\\\Desktop\\\\My codes\\\\scholesa-edu-2\\\\functions\\\\src\\\\dataconnect-admin-generated\"\nGenerated sources: index.d.ts [3684B] esm\\index.esm.js [1364B] esm\\package.json [17B] index.cjs.js [1551B] package.json [632B] \n"}}
+[debug] [2025-12-24T19:01:36.368Z] I1224 11:01:36.368006   25420 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation
+I1224 11:01:36.368006   25420 load.go:109] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.368006   25420 installsdk.go:55] Package @dataconnect/admin-generated is already installed. Skipping installation\nI1224 11:01:36.368006   25420 load.go:109] Finished reloading\n"}}
+[debug] [2025-12-24T19:01:36.385Z] I1224 11:01:36.384294   25420 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.384294   25420 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[debug] [2025-12-24T19:01:36.491Z] I1224 11:01:36.491177   25420 engine.go:179] [/emulator/scholesa-edu-2 98ed] ExecuteGraphqlRead IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I1224 11:01:36.491177   25420 engine.go:179] [/emulator/scholesa-edu-2 98ed] ExecuteGraphqlRead IntrospectionQuery: succeeded. \n"}}
+[debug] [2025-12-24T19:01:36.739Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-12-24T19:01:36.740Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
