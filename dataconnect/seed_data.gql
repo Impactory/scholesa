@@ -1,0 +1,101 @@
+mutation SeedDatabase @transaction @auth(level: USER, insecureReason: "This operation is for seeding the database and is safe for all logged-in users.") {
+  user_insertMany(data: [
+    {
+      id: "676f72c3-bb9c-487a-be0b-69c9b6a001af",
+      displayName: "Demo Coach 1",
+      email: "democoach1@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "4a0a5404-a2d6-4a4a-9623-9f7153a9c091",
+      displayName: "Demo Coach 2",
+      email: "democoach2@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  team_insertMany(data: [
+    {
+      id: "8e0a0a88-4b49-4644-8b88-4f9a9a8e0a0a",
+      name: "Demo Team 1",
+      description: "A demo team for testing",
+      ageGroup: "U10",
+      coachId: "676f72c3-bb9c-487a-be0b-69c9b6a001af",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "9f9c9c99-9b9c-4b4b-9a99-9b9c9c999c9c",
+      name: "Demo Team 2",
+      description: "Another demo team for testing",
+      ageGroup: "U12",
+      coachId: "4a0a5404-a2d6-4a4a-9623-9f7153a9c091",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  player_insertMany(data: [
+    {
+      id: "2e8a1b3a-e1c8-4b7c-8e1a-2b5f0b5f0b5f",
+      firstName: "Demo",
+      lastName: "Player 1",
+      jerseyNumber: 10,
+      teamId: "8e0a0a88-4b49-4644-8b88-4f9a9a8e0a0a",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "3c9b4d5a-f2d9-4c8a-9b3d-4b5f2d9a8c7e",
+      firstName: "Demo",
+      lastName: "Player 2",
+      jerseyNumber: 5,
+      teamId: "9f9c9c99-9b9c-4b4b-9a99-9b9c9c999c9c",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  event_insertMany(data: [
+    {
+      id: "7f5b1a7f-7b1a-4b7f-9b1a-7f5b1a7f7b1a",
+      type: "Practice",
+      location: "Demo Field 1",
+      dateTime: "2024-04-27T10:00:00Z",
+      teamId: "8e0a0a88-4b49-4644-8b88-4f9a9a8e0a0a",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "1a2b3c4d-5e6f-7a8b-9c0d-1a2b3c4d5e6f",
+      type: "Game",
+      opponentName: "Demo Opponent",
+      location: "Demo Field 2",
+      dateTime: "2024-04-28T14:00:00Z",
+      teamId: "9f9c9c99-9b9c-4b4b-9a99-9b9c9c999c9c",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  attendance_insertMany(data: [
+    {
+      playerId: "2e8a1b3a-e1c8-4b7c-8e1a-2b5f0b5f0b5f",
+      eventId: "7f5b1a7f-7b1a-4b7f-9b1a-7f5b1a7f7b1a",
+      status: "Present",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      playerId: "3c9b4d5a-f2d9-4c8a-9b3d-4b5f2d9a8c7e",
+      eventId: "1a2b3c4d-5e6f-7a8b-9c0d-1a2b3c4d5e6f",
+      status: "Present",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  performanceStat_insertMany(data: [
+    {
+      playerId: "2e8a1b3a-e1c8-4b7c-8e1a-2b5f0b5f0b5f",
+      eventId: "7f5b1a7f-7b1a-4b7f-9b1a-7f5b1a7f7b1a",
+      statType: "Goals",
+      value: "2",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      playerId: "3c9b4d5a-f2d9-4c8a-9b3d-4b5f2d9a8c7e",
+      eventId: "1a2b3c4d-5e6f-7a8b-9c0d-1a2b3c4d5e6f",
+      statType: "Assists",
+      value: "1",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+}

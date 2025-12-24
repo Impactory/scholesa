@@ -1,0 +1,23 @@
+mutation CreateDemoUser @auth(level: PUBLIC, insecureReason: "This is a demo mutation") {
+  user_insert(data: {id: "550e8400-e29b-41d4-a716-446655440000", displayName: "demouser1", email: "demouser1@example.com", createdAt: "2024-04-26T12:00:00Z"})
+}
+
+query ListAllTeams @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  teams {
+    id
+    name
+    description
+  }
+}
+
+mutation UpdatePlayerJerseyNumber($id: UUID!, $jerseyNumber: Int!) @auth(level: USER) {
+  player_update(key: {id: $id}, data: {jerseyNumber: $jerseyNumber})
+}
+
+query ListMyTeams @auth(level: USER) {
+  teams(where: {coachId: {eq_expr: "auth.uid"}}) {
+    id
+    name
+    description
+  }
+}

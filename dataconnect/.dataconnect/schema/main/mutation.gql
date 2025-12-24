@@ -1,0 +1,654 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Attendance` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  attendance_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Attendance_Data!
+  ): Attendance_KeyOutput! @fdc_generated(from: "Attendance", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Event` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  event_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput! @fdc_generated(from: "Event", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PerformanceStat` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  performanceStat_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PerformanceStat_Data!
+  ): PerformanceStat_KeyOutput! @fdc_generated(from: "PerformanceStat", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Player` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  player_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Player_Data!
+  ): Player_KeyOutput! @fdc_generated(from: "Player", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Team` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  team_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Team_Data!
+  ): Team_KeyOutput! @fdc_generated(from: "Team", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Attendance` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  attendance_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Attendance_Data!]!
+  ): [Attendance_KeyOutput!]! @fdc_generated(from: "Attendance", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Event` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  event_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Event_Data!]!
+  ): [Event_KeyOutput!]! @fdc_generated(from: "Event", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PerformanceStat` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  performanceStat_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PerformanceStat_Data!]!
+  ): [PerformanceStat_KeyOutput!]! @fdc_generated(from: "PerformanceStat", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Player` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  player_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Player_Data!]!
+  ): [Player_KeyOutput!]! @fdc_generated(from: "Player", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Team` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  team_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Team_Data!]!
+  ): [Team_KeyOutput!]! @fdc_generated(from: "Team", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Attendance` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Attendance`.
+  """
+  attendance_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Attendance_Data!
+  ): Attendance_KeyOutput! @fdc_generated(from: "Attendance", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Event` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Event`.
+  """
+  event_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput! @fdc_generated(from: "Event", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PerformanceStat` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PerformanceStat`.
+  """
+  performanceStat_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PerformanceStat_Data!
+  ): PerformanceStat_KeyOutput! @fdc_generated(from: "PerformanceStat", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Player` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Player`.
+  """
+  player_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Player_Data!
+  ): Player_KeyOutput! @fdc_generated(from: "Player", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Team` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Team`.
+  """
+  team_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Team_Data!
+  ): Team_KeyOutput! @fdc_generated(from: "Team", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Attendance` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Attendance`.
+  """
+  attendance_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Attendance_Data!]!
+  ): [Attendance_KeyOutput!]! @fdc_generated(from: "Attendance", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Event` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Event`.
+  """
+  event_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Event_Data!]!
+  ): [Event_KeyOutput!]! @fdc_generated(from: "Event", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PerformanceStat` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PerformanceStat`.
+  """
+  performanceStat_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PerformanceStat_Data!]!
+  ): [PerformanceStat_KeyOutput!]! @fdc_generated(from: "PerformanceStat", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Player` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Player`.
+  """
+  player_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Player_Data!]!
+  ): [Player_KeyOutput!]! @fdc_generated(from: "Player", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Team` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Team`.
+  """
+  team_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Team_Data!]!
+  ): [Team_KeyOutput!]! @fdc_generated(from: "Team", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Attendance` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Attendance` or `null` if not found.
+  """
+  attendance_update(
+    """
+    The key used to identify the object.
+    """
+    key: Attendance_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Attendance_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Attendance_Data!
+  ): Attendance_KeyOutput @fdc_generated(from: "Attendance", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Event` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Event` or `null` if not found.
+  """
+  event_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Event_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Event_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput @fdc_generated(from: "Event", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PerformanceStat` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PerformanceStat` or `null` if not found.
+  """
+  performanceStat_update(
+    """
+    The key used to identify the object.
+    """
+    key: PerformanceStat_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PerformanceStat_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PerformanceStat_Data!
+  ): PerformanceStat_KeyOutput @fdc_generated(from: "PerformanceStat", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Player` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Player` or `null` if not found.
+  """
+  player_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Player_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Player_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Player_Data!
+  ): Player_KeyOutput @fdc_generated(from: "Player", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Team` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Team` or `null` if not found.
+  """
+  team_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Team_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Team_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Team_Data!
+  ): Team_KeyOutput @fdc_generated(from: "Team", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Attendance` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  attendance_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Attendance_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Attendance_Data!
+  ): Int! @fdc_generated(from: "Attendance", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Event` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  event_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Event_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Event_Data!
+  ): Int! @fdc_generated(from: "Event", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PerformanceStat` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  performanceStat_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PerformanceStat_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PerformanceStat_Data!
+  ): Int! @fdc_generated(from: "PerformanceStat", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Player` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  player_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Player_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Player_Data!
+  ): Int! @fdc_generated(from: "Player", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Team` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  team_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Team_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Team_Data!
+  ): Int! @fdc_generated(from: "Team", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Attendance` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  attendance_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Attendance_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Attendance_FirstRow
+  ): Attendance_KeyOutput @fdc_generated(from: "Attendance", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Event` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  event_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Event_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Event_FirstRow
+  ): Event_KeyOutput @fdc_generated(from: "Event", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PerformanceStat` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  performanceStat_delete(
+    """
+    The key used to identify the object.
+    """
+    key: PerformanceStat_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PerformanceStat_FirstRow
+  ): PerformanceStat_KeyOutput @fdc_generated(from: "PerformanceStat", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Player` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  player_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Player_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Player_FirstRow
+  ): Player_KeyOutput @fdc_generated(from: "Player", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Team` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  team_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Team_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Team_FirstRow
+  ): Team_KeyOutput @fdc_generated(from: "Team", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Attendance` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  attendance_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Attendance_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Attendance", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Event` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  event_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Event_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Event", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PerformanceStat` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  performanceStat_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PerformanceStat_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PerformanceStat", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Player` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  player_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Player_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Player", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Team` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  team_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Team_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Team", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+}

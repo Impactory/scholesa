@@ -1,0 +1,1938 @@
+"""
+✨ `Attendance_KeyOutput` returns the primary key fields of table type `Attendance`.
+
+It has the same format as `Attendance_Key`, but is only used as mutation return value.
+"""
+scalar Attendance_KeyOutput
+"""
+✨ `Event_KeyOutput` returns the primary key fields of table type `Event`.
+
+It has the same format as `Event_Key`, but is only used as mutation return value.
+"""
+scalar Event_KeyOutput
+"""
+✨ `PerformanceStat_KeyOutput` returns the primary key fields of table type `PerformanceStat`.
+
+It has the same format as `PerformanceStat_Key`, but is only used as mutation return value.
+"""
+scalar PerformanceStat_KeyOutput
+"""
+✨ `Player_KeyOutput` returns the primary key fields of table type `Player`.
+
+It has the same format as `Player_Key`, but is only used as mutation return value.
+"""
+scalar Player_KeyOutput
+"""
+✨ `Team_KeyOutput` returns the primary key fields of table type `Team`.
+
+It has the same format as `Team_Key`, but is only used as mutation return value.
+"""
+scalar Team_KeyOutput
+"""
+✨ `User_KeyOutput` returns the primary key fields of table type `User`.
+
+It has the same format as `User_Key`, but is only used as mutation return value.
+"""
+scalar User_KeyOutput
+"""
+✨ Generated data input type for table 'Attendance'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Attendance_Data {
+  """
+  ✨ Generated from Field `Attendance`.`playerId` of type `UUID!`
+  """
+  playerId: UUID
+  """
+  ✨ `_expr` server value variant of `playerId` (✨ Generated from Field `Attendance`.`playerId` of type `UUID!`)
+  """
+  playerId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Attendance`.`eventId` of type `UUID!`
+  """
+  eventId: UUID
+  """
+  ✨ `_expr` server value variant of `eventId` (✨ Generated from Field `Attendance`.`eventId` of type `UUID!`)
+  """
+  eventId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Attendance`.`event` of type `Event!`
+  """
+  event: Event_Key
+  """
+  ✨ Generated from Field `Attendance`.`player` of type `Player!`
+  """
+  player: Player_Key
+  """
+  ✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Attendance`.`notes` of type `String`
+  """
+  notes: String
+  """
+  ✨ `_expr` server value variant of `notes` (✨ Generated from Field `Attendance`.`notes` of type `String`)
+  """
+  notes_expr: String_Expr
+  """
+  ✨ Generated from Field `Attendance`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Attendance`.`status` of type `String!`)
+  """
+  status_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'Attendance'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Attendance_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Attendance_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Attendance_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Attendance_Filter!]
+  """
+  ✨ Generated from Field `Attendance`.`playerId` of type `UUID!`
+  """
+  playerId: UUID_Filter
+  """
+  ✨ Generated from Field `Attendance`.`eventId` of type `UUID!`
+  """
+  eventId: UUID_Filter
+  """
+  ✨ Generated from Field `Attendance`.`event` of type `Event!`
+  """
+  event: Event_Filter
+  """
+  ✨ Generated from Field `Attendance`.`player` of type `Player!`
+  """
+  player: Player_Filter
+  """
+  ✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Attendance`.`notes` of type `String`
+  """
+  notes: String_Filter
+  """
+  ✨ Generated from Field `Attendance`.`status` of type `String!`
+  """
+  status: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'Attendance'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Attendance_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Attendance_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Attendance_Filter
+}
+"""
+✨ Generated having input type for table 'Attendance'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Attendance_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Attendance_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Attendance_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Attendance_Having!]
+  """
+  ✨ Generated from Field `Attendance`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`eventId_count` of type `Int!`
+  """
+  eventId_count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`notes_count` of type `Int!`
+  """
+  notes_count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`playerId_count` of type `Int!`
+  """
+  playerId_count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Attendance'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Attendance_Key {
+  """
+  ✨ Generated from Field `Attendance`.`playerId` of type `UUID!`
+  """
+  playerId: UUID
+  """
+  ✨ `_expr` server value variant of `playerId` (✨ Generated from Field `Attendance`.`playerId` of type `UUID!`)
+  """
+  playerId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Attendance`.`eventId` of type `UUID!`
+  """
+  eventId: UUID
+  """
+  ✨ `_expr` server value variant of `eventId` (✨ Generated from Field `Attendance`.`eventId` of type `UUID!`)
+  """
+  eventId_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'Attendance'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Attendance_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Attendance_Filter
+}
+"""
+✨ Generated order input type for table 'Attendance'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Attendance_Order {
+  """
+  ✨ Generated from Field `Attendance`.`playerId` of type `UUID!`
+  """
+  playerId: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`eventId` of type `UUID!`
+  """
+  eventId: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`event` of type `Event!`
+  """
+  event: Event_Order
+  """
+  ✨ Generated from Field `Attendance`.`player` of type `Player!`
+  """
+  player: Player_Order
+  """
+  ✨ Generated from Field `Attendance`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`notes` of type `String`
+  """
+  notes: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`eventId_count` of type `Int!`
+  """
+  eventId_count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`notes_count` of type `Int!`
+  """
+  notes_count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`playerId_count` of type `Int!`
+  """
+  playerId_count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Attendance`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Event'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Event_Data {
+  """
+  ✨ Generated from Field `Event`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Event`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Event`.`teamId` of type `UUID`
+  """
+  teamId: UUID
+  """
+  ✨ `_expr` server value variant of `teamId` (✨ Generated from Field `Event`.`teamId` of type `UUID`)
+  """
+  teamId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Event`.`team` of type `Team`
+  """
+  team: Team_Key
+  """
+  ✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`
+  """
+  dateTime: Timestamp
+  """
+  ✨ `_expr` server value variant of `dateTime` (✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`)
+  """
+  dateTime_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `dateTime` (✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`)
+  """
+  dateTime_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `dateTime` (✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`)
+  """
+  dateTime_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Event`.`location` of type `String!`
+  """
+  location: String
+  """
+  ✨ `_expr` server value variant of `location` (✨ Generated from Field `Event`.`location` of type `String!`)
+  """
+  location_expr: String_Expr
+  """
+  ✨ Generated from Field `Event`.`notes` of type `String`
+  """
+  notes: String
+  """
+  ✨ `_expr` server value variant of `notes` (✨ Generated from Field `Event`.`notes` of type `String`)
+  """
+  notes_expr: String_Expr
+  """
+  ✨ Generated from Field `Event`.`opponentName` of type `String`
+  """
+  opponentName: String
+  """
+  ✨ `_expr` server value variant of `opponentName` (✨ Generated from Field `Event`.`opponentName` of type `String`)
+  """
+  opponentName_expr: String_Expr
+  """
+  ✨ Generated from Field `Event`.`type` of type `String!`
+  """
+  type: String
+  """
+  ✨ `_expr` server value variant of `type` (✨ Generated from Field `Event`.`type` of type `String!`)
+  """
+  type_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'Event'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Event_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Event_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Event_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Event_Filter!]
+  """
+  ✨ Generated from Field `Event`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Event`.`teamId` of type `UUID`
+  """
+  teamId: UUID_Filter
+  """
+  ✨ Generated from Field `Event`.`team` of type `Team`
+  """
+  team: Team_Filter
+  """
+  ✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`
+  """
+  dateTime: Timestamp_Filter
+  """
+  ✨ Generated from Field `Event`.`location` of type `String!`
+  """
+  location: String_Filter
+  """
+  ✨ Generated from Field `Event`.`notes` of type `String`
+  """
+  notes: String_Filter
+  """
+  ✨ Generated from Field `Event`.`opponentName` of type `String`
+  """
+  opponentName: String_Filter
+  """
+  ✨ Generated from Field `Event`.`type` of type `String!`
+  """
+  type: String_Filter
+  """
+  ✨ Generated from Field `Event`.`attendances_on_event` of type `[Attendance!]!`
+  """
+  attendances_on_event: Attendance_ListFilter
+  """
+  ✨ Generated from Field `Event`.`performanceStats_on_event` of type `[PerformanceStat!]!`
+  """
+  performanceStats_on_event: PerformanceStat_ListFilter
+  """
+  ✨ Generated from Field `Event`.`players_via_Attendance` of type `[Player!]!`
+  """
+  players_via_Attendance: Player_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Event'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Event_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Event_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Event_Filter
+}
+"""
+✨ Generated having input type for table 'Event'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Event_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Event_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Event_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Event_Having!]
+  """
+  ✨ Generated from Field `Event`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`dateTime_count` of type `Int!`
+  """
+  dateTime_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`location_count` of type `Int!`
+  """
+  location_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`notes_count` of type `Int!`
+  """
+  notes_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`opponentName_count` of type `Int!`
+  """
+  opponentName_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`teamId_count` of type `Int!`
+  """
+  teamId_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`type_count` of type `Int!`
+  """
+  type_count: Int_Filter
+  """
+  ✨ Generated from Field `Event`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Event`.`dateTime_min` of type `Timestamp`
+  """
+  dateTime_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Event`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Event`.`dateTime_max` of type `Timestamp`
+  """
+  dateTime_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Event'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Event_Key {
+  """
+  ✨ Generated from Field `Event`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Event`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'Event'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Event_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Event_Filter
+}
+"""
+✨ Generated order input type for table 'Event'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Event_Order {
+  """
+  ✨ Generated from Field `Event`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`teamId` of type `UUID`
+  """
+  teamId: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`team` of type `Team`
+  """
+  team: Team_Order
+  """
+  ✨ Generated from Field `Event`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`dateTime` of type `Timestamp!`
+  """
+  dateTime: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`location` of type `String!`
+  """
+  location: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`notes` of type `String`
+  """
+  notes: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`opponentName` of type `String`
+  """
+  opponentName: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`type` of type `String!`
+  """
+  type: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`dateTime_count` of type `Int!`
+  """
+  dateTime_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`location_count` of type `Int!`
+  """
+  location_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`notes_count` of type `Int!`
+  """
+  notes_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`opponentName_count` of type `Int!`
+  """
+  opponentName_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`teamId_count` of type `Int!`
+  """
+  teamId_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`type_count` of type `Int!`
+  """
+  type_count: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`dateTime_min` of type `Timestamp`
+  """
+  dateTime_min: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Event`.`dateTime_max` of type `Timestamp`
+  """
+  dateTime_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'PerformanceStat'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input PerformanceStat_Data {
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`
+  """
+  playerId: UUID
+  """
+  ✨ `_expr` server value variant of `playerId` (✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`)
+  """
+  playerId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`
+  """
+  eventId: UUID
+  """
+  ✨ `_expr` server value variant of `eventId` (✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`)
+  """
+  eventId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType` of type `String!`
+  """
+  statType: String
+  """
+  ✨ `_expr` server value variant of `statType` (✨ Generated from Field `PerformanceStat`.`statType` of type `String!`)
+  """
+  statType_expr: String_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`event` of type `Event!`
+  """
+  event: Event_Key
+  """
+  ✨ Generated from Field `PerformanceStat`.`player` of type `Player!`
+  """
+  player: Player_Key
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `PerformanceStat`.`notes` of type `String`
+  """
+  notes: String
+  """
+  ✨ `_expr` server value variant of `notes` (✨ Generated from Field `PerformanceStat`.`notes` of type `String`)
+  """
+  notes_expr: String_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`value` of type `String!`
+  """
+  value: String
+  """
+  ✨ `_expr` server value variant of `value` (✨ Generated from Field `PerformanceStat`.`value` of type `String!`)
+  """
+  value_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'PerformanceStat'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PerformanceStat_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [PerformanceStat_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: PerformanceStat_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [PerformanceStat_Filter!]
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`
+  """
+  playerId: UUID_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`
+  """
+  eventId: UUID_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType` of type `String!`
+  """
+  statType: String_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`event` of type `Event!`
+  """
+  event: Event_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`player` of type `Player!`
+  """
+  player: Player_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`notes` of type `String`
+  """
+  notes: String_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`value` of type `String!`
+  """
+  value: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'PerformanceStat'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input PerformanceStat_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [PerformanceStat_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: PerformanceStat_Filter
+}
+"""
+✨ Generated having input type for table 'PerformanceStat'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input PerformanceStat_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [PerformanceStat_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: PerformanceStat_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [PerformanceStat_Having!]
+  """
+  ✨ Generated from Field `PerformanceStat`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId_count` of type `Int!`
+  """
+  eventId_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`notes_count` of type `Int!`
+  """
+  notes_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId_count` of type `Int!`
+  """
+  playerId_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType_count` of type `Int!`
+  """
+  statType_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`value_count` of type `Int!`
+  """
+  value_count: Int_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'PerformanceStat'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input PerformanceStat_Key {
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`
+  """
+  playerId: UUID
+  """
+  ✨ `_expr` server value variant of `playerId` (✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`)
+  """
+  playerId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`
+  """
+  eventId: UUID
+  """
+  ✨ `_expr` server value variant of `eventId` (✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`)
+  """
+  eventId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType` of type `String!`
+  """
+  statType: String
+  """
+  ✨ `_expr` server value variant of `statType` (✨ Generated from Field `PerformanceStat`.`statType` of type `String!`)
+  """
+  statType_expr: String_Expr
+}
+"""
+✨ Generated list filter input type for table 'PerformanceStat'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input PerformanceStat_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: PerformanceStat_Filter
+}
+"""
+✨ Generated order input type for table 'PerformanceStat'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input PerformanceStat_Order {
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId` of type `UUID!`
+  """
+  playerId: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId` of type `UUID!`
+  """
+  eventId: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType` of type `String!`
+  """
+  statType: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`event` of type `Event!`
+  """
+  event: Event_Order
+  """
+  ✨ Generated from Field `PerformanceStat`.`player` of type `Player!`
+  """
+  player: Player_Order
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`notes` of type `String`
+  """
+  notes: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`value` of type `String!`
+  """
+  value: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`eventId_count` of type `Int!`
+  """
+  eventId_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`notes_count` of type `Int!`
+  """
+  notes_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`playerId_count` of type `Int!`
+  """
+  playerId_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`statType_count` of type `Int!`
+  """
+  statType_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`value_count` of type `Int!`
+  """
+  value_count: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `PerformanceStat`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Player'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Player_Data {
+  """
+  ✨ Generated from Field `Player`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Player`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Player`.`teamId` of type `UUID`
+  """
+  teamId: UUID
+  """
+  ✨ `_expr` server value variant of `teamId` (✨ Generated from Field `Player`.`teamId` of type `UUID`)
+  """
+  teamId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Player`.`team` of type `Team`
+  """
+  team: Team_Key
+  """
+  ✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: Date
+  """
+  ✨ `_date` server value variant of `dateOfBirth` (✨ Generated from Field `Player`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_date: Date_Relative
+  """
+  ✨ `_expr` server value variant of `dateOfBirth` (✨ Generated from Field `Player`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_expr: Date_Expr
+  """
+  ✨ `_update` server value variant of `dateOfBirth` (✨ Generated from Field `Player`.`dateOfBirth` of type `Date`)
+  """
+  dateOfBirth_update: [Date_Update!]
+  """
+  ✨ Generated from Field `Player`.`firstName` of type `String!`
+  """
+  firstName: String
+  """
+  ✨ `_expr` server value variant of `firstName` (✨ Generated from Field `Player`.`firstName` of type `String!`)
+  """
+  firstName_expr: String_Expr
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber` of type `Int!`
+  """
+  jerseyNumber: Int
+  """
+  ✨ `_expr` server value variant of `jerseyNumber` (✨ Generated from Field `Player`.`jerseyNumber` of type `Int!`)
+  """
+  jerseyNumber_expr: Int_Expr
+  """
+  ✨ `_update` server value variant of `jerseyNumber` (✨ Generated from Field `Player`.`jerseyNumber` of type `Int!`)
+  """
+  jerseyNumber_update: [Int_Update!]
+  """
+  ✨ Generated from Field `Player`.`lastName` of type `String!`
+  """
+  lastName: String
+  """
+  ✨ `_expr` server value variant of `lastName` (✨ Generated from Field `Player`.`lastName` of type `String!`)
+  """
+  lastName_expr: String_Expr
+  """
+  ✨ Generated from Field `Player`.`parentContactEmail` of type `String`
+  """
+  parentContactEmail: String
+  """
+  ✨ `_expr` server value variant of `parentContactEmail` (✨ Generated from Field `Player`.`parentContactEmail` of type `String`)
+  """
+  parentContactEmail_expr: String_Expr
+  """
+  ✨ Generated from Field `Player`.`parentContactPhone` of type `String`
+  """
+  parentContactPhone: String
+  """
+  ✨ `_expr` server value variant of `parentContactPhone` (✨ Generated from Field `Player`.`parentContactPhone` of type `String`)
+  """
+  parentContactPhone_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'Player'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Player_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Player_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Player_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Player_Filter!]
+  """
+  ✨ Generated from Field `Player`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Player`.`teamId` of type `UUID`
+  """
+  teamId: UUID_Filter
+  """
+  ✨ Generated from Field `Player`.`team` of type `Team`
+  """
+  team: Team_Filter
+  """
+  ✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: Date_Filter
+  """
+  ✨ Generated from Field `Player`.`firstName` of type `String!`
+  """
+  firstName: String_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber` of type `Int!`
+  """
+  jerseyNumber: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`lastName` of type `String!`
+  """
+  lastName: String_Filter
+  """
+  ✨ Generated from Field `Player`.`parentContactEmail` of type `String`
+  """
+  parentContactEmail: String_Filter
+  """
+  ✨ Generated from Field `Player`.`parentContactPhone` of type `String`
+  """
+  parentContactPhone: String_Filter
+  """
+  ✨ Generated from Field `Player`.`attendances_on_player` of type `[Attendance!]!`
+  """
+  attendances_on_player: Attendance_ListFilter
+  """
+  ✨ Generated from Field `Player`.`performanceStats_on_player` of type `[PerformanceStat!]!`
+  """
+  performanceStats_on_player: PerformanceStat_ListFilter
+  """
+  ✨ Generated from Field `Player`.`events_via_Attendance` of type `[Event!]!`
+  """
+  events_via_Attendance: Event_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Player'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Player_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Player_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Player_Filter
+}
+"""
+✨ Generated having input type for table 'Player'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Player_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Player_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Player_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Player_Having!]
+  """
+  ✨ Generated from Field `Player`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_count` of type `Int!`
+  """
+  dateOfBirth_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`firstName_count` of type `Int!`
+  """
+  firstName_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_count` of type `Int!`
+  """
+  jerseyNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`lastName_count` of type `Int!`
+  """
+  lastName_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`parentContactEmail_count` of type `Int!`
+  """
+  parentContactEmail_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`parentContactPhone_count` of type `Int!`
+  """
+  parentContactPhone_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`teamId_count` of type `Int!`
+  """
+  teamId_count: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_sum` of type `Int`
+  """
+  jerseyNumber_sum: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_avg` of type `Float`
+  """
+  jerseyNumber_avg: Float_Filter
+  """
+  ✨ Generated from Field `Player`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_min` of type `Date`
+  """
+  dateOfBirth_min: Date_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_min` of type `Int`
+  """
+  jerseyNumber_min: Int_Filter
+  """
+  ✨ Generated from Field `Player`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_max` of type `Date`
+  """
+  dateOfBirth_max: Date_Filter
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_max` of type `Int`
+  """
+  jerseyNumber_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'Player'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Player_Key {
+  """
+  ✨ Generated from Field `Player`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Player`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'Player'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Player_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Player_Filter
+}
+"""
+✨ Generated order input type for table 'Player'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Player_Order {
+  """
+  ✨ Generated from Field `Player`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`teamId` of type `UUID`
+  """
+  teamId: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`team` of type `Team`
+  """
+  team: Team_Order
+  """
+  ✨ Generated from Field `Player`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth` of type `Date`
+  """
+  dateOfBirth: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`firstName` of type `String!`
+  """
+  firstName: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber` of type `Int!`
+  """
+  jerseyNumber: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`lastName` of type `String!`
+  """
+  lastName: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`parentContactEmail` of type `String`
+  """
+  parentContactEmail: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`parentContactPhone` of type `String`
+  """
+  parentContactPhone: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_count` of type `Int!`
+  """
+  dateOfBirth_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`firstName_count` of type `Int!`
+  """
+  firstName_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_count` of type `Int!`
+  """
+  jerseyNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`lastName_count` of type `Int!`
+  """
+  lastName_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`parentContactEmail_count` of type `Int!`
+  """
+  parentContactEmail_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`parentContactPhone_count` of type `Int!`
+  """
+  parentContactPhone_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`teamId_count` of type `Int!`
+  """
+  teamId_count: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_sum` of type `Int`
+  """
+  jerseyNumber_sum: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_avg` of type `Float`
+  """
+  jerseyNumber_avg: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_min` of type `Date`
+  """
+  dateOfBirth_min: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_min` of type `Int`
+  """
+  jerseyNumber_min: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`dateOfBirth_max` of type `Date`
+  """
+  dateOfBirth_max: OrderDirection
+  """
+  ✨ Generated from Field `Player`.`jerseyNumber_max` of type `Int`
+  """
+  jerseyNumber_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Team'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Team_Data {
+  """
+  ✨ Generated from Field `Team`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Team`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Team`.`coachId` of type `UUID`
+  """
+  coachId: UUID
+  """
+  ✨ `_expr` server value variant of `coachId` (✨ Generated from Field `Team`.`coachId` of type `UUID`)
+  """
+  coachId_expr: UUID_Expr
+  """
+  ✨ Generated from Field `Team`.`coach` of type `User`
+  """
+  coach: User_Key
+  """
+  ✨ Generated from Field `Team`.`ageGroup` of type `String`
+  """
+  ageGroup: String
+  """
+  ✨ `_expr` server value variant of `ageGroup` (✨ Generated from Field `Team`.`ageGroup` of type `String`)
+  """
+  ageGroup_expr: String_Expr
+  """
+  ✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `Team`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `Team`.`description` of type `String`)
+  """
+  description_expr: String_Expr
+  """
+  ✨ Generated from Field `Team`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Team`.`name` of type `String!`)
+  """
+  name_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'Team'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Team_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Team_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Team_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Team_Filter!]
+  """
+  ✨ Generated from Field `Team`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Team`.`coachId` of type `UUID`
+  """
+  coachId: UUID_Filter
+  """
+  ✨ Generated from Field `Team`.`coach` of type `User`
+  """
+  coach: User_Filter
+  """
+  ✨ Generated from Field `Team`.`ageGroup` of type `String`
+  """
+  ageGroup: String_Filter
+  """
+  ✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Team`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `Team`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Team`.`events_on_team` of type `[Event!]!`
+  """
+  events_on_team: Event_ListFilter
+  """
+  ✨ Generated from Field `Team`.`players_on_team` of type `[Player!]!`
+  """
+  players_on_team: Player_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Team'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Team_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Team_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Team_Filter
+}
+"""
+✨ Generated having input type for table 'Team'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Team_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Team_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Team_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Team_Having!]
+  """
+  ✨ Generated from Field `Team`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`ageGroup_count` of type `Int!`
+  """
+  ageGroup_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`coachId_count` of type `Int!`
+  """
+  coachId_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Team`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Team`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Team'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Team_Key {
+  """
+  ✨ Generated from Field `Team`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Team`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'Team'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Team_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Team_Filter
+}
+"""
+✨ Generated order input type for table 'Team'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Team_Order {
+  """
+  ✨ Generated from Field `Team`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`coachId` of type `UUID`
+  """
+  coachId: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`coach` of type `User`
+  """
+  coach: User_Order
+  """
+  ✨ Generated from Field `Team`.`ageGroup` of type `String`
+  """
+  ageGroup: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`ageGroup_count` of type `Int!`
+  """
+  ageGroup_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`coachId_count` of type `Int!`
+  """
+  coachId_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Team`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'User'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input User_Data {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!]
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String!`
+  """
+  displayName: String
+  """
+  ✨ `_expr` server value variant of `displayName` (✨ Generated from Field `User`.`displayName` of type `String!`)
+  """
+  displayName_expr: String_Expr
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: String
+  """
+  ✨ `_expr` server value variant of `email` (✨ Generated from Field `User`.`email` of type `String!`)
+  """
+  email_expr: String_Expr
+  """
+  ✨ Generated from Field `User`.`phoneNumber` of type `String`
+  """
+  phoneNumber: String
+  """
+  ✨ `_expr` server value variant of `phoneNumber` (✨ Generated from Field `User`.`phoneNumber` of type `String`)
+  """
+  phoneNumber_expr: String_Expr
+  """
+  ✨ Generated from Field `User`.`photoUrl` of type `String`
+  """
+  photoUrl: String
+  """
+  ✨ `_expr` server value variant of `photoUrl` (✨ Generated from Field `User`.`photoUrl` of type `String`)
+  """
+  photoUrl_expr: String_Expr
+}
+"""
+✨ Generated filter input type for table 'User'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [User_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: User_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [User_Filter!]
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String!`
+  """
+  displayName: String_Filter
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: String_Filter
+  """
+  ✨ Generated from Field `User`.`phoneNumber` of type `String`
+  """
+  phoneNumber: String_Filter
+  """
+  ✨ Generated from Field `User`.`photoUrl` of type `String`
+  """
+  photoUrl: String_Filter
+  """
+  ✨ Generated from Field `User`.`teams_on_coach` of type `[Team!]!`
+  """
+  teams_on_coach: Team_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'User'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input User_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [User_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: User_Filter
+}
+"""
+✨ Generated having input type for table 'User'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [User_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: User_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [User_Having!]
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`phoneNumber_count` of type `Int!`
+  """
+  phoneNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`photoUrl_count` of type `Int!`
+  """
+  photoUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'User'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input User_Key {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr
+}
+"""
+✨ Generated list filter input type for table 'User'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input User_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: User_Filter
+}
+"""
+✨ Generated order input type for table 'User'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input User_Order {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String!`
+  """
+  displayName: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email` of type `String!`
+  """
+  email: OrderDirection
+  """
+  ✨ Generated from Field `User`.`phoneNumber` of type `String`
+  """
+  phoneNumber: OrderDirection
+  """
+  ✨ Generated from Field `User`.`photoUrl` of type `String`
+  """
+  photoUrl: OrderDirection
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`email_count` of type `Int!`
+  """
+  email_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`phoneNumber_count` of type `Int!`
+  """
+  phoneNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`photoUrl_count` of type `Int!`
+  """
+  photoUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}

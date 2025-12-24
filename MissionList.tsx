@@ -6,7 +6,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { query, where, orderBy, addDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { enrolmentsCollection, missionsCollection, missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import { Mission, MissionAttempt } from '@/src/types/schema';
-import { ReflectionForm } from '@/src/features/learner/components/ReflectionForm';
+import { ReflectionForm } from '@/ReflectionForm';
 
 export function MissionList() {
   const { user } = useAuthContext();

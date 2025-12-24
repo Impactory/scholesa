@@ -1,0 +1,53 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  phoneNumber: String
+}
+
+type Team @table {
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  ageGroup: String
+  coach: User
+}
+
+type Player @table {
+  firstName: String!
+  lastName: String!
+  jerseyNumber: Int!
+  createdAt: Timestamp!
+  dateOfBirth: Date
+  parentContactEmail: String
+  parentContactPhone: String
+  team: Team
+}
+
+type Event @table {
+  type: String!
+  dateTime: Timestamp!
+  location: String!
+  createdAt: Timestamp!
+  opponentName: String
+  notes: String
+  team: Team
+}
+
+type Attendance @table(key: ["player", "event"]) {
+  status: String!
+  createdAt: Timestamp!
+  notes: String
+  player: Player!
+  event: Event!
+}
+
+type PerformanceStat @table(key: ["player", "event", "statType"]) {
+  statType: String!
+  value: String!
+  createdAt: Timestamp!
+  notes: String
+  player: Player!
+  event: Event!
+}
