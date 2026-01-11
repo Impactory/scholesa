@@ -133,6 +133,8 @@ class GuardianLink extends Equatable {
     this.isPrimary = false,
     required this.createdAt,
     required this.createdBy,
+    this.parentName,
+    this.learnerName,
   });
 
   factory GuardianLink.fromJson(Map<String, dynamic> json) => GuardianLink(
@@ -144,6 +146,8 @@ class GuardianLink extends Equatable {
         isPrimary: json['isPrimary'] as bool? ?? false,
         createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
         createdBy: json['createdBy'] as String,
+        parentName: json['parentName'] as String?,
+        learnerName: json['learnerName'] as String?,
       );
   final String id;
   final String siteId;
@@ -153,6 +157,9 @@ class GuardianLink extends Equatable {
   final bool isPrimary;
   final DateTime createdAt;
   final String createdBy;
+  // Display names (resolved from user lookups)
+  final String? parentName;
+  final String? learnerName;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'siteId': siteId,

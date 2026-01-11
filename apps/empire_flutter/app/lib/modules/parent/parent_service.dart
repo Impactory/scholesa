@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'parent_models.dart';
@@ -11,6 +12,7 @@ class ParentService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String parentId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
   BillingSummary? _billingSummary;
@@ -23,166 +25,190 @@ class ParentService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Load all data for parent dashboard
+  /// Load all data for parent dashboard from Firebase
   Future<void> loadParentData() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      _learnerSummaries = _generateMockLearnerSummaries();
-      _billingSummary = _generateMockBillingSummary();
+      // Load learners linked to this parent
+      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
+          .collection('users')
+          .where('parentIds', arrayContains: parentId)
+          .where('role', isEqualTo: 'learner')
+          .get();
+
+      final List<LearnerSummary> summaries = <LearnerSummary>[];
+      
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> learnerDoc in learnersSnapshot.docs) {
+        final Map<String, dynamic> learnerData = learnerDoc.data();
+        final String learnerId = learnerDoc.id;
+
+        // Get learner progress data
+        final DocumentSnapshot<Map<String, dynamic>> progressDoc = await _firestore
+            .collection('learnerProgress')
+            .doc(learnerId)
+            .get();
+        
+        final Map<String, dynamic>? progressData = progressDoc.data();
+
+        // Get recent activities
+        final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot = await _firestore
+            .collection('activities')
+            .where('learnerId', isEqualTo: learnerId)
+            .orderBy('timestamp', descending: true)
+            .limit(10)
+            .get();
+
+        final List<RecentActivity> activities = activitiesSnapshot.docs.map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            return RecentActivity(
+              id: doc.id,
+              title: data['title'] as String? ?? '',
+              description: data['description'] as String? ?? '',
+              type: data['type'] as String? ?? 'activity',
+              emoji: data['emoji'] as String? ?? '📝',
+              timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
+            );
+          },
+        ).toList();
+
+        // Get upcoming events
+        final DateTime now = DateTime.now();
+        final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await _firestore
+            .collection('events')
+            .where('learnerId', isEqualTo: learnerId)
+            .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
+            .orderBy('dateTime')
+            .limit(5)
+            .get();
+
+        final List<UpcomingEvent> events = eventsSnapshot.docs.map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            return UpcomingEvent(
+              id: doc.id,
+              title: data['title'] as String? ?? '',
+              description: data['description'] as String?,
+              dateTime: _parseTimestamp(data['dateTime']) ?? DateTime.now(),
+              type: data['type'] as String? ?? 'event',
+              location: data['location'] as String?,
+            );
+          },
+        ).toList();
+
+        // Calculate attendance rate from records
+        final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot = await _firestore
+            .collection('attendanceRecords')
+            .where('learnerId', isEqualTo: learnerId)
+            .orderBy('timestamp', descending: true)
+            .limit(30)
+            .get();
+
+        int presentCount = 0;
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attendanceSnapshot.docs) {
+          if (doc.data()['status'] == 'present') {
+            presentCount++;
+          }
+        }
+        final double attendanceRate = attendanceSnapshot.docs.isNotEmpty
+            ? presentCount / attendanceSnapshot.docs.length
+            : 0.0;
+
+        summaries.add(LearnerSummary(
+          learnerId: learnerId,
+          learnerName: learnerData['displayName'] as String? ?? 'Unknown',
+          photoUrl: learnerData['photoUrl'] as String?,
+          currentLevel: progressData?['level'] as int? ?? 1,
+          totalXp: progressData?['totalXp'] as int? ?? 0,
+          missionsCompleted: progressData?['missionsCompleted'] as int? ?? 0,
+          currentStreak: progressData?['currentStreak'] as int? ?? 0,
+          attendanceRate: attendanceRate,
+          pillarProgress: <String, double>{
+            'futureSkills': (progressData?['futureSkillsProgress'] as num?)?.toDouble() ?? 0.0,
+            'leadership': (progressData?['leadershipProgress'] as num?)?.toDouble() ?? 0.0,
+            'impact': (progressData?['impactProgress'] as num?)?.toDouble() ?? 0.0,
+          },
+          recentActivities: activities,
+          upcomingEvents: events,
+        ));
+      }
+
+      _learnerSummaries = summaries;
+
+      // Load billing summary
+      await _loadBillingSummary();
+
+      debugPrint('Loaded ${_learnerSummaries.length} learner summaries for parent');
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading parent data: $e');
+      _error = 'Failed to load data: $e';
+      _learnerSummaries = <LearnerSummary>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Mock data generators
-  List<LearnerSummary> _generateMockLearnerSummaries() {
-    final DateTime now = DateTime.now();
-    return <LearnerSummary>[
-      LearnerSummary(
-        learnerId: 'learner_001',
-        learnerName: 'Alex Chen',
-        currentLevel: 5,
-        totalXp: 1250,
-        missionsCompleted: 8,
-        currentStreak: 12,
-        attendanceRate: 0.95,
-        pillarProgress: const <String, double>{
-          'futureSkills': 0.72,
-          'leadership': 0.58,
-          'impact': 0.45,
+  /// Load billing summary from Firebase
+  Future<void> _loadBillingSummary() async {
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> billingDoc = await _firestore
+          .collection('billingAccounts')
+          .doc(parentId)
+          .get();
+
+      if (!billingDoc.exists) {
+        _billingSummary = null;
+        return;
+      }
+
+      final Map<String, dynamic>? data = billingDoc.data();
+      if (data == null) {
+        _billingSummary = null;
+        return;
+      }
+
+      // Get recent payments
+      final QuerySnapshot<Map<String, dynamic>> paymentsSnapshot = await _firestore
+          .collection('payments')
+          .where('parentId', isEqualTo: parentId)
+          .orderBy('date', descending: true)
+          .limit(10)
+          .get();
+
+      final List<PaymentHistory> payments = paymentsSnapshot.docs.map(
+        (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          final Map<String, dynamic> payData = doc.data();
+          return PaymentHistory(
+            id: doc.id,
+            amount: (payData['amount'] as num?)?.toDouble() ?? 0.0,
+            date: _parseTimestamp(payData['date']) ?? DateTime.now(),
+            status: payData['status'] as String? ?? 'unknown',
+            description: payData['description'] as String? ?? '',
+          );
         },
-        recentActivities: <RecentActivity>[
-          RecentActivity(
-            id: 'act_001',
-            title: 'Completed Coding Mission',
-            description: 'Built a Calculator App',
-            type: 'mission',
-            emoji: '🚀',
-            timestamp: now.subtract(const Duration(hours: 3)),
-          ),
-          RecentActivity(
-            id: 'act_002',
-            title: 'Morning Reading',
-            description: '15 minutes completed',
-            type: 'habit',
-            emoji: '📖',
-            timestamp: now.subtract(const Duration(hours: 8)),
-          ),
-          RecentActivity(
-            id: 'act_003',
-            title: 'Achievement Unlocked',
-            description: '10-day streak badge',
-            type: 'achievement',
-            emoji: '🏆',
-            timestamp: now.subtract(const Duration(days: 1)),
-          ),
-          RecentActivity(
-            id: 'act_004',
-            title: 'Attended Science Class',
-            description: 'On time',
-            type: 'attendance',
-            emoji: '✅',
-            timestamp: now.subtract(const Duration(days: 1)),
-          ),
-        ],
-        upcomingEvents: <UpcomingEvent>[
-          UpcomingEvent(
-            id: 'evt_001',
-            title: 'Math Class',
-            dateTime: now.add(const Duration(hours: 2)),
-            type: 'class',
-            location: 'Room 101',
-          ),
-          UpcomingEvent(
-            id: 'evt_002',
-            title: 'Website Mission Due',
-            description: 'Code Your First Website',
-            dateTime: now.add(const Duration(days: 5)),
-            type: 'mission_due',
-          ),
-          UpcomingEvent(
-            id: 'evt_003',
-            title: 'Parent-Teacher Conference',
-            dateTime: now.add(const Duration(days: 3)),
-            type: 'conference',
-            location: 'Main Hall',
-          ),
-        ],
-      ),
-      LearnerSummary(
-        learnerId: 'learner_002',
-        learnerName: 'Emma Chen',
-        currentLevel: 3,
-        totalXp: 680,
-        missionsCompleted: 4,
-        currentStreak: 5,
-        attendanceRate: 0.88,
-        pillarProgress: const <String, double>{
-          'futureSkills': 0.45,
-          'leadership': 0.62,
-          'impact': 0.35,
-        },
-        recentActivities: <RecentActivity>[
-          RecentActivity(
-            id: 'act_005',
-            title: 'Led Team Discussion',
-            description: 'Community project brainstorm',
-            type: 'mission',
-            emoji: '👑',
-            timestamp: now.subtract(const Duration(hours: 6)),
-          ),
-          RecentActivity(
-            id: 'act_006',
-            title: 'Mindful Breathing',
-            description: '5 minutes completed',
-            type: 'habit',
-            emoji: '🧘',
-            timestamp: now.subtract(const Duration(hours: 10)),
-          ),
-        ],
-        upcomingEvents: <UpcomingEvent>[
-          UpcomingEvent(
-            id: 'evt_004',
-            title: 'Art Class',
-            dateTime: now.add(const Duration(hours: 4)),
-            type: 'class',
-            location: 'Art Room',
-          ),
-        ],
-      ),
-    ];
+      ).toList();
+
+      _billingSummary = BillingSummary(
+        currentBalance: (data['currentBalance'] as num?)?.toDouble() ?? 0.0,
+        nextPaymentAmount: (data['nextPaymentAmount'] as num?)?.toDouble() ?? 0.0,
+        nextPaymentDate: _parseTimestamp(data['nextPaymentDate']),
+        subscriptionPlan: data['subscriptionPlan'] as String? ?? 'Basic',
+        recentPayments: payments,
+      );
+    } catch (e) {
+      debugPrint('Error loading billing summary: $e');
+      _billingSummary = null;
+    }
   }
 
-  BillingSummary _generateMockBillingSummary() {
-    final DateTime now = DateTime.now();
-    return BillingSummary(
-      currentBalance: 0.00,
-      nextPaymentAmount: 299.00,
-      nextPaymentDate: DateTime(now.year, now.month + 1),
-      subscriptionPlan: 'Family Premium',
-      recentPayments: <PaymentHistory>[
-        PaymentHistory(
-          id: 'pay_001',
-          amount: 299.00,
-          date: DateTime(now.year, now.month),
-          status: 'paid',
-          description: 'Monthly subscription',
-        ),
-        PaymentHistory(
-          id: 'pay_002',
-          amount: 299.00,
-          date: DateTime(now.year, now.month - 1),
-          status: 'paid',
-          description: 'Monthly subscription',
-        ),
-      ],
-    );
+  DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 }

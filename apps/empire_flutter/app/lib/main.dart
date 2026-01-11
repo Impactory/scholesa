@@ -89,7 +89,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
       // Create core services
       _appState = AppState();
       _firestoreService = FirestoreService();
-      _storageService = StorageService();
+      _storageService = StorageService.instance;
       _offlineQueue = OfflineQueue();
       
       // Initialize offline queue

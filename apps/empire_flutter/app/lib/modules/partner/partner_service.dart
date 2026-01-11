@@ -32,63 +32,26 @@ class PartnerService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Try to load from Firestore
+      // Load from Firestore
       final List<Map<String, dynamic>> data = await _firestoreService.queryCollection(
         'marketplaceListings',
         where: <List<dynamic>>[<dynamic>['partnerId', _partnerId]],
       );
 
-      if (data.isNotEmpty) {
-        _listings = data.map((Map<String, dynamic> doc) => MarketplaceListing(
-          id: doc['id'] as String? ?? '',
-          partnerId: doc['partnerId'] as String? ?? _partnerId,
-          title: doc['title'] as String? ?? '',
-          description: doc['description'] as String? ?? '',
-          status: _parseListingStatus(doc['status'] as String?),
-          category: doc['category'] as String? ?? 'General',
-          price: (doc['price'] as num?)?.toDouble(),
-          imageUrl: doc['imageUrl'] as String?,
-        )).toList();
-      } else {
-        // Mock data for demo
-        _listings = <MarketplaceListing>[
-          MarketplaceListing(
-            id: 'listing_1',
-            partnerId: _partnerId,
-            title: 'AI Coding Workshop',
-            description: 'Interactive coding workshop for K-9 learners',
-            status: ListingStatus.published,
-            category: 'Future Skills',
-            price: 299.00,
-            createdAt: DateTime.now().subtract(const Duration(days: 30)),
-          ),
-          MarketplaceListing(
-            id: 'listing_2',
-            partnerId: _partnerId,
-            title: 'Robotics Kit Bundle',
-            description: 'Complete robotics kit with curriculum',
-            status: ListingStatus.draft,
-            category: 'Future Skills',
-            price: 499.00,
-            createdAt: DateTime.now().subtract(const Duration(days: 7)),
-          ),
-        ];
-      }
+      _listings = data.map((Map<String, dynamic> doc) => MarketplaceListing(
+        id: doc['id'] as String? ?? '',
+        partnerId: doc['partnerId'] as String? ?? _partnerId,
+        title: doc['title'] as String? ?? '',
+        description: doc['description'] as String? ?? '',
+        status: _parseListingStatus(doc['status'] as String?),
+        category: doc['category'] as String? ?? 'General',
+        price: (doc['price'] as num?)?.toDouble(),
+        imageUrl: doc['imageUrl'] as String?,
+      )).toList();
     } catch (e) {
       debugPrint('Failed to load listings: $e');
       _error = 'Failed to load listings';
-      // Fallback to mock data
-      _listings = <MarketplaceListing>[
-        MarketplaceListing(
-          id: 'listing_1',
-          partnerId: _partnerId,
-          title: 'AI Coding Workshop',
-          description: 'Interactive coding workshop for K-9 learners',
-          status: ListingStatus.published,
-          category: 'Future Skills',
-          price: 299.00,
-        ),
-      ];
+      _listings = <MarketplaceListing>[];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -106,50 +69,17 @@ class PartnerService extends ChangeNotifier {
         where: <List<dynamic>>[<dynamic>['partnerId', _partnerId]],
       );
 
-      if (data.isNotEmpty) {
-        _contracts = data.map((Map<String, dynamic> doc) => PartnerContract(
-          id: doc['id'] as String? ?? '',
-          partnerId: doc['partnerId'] as String? ?? _partnerId,
-          siteId: doc['siteId'] as String? ?? '',
-          title: doc['title'] as String? ?? '',
-          status: _parseContractStatus(doc['status'] as String?),
-          totalValue: (doc['totalValue'] as num?)?.toDouble() ?? 0,
-        )).toList();
-      } else {
-        // Mock data
-        _contracts = <PartnerContract>[
-          PartnerContract(
-            id: 'contract_1',
-            partnerId: _partnerId,
-            siteId: 'site_1',
-            title: 'Q1 Workshop Series',
-            status: ContractStatus.active,
-            totalValue: 5000.00,
-            startDate: DateTime.now().subtract(const Duration(days: 30)),
-            endDate: DateTime.now().add(const Duration(days: 60)),
-          ),
-          PartnerContract(
-            id: 'contract_2',
-            partnerId: _partnerId,
-            siteId: 'site_2',
-            title: 'Annual Curriculum License',
-            status: ContractStatus.negotiation,
-            totalValue: 12000.00,
-          ),
-        ];
-      }
+      _contracts = data.map((Map<String, dynamic> doc) => PartnerContract(
+        id: doc['id'] as String? ?? '',
+        partnerId: doc['partnerId'] as String? ?? _partnerId,
+        siteId: doc['siteId'] as String? ?? '',
+        title: doc['title'] as String? ?? '',
+        status: _parseContractStatus(doc['status'] as String?),
+        totalValue: (doc['totalValue'] as num?)?.toDouble() ?? 0,
+      )).toList();
     } catch (e) {
       debugPrint('Failed to load contracts: $e');
-      _contracts = <PartnerContract>[
-        PartnerContract(
-          id: 'contract_1',
-          partnerId: _partnerId,
-          siteId: 'site_1',
-          title: 'Q1 Workshop Series',
-          status: ContractStatus.active,
-          totalValue: 5000.00,
-        ),
-      ];
+      _contracts = <PartnerContract>[];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -167,47 +97,16 @@ class PartnerService extends ChangeNotifier {
         where: <List<dynamic>>[<dynamic>['partnerId', _partnerId]],
       );
 
-      if (data.isNotEmpty) {
-        _payouts = data.map((Map<String, dynamic> doc) => Payout(
-          id: doc['id'] as String? ?? '',
-          partnerId: doc['partnerId'] as String? ?? _partnerId,
-          amount: (doc['amount'] as num?)?.toDouble() ?? 0,
-          status: _parsePayoutStatus(doc['status'] as String?),
-          contractId: doc['contractId'] as String?,
-        )).toList();
-      } else {
-        // Mock data
-        _payouts = <Payout>[
-          Payout(
-            id: 'payout_1',
-            partnerId: _partnerId,
-            amount: 2500.00,
-            status: PayoutStatus.paid,
-            contractId: 'contract_1',
-            requestedAt: DateTime.now().subtract(const Duration(days: 15)),
-            paidAt: DateTime.now().subtract(const Duration(days: 10)),
-          ),
-          Payout(
-            id: 'payout_2',
-            partnerId: _partnerId,
-            amount: 1500.00,
-            status: PayoutStatus.pending,
-            contractId: 'contract_1',
-            requestedAt: DateTime.now().subtract(const Duration(days: 2)),
-          ),
-        ];
-      }
+      _payouts = data.map((Map<String, dynamic> doc) => Payout(
+        id: doc['id'] as String? ?? '',
+        partnerId: doc['partnerId'] as String? ?? _partnerId,
+        amount: (doc['amount'] as num?)?.toDouble() ?? 0,
+        status: _parsePayoutStatus(doc['status'] as String?),
+        contractId: doc['contractId'] as String?,
+      )).toList();
     } catch (e) {
       debugPrint('Failed to load payouts: $e');
-      _payouts = <Payout>[
-        Payout(
-          id: 'payout_1',
-          partnerId: _partnerId,
-          amount: 2500.00,
-          status: PayoutStatus.paid,
-          paidAt: DateTime.now().subtract(const Duration(days: 10)),
-        ),
-      ];
+      _payouts = <Payout>[];
     } finally {
       _isLoading = false;
       notifyListeners();

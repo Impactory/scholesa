@@ -154,8 +154,10 @@ class AuthService {
       microsoftProvider.addScope('openid');
       
       // Set custom parameters for Microsoft login
+      // Using Firebase auth handler: https://studio-3328096157-e3f79.firebaseapp.com/__/auth/handler
       microsoftProvider.setCustomParameters(<String, String>{
         'prompt': 'select_account',
+        'tenant': 'common', // Allow any Microsoft account (personal or work/school)
       });
 
       if (kIsWeb) {

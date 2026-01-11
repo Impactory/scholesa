@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'mission_models.dart';
@@ -11,6 +12,7 @@ class MissionService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String learnerId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<Mission> _missions = <Mission>[];
   LearnerProgress? _progress;
@@ -56,53 +58,92 @@ class MissionService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load all missions for the learner
+  /// Load all missions for the learner from Firebase
   Future<void> loadMissions() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Try to load from Firestore first
-      if (learnerId.isNotEmpty) {
-        final List<Map<String, dynamic>> firestoreData = 
-            await _firestoreService.getLearnerMissions(learnerId);
-        
-        if (firestoreData.isNotEmpty) {
-          _missions = firestoreData.map((Map<String, dynamic> data) {
-            return Mission(
-              id: data['id'] as String,
-              title: data['title'] as String? ?? 'Mission',
-              description: data['description'] as String? ?? '',
-              pillar: _parsePillar(data['pillarCode'] as String?),
-              difficulty: _parseDifficulty(data['difficulty'] as String?),
-              xpReward: data['xpReward'] as int? ?? 100,
-              status: _parseStatus(data['status'] as String?),
-              progress: (data['progress'] as num?)?.toDouble() ?? 0.0,
-              steps: <MissionStep>[],
-              skills: <Skill>[],
+      // Load missions assigned to this learner
+      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot = await _firestore
+          .collection('missionAssignments')
+          .where('learnerId', isEqualTo: learnerId)
+          .get();
+
+      final List<Mission> loadedMissions = <Mission>[];
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc in assignmentsSnapshot.docs) {
+        final Map<String, dynamic> assignData = assignDoc.data();
+        final String missionId = assignData['missionId'] as String? ?? '';
+
+        // Get mission details
+        final DocumentSnapshot<Map<String, dynamic>> missionDoc = await _firestore
+            .collection('missions')
+            .doc(missionId)
+            .get();
+
+        if (missionDoc.exists) {
+          final Map<String, dynamic> missionData = missionDoc.data()!;
+          
+          // Get steps for this mission
+          final QuerySnapshot<Map<String, dynamic>> stepsSnapshot = await _firestore
+              .collection('missions')
+              .doc(missionId)
+              .collection('steps')
+              .orderBy('order')
+              .get();
+
+          final List<MissionStep> steps = stepsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> stepData = doc.data();
+            return MissionStep(
+              id: doc.id,
+              title: stepData['title'] as String? ?? '',
+              order: stepData['order'] as int? ?? 0,
+              isCompleted: stepData['isCompleted'] as bool? ?? false,
+              completedAt: stepData['completedAt'] as String?,
             );
           }).toList();
-          _progress = _calculateProgress();
-          _isLoading = false;
-          notifyListeners();
-          return;
+
+          loadedMissions.add(Mission(
+            id: missionDoc.id,
+            title: missionData['title'] as String? ?? 'Mission',
+            description: missionData['description'] as String? ?? '',
+            pillar: _parsePillar(missionData['pillarCode'] as String?),
+            difficulty: _parseDifficulty(missionData['difficulty'] as String?),
+            xpReward: missionData['xpReward'] as int? ?? 100,
+            status: _parseStatus(assignData['status'] as String?),
+            progress: (assignData['progress'] as num?)?.toDouble() ?? 0.0,
+            steps: steps,
+            skills: <Skill>[],
+            dueDate: _parseTimestamp(assignData['dueDate']),
+            startedAt: _parseTimestamp(assignData['startedAt']),
+            completedAt: _parseTimestamp(assignData['completedAt']),
+            educatorFeedback: assignData['feedback'] as String?,
+            reflectionPrompt: missionData['reflectionPrompt'] as String?,
+          ));
         }
       }
-      
-      // Fall back to mock data for demo purposes
-      await Future.delayed(const Duration(milliseconds: 300));
-      _missions = _generateMockMissions();
-      _progress = _generateMockProgress();
+
+      _missions = loadedMissions;
+      _progress = _calculateProgress();
+
+      debugPrint('Loaded ${_missions.length} missions for learner');
     } catch (e) {
       debugPrint('Error loading missions: $e');
-      // Fall back to mock data on error
-      _missions = _generateMockMissions();
-      _progress = _generateMockProgress();
+      _error = 'Failed to load missions: $e';
+      _missions = <Mission>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 
   Pillar _parsePillar(String? code) {
@@ -273,191 +314,113 @@ class MissionService extends ChangeNotifier {
     }
   }
 
-  // Mock data generators
-  List<Mission> _generateMockMissions() {
-    return <Mission>[
-      Mission(
-        id: 'mission_001',
-        title: 'Code Your First Website',
-        description: 'Learn the basics of HTML and CSS by building a personal portfolio page.',
-        pillar: Pillar.futureSkills,
-        difficulty: DifficultyLevel.beginner,
-        skills: const <Skill>[
-          Skill(id: 'skill_html', name: 'HTML', pillar: Pillar.futureSkills),
-          Skill(id: 'skill_css', name: 'CSS', pillar: Pillar.futureSkills),
-        ],
-        steps: const <MissionStep>[
-          MissionStep(id: 'step_1', title: 'Set up your project folder', order: 1, isCompleted: true),
-          MissionStep(id: 'step_2', title: 'Create the HTML structure', order: 2, isCompleted: true),
-          MissionStep(id: 'step_3', title: 'Add your content', order: 3),
-          MissionStep(id: 'step_4', title: 'Style with CSS', order: 4),
-          MissionStep(id: 'step_5', title: 'Deploy your site', order: 5),
-        ],
-        status: MissionStatus.inProgress,
-        xpReward: 150,
-        dueDate: DateTime.now().add(const Duration(days: 7)),
-        startedAt: DateTime.now().subtract(const Duration(days: 2)),
-        progress: 0.4,
-        reflectionPrompt: 'What did you learn about web development?',
-      ),
-      Mission(
-        id: 'mission_002',
-        title: 'Lead a Team Discussion',
-        description: 'Facilitate a group brainstorming session on a community problem.',
-        pillar: Pillar.leadership,
-        difficulty: DifficultyLevel.intermediate,
-        skills: const <Skill>[
-          Skill(id: 'skill_comm', name: 'Communication', pillar: Pillar.leadership),
-          Skill(id: 'skill_facilitation', name: 'Facilitation', pillar: Pillar.leadership),
-        ],
-        steps: const <MissionStep>[
-          MissionStep(id: 'step_1', title: 'Choose a community problem', order: 1),
-          MissionStep(id: 'step_2', title: 'Prepare discussion questions', order: 2),
-          MissionStep(id: 'step_3', title: 'Invite participants', order: 3),
-          MissionStep(id: 'step_4', title: 'Lead the discussion', order: 4),
-          MissionStep(id: 'step_5', title: 'Document outcomes', order: 5),
-        ],
-        xpReward: 200,
-        dueDate: DateTime.now().add(const Duration(days: 14)),
-      ),
-      const Mission(
-        id: 'mission_003',
-        title: 'Design a Sustainability Solution',
-        description: 'Create an innovative solution for a local environmental challenge.',
-        pillar: Pillar.impact,
-        difficulty: DifficultyLevel.advanced,
-        skills: <Skill>[
-          Skill(id: 'skill_design', name: 'Design Thinking', pillar: Pillar.impact),
-          Skill(id: 'skill_sustainability', name: 'Sustainability', pillar: Pillar.impact),
-        ],
-        steps: <MissionStep>[
-          MissionStep(id: 'step_1', title: 'Research local environmental issues', order: 1),
-          MissionStep(id: 'step_2', title: 'Brainstorm solutions', order: 2),
-          MissionStep(id: 'step_3', title: 'Create a prototype', order: 3),
-          MissionStep(id: 'step_4', title: 'Test with stakeholders', order: 4),
-          MissionStep(id: 'step_5', title: 'Present your solution', order: 5),
-        ],
-        xpReward: 300,
-      ),
-      Mission(
-        id: 'mission_004',
-        title: 'Build a Calculator App',
-        description: 'Learn programming basics by creating a functional calculator.',
-        pillar: Pillar.futureSkills,
-        difficulty: DifficultyLevel.beginner,
-        skills: const <Skill>[
-          Skill(id: 'skill_python', name: 'Python', pillar: Pillar.futureSkills),
-          Skill(id: 'skill_logic', name: 'Logic', pillar: Pillar.futureSkills),
-        ],
-        steps: const <MissionStep>[
-          MissionStep(id: 'step_1', title: 'Set up Python environment', order: 1, isCompleted: true),
-          MissionStep(id: 'step_2', title: 'Create basic operations', order: 2, isCompleted: true),
-          MissionStep(id: 'step_3', title: 'Add user interface', order: 3, isCompleted: true),
-          MissionStep(id: 'step_4', title: 'Handle edge cases', order: 4, isCompleted: true),
-          MissionStep(id: 'step_5', title: 'Write documentation', order: 5, isCompleted: true),
-        ],
-        status: MissionStatus.completed,
-        startedAt: DateTime.now().subtract(const Duration(days: 14)),
-        completedAt: DateTime.now().subtract(const Duration(days: 7)),
-        progress: 1.0,
-        educatorFeedback: 'Great work on error handling! Your code is clean and well-documented.',
-      ),
-      Mission(
-        id: 'mission_005',
-        title: 'Public Speaking Challenge',
-        description: 'Prepare and deliver a 5-minute presentation on a topic you care about.',
-        pillar: Pillar.leadership,
-        difficulty: DifficultyLevel.beginner,
-        skills: const <Skill>[
-          Skill(id: 'skill_speaking', name: 'Public Speaking', pillar: Pillar.leadership),
-          Skill(id: 'skill_confidence', name: 'Confidence', pillar: Pillar.leadership),
-        ],
-        steps: const <MissionStep>[
-          MissionStep(id: 'step_1', title: 'Choose your topic', order: 1, isCompleted: true),
-          MissionStep(id: 'step_2', title: 'Research and outline', order: 2, isCompleted: true),
-          MissionStep(id: 'step_3', title: 'Create visual aids', order: 3),
-          MissionStep(id: 'step_4', title: 'Practice delivery', order: 4),
-          MissionStep(id: 'step_5', title: 'Present to an audience', order: 5),
-        ],
-        status: MissionStatus.inProgress,
-        xpReward: 150,
-        dueDate: DateTime.now().add(const Duration(days: 5)),
-        startedAt: DateTime.now().subtract(const Duration(days: 3)),
-        progress: 0.4,
-      ),
-    ];
-  }
-
-  LearnerProgress _generateMockProgress() {
-    return const LearnerProgress(
-      totalXp: 1250,
-      currentLevel: 5,
-      xpToNextLevel: 250,
-      missionsCompleted: 8,
-      currentStreak: 12,
-      pillarProgress: <Pillar, int>{
-        Pillar.futureSkills: 450,
-        Pillar.leadership: 400,
-        Pillar.impact: 400,
-      },
-    );
-  }
-
   // ========== Educator: Pending Reviews ==========
   List<MissionSubmission> _pendingReviews = <MissionSubmission>[];
   List<MissionSubmission> get pendingReviews => _pendingReviews;
-  int get reviewedToday => 5; // Mock value
+  int _reviewedToday = 0;
+  int get reviewedToday => _reviewedToday;
 
-  Future<void> loadPendingReviews() async {
+  Future<void> loadPendingReviews({String? educatorId, String? siteId}) async {
     _isLoading = true;
     notifyListeners();
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      _pendingReviews = _generateMockSubmissions();
+      // Build query for pending submissions
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('missionSubmissions')
+          .where('status', isEqualTo: 'pending')
+          .orderBy('submittedAt', descending: true);
+
+      if (siteId != null && siteId.isNotEmpty) {
+        query = query.where('siteId', isEqualTo: siteId);
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.limit(50).get();
+
+      _pendingReviews = await Future.wait(
+        snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+          final Map<String, dynamic> data = doc.data();
+          final String learnerId = data['learnerId'] as String? ?? '';
+
+          // Get learner info
+          final DocumentSnapshot<Map<String, dynamic>> learnerDoc = await _firestore
+              .collection('users')
+              .doc(learnerId)
+              .get();
+          final Map<String, dynamic>? learnerData = learnerDoc.data();
+
+          // Get mission info
+          final String missionId = data['missionId'] as String? ?? '';
+          final DocumentSnapshot<Map<String, dynamic>> missionDoc = await _firestore
+              .collection('missions')
+              .doc(missionId)
+              .get();
+          final Map<String, dynamic>? missionData = missionDoc.data();
+
+          return MissionSubmission(
+            id: doc.id,
+            missionId: missionId,
+            missionTitle: missionData?['title'] as String? ?? 'Unknown Mission',
+            learnerId: learnerId,
+            learnerName: learnerData?['displayName'] as String? ?? 'Unknown',
+            learnerPhotoUrl: learnerData?['photoUrl'] as String?,
+            pillar: missionData?['pillarCode'] as String? ?? 'future_skills',
+            submittedAt: _parseTimestamp(data['submittedAt']) ?? DateTime.now(),
+            status: data['status'] as String? ?? 'pending',
+            submissionText: data['submissionText'] as String?,
+            attachmentUrls: List<String>.from(data['attachmentUrls'] as List? ?? <String>[]),
+            rating: data['rating'] as int?,
+            feedback: data['feedback'] as String?,
+          );
+        }),
+      );
+
+      // Count reviewed today
+      final DateTime today = DateTime.now();
+      final DateTime startOfDay = DateTime(today.year, today.month, today.day);
+      final QuerySnapshot<Map<String, dynamic>> reviewedSnapshot = await _firestore
+          .collection('missionSubmissions')
+          .where('status', isEqualTo: 'reviewed')
+          .where('reviewedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .get();
+      _reviewedToday = reviewedSnapshot.docs.length;
+
+      debugPrint('Loaded ${_pendingReviews.length} pending reviews');
+    } catch (e) {
+      debugPrint('Error loading pending reviews: $e');
+      _pendingReviews = <MissionSubmission>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  List<MissionSubmission> _generateMockSubmissions() {
-    final DateTime now = DateTime.now();
-    return <MissionSubmission>[
-      MissionSubmission(
-        id: 'sub_001',
-        missionId: 'mission_001',
-        missionTitle: 'Build a Calculator App',
-        learnerId: 'l_001',
-        learnerName: 'Emma Wilson',
-        pillar: 'future_skills',
-        submittedAt: now.subtract(const Duration(hours: 2)),
-        status: 'pending',
-        submissionText: 'Here is my completed calculator with error handling.',
-      ),
-      MissionSubmission(
-        id: 'sub_002',
-        missionId: 'mission_002',
-        missionTitle: 'Team Leadership Project',
-        learnerId: 'l_002',
-        learnerName: 'Liam Chen',
-        pillar: 'leadership',
-        submittedAt: now.subtract(const Duration(hours: 5)),
-        status: 'pending',
-        submissionText: 'Our team presentation on collaboration.',
-      ),
-      MissionSubmission(
-        id: 'sub_003',
-        missionId: 'mission_003',
-        missionTitle: 'Community Garden Initiative',
-        learnerId: 'l_003',
-        learnerName: 'Sofia Martinez',
-        pillar: 'impact',
-        submittedAt: now.subtract(const Duration(days: 1)),
-        status: 'reviewed',
-        rating: 4,
-        feedback: 'Excellent work on community engagement!',
-      ),
-    ];
+  /// Submit review for a mission
+  Future<bool> submitReview({
+    required String submissionId,
+    required int rating,
+    required String feedback,
+    required String reviewerId,
+  }) async {
+    try {
+      await _firestore.collection('missionSubmissions').doc(submissionId).update(<String, dynamic>{
+        'status': 'reviewed',
+        'rating': rating,
+        'feedback': feedback,
+        'reviewedBy': reviewerId,
+        'reviewedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update local state
+      _pendingReviews = _pendingReviews.where((MissionSubmission s) => s.id != submissionId).toList();
+      _reviewedToday++;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error submitting review: $e');
+      _error = 'Failed to submit review: $e';
+      notifyListeners();
+      return false;
+    }
   }
 }
 

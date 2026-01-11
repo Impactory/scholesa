@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Scholesa logo">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="224" height="224" rx="40" fill="#0b1224" />
+  <circle cx="128" cy="128" r="92" fill="url(#g)" />
+  <text x="50%" y="54%" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-size="92" font-weight="800" fill="#0b1224" dominant-baseline="middle">S</text>
+  <text x="50%" y="72%" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#e2e8f0">Scholesa</text>
+</svg>

@@ -1,13 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import '../../auth/app_state.dart' show UserRole, UserRoleExtension;
+import '../../auth/app_state.dart' show UserRole;
 import '../../services/firestore_service.dart';
 import 'user_models.dart';
 
-/// Service for HQ user administration
+/// Service for HQ user administration - wired to Firebase
 class UserAdminService extends ChangeNotifier {
 
-  UserAdminService({required FirestoreService firestoreService}) : _firestoreService = firestoreService;
+  UserAdminService({required FirestoreService firestoreService}) 
+      : _firestoreService = firestoreService;
+  
+  // ignore: unused_field
   final FirestoreService _firestoreService;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<UserModel> _users = <UserModel>[];
   List<SiteModel> _sites = <SiteModel>[];
@@ -91,42 +96,140 @@ class UserAdminService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load all users (HQ only)
+  /// Load all users from Firebase (HQ only)
   Future<void> loadUsers() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // TODO: Replace with real API call
-      // final response = await _apiClient.get('/v1/admin/users');
-      // _users = (response['users'] as List).map((u) => UserModel.fromJson(u)).toList();
+      // Load users from Firebase
+      final QuerySnapshot<Map<String, dynamic>> usersSnapshot =
+          await _firestore.collection('users').get();
       
-      // Mock data for development
-      await Future.delayed(const Duration(milliseconds: 500));
-      _users = _generateMockUsers();
-      _sites = _generateMockSites();
+      _users = usersSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return UserModel(
+          uid: doc.id,
+          email: data['email'] as String? ?? '',
+          displayName: data['displayName'] as String?,
+          role: _parseRole(data['role'] as String?),
+          status: _parseStatus(data['status'] as String?),
+          siteIds: List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]),
+          parentIds: List<String>.from(data['parentIds'] as List<dynamic>? ?? <dynamic>[]),
+          organizationId: data['organizationId'] as String?,
+          createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
+          updatedAt: _parseTimestamp(data['updatedAt']),
+          lastLoginAt: _parseTimestamp(data['lastLoginAt']),
+        );
+      }).toList();
+
+      // Load sites from Firebase
+      final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
+          await _firestore.collection('sites').get();
+      
+      _sites = sitesSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return SiteModel(
+          id: doc.id,
+          name: data['name'] as String? ?? 'Unknown Site',
+          location: data['location'] as String?,
+          siteLeadIds: List<String>.from(data['siteLeadIds'] as List<dynamic>? ?? <dynamic>[]),
+          createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
+          userCount: _users.where((UserModel u) => u.siteIds.contains(doc.id)).length,
+          learnerCount: _users.where((UserModel u) => 
+            u.siteIds.contains(doc.id) && u.role == UserRole.learner
+          ).length,
+        );
+      }).toList();
+
+      debugPrint('Loaded ${_users.length} users and ${_sites.length} sites from Firebase');
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading users from Firebase: $e');
+      _error = 'Failed to load users: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Load audit logs
+  /// Parse role from string
+  UserRole _parseRole(String? roleStr) {
+    if (roleStr == null) return UserRole.learner;
+    switch (roleStr.toLowerCase()) {
+      case 'hq':
+        return UserRole.hq;
+      case 'educator':
+        return UserRole.educator;
+      case 'site':
+        return UserRole.site;
+      case 'parent':
+        return UserRole.parent;
+      case 'partner':
+        return UserRole.partner;
+      default:
+        return UserRole.learner;
+    }
+  }
+
+  /// Parse status from string
+  UserStatus _parseStatus(String? statusStr) {
+    if (statusStr == null) return UserStatus.active;
+    switch (statusStr.toLowerCase()) {
+      case 'suspended':
+        return UserStatus.suspended;
+      case 'deactivated':
+        return UserStatus.deactivated;
+      case 'pending':
+        return UserStatus.pending;
+      default:
+        return UserStatus.active;
+    }
+  }
+
+  /// Parse Firestore Timestamp to DateTime
+  DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
+  }
+
+  /// Load audit logs from Firebase
   Future<void> loadAuditLogs({String? userId}) async {
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 300));
-      _auditLogs = _generateMockAuditLogs(userId: userId);
+      Query<Map<String, dynamic>> query = _firestore.collection('auditLogs')
+          .orderBy('timestamp', descending: true)
+          .limit(100);
+      
+      if (userId != null) {
+        query = query.where('entityId', isEqualTo: userId);
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      
+      _auditLogs = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return AuditLogEntry(
+          id: doc.id,
+          actorId: data['actorId'] as String? ?? '',
+          actorEmail: data['actorEmail'] as String?,
+          action: data['action'] as String? ?? 'unknown',
+          entityType: data['entityType'] as String? ?? 'Unknown',
+          entityId: data['entityId'] as String? ?? '',
+          siteId: data['siteId'] as String?,
+          details: data['details'] as Map<String, dynamic>?,
+          timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
+        );
+      }).toList();
+      
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load audit logs: $e');
     }
   }
 
-  /// Create a new user
+  /// Create a new user in Firebase
   Future<UserModel?> createUser({
     required String email,
     required String displayName,
@@ -137,13 +240,33 @@ class UserAdminService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Replace with real API call
-      // final response = await _apiClient.post('/v1/admin/users', body: {...});
-      
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      // Create user document in Firebase
+      final DocumentReference<Map<String, dynamic>> docRef = 
+          await _firestore.collection('users').add(<String, dynamic>{
+        'email': email,
+        'displayName': displayName,
+        'role': role.name,
+        'status': 'pending',
+        'siteIds': siteIds,
+        'entitlements': <Map<String, dynamic>>[],
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log the action
+      await _logAuditAction(
+        action: 'user.created',
+        entityType: 'User',
+        entityId: docRef.id,
+        details: <String, dynamic>{
+          'email': email,
+          'role': role.name,
+          'siteIds': siteIds,
+        },
+      );
+
       final UserModel newUser = UserModel(
-        uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
+        uid: docRef.id,
         email: email,
         displayName: displayName,
         role: role,
@@ -165,22 +288,36 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
-  /// Update user role
+  /// Update user role in Firebase
   Future<bool> updateUserRole(String userId, UserRole newRole) async {
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 300));
-      
       final int index = _users.indexWhere((UserModel u) => u.uid == userId);
-      if (index != -1) {
-        _users[index] = _users[index].copyWith(
-          role: newRole,
-          updatedAt: DateTime.now(),
-        );
-        notifyListeners();
-        return true;
-      }
-      return false;
+      if (index == -1) return false;
+
+      final UserRole oldRole = _users[index].role;
+
+      await _firestore.collection('users').doc(userId).update(<String, dynamic>{
+        'role': newRole.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log the action
+      await _logAuditAction(
+        action: 'user.role_updated',
+        entityType: 'User',
+        entityId: userId,
+        details: <String, dynamic>{
+          'oldRole': oldRole.name,
+          'newRole': newRole.name,
+        },
+      );
+
+      _users[index] = _users[index].copyWith(
+        role: newRole,
+        updatedAt: DateTime.now(),
+      );
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -188,22 +325,36 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
-  /// Update user status (suspend/reactivate)
+  /// Update user status in Firebase (suspend/reactivate)
   Future<bool> updateUserStatus(String userId, UserStatus newStatus) async {
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 300));
-      
       final int index = _users.indexWhere((UserModel u) => u.uid == userId);
-      if (index != -1) {
-        _users[index] = _users[index].copyWith(
-          status: newStatus,
-          updatedAt: DateTime.now(),
-        );
-        notifyListeners();
-        return true;
-      }
-      return false;
+      if (index == -1) return false;
+
+      final UserStatus oldStatus = _users[index].status;
+
+      await _firestore.collection('users').doc(userId).update(<String, dynamic>{
+        'status': newStatus.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log the action
+      await _logAuditAction(
+        action: newStatus == UserStatus.suspended ? 'user.suspended' : 'user.status_updated',
+        entityType: 'User',
+        entityId: userId,
+        details: <String, dynamic>{
+          'oldStatus': oldStatus.name,
+          'newStatus': newStatus.name,
+        },
+      );
+
+      _users[index] = _users[index].copyWith(
+        status: newStatus,
+        updatedAt: DateTime.now(),
+      );
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -211,22 +362,36 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
-  /// Add user to site
+  /// Add user to site in Firebase
   Future<bool> addUserToSite(String userId, String siteId) async {
     try {
       final int index = _users.indexWhere((UserModel u) => u.uid == userId);
-      if (index != -1) {
-        final UserModel user = _users[index];
-        if (!user.siteIds.contains(siteId)) {
-          _users[index] = user.copyWith(
-            siteIds: <String>[...user.siteIds, siteId],
-            updatedAt: DateTime.now(),
-          );
-          notifyListeners();
-        }
-        return true;
-      }
-      return false;
+      if (index == -1) return false;
+
+      final UserModel user = _users[index];
+      if (user.siteIds.contains(siteId)) return true; // Already in site
+
+      final List<String> newSiteIds = <String>[...user.siteIds, siteId];
+
+      await _firestore.collection('users').doc(userId).update(<String, dynamic>{
+        'siteIds': newSiteIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log the action
+      await _logAuditAction(
+        action: 'user.site_added',
+        entityType: 'User',
+        entityId: userId,
+        siteId: siteId,
+      );
+
+      _users[index] = user.copyWith(
+        siteIds: newSiteIds,
+        updatedAt: DateTime.now(),
+      );
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -234,20 +399,34 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
-  /// Remove user from site
+  /// Remove user from site in Firebase
   Future<bool> removeUserFromSite(String userId, String siteId) async {
     try {
       final int index = _users.indexWhere((UserModel u) => u.uid == userId);
-      if (index != -1) {
-        final UserModel user = _users[index];
-        _users[index] = user.copyWith(
-          siteIds: user.siteIds.where((String s) => s != siteId).toList(),
-          updatedAt: DateTime.now(),
-        );
-        notifyListeners();
-        return true;
-      }
-      return false;
+      if (index == -1) return false;
+
+      final UserModel user = _users[index];
+      final List<String> newSiteIds = user.siteIds.where((String s) => s != siteId).toList();
+
+      await _firestore.collection('users').doc(userId).update(<String, dynamic>{
+        'siteIds': newSiteIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log the action
+      await _logAuditAction(
+        action: 'user.site_removed',
+        entityType: 'User',
+        entityId: userId,
+        siteId: siteId,
+      );
+
+      _users[index] = user.copyWith(
+        siteIds: newSiteIds,
+        updatedAt: DateTime.now(),
+      );
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -255,190 +434,31 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
-  /// Delete user (deactivate)
+  /// Delete user (deactivate in Firebase)
   Future<bool> deleteUser(String userId) async {
     return updateUserStatus(userId, UserStatus.deactivated);
   }
 
-  // Mock data generators
-  List<UserModel> _generateMockUsers() {
-    return <UserModel>[
-      UserModel(
-        uid: 'hq_001',
-        email: 'admin@scholesa.com',
-        displayName: 'Super Admin',
-        role: UserRole.hq,
-        siteIds: const <String>['site_001', 'site_002', 'site_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 365)),
-        lastLoginAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      UserModel(
-        uid: 'edu_001',
-        email: 'maria.johnson@scholesa.com',
-        displayName: 'Maria Johnson',
-        role: UserRole.educator,
-        siteIds: const <String>['site_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 180)),
-        lastLoginAt: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      UserModel(
-        uid: 'edu_002',
-        email: 'james.wilson@scholesa.com',
-        displayName: 'James Wilson',
-        role: UserRole.educator,
-        siteIds: const <String>['site_001', 'site_002'],
-        createdAt: DateTime.now().subtract(const Duration(days: 120)),
-        lastLoginAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      UserModel(
-        uid: 'site_001',
-        email: 'site.manager@downtown.com',
-        displayName: 'Downtown Site Manager',
-        role: UserRole.site,
-        siteIds: const <String>['site_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 200)),
-        lastLoginAt: DateTime.now().subtract(const Duration(hours: 8)),
-      ),
-      UserModel(
-        uid: 'learner_001',
-        email: 'alex.student@email.com',
-        displayName: 'Alex Chen',
-        role: UserRole.learner,
-        siteIds: const <String>['site_001'],
-        parentIds: const <String>['parent_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 90)),
-        lastLoginAt: DateTime.now().subtract(const Duration(hours: 12)),
-      ),
-      UserModel(
-        uid: 'learner_002',
-        email: 'emma.student@email.com',
-        displayName: 'Emma Rodriguez',
-        role: UserRole.learner,
-        siteIds: const <String>['site_001'],
-        parentIds: const <String>['parent_002'],
-        createdAt: DateTime.now().subtract(const Duration(days: 85)),
-        lastLoginAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      UserModel(
-        uid: 'learner_003',
-        email: 'noah.student@email.com',
-        displayName: 'Noah Williams',
-        role: UserRole.learner,
-        status: UserStatus.suspended,
-        siteIds: const <String>['site_002'],
-        createdAt: DateTime.now().subtract(const Duration(days: 60)),
-      ),
-      UserModel(
-        uid: 'parent_001',
-        email: 'chen.parent@email.com',
-        displayName: 'Wei Chen',
-        role: UserRole.parent,
-        siteIds: const <String>['site_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 90)),
-        lastLoginAt: DateTime.now().subtract(const Duration(days: 3)),
-      ),
-      UserModel(
-        uid: 'parent_002',
-        email: 'rodriguez.parent@email.com',
-        displayName: 'Sofia Rodriguez',
-        role: UserRole.parent,
-        siteIds: const <String>['site_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 85)),
-        lastLoginAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      UserModel(
-        uid: 'partner_001',
-        email: 'content@partner.com',
-        displayName: 'Learning Partners Inc',
-        role: UserRole.partner,
-        siteIds: const <String>[],
-        organizationId: 'org_partners',
-        createdAt: DateTime.now().subtract(const Duration(days: 150)),
-      ),
-    ];
-  }
-
-  List<SiteModel> _generateMockSites() {
-    return <SiteModel>[
-      SiteModel(
-        id: 'site_001',
-        name: 'Downtown Learning Studio',
-        location: '123 Main St, Downtown',
-        siteLeadIds: const <String>['site_001'],
-        createdAt: DateTime.now().subtract(const Duration(days: 400)),
-        userCount: 45,
-        learnerCount: 32,
-      ),
-      SiteModel(
-        id: 'site_002',
-        name: 'Uptown Academy',
-        location: '456 Oak Ave, Uptown',
-        siteLeadIds: const <String>[],
-        createdAt: DateTime.now().subtract(const Duration(days: 300)),
-        userCount: 28,
-        learnerCount: 20,
-      ),
-      SiteModel(
-        id: 'site_003',
-        name: 'Riverside Campus',
-        location: '789 River Rd',
-        siteLeadIds: const <String>[],
-        createdAt: DateTime.now().subtract(const Duration(days: 100)),
-        userCount: 15,
-        learnerCount: 10,
-      ),
-    ];
-  }
-
-  List<AuditLogEntry> _generateMockAuditLogs({String? userId}) {
-    final List<AuditLogEntry> logs = <AuditLogEntry>[
-      AuditLogEntry(
-        id: 'log_001',
-        actorId: 'hq_001',
-        actorEmail: 'admin@scholesa.com',
-        action: 'user.role_updated',
-        entityType: 'User',
-        entityId: 'edu_001',
-        siteId: 'site_001',
-        details: const <String, dynamic>{'oldRole': 'learner', 'newRole': 'educator'},
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      AuditLogEntry(
-        id: 'log_002',
-        actorId: 'hq_001',
-        actorEmail: 'admin@scholesa.com',
-        action: 'user.suspended',
-        entityType: 'User',
-        entityId: 'learner_003',
-        siteId: 'site_002',
-        details: const <String, dynamic>{'reason': 'Policy violation'},
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      AuditLogEntry(
-        id: 'log_003',
-        actorId: 'hq_001',
-        actorEmail: 'admin@scholesa.com',
-        action: 'user.created',
-        entityType: 'User',
-        entityId: 'learner_002',
-        siteId: 'site_001',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      AuditLogEntry(
-        id: 'log_004',
-        actorId: 'site_001',
-        actorEmail: 'site.manager@downtown.com',
-        action: 'user.site_added',
-        entityType: 'User',
-        entityId: 'edu_002',
-        siteId: 'site_002',
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-    ];
-
-    if (userId != null) {
-      return logs.where((AuditLogEntry l) => l.entityId == userId).toList();
+  /// Helper to log audit actions
+  Future<void> _logAuditAction({
+    required String action,
+    required String entityType,
+    String? entityId,
+    String? siteId,
+    Map<String, dynamic>? details,
+  }) async {
+    try {
+      await _firestore.collection('auditLogs').add(<String, dynamic>{
+        'action': action,
+        'entityType': entityType,
+        'entityId': entityId,
+        'siteId': siteId,
+        'details': details,
+        'timestamp': FieldValue.serverTimestamp(),
+        // Actor info will be filled by security rules or cloud function
+      });
+    } catch (e) {
+      debugPrint('Failed to log audit action: $e');
     }
-    return logs;
   }
 }

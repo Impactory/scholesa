@@ -447,7 +447,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   bool _hasEvents(DateTime date) {
-    // Mock: has events on weekdays
+    // TODO: Wire to actual schedule data - currently shows indicator for weekdays
     return date.weekday <= 5;
   }
 }

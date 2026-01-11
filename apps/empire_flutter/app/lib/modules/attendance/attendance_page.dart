@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../auth/app_state.dart';
 import '../../offline/sync_status_widget.dart';
 import '../../ui/common/loading.dart';
@@ -26,7 +27,10 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   Future<void> _loadOccurrences() async {
-    // TODO: Get attendance service from provider and load
+    final AttendanceService? service = context.read<AttendanceService?>();
+    if (service != null) {
+      await service.loadTodayOccurrences();
+    }
   }
 
   @override
@@ -51,95 +55,101 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   Widget _buildBody() {
-    // For now, show placeholder until service is wired
-    return const _OccurrenceSelector();
+    final AttendanceService? service = context.watch<AttendanceService?>();
+    
+    if (service == null) {
+      return const Center(
+        child: Text('Attendance service not available'),
+      );
+    }
+
+    if (service.isLoading) {
+      return const LoadingWidget();
+    }
+
+    if (service.error != null) {
+      return ErrorState(
+        message: service.error!,
+        onRetry: _loadOccurrences,
+      );
+    }
+
+    return _OccurrenceSelector(
+      occurrences: service.todayOccurrences,
+      onRefresh: _loadOccurrences,
+    );
   }
 }
 
 /// Occurrence selector view
 class _OccurrenceSelector extends StatelessWidget {
-  const _OccurrenceSelector();
+  const _OccurrenceSelector({
+    required this.occurrences,
+    required this.onRefresh,
+  });
+
+  final List<SessionOccurrence> occurrences;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for demonstration
-    final List<_MockOccurrence> mockOccurrences = <_MockOccurrence>[
-      _MockOccurrence(
-        id: '1',
-        title: 'Grade 3 - Morning Session',
-        time: '9:00 AM - 10:30 AM',
-        room: 'Room A',
-        studentCount: 15,
-      ),
-      _MockOccurrence(
-        id: '2',
-        title: 'Grade 4 - Afternoon Session',
-        time: '1:00 PM - 2:30 PM',
-        room: 'Room B',
-        studentCount: 12,
-      ),
-    ];
-
-    if (mockOccurrences.isEmpty) {
-      return const EmptyState(
+    if (occurrences.isEmpty) {
+      return EmptyState(
         icon: Icons.event_busy,
         title: 'No classes today',
         message: 'You have no scheduled classes for today.',
+        action: TextButton.icon(
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Refresh'),
+        ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mockOccurrences.length,
-      itemBuilder: (BuildContext context, int index) {
-        final _MockOccurrence occ = mockOccurrences[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(Icons.class_, color: Colors.white),
+    return RefreshIndicator(
+      onRefresh: () async => onRefresh(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: occurrences.length,
+        itemBuilder: (BuildContext context, int index) {
+          final SessionOccurrence occ = occurrences[index];
+          final String timeStr = DateFormat.jm().format(occ.startTime);
+          final String endTimeStr = occ.endTime != null 
+              ? ' - ${DateFormat.jm().format(occ.endTime!)}'
+              : '';
+          
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Theme.of(context).primaryColor,
+                child: const Icon(Icons.class_, color: Colors.white),
+              ),
+              title: Text(occ.title),
+              subtitle: Text('$timeStr$endTimeStr${occ.roomName != null ? ' • ${occ.roomName}' : ''}'),
+              trailing: Chip(
+                label: Text('${occ.learnerCount ?? occ.roster.length} students'),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => _AttendanceRosterView(occurrenceId: occ.id),
+                  ),
+                );
+              },
             ),
-            title: Text(occ.title),
-            subtitle: Text('${occ.time} • ${occ.room}'),
-            trailing: Chip(
-              label: Text('${occ.studentCount} students'),
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => _AttendanceRosterView(occurrenceId: occ.id),
-                ),
-              );
-            },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
 
-class _MockOccurrence {
-
-  _MockOccurrence({
-    required this.id,
-    required this.title,
-    required this.time,
-    required this.room,
-    required this.studentCount,
-  });
-  final String id;
-  final String title;
-  final String time;
-  final String room;
-  final int studentCount;
-}
-
 /// Roster view for taking attendance
 class _AttendanceRosterView extends StatefulWidget {
-
   const _AttendanceRosterView({required this.occurrenceId});
+  
   final String occurrenceId;
 
   @override
@@ -150,22 +160,86 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   final Map<String, AttendanceStatus> _attendance = <String, AttendanceStatus>{};
   final Map<String, String> _notes = <String, String>{};
 
-  // Mock roster for demonstration
-  final List<_MockStudent> _mockRoster = <_MockStudent>[
-    _MockStudent(id: '1', name: 'Alice Johnson'),
-    _MockStudent(id: '2', name: 'Bob Smith'),
-    _MockStudent(id: '3', name: 'Charlie Brown'),
-    _MockStudent(id: '4', name: 'Diana Prince'),
-    _MockStudent(id: '5', name: 'Edward Norton'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadRoster();
+    });
+  }
+
+  Future<void> _loadRoster() async {
+    final AttendanceService? service = context.read<AttendanceService?>();
+    if (service != null) {
+      await service.loadOccurrenceRoster(widget.occurrenceId);
+      
+      // Initialize attendance map from existing records
+      if (service.currentOccurrence != null) {
+        for (final RosterLearner learner in service.currentOccurrence!.roster) {
+          if (learner.currentAttendance != null) {
+            _attendance[learner.id] = learner.currentAttendance!.status;
+            if (learner.currentAttendance!.notes != null) {
+              _notes[learner.id] = learner.currentAttendance!.notes!;
+            }
+          }
+        }
+        setState(() {});
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    context.read<AttendanceService?>()?.clearCurrentOccurrence();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final AttendanceService? service = context.watch<AttendanceService?>();
     final AppState appState = context.watch<AppState>();
+    
+    if (service == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Class Roster')),
+        body: const Center(child: Text('Service not available')),
+      );
+    }
+
+    if (service.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Class Roster')),
+        body: const LoadingWidget(),
+      );
+    }
+
+    if (service.error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Class Roster')),
+        body: ErrorState(
+          message: service.error!,
+          onRetry: _loadRoster,
+        ),
+      );
+    }
+
+    final SessionOccurrence? occurrence = service.currentOccurrence;
+    if (occurrence == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Class Roster')),
+        body: const EmptyState(
+          icon: Icons.person_off,
+          title: 'No roster found',
+          message: 'Could not load the class roster.',
+        ),
+      );
+    }
+
+    final List<RosterLearner> roster = occurrence.roster;
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Class Roster'),
+        title: Text(occurrence.title),
         actions: const <Widget>[
           SyncStatusIndicator(),
           SizedBox(width: 8),
@@ -184,7 +258,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.check_circle, color: Colors.green),
                     label: const Text('All Present'),
-                    onPressed: () => _markAll(AttendanceStatus.present),
+                    onPressed: () => _markAll(roster, AttendanceStatus.present),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -192,7 +266,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     label: const Text('All Absent'),
-                    onPressed: () => _markAll(AttendanceStatus.absent),
+                    onPressed: () => _markAll(roster, AttendanceStatus.absent),
                   ),
                 ),
               ],
@@ -200,28 +274,34 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
           ),
           // Roster list
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: _mockRoster.length,
-              itemBuilder: (BuildContext context, int index) {
-                final _MockStudent student = _mockRoster[index];
-                return _StudentAttendanceCard(
-                  student: student,
-                  status: _attendance[student.id],
-                  note: _notes[student.id],
-                  onStatusChanged: (AttendanceStatus status) {
-                    setState(() {
-                      _attendance[student.id] = status;
-                    });
-                  },
-                  onNoteChanged: (String note) {
-                    setState(() {
-                      _notes[student.id] = note;
-                    });
-                  },
-                );
-              },
-            ),
+            child: roster.isEmpty
+                ? const EmptyState(
+                    icon: Icons.people_outline,
+                    title: 'No learners enrolled',
+                    message: 'There are no learners enrolled in this class.',
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: roster.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final RosterLearner learner = roster[index];
+                      return _StudentAttendanceCard(
+                        learner: learner,
+                        status: _attendance[learner.id],
+                        note: _notes[learner.id],
+                        onStatusChanged: (AttendanceStatus status) {
+                          setState(() {
+                            _attendance[learner.id] = status;
+                          });
+                        },
+                        onNoteChanged: (String note) {
+                          setState(() {
+                            _notes[learner.id] = note;
+                          });
+                        },
+                      );
+                    },
+                  ),
           ),
           // Submit button
           SafeArea(
@@ -232,9 +312,9 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 height: 48,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.save),
-                  label: Text('Save Attendance (${_attendance.length}/${_mockRoster.length})'),
-                  onPressed: _attendance.length == _mockRoster.length
-                      ? () => _saveAttendance(appState)
+                  label: Text('Save Attendance (${_attendance.length}/${roster.length})'),
+                  onPressed: _attendance.length == roster.length
+                      ? () => _saveAttendance(service, appState)
                       : null,
                 ),
               ),
@@ -245,44 +325,52 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     );
   }
 
-  void _markAll(AttendanceStatus status) {
+  void _markAll(List<RosterLearner> roster, AttendanceStatus status) {
     setState(() {
-      for (final _MockStudent student in _mockRoster) {
-        _attendance[student.id] = status;
+      for (final RosterLearner learner in roster) {
+        _attendance[learner.id] = status;
       }
     });
   }
 
-  Future<void> _saveAttendance(AppState appState) async {
-    // TODO: Submit via AttendanceService
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Attendance saved (offline sync enabled)'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.pop(context);
+  Future<void> _saveAttendance(AttendanceService service, AppState appState) async {
+    final List<AttendanceRecord> records = _attendance.entries.map((MapEntry<String, AttendanceStatus> entry) {
+      return AttendanceRecord(
+        id: '',
+        occurrenceId: widget.occurrenceId,
+        learnerId: entry.key,
+        status: entry.value,
+        recordedAt: DateTime.now(),
+        recordedBy: appState.userId,
+        notes: _notes[entry.key],
+      );
+    }).toList();
+
+    await service.batchRecordAttendance(records);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Attendance saved successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
-}
-
-class _MockStudent {
-
-  _MockStudent({required this.id, required this.name});
-  final String id;
-  final String name;
 }
 
 /// Individual student attendance card
 class _StudentAttendanceCard extends StatelessWidget {
-
   const _StudentAttendanceCard({
-    required this.student,
+    required this.learner,
     this.status,
     this.note,
     required this.onStatusChanged,
     required this.onNoteChanged,
   });
-  final _MockStudent student;
+
+  final RosterLearner learner;
   final AttendanceStatus? status;
   final String? note;
   final ValueChanged<AttendanceStatus> onStatusChanged;
@@ -300,13 +388,31 @@ class _StudentAttendanceCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 CircleAvatar(
-                  child: Text(student.name[0]),
+                  backgroundImage: learner.photoUrl != null 
+                      ? NetworkImage(learner.photoUrl!)
+                      : null,
+                  child: learner.photoUrl == null 
+                      ? Text(learner.displayName.isNotEmpty ? learner.displayName[0] : '?')
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    student.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        learner.displayName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (learner.currentAttendance?.isOffline == true)
+                        Text(
+                          'Pending sync',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[700],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -357,6 +463,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                   isDense: true,
                   border: OutlineInputBorder(),
                 ),
+                controller: TextEditingController(text: note),
                 onChanged: onNoteChanged,
               ),
             ],
@@ -368,7 +475,6 @@ class _StudentAttendanceCard extends StatelessWidget {
 }
 
 class _StatusButton extends StatelessWidget {
-
   const _StatusButton({
     required this.label,
     required this.icon,
@@ -376,6 +482,7 @@ class _StatusButton extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
   });
+
   final String label;
   final IconData icon;
   final Color color;

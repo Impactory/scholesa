@@ -1,107 +1,44 @@
 import 'dart:typed_data';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mime/mime.dart';
 
-/// Service for Firebase Storage operations
 class StorageService {
-  StorageService({
-    FirebaseStorage? storage,
-    FirebaseAuth? auth,
-  })  : _storage = storage ?? FirebaseStorage.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  StorageService._();
+  static final StorageService instance = StorageService._();
 
-  final FirebaseStorage _storage;
-  final FirebaseAuth _auth;
+  Future<String?> pickAndUploadDeliverable({required String contractId}) async {
+    final result = await FilePicker.platform.pickFiles(withData: true, allowMultiple: false);
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    final Uint8List? bytes = file.bytes;
+    if (bytes == null) return null;
 
-  /// Upload a file to Firebase Storage
-  /// Returns the download URL
-  Future<String> uploadFile({
-    required String path,
-    required Uint8List data,
-    String? contentType,
-  }) async {
-    final User? user = _auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
-
-    final Reference ref = _storage.ref().child(path);
-    
-    final SettableMetadata metadata = SettableMetadata(
-      contentType: contentType,
-      customMetadata: <String, String>{
-        'uploadedBy': user.uid,
-        'uploadedAt': DateTime.now().toIso8601String(),
-      },
-    );
-
-    final UploadTask task = ref.putData(data, metadata);
-    final TaskSnapshot snapshot = await task;
-    
-    return await snapshot.ref.getDownloadURL();
+    final sanitizedName = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9_\.\-]'), '_');
+    final path = 'partnerDeliverables/$contractId/${DateTime.now().millisecondsSinceEpoch}-$sanitizedName';
+    final ref = FirebaseStorage.instance.ref().child(path);
+    final contentType = lookupMimeType(file.name, headerBytes: bytes.length >= 12 ? bytes.sublist(0, 12) : bytes) ?? 'application/octet-stream';
+    final metadata = SettableMetadata(contentType: contentType);
+    final task = ref.putData(bytes, metadata);
+    final snapshot = await task.whenComplete(() {});
+    return snapshot.ref.getDownloadURL();
   }
 
-  /// Upload a profile photo
-  Future<String> uploadProfilePhoto({
-    required Uint8List data,
-    String contentType = 'image/jpeg',
-  }) async {
-    final User? user = _auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
-
-    final String path = 'users/${user.uid}/profile.jpg';
-    return uploadFile(path: path, data: data, contentType: contentType);
+  Future<String?> pickAndUploadNotificationAttachment({required String threadId}) async {
+    final result = await FilePicker.platform.pickFiles(withData: true, allowMultiple: false);
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    final Uint8List? bytes = file.bytes;
+    if (bytes == null) return null;
+    final sanitizedName = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9_\.\-]'), '_');
+    final path = 'notificationUploads/$threadId/${DateTime.now().millisecondsSinceEpoch}-$sanitizedName';
+    final ref = FirebaseStorage.instance.ref().child(path);
+    final contentType = lookupMimeType(file.name, headerBytes: bytes.length >= 12 ? bytes.sublist(0, 12) : bytes) ?? 'application/octet-stream';
+    final metadata = SettableMetadata(contentType: contentType);
+    final task = ref.putData(bytes, metadata);
+    final snapshot = await task.whenComplete(() {});
+    return snapshot.ref.getDownloadURL();
   }
-
-  /// Upload a mission submission (image, video, document)
-  Future<String> uploadMissionSubmission({
-    required String missionId,
-    required String filename,
-    required Uint8List data,
-    String? contentType,
-  }) async {
-    final User? user = _auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
-
-    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String path = 'submissions/${user.uid}/$missionId/${timestamp}_$filename';
-    return uploadFile(path: path, data: data, contentType: contentType);
-  }
-
-  /// Upload a site asset (logo, banner, etc.)
-  Future<String> uploadSiteAsset({
-    required String siteId,
-    required String assetType,
-    required Uint8List data,
-    String? contentType,
-  }) async {
-    final String path = 'sites/$siteId/assets/$assetType';
-    return uploadFile(path: path, data: data, contentType: contentType);
-  }
-
-  /// Upload a message attachment
-  Future<String> uploadMessageAttachment({
-    required String conversationId,
-    required String filename,
-    required Uint8List data,
-    String? contentType,
-  }) async {
-    final User? user = _auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
-
-    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String path = 'messages/$conversationId/${timestamp}_$filename';
-    return uploadFile(path: path, data: data, contentType: contentType);
-  }
-
-  /// Delete a file from storage
-  Future<void> deleteFile(String path) async {
-    await _storage.ref().child(path).delete();
-  }
-
-  /// Get download URL for a file
-  Future<String> getDownloadUrl(String path) async {
-    return await _storage.ref().child(path).getDownloadURL();
-  }
-
-  /// Get Firebase Storage instance for direct operations
-  FirebaseStorage get storage => _storage;
 }

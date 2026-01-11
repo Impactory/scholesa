@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'educator_models.dart';
 
-/// Service for educator-specific features
+/// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
 
   EducatorService({
@@ -11,6 +12,7 @@ class EducatorService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String educatorId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<TodayClass> _todayClasses = <TodayClass>[];
   EducatorDayStats? _dayStats;
@@ -26,58 +28,69 @@ class EducatorService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Load today's schedule
+  /// Load today's schedule from Firebase
   Future<void> loadTodaySchedule() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Try to load from Firestore first
-      if (educatorId.isNotEmpty) {
-        final List<Map<String, dynamic>> firestoreData = 
-            await _firestoreService.queryCollection(
-              'sessionOccurrences',
-              where: <List<dynamic>>[<dynamic>['educatorId', educatorId]],
-              orderBy: 'startTime',
-            );
-        
-        if (firestoreData.isNotEmpty) {
-          _todayClasses = firestoreData.map((Map<String, dynamic> data) {
-            return TodayClass(
-              id: data['id'] as String,
-              sessionId: data['sessionId'] as String? ?? '',
-              title: data['title'] as String? ?? 'Session',
-              description: data['description'] as String? ?? '',
-              startTime: (data['startTime'] as dynamic)?.toDate() ?? DateTime.now(),
-              endTime: (data['endTime'] as dynamic)?.toDate() ?? DateTime.now().add(const Duration(hours: 1)),
-              location: data['location'] as String? ?? '',
-              enrolledCount: data['enrolledCount'] as int? ?? 0,
-              presentCount: data['presentCount'] as int? ?? 0,
-              status: data['status'] as String? ?? 'upcoming',
-              learners: <EnrolledLearner>[],
-            );
-          }).toList();
-          _dayStats = _calculateStats();
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
-      }
-      
-      // Fall back to mock data for demo purposes
-      await Future.delayed(const Duration(milliseconds: 300));
-      _todayClasses = _generateMockClasses();
-      _dayStats = _generateMockStats();
+      final DateTime now = DateTime.now();
+      final DateTime startOfDay = DateTime(now.year, now.month, now.day);
+      final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+
+      // Query session occurrences for this educator today
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+          .collection('sessionOccurrences')
+          .where('educatorId', isEqualTo: educatorId)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('date', isLessThan: Timestamp.fromDate(endOfDay))
+          .orderBy('date')
+          .orderBy('startTime')
+          .get();
+
+      _todayClasses = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return TodayClass(
+          id: doc.id,
+          sessionId: data['sessionId'] as String? ?? '',
+          title: data['title'] as String? ?? 'Session',
+          description: data['description'] as String? ?? '',
+          startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
+          endTime: _parseTimestamp(data['endTime']) ?? DateTime.now().add(const Duration(hours: 1)),
+          location: data['location'] as String? ?? '',
+          enrolledCount: data['enrolledCount'] as int? ?? 0,
+          presentCount: data['presentCount'] as int? ?? 0,
+          status: data['status'] as String? ?? 'upcoming',
+          learners: <EnrolledLearner>[],
+        );
+      }).toList();
+
+      _dayStats = _calculateStats();
+      debugPrint('Loaded ${_todayClasses.length} classes for educator $educatorId');
     } catch (e) {
       debugPrint('Error loading educator schedule: $e');
-      // Fall back to mock data on error
-      _todayClasses = _generateMockClasses();
-      _dayStats = _generateMockStats();
+      _error = 'Failed to load schedule: $e';
+      _todayClasses = <TodayClass>[];
+      _dayStats = const EducatorDayStats(
+        totalClasses: 0,
+        completedClasses: 0,
+        totalLearners: 0,
+        presentLearners: 0,
+        missionsToReview: 0,
+        unreadMessages: 0,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 
   EducatorDayStats _calculateStats() {
@@ -110,10 +123,17 @@ class EducatorService extends ChangeNotifier {
     }
   }
 
-  /// Quick attendance mark
+  /// Quick attendance mark - saves to Firebase
   Future<bool> markAttendance(String classId, String learnerId, String status) async {
     try {
-      // In real implementation, would update server and local state
+      await _firestore.collection('attendanceRecords').add(<String, dynamic>{
+        'sessionOccurrenceId': classId,
+        'learnerId': learnerId,
+        'status': status,
+        'recordedBy': educatorId,
+        'recordedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       notifyListeners();
       return true;
     } catch (e) {
@@ -123,216 +143,104 @@ class EducatorService extends ChangeNotifier {
     }
   }
 
-  // Mock data generators
-  List<TodayClass> _generateMockClasses() {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    return <TodayClass>[
-      TodayClass(
-        id: 'class_001',
-        sessionId: 'session_001',
-        title: 'Future Skills: Python Programming',
-        description: 'Introduction to functions and loops',
-        startTime: today.add(const Duration(hours: 9)),
-        endTime: today.add(const Duration(hours: 10)),
-        location: 'Lab A',
-        enrolledCount: 12,
-        presentCount: 12,
-        status: 'completed',
-        learners: _generateMockLearners(12, allPresent: true),
-      ),
-      TodayClass(
-        id: 'class_002',
-        sessionId: 'session_002',
-        title: 'Leadership Workshop',
-        description: 'Team collaboration and communication',
-        startTime: today.add(const Duration(hours: 10, minutes: 30)),
-        endTime: today.add(const Duration(hours: 11, minutes: 30)),
-        location: 'Room 201',
-        enrolledCount: 8,
-        presentCount: 7,
-        status: now.hour >= 10 && now.hour < 12 ? 'in_progress' : 'completed',
-        learners: _generateMockLearners(8),
-      ),
-      TodayClass(
-        id: 'class_003',
-        sessionId: 'session_003',
-        title: 'Impact Project Review',
-        description: 'Mid-project presentations',
-        startTime: today.add(const Duration(hours: 13)),
-        endTime: today.add(const Duration(hours: 14, minutes: 30)),
-        location: 'Main Hall',
-        enrolledCount: 15,
-        status: now.hour >= 13 ? 'in_progress' : 'upcoming',
-        learners: _generateMockLearners(15, recorded: false),
-      ),
-      TodayClass(
-        id: 'class_004',
-        sessionId: 'session_004',
-        title: 'Creative Coding',
-        description: 'Building interactive art with p5.js',
-        startTime: today.add(const Duration(hours: 15)),
-        endTime: today.add(const Duration(hours: 16)),
-        location: 'Lab B',
-        enrolledCount: 10,
-        status: 'upcoming',
-        learners: _generateMockLearners(10, recorded: false),
-      ),
-    ];
-  }
-
-  List<EnrolledLearner> _generateMockLearners(int count, {bool allPresent = false, bool recorded = true}) {
-    final List<String> names = <String>[
-      'Alex Chen', 'Emma Wilson', 'Liam Johnson', 'Sophia Brown',
-      'Noah Davis', 'Olivia Miller', 'Ethan Garcia', 'Ava Martinez',
-      'Mason Rodriguez', 'Isabella Anderson', 'Lucas Thomas', 'Mia Taylor',
-      'Oliver Jackson', 'Charlotte White', 'Aiden Harris',
-    ];
-
-    return List.generate(count, (int i) {
-      String? status;
-      if (recorded) {
-        if (allPresent) {
-          status = 'present';
-        } else {
-          status = i % 8 == 0 ? 'absent' : (i % 5 == 0 ? 'late' : 'present');
-        }
-      }
-      return EnrolledLearner(
-        id: 'learner_${i + 1}',
-        name: names[i % names.length],
-        attendanceStatus: status,
-      );
-    });
-  }
-
-  EducatorDayStats _generateMockStats() {
-    return const EducatorDayStats(
-      totalClasses: 4,
-      completedClasses: 2,
-      totalLearners: 45,
-      presentLearners: 38,
-      missionsToReview: 7,
-      unreadMessages: 3,
-    );
-  }
-
   // ========== Sessions Management ==========
   List<EducatorSession> _sessions = <EducatorSession>[];
   List<EducatorSession> get sessions => _sessions;
 
+  /// Load sessions from Firebase
   Future<void> loadSessions() async {
     _isLoading = true;
     notifyListeners();
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      _sessions = _generateMockSessions();
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+          .collection('sessions')
+          .where('educatorId', isEqualTo: educatorId)
+          .orderBy('startTime', descending: true)
+          .get();
+
+      _sessions = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return EducatorSession(
+          id: doc.id,
+          title: data['title'] as String? ?? 'Session',
+          description: data['description'] as String? ?? '',
+          pillar: data['pillar'] as String? ?? 'future_skills',
+          startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
+          endTime: _parseTimestamp(data['endTime']) ?? DateTime.now().add(const Duration(hours: 1)),
+          location: data['location'] as String? ?? '',
+          enrolledCount: data['enrolledCount'] as int? ?? 0,
+          maxCapacity: data['maxCapacity'] as int? ?? 20,
+          status: data['status'] as String? ?? 'upcoming',
+        );
+      }).toList();
+
+      debugPrint('Loaded ${_sessions.length} sessions for educator');
+    } catch (e) {
+      debugPrint('Error loading sessions: $e');
+      _error = 'Failed to load sessions: $e';
+      _sessions = <EducatorSession>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  List<EducatorSession> _generateMockSessions() {
-    final DateTime now = DateTime.now();
-    return <EducatorSession>[
-      EducatorSession(
-        id: 'ses_001',
-        title: 'Python Fundamentals',
-        description: 'Introduction to programming with Python',
-        pillar: 'future_skills',
-        startTime: now.add(const Duration(days: 1, hours: 9)),
-        endTime: now.add(const Duration(days: 1, hours: 10)),
-        location: 'Lab A',
-        enrolledCount: 12,
-        maxCapacity: 15,
-        status: 'upcoming',
-      ),
-      EducatorSession(
-        id: 'ses_002',
-        title: 'Leadership Circle',
-        description: 'Developing leadership skills through collaboration',
-        pillar: 'leadership',
-        startTime: now.subtract(const Duration(hours: 2)),
-        endTime: now.subtract(const Duration(hours: 1)),
-        location: 'Room 201',
-        enrolledCount: 8,
-        maxCapacity: 10,
-        status: 'completed',
-      ),
-      EducatorSession(
-        id: 'ses_003',
-        title: 'Community Impact Project',
-        description: 'Working on local sustainability initiatives',
-        pillar: 'impact',
-        startTime: now.add(const Duration(days: 2, hours: 14)),
-        endTime: now.add(const Duration(days: 2, hours: 16)),
-        location: 'Main Hall',
-        enrolledCount: 18,
-        maxCapacity: 20,
-        status: 'upcoming',
-      ),
-    ];
   }
 
   // ========== Learners Management ==========
   List<EducatorLearner> _learners = <EducatorLearner>[];
   List<EducatorLearner> get learners => _learners;
 
+  /// Load learners from Firebase
   Future<void> loadLearners() async {
     _isLoading = true;
     notifyListeners();
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      _learners = _generateMockEducatorLearners();
+      // Get enrollments for this educator's sessions
+      final QuerySnapshot<Map<String, dynamic>> enrollmentSnapshot = await _firestore
+          .collection('enrollments')
+          .where('educatorId', isEqualTo: educatorId)
+          .get();
+
+      final Set<String> learnerIds = enrollmentSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data()['learnerId'] as String?)
+          .whereType<String>()
+          .toSet();
+
+      if (learnerIds.isEmpty) {
+        _learners = <EducatorLearner>[];
+        return;
+      }
+
+      // Fetch learner profiles
+      final List<EducatorLearner> loadedLearners = <EducatorLearner>[];
+      for (final String learnerId in learnerIds) {
+        final DocumentSnapshot<Map<String, dynamic>> doc = 
+            await _firestore.collection('users').doc(learnerId).get();
+        if (doc.exists) {
+          final Map<String, dynamic> data = doc.data()!;
+          loadedLearners.add(EducatorLearner(
+            id: doc.id,
+            name: data['displayName'] as String? ?? 'Unknown',
+            email: data['email'] as String? ?? '',
+            attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
+            missionsCompleted: data['missionsCompleted'] as int? ?? 0,
+            pillarProgress: <String, double>{
+              'future_skills': (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
+              'leadership': (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
+              'impact': (data['impactProgress'] as num?)?.toDouble() ?? 0,
+            },
+            enrolledSessionIds: List<String>.from(data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
+          ));
+        }
+      }
+      _learners = loadedLearners;
+      debugPrint('Loaded ${_learners.length} learners for educator');
+    } catch (e) {
+      debugPrint('Error loading learners: $e');
+      _error = 'Failed to load learners: $e';
+      _learners = <EducatorLearner>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  List<EducatorLearner> _generateMockEducatorLearners() {
-    return <EducatorLearner>[
-      const EducatorLearner(
-        id: 'l_001',
-        name: 'Emma Wilson',
-        email: 'emma@example.com',
-        attendanceRate: 95,
-        missionsCompleted: 28,
-        pillarProgress: <String, double>{
-          'future_skills': 0.72,
-          'leadership': 0.65,
-          'impact': 0.58,
-        },
-        enrolledSessionIds: <String>['ses_001', 'ses_003'],
-      ),
-      const EducatorLearner(
-        id: 'l_002',
-        name: 'Liam Chen',
-        email: 'liam@example.com',
-        attendanceRate: 88,
-        missionsCompleted: 22,
-        pillarProgress: <String, double>{
-          'future_skills': 0.85,
-          'leadership': 0.45,
-          'impact': 0.52,
-        },
-        enrolledSessionIds: <String>['ses_001', 'ses_002'],
-      ),
-      const EducatorLearner(
-        id: 'l_003',
-        name: 'Sofia Martinez',
-        email: 'sofia@example.com',
-        attendanceRate: 92,
-        missionsCompleted: 25,
-        pillarProgress: <String, double>{
-          'future_skills': 0.60,
-          'leadership': 0.78,
-          'impact': 0.70,
-        },
-        enrolledSessionIds: <String>['ses_002', 'ses_003'],
-      ),
-    ];
   }
 }

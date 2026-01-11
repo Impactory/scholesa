@@ -1,0 +1,112 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function getUserRole(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.primaryRole;
+    }
+
+    function isStaff() {
+      let role = getUserRole(request.auth.uid);
+      return role == 'hq' || role == 'admin';
+    }
+
+    function isEducator() {
+      return getUserRole(request.auth.uid) == 'educator';
+    }
+
+    // Check if the requesting user is a parent of the given learnerId
+    function isParentOf(learnerId) {
+      // This rule assumes a specific document ID format for parent_links for efficient lookup.
+      // The ID is constructed as `parentUserId_learnerUserId`.
+      return exists(/databases/$(database)/documents/parent_links/$(request.auth.uid + '_' + learnerId));
+    }
+    
+    // Check if the requesting user is an educator for the given cohortId
+    function isEducatorOfCohort(cohortId) {
+        return request.auth.uid in get(/databases/$(database)/documents/cohorts/$(cohortId)).data.educatorIds;
+    }
+
+    // Check if the requesting user is an educator for any cohort the learner is in.
+    function isEducatorOfLearner(learnerId) {
+        // This is a simplified check. A more robust implementation for large scale would involve
+        // custom claims or a dedicated collection mapping educators to learners.
+        // For the MVP, we assume being an educator grants broader read access within their scope,
+        // which is then filtered on the client.
+        // This check is intentionally broad for the MVP.
+        return isEducator();
+    }
+
+    function canViewLearnerData(learnerId) {
+      return isOwner(learnerId) || isParentOf(learnerId) || isStaff() || isEducatorOfLearner(learnerId);
+    }
+    
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow read, update: if isSignedIn() && (isOwner(userId) || isStaff());
+      allow create: if isSignedIn();
+      allow delete: if false; 
+    }
+
+    match /learner_profiles/{userId} {
+      allow read: if canViewLearnerData(userId);
+      allow create, update: if isOwner(userId) || isStaff();
+    }
+
+     match /educator_profiles/{userId} {
+      allow read: if isSignedIn(); 
+      allow create, update: if isOwner(userId) || isStaff();
+    }
+
+    match /parent_links/{linkId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.parentUserId) || isOwner(resource.data.learnerUserId) || isStaff());
+      allow create, update, delete: if isSignedIn() && isStaff(); // Admin action
+    }
+
+    match /programs/{programId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isStaff();
+    }
+    match /missions/{missionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isEducator() || isStaff();
+    }
+
+    match /cohorts/{cohortId} {
+      // Any signed-in user can see high-level cohort info.
+      allow get, list: if isSignedIn();
+      // Only educators and staff can manage cohorts.
+      allow create, update: if isEducator() || isStaff();
+    }
+    
+    match /enrollments/{enrollmentId} {
+      allow read: if canViewLearnerData(resource.data.learnerUserId) || isEducatorOfCohort(resource.data.cohortId);
+      // Listing enrollments is powerful. Limit to staff and educators who can query by cohort.
+      allow list: if isStaff() || isEducator();
+      // Only staff/admins can create, update, or delete enrollments.
+      allow create, update, delete: if isStaff();
+    }
+
+    // Learner Portfolio is readable by the learner, their parents, their educators, and staff.
+    // It is only writable by the learner.
+    match /users/{userId}/portfolio/{docId} {
+      allow read: if canViewLearnerData(userId);
+      allow write: if isOwner(userId);
+    }
+    match /users/{userId}/portfolioItems/{itemId} {
+      allow read: if canViewLearnerData(userId);
+      allow write: if isOwner(userId);
+    }
+  }
+}

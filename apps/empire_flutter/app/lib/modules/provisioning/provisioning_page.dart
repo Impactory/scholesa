@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
-import '../../ui/common/loading.dart';
 import '../../ui/common/empty_state.dart';
 import 'provisioning_models.dart';
+import 'provisioning_service.dart';
 
 /// Provisioning page for site admins
 class ProvisioningPage extends StatefulWidget {
@@ -16,11 +16,34 @@ class ProvisioningPage extends StatefulWidget {
 class _ProvisioningPageState extends State<ProvisioningPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _loadData();
+    }
+  }
+
+  Future<void> _loadData() async {
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) return;
+
+    final service = context.read<ProvisioningService>();
+    await Future.wait(<Future<void>>[
+      service.loadLearners(siteId),
+      service.loadParents(siteId),
+      service.loadGuardianLinks(siteId),
+    ]);
   }
 
   @override
@@ -93,191 +116,262 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 }
 
-/// Learners tab
+/// Learners tab - uses ProvisioningService data
 class _LearnersTab extends StatelessWidget {
   const _LearnersTab();
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for demonstration
-    final List<_MockLearner> mockLearners = <_MockLearner>[
-      _MockLearner(id: '1', name: 'Alice Johnson', grade: 3),
-      _MockLearner(id: '2', name: 'Bob Smith', grade: 4),
-      _MockLearner(id: '3', name: 'Charlie Brown', grade: 3),
-    ];
+    return Consumer<ProvisioningService>(
+      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+        if (service.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (mockLearners.isEmpty) {
-      return const EmptyState(
-        icon: Icons.child_care,
-        title: 'No learners yet',
-        message: 'Add learners to your site to get started.',
-      );
-    }
+        final List<LearnerProfile> learners = service.learners;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mockLearners.length,
-      itemBuilder: (BuildContext context, int index) {
-        final _MockLearner learner = mockLearners[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              child: Text(learner.name[0]),
-            ),
-            title: Text(learner.name),
-            subtitle: Text('Grade ${learner.grade}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
+        if (learners.isEmpty) {
+          return const EmptyState(
+            icon: Icons.child_care,
+            title: 'No learners yet',
+            message: 'Add learners to your site to get started.',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            final appState = context.read<AppState>();
+            final siteId = appState.activeSiteId;
+            if (siteId != null) {
+              await service.loadLearners(siteId);
+            }
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: learners.length,
+            itemBuilder: (BuildContext context, int index) {
+              final LearnerProfile learner = learners[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text(learner.displayName.isNotEmpty ? learner.displayName[0] : '?'),
+                  ),
+                  title: Text(learner.displayName),
+                  subtitle: learner.gradeLevel != null
+                      ? Text('Grade ${learner.gradeLevel}')
+                      : null,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () => _showLearnerOptions(context, learner),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
     );
   }
+
+  void _showLearnerOptions(BuildContext context, LearnerProfile learner) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Edit Learner'),
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Implement edit dialog
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.link),
+            title: const Text('Manage Guardian Links'),
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to links filtered by learner
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _MockLearner {
-
-  _MockLearner({required this.id, required this.name, required this.grade});
-  final String id;
-  final String name;
-  final int grade;
-}
-
-/// Parents tab
+/// Parents tab - uses ProvisioningService data
 class _ParentsTab extends StatelessWidget {
   const _ParentsTab();
 
   @override
   Widget build(BuildContext context) {
-    final List<_MockParent> mockParents = <_MockParent>[
-      _MockParent(id: '1', name: 'John Johnson', email: 'john@example.com'),
-      _MockParent(id: '2', name: 'Jane Smith', email: 'jane@example.com'),
-    ];
+    return Consumer<ProvisioningService>(
+      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+        if (service.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (mockParents.isEmpty) {
-      return const EmptyState(
-        icon: Icons.family_restroom,
-        title: 'No parents yet',
-        message: 'Add parent accounts to link with learners.',
-      );
-    }
+        final List<ParentProfile> parents = service.parents;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mockParents.length,
-      itemBuilder: (BuildContext context, int index) {
-        final _MockParent parent = mockParents[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Text(parent.name[0], style: const TextStyle(color: Colors.white)),
-            ),
-            title: Text(parent.name),
-            subtitle: Text(parent.email),
-            trailing: IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
+        if (parents.isEmpty) {
+          return const EmptyState(
+            icon: Icons.family_restroom,
+            title: 'No parents yet',
+            message: 'Add parent accounts to link with learners.',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            final appState = context.read<AppState>();
+            final siteId = appState.activeSiteId;
+            if (siteId != null) {
+              await service.loadParents(siteId);
+            }
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: parents.length,
+            itemBuilder: (BuildContext context, int index) {
+              final ParentProfile parent = parents[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      parent.displayName.isNotEmpty ? parent.displayName[0] : '?',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Text(parent.displayName),
+                  subtitle: Text(parent.email ?? ''),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () => _showParentOptions(context, parent),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
     );
   }
+
+  void _showParentOptions(BuildContext context, ParentProfile parent) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Edit Parent'),
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Implement edit dialog
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.link),
+            title: const Text('Manage Learner Links'),
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to links filtered by parent
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _MockParent {
-
-  _MockParent({required this.id, required this.name, required this.email});
-  final String id;
-  final String name;
-  final String email;
-}
-
-/// Guardian links tab
+/// Guardian links tab - uses ProvisioningService data
 class _LinksTab extends StatelessWidget {
   const _LinksTab();
 
   @override
   Widget build(BuildContext context) {
-    final List<_MockLink> mockLinks = <_MockLink>[
-      _MockLink(
-        id: '1',
-        parentName: 'John Johnson',
-        learnerName: 'Alice Johnson',
-        relationship: 'Father',
-        isPrimary: true,
-      ),
-      _MockLink(
-        id: '2',
-        parentName: 'Jane Smith',
-        learnerName: 'Bob Smith',
-        relationship: 'Mother',
-        isPrimary: true,
-      ),
-    ];
+    return Consumer<ProvisioningService>(
+      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+        if (service.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (mockLinks.isEmpty) {
-      return const EmptyState(
-        icon: Icons.link,
-        title: 'No guardian links',
-        message: 'Link parents to learners to enable family access.',
-      );
-    }
+        final List<GuardianLink> links = service.guardianLinks;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mockLinks.length,
-      itemBuilder: (BuildContext context, int index) {
-        final _MockLink link = mockLinks[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: const Icon(Icons.link, size: 32),
-            title: Text('${link.parentName} → ${link.learnerName}'),
-            subtitle: Row(
-              children: <Widget>[
-                Text(link.relationship),
-                if (link.isPrimary) ...<Widget>[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Primary',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.green[800],
-                      ),
-                    ),
+        if (links.isEmpty) {
+          return const EmptyState(
+            icon: Icons.link,
+            title: 'No guardian links',
+            message: 'Link parents to learners to enable family access.',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            final appState = context.read<AppState>();
+            final siteId = appState.activeSiteId;
+            if (siteId != null) {
+              await service.loadGuardianLinks(siteId);
+            }
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: links.length,
+            itemBuilder: (BuildContext context, int index) {
+              final GuardianLink link = links[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.link, size: 32),
+                  title: Text('${link.parentName ?? link.parentId} → ${link.learnerName ?? link.learnerId}'),
+                  subtitle: Row(
+                    children: <Widget>[
+                      Text(link.relationship),
+                      if (link.isPrimary) ...<Widget>[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green[100],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Primary',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () => _confirmDelete(context, link),
-            ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () => _confirmDelete(context, link, service),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
     );
   }
 
-  void _confirmDelete(BuildContext context, _MockLink link) {
+  void _confirmDelete(BuildContext context, GuardianLink link, ProvisioningService service) {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: const Text('Delete Link'),
         content: Text(
-          'Remove the guardian link between ${link.parentName} and ${link.learnerName}?',
+          'Remove the guardian link between ${link.parentName ?? link.parentId} and ${link.learnerName ?? link.learnerId}?',
         ),
         actions: <Widget>[
           TextButton(
@@ -285,11 +379,16 @@ class _LinksTab extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Link removed')),
-              );
+              final bool success = await service.deleteGuardianLink(link.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Link removed' : 'Failed to remove link'),
+                  ),
+                );
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -300,23 +399,7 @@ class _LinksTab extends StatelessWidget {
   }
 }
 
-class _MockLink {
-
-  _MockLink({
-    required this.id,
-    required this.parentName,
-    required this.learnerName,
-    required this.relationship,
-    required this.isPrimary,
-  });
-  final String id;
-  final String parentName;
-  final String learnerName;
-  final String relationship;
-  final bool isPrimary;
-}
-
-/// Create learner dialog
+/// Create learner dialog - wired to ProvisioningService
 class _CreateLearnerDialog extends StatefulWidget {
   const _CreateLearnerDialog();
 
@@ -329,12 +412,50 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   int? _selectedGrade;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isSubmitting = true);
+    
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No site selected')),
+      );
+      return;
+    }
+
+    final service = context.read<ProvisioningService>();
+    final result = await service.createLearner(
+      siteId: siteId,
+      email: _emailController.text.trim(),
+      displayName: _nameController.text.trim(),
+      gradeLevel: _selectedGrade,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Learner created successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to create learner')),
+      );
+    }
   }
 
   @override
@@ -352,7 +473,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                 labelText: 'Full Name',
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? false ? 'Required' : null,
+              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -363,7 +484,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? false) return 'Required';
+                if (v?.isEmpty ?? true) return 'Required';
                 if (!v!.contains('@')) return 'Invalid email';
                 return null;
               },
@@ -388,26 +509,25 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Learner created')),
-              );
-            }
-          },
-          child: const Text('Create'),
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Create'),
         ),
       ],
     );
   }
 }
 
-/// Create parent dialog
+/// Create parent dialog - wired to ProvisioningService
 class _CreateParentDialog extends StatefulWidget {
   const _CreateParentDialog();
 
@@ -420,6 +540,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -427,6 +548,44 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isSubmitting = true);
+    
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No site selected')),
+      );
+      return;
+    }
+
+    final service = context.read<ProvisioningService>();
+    final phone = _phoneController.text.trim();
+    final result = await service.createParent(
+      siteId: siteId,
+      email: _emailController.text.trim(),
+      displayName: _nameController.text.trim(),
+      phone: phone.isNotEmpty ? phone : null,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Parent created successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to create parent')),
+      );
+    }
   }
 
   @override
@@ -444,7 +603,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                 labelText: 'Full Name',
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? false ? 'Required' : null,
+              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -455,7 +614,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? false) return 'Required';
+                if (v?.isEmpty ?? true) return 'Required';
                 if (!v!.contains('@')) return 'Invalid email';
                 return null;
               },
@@ -474,26 +633,25 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Parent created')),
-              );
-            }
-          },
-          child: const Text('Create'),
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Create'),
         ),
       ],
     );
   }
 }
 
-/// Create guardian link dialog
+/// Create guardian link dialog - wired to ProvisioningService
 class _CreateLinkDialog extends StatefulWidget {
   const _CreateLinkDialog();
 
@@ -502,84 +660,148 @@ class _CreateLinkDialog extends StatefulWidget {
 }
 
 class _CreateLinkDialogState extends State<_CreateLinkDialog> {
-  String? _selectedParent;
-  String? _selectedLearner;
+  String? _selectedParentId;
+  String? _selectedLearnerId;
   String _relationship = 'Parent';
   bool _isPrimary = false;
+  bool _isSubmitting = false;
 
   final List<String> _relationships = <String>['Parent', 'Father', 'Mother', 'Guardian', 'Grandparent', 'Other'];
 
+  Future<void> _submit() async {
+    if (_selectedParentId == null || _selectedLearnerId == null) return;
+    
+    setState(() => _isSubmitting = true);
+    
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No site selected')),
+      );
+      return;
+    }
+
+    final service = context.read<ProvisioningService>();
+    final result = await service.createGuardianLink(
+      siteId: siteId,
+      parentId: _selectedParentId!,
+      learnerId: _selectedLearnerId!,
+      relationship: _relationship,
+      isPrimary: _isPrimary,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Guardian link created successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to create link')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Create Guardian Link'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          DropdownButtonFormField<String>(
-            value: _selectedParent,
-            decoration: const InputDecoration(
-              labelText: 'Parent',
-              prefixIcon: Icon(Icons.family_restroom),
-            ),
-            items: const <DropdownMenuItem<String>>[
-              DropdownMenuItem(value: '1', child: Text('John Johnson')),
-              DropdownMenuItem(value: '2', child: Text('Jane Smith')),
+    return Consumer<ProvisioningService>(
+      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+        final List<ParentProfile> parents = service.parents;
+        final List<LearnerProfile> learners = service.learners;
+
+        return AlertDialog(
+          title: const Text('Create Guardian Link'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              DropdownButtonFormField<String>(
+                value: _selectedParentId,
+                decoration: const InputDecoration(
+                  labelText: 'Parent',
+                  prefixIcon: Icon(Icons.family_restroom),
+                ),
+                items: parents.isEmpty
+                    ? <DropdownMenuItem<String>>[
+                        const DropdownMenuItem(
+                          enabled: false,
+                          child: Text('No parents available'),
+                        ),
+                      ]
+                    : parents
+                        .map((ParentProfile p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.displayName),
+                            ))
+                        .toList(),
+                onChanged: (String? v) => setState(() => _selectedParentId = v),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedLearnerId,
+                decoration: const InputDecoration(
+                  labelText: 'Learner',
+                  prefixIcon: Icon(Icons.child_care),
+                ),
+                items: learners.isEmpty
+                    ? <DropdownMenuItem<String>>[
+                        const DropdownMenuItem(
+                          enabled: false,
+                          child: Text('No learners available'),
+                        ),
+                      ]
+                    : learners
+                        .map((LearnerProfile l) => DropdownMenuItem(
+                              value: l.id,
+                              child: Text(l.displayName),
+                            ))
+                        .toList(),
+                onChanged: (String? v) => setState(() => _selectedLearnerId = v),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _relationship,
+                decoration: const InputDecoration(
+                  labelText: 'Relationship',
+                  prefixIcon: Icon(Icons.people),
+                ),
+                items: _relationships
+                    .map((String r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (String? v) => setState(() => _relationship = v ?? 'Parent'),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Primary guardian'),
+                subtitle: const Text('Receives all notifications'),
+                value: _isPrimary,
+                onChanged: (bool v) => setState(() => _isPrimary = v),
+              ),
             ],
-            onChanged: (String? v) => setState(() => _selectedParent = v),
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedLearner,
-            decoration: const InputDecoration(
-              labelText: 'Learner',
-              prefixIcon: Icon(Icons.child_care),
+          actions: <Widget>[
+            TextButton(
+              onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            items: const <DropdownMenuItem<String>>[
-              DropdownMenuItem(value: '1', child: Text('Alice Johnson')),
-              DropdownMenuItem(value: '2', child: Text('Bob Smith')),
-              DropdownMenuItem(value: '3', child: Text('Charlie Brown')),
-            ],
-            onChanged: (String? v) => setState(() => _selectedLearner = v),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _relationship,
-            decoration: const InputDecoration(
-              labelText: 'Relationship',
-              prefixIcon: Icon(Icons.people),
+            ElevatedButton(
+              onPressed: _isSubmitting || _selectedParentId == null || _selectedLearnerId == null
+                  ? null
+                  : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Create Link'),
             ),
-            items: _relationships
-                .map((String r) => DropdownMenuItem(value: r, child: Text(r)))
-                .toList(),
-            onChanged: (String? v) => setState(() => _relationship = v ?? 'Parent'),
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('Primary guardian'),
-            subtitle: const Text('Receives all notifications'),
-            value: _isPrimary,
-            onChanged: (bool v) => setState(() => _isPrimary = v),
-          ),
-        ],
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _selectedParent != null && _selectedLearner != null
-              ? () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Guardian link created')),
-                  );
-                }
-              : null,
-          child: const Text('Create Link'),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

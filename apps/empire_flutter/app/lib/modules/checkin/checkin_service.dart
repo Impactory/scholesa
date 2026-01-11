@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'checkin_models.dart';
 
-/// Service for site check-in/check-out operations
+/// Service for site check-in/check-out operations - wired to Firebase
 class CheckinService extends ChangeNotifier {
 
   CheckinService({
@@ -11,6 +12,7 @@ class CheckinService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String siteId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<LearnerDaySummary> _learnerSummaries = <LearnerDaySummary>[];
   List<CheckRecord> _todayRecords = <CheckRecord>[];
@@ -72,76 +74,110 @@ class CheckinService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load today's check-in data
+  /// Load today's check-in data from Firebase
   Future<void> loadTodayData() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Try to load from Firestore first
-      if (siteId.isNotEmpty && siteId != 'default_site') {
-        final List<Map<String, dynamic>> firestoreData = 
-            await _firestoreService.queryCollection(
-              'presenceRecords',
-              where: <List<dynamic>>[<dynamic>['siteId', siteId]],
-              orderBy: 'timestamp',
-              descending: true,
-            );
-        
-        if (firestoreData.isNotEmpty) {
-          // Group by learner and build summaries
-          final Map<String, List<Map<String, dynamic>>> byLearner = <String, List<Map<String, dynamic>>>{};
-          for (final Map<String, dynamic> record in firestoreData) {
-            final String learnerId = record['learnerId'] as String? ?? '';
-            byLearner.putIfAbsent(learnerId, () => <Map<String, dynamic>>[]).add(record);
-          }
-          
-          _learnerSummaries = byLearner.entries.map((MapEntry<String, List<Map<String, dynamic>>> entry) {
-            final List<Map<String, dynamic>> records = entry.value;
-            final Map<String, dynamic>? lastRecord = records.isNotEmpty ? records.first : null;
-            final DateTime? timestamp = (lastRecord?['timestamp'] as dynamic)?.toDate();
-            final bool isCheckin = lastRecord?['type'] == 'checkin';
-            return LearnerDaySummary(
-              learnerId: entry.key,
-              learnerName: lastRecord?['learnerName'] as String? ?? 'Unknown',
-              currentStatus: isCheckin ? CheckStatus.checkedIn : CheckStatus.checkedOut,
-              checkedInAt: isCheckin ? timestamp : null,
-              checkedOutAt: !isCheckin ? timestamp : null,
-            );
-          }).toList();
-          
-          // Build today's records
-          _todayRecords = firestoreData.map((Map<String, dynamic> r) => CheckRecord(
-            id: r['id'] as String,
-            learnerId: r['learnerId'] as String? ?? '',
-            learnerName: r['learnerName'] as String? ?? 'Unknown',
-            siteId: siteId,
-            status: r['type'] == 'checkin' ? CheckStatus.checkedIn : CheckStatus.checkedOut,
-            timestamp: (r['timestamp'] as dynamic)?.toDate() ?? DateTime.now(),
-            visitorId: r['recordedBy'] as String? ?? '',
-            visitorName: r['recorderName'] as String? ?? '',
-          )).toList();
-          
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
+      final DateTime now = DateTime.now();
+      final DateTime startOfDay = DateTime(now.year, now.month, now.day);
+      final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+
+      // Query presence records for today
+      final QuerySnapshot<Map<String, dynamic>> recordsSnapshot = await _firestore
+          .collection('presenceRecords')
+          .where('siteId', isEqualTo: siteId)
+          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      // Build today's records
+      _todayRecords = recordsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return CheckRecord(
+          id: doc.id,
+          learnerId: data['learnerId'] as String? ?? '',
+          learnerName: data['learnerName'] as String? ?? 'Unknown',
+          siteId: siteId,
+          status: data['type'] == 'checkin' ? CheckStatus.checkedIn : CheckStatus.checkedOut,
+          timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
+          visitorId: data['recordedBy'] as String? ?? '',
+          visitorName: data['recorderName'] as String? ?? '',
+          notes: data['notes'] as String?,
+        );
+      }).toList();
+
+      // Group records by learner to build summaries
+      final Map<String, List<CheckRecord>> byLearner = <String, List<CheckRecord>>{};
+      for (final CheckRecord record in _todayRecords) {
+        byLearner.putIfAbsent(record.learnerId, () => <CheckRecord>[]).add(record);
       }
-      
-      // Fall back to mock data for demo purposes
-      await Future.delayed(const Duration(milliseconds: 300));
-      _learnerSummaries = _generateMockSummaries();
-      _todayRecords = _generateMockRecords();
+
+      // Get all learners enrolled at this site
+      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
+          .collection('users')
+          .where('siteIds', arrayContains: siteId)
+          .where('role', isEqualTo: 'learner')
+          .get();
+
+      _learnerSummaries = learnersSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final List<CheckRecord> records = byLearner[doc.id] ?? <CheckRecord>[];
+        
+        // Find latest checkin and checkout
+        CheckRecord? latestCheckin;
+        CheckRecord? latestCheckout;
+        for (final CheckRecord r in records) {
+          if (r.status == CheckStatus.checkedIn && (latestCheckin == null || r.timestamp.isAfter(latestCheckin.timestamp))) {
+            latestCheckin = r;
+          }
+          if (r.status == CheckStatus.checkedOut && (latestCheckout == null || r.timestamp.isAfter(latestCheckout.timestamp))) {
+            latestCheckout = r;
+          }
+        }
+
+        // Determine current status
+        CheckStatus? currentStatus;
+        if (latestCheckout != null && latestCheckin != null) {
+          currentStatus = latestCheckout.timestamp.isAfter(latestCheckin.timestamp)
+              ? CheckStatus.checkedOut
+              : CheckStatus.checkedIn;
+        } else if (latestCheckin != null) {
+          currentStatus = CheckStatus.checkedIn;
+        }
+
+        return LearnerDaySummary(
+          learnerId: doc.id,
+          learnerName: data['displayName'] as String? ?? 'Unknown',
+          currentStatus: currentStatus,
+          checkedInAt: latestCheckin?.timestamp,
+          checkedInBy: latestCheckin?.visitorName,
+          checkedOutAt: latestCheckout?.timestamp,
+          checkedOutBy: latestCheckout?.visitorName,
+          authorizedPickups: <AuthorizedPickup>[], // Will be loaded separately if needed
+        );
+      }).toList();
+
+      debugPrint('Loaded ${_learnerSummaries.length} learners and ${_todayRecords.length} records');
     } catch (e) {
       debugPrint('Error loading checkin data: $e');
-      // Fall back to mock data on error
-      _learnerSummaries = _generateMockSummaries();
-      _todayRecords = _generateMockRecords();
+      _error = 'Failed to load check-in data: $e';
+      _learnerSummaries = <LearnerDaySummary>[];
+      _todayRecords = <CheckRecord>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 
   /// Check in a learner
@@ -266,162 +302,5 @@ class CheckinService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  // Mock data generators
-  List<LearnerDaySummary> _generateMockSummaries() {
-    return <LearnerDaySummary>[
-      LearnerDaySummary(
-        learnerId: 'learner_001',
-        learnerName: 'Alex Chen',
-        currentStatus: CheckStatus.checkedIn,
-        checkedInAt: DateTime.now().subtract(const Duration(hours: 3)),
-        checkedInBy: 'Wei Chen',
-        authorizedPickups: const <AuthorizedPickup>[
-          AuthorizedPickup(
-            id: 'pickup_001',
-            learnerId: 'learner_001',
-            name: 'Wei Chen',
-            phone: '+1234567890',
-            relationship: 'Father',
-            isPrimaryContact: true,
-          ),
-          AuthorizedPickup(
-            id: 'pickup_002',
-            learnerId: 'learner_001',
-            name: 'Lin Chen',
-            phone: '+1234567891',
-            relationship: 'Mother',
-          ),
-        ],
-      ),
-      LearnerDaySummary(
-        learnerId: 'learner_002',
-        learnerName: 'Emma Rodriguez',
-        currentStatus: CheckStatus.checkedIn,
-        checkedInAt: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
-        checkedInBy: 'Sofia Rodriguez',
-        authorizedPickups: const <AuthorizedPickup>[
-          AuthorizedPickup(
-            id: 'pickup_003',
-            learnerId: 'learner_002',
-            name: 'Sofia Rodriguez',
-            phone: '+1234567892',
-            relationship: 'Mother',
-            isPrimaryContact: true,
-          ),
-        ],
-      ),
-      LearnerDaySummary(
-        learnerId: 'learner_003',
-        learnerName: 'Noah Williams',
-        currentStatus: CheckStatus.late,
-        checkedInAt: DateTime.now().subtract(const Duration(hours: 1)),
-        checkedInBy: 'John Williams',
-        authorizedPickups: const <AuthorizedPickup>[
-          AuthorizedPickup(
-            id: 'pickup_004',
-            learnerId: 'learner_003',
-            name: 'John Williams',
-            phone: '+1234567893',
-            relationship: 'Father',
-            isPrimaryContact: true,
-          ),
-        ],
-      ),
-      LearnerDaySummary(
-        learnerId: 'learner_004',
-        learnerName: 'Sophia Martinez',
-        currentStatus: CheckStatus.checkedOut,
-        checkedInAt: DateTime.now().subtract(const Duration(hours: 4)),
-        checkedInBy: 'Maria Martinez',
-        checkedOutAt: DateTime.now().subtract(const Duration(minutes: 30)),
-        checkedOutBy: 'Maria Martinez',
-        authorizedPickups: const <AuthorizedPickup>[
-          AuthorizedPickup(
-            id: 'pickup_005',
-            learnerId: 'learner_004',
-            name: 'Maria Martinez',
-            phone: '+1234567894',
-            relationship: 'Mother',
-            isPrimaryContact: true,
-          ),
-        ],
-      ),
-      const LearnerDaySummary(
-        learnerId: 'learner_005',
-        learnerName: 'Liam Johnson',
-        authorizedPickups: <AuthorizedPickup>[
-          AuthorizedPickup(
-            id: 'pickup_006',
-            learnerId: 'learner_005',
-            name: 'Sarah Johnson',
-            phone: '+1234567895',
-            relationship: 'Mother',
-            isPrimaryContact: true,
-          ),
-        ],
-      ),
-      const LearnerDaySummary(
-        learnerId: 'learner_006',
-        learnerName: 'Olivia Brown',
-      ),
-    ];
-  }
-
-  List<CheckRecord> _generateMockRecords() {
-    return <CheckRecord>[
-      CheckRecord(
-        id: 'rec_001',
-        visitorId: 'parent_001',
-        visitorName: 'Wei Chen',
-        learnerId: 'learner_001',
-        learnerName: 'Alex Chen',
-        siteId: siteId,
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-        status: CheckStatus.checkedIn,
-      ),
-      CheckRecord(
-        id: 'rec_002',
-        visitorId: 'parent_002',
-        visitorName: 'Sofia Rodriguez',
-        learnerId: 'learner_002',
-        learnerName: 'Emma Rodriguez',
-        siteId: siteId,
-        timestamp: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
-        status: CheckStatus.checkedIn,
-      ),
-      CheckRecord(
-        id: 'rec_003',
-        visitorId: 'parent_003',
-        visitorName: 'John Williams',
-        learnerId: 'learner_003',
-        learnerName: 'Noah Williams',
-        siteId: siteId,
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        status: CheckStatus.late,
-        notes: 'Arrived 30 minutes late',
-      ),
-      CheckRecord(
-        id: 'rec_004',
-        visitorId: 'parent_004',
-        visitorName: 'Maria Martinez',
-        learnerId: 'learner_004',
-        learnerName: 'Sophia Martinez',
-        siteId: siteId,
-        timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-        status: CheckStatus.checkedIn,
-      ),
-      CheckRecord(
-        id: 'rec_005',
-        visitorId: 'parent_004',
-        visitorName: 'Maria Martinez',
-        learnerId: 'learner_004',
-        learnerName: 'Sophia Martinez',
-        siteId: siteId,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        status: CheckStatus.checkedOut,
-      ),
-    ];
   }
 }
