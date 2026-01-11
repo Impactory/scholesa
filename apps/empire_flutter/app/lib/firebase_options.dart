@@ -84,5 +84,3 @@ class DefaultFirebaseOptions {
     storageBucket: 'studio-3328096157-e3f79.firebasestorage.app',
   );
 }
-  );
-}

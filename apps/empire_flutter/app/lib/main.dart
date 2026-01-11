@@ -154,7 +154,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
     if (!_isInitialized) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ScholesaTheme.lightTheme,
+        theme: ScholesaTheme.light,
         home: const SplashScreen(),
       );
     }
