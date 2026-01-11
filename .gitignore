@@ -33,3 +33,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Don’t commit Flutter SDK / tooling trees
+apps/empire_flutter/dev/
+apps/empire_flutter/flutter/
+flutter/
+
+# Common noise
+**/node_modules/
+.firebase/
+.gemini/
+.vscode/
+**/build/
+dataconnect/.dataconnect/pgliteData/
