@@ -21,6 +21,7 @@ import '../modules/learner/learner.dart';
 import '../modules/profile/profile.dart';
 import '../modules/site/site.dart';
 import '../modules/settings/settings.dart';
+import '../modules/partner/partner.dart';
 
 /// Known routes registry - flip status when modules are done
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
@@ -39,37 +40,59 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/learner/today': true,
   '/learner/missions': true,
   '/learner/habits': true,
-  '/learner/portfolio': true, // ENABLED
+  '/learner/portfolio': true,
   
   // Educator
   '/educator/today': true,
   '/educator/attendance': true,
-  '/educator/sessions': true, // ENABLED
-  '/educator/learners': true, // ENABLED
-  '/educator/missions/review': true, // ENABLED
+  '/educator/sessions': true,
+  '/educator/learners': true,
+  '/educator/missions/review': true,
+  '/educator/mission-plans': true,
+  '/educator/learner-supports': true,
+  '/educator/integrations': true,
+  '/educator/review-queue': true, // alias for missions/review
   
   // Parent
   '/parent/summary': true,
-  '/parent/billing': true, // ENABLED
-  '/parent/schedule': true, // ENABLED
+  '/parent/billing': true,
+  '/parent/schedule': true,
+  '/parent/portfolio': true,
   
   // Site
   '/site/checkin': true,
   '/site/provisioning': true,
-  '/site/dashboard': true, // ENABLED
-  '/site/sessions': true, // ENABLED
+  '/site/dashboard': true,
+  '/site/sessions': true,
+  '/site/ops': true,
+  '/site/incidents': true,
+  '/site/identity': true,
+  '/site/integrations-health': true,
+  '/site/billing': true,
+  
+  // Partner
+  '/partner/listings': true,
+  '/partner/contracts': true,
+  '/partner/payouts': true,
   
   // HQ
   '/hq/user-admin': true,
   '/hq/role-switcher': true,
-  '/hq/sites': true, // ENABLED
-  '/hq/analytics': true, // ENABLED
-  '/hq/billing': true, // ENABLED
+  '/hq/sites': true,
+  '/hq/analytics': true,
+  '/hq/billing': true,
+  '/hq/approvals': true,
+  '/hq/audit': true,
+  '/hq/safety': true,
+  '/hq/integrations-health': true,
+  '/hq/curriculum': true,
+  '/hq/feature-flags': true,
   
   // Cross-role
   '/messages': true,
+  '/notifications': true,
   '/profile': true,
-  '/settings': true, // ENABLED
+  '/settings': true,
 };
 
 /// Check if a route is enabled
@@ -316,6 +339,160 @@ GoRouter createAppRouter(AppState appState) {
       GoRoute(
         path: '/settings',
         builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - Partner Module
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/partner/listings',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
+          child: PartnerListingsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/partner/contracts',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
+          child: PartnerContractsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/partner/payouts',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
+          child: PartnerPayoutsPage(),
+        ),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - Site Module (Extended)
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/site/ops',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteOpsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/site/incidents',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteIncidentsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/site/identity',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteIdentityPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/site/integrations-health',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteIntegrationsHealthPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/site/billing',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteBillingPage(),
+        ),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - Educator Module (Extended)
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/educator/mission-plans',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          child: EducatorMissionPlansPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/educator/learner-supports',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          child: EducatorLearnerSupportsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/educator/integrations',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          child: EducatorIntegrationsPage(),
+        ),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - Parent Module (Extended)
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/parent/portfolio',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
+          child: ParentPortfolioPage(),
+        ),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - HQ Admin Module (Extended)
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/hq/approvals',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqApprovalsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/audit',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqAuditPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/safety',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqSafetyPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/integrations-health',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqIntegrationsHealthPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/curriculum',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqCurriculumPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/feature-flags',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqFeatureFlagsPage(),
+        ),
+      ),
+
+      // ─────────────────────────────────────────────────────────────
+      // NEW ROUTES - Cross-Role (Notifications)
+      // ─────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/notifications',
+        builder: (BuildContext context, GoRouterState state) => const NotificationsPage(),
       ),
 
       // Placeholder routes for disabled features

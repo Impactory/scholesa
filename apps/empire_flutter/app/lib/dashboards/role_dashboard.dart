@@ -114,7 +114,7 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry = <UserRole, List<Dashboa
       title: 'Review Queue',
       subtitle: 'Review student submissions',
       icon: Icons.rate_review_rounded,
-      route: '/educator/review-queue',
+      route: '/educator/missions/review',
       gradient: LinearGradient(
         colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)],
         begin: Alignment.topLeft,
@@ -575,9 +575,7 @@ class RoleDashboard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.settings_outlined, color: Colors.white),
                     tooltip: 'Settings',
-                    onPressed: () {
-                      // TODO: Navigate to settings
-                    },
+                    onPressed: () => context.push('/settings'),
                   ),
                   IconButton(
                     icon: const Icon(Icons.logout, color: Colors.white),
@@ -806,7 +804,7 @@ class RoleDashboard extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
+      builder: (BuildContext dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: <Widget>[
@@ -818,13 +816,18 @@ class RoleDashboard extends StatelessWidget {
         content: const Text('Are you sure you want to sign out?'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.go('/login');
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              // Clear app state and go to login
+              final AppState appState = context.read<AppState>();
+              appState.clear();
+              if (context.mounted) {
+                context.go('/welcome');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: ScholesaColors.error,
