@@ -1,0 +1,17 @@
+{
+  "docs_dir": "/mnt/data/docs",
+  "added_files": [
+    "64_MASTER_IMPLEMENTATION_PLAN.md",
+    "65_MODULE_DEFINITION_OF_DONE.md",
+    "66_API_ENDPOINTS_FULL_CATALOG.md",
+    "67_FIRESTORE_RULES_TEST_MATRIX.md",
+    "68_OFFLINE_OPS_CATALOG.md",
+    "69_UI_SCREEN_INVENTORY.md",
+    "70_BACKGROUND_JOBS_WEBHOOKS.md",
+    "71_SECURITY_PRIVACY_COMPLIANCE.md",
+    "72_RELEASE_CUTOVER_RUNBOOK.md"
+  ],
+  "updated_files": [
+    "INDEX.md"
+  ]
+}

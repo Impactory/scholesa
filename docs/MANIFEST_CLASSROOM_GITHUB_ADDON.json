@@ -1,0 +1,15 @@
+{
+  "docs_dir": "/mnt/data/docs",
+  "added_files": [
+    "33_CLASSROOM_ADDON_PRODUCT_SPEC.md",
+    "34_GOOGLE_CLASSROOM_PROVIDER_APIS.md",
+    "35_GITHUB_INTEGRATION_PRODUCT_SPEC.md",
+    "36_INTEGRATIONS_INTERNAL_API_CONTRACT.md",
+    "37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md",
+    "38_QA_SCRIPT_CLASSROOM_ADDON_GITHUB.md"
+  ],
+  "updated_files": [
+    "INDEX.md",
+    "02A_SCHEMA_V3.ts"
+  ]
+}

@@ -1,0 +1,13 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - build
+    - -f
+    - Dockerfile.flutter
+    - -t
+    - gcr.io/studio-3328096157-e3f79/empire-web:${_TAG}
+    - .
+images:
+  - gcr.io/studio-3328096157-e3f79/empire-web:${_TAG}
+substitutions:
+  _TAG: latest

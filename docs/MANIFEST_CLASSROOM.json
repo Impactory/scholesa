@@ -1,0 +1,10 @@
+{
+  "docs_dir": "/mnt/data/docs",
+  "added_files": [
+    "28_GOOGLE_CLASSROOM_INTEGRATION_SPEC.md",
+    "29_GOOGLE_CLASSROOM_SCHEMA_EXTENSIONS.md",
+    "30_GOOGLE_CLASSROOM_OAUTH_SECURITY.md",
+    "31_GOOGLE_CLASSROOM_SYNC_JOBS.md",
+    "32_GOOGLE_CLASSROOM_QA_SCRIPT.md"
+  ]
+}

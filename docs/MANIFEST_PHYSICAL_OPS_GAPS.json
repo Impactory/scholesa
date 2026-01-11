@@ -1,0 +1,15 @@
+{
+  "docs_dir": "/mnt/data/docs",
+  "added_files": [
+    "41_SAFETY_CONSENT_INCIDENTS_SPEC.md",
+    "42_PHYSICAL_SITE_CHECKIN_CHECKOUT_SPEC.md",
+    "43_EXPORT_RETENTION_BACKUP_SPEC.md",
+    "44_SCHEDULING_CALENDAR_ROOMS_SPEC.md",
+    "45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md",
+    "46_IDENTITY_MATCHING_RESOLUTION_SPEC.md"
+  ],
+  "updated_files": [
+    "INDEX.md",
+    "02A_SCHEMA_V3.ts"
+  ]
+}
