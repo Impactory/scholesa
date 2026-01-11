@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/firestore_service.dart';
 import 'app_state.dart';
 
@@ -10,12 +11,17 @@ class AuthService {
     required FirebaseAuth auth,
     required FirestoreService firestoreService,
     required AppState appState,
+    GoogleSignIn? googleSignIn,
   })  : _auth = auth,
         _firestoreService = firestoreService,
-        _appState = appState;
+        _appState = appState,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(
+          scopes: <String>['email', 'profile'],
+        );
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
+  final GoogleSignIn _googleSignIn;
 
   /// Current Firebase user
   User? get currentUser => _auth.currentUser;
@@ -71,8 +77,113 @@ class AuthService {
 
   /// Sign out
   Future<void> signOut() async {
+    // Sign out from Google if signed in with Google
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Ignore if not signed in with Google
+    }
     await _auth.signOut();
     _appState.clear();
+  }
+
+  /// Sign in with Google
+  Future<void> signInWithGoogle() async {
+    try {
+      _appState.setLoading(true);
+      _appState.clearError();
+
+      if (kIsWeb) {
+        // Web: Use popup sign-in
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        
+        await _auth.signInWithPopup(googleProvider);
+      } else {
+        // Mobile: Use native Google Sign-In
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        
+        if (googleUser == null) {
+          // User cancelled the sign-in
+          _appState.setLoading(false);
+          return;
+        }
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        await _auth.signInWithCredential(credential);
+      }
+      
+      // Ensure user profile exists in Firestore
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final Map<String, dynamic>? existingProfile = await _firestoreService.getUserProfile();
+        if (existingProfile == null) {
+          // Create profile for new SSO user
+          await _firestoreService.createUserProfile(
+            displayName: user.displayName ?? user.email?.split('@').first ?? 'User',
+          );
+        }
+      }
+      
+      await _bootstrapSession();
+    } on FirebaseAuthException catch (e) {
+      _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    } catch (e) {
+      debugPrint('Google sign-in error: $e');
+      _appState.setError('Failed to sign in with Google');
+      rethrow;
+    }
+  }
+
+  /// Sign in with Microsoft (via Firebase Auth)
+  Future<void> signInWithMicrosoft() async {
+    try {
+      _appState.setLoading(true);
+      _appState.clearError();
+
+      final OAuthProvider microsoftProvider = OAuthProvider('microsoft.com');
+      microsoftProvider.addScope('email');
+      microsoftProvider.addScope('profile');
+      microsoftProvider.addScope('openid');
+      
+      // Set custom parameters for Microsoft login
+      microsoftProvider.setCustomParameters(<String, String>{
+        'prompt': 'select_account',
+      });
+
+      if (kIsWeb) {
+        await _auth.signInWithPopup(microsoftProvider);
+      } else {
+        await _auth.signInWithProvider(microsoftProvider);
+      }
+      
+      // Ensure user profile exists in Firestore
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final Map<String, dynamic>? existingProfile = await _firestoreService.getUserProfile();
+        if (existingProfile == null) {
+          await _firestoreService.createUserProfile(
+            displayName: user.displayName ?? user.email?.split('@').first ?? 'User',
+          );
+        }
+      }
+      
+      await _bootstrapSession();
+    } on FirebaseAuthException catch (e) {
+      _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    } catch (e) {
+      debugPrint('Microsoft sign-in error: $e');
+      _appState.setError('Failed to sign in with Microsoft');
+      rethrow;
+    }
   }
 
   /// Bootstrap session by fetching user profile from Firestore

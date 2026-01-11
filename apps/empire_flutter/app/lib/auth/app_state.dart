@@ -158,6 +158,12 @@ class AppState extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+  
+  /// Clear error state
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   /// Clear state on logout
   void clear() {

@@ -76,6 +76,62 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final AuthService authService = context.read<AuthService>();
+      await authService.signInWithGoogle();
+      
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleMicrosoftSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final AuthService authService = context.read<AuthService>();
+      await authService.signInWithMicrosoft();
+      
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
@@ -430,9 +486,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             children: <Widget>[
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    // TODO: Google sign in
-                                  },
+                                  onPressed: _isLoading ? null : _handleGoogleSignIn,
                                   icon: const Icon(
                                     Icons.g_mobiledata,
                                     color: Colors.red,
@@ -451,9 +505,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                               const SizedBox(width: 16),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    // TODO: Microsoft sign in
-                                  },
+                                  onPressed: _isLoading ? null : _handleMicrosoftSignIn,
                                   icon: const Icon(
                                     Icons.window,
                                     size: 20,
