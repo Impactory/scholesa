@@ -53,7 +53,7 @@ class ParentService extends ChangeNotifier {
         missionsCompleted: 8,
         currentStreak: 12,
         attendanceRate: 0.95,
-        pillarProgress: <String, double>const {
+        pillarProgress: const <String, double>{
           'futureSkills': 0.72,
           'leadership': 0.58,
           'impact': 0.45,
@@ -124,7 +124,7 @@ class ParentService extends ChangeNotifier {
         missionsCompleted: 4,
         currentStreak: 5,
         attendanceRate: 0.88,
-        pillarProgress: <String, double>const {
+        pillarProgress: const <String, double>{
           'futureSkills': 0.45,
           'leadership': 0.62,
           'impact': 0.35,

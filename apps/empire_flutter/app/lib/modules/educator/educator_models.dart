@@ -113,6 +113,13 @@ class EducatorSession extends Equatable { // upcoming, ongoing, completed, cance
   final int maxCapacity;
   final String status;
 
+  /// Convenience getters for UI
+  int get learnerCount => enrolledCount;
+  String get dayOfWeek {
+    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days[startTime.weekday - 1];
+  }
+
   @override
   List<Object?> get props => <Object?>[
         id, title, description, pillar, startTime, endTime,
@@ -132,6 +139,7 @@ class EducatorLearner extends Equatable {
     required this.missionsCompleted,
     required this.pillarProgress,
     required this.enrolledSessionIds,
+    this.isActiveToday = false,
   });
   final String id;
   final String name;
@@ -141,50 +149,24 @@ class EducatorLearner extends Equatable {
   final int missionsCompleted;
   final Map<String, double> pillarProgress; // pillar -> progress 0-1
   final List<String> enrolledSessionIds;
+  final bool isActiveToday;
+
+  /// Convenience getters for UI
+  List<String> get sessionIds => enrolledSessionIds;
+  String get initials {
+    final List<String> parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+  double get futureSkillsProgress => pillarProgress['future_skills'] ?? 0;
+  double get leadershipProgress => pillarProgress['leadership'] ?? 0;
+  double get impactProgress => pillarProgress['impact'] ?? 0;
 
   @override
   List<Object?> get props => <Object?>[
         id, name, email, photoUrl, attendanceRate,
-        missionsCompleted, pillarProgress, enrolledSessionIds,
-      ];
-}
-
-/// Mission submission for review
-class MissionSubmission extends Equatable {
-
-  const MissionSubmission({
-    required this.id,
-    required this.missionId,
-    required this.missionTitle,
-    required this.learnerId,
-    required this.learnerName,
-    this.learnerPhotoUrl,
-    required this.pillar,
-    required this.submittedAt,
-    required this.status,
-    this.submissionText,
-    this.attachmentUrls = const [],
-    this.rating,
-    this.feedback,
-  });
-  final String id;
-  final String missionId;
-  final String missionTitle;
-  final String learnerId;
-  final String learnerName;
-  final String? learnerPhotoUrl;
-  final String pillar;
-  final DateTime submittedAt;
-  final String status; // pending, reviewed, revision_requested, approved
-  final String? submissionText;
-  final List<String> attachmentUrls;
-  final int? rating;
-  final String? feedback;
-
-  @override
-  List<Object?> get props => <Object?>[
-        id, missionId, missionTitle, learnerId, learnerName,
-        learnerPhotoUrl, pillar, submittedAt, status,
-        submissionText, attachmentUrls, rating, feedback,
+        missionsCompleted, pillarProgress, enrolledSessionIds, isActiveToday,
       ];
 }

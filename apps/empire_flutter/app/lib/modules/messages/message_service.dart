@@ -176,7 +176,7 @@ class MessageService extends ChangeNotifier {
       Conversation(
         id: 'conv_001',
         participantIds: <String>[userId, 'educator_001'],
-        participantNames: <String>const ['You', 'Ms. Chen'],
+        participantNames: const <String>['You', 'Ms. Chen'],
         lastMessage: Message(
           id: 'msg_006',
           title: '',
@@ -191,7 +191,7 @@ class MessageService extends ChangeNotifier {
       Conversation(
         id: 'conv_002',
         participantIds: <String>[userId, 'educator_002'],
-        participantNames: <String>const ['You', 'Mr. Williams'],
+        participantNames: const <String>['You', 'Mr. Williams'],
         lastMessage: Message(
           id: 'msg_temp',
           title: '',

@@ -224,7 +224,7 @@ class CheckinService extends ChangeNotifier {
         currentStatus: CheckStatus.checkedIn,
         checkedInAt: DateTime.now().subtract(const Duration(hours: 3)),
         checkedInBy: 'Wei Chen',
-        authorizedPickups: <AuthorizedPickup>const [
+        authorizedPickups: const <AuthorizedPickup>[
           AuthorizedPickup(
             id: 'pickup_001',
             learnerId: 'learner_001',
@@ -248,7 +248,7 @@ class CheckinService extends ChangeNotifier {
         currentStatus: CheckStatus.checkedIn,
         checkedInAt: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
         checkedInBy: 'Sofia Rodriguez',
-        authorizedPickups: <AuthorizedPickup>const [
+        authorizedPickups: const <AuthorizedPickup>[
           AuthorizedPickup(
             id: 'pickup_003',
             learnerId: 'learner_002',
@@ -265,7 +265,7 @@ class CheckinService extends ChangeNotifier {
         currentStatus: CheckStatus.late,
         checkedInAt: DateTime.now().subtract(const Duration(hours: 1)),
         checkedInBy: 'John Williams',
-        authorizedPickups: <AuthorizedPickup>const [
+        authorizedPickups: const <AuthorizedPickup>[
           AuthorizedPickup(
             id: 'pickup_004',
             learnerId: 'learner_003',
@@ -284,7 +284,7 @@ class CheckinService extends ChangeNotifier {
         checkedInBy: 'Maria Martinez',
         checkedOutAt: DateTime.now().subtract(const Duration(minutes: 30)),
         checkedOutBy: 'Maria Martinez',
-        authorizedPickups: <AuthorizedPickup>const [
+        authorizedPickups: const <AuthorizedPickup>[
           AuthorizedPickup(
             id: 'pickup_005',
             learnerId: 'learner_004',

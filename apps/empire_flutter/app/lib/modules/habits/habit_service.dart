@@ -304,7 +304,7 @@ class HabitService extends ChangeNotifier {
       weekStart: DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)),
       totalCompletions: 28,
       totalMinutes: 340,
-      completionsByHabit: <String, int>const {
+      completionsByHabit: const <String, int>{
         'habit_001': 6,
         'habit_002': 4,
         'habit_003': 7,
@@ -312,7 +312,7 @@ class HabitService extends ChangeNotifier {
         'habit_005': 3,
         'habit_006': 4,
       },
-      dailyCompletions: <bool>const [true, true, true, false, true, true, true],
+      dailyCompletions: const <bool>[true, true, true, false, true, true, true],
     );
   }
 }

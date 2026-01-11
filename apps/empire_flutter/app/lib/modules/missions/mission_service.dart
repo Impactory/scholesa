@@ -402,4 +402,35 @@ class MissionSubmission {
     this.rating,
     this.feedback,
   });
+
+  /// Convenience getters for UI
+  String get learnerInitials {
+    final List<String> parts = learnerName.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return learnerName.isNotEmpty ? learnerName[0].toUpperCase() : '?';
+  }
+  
+  String get submissionPreview {
+    if (submissionText == null || submissionText!.isEmpty) {
+      return attachmentUrls.isNotEmpty 
+          ? '${attachmentUrls.length} attachment(s)'
+          : 'No content';
+    }
+    return submissionText!.length > 100 
+        ? '${submissionText!.substring(0, 100)}...'
+        : submissionText!;
+  }
+  
+  String get submittedAgo {
+    final Duration diff = DateTime.now().difference(submittedAt);
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else {
+      return '${diff.inDays}d ago';
+    }
+  }
 }
