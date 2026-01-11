@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scholesa Icon Generator</title>
+  <style>
+    body { font-family: system-ui; padding: 40px; background: #1e293b; color: white; }
+    canvas { display: block; margin: 20px 0; border: 1px solid #334155; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #10B981; border: none; color: white; border-radius: 8px; }
+    .icons { display: flex; flex-wrap: wrap; gap: 20px; }
+    .icon-item { text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Scholesa Icon Generator</h1>
+  <p>Click each button to download the icon</p>
+  <div class="icons" id="icons"></div>
+
+  <script>
+    const sizes = [
+      { name: 'favicon-16x16.png', size: 16 },
+      { name: 'favicon-32x32.png', size: 32 },
+      { name: 'Icon-192.png', size: 192 },
+      { name: 'Icon-512.png', size: 512 },
+      { name: 'Icon-maskable-192.png', size: 192, maskable: true },
+      { name: 'Icon-maskable-512.png', size: 512, maskable: true },
+    ];
+
+    function drawIcon(ctx, size, maskable = false) {
+      const padding = maskable ? size * 0.1 : 0;
+      const innerSize = size - padding * 2;
+      const cornerRadius = innerSize * 0.2;
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#10B981');
+      gradient.addColorStop(1, '#059669');
+      
+      if (maskable) {
+        // Full square for maskable
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+      } else {
+        // Rounded rectangle
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(padding, padding, innerSize, innerSize, cornerRadius);
+        ctx.fill();
+      }
+
+      // School icon (simplified)
+      ctx.fillStyle = 'white';
+      const iconScale = innerSize / 512;
+      const offsetX = padding;
+      const offsetY = padding;
+      
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(iconScale, iconScale);
+      
+      // Draw school cap icon
+      ctx.beginPath();
+      ctx.moveTo(128, 282.9);
+      ctx.lineTo(128, 368.2);
+      ctx.lineTo(256, 438);
+      ctx.lineTo(384, 352.7);
+      ctx.lineTo(384, 282.9);
+      ctx.lineTo(256, 341);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(256, 64);
+      ctx.lineTo(64, 170.7);
+      ctx.lineTo(256, 277.3);
+      ctx.lineTo(421.3, 187.8);
+      ctx.lineTo(421.3, 320);
+      ctx.lineTo(457.7, 320);
+      ctx.lineTo(457.7, 170.7);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    const container = document.getElementById('icons');
+    
+    sizes.forEach(({ name, size, maskable }) => {
+      const div = document.createElement('div');
+      div.className = 'icon-item';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      drawIcon(ctx, size, maskable);
+      
+      const btn = document.createElement('button');
+      btn.textContent = 'Download ' + name;
+      btn.onclick = () => {
+        const link = document.createElement('a');
+        link.download = name;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      
+      div.appendChild(canvas);
+      div.appendChild(document.createElement('br'));
+      div.appendChild(btn);
+      container.appendChild(div);
+    });
+  </script>
+</body>
+</html>
