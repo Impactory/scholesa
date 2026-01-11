@@ -46,3 +46,17 @@ flutter/
 .vscode/
 **/build/
 dataconnect/.dataconnect/pgliteData/
+
+# Local/editor + firebase noise
+.firebase/
+.vscode/
+.gemini/
+
+# Node deps
+node_modules/
+functions/node_modules/
+
+# Flutter SDK/tooling trees (do not commit these)
+flutter/
+apps/empire_flutter/flutter/
+apps/empire_flutter/dev/
