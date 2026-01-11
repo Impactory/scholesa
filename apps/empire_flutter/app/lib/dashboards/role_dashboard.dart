@@ -368,6 +368,66 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry = <UserRole, List<Dashboa
         end: Alignment.bottomRight,
       ),
     ),
+    const DashboardCard(
+      id: 'hq_sites',
+      title: 'Site Management',
+      subtitle: 'All sites overview',
+      icon: Icons.business_rounded,
+      route: '/hq/sites',
+      gradient: LinearGradient(
+        colors: <Color>[Color(0xFF0EA5E9), Color(0xFF38BDF8)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    const DashboardCard(
+      id: 'hq_analytics',
+      title: 'Platform Analytics',
+      subtitle: 'Global metrics & insights',
+      icon: Icons.analytics_rounded,
+      route: '/hq/analytics',
+      gradient: LinearGradient(
+        colors: <Color>[Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    const DashboardCard(
+      id: 'hq_role_switcher',
+      title: 'Role Impersonation',
+      subtitle: 'Test other role views',
+      icon: Icons.swap_horizontal_circle_rounded,
+      route: '/hq/role-switcher',
+      gradient: LinearGradient(
+        colors: <Color>[Color(0xFFEC4899), Color(0xFFF472B6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    const DashboardCard(
+      id: 'hq_curriculum',
+      title: 'Curriculum Builder',
+      subtitle: 'Pillars, skills, missions',
+      icon: Icons.school_rounded,
+      route: '/hq/curriculum',
+      gradient: LinearGradient(
+        colors: <Color>[Color(0xFF059669), Color(0xFF10B981)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    const DashboardCard(
+      id: 'hq_feature_flags',
+      title: 'Feature Flags',
+      subtitle: 'Toggle platform features',
+      icon: Icons.flag_rounded,
+      route: '/hq/feature-flags',
+      gradient: LinearGradient(
+        colors: <Color>[Color(0xFF6366F1), Color(0xFF818CF8)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
   ],
 };
 

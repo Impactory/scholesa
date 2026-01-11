@@ -4,35 +4,324 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Scholesa - Education 2.0 Platform">
+  <meta name="description" content="Scholesa - Education 2.0 Platform for K-9 Learning Studios">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Theme colors -->
+  <meta name="theme-color" content="#10B981">
+  <meta name="msapplication-TileColor" content="#10B981">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Scholesa">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Scholesa</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The value below is injected by flutter build
-    const serviceWorkerVersion = null;
-  </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Splash screen styles -->
+  <style>
+    :root {
+      --primary: #10B981;
+      --future-skills: #3B82F6;
+      --leadership: #8B5CF6;
+      --impact: #10B981;
+      --bg-dark: #0F172A;
+      --bg-mid: #1E293B;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-mid) 50%, var(--bg-dark) 100%);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    #splash.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+    
+    .orb-1 {
+      width: 200px;
+      height: 200px;
+      top: -50px;
+      right: -50px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 50%, transparent 70%);
+      animation-delay: 0s;
+    }
+    
+    .orb-2 {
+      width: 150px;
+      height: 150px;
+      bottom: 100px;
+      left: -30px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0.1) 50%, transparent 70%);
+      animation-delay: -2s;
+    }
+    
+    .orb-3 {
+      width: 180px;
+      height: 180px;
+      bottom: -60px;
+      right: 50px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(16, 185, 129, 0.1) 50%, transparent 70%);
+      animation-delay: -4s;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, 10px); }
+    }
+    
+    /* Logo */
+    .logo-container {
+      animation: logoEntry 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+    
+    @keyframes logoEntry {
+      0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    
+    .logo {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      border-radius: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 
+        0 0 30px rgba(16, 185, 129, 0.4),
+        0 0 60px rgba(59, 130, 246, 0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .logo svg {
+      width: 64px;
+      height: 64px;
+      fill: white;
+    }
+    
+    /* App name */
+    .app-name {
+      margin-top: 40px;
+      font-size: 42px;
+      font-weight: bold;
+      background: linear-gradient(90deg, #10B981, #3B82F6, #8B5CF6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+      animation: fadeIn 1s ease-out 0.3s both;
+    }
+    
+    .tagline {
+      margin-top: 8px;
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 1px;
+      animation: fadeIn 1s ease-out 0.5s both;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Loading dots */
+    .loading-dots {
+      display: flex;
+      gap: 16px;
+      margin-top: 60px;
+      animation: fadeIn 1s ease-out 0.7s both;
+    }
+    
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: dotPulse 1.5s ease-in-out infinite;
+    }
+    
+    .dot:nth-child(1) {
+      background: var(--future-skills);
+      box-shadow: 0 0 10px var(--future-skills);
+      animation-delay: 0s;
+    }
+    
+    .dot:nth-child(2) {
+      background: var(--leadership);
+      box-shadow: 0 0 10px var(--leadership);
+      animation-delay: 0.2s;
+    }
+    
+    .dot:nth-child(3) {
+      background: var(--impact);
+      box-shadow: 0 0 10px var(--impact);
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    /* Loading text */
+    .loading-text {
+      margin-top: 24px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      animation: fadeIn 1s ease-out 0.9s both;
+    }
+    
+    /* Pillar chips */
+    .pillars {
+      position: absolute;
+      bottom: 40px;
+      display: flex;
+      gap: 12px;
+      animation: fadeIn 1s ease-out 1.1s both;
+    }
+    
+    .pillar-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .pillar-chip.future-skills {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #3B82F6;
+    }
+    
+    .pillar-chip.leadership {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #8B5CF6;
+    }
+    
+    .pillar-chip.impact {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10B981;
+    }
+    
+    .pillar-chip svg {
+      width: 14px;
+      height: 14px;
+    }
+  </style>
 </head>
 <body>
+  <!-- Native splash screen -->
+  <div id="splash">
+    <!-- Floating orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    
+    <!-- Logo -->
+    <div class="logo-container">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+        </svg>
+      </div>
+    </div>
+    
+    <!-- App name -->
+    <div class="app-name">Scholesa</div>
+    <div class="tagline">Education 2.0 Platform</div>
+    
+    <!-- Loading indicator -->
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    
+    <div class="loading-text">Loading...</div>
+    
+    <!-- Pillar chips -->
+    <div class="pillars">
+      <div class="pillar-chip future-skills">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5L4.5 20h2.5l1.5-4h7l1.5 4h2.5L12 2.5zm-1.5 11l1.5-4 1.5 4h-3z"/></svg>
+        Future Skills
+      </div>
+      <div class="pillar-chip leadership">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Leadership
+      </div>
+      <div class="pillar-chip impact">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        Impact
+      </div>
+    </div>
+  </div>
+
   <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.load({
-        serviceWorkerSettings: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-      });
+    {{flutter_js}}
+    {{flutter_build_config}}
+    
+    _flutter.loader.load({
+      onEntrypointLoaded: async function(engineInitializer) {
+        const appRunner = await engineInitializer.initializeEngine();
+        await appRunner.runApp();
+        
+        // Hide splash after Flutter is ready
+        setTimeout(() => {
+          const splash = document.getElementById('splash');
+          if (splash) {
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 500);
+          }
+        }, 300);
+      }
     });
   </script>
 </body>

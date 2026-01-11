@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import 'role_gate.dart';
+import '../ui/landing/landing_page.dart';
 import '../ui/auth/login_page.dart';
 import '../ui/auth/register_page.dart';
 import '../ui/error/fatal_error_screen.dart';
@@ -10,6 +10,7 @@ import '../dashboards/role_dashboard.dart';
 import '../modules/attendance/attendance_page.dart';
 import '../modules/provisioning/provisioning_page.dart';
 import '../modules/hq_admin/hq_admin.dart';
+import '../modules/hq_admin/hq_role_switcher_page.dart';
 import '../modules/checkin/checkin.dart';
 import '../modules/missions/missions.dart';
 import '../modules/habits/habits.dart';
@@ -24,6 +25,9 @@ import '../modules/settings/settings.dart';
 /// Known routes registry - flip status when modules are done
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
 final Map<String, bool> kKnownRoutes = <String, bool>{
+  // Public
+  '/welcome': true,
+  
   // Auth
   '/login': true,
   '/register': true,
@@ -57,6 +61,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   
   // HQ
   '/hq/user-admin': true,
+  '/hq/role-switcher': true,
   '/hq/sites': true, // ENABLED
   '/hq/analytics': true, // ENABLED
   '/hq/billing': true, // ENABLED
@@ -80,18 +85,19 @@ GoRouter createAppRouter(AppState appState) {
     redirect: (BuildContext context, GoRouterState state) {
       final bool isLoading = appState.isLoading;
       final bool isLoggedIn = appState.isAuthenticated;
+      final bool isWelcomeRoute = state.matchedLocation == '/welcome';
       final bool isLoginRoute = state.matchedLocation == '/login';
       final bool isRegisterRoute = state.matchedLocation == '/register';
-      final bool isAuthRoute = isLoginRoute || isRegisterRoute;
+      final bool isPublicRoute = isWelcomeRoute || isLoginRoute || isRegisterRoute;
       
       // Still loading, stay on current route
       if (isLoading) return null;
       
-      // Not logged in and not on auth route -> go to login
-      if (!isLoggedIn && !isAuthRoute) return '/login';
+      // Not logged in and not on public route -> go to landing page
+      if (!isLoggedIn && !isPublicRoute) return '/welcome';
       
-      // Logged in and on auth route -> go to dashboard
-      if (isLoggedIn && isAuthRoute) return '/';
+      // Logged in and on public route -> go to dashboard
+      if (isLoggedIn && isPublicRoute) return '/';
       
       return null;
     },
@@ -102,6 +108,12 @@ GoRouter createAppRouter(AppState appState) {
     ),
     
     routes: <RouteBase>[
+      // Public landing page
+      GoRoute(
+        path: '/welcome',
+        builder: (BuildContext context, GoRouterState state) => const LandingPage(),
+      ),
+      
       // Auth routes
       GoRoute(
         path: '/login',
@@ -149,6 +161,13 @@ GoRouter createAppRouter(AppState appState) {
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.hq],
           child: UserAdminPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/role-switcher',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqRoleSwitcherPage(),
         ),
       ),
       

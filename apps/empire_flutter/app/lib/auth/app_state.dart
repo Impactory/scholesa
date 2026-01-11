@@ -74,18 +74,36 @@ class AppState extends ChangeNotifier {
   List<Entitlement> _entitlements = <Entitlement>[];
   bool _isLoading = true;
   String? _error;
+  
+  /// Role impersonation for HQ users
+  UserRole? _impersonatingRole;
 
   // Getters
   String? get userId => _userId;
   String? get email => _email;
   String? get displayName => _displayName;
-  UserRole? get role => _role;
+  
+  /// Returns the effective role (impersonating role if set, otherwise actual role)
+  UserRole? get role => _impersonatingRole ?? _role;
+  
+  /// Returns the actual role (ignoring impersonation)
+  UserRole? get actualRole => _role;
+  
+  /// Returns the role being impersonated, if any
+  UserRole? get impersonatingRole => _impersonatingRole;
+  
+  /// Returns true if currently impersonating another role
+  bool get isImpersonating => _impersonatingRole != null;
+  
   String? get activeSiteId => _activeSiteId;
   List<String> get siteIds => List<String>.unmodifiable(_siteIds);
   List<Entitlement> get entitlements => List<Entitlement>.unmodifiable(_entitlements);
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _userId != null;
+  
+  /// Check if user is HQ (can impersonate)
+  bool get canImpersonate => _role == UserRole.hq;
 
   /// Check if user has a specific entitlement
   bool hasEntitlement(String feature) {
@@ -152,6 +170,21 @@ class AppState extends ChangeNotifier {
     _entitlements = <Entitlement>[];
     _isLoading = false;
     _error = null;
+    _impersonatingRole = null;
+    notifyListeners();
+  }
+  
+  /// Set impersonation role (HQ only)
+  void setImpersonation(UserRole targetRole) {
+    if (_role == UserRole.hq && targetRole != UserRole.hq) {
+      _impersonatingRole = targetRole;
+      notifyListeners();
+    }
+  }
+  
+  /// Clear impersonation and return to HQ view
+  void clearImpersonation() {
+    _impersonatingRole = null;
     notifyListeners();
   }
 }

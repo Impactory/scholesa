@@ -1,0 +1,37 @@
+# Ignore files for gcloud builds submit
+.git/
+.github/
+node_modules/
+.next/
+.dart_tool/
+.idea/
+*.iml
+
+# Flutter build artifacts (except web which we need)
+apps/empire_flutter/app/build/app/
+apps/empire_flutter/app/build/flutter_assets/
+apps/empire_flutter/app/.dart_tool/
+apps/empire_flutter/app/android/.gradle/
+apps/empire_flutter/app/ios/Pods/
+apps/empire_flutter/app/macos/Pods/
+
+# Other Flutter apps we don't need
+flutter/
+scholesa_app/
+
+# Test files
+*.test.ts
+*.test.js
+*.spec.ts
+
+# Docs (not needed for build)
+docs/
+
+# Local env files
+.env
+.env.local
+*.log
+
+# Large unnecessary files
+*.xd
+*.code-workspace
