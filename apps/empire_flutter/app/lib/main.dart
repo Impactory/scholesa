@@ -11,7 +11,8 @@ import 'auth/app_state.dart';
 import 'auth/auth_service.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
-import 'services/api_client.dart';
+import 'services/firestore_service.dart';
+import 'services/storage_service.dart';
 import 'services/session_bootstrap.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
@@ -67,7 +68,8 @@ class ScholesaApp extends StatefulWidget {
 
 class _ScholesaAppState extends State<ScholesaApp> {
   late final AppState _appState;
-  late final ApiClient _apiClient;
+  late final FirestoreService _firestoreService;
+  late final StorageService _storageService;
   late final OfflineQueue _offlineQueue;
   late final SyncCoordinator _syncCoordinator;
   late final AuthService _authService;
@@ -86,7 +88,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
     try {
       // Create core services
       _appState = AppState();
-      _apiClient = ApiClient();
+      _firestoreService = FirestoreService();
+      _storageService = StorageService();
       _offlineQueue = OfflineQueue();
       
       // Initialize offline queue
@@ -94,19 +97,19 @@ class _ScholesaAppState extends State<ScholesaApp> {
       
       _syncCoordinator = SyncCoordinator(
         queue: _offlineQueue,
-        apiClient: _apiClient,
+        firestoreService: _firestoreService,
       );
       await _syncCoordinator.init();
 
       _authService = AuthService(
         auth: FirebaseAuth.instance,
-        apiClient: _apiClient,
+        firestoreService: _firestoreService,
         appState: _appState,
       );
 
       _sessionBootstrap = SessionBootstrap(
         auth: FirebaseAuth.instance,
-        apiClient: _apiClient,
+        firestoreService: _firestoreService,
         appState: _appState,
       );
 
@@ -129,7 +132,6 @@ class _ScholesaAppState extends State<ScholesaApp> {
 
   @override
   void dispose() {
-    _apiClient.dispose();
     _syncCoordinator.dispose();
     super.dispose();
   }
@@ -163,35 +165,54 @@ class _ScholesaAppState extends State<ScholesaApp> {
       providers: <SingleChildWidget>[
         ChangeNotifierProvider.value(value: _appState),
         ChangeNotifierProvider.value(value: _syncCoordinator),
-        Provider.value(value: _apiClient),
+        Provider.value(value: _firestoreService),
+        Provider.value(value: _storageService),
         Provider.value(value: _authService),
         // HQ Admin services
         ChangeNotifierProvider(
-          create: (_) => UserAdminService(apiClient: _apiClient),
+          create: (_) => UserAdminService(firestoreService: _firestoreService),
         ),
         // Site Check-in services
         ChangeNotifierProvider(
-          create: (_) => CheckinService(apiClient: _apiClient, siteId: 'site_001'),
+          create: (_) => CheckinService(
+            firestoreService: _firestoreService, 
+            siteId: _appState.activeSiteId ?? 'default_site',
+          ),
         ),
         // Learner Missions services
         ChangeNotifierProvider(
-          create: (_) => MissionService(apiClient: _apiClient, learnerId: 'learner_001'),
+          create: (_) => MissionService(
+            firestoreService: _firestoreService, 
+            learnerId: _appState.userId ?? '',
+          ),
         ),
         // Learner Habits services
         ChangeNotifierProvider(
-          create: (_) => HabitService(apiClient: _apiClient, learnerId: 'learner_001'),
+          create: (_) => HabitService(
+            firestoreService: _firestoreService, 
+            learnerId: _appState.userId ?? '',
+          ),
         ),
         // Messages services
         ChangeNotifierProvider(
-          create: (_) => MessageService(apiClient: _apiClient, userId: 'user_001'),
+          create: (_) => MessageService(
+            firestoreService: _firestoreService, 
+            userId: _appState.userId ?? '',
+          ),
         ),
         // Parent services
         ChangeNotifierProvider(
-          create: (_) => ParentService(apiClient: _apiClient, parentId: 'parent_001'),
+          create: (_) => ParentService(
+            firestoreService: _firestoreService, 
+            parentId: _appState.userId ?? '',
+          ),
         ),
         // Educator services
         ChangeNotifierProvider(
-          create: (_) => EducatorService(apiClient: _apiClient, educatorId: 'educator_001'),
+          create: (_) => EducatorService(
+            firestoreService: _firestoreService, 
+            educatorId: _appState.userId ?? '',
+          ),
         ),
       ],
       child: Consumer<AppState>(

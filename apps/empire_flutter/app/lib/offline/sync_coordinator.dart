@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
-import '../services/api_client.dart';
+import '../services/firestore_service.dart';
 import 'offline_queue.dart';
 
-/// Coordinates sync between offline queue and server
+/// Coordinates sync between offline queue and Firestore
 class SyncCoordinator extends ChangeNotifier {
 
   SyncCoordinator({
     required OfflineQueue queue,
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     Connectivity? connectivity,
   })  : _queue = queue,
-        _apiClient = apiClient,
+        _firestoreService = firestoreService,
         _connectivity = connectivity ?? Connectivity();
   final OfflineQueue _queue;
-  final ApiClient _apiClient;
+  final FirestoreService _firestoreService;
   final Connectivity _connectivity;
 
   bool _isOnline = true;
@@ -83,45 +83,23 @@ class SyncCoordinator extends ChangeNotifier {
         return SyncResult(synced: 0, failed: 0, pending: 0);
       }
 
-      // Batch sync via /v1/sync/batch
-      final List<Map<String, Object?>> batch = pending
-          .where((QueuedOp op) => op.retryCount < 3) // Max 3 retries
-          .map((QueuedOp op) => <String, Object?>{
-                'opId': op.id,
-                'type': op.type.name,
-                'payload': op.payload,
-                'idempotencyKey': op.idempotencyKey,
-              })
-          .toList();
-
-      if (batch.isEmpty) {
-        return SyncResult(synced: 0, failed: pending.length, pending: 0);
-      }
-
-      try {
-        final Map<String, dynamic> response = await _apiClient.post('/v1/sync/batch', body: <String, dynamic>{'ops': batch});
-        final List<dynamic> results = response['results'] as List? ?? <dynamic>[];
-
-        for (final result in results) {
-          final String opId = result['opId'] as String;
-          final bool success = result['success'] as bool? ?? false;
-          final String? error = result['error'] as String?;
-
-          if (success) {
-            await _queue.updateStatus(opId, OpStatus.synced);
-            synced++;
-          } else {
-            await _queue.updateStatus(opId, OpStatus.failed, error: error);
-            failed++;
-          }
+      // Process each operation using Firestore directly
+      for (final QueuedOp op in pending) {
+        if (op.retryCount >= 3) {
+          failed++;
+          continue;
         }
-      } catch (e) {
-        debugPrint('Batch sync failed: $e');
-        // Mark all as failed for retry
-        for (final QueuedOp op in pending) {
+
+        try {
+          // Process operation based on type using Firestore
+          await _processOperation(op);
+          await _queue.updateStatus(op.id, OpStatus.synced);
+          synced++;
+        } catch (e) {
+          debugPrint('Sync operation failed: $e');
           await _queue.updateStatus(op.id, OpStatus.failed, error: e.toString());
+          failed++;
         }
-        failed = pending.length;
       }
     } finally {
       _isSyncing = false;
@@ -133,6 +111,37 @@ class SyncCoordinator extends ChangeNotifier {
       failed: failed,
       pending: _queue.pendingCount,
     );
+  }
+
+  /// Process a single queued operation
+  Future<void> _processOperation(QueuedOp op) async {
+    final firestore = _firestoreService.firestore;
+    final Map<String, dynamic> payload = Map<String, dynamic>.from(op.payload);
+
+    switch (op.type) {
+      case OpType.attendanceRecord:
+        await firestore.collection('attendanceRecords').add(payload);
+        break;
+      case OpType.presenceCheckin:
+        await firestore.collection('checkins').add(payload);
+        break;
+      case OpType.presenceCheckout:
+        final String docId = payload['checkinId'] as String? ?? '';
+        if (docId.isNotEmpty) {
+          payload.remove('checkinId');
+          await firestore.collection('checkins').doc(docId).update(payload);
+        }
+        break;
+      case OpType.incidentSubmit:
+        await firestore.collection('incidents').add(payload);
+        break;
+      case OpType.messageSend:
+        await firestore.collection('messages').add(payload);
+        break;
+      case OpType.attemptSaveDraft:
+        await firestore.collection('drafts').add(payload);
+        break;
+    }
   }
 
   /// Force retry all failed ops

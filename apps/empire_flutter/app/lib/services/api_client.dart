@@ -95,12 +95,23 @@ class ApiClient {
   Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return <String, dynamic>{};
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        // Response is not JSON, return empty map
+        return <String, dynamic>{};
+      }
     }
 
-    final Map<String, dynamic> errorBody = response.body.isNotEmpty
-        ? jsonDecode(response.body) as Map<String, dynamic>
-        : <String, dynamic>{};
+    Map<String, dynamic> errorBody = <String, dynamic>{};
+    if (response.body.isNotEmpty) {
+      try {
+        errorBody = jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        // Response is not JSON (e.g., HTML error page)
+        errorBody = <String, dynamic>{'message': 'Server error: ${response.statusCode}'};
+      }
+    }
 
     throw ApiException(
       statusCode: response.statusCode,

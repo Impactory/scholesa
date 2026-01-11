@@ -1,10 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#10B981"/>
-      <stop offset="100%" style="stop-color:#059669"/>
+    <!-- Three pillar gradient: Future Skills (Blue) → Leadership (Purple) → Impact (Green) -->
+    <linearGradient id="pillarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#10B981"/>
     </linearGradient>
+    <!-- Inner glow gradient -->
+    <radialGradient id="glowGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </radialGradient>
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="100" fill="url(#grad)"/>
-  <path d="M128 282.9v85.3l128 69.8 128-85.3v-85.3L256 341l-128-58.1zM256 64L64 170.7l192 106.6 165.3-89.5V320h36.4V170.7L256 64z" fill="white"/>
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="96" fill="url(#pillarGrad)"/>
+  <!-- Subtle glow overlay -->
+  <rect width="512" height="512" rx="96" fill="url(#glowGrad)"/>
+  <!-- Scholesa "S" letterform with academic cap motif -->
+  <g filter="url(#shadow)">
+    <!-- Academic cap / graduation mortarboard top -->
+    <polygon points="256,80 120,160 256,200 392,160" fill="white"/>
+    <polygon points="256,200 120,160 120,180 256,220" fill="#f0f0f0"/>
+    <polygon points="256,200 392,160 392,180 256,220" fill="#e8e8e8"/>
+    <!-- Tassel -->
+    <circle cx="392" cy="160" r="8" fill="#FFD700"/>
+    <path d="M392 168 Q400 200 390 240 Q385 260 395 280" stroke="#FFD700" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="395" cy="284" r="10" fill="#FFD700"/>
+    <!-- Stylized "S" shape representing growth/learning journey -->
+    <path d="M180 280 
+             Q180 240 220 240 
+             L340 240 
+             Q380 240 380 280 
+             Q380 320 340 320 
+             L220 320 
+             Q180 320 180 360 
+             Q180 400 220 400 
+             L340 400" 
+          stroke="white" stroke-width="32" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Three dots representing 3 pillars -->
+    <circle cx="172" cy="420" r="16" fill="#3B82F6"/>
+    <circle cx="256" cy="440" r="16" fill="#8B5CF6"/>
+    <circle cx="340" cy="420" r="16" fill="#10B981"/>
+  </g>
 </svg>

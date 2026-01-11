@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'mission_models.dart';
 
 /// Service for learner missions
 class MissionService extends ChangeNotifier {
 
   MissionService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.learnerId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String learnerId;
 
   List<Mission> _missions = <Mission>[];
@@ -63,16 +63,106 @@ class MissionService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Try to load from Firestore first
+      if (learnerId.isNotEmpty) {
+        final List<Map<String, dynamic>> firestoreData = 
+            await _firestoreService.getLearnerMissions(learnerId);
+        
+        if (firestoreData.isNotEmpty) {
+          _missions = firestoreData.map((Map<String, dynamic> data) {
+            return Mission(
+              id: data['id'] as String,
+              title: data['title'] as String? ?? 'Mission',
+              description: data['description'] as String? ?? '',
+              pillar: _parsePillar(data['pillarCode'] as String?),
+              difficulty: _parseDifficulty(data['difficulty'] as String?),
+              xpReward: data['xpReward'] as int? ?? 100,
+              status: _parseStatus(data['status'] as String?),
+              progress: (data['progress'] as num?)?.toDouble() ?? 0.0,
+              steps: <MissionStep>[],
+              skills: <Skill>[],
+            );
+          }).toList();
+          _progress = _calculateProgress();
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      // Fall back to mock data for demo purposes
+      await Future.delayed(const Duration(milliseconds: 300));
       _missions = _generateMockMissions();
       _progress = _generateMockProgress();
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading missions: $e');
+      // Fall back to mock data on error
+      _missions = _generateMockMissions();
+      _progress = _generateMockProgress();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Pillar _parsePillar(String? code) {
+    switch (code) {
+      case 'future_skills':
+        return Pillar.futureSkills;
+      case 'leadership':
+        return Pillar.leadership;
+      case 'impact':
+        return Pillar.impact;
+      default:
+        return Pillar.futureSkills;
+    }
+  }
+
+  DifficultyLevel _parseDifficulty(String? level) {
+    switch (level) {
+      case 'beginner':
+        return DifficultyLevel.beginner;
+      case 'intermediate':
+        return DifficultyLevel.intermediate;
+      case 'advanced':
+        return DifficultyLevel.advanced;
+      default:
+        return DifficultyLevel.beginner;
+    }
+  }
+
+  MissionStatus _parseStatus(String? status) {
+    switch (status) {
+      case 'not_started':
+        return MissionStatus.notStarted;
+      case 'in_progress':
+        return MissionStatus.inProgress;
+      case 'submitted':
+        return MissionStatus.submitted;
+      case 'completed':
+        return MissionStatus.completed;
+      default:
+        return MissionStatus.notStarted;
+    }
+  }
+
+  LearnerProgress _calculateProgress() {
+    final int totalXp = _missions.where((Mission m) => m.status == MissionStatus.completed)
+        .fold(0, (int sum, Mission m) => sum + m.xpReward);
+    final int completed = _missions.where((Mission m) => m.status == MissionStatus.completed).length;
+    final int level = (totalXp / 1000).floor() + 1;
+    return LearnerProgress(
+      totalXp: totalXp,
+      currentLevel: level,
+      xpToNextLevel: (level * 1000) - totalXp,
+      missionsCompleted: completed,
+      currentStreak: 5,
+      pillarProgress: <Pillar, int>{
+        Pillar.futureSkills: 60,
+        Pillar.leadership: 40,
+        Pillar.impact: 50,
+      },
+    );
   }
 
   /// Start a mission

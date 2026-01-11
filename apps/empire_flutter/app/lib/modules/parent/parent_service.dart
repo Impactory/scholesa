@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'parent_models.dart';
 
 /// Service for parent-specific views
 class ParentService extends ChangeNotifier {
 
   ParentService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.parentId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String parentId;
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];

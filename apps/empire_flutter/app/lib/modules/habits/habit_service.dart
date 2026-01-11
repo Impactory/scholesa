@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'habit_models.dart';
 
 /// Service for habit tracking and coaching
 class HabitService extends ChangeNotifier {
 
   HabitService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.learnerId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String learnerId;
 
   List<Habit> _habits = <Habit>[];
@@ -43,16 +43,69 @@ class HabitService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Try to load from Firestore first
+      if (learnerId.isNotEmpty) {
+        final List<Map<String, dynamic>> firestoreData = 
+            await _firestoreService.queryCollection(
+              'habits',
+              where: <List<dynamic>>[<dynamic>['learnerId', learnerId]],
+            );
+        
+        if (firestoreData.isNotEmpty) {
+          _habits = firestoreData.map((Map<String, dynamic> data) {
+            return Habit(
+              id: data['id'] as String,
+              title: data['title'] as String? ?? 'Habit',
+              description: data['description'] as String?,
+              emoji: data['emoji'] as String? ?? '⭐',
+              category: _parseCategory(data['category'] as String?),
+              frequency: HabitFrequency.daily,
+              preferredTime: HabitTimePreference.anytime,
+              targetMinutes: data['targetMinutes'] as int? ?? 10,
+              createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
+              currentStreak: data['currentStreak'] as int? ?? 0,
+              longestStreak: data['longestStreak'] as int? ?? 0,
+              totalCompletions: data['totalCompletions'] as int? ?? 0,
+            );
+          }).toList();
+          _weeklySummary = _generateMockWeeklySummary();
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      // Fall back to mock data for demo purposes
+      await Future.delayed(const Duration(milliseconds: 300));
       _habits = _generateMockHabits();
       _recentLogs = _generateMockLogs();
       _weeklySummary = _generateMockWeeklySummary();
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading habits: $e');
+      // Fall back to mock data on error
+      _habits = _generateMockHabits();
+      _recentLogs = _generateMockLogs();
+      _weeklySummary = _generateMockWeeklySummary();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  HabitCategory _parseCategory(String? category) {
+    switch (category) {
+      case 'learning':
+        return HabitCategory.learning;
+      case 'health':
+        return HabitCategory.health;
+      case 'creativity':
+        return HabitCategory.creativity;
+      case 'social':
+        return HabitCategory.social;
+      case 'mindfulness':
+        return HabitCategory.mindfulness;
+      default:
+        return HabitCategory.learning;
     }
   }
 

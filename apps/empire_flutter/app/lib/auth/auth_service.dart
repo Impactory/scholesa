@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../services/api_client.dart';
+import '../services/firestore_service.dart';
 import 'app_state.dart';
 
 /// Service for handling Firebase authentication
@@ -8,13 +8,13 @@ class AuthService {
 
   AuthService({
     required FirebaseAuth auth,
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required AppState appState,
   })  : _auth = auth,
-        _apiClient = apiClient,
+        _firestoreService = firestoreService,
         _appState = appState;
   final FirebaseAuth _auth;
-  final ApiClient _apiClient;
+  final FirestoreService _firestoreService;
   final AppState _appState;
 
   /// Current Firebase user
@@ -57,6 +57,8 @@ class AuthService {
         password: password,
       );
       await credential.user?.updateDisplayName(displayName);
+      // Create user profile in Firestore
+      await _firestoreService.createUserProfile(displayName: displayName);
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -73,11 +75,13 @@ class AuthService {
     _appState.clear();
   }
 
-  /// Bootstrap session by calling /v1/me
+  /// Bootstrap session by fetching user profile from Firestore
   Future<void> _bootstrapSession() async {
     try {
-      final Map<String, dynamic> response = await _apiClient.get('/v1/me');
-      _appState.updateFromMeResponse(response);
+      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+      if (profile != null) {
+        _appState.updateFromMeResponse(profile);
+      }
     } catch (e) {
       debugPrint('Failed to bootstrap session: $e');
       _appState.setError('Failed to load user profile');
@@ -85,7 +89,7 @@ class AuthService {
     }
   }
 
-  /// Refresh session (call /v1/me again)
+  /// Refresh session (fetch profile from Firestore again)
   Future<void> refreshSession() async {
     if (currentUser == null) return;
     await _bootstrapSession();

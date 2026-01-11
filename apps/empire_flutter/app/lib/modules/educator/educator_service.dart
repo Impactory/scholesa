@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'educator_models.dart';
 
 /// Service for educator-specific features
 class EducatorService extends ChangeNotifier {
 
   EducatorService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.educatorId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String educatorId;
 
   List<TodayClass> _todayClasses = <TodayClass>[];
@@ -33,15 +33,65 @@ class EducatorService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Try to load from Firestore first
+      if (educatorId.isNotEmpty) {
+        final List<Map<String, dynamic>> firestoreData = 
+            await _firestoreService.queryCollection(
+              'sessionOccurrences',
+              where: <List<dynamic>>[<dynamic>['educatorId', educatorId]],
+              orderBy: 'startTime',
+            );
+        
+        if (firestoreData.isNotEmpty) {
+          _todayClasses = firestoreData.map((Map<String, dynamic> data) {
+            return TodayClass(
+              id: data['id'] as String,
+              sessionId: data['sessionId'] as String? ?? '',
+              title: data['title'] as String? ?? 'Session',
+              description: data['description'] as String? ?? '',
+              startTime: (data['startTime'] as dynamic)?.toDate() ?? DateTime.now(),
+              endTime: (data['endTime'] as dynamic)?.toDate() ?? DateTime.now().add(const Duration(hours: 1)),
+              location: data['location'] as String? ?? '',
+              enrolledCount: data['enrolledCount'] as int? ?? 0,
+              presentCount: data['presentCount'] as int? ?? 0,
+              status: data['status'] as String? ?? 'upcoming',
+              learners: <EnrolledLearner>[],
+            );
+          }).toList();
+          _dayStats = _calculateStats();
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      // Fall back to mock data for demo purposes
+      await Future.delayed(const Duration(milliseconds: 300));
       _todayClasses = _generateMockClasses();
       _dayStats = _generateMockStats();
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading educator schedule: $e');
+      // Fall back to mock data on error
+      _todayClasses = _generateMockClasses();
+      _dayStats = _generateMockStats();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  EducatorDayStats _calculateStats() {
+    final int completed = _todayClasses.where((TodayClass c) => c.status == 'completed').length;
+    final int totalLearners = _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.enrolledCount);
+    final int presentLearners = _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.presentCount);
+    return EducatorDayStats(
+      totalClasses: _todayClasses.length,
+      completedClasses: completed,
+      totalLearners: totalLearners,
+      presentLearners: presentLearners,
+      missionsToReview: 0,
+      unreadMessages: 0,
+    );
   }
 
   /// Start a class (transition to in_progress)

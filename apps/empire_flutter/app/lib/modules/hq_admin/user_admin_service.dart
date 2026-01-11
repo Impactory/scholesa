@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../../auth/app_state.dart' show UserRole, UserRoleExtension;
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'user_models.dart';
 
 /// Service for HQ user administration
 class UserAdminService extends ChangeNotifier {
 
-  UserAdminService({required ApiClient apiClient}) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  UserAdminService({required FirestoreService firestoreService}) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
 
   List<UserModel> _users = <UserModel>[];
   List<SiteModel> _sites = <SiteModel>[];

@@ -1,20 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../auth/app_state.dart';
-import 'api_client.dart';
+import 'firestore_service.dart';
 
-/// Bootstraps the app session after Firebase init
+/// Bootstraps the app session after Firebase init using Firestore directly
 class SessionBootstrap {
 
   SessionBootstrap({
     required FirebaseAuth auth,
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required AppState appState,
   })  : _auth = auth,
-        _apiClient = apiClient,
+        _firestoreService = firestoreService,
         _appState = appState;
   final FirebaseAuth _auth;
-  final ApiClient _apiClient;
+  final FirestoreService _firestoreService;
   final AppState _appState;
 
   /// Initialize session - call after Firebase.initializeApp()
@@ -29,18 +29,16 @@ class SessionBootstrap {
     }
 
     try {
-      // Fetch user profile from API
-      final Map<String, dynamic> response = await _apiClient.get('/v1/me');
-      _appState.updateFromMeResponse(response);
+      // Fetch user profile directly from Firestore
+      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+      if (profile != null) {
+        _appState.updateFromMeResponse(profile);
+      } else {
+        _appState.setLoading(false);
+      }
     } catch (e) {
       debugPrint('Session bootstrap failed: $e');
-      // Clear any stale auth state if API fails
-      if (e is ApiException && e.statusCode == 401) {
-        await _auth.signOut();
-        _appState.clear();
-      } else {
-        _appState.setError('Failed to load profile. Please try again.');
-      }
+      _appState.setError('Failed to load profile. Please try again.');
     }
   }
 

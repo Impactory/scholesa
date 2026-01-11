@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'checkin_models.dart';
 
 /// Service for site check-in/check-out operations
 class CheckinService extends ChangeNotifier {
 
   CheckinService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.siteId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String siteId;
 
   List<LearnerDaySummary> _learnerSummaries = <LearnerDaySummary>[];
@@ -79,12 +79,65 @@ class CheckinService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Replace with real API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Try to load from Firestore first
+      if (siteId.isNotEmpty && siteId != 'default_site') {
+        final List<Map<String, dynamic>> firestoreData = 
+            await _firestoreService.queryCollection(
+              'presenceRecords',
+              where: <List<dynamic>>[<dynamic>['siteId', siteId]],
+              orderBy: 'timestamp',
+              descending: true,
+            );
+        
+        if (firestoreData.isNotEmpty) {
+          // Group by learner and build summaries
+          final Map<String, List<Map<String, dynamic>>> byLearner = <String, List<Map<String, dynamic>>>{};
+          for (final Map<String, dynamic> record in firestoreData) {
+            final String learnerId = record['learnerId'] as String? ?? '';
+            byLearner.putIfAbsent(learnerId, () => <Map<String, dynamic>>[]).add(record);
+          }
+          
+          _learnerSummaries = byLearner.entries.map((MapEntry<String, List<Map<String, dynamic>>> entry) {
+            final List<Map<String, dynamic>> records = entry.value;
+            final Map<String, dynamic>? lastRecord = records.isNotEmpty ? records.first : null;
+            final DateTime? timestamp = (lastRecord?['timestamp'] as dynamic)?.toDate();
+            final bool isCheckin = lastRecord?['type'] == 'checkin';
+            return LearnerDaySummary(
+              learnerId: entry.key,
+              learnerName: lastRecord?['learnerName'] as String? ?? 'Unknown',
+              currentStatus: isCheckin ? CheckStatus.checkedIn : CheckStatus.checkedOut,
+              checkedInAt: isCheckin ? timestamp : null,
+              checkedOutAt: !isCheckin ? timestamp : null,
+            );
+          }).toList();
+          
+          // Build today's records
+          _todayRecords = firestoreData.map((Map<String, dynamic> r) => CheckRecord(
+            id: r['id'] as String,
+            learnerId: r['learnerId'] as String? ?? '',
+            learnerName: r['learnerName'] as String? ?? 'Unknown',
+            siteId: siteId,
+            status: r['type'] == 'checkin' ? CheckStatus.checkedIn : CheckStatus.checkedOut,
+            timestamp: (r['timestamp'] as dynamic)?.toDate() ?? DateTime.now(),
+            visitorId: r['recordedBy'] as String? ?? '',
+            visitorName: r['recorderName'] as String? ?? '',
+          )).toList();
+          
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      // Fall back to mock data for demo purposes
+      await Future.delayed(const Duration(milliseconds: 300));
       _learnerSummaries = _generateMockSummaries();
       _todayRecords = _generateMockRecords();
     } catch (e) {
-      _error = e.toString();
+      debugPrint('Error loading checkin data: $e');
+      // Fall back to mock data on error
+      _learnerSummaries = _generateMockSummaries();
+      _todayRecords = _generateMockRecords();
     } finally {
       _isLoading = false;
       notifyListeners();

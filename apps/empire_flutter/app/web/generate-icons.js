@@ -1,148 +1,84 @@
-// Generate PNG icons for Scholesa Flutter web app
-// Run with: node generate-icons.js
+#!/usr/bin/env node
+/**
+ * Scholesa Icon Generator
+ * 
+ * Generates PNG icons from the SVG source for web/PWA
+ * Run: node generate-icons.js
+ * 
+ * Prerequisites:
+ *   npm install sharp
+ */
 
 const fs = require('fs');
 const path = require('path');
 
-// Simple 1x1 green pixel PNG as base (we'll create proper icons)
-// This creates placeholder icons - in production, use proper icon generation
+async function generateIcons() {
+  const svgPath = path.join(__dirname, 'icons', 'icon.svg');
+  const iconsDir = path.join(__dirname, 'icons');
+  
+  const svgContent = fs.readFileSync(svgPath, 'utf8');
+  
+  const sizes = [
+    { name: 'favicon-16x16.png', size: 16 },
+    { name: 'favicon-32x32.png', size: 32 },
+    { name: 'Icon-192.png', size: 192 },
+    { name: 'Icon-512.png', size: 512 },
+    { name: 'Icon-maskable-192.png', size: 192 },
+    { name: 'Icon-maskable-512.png', size: 512 },
+  ];
 
-const iconsDir = path.join(__dirname, 'icons');
-
-// Ensure icons directory exists
-if (!fs.existsSync(iconsDir)) {
-  fs.mkdirSync(iconsDir, { recursive: true });
+  try {
+    const sharp = require('sharp');
+    
+    for (const { name, size } of sizes) {
+      const outputPath = path.join(iconsDir, name);
+      const isMaskable = name.includes('maskable');
+      const padding = isMaskable ? Math.floor(size * 0.1) : 0;
+      const innerSize = size - (padding * 2);
+      
+      let buffer;
+      if (isMaskable) {
+        buffer = await sharp(Buffer.from(svgContent))
+          .resize(innerSize, innerSize)
+          .extend({
+            top: padding,
+            bottom: padding,
+            left: padding,
+            right: padding,
+            background: { r: 59, g: 130, b: 246, alpha: 1 }
+          })
+          .png()
+          .toBuffer();
+      } else {
+        buffer = await sharp(Buffer.from(svgContent))
+          .resize(size, size)
+          .png()
+          .toBuffer();
+      }
+      
+      fs.writeFileSync(outputPath, buffer);
+      console.log(`✓ Generated ${name} (${size}x${size})`);
+    }
+    
+    const faviconBuffer = await sharp(Buffer.from(svgContent))
+      .resize(32, 32)
+      .png()
+      .toBuffer();
+    fs.writeFileSync(path.join(iconsDir, 'favicon.ico'), faviconBuffer);
+    console.log('✓ Generated favicon.ico');
+    
+    console.log('\n✅ All icons generated successfully!');
+    
+  } catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+      console.log('Sharp not installed.');
+      console.log('\nTo generate PNG icons:');
+      console.log('  npm install sharp && node generate-icons.js');
+      console.log('\nOr open generate-icons.html in browser.\n');
+    } else {
+      throw err;
+    }
+  }
 }
 
-// Create a simple HTML file that can be opened in browser to download icons
-const html = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Scholesa Icon Generator</title>
-  <style>
-    body { font-family: system-ui; padding: 40px; background: #1e293b; color: white; }
-    canvas { display: block; margin: 20px 0; border: 1px solid #334155; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #10B981; border: none; color: white; border-radius: 8px; }
-    .icons { display: flex; flex-wrap: wrap; gap: 20px; }
-    .icon-item { text-align: center; }
-  </style>
-</head>
-<body>
-  <h1>Scholesa Icon Generator</h1>
-  <p>Click each button to download the icon</p>
-  <div class="icons" id="icons"></div>
-
-  <script>
-    const sizes = [
-      { name: 'favicon-16x16.png', size: 16 },
-      { name: 'favicon-32x32.png', size: 32 },
-      { name: 'Icon-192.png', size: 192 },
-      { name: 'Icon-512.png', size: 512 },
-      { name: 'Icon-maskable-192.png', size: 192, maskable: true },
-      { name: 'Icon-maskable-512.png', size: 512, maskable: true },
-    ];
-
-    function drawIcon(ctx, size, maskable = false) {
-      const padding = maskable ? size * 0.1 : 0;
-      const innerSize = size - padding * 2;
-      const cornerRadius = innerSize * 0.2;
-
-      // Background gradient
-      const gradient = ctx.createLinearGradient(0, 0, size, size);
-      gradient.addColorStop(0, '#10B981');
-      gradient.addColorStop(1, '#059669');
-      
-      if (maskable) {
-        // Full square for maskable
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-      } else {
-        // Rounded rectangle
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.roundRect(padding, padding, innerSize, innerSize, cornerRadius);
-        ctx.fill();
-      }
-
-      // School icon (simplified)
-      ctx.fillStyle = 'white';
-      const iconScale = innerSize / 512;
-      const offsetX = padding;
-      const offsetY = padding;
-      
-      ctx.save();
-      ctx.translate(offsetX, offsetY);
-      ctx.scale(iconScale, iconScale);
-      
-      // Draw school cap icon
-      ctx.beginPath();
-      ctx.moveTo(128, 282.9);
-      ctx.lineTo(128, 368.2);
-      ctx.lineTo(256, 438);
-      ctx.lineTo(384, 352.7);
-      ctx.lineTo(384, 282.9);
-      ctx.lineTo(256, 341);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.beginPath();
-      ctx.moveTo(256, 64);
-      ctx.lineTo(64, 170.7);
-      ctx.lineTo(256, 277.3);
-      ctx.lineTo(421.3, 187.8);
-      ctx.lineTo(421.3, 320);
-      ctx.lineTo(457.7, 320);
-      ctx.lineTo(457.7, 170.7);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.restore();
-    }
-
-    const container = document.getElementById('icons');
-    
-    sizes.forEach(({ name, size, maskable }) => {
-      const div = document.createElement('div');
-      div.className = 'icon-item';
-      
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      
-      drawIcon(ctx, size, maskable);
-      
-      const btn = document.createElement('button');
-      btn.textContent = 'Download ' + name;
-      btn.onclick = () => {
-        const link = document.createElement('a');
-        link.download = name;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      };
-      
-      div.appendChild(canvas);
-      div.appendChild(document.createElement('br'));
-      div.appendChild(btn);
-      container.appendChild(div);
-    });
-  </script>
-</body>
-</html>`;
-
-fs.writeFileSync(path.join(__dirname, 'generate-icons.html'), html);
-console.log('Created generate-icons.html - open in browser to generate icons');
-
-// Also create a simple favicon.ico placeholder (1x1 green pixel)
-// In production, use a proper ICO file
-const icoPlaceholder = Buffer.from([
-  0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x10, 0x10,
-  0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x68, 0x04,
-  0x00, 0x00, 0x16, 0x00, 0x00, 0x00
-]);
-
-console.log('\\nTo generate proper icons:');
-console.log('1. Open generate-icons.html in a browser');
-console.log('2. Download each icon');
-console.log('3. Place them in the web/icons folder');
-console.log('\\nOr use an online tool like realfavicongenerator.net');
+generateIcons().catch(console.error);

@@ -62,9 +62,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         context.go('/');
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {

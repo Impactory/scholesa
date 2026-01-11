@@ -4,19 +4,19 @@ class AppConfig {
   /// Firebase project ID
   static const String firebaseProjectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: 'scholesa-dev',
+    defaultValue: 'studio-3328096157-e3f79',
   );
 
-  /// API base URL for Cloud Run backend
+  /// API base URL for Cloud Functions backend
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8080',
+    defaultValue: 'https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/apiV1',
   );
 
   /// Current environment: dev, staging, prod
   static const String environment = String.fromEnvironment(
     'ENVIRONMENT',
-    defaultValue: 'dev',
+    defaultValue: 'prod',
   );
 
   /// Whether to enable debug logging

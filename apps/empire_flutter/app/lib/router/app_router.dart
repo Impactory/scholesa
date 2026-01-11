@@ -79,7 +79,7 @@ bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
 GoRouter createAppRouter(AppState appState) {
   return GoRouter(
     refreshListenable: appState,
-    initialLocation: '/',
+    initialLocation: '/welcome',
     debugLogDiagnostics: true,
     
     redirect: (BuildContext context, GoRouterState state) {
@@ -90,8 +90,11 @@ GoRouter createAppRouter(AppState appState) {
       final bool isRegisterRoute = state.matchedLocation == '/register';
       final bool isPublicRoute = isWelcomeRoute || isLoginRoute || isRegisterRoute;
       
-      // Still loading, stay on current route
-      if (isLoading) return null;
+      // Still loading and on public route, stay there (show landing page while loading)
+      if (isLoading && isPublicRoute) return null;
+      
+      // Still loading and NOT on public route, go to welcome page
+      if (isLoading && !isPublicRoute) return '/welcome';
       
       // Not logged in and not on public route -> go to landing page
       if (!isLoggedIn && !isPublicRoute) return '/welcome';

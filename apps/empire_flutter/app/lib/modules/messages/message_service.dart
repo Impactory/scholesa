@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
-import '../../services/api_client.dart';
+import '../../services/firestore_service.dart';
 import 'message_models.dart';
 
 /// Service for messages and notifications
 class MessageService extends ChangeNotifier {
 
   MessageService({
-    required ApiClient apiClient,
+    required FirestoreService firestoreService,
     required this.userId,
-  }) : _apiClient = apiClient;
-  final ApiClient _apiClient;
+  }) : _firestoreService = firestoreService;
+  final FirestoreService _firestoreService;
   final String userId;
 
   List<Message> _messages = <Message>[];
