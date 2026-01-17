@@ -7,8 +7,8 @@ export interface BaseEntity { id: ID; createdAt: EpochMs; updatedAt?: EpochMs; m
    GOOGLE CLASSROOM INTEGRATION
    =========================== */
 
-export type IntegrationProvider = "google_classroom";
-export type IntegrationStatus = "active" | "revoked" | "error";
+export type IntegrationProvider = 'google_classroom';
+export type IntegrationStatus = 'active' | 'revoked' | 'error';
 
 export interface IntegrationConnection extends BaseEntity {
   ownerUserId: ID; // educator uid
@@ -27,7 +27,7 @@ export interface ExternalCourseLink extends BaseEntity {
   siteId: ID;
   sessionId: ID;
 
-  syncPolicy?: "manual" | "daily" | "weekly";
+  syncPolicy?: 'manual' | 'daily' | 'weekly';
   lastRosterSyncAt?: EpochMs;
   lastCourseworkSyncAt?: EpochMs;
 }
@@ -37,8 +37,8 @@ export interface ExternalUserLink extends BaseEntity {
   providerUserId: string;
   scholesaUserId: ID;
   siteId: ID;
-  roleHint?: "learner" | "educator";
-  matchSource?: "email" | "manual" | "sis";
+  roleHint?: 'learner' | 'educator';
+  matchSource?: 'email' | 'manual' | 'sis';
 }
 
 export interface ExternalCourseworkLink extends BaseEntity {
@@ -57,10 +57,10 @@ export interface ExternalCourseworkLink extends BaseEntity {
 }
 
 export interface SyncJob extends BaseEntity {
-  type: "roster_import" | "coursework_publish" | "submission_pull" | "grade_push";
+  type: 'roster_import' | 'coursework_publish' | 'submission_pull' | 'grade_push';
   siteId?: ID;
   requestedBy: ID;
-  status: "queued" | "running" | "failed" | "completed";
+  status: 'queued' | 'running' | 'failed' | 'completed';
   cursor?: string;
   nextPageToken?: string;
   lastError?: string;
@@ -70,7 +70,7 @@ export interface SyncCursor extends BaseEntity {
   ownerUserId: ID;
   provider: IntegrationProvider;
   providerCourseId: string;
-  cursorType: "roster" | "coursework" | "submissions";
+  cursorType: 'roster' | 'coursework' | 'submissions';
   nextPageToken?: string;
 }
 
@@ -78,8 +78,8 @@ export interface SyncCursor extends BaseEntity {
    GITHUB INTEGRATION
    =========================== */
 
-export type GitHubAuthType = "oauth_app" | "github_app";
-export type GitHubConnectionStatus = "active" | "revoked" | "error";
+export type GitHubAuthType = 'oauth_app' | 'github_app';
+export type GitHubConnectionStatus = 'active' | 'revoked' | 'error';
 
 export interface GitHubConnection extends BaseEntity {
   ownerUserId: ID; // educator uid (or admin uid for org installs)
@@ -110,7 +110,7 @@ export interface ExternalRepoLink extends BaseEntity {
   missionId?: ID;
   missionAttemptId?: ID;
 
-  status?: "active" | "archived";
+  status?: 'active' | 'archived';
 }
 
 export interface ExternalPullRequestLink extends BaseEntity {
@@ -121,7 +121,7 @@ export interface ExternalPullRequestLink extends BaseEntity {
   learnerId?: ID;
   missionAttemptId?: ID;
 
-  status?: "open" | "merged" | "closed";
+  status?: 'open' | 'merged' | 'closed';
 }
 
 export interface GitHubWebhookDelivery extends BaseEntity {
@@ -130,7 +130,7 @@ export interface GitHubWebhookDelivery extends BaseEntity {
   repoFullName?: string;
   installationId?: string;
   processedAt?: EpochMs;
-  status?: "ok" | "failed";
+  status?: 'ok' | 'failed';
   lastError?: string;
 }
 
@@ -138,9 +138,9 @@ export interface GitHubWebhookDelivery extends BaseEntity {
    PHYSICAL SCHOOL OPERATIONS / SAFETY / COMPLIANCE
    =========================== */
 
-export type IncidentSeverity = "minor" | "major" | "critical";
-export type IncidentStatus = "draft" | "submitted" | "reviewed" | "closed";
-export type ConsentStatus = "active" | "expired" | "revoked";
+export type IncidentSeverity = 'minor' | 'major' | 'critical';
+export type IncidentStatus = 'draft' | 'submitted' | 'reviewed' | 'closed';
+export type ConsentStatus = 'active' | 'expired' | 'revoked';
 
 export interface MediaConsent extends BaseEntity {
   siteId: ID;
@@ -176,7 +176,7 @@ export interface IncidentReport extends BaseEntity {
   sessionOccurrenceId?: ID;
   reportedBy: ID; // educator/admin
   severity: IncidentSeverity;
-  category: "injury" | "behavior" | "bullying" | "facility" | "late_pickup" | "other";
+  category: 'injury' | 'behavior' | 'bullying' | 'facility' | 'late_pickup' | 'other';
   status: IncidentStatus;
 
   summary: string;
@@ -216,7 +216,7 @@ export interface MissionSnapshot extends BaseEntity {
   pillarCodes: PillarCode[];
   skillIds?: ID[];
   bodyJson?: any; // immutable snapshot of mission content blocks
-  publisherType?: "hq" | "partner" | "site";
+  publisherType?: 'hq' | 'partner' | 'site';
   publisherId?: ID;
   publishedAt?: EpochMs;
 }
@@ -241,7 +241,7 @@ export interface RubricApplication extends BaseEntity {
   overallNote?: string;
 }
 
-export type IdentityLinkProvider = "google_classroom" | "github";
+export type IdentityLinkProvider = 'google_classroom' | 'github';
 
 export interface ExternalIdentityLink extends BaseEntity {
   siteId: ID;
@@ -249,9 +249,9 @@ export interface ExternalIdentityLink extends BaseEntity {
   providerUserId: string;
 
   scholesaUserId?: ID; // linked uid
-  status: "unmatched" | "linked" | "ignored";
+  status: 'unmatched' | 'linked' | 'ignored';
 
-  suggestedMatches?: Array<{ scholesaUserId: ID; reason: string; confidence: "low"|"med"|"high" }>;
+  suggestedMatches?: Array<{ scholesaUserId: ID; reason: string; confidence: 'low'|'med'|'high' }>;
   approvedBy?: ID; // admin/HQ
   approvedAt?: EpochMs;
 }

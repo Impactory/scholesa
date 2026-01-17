@@ -57,7 +57,7 @@ if (!admin.apps.length) {
         // No explicit credentials provided — create a default app.
         // This avoids throwing during build/collect-phase; runtime calls will fail fast if ADC is not available.
         // Log guidance for the developer.
-        // eslint-disable-next-line no-console
+         
         console.warn(
           'Firebase Admin SDK not configured via env; initializing default app. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS for production.',
         );
@@ -65,14 +65,14 @@ if (!admin.apps.length) {
           admin.initializeApp();
         } catch (e) {
           // If initializeApp throws for some reason, still continue to allow build to proceed
-          // eslint-disable-next-line no-console
+           
           console.warn('Failed to initialize default Firebase Admin app:', e);
         }
       }
     }
   } catch (error) {
     // initialization errors should be logged but not throw during build/collect-phase
-    // eslint-disable-next-line no-console
+     
     console.warn('Firebase Admin initialization failed (continuing build):', error);
   }
 }

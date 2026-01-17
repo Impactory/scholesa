@@ -57,7 +57,7 @@ export function AttendanceTaker() {
     try {
       await setDoc(doc(attendanceCollection, attendanceId), record);
     } catch (err) {
-      console.error("Error marking attendance:", err);
+      console.error('Error marking attendance:', err);
     }
   };
 

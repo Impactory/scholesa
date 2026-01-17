@@ -3,6 +3,7 @@ import tseslint from "typescript-eslint";
 import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+import globals from "globals";
 
 export default tseslint.config(
   js.configs.recommended,
@@ -19,14 +20,21 @@ export default tseslint.config(
       "**/flutter/**",
       "**/*.config.js",
       "**/*.config.mjs",
+      "**/dataconnect/**",
     ],
   },
   {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    files: ["**/*.ts", "**/*.tsx"],
     plugins: {
       "@next/next": nextPlugin,
       "react": reactPlugin,
       "react-hooks": reactHooksPlugin,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
@@ -42,9 +50,31 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
+    files: ["**/*.js", "**/*.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["**/*.cjs", ".eslintrc*.cjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        module: "readonly",
+        require: "readonly",
+        exports: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "no-undef": "off",
     },
   }
 );

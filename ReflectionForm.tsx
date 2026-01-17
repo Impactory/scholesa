@@ -32,7 +32,7 @@ export function ReflectionForm({ userId, missionId, onSuccess, onCancel }: Props
       await addDoc(reflectionsCollection, reflection as any);
       onSuccess();
     } catch (error) {
-      console.error("Error saving reflection:", error);
+      console.error('Error saving reflection:', error);
     } finally {
       setIsSubmitting(false);
     }

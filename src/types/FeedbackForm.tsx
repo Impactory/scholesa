@@ -27,7 +27,7 @@ export function FeedbackForm({ attemptId, onSuccess, onCancel }: Props) {
       });
       onSuccess();
     } catch (error) {
-      console.error("Error grading submission:", error);
+      console.error('Error grading submission:', error);
     } finally {
       setIsSubmitting(false);
     }
