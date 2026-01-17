@@ -18,6 +18,7 @@ import {
   BookOpenIcon
 } from 'lucide-react';
 import { sdtMotivation, type DashboardData, DIFFICULTY_EMOJI, DIFFICULTY_LABELS } from '@/src/lib/motivation/sdtMotivation';
+import { usePageViewTracking } from '@/src/hooks/useTelemetry';
 
 interface StudentDashboardProps {
   learnerId: string;
@@ -37,6 +38,9 @@ export function StudentDashboard({
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Track page view
+  usePageViewTracking('student_dashboard', { learnerId, siteId });
 
   useEffect(() => {
     const fetchDashboard = async () => {

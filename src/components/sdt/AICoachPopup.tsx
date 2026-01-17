@@ -22,7 +22,7 @@ import {
   Volume2Icon
 } from 'lucide-react';
 import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/gradeBandPolicy';
-import { trackAICoachUse } from '@/src/lib/telemetry/sdtTelemetry';
+import { useAITracking } from '@/src/hooks/useTelemetry';
 import { AIService, recordFeedback as recordAIFeedback } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 
@@ -126,6 +126,7 @@ export function AICoachPopup({
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
+  const trackAI = useAITracking();
 
   // Initialize speech recognition
   useEffect(() => {
@@ -198,16 +199,13 @@ export function AICoachPopup({
       setCurrentLogId(aiResponse.logId);
 
       // Track telemetry
-      if (sprintSessionId) {
-        await trackAICoachUse(
-          learnerId,
-          siteId,
-          grade,
-          sprintSessionId,
-          mode,
-          false // explain-back tracked separately
-        );
-      }
+      trackAI('ai_hint_requested', {
+        mode,
+        question: question.substring(0, 100), // First 100 chars for privacy
+        missionId,
+        sessionId: sprintSessionId,
+        modelUsed: aiResponse.modelUsed
+      });
     } catch (err) {
       console.error('AI Coach error:', err);
       // Show friendly error
@@ -230,9 +228,11 @@ export function AICoachPopup({
     }
 
     // Track explain-back telemetry
-    if (sprintSessionId) {
-      await trackAICoachUse(learnerId, siteId, grade, sprintSessionId, mode || 'hint', true);
-    }
+    trackAI('ai_critique_requested', {
+      explainBackLength: explainBack.length,
+      sessionId: sprintSessionId,
+      missionId
+    });
 
     // Clear and reset
     setResponse(null);
