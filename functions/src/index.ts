@@ -2,8 +2,14 @@ import { createHmac } from 'crypto';
 import { onCall, onRequest, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
+import Stripe from 'stripe';
 
 admin.initializeApp();
+
+// Initialize Stripe
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -25,7 +31,17 @@ const ENTITLEMENTS_COLLECTION = 'entitlements';
 const NOTIFICATION_REQUESTS_COLLECTION = 'notificationRequests';
 const NOTIFICATION_RATE_COLLECTION = 'notificationRateLimits';
 const CHECKOUT_INTENTS_COLLECTION = 'checkoutIntents';
+const STRIPE_CUSTOMERS_COLLECTION = 'stripeCustomers';
+const SUBSCRIPTIONS_COLLECTION = 'subscriptions';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+
+// Stripe Price IDs - map to your Stripe Dashboard products
+const STRIPE_PRICE_IDS: Record<ProductId, string> = {
+  'learner-seat': process.env.STRIPE_PRICE_LEARNER || 'price_learner_seat',
+  'educator-seat': process.env.STRIPE_PRICE_EDUCATOR || 'price_educator_seat',
+  'parent-seat': process.env.STRIPE_PRICE_PARENT || 'price_parent_seat',
+  'site-license': process.env.STRIPE_PRICE_SITE || 'price_site_license',
+};
 
 const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'auth.login',
@@ -668,4 +684,604 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
   } catch (e: any) {
     res.status(500).send(e?.message ?? 'error');
   }
+});
+
+// ============================================================================
+// STRIPE PAYMENT INTEGRATION
+// ============================================================================
+
+/**
+ * Get or create a Stripe customer for a user
+ */
+async function getOrCreateStripeCustomer(userId: string, email: string, name?: string): Promise<string> {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+
+  const customerRef = admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(userId);
+  const customerSnap = await customerRef.get();
+
+  if (customerSnap.exists) {
+    const data = customerSnap.data();
+    if (data?.stripeCustomerId) {
+      return data.stripeCustomerId as string;
+    }
+  }
+
+  // Create new Stripe customer
+  const customer = await stripe.customers.create({
+    email,
+    name: name ?? undefined,
+    metadata: {
+      firebaseUserId: userId,
+    },
+  });
+
+  await customerRef.set({
+    stripeCustomerId: customer.id,
+    email,
+    name,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return customer.id;
+}
+
+/**
+ * Create a Stripe Checkout Session for purchasing a product
+ */
+export const createStripeCheckoutSession = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
+  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
+  const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
+  const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
+
+  if (!siteId || !targetUserId) throw new HttpsError('invalid-argument', 'siteId and userId are required');
+  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
+  if (!successUrl || !cancelUrl) throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
+
+  const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site', 'parent', 'learner'], siteId);
+
+  // Get target user email
+  const targetUserSnap = await admin.firestore().collection(USERS_COLLECTION).doc(targetUserId).get();
+  if (!targetUserSnap.exists) throw new HttpsError('not-found', 'Target user not found');
+  const targetUser = targetUserSnap.data() as UserRecord;
+  if (!targetUser.email) throw new HttpsError('failed-precondition', 'Target user has no email');
+
+  const product = PRODUCT_CATALOG[productId as ProductId];
+  const priceId = STRIPE_PRICE_IDS[productId as ProductId];
+
+  // Get or create Stripe customer
+  const stripeCustomerId = await getOrCreateStripeCustomer(
+    targetUserId,
+    targetUser.email,
+    targetUser.displayName
+  );
+
+  // Create checkout intent record for tracking
+  const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc();
+  await intentRef.set({
+    siteId,
+    userId: targetUserId,
+    productId,
+    amount: product.amount,
+    currency: product.currency,
+    status: 'pending_stripe',
+    actorId: actor.uid,
+    actorRole: actor.role,
+    stripeCustomerId,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Create Stripe Checkout Session
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'payment', // Use 'subscription' for recurring
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&intent_id=${intentRef.id}`,
+    cancel_url: cancelUrl,
+    metadata: {
+      firebaseIntentId: intentRef.id,
+      siteId,
+      targetUserId,
+      productId,
+      actorId: actor.uid,
+    },
+    client_reference_id: intentRef.id,
+  });
+
+  // Update intent with session ID
+  await intentRef.update({
+    stripeSessionId: session.id,
+    stripeSessionUrl: session.url,
+  });
+
+  await persistTelemetryEvent({
+    event: 'order.intent',
+    userId: actor.uid,
+    role: actor.role,
+    siteId,
+    metadata: { productId, targetUserId, stripeSessionId: session.id },
+  });
+
+  return {
+    sessionId: session.id,
+    sessionUrl: session.url,
+    intentId: intentRef.id,
+    amount: product.amount,
+    currency: product.currency,
+  };
+});
+
+/**
+ * Create a Stripe Checkout Session for subscriptions
+ */
+export const createStripeSubscription = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
+  const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : '';
+  const cancelUrl = typeof request.data?.cancelUrl === 'string' ? request.data.cancelUrl : '';
+
+  if (!siteId) throw new HttpsError('invalid-argument', 'siteId is required');
+  if (!(productId in PRODUCT_CATALOG)) throw new HttpsError('invalid-argument', 'Unknown productId');
+  if (!successUrl || !cancelUrl) throw new HttpsError('invalid-argument', 'successUrl and cancelUrl are required');
+
+  const actor = await requireRoleAndSite(request.auth?.uid, ['hq', 'site'], siteId);
+
+  const actorProfile = await getUserProfile(actor.uid);
+  if (!actorProfile?.email) throw new HttpsError('failed-precondition', 'User has no email');
+
+  const product = PRODUCT_CATALOG[productId as ProductId];
+  const priceId = STRIPE_PRICE_IDS[productId as ProductId];
+
+  const stripeCustomerId = await getOrCreateStripeCustomer(
+    actor.uid,
+    actorProfile.email,
+    actorProfile.displayName
+  );
+
+  // Create subscription record
+  const subRef = admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc();
+  await subRef.set({
+    siteId,
+    userId: actor.uid,
+    productId,
+    status: 'pending',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'subscription',
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&subscription_id=${subRef.id}`,
+    cancel_url: cancelUrl,
+    metadata: {
+      firebaseSubscriptionId: subRef.id,
+      siteId,
+      userId: actor.uid,
+      productId,
+    },
+    client_reference_id: subRef.id,
+  });
+
+  await subRef.update({
+    stripeSessionId: session.id,
+  });
+
+  return {
+    sessionId: session.id,
+    sessionUrl: session.url,
+    subscriptionId: subRef.id,
+    amount: product.amount,
+    currency: product.currency,
+  };
+});
+
+/**
+ * Stripe Webhook Handler - processes payment events
+ */
+export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method not allowed');
+    return;
+  }
+
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+    console.error('Stripe not configured');
+    res.status(500).send('Stripe not configured');
+    return;
+  }
+
+  const sig = req.headers['stripe-signature'];
+  if (!sig) {
+    res.status(400).send('Missing stripe-signature header');
+    return;
+  }
+
+  let event: Stripe.Event;
+  try {
+    // Get raw body for signature verification
+    const rawBody = req.rawBody;
+    event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  // Handle the event
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutSessionCompleted(session);
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await handleInvoicePaid(invoice);
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await handleInvoicePaymentFailed(invoice);
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionUpdated(subscription);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionDeleted(subscription);
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err: any) {
+    console.error('Error processing webhook:', err);
+    res.status(500).send(`Webhook processing error: ${err.message}`);
+  }
+});
+
+/**
+ * Handle successful checkout session completion
+ */
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  const intentId = session.metadata?.firebaseIntentId || session.client_reference_id;
+  if (!intentId) {
+    console.error('No intent ID in session metadata');
+    return;
+  }
+
+  const intentSnap = await admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId).get();
+  if (!intentSnap.exists) {
+    console.error('Intent not found:', intentId);
+    return;
+  }
+
+  const intent = intentSnap.data() as any;
+  if (intent.status === 'paid') {
+    console.log('Intent already paid:', intentId);
+    return;
+  }
+
+  const productId = intent.productId as ProductId;
+  if (!(productId in PRODUCT_CATALOG)) {
+    console.error('Unknown product:', productId);
+    return;
+  }
+
+  const product = PRODUCT_CATALOG[productId];
+  const entitlementRef = admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc();
+
+  await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(intentSnap.ref);
+    const current = snap.data();
+    if (!current || current.status === 'paid') return;
+
+    // Update intent
+    tx.set(intentSnap.ref, {
+      status: 'paid',
+      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      entitlementId: entitlementRef.id,
+      stripePaymentIntentId: session.payment_intent,
+      stripePaymentStatus: session.payment_status,
+    }, { merge: true });
+
+    // Create entitlement
+    tx.set(entitlementRef, {
+      userId: current.userId,
+      siteId: current.siteId,
+      productId,
+      roles: product.roles,
+      stripeSessionId: session.id,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Update user roles
+    const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
+    tx.set(
+      userRef,
+      {
+        roles: admin.firestore.FieldValue.arrayUnion(...product.roles),
+        entitlements: admin.firestore.FieldValue.arrayUnion(...product.roles),
+        siteIds: admin.firestore.FieldValue.arrayUnion(current.siteId),
+        primarySiteId: current.siteId,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    // Audit log
+    const auditRef = admin.firestore().collection(AUDIT_COLLECTION).doc();
+    tx.set(auditRef, {
+      actorId: 'stripe_webhook',
+      actorRole: 'system',
+      action: 'stripe.checkout.completed',
+      entityType: 'order',
+      entityId: intentId,
+      siteId: current.siteId,
+      details: {
+        productId,
+        amount: session.amount_total,
+        currency: session.currency,
+        roles: product.roles,
+        stripeSessionId: session.id,
+        stripePaymentIntent: session.payment_intent,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  await persistTelemetryEvent({
+    event: 'order.paid',
+    userId: intent.actorId ?? 'system',
+    role: intent.actorRole as Role | undefined,
+    siteId: intent.siteId as string,
+    metadata: {
+      orderId: intentId,
+      productId,
+      targetUserId: intent.userId,
+      amount: session.amount_total,
+      currency: session.currency,
+      via: 'stripe_webhook',
+      stripeSessionId: session.id,
+    },
+  });
+
+  console.log('Checkout completed for intent:', intentId);
+}
+
+/**
+ * Handle subscription invoice paid
+ */
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const invoiceData = invoice as any;
+  const subscriptionId = typeof invoiceData.subscription === 'string' 
+    ? invoiceData.subscription 
+    : invoiceData.subscription?.id;
+  if (!subscriptionId) return;
+
+  const subSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscriptionId)
+    .limit(1)
+    .get();
+
+  if (subSnap.empty) {
+    console.log('No local subscription found for:', subscriptionId);
+    return;
+  }
+
+  const subDoc = subSnap.docs[0];
+  await subDoc.ref.update({
+    status: 'active',
+    currentPeriodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : null,
+    lastInvoiceId: invoice.id,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Subscription invoice paid:', subscriptionId);
+}
+
+/**
+ * Handle subscription invoice payment failed
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const invoiceData = invoice as any;
+  const subscriptionId = typeof invoiceData.subscription === 'string' 
+    ? invoiceData.subscription 
+    : invoiceData.subscription?.id;
+  if (!subscriptionId) return;
+
+  const subSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscriptionId)
+    .limit(1)
+    .get();
+
+  if (subSnap.empty) return;
+
+  const subDoc = subSnap.docs[0];
+  await subDoc.ref.update({
+    status: 'past_due',
+    lastPaymentError: invoice.last_finalization_error?.message ?? 'Payment failed',
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // TODO: Send notification to user about failed payment
+  console.log('Subscription payment failed:', subscriptionId);
+}
+
+/**
+ * Handle subscription updated
+ */
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const subData = subscription as any;
+  const subSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscription.id)
+    .limit(1)
+    .get();
+
+  if (subSnap.empty) {
+    // This might be a new subscription from checkout
+    const sessionId = subscription.metadata?.firebaseSubscriptionId;
+    if (sessionId) {
+      const intentSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(sessionId).get();
+      if (intentSnap.exists) {
+        await intentSnap.ref.update({
+          stripeSubscriptionId: subscription.id,
+          status: subscription.status,
+          currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    }
+    return;
+  }
+
+  const subDoc = subSnap.docs[0];
+  await subDoc.ref.update({
+    status: subscription.status,
+    currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
+    cancelAtPeriodEnd: subData.cancel_at_period_end,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Subscription updated:', subscription.id, subscription.status);
+}
+
+/**
+ * Handle subscription deleted/cancelled
+ */
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const subSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscription.id)
+    .limit(1)
+    .get();
+
+  if (subSnap.empty) return;
+
+  const subDoc = subSnap.docs[0];
+  const subData = subDoc.data();
+
+  await subDoc.ref.update({
+    status: 'cancelled',
+    cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Optionally revoke entitlements
+  if (subData.productId) {
+    const product = PRODUCT_CATALOG[subData.productId as ProductId];
+    if (product && subData.userId) {
+      // Note: In production, you might want to keep entitlements until period end
+      console.log('Subscription cancelled for user:', subData.userId);
+    }
+  }
+}
+
+/**
+ * Get Stripe Customer Portal URL for managing subscriptions
+ */
+export const createStripePortalSession = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const returnUrl = typeof request.data?.returnUrl === 'string' ? request.data.returnUrl : '';
+  if (!returnUrl) throw new HttpsError('invalid-argument', 'returnUrl is required');
+
+  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
+  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+
+  const stripeCustomerId = customerSnap.data()?.stripeCustomerId;
+  if (!stripeCustomerId) throw new HttpsError('not-found', 'No Stripe customer ID');
+
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    return_url: returnUrl,
+  });
+
+  return { url: portalSession.url };
+});
+
+/**
+ * Get user's active subscriptions
+ */
+export const getUserSubscriptions = onCall(async (request: CallableRequest) => {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const userId = typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
+
+  // Only allow viewing own subscriptions unless HQ
+  if (userId !== request.auth.uid) {
+    await requireHq(request.auth.uid);
+  }
+
+  const subsSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('userId', '==', userId)
+    .where('status', 'in', ['active', 'trialing', 'past_due'])
+    .get();
+
+  const subscriptions = subsSnap.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return { subscriptions };
+});
+
+/**
+ * Get user's entitlements
+ */
+export const getUserEntitlements = onCall(async (request: CallableRequest) => {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const userId = typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
+
+  // Only allow viewing own entitlements unless HQ
+  if (userId !== request.auth.uid) {
+    await requireHq(request.auth.uid);
+  }
+
+  const entSnap = await admin.firestore()
+    .collection(ENTITLEMENTS_COLLECTION)
+    .where('userId', '==', userId)
+    .get();
+
+  const entitlements = entSnap.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return { entitlements };
 });

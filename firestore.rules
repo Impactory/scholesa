@@ -90,6 +90,55 @@ service cloud.firestore {
       allow read: if isAuthenticated(); // Portfolios might be public within school?
       allow write: if isOwner(resource.data.learnerId) || isEducator();
     }
+
+    // --- Stripe & Billing Collections (Server-only writes) ---
+    
+    // Stripe Customers: Users can read their own, no client writes
+    match /stripeCustomers/{userId} {
+      allow read: if isOwner(userId) || isHQ();
+      allow write: if false; // Server-only via Cloud Functions
+    }
+    
+    // Checkout Intents: Users can read their own, no client writes
+    match /checkoutIntents/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.actorId == request.auth.uid || isHQ());
+      allow write: if false; // Server-only via Cloud Functions
+    }
+    
+    // Subscriptions: Users can read their own, no client writes
+    match /subscriptions/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
+      allow write: if false; // Server-only via Cloud Functions
+    }
+    
+    // Entitlements: Users can read their own, no client writes
+    match /entitlements/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
+      allow write: if false; // Server-only via Cloud Functions
+    }
+    
+    // Orders: Read for owner/HQ, no client writes
+    match /orders/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
+      allow write: if false; // Server-only via Cloud Functions
+    }
+
+    // Audit Logs: HQ read only, no client writes
+    match /auditLogs/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+
+    // Telemetry: No client access (server-only)
+    match /telemetryEvents/{id} {
+      allow read, write: if false; // Server-only
+    }
+
+    // Notification Requests: Educators can read their own requests
+    match /notificationRequests/{id} {
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isHQ());
+      allow write: if false; // Server-only via Cloud Functions
+    }
     
     // Default Deny
     match /{document=**} {
