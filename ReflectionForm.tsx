@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { addDoc, Timestamp } from 'firebase/firestore';
 import { reflectionsCollection } from '@/src/firebase/firestore/collections';
 import { Reflection } from '@/src/types/schema';
+import { useReflectionTracking } from '@/src/hooks/useTelemetry';
 
 interface Props {
   userId: string;
@@ -15,6 +16,9 @@ interface Props {
 export function ReflectionForm({ userId, missionId, onSuccess, onCancel }: Props) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Telemetry hook
+  const trackReflection = useReflectionTracking();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +34,14 @@ export function ReflectionForm({ userId, missionId, onSuccess, onCancel }: Props
       };
       // Cast to any to bypass strict ID requirement on creation
       await addDoc(reflectionsCollection, reflection as any);
+      
+      // Track reflection submission
+      trackReflection('reflection_submitted', {
+        missionId,
+        responseLength: content.length,
+        wordCount: content.split(/\s+/).length
+      });
+      
       onSuccess();
     } catch (error) {
       console.error('Error saving reflection:', error);
