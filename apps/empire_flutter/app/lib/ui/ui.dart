@@ -10,3 +10,4 @@ export 'theme/scholesa_theme.dart';
 // Common widgets
 export 'widgets/cards.dart';
 export 'widgets/learner_widgets.dart';
+export 'widgets/scholesa_logo.dart';

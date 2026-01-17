@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/auth_service.dart';
 import '../theme/scholesa_theme.dart';
+import '../widgets/scholesa_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -158,18 +159,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         // Logo
                         Row(
                           children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                size: 32,
-                                color: Colors.white,
-                              ),
-                            ),
+                            const ScholesaLogo(size: 56, showShadow: false),
                             const SizedBox(width: 12),
                             const Text(
                               'Scholesa',
@@ -243,26 +233,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         children: <Widget>[
                           // Mobile logo (only show on narrow screens)
                           if (!isWide) ...<Widget>[
-                            Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  gradient: ScholesaColors.primaryGradient,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                      color: ScholesaColors.primary.withValues(alpha: 0.3),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.school_rounded,
-                                  size: 48,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            const Center(
+                              child: ScholesaLogo(size: 80, showShadow: true),
                             ),
                             const SizedBox(height: 24),
                           ],
