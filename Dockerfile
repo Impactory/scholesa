@@ -32,6 +32,7 @@ COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
 # Expose default Next.js port (Cloud Run uses port from $PORT env var)
 ENV PORT 8080
+ENV HOSTNAME "0.0.0.0"
 EXPOSE 8080
 
 # Use a lightweight non-root user
@@ -39,4 +40,4 @@ RUN useradd --user-group --create-home --shell /bin/false appuser
 USER appuser
 
 # Start the Next.js server
-CMD ["node", "./node_modules/next/dist/server/next-start.js"]
+CMD ["npm", "start"]
