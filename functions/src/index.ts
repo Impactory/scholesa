@@ -7,6 +7,13 @@ import Stripe from 'stripe';
 
 admin.initializeApp();
 
+// Export telemetry aggregation functions
+export {
+  aggregateDailyTelemetry,
+  aggregateWeeklyTelemetry,
+  triggerTelemetryAggregation,
+} from './telemetryAggregator';
+
 // Define secrets for Firebase Functions v2
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');

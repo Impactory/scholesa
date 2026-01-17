@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import { GoalSettingForm } from '@/src/components/goals/GoalSettingForm';
 import { 
   BrainIcon, 
   AwardIcon, 
@@ -64,6 +65,7 @@ export function StudentMotivationProfile() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [recognitionCount, setRecognitionCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showGoalForm, setShowGoalForm] = useState(false);
   
   const learnerId = profile?.uid || '';
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';

@@ -12,6 +12,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { db } from '@/src/firebase/client-init';
+import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { 
   TrendingUpIcon, 
   TrendingDownIcon, 
@@ -20,7 +23,8 @@ import {
   ActivityIcon,
   AwardIcon,
   HeartIcon,
-  BrainIcon
+  BrainIcon,
+  DownloadIcon
 } from 'lucide-react';
 
 interface StudentEngagement {
@@ -34,9 +38,18 @@ interface StudentEngagement {
   eventCount: number;
 }
 
+interface WeeklyDataPoint {
+  date: string;
+  avgEngagement: number;
+  avgAutonomy: number;
+  avgCompetence: number;
+  avgBelonging: number;
+}
+
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
   const [students, setStudents] = useState<StudentEngagement[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
   
@@ -48,44 +61,139 @@ export function AnalyticsDashboard() {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        // TODO: Replace with actual Firestore query when telemetryAggregates collection has data
-        // For now, generate mock data for demonstration
-        const mockStudents: StudentEngagement[] = [
-          {
-            learnerId: 'student1',
-            learnerName: 'Alex Johnson',
-            engagementScore: 85,
-            autonomyScore: 90,
-            competenceScore: 80,
-            belongingScore: 85,
-            lastActive: new Date(),
-            eventCount: 45
-          },
-          {
-            learnerId: 'student2',
-            learnerName: 'Maria Garcia',
-            engagementScore: 72,
-            autonomyScore: 75,
-            competenceScore: 70,
-            belongingScore: 70,
-            lastActive: new Date(Date.now() - 86400000), // 1 day ago
-            eventCount: 32
-          },
-          {
-            learnerId: 'student3',
-            learnerName: 'Jordan Lee',
-            engagementScore: 45,
-            autonomyScore: 40,
-            competenceScore: 50,
-            belongingScore: 45,
-            lastActive: new Date(Date.now() - 259200000), // 3 days ago
-            eventCount: 12
-          }
-        ];
+        // Calculate date range
+        const now = new Date();
+        const daysBack = timeRange === 'week' ? 7 : 30;
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - daysBack);
+        startDate.setHours(0, 0, 0, 0);
         
-        setStudents(mockStudents);
+        // Fetch all learners in this site
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('siteIds', 'array-contains', siteId),
+          where('role', '==', 'learner')
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        const learnerIds = usersSnapshot.docs.map(doc => doc.id);
+        
+        if (learnerIds.length === 0) {
+          setStudents([]);
+          setWeeklyData([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch SDT profiles for all learners
+        const studentEngagementData: StudentEngagement[] = [];
+        
+        for (const learnerId of learnerIds) {
+          const userData = usersSnapshot.docs.find(doc => doc.id === learnerId)?.data();
+          const learnerName = userData?.displayName || userData?.email || 'Unknown';
+          
+          // Get SDT scores from telemetry
+          const sdtScores = await TelemetryService.getSDTProfile(learnerId, siteId);
+          
+          // Get event count and last active
+          const eventsQuery = query(
+            collection(db, 'telemetryEvents'),
+            where('userId', '==', learnerId),
+            where('siteId', '==', siteId),
+            where('timestamp', '>=', Timestamp.fromDate(startDate)),
+            orderBy('timestamp', 'desc')
+          );
+          const eventsSnapshot = await getDocs(eventsQuery);
+          
+          const eventCount = eventsSnapshot.size;
+          const lastActiveDoc = eventsSnapshot.docs[0];
+          const lastActive = lastActiveDoc 
+            ? lastActiveDoc.data().timestamp.toDate() 
+            : new Date(0);
+          
+          // Calculate overall engagement (average of SDT scores)
+          const engagementScore = Math.round(
+            (sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3
+          );
+          
+          studentEngagementData.push({
+            learnerId,
+            learnerName,
+            engagementScore,
+            autonomyScore: sdtScores.autonomy,
+            competenceScore: sdtScores.competence,
+            belongingScore: sdtScores.belonging,
+            lastActive,
+            eventCount
+          });
+        }
+        
+        setStudents(studentEngagementData.sort((a, b) => b.engagementScore - a.engagementScore));
+        
+        // Fetch weekly trends (aggregate by day)
+        const weeklyTrends: WeeklyDataPoint[] = [];
+        for (let i = daysBack - 1; i >= 0; i--) {
+          const dayDate = new Date(now);
+          dayDate.setDate(dayDate.getDate() - i);
+          dayDate.setHours(0, 0, 0, 0);
+          
+          const dayEnd = new Date(dayDate);
+          dayEnd.setHours(23, 59, 59, 999);
+          
+          // Query aggregates for this day (if they exist)
+          const aggregatesQuery = query(
+            collection(db, 'telemetryAggregates'),
+            where('siteId', '==', siteId),
+            where('date', '>=', Timestamp.fromDate(dayDate)),
+            where('date', '<=', Timestamp.fromDate(dayEnd))
+          );
+          const aggregatesSnapshot = await getDocs(aggregatesQuery);
+          
+          if (aggregatesSnapshot.size > 0) {
+            let totalEngagement = 0;
+            let totalAutonomy = 0;
+            let totalCompetence = 0;
+            let totalBelonging = 0;
+            
+            aggregatesSnapshot.forEach(doc => {
+              const agg = doc.data();
+              const sdtCounts = agg.sdtCounts || { autonomy: 0, competence: 0, belonging: 0 };
+              const total = sdtCounts.autonomy + sdtCounts.competence + sdtCounts.belonging;
+              
+              if (total > 0) {
+                totalAutonomy += (sdtCounts.autonomy / total) * 100;
+                totalCompetence += (sdtCounts.competence / total) * 100;
+                totalBelonging += (sdtCounts.belonging / total) * 100;
+                totalEngagement += agg.engagementScore || 0;
+              }
+            });
+            
+            const count = aggregatesSnapshot.size;
+            weeklyTrends.push({
+              date: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              avgEngagement: count > 0 ? Math.round(totalEngagement / count) : 0,
+              avgAutonomy: count > 0 ? Math.round(totalAutonomy / count) : 0,
+              avgCompetence: count > 0 ? Math.round(totalCompetence / count) : 0,
+              avgBelonging: count > 0 ? Math.round(totalBelonging / count) : 0
+            });
+          } else {
+            // No aggregates for this day, use 0s
+            weeklyTrends.push({
+              date: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              avgEngagement: 0,
+              avgAutonomy: 0,
+              avgCompetence: 0,
+              avgBelonging: 0
+            });
+          }
+        }
+        
+        setWeeklyData(weeklyTrends);
+        
       } catch (err) {
         console.error('Failed to load analytics:', err);
+        // Fallback to empty data
+        setStudents([]);
+        setWeeklyData([]);
       } finally {
         setLoading(false);
       }
@@ -111,10 +219,43 @@ export function AnalyticsDashboard() {
   const atRiskCount = students.filter(s => s.engagementScore < 60).length;
   const highPerformers = students.filter(s => s.engagementScore >= 80).length;
   
+  const handleExportCSV = () => {
+    if (students.length === 0) return;
+    
+    // Prepare CSV headers
+    const headers = ['Student Name', 'Engagement %', 'Autonomy %', 'Competence %', 'Belonging %', 'Events', 'Last Active'];
+    
+    // Prepare CSV rows
+    const rows = students.map(s => [
+      s.learnerName,
+      s.engagementScore.toString(),
+      s.autonomyScore.toString(),
+      s.competenceScore.toString(),
+      s.belongingScore.toString(),
+      s.eventCount.toString(),
+      s.lastActive.toLocaleDateString()
+    ]);
+    
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `scholesa-analytics-${siteId}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  
   return (
     <div className="space-y-6">
-      {/* Time Range Selector */}
-      <div className="flex justify-end">
+      {/* Time Range Selector + Export */}
+      <div className="flex justify-between items-center">
         <div className="inline-flex rounded-md shadow-sm">
           <button
             onClick={() => setTimeRange('week')}
@@ -137,6 +278,15 @@ export function AnalyticsDashboard() {
             This Month
           </button>
         </div>
+        
+        <button
+          onClick={handleExportCSV}
+          disabled={students.length === 0}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <DownloadIcon className="h-4 w-4" />
+          Export CSV
+        </button>
       </div>
       
       {/* Summary Cards */}
@@ -255,12 +405,18 @@ export function AnalyticsDashboard() {
         </div>
       </div>
       
-      {/* Placeholder for future charts */}
+      {/* Weekly Trends Chart */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Trends</h3>
-        <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-          Coming soon: Line chart showing engagement over time
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {timeRange === 'week' ? 'Weekly' : 'Monthly'} Engagement Trends
+        </h3>
+        {weeklyData.length > 0 ? (
+          <WeeklyTrendsChart data={weeklyData} />
+        ) : (
+          <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+            No trend data available yet. Data will appear after students complete activities.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -365,3 +521,159 @@ function formatRelativeTime(date: Date): string {
   
   return date.toLocaleDateString();
 }
+
+// ==================== WEEKLY TRENDS CHART ====================
+
+interface WeeklyTrendsChartProps {
+  data: WeeklyDataPoint[];
+}
+
+function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
+  if (data.length === 0) return null;
+  
+  const maxValue = Math.max(
+    ...data.map(d => Math.max(d.avgEngagement, d.avgAutonomy, d.avgCompetence, d.avgBelonging))
+  );
+  const chartHeight = 256; // 64 * 4 = h-64
+  const chartWidth = data.length * 60; // 60px per data point
+  
+  // Calculate Y-axis scale
+  const yScale = (value: number) => {
+    return chartHeight - (value / 100) * chartHeight;
+  };
+  
+  // Generate SVG path for a line
+  const generatePath = (dataKey: keyof WeeklyDataPoint) => {
+    return data.map((point, index) => {
+      const x = index * 60 + 30; // Center of each segment
+      const y = yScale(point[dataKey] as number);
+      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+    }).join(' ');
+  };
+  
+  return (
+    <div className="space-y-4">
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-green-500" />
+          <span>Overall Engagement</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-purple-500" />
+          <span>Autonomy</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-blue-500" />
+          <span>Competence</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-pink-500" />
+          <span>Belonging</span>
+        </div>
+      </div>
+      
+      {/* Chart */}
+      <div className="overflow-x-auto">
+        <svg width={Math.max(chartWidth, 800)} height={chartHeight + 40} className="border border-gray-200 rounded-lg bg-gray-50">
+          {/* Grid lines */}
+          {[0, 25, 50, 75, 100].map(value => (
+            <g key={value}>
+              <line
+                x1={0}
+                y1={yScale(value)}
+                x2={chartWidth}
+                y2={yScale(value)}
+                stroke="#e5e7eb"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+              <text
+                x={5}
+                y={yScale(value) - 5}
+                fontSize={12}
+                fill="#6b7280"
+              >
+                {value}%
+              </text>
+            </g>
+          ))}
+          
+          {/* Overall Engagement Line */}
+          <path
+            d={generatePath('avgEngagement')}
+            fill="none"
+            stroke="#10b981"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          
+          {/* Autonomy Line */}
+          <path
+            d={generatePath('avgAutonomy')}
+            fill="none"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="5 5"
+          />
+          
+          {/* Competence Line */}
+          <path
+            d={generatePath('avgCompetence')}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="5 5"
+          />
+          
+          {/* Belonging Line */}
+          <path
+            d={generatePath('avgBelonging')}
+            fill="none"
+            stroke="#ec4899"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="5 5"
+          />
+          
+          {/* Data points */}
+          {data.map((point, index) => {
+            const x = index * 60 + 30;
+            return (
+              <g key={index}>
+                <circle cx={x} cy={yScale(point.avgEngagement)} r={4} fill="#10b981" />
+                <circle cx={x} cy={yScale(point.avgAutonomy)} r={3} fill="#8b5cf6" />
+                <circle cx={x} cy={yScale(point.avgCompetence)} r={3} fill="#3b82f6" />
+                <circle cx={x} cy={yScale(point.avgBelonging)} r={3} fill="#ec4899" />
+              </g>
+            );
+          })}
+          
+          {/* X-axis labels */}
+          {data.map((point, index) => {
+            const x = index * 60 + 30;
+            return (
+              <text
+                key={index}
+                x={x}
+                y={chartHeight + 20}
+                fontSize={10}
+                fill="#6b7280"
+                textAnchor="middle"
+              >
+                {point.date}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
