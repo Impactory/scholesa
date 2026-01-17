@@ -1702,13 +1702,52 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (subSnap.empty) return;
 
   const subDoc = subSnap.docs[0];
+  const subData = subDoc.data();
+  
   await subDoc.ref.update({
     status: 'past_due',
     lastPaymentError: invoice.last_finalization_error?.message ?? 'Payment failed',
+    failedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // TODO: Send notification to user about failed payment
+  // Send notification to user about failed payment
+  if (subData.userId) {
+    await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+      userId: subData.userId,
+      type: 'subscription_payment_failed',
+      channel: 'email',
+      status: 'pending',
+      data: {
+        subscriptionId: subDoc.id,
+        productId: subData.productId,
+        amount: invoiceData.amount_due,
+        currency: invoiceData.currency,
+        invoiceUrl: invoiceData.hosted_invoice_url,
+        errorMessage: invoice.last_finalization_error?.message ?? 'Payment failed',
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Log audit event for payment failure
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: 'stripe_webhook',
+      actorRole: 'system',
+      action: 'subscription.payment_failed',
+      entityType: 'subscription',
+      entityId: subDoc.id,
+      siteId: subData.siteId,
+      details: {
+        stripeSubscriptionId: subscriptionId,
+        invoiceId: invoice.id,
+        amount: invoiceData.amount_due,
+        currency: invoiceData.currency,
+        error: invoice.last_finalization_error?.message,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
   console.log('Subscription payment failed:', subscriptionId);
 }
 
@@ -1857,4 +1896,408 @@ export const getUserEntitlements = onCall(async (request: CallableRequest) => {
   }));
 
   return { entitlements };
+});
+
+// ============================================================================
+// PRODUCTION HEALTH & MAINTENANCE FUNCTIONS
+// ============================================================================
+
+/**
+ * Health check endpoint for load balancers and monitoring
+ */
+export const healthCheck = onRequest({ cors: true }, async (_req, res) => {
+  try {
+    // Verify Firestore connectivity
+    await admin.firestore().collection('_healthCheck').doc('ping').get();
+    
+    // Verify Auth connectivity
+    await admin.auth().getUser('health-check-dummy').catch(() => {});
+
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: process.env.K_REVISION || 'local',
+      services: {
+        firestore: 'ok',
+        auth: 'ok',
+        stripe: stripe ? 'configured' : 'not_configured',
+      },
+    });
+  } catch (err: any) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * Scheduled job to check for expiring subscriptions and send reminders
+ * Runs daily at 9 AM UTC
+ */
+export const checkExpiringSubscriptions = onSchedule('0 9 * * *', async () => {
+  const db = admin.firestore();
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // Find subscriptions expiring in the next 7 days
+  const expiringSnap = await db
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('status', '==', 'active')
+    .where('currentPeriodEnd', '<=', sevenDaysFromNow)
+    .where('currentPeriodEnd', '>', now)
+    .get();
+
+  for (const doc of expiringSnap.docs) {
+    const sub = doc.data();
+    const periodEnd = sub.currentPeriodEnd?.toDate?.() ?? sub.currentPeriodEnd;
+    if (!periodEnd || !sub.userId) continue;
+
+    const daysUntilExpiry = Math.ceil((periodEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+    
+    // Check if we already sent a reminder for this period
+    const existingReminder = await db
+      .collection(NOTIFICATION_REQUESTS_COLLECTION)
+      .where('userId', '==', sub.userId)
+      .where('type', '==', 'subscription_expiring')
+      .where('data.subscriptionId', '==', doc.id)
+      .where('createdAt', '>', new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000))
+      .limit(1)
+      .get();
+
+    if (!existingReminder.empty) continue;
+
+    // Send reminder at 7 days and 3 days before expiry
+    if (daysUntilExpiry <= 3 || daysUntilExpiry === 7) {
+      await db.collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+        userId: sub.userId,
+        type: 'subscription_expiring',
+        channel: 'email',
+        status: 'pending',
+        data: {
+          subscriptionId: doc.id,
+          productId: sub.productId,
+          expiresAt: periodEnd,
+          daysUntilExpiry,
+        },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      console.log(`Sent expiring subscription reminder to user ${sub.userId}, expires in ${daysUntilExpiry} days`);
+    }
+  }
+});
+
+/**
+ * Scheduled job to archive old telemetry data (older than 90 days)
+ * Runs weekly on Sundays at 3 AM UTC
+ */
+export const archiveOldTelemetry = onSchedule('0 3 * * 0', async () => {
+  const db = admin.firestore();
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+  // Get old telemetry events
+  const oldEventsSnap = await db
+    .collection(TELEMETRY_COLLECTION)
+    .where('timestamp', '<', ninetyDaysAgo)
+    .limit(500)
+    .get();
+
+  if (oldEventsSnap.empty) {
+    console.log('No old telemetry events to archive');
+    return;
+  }
+
+  const batch = db.batch();
+  let count = 0;
+
+  for (const doc of oldEventsSnap.docs) {
+    // Move to archive collection
+    const archiveRef = db.collection('telemetryArchive').doc(doc.id);
+    batch.set(archiveRef, {
+      ...doc.data(),
+      archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    batch.delete(doc.ref);
+    count++;
+  }
+
+  await batch.commit();
+  console.log(`Archived ${count} telemetry events`);
+});
+
+/**
+ * Scheduled job to clean up expired checkout intents (older than 24 hours)
+ * Runs every 6 hours
+ */
+export const cleanupExpiredIntents = onSchedule('0 */6 * * *', async () => {
+  const db = admin.firestore();
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const expiredIntentsSnap = await db
+    .collection(CHECKOUT_INTENTS_COLLECTION)
+    .where('status', '==', 'intent')
+    .where('createdAt', '<', oneDayAgo)
+    .limit(100)
+    .get();
+
+  if (expiredIntentsSnap.empty) {
+    console.log('No expired checkout intents to clean up');
+    return;
+  }
+
+  const batch = db.batch();
+  let count = 0;
+
+  for (const doc of expiredIntentsSnap.docs) {
+    batch.update(doc.ref, {
+      status: 'expired',
+      expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    count++;
+  }
+
+  await batch.commit();
+  console.log(`Marked ${count} checkout intents as expired`);
+});
+
+/**
+ * Cancel a subscription (user-initiated)
+ */
+export const cancelSubscription = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
+  const cancelAtPeriodEnd = request.data?.cancelAtPeriodEnd !== false; // Default to cancel at period end
+
+  if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
+
+  // Get the subscription from Firestore
+  const subSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId).get();
+  if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
+
+  const sub = subSnap.data() as any;
+  
+  // Verify user owns this subscription or is HQ
+  if (sub.userId !== request.auth.uid) {
+    await requireHq(request.auth.uid);
+  }
+
+  if (!sub.stripeSubscriptionId) {
+    throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
+  }
+
+  try {
+    // Cancel in Stripe
+    const stripeSubscription = await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+      cancel_at_period_end: cancelAtPeriodEnd,
+    });
+
+    // Update local record
+    await subSnap.ref.update({
+      cancelAtPeriodEnd,
+      cancelledAt: cancelAtPeriodEnd ? null : admin.firestore.FieldValue.serverTimestamp(),
+      status: cancelAtPeriodEnd ? 'active' : 'cancelled',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth.uid,
+      actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
+      action: cancelAtPeriodEnd ? 'subscription.scheduled_cancel' : 'subscription.cancelled',
+      entityType: 'subscription',
+      entityId: subscriptionId,
+      siteId: sub.siteId,
+      details: {
+        stripeSubscriptionId: sub.stripeSubscriptionId,
+        cancelAtPeriodEnd,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      cancelAtPeriodEnd,
+      currentPeriodEnd: stripeSubscription.items?.data?.[0]?.current_period_end
+        ? new Date(stripeSubscription.items.data[0].current_period_end * 1000).toISOString()
+        : null,
+    };
+  } catch (err: any) {
+    console.error('Error cancelling subscription:', err);
+    throw new HttpsError('internal', err.message || 'Failed to cancel subscription');
+  }
+});
+
+/**
+ * Resume a cancelled subscription (if cancelled with cancel_at_period_end)
+ */
+export const resumeSubscription = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
+  if (!subscriptionId) throw new HttpsError('invalid-argument', 'subscriptionId is required');
+
+  const subSnap = await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId).get();
+  if (!subSnap.exists) throw new HttpsError('not-found', 'Subscription not found');
+
+  const sub = subSnap.data() as any;
+
+  if (sub.userId !== request.auth.uid) {
+    await requireHq(request.auth.uid);
+  }
+
+  if (!sub.stripeSubscriptionId) {
+    throw new HttpsError('failed-precondition', 'No Stripe subscription linked');
+  }
+
+  if (!sub.cancelAtPeriodEnd) {
+    throw new HttpsError('failed-precondition', 'Subscription is not scheduled for cancellation');
+  }
+
+  try {
+    await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+      cancel_at_period_end: false,
+    });
+
+    await subSnap.ref.update({
+      cancelAtPeriodEnd: false,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth.uid,
+      actorRole: sub.userId === request.auth.uid ? 'user' : 'hq',
+      action: 'subscription.resumed',
+      entityType: 'subscription',
+      entityId: subscriptionId,
+      siteId: sub.siteId,
+      details: { stripeSubscriptionId: sub.stripeSubscriptionId },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error resuming subscription:', err);
+    throw new HttpsError('internal', err.message || 'Failed to resume subscription');
+  }
+});
+
+/**
+ * Update payment method for a subscription
+ */
+export const updateSubscriptionPaymentMethod = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const paymentMethodId = typeof request.data?.paymentMethodId === 'string' ? request.data.paymentMethodId : '';
+  if (!paymentMethodId) throw new HttpsError('invalid-argument', 'paymentMethodId is required');
+
+  // Get user's Stripe customer
+  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
+  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+
+  const customerId = customerSnap.data()?.stripeCustomerId;
+  if (!customerId) throw new HttpsError('not-found', 'No Stripe customer ID');
+
+  try {
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+
+    // Set as default payment method
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethodId },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error updating payment method:', err);
+    throw new HttpsError('internal', err.message || 'Failed to update payment method');
+  }
+});
+
+/**
+ * Get invoice history for a user
+ */
+export const getInvoiceHistory = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const userId = typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
+
+  if (userId !== request.auth.uid) {
+    await requireHq(request.auth.uid);
+  }
+
+  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(userId).get();
+  if (!customerSnap.exists) return { invoices: [] };
+
+  const customerId = customerSnap.data()?.stripeCustomerId;
+  if (!customerId) return { invoices: [] };
+
+  try {
+    const invoices = await stripe.invoices.list({
+      customer: customerId,
+      limit: 50,
+    });
+
+    return {
+      invoices: invoices.data.map(inv => ({
+        id: inv.id,
+        number: inv.number,
+        status: inv.status,
+        amount: inv.amount_paid,
+        currency: inv.currency,
+        created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
+        hostedInvoiceUrl: inv.hosted_invoice_url,
+        invoicePdf: inv.invoice_pdf,
+      })),
+    };
+  } catch (err: any) {
+    console.error('Error fetching invoices:', err);
+    throw new HttpsError('internal', err.message || 'Failed to fetch invoices');
+  }
+});
+
+/**
+ * Retry a failed invoice payment
+ */
+export const retryInvoicePayment = onCall(async (request: CallableRequest) => {
+  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  const invoiceId = typeof request.data?.invoiceId === 'string' ? request.data.invoiceId : '';
+  if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
+
+  // Verify user owns this invoice
+  const customerSnap = await admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(request.auth.uid).get();
+  if (!customerSnap.exists) throw new HttpsError('not-found', 'No Stripe customer found');
+
+  const customerId = customerSnap.data()?.stripeCustomerId;
+
+  try {
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+    
+    if (invoice.customer !== customerId) {
+      await requireHq(request.auth.uid);
+    }
+
+    if (invoice.status !== 'open') {
+      throw new HttpsError('failed-precondition', 'Invoice is not payable');
+    }
+
+    const paidInvoice = await stripe.invoices.pay(invoiceId);
+
+    return {
+      success: true,
+      status: paidInvoice.status,
+      amountPaid: paidInvoice.amount_paid,
+    };
+  } catch (err: any) {
+    console.error('Error retrying payment:', err);
+    throw new HttpsError('internal', err.message || 'Failed to retry payment');
+  }
 });
