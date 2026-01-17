@@ -2,6 +2,16 @@
 
 This guide explains how to configure Stripe API keys and webhooks for the Scholesa platform.
 
+## ✅ Current Status
+
+| Component | Status |
+|-----------|--------|
+| Stripe SDK | v20.2.0 (API v2025-12-15.clover) |
+| Secret Key | ✅ Configured in Firebase Secrets |
+| Webhook Secret | ✅ Configured in Firebase Secrets |
+| Health Check | ✅ Connected |
+| Webhook URL | `https://stripewebhook-gu5vyrn2tq-uc.a.run.app` |
+
 ## Overview
 
 Scholesa uses Stripe for:
@@ -9,6 +19,8 @@ Scholesa uses Stripe for:
 - One-time payments (checkout sessions)
 - Customer portal (self-service billing management)
 - Webhook handling for real-time event processing
+- Product and pricing management (admin dashboard)
+- Refund processing
 
 ## Prerequisites
 
@@ -268,6 +280,7 @@ The platform includes pre-built components in `src/components/stripe/`:
 | `StripeDashboard` | Admin metrics and revenue overview (HQ only) |
 | `WebhookMonitor` | Monitor webhook events and failures (HQ only) |
 | `RefundManager` | Process refunds for payments (HQ only) |
+| `PlanManager` | Create/edit products and pricing (HQ only) |
 
 ### Usage Example:
 

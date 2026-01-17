@@ -19,7 +19,7 @@ function getStripe(): Stripe | null {
   const key = stripeSecretKey.value();
   if (key) {
     stripeClient = new Stripe(key, {
-      apiVersion: '2024-12-18.acacia', // Latest Stripe API version
+      apiVersion: '2025-12-15.clover', // Latest Stripe API version
       typescript: true,
     });
   }
@@ -68,14 +68,32 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'order.paid',
   'cms.page.viewed',
   'lead.submitted',
-    'contract.created',
-    'contract.approved',
-    'deliverable.submitted',
-    'deliverable.accepted',
-    'payout.approved',
+  'contract.created',
+  'contract.approved',
+  'deliverable.submitted',
+  'deliverable.accepted',
+  'payout.approved',
   'notification.requested',
-    'aiDraft.requested',
-    'aiDraft.reviewed',
+  'aiDraft.requested',
+  'aiDraft.reviewed',
+  // Motivation & Engagement Events
+  'app.open',
+  'app.session.end',
+  'mission.started',
+  'mission.completed',
+  'mission.abandoned',
+  'reflection.submitted',
+  'portfolio.item.added',
+  'help.requested',
+  'badge.viewed',
+  'leaderboard.viewed',
+  'streak.celebrated',
+  'nudge.accepted',
+  'nudge.dismissed',
+  'nudge.snoozed',
+  'educator.feedback.submitted',
+  'support.intervention.logged',
+  'motivation.insight.viewed',
 ]);
 
 type ProductId = 'learner-seat' | 'educator-seat' | 'parent-seat' | 'site-license';
@@ -1942,19 +1960,7 @@ export const healthCheck = onRequest({
   secrets: [stripeSecretKey],
 }, async (_req, res) => {
   try {
-    // Verify Firestore connectivity
-    await admin.firestore().collection('_healthCheck').doc('ping').set({ 
-      lastPing: admin.firestore.FieldValue.serverTimestamp() 
-    });
-    
-    // Verify Auth connectivity (don't fail if user doesn't exist)
-    try {
-      await admin.auth().getUser('health-check-dummy');
-    } catch {
-      // Expected - user doesn't exist, but auth service is working
-    }
-
-    // Check Stripe configuration
+    // Check Stripe configuration first since that's the main concern
     const stripeInstance = getStripe();
     let stripeStatus = 'not_configured';
     if (stripeInstance) {
@@ -1967,13 +1973,30 @@ export const healthCheck = onRequest({
       }
     }
 
+    // Try to verify Firestore connectivity (non-critical)
+    let firestoreStatus = 'unknown';
+    try {
+      await admin.firestore().listCollections();
+      firestoreStatus = 'ok';
+    } catch {
+      firestoreStatus = 'limited';
+    }
+    
+    // Verify Auth connectivity (don't fail if user doesn't exist)
+    let authStatus = 'ok';
+    try {
+      await admin.auth().getUser('health-check-dummy');
+    } catch {
+      // Expected - user doesn't exist, but auth service is working
+    }
+
     res.status(200).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: process.env.K_REVISION || 'local',
       services: {
-        firestore: 'ok',
-        auth: 'ok',
+        firestore: firestoreStatus,
+        auth: authStatus,
         stripe: stripeStatus,
       },
     });

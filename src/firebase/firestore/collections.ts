@@ -21,6 +21,12 @@ import type {
   Alert,
   Announcement,
   PortfolioItem,
+  EducatorFeedback,
+  LearnerMotivationProfile,
+  LearnerInteraction,
+  SupportIntervention,
+  MotivationNudge,
+  MotivationConfig,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -49,3 +55,11 @@ export const accountabilityReviewsCollection = createCollection<AccountabilityRe
 export const alertsCollection = createCollection<Alert>('alerts');
 export const announcementsCollection = createCollection<Announcement>('announcements');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');
+
+// Motivation & Personalization System
+export const educatorFeedbackCollection = createCollection<EducatorFeedback>('educatorFeedback');
+export const learnerMotivationProfilesCollection = createCollection<LearnerMotivationProfile>('learnerMotivationProfiles');
+export const learnerInteractionsCollection = createCollection<LearnerInteraction>('learnerInteractions');
+export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
+export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
+export const motivationConfigCollection = createCollection<MotivationConfig>('configs/motivationConfig');

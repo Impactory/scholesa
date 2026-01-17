@@ -19,6 +19,15 @@ import type {
   AuditLog
 } from '@/schema';
 
+import type {
+  EducatorFeedback,
+  LearnerMotivationProfile,
+  LearnerInteraction,
+  SupportIntervention,
+  MotivationNudge,
+  MotivationConfig
+} from '@/src/types/schema';
+
 // Helper to create a typed collection reference
 const createCollection = <T = DocumentData>(collectionName: string) => {
   return collection(firestore, collectionName) as CollectionReference<T>;
@@ -51,3 +60,11 @@ export const accountabilityReviewsCollection = createCollection<AccountabilityRe
 
 // System
 export const auditLogsCollection = createCollection<AuditLog>('auditLogs');
+
+// Motivation & Personalization System
+export const educatorFeedbackCollection = createCollection<EducatorFeedback>('educatorFeedback');
+export const learnerMotivationProfilesCollection = createCollection<LearnerMotivationProfile>('learnerMotivationProfiles');
+export const learnerInteractionsCollection = createCollection<LearnerInteraction>('learnerInteractions');
+export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
+export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
+export const motivationConfigCollection = createCollection<MotivationConfig>('configs');
