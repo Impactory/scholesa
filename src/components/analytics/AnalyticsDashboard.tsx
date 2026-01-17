@@ -12,7 +12,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { 
   TrendingUpIcon, 
   TrendingDownIcon, 
@@ -337,8 +336,15 @@ function ScoreBar({ score, color }: ScoreBarProps) {
       <div className={`w-24 h-2 rounded-full ${bgColorClasses[color]}`}>
         <div 
           className={`h-full rounded-full ${colorClasses[color]}`}
-          style={{ width: `${score}%` }}
-        />
+          data-score={score}
+          aria-label={`Score: ${score}%`}
+        >
+          <style jsx>{`
+            div[data-score="${score}"] {
+              width: ${score}%;
+            }
+          `}</style>
+        </div>
       </div>
       <span className="text-sm font-medium text-gray-700">{score}%</span>
     </div>
