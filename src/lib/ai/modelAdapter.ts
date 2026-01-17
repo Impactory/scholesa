@@ -34,6 +34,7 @@ export interface ContextBlock {
   content: string;
   id?: string; // Reference to source (for citations)
   relevance?: number; // 0-1, from retrieval
+  metadata?: Record<string, unknown>; // Optional metadata for logging/debugging
 }
 
 export interface SafetyConstraints {

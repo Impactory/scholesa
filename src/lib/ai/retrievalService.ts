@@ -12,6 +12,7 @@
 
 import type { ContextBlock } from './modelAdapter';
 import type { AgeBand } from '@/src/types/schema';
+import { getRubricForMission, formatRubricForAI, type AssessmentRubric } from './rubricManager';
 
 // ==================== TYPES ====================
 
@@ -130,19 +131,45 @@ export class RetrievalService {
     gradeBand: AgeBand
   ): Promise<ContextBlock | null> {
     // Fetch from YOUR Firestore (rubrics collection)
-    // Age-appropriate language already stored
+    // REAL implementation using RubricManager
     
-    // Mock for now
-    return {
-      type: 'rubric',
-      content: `Success criteria for this mission:
-- Shows understanding of core concept
-- Code/artifact runs without errors
-- Includes clear explanation of approach
-- Demonstrates debugging skills`,
-      id: `rubric_${missionId}`,
-      relevance: 0.9
+    try {
+      const gradeNumber = this.gradeBandToNumber(gradeBand);
+      const rubric = await getRubricForMission('*', missionId, gradeNumber);
+      
+      if (!rubric) return null;
+      
+      // Format rubric as markdown
+      const formattedRubric = formatRubricForAI(rubric);
+      
+      return {
+        type: 'rubric',
+        content: formattedRubric,
+        id: rubric.id || `rubric_${missionId}`,
+        metadata: {
+          rubricId: rubric.id,
+          rubricVersion: rubric.version,
+          rubricName: rubric.name
+        },
+        relevance: 0.95 // Rubrics are highly relevant
+      };
+    } catch (err) {
+      console.error('Error fetching rubric:', err);
+      return null;
+    }
+  }
+  
+  /**
+   * Helper: Convert age band to grade number for rubric lookup
+   */
+  private static gradeBandToNumber(ageBand: AgeBand): number {
+    const mapping: Record<AgeBand, number> = {
+      grades_1_3: 2,
+      grades_4_6: 5,
+      grades_7_9: 8,
+      grades_10_12: 11
     };
+    return mapping[ageBand] || 5;
   }
   
   private static async getExemplars(query: RetrievalQuery): Promise<ContextBlock[]> {
