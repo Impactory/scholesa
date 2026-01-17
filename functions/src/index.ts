@@ -2301,3 +2301,220 @@ export const retryInvoicePayment = onCall(async (request: CallableRequest) => {
     throw new HttpsError('internal', err.message || 'Failed to retry payment');
   }
 });
+
+/**
+ * Monitor webhook failures - runs daily at 9 AM UTC
+ * Checks for failed webhook events and alerts admins
+ */
+export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+  // Get recent webhook logs
+  const logsSnap = await admin.firestore()
+    .collection('stripeWebhookLogs')
+    .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(oneDayAgo))
+    .get();
+
+  const logs = logsSnap.docs.map(doc => doc.data());
+  const failedEvents = logs.filter(log => log.status === 'error' || log.status === 'failed');
+  const successfulEvents = logs.filter(log => log.status === 'success' || log.status === 'processed');
+
+  const summary = {
+    totalEvents: logs.length,
+    successfulEvents: successfulEvents.length,
+    failedEvents: failedEvents.length,
+    successRate: logs.length > 0 
+      ? ((successfulEvents.length / logs.length) * 100).toFixed(2) + '%'
+      : 'N/A',
+    failuresByType: failedEvents.reduce((acc: Record<string, number>, log) => {
+      acc[log.eventType || 'unknown'] = (acc[log.eventType || 'unknown'] || 0) + 1;
+      return acc;
+    }, {}),
+  };
+
+  // Log to audit for tracking
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: 'system',
+    actorRole: 'system',
+    action: 'webhook.health.report',
+    entityType: 'system',
+    entityId: 'stripe-webhooks',
+    details: summary,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // If failure rate is high, create an alert
+  if (failedEvents.length > 0 && (failedEvents.length / logs.length) > 0.1) {
+    await admin.firestore().collection('alerts').add({
+      type: 'webhook_failures',
+      severity: 'high',
+      title: 'High Stripe Webhook Failure Rate',
+      message: `${failedEvents.length} of ${logs.length} webhook events failed in the last 24 hours`,
+      details: summary,
+      acknowledged: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  console.log('Webhook health report:', JSON.stringify(summary));
+});
+
+/**
+ * Process refund requests - callable by HQ only
+ */
+export const processRefund = onCall(async (request: CallableRequest<{
+  paymentIntentId: string;
+  amount?: number;
+  reason?: string;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { paymentIntentId, amount, reason } = request.data;
+
+  if (!paymentIntentId) {
+    throw new HttpsError('invalid-argument', 'paymentIntentId is required');
+  }
+
+  try {
+    // Create the refund
+    const refundParams: Stripe.RefundCreateParams = {
+      payment_intent: paymentIntentId,
+      reason: (reason as Stripe.RefundCreateParams.Reason) || 'requested_by_customer',
+    };
+
+    if (amount) {
+      refundParams.amount = amount; // Amount in cents
+    }
+
+    const refund = await stripe.refunds.create(refundParams);
+
+    // Log the refund
+    await admin.firestore().collection('refunds').add({
+      stripeRefundId: refund.id,
+      paymentIntentId,
+      amount: refund.amount,
+      currency: refund.currency,
+      status: refund.status,
+      reason: reason || 'requested_by_customer',
+      processedBy: request.auth!.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'refund.processed',
+      entityType: 'payment',
+      entityId: paymentIntentId,
+      details: {
+        refundId: refund.id,
+        amount: refund.amount,
+        reason,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      refundId: refund.id,
+      status: refund.status,
+      amount: refund.amount,
+    };
+  } catch (err: any) {
+    console.error('Error processing refund:', err);
+    throw new HttpsError('internal', err.message || 'Failed to process refund');
+  }
+});
+
+/**
+ * Get webhook logs for monitoring dashboard - HQ only
+ */
+export const getWebhookLogs = onCall(async (request: CallableRequest<{
+  limit?: number;
+  status?: string;
+  eventType?: string;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  const { limit = 50, status, eventType } = request.data;
+
+  let query = admin.firestore()
+    .collection('stripeWebhookLogs')
+    .orderBy('timestamp', 'desc')
+    .limit(limit);
+
+  if (status) {
+    query = query.where('status', '==', status);
+  }
+
+  if (eventType) {
+    query = query.where('eventType', '==', eventType);
+  }
+
+  const snapshot = await query.get();
+  const logs = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    timestamp: doc.data().timestamp?.toDate?.()?.toISOString(),
+  }));
+
+  return { logs };
+});
+
+/**
+ * Get Stripe dashboard metrics - HQ only
+ */
+export const getStripeMetrics = onCall(async (request: CallableRequest) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  try {
+    // Get subscription counts
+    const subscriptionsSnap = await admin.firestore()
+      .collection(SUBSCRIPTIONS_COLLECTION)
+      .get();
+
+    const subscriptions = subscriptionsSnap.docs.map(doc => doc.data());
+    
+    const metrics = {
+      totalSubscriptions: subscriptions.length,
+      activeSubscriptions: subscriptions.filter(s => s.status === 'active').length,
+      trialingSubscriptions: subscriptions.filter(s => s.status === 'trialing').length,
+      canceledSubscriptions: subscriptions.filter(s => s.status === 'cancelled').length,
+      pendingCancellations: subscriptions.filter(s => s.cancelAtPeriodEnd).length,
+      byProduct: subscriptions.reduce((acc: Record<string, number>, s) => {
+        acc[s.productId || 'unknown'] = (acc[s.productId || 'unknown'] || 0) + 1;
+        return acc;
+      }, {}),
+    };
+
+    // Get recent revenue from Stripe (last 30 days)
+    const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+    const charges = await stripe.charges.list({
+      created: { gte: thirtyDaysAgo },
+      limit: 100,
+    });
+
+    const revenue = charges.data
+      .filter(c => c.paid && !c.refunded)
+      .reduce((sum, c) => sum + c.amount, 0);
+
+    return {
+      ...metrics,
+      last30DaysRevenue: revenue,
+      last30DaysRevenueFormatted: `$${(revenue / 100).toFixed(2)}`,
+    };
+  } catch (err: any) {
+    console.error('Error getting Stripe metrics:', err);
+    throw new HttpsError('internal', err.message || 'Failed to get metrics');
+  }
+});
