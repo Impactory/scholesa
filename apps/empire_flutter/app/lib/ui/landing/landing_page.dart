@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/scholesa_theme.dart';
+import '../widgets/scholesa_logo.dart';
 
 /// Landing Page - Public welcome page before login
 /// Showcases Scholesa's Education 2.0 platform with the 3 pillars
@@ -137,18 +138,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       child: Row(
         children: <Widget>[
           // Logo
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: ScholesaColors.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.school_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
+          const ScholesaLogoSmall(size: 44),
           const SizedBox(width: 12),
           const Text(
             'Scholesa',
@@ -382,26 +372,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             ),
           ),
           // Center logo
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                gradient: ScholesaColors.primaryGradient,
-                shape: BoxShape.circle,
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: ScholesaColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.school_rounded,
-                size: 64,
-                color: Colors.white,
-              ),
-            ),
+          const Center(
+            child: ScholesaLogo(size: 128, showShadow: true),
           ),
         ],
       ),
@@ -800,14 +772,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: ScholesaColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.school_rounded, color: Colors.white, size: 20),
-              ),
+              const ScholesaLogoSmall(size: 36),
               const SizedBox(width: 8),
               const Text(
                 'Scholesa',

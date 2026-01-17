@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../theme/scholesa_theme.dart';
+import '../widgets/scholesa_logo.dart';
 
 /// Beautiful animated splash screen for Scholesa
 class SplashScreen extends StatefulWidget {
@@ -181,31 +182,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildLogo() {
-    return Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        gradient: ScholesaColors.primaryGradient,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: ScholesaColors.primary.withValues(alpha: 0.4),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-          BoxShadow(
-            color: ScholesaColors.futureSkills.withValues(alpha: 0.2),
-            blurRadius: 60,
-            spreadRadius: 10,
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.school_rounded,
-        size: 64,
-        color: Colors.white,
-      ),
-    );
+    return const ScholesaLogoLarge(size: 120);
   }
 
   List<Widget> _buildFloatingOrbs() {
