@@ -210,7 +210,10 @@ export function StudentMotivationProfile() {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">My Learning Goals</h2>
-          <button className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+          <button 
+            onClick={() => setShowGoalForm(true)}
+            className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
             + Set New Goal
           </button>
         </div>
@@ -241,6 +244,22 @@ export function StudentMotivationProfile() {
           </div>
         </div>
       </div>
+      
+      {/* Goal Setting Modal */}
+      {showGoalForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <GoalSettingForm 
+              onClose={() => setShowGoalForm(false)}
+              onGoalSet={(goalId) => {
+                // Refresh goals list
+                setShowGoalForm(false);
+                // In production, refetch goals from Firestore
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
