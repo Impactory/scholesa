@@ -2995,3 +2995,1039 @@ export const archiveStripeProduct = onCall({
     throw new HttpsError('internal', err.message || 'Failed to archive product');
   }
 });
+
+// ============================================================================
+// MOTIVATION & PERSONALIZATION ENGINE
+// ============================================================================
+
+// Motivation types and their characteristics
+type MotivationType = 'achievement' | 'social' | 'mastery' | 'autonomy' | 'purpose' | 'competition' | 'creativity';
+type EngagementLevel = 'thriving' | 'engaged' | 'coasting' | 'struggling' | 'at-risk';
+
+const MOTIVATION_COLLECTIONS = {
+  EDUCATOR_FEEDBACK: 'educatorFeedback',
+  MOTIVATION_PROFILES: 'learnerMotivationProfiles',
+  LEARNER_INTERACTIONS: 'learnerInteractions',
+  SUPPORT_INTERVENTIONS: 'supportInterventions',
+  MOTIVATION_NUDGES: 'motivationNudges',
+  MOTIVATION_CONFIG: 'configs',
+};
+
+/**
+ * Submit educator feedback about a learner's engagement and motivation
+ */
+export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  sessionOccurrenceId?: string;
+  engagementLevel: 1 | 2 | 3 | 4 | 5;
+  participationType: 'leader' | 'active' | 'quiet' | 'observer' | 'reluctant';
+  respondedWellTo: MotivationType[];
+  struggledWith?: string;
+  effectiveStrategies?: Array<{ type: MotivationType; strategy: string }>;
+  notes?: string;
+  highlights?: string[];
+}>) => {
+  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+
+  const {
+    learnerId,
+    siteId,
+    sessionOccurrenceId,
+    engagementLevel,
+    participationType,
+    respondedWellTo,
+    struggledWith,
+    effectiveStrategies,
+    notes,
+    highlights,
+  } = request.data;
+
+  if (!learnerId || !siteId || !engagementLevel || !participationType) {
+    throw new HttpsError('invalid-argument', 'Missing required fields');
+  }
+
+  // Create the feedback document
+  const feedbackRef = await admin.firestore().collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK).add({
+    learnerId,
+    educatorId: uid,
+    siteId,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    engagementLevel,
+    participationType,
+    respondedWellTo: respondedWellTo || [],
+    struggledWith: struggledWith || null,
+    effectiveStrategies: (effectiveStrategies || []).map(s => ({
+      type: s.type,
+      strategy: s.strategy,
+      effectiveness: 0.5, // Default, will be updated based on outcomes
+      usageCount: 1,
+    })),
+    notes: notes || null,
+    highlights: highlights || [],
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Log telemetry
+  await persistTelemetryEvent({
+    event: 'educator.feedback.submitted',
+    userId: uid,
+    role,
+    siteId,
+    metadata: { learnerId, feedbackId: feedbackRef.id },
+  });
+
+  // Trigger async profile update
+  await updateLearnerMotivationProfile(learnerId, siteId);
+
+  return { success: true, feedbackId: feedbackRef.id };
+});
+
+/**
+ * Log a support intervention and its outcome
+ */
+export const logSupportIntervention = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  sessionOccurrenceId?: string;
+  strategyType: MotivationType;
+  strategyDescription: string;
+  context: 'group' | 'individual' | 'peer-supported';
+  triggerReason?: string;
+  outcome: 'helped' | 'partial' | 'no-change' | 'backfired';
+  learnerResponse?: 'positive' | 'neutral' | 'resistant';
+  notes?: string;
+  recommendForFuture: boolean;
+}>) => {
+  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+
+  const {
+    learnerId,
+    siteId,
+    sessionOccurrenceId,
+    strategyType,
+    strategyDescription,
+    context,
+    triggerReason,
+    outcome,
+    learnerResponse,
+    notes,
+    recommendForFuture,
+  } = request.data;
+
+  if (!learnerId || !siteId || !strategyType || !strategyDescription || !context || !outcome) {
+    throw new HttpsError('invalid-argument', 'Missing required fields');
+  }
+
+  const interventionRef = await admin.firestore().collection(MOTIVATION_COLLECTIONS.SUPPORT_INTERVENTIONS).add({
+    learnerId,
+    educatorId: uid,
+    siteId,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    strategyType,
+    strategyDescription,
+    context,
+    triggerReason: triggerReason || null,
+    outcome,
+    learnerResponse: learnerResponse || null,
+    notes: notes || null,
+    recommendForFuture,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Update effectiveness score in motivation profile
+  if (outcome !== 'no-change') {
+    await updateStrategyEffectiveness(learnerId, strategyType, outcome);
+  }
+
+  // Log telemetry
+  await persistTelemetryEvent({
+    event: 'support.intervention.logged',
+    userId: uid,
+    role,
+    siteId,
+    metadata: { learnerId, interventionId: interventionRef.id, outcome },
+  });
+
+  return { success: true, interventionId: interventionRef.id };
+});
+
+/**
+ * Track learner interaction with the app
+ */
+export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
+  eventType: string;
+  siteId: string;
+  metadata?: {
+    durationSeconds?: number;
+    missionId?: string;
+    pillarCode?: string;
+    difficultyLevel?: string;
+    timeToComplete?: number;
+    helpType?: string;
+    nudgeType?: string;
+  };
+}>) => {
+  const auth = request.auth;
+  if (!auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+
+  const { eventType, siteId, metadata } = request.data;
+
+  if (!eventType || !siteId) {
+    throw new HttpsError('invalid-argument', 'eventType and siteId are required');
+  }
+
+  // Validate event type
+  const validEvents = [
+    'app.open', 'app.session.end', 'mission.started', 'mission.completed',
+    'mission.abandoned', 'reflection.submitted', 'portfolio.item.added',
+    'help.requested', 'badge.viewed', 'leaderboard.viewed', 'streak.celebrated',
+    'nudge.accepted', 'nudge.dismissed', 'nudge.snoozed',
+  ];
+
+  if (!validEvents.includes(eventType)) {
+    throw new HttpsError('invalid-argument', `Invalid event type: ${eventType}`);
+  }
+
+  // Store interaction
+  await admin.firestore().collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS).add({
+    learnerId: auth.uid,
+    siteId,
+    eventType,
+    metadata: metadata || {},
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Also log to general telemetry
+  await persistTelemetryEvent({
+    event: eventType,
+    userId: auth.uid,
+    siteId,
+    metadata,
+  });
+
+  return { success: true };
+});
+
+/**
+ * Get learner's motivation profile
+ */
+export const getLearnerMotivationProfile = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+}>) => {
+  const { uid, role } = await requireRoleAndSite(
+    request.auth?.uid, 
+    ['learner', 'educator', 'parent', 'hq'], 
+    request.data.siteId
+  );
+
+  const { learnerId, siteId } = request.data;
+
+  // Learners can only view their own profile, educators/parents can view their assigned learners
+  if (role === 'learner' && uid !== learnerId) {
+    throw new HttpsError('permission-denied', 'Cannot view other learner profiles');
+  }
+
+  // Try to get existing profile
+  const profileQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .limit(1)
+    .get();
+
+  if (profileQuery.empty) {
+    // Create initial profile
+    const newProfile = await createInitialMotivationProfile(learnerId, siteId);
+    return newProfile;
+  }
+
+  const profile = profileQuery.docs[0].data();
+  return { id: profileQuery.docs[0].id, ...profile };
+});
+
+/**
+ * Get personalized motivation nudges for a learner
+ */
+export const getLearnerNudges = onCall(async (request: CallableRequest<{
+  siteId: string;
+  limit?: number;
+}>) => {
+  const auth = request.auth;
+  if (!auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+
+  const { siteId, limit: nudgeLimit } = request.data;
+  const maxNudges = Math.min(nudgeLimit || 5, 10);
+
+  // Get pending nudges for this learner
+  const nudgesQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
+    .where('learnerId', '==', auth.uid)
+    .where('siteId', '==', siteId)
+    .where('status', '==', 'pending')
+    .orderBy('priority', 'desc')
+    .orderBy('createdAt', 'desc')
+    .limit(maxNudges)
+    .get();
+
+  const nudges = nudgesQuery.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return { nudges };
+});
+
+/**
+ * Respond to a motivation nudge
+ */
+export const respondToNudge = onCall(async (request: CallableRequest<{
+  nudgeId: string;
+  response: 'accepted' | 'dismissed' | 'snoozed';
+  snoozeDurationMinutes?: number;
+}>) => {
+  const auth = request.auth;
+  if (!auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+
+  const { nudgeId, response, snoozeDurationMinutes } = request.data;
+
+  if (!nudgeId || !response) {
+    throw new HttpsError('invalid-argument', 'nudgeId and response are required');
+  }
+
+  const nudgeRef = admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES).doc(nudgeId);
+  const nudgeDoc = await nudgeRef.get();
+
+  if (!nudgeDoc.exists) {
+    throw new HttpsError('not-found', 'Nudge not found');
+  }
+
+  const nudgeData = nudgeDoc.data()!;
+
+  // Verify ownership
+  if (nudgeData.learnerId !== auth.uid) {
+    throw new HttpsError('permission-denied', 'Cannot respond to nudges for other learners');
+  }
+
+  // Update nudge status
+  const updateData: Record<string, any> = {
+    status: response === 'snoozed' ? 'pending' : response,
+    respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (response === 'snoozed' && snoozeDurationMinutes) {
+    updateData.scheduledFor = admin.firestore.Timestamp.fromMillis(
+      Date.now() + snoozeDurationMinutes * 60 * 1000
+    );
+  }
+
+  await nudgeRef.update(updateData);
+
+  // Track response
+  await admin.firestore().collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS).add({
+    learnerId: auth.uid,
+    siteId: nudgeData.siteId,
+    eventType: `nudge.${response}`,
+    metadata: {
+      nudgeId,
+      nudgeType: nudgeData.type,
+      motivationType: nudgeData.motivationTypeTarget,
+    },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+});
+
+/**
+ * Compute motivation signals for a learner (scheduled function or manual trigger)
+ */
+export const computeMotivationSignals = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+}>) => {
+  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+
+  const { learnerId, siteId } = request.data;
+  await updateLearnerMotivationProfile(learnerId, siteId);
+
+  return { success: true };
+});
+
+/**
+ * Generate personalized nudges for learners (scheduled function)
+ */
+export const generateMotivationNudges = onCall(async (request: CallableRequest<{
+  siteId: string;
+  learnerIds?: string[];
+}>) => {
+  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+
+  const { siteId, learnerIds } = request.data;
+
+  // Get learners to process
+  let learnersQuery: FirebaseFirestore.Query = admin.firestore()
+    .collection(USERS_COLLECTION)
+    .where('role', '==', 'learner')
+    .where('siteIds', 'array-contains', siteId);
+
+  if (learnerIds && learnerIds.length > 0) {
+    // Process specific learners only
+    const batch = learnerIds.slice(0, 10); // Limit batch size
+    for (const learnerId of batch) {
+      await generateNudgesForLearner(learnerId, siteId);
+    }
+    return { success: true, processedCount: batch.length };
+  }
+
+  // Process all learners at the site
+  const learnersSnap = await learnersQuery.limit(100).get();
+  let processed = 0;
+
+  for (const learnerDoc of learnersSnap.docs) {
+    try {
+      await generateNudgesForLearner(learnerDoc.id, siteId);
+      processed++;
+    } catch (err) {
+      console.error(`Error generating nudges for learner ${learnerDoc.id}:`, err);
+    }
+  }
+
+  return { success: true, processedCount: processed };
+});
+
+/**
+ * Get educator insights for a class/session
+ */
+export const getClassInsights = onCall(async (request: CallableRequest<{
+  siteId: string;
+  sessionOccurrenceId?: string;
+  learnerIds?: string[];
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+
+  const { siteId, sessionOccurrenceId, learnerIds } = request.data;
+
+  // Build query for motivation profiles
+  let profilesQuery: FirebaseFirestore.Query = admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .where('siteId', '==', siteId);
+
+  if (learnerIds && learnerIds.length > 0) {
+    // Note: Firestore 'in' limited to 10
+    const limitedIds = learnerIds.slice(0, 10);
+    profilesQuery = profilesQuery.where('learnerId', 'in', limitedIds);
+  }
+
+  const profilesSnap = await profilesQuery.limit(30).get();
+
+  // Build insights summary
+  const insights: Array<{
+    learnerId: string;
+    currentEngagement: EngagementLevel;
+    primaryMotivators: MotivationType[];
+    suggestedStrategies: Array<{ type: MotivationType; strategy: string }>;
+    recentHighlights?: string[];
+    needsAttention: boolean;
+  }> = [];
+
+  for (const doc of profilesSnap.docs) {
+    const profile = doc.data();
+
+    // Get recent educator feedback for highlights
+    const recentFeedback = await admin.firestore()
+      .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
+      .where('learnerId', '==', profile.learnerId)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    const highlights = recentFeedback.empty 
+      ? [] 
+      : (recentFeedback.docs[0].data().highlights || []);
+
+    // Determine if needs attention
+    const needsAttention = ['struggling', 'at-risk'].includes(profile.currentEngagement) ||
+      profile.engagementTrend === 'declining';
+
+    // Get top effective strategies
+    const suggestedStrategies = (profile.effectiveStrategies || [])
+      .filter((s: any) => s.effectiveness > 0.5)
+      .slice(0, 3)
+      .map((s: any) => ({ type: s.type, strategy: s.strategy }));
+
+    insights.push({
+      learnerId: profile.learnerId,
+      currentEngagement: profile.currentEngagement,
+      primaryMotivators: profile.primaryMotivators || [],
+      suggestedStrategies,
+      recentHighlights: highlights.slice(0, 2),
+      needsAttention,
+    });
+  }
+
+  // Sort by needs attention first
+  insights.sort((a, b) => {
+    if (a.needsAttention && !b.needsAttention) return -1;
+    if (!a.needsAttention && b.needsAttention) return 1;
+    return 0;
+  });
+
+  return { insights };
+});
+
+// ============================================================================
+// HELPER FUNCTIONS FOR MOTIVATION ENGINE
+// ============================================================================
+
+async function createInitialMotivationProfile(learnerId: string, siteId: string) {
+  const defaultProfile = {
+    learnerId,
+    siteId,
+    primaryMotivators: ['mastery', 'achievement'] as MotivationType[],
+    motivatorConfidence: {
+      achievement: 0.3,
+      social: 0.3,
+      mastery: 0.3,
+      autonomy: 0.3,
+      purpose: 0.3,
+      competition: 0.3,
+      creativity: 0.3,
+    },
+    currentEngagement: 'engaged' as EngagementLevel,
+    engagementTrend: 'stable' as const,
+    interactionPatterns: {
+      avgSessionDurationMinutes: 0,
+      preferredTimeOfDay: 'afternoon' as const,
+      mostActiveDay: 1,
+      missionsCompletedPerWeek: 0,
+      reflectionResponseRate: 0,
+      appOpenFrequency: 0,
+      streakDays: 0,
+      longestStreak: 0,
+      pauseBeforeSubmit: false,
+      seeksHelpFrequency: 0,
+      portfolioContributions: 0,
+    },
+    effectiveStrategies: [],
+    nudgeFrequency: 'moderate' as const,
+    respondsToBadges: true,
+    respondsToStreaks: true,
+    respondsSoSocialProof: true,
+    pillarEngagement: {
+      FUTURE_SKILLS: { interest: 0.5, performance: 0.5, growth: 0 },
+      LEADERSHIP_AGENCY: { interest: 0.5, performance: 0.5, growth: 0 },
+      IMPACT_INNOVATION: { interest: 0.5, performance: 0.5, growth: 0 },
+    },
+    insights: [],
+    lastInteractionUpdate: admin.firestore.FieldValue.serverTimestamp(),
+    lastEducatorFeedback: admin.firestore.FieldValue.serverTimestamp(),
+    lastComputedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const docRef = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .add(defaultProfile);
+
+  return { id: docRef.id, ...defaultProfile };
+}
+
+async function updateLearnerMotivationProfile(learnerId: string, siteId: string) {
+  // Get or create profile
+  const profileQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .limit(1)
+    .get();
+
+  let profileRef: FirebaseFirestore.DocumentReference;
+  let existingProfile: Record<string, any>;
+
+  if (profileQuery.empty) {
+    const newProfile = await createInitialMotivationProfile(learnerId, siteId);
+    profileRef = admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES).doc(newProfile.id);
+    existingProfile = newProfile;
+  } else {
+    profileRef = profileQuery.docs[0].ref;
+    existingProfile = profileQuery.docs[0].data();
+  }
+
+  // Compute signals from interactions (last 30 days)
+  const thirtyDaysAgo = admin.firestore.Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const interactions = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS)
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .where('timestamp', '>=', thirtyDaysAgo)
+    .orderBy('timestamp', 'desc')
+    .limit(500)
+    .get();
+
+  // Analyze interaction patterns
+  const interactionData = interactions.docs.map(d => d.data());
+  const interactionPatterns = computeInteractionPatterns(interactionData);
+
+  // Get educator feedback (last 30 days)
+  const feedbackQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.EDUCATOR_FEEDBACK)
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .where('createdAt', '>=', thirtyDaysAgo)
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .get();
+
+  const feedbackData = feedbackQuery.docs.map(d => d.data());
+
+  // Compute motivation type scores from feedback
+  const motivatorScores = computeMotivatorScores(feedbackData, existingProfile.motivatorConfidence || {});
+
+  // Determine engagement level
+  const engagementLevel = computeEngagementLevel(interactionPatterns, feedbackData);
+
+  // Determine engagement trend
+  const previousEngagement = existingProfile.currentEngagement || 'engaged';
+  const engagementTrend = computeEngagementTrend(previousEngagement, engagementLevel);
+
+  // Extract effective strategies from feedback
+  const effectiveStrategies = extractEffectiveStrategies(feedbackData, existingProfile.effectiveStrategies || []);
+
+  // Generate insights
+  const insights = generateInsights(interactionPatterns, feedbackData, motivatorScores, engagementLevel);
+
+  // Sort motivators by confidence
+  const sortedMotivators = Object.entries(motivatorScores)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
+    .slice(0, 3)
+    .map(([type]) => type as MotivationType);
+
+  // Update profile
+  await profileRef.update({
+    primaryMotivators: sortedMotivators,
+    motivatorConfidence: motivatorScores,
+    currentEngagement: engagementLevel,
+    engagementTrend,
+    interactionPatterns,
+    effectiveStrategies,
+    insights,
+    lastComputedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+}
+
+function computeInteractionPatterns(interactions: any[]): Record<string, any> {
+  if (interactions.length === 0) {
+    return {
+      avgSessionDurationMinutes: 0,
+      preferredTimeOfDay: 'afternoon',
+      mostActiveDay: 1,
+      missionsCompletedPerWeek: 0,
+      reflectionResponseRate: 0,
+      appOpenFrequency: 0,
+      streakDays: 0,
+      longestStreak: 0,
+      pauseBeforeSubmit: false,
+      seeksHelpFrequency: 0,
+      portfolioContributions: 0,
+    };
+  }
+
+  // Count events
+  const appSessions = interactions.filter(i => i.eventType === 'app.session.end');
+  const missionsCompleted = interactions.filter(i => i.eventType === 'mission.completed');
+  const reflections = interactions.filter(i => i.eventType === 'reflection.submitted');
+  const appOpens = interactions.filter(i => i.eventType === 'app.open');
+  const helpRequests = interactions.filter(i => i.eventType === 'help.requested');
+  const portfolioAdds = interactions.filter(i => i.eventType === 'portfolio.item.added');
+
+  // Calculate averages
+  const avgSessionDuration = appSessions.length > 0
+    ? appSessions.reduce((sum, s) => sum + (s.metadata?.durationSeconds || 0), 0) / appSessions.length / 60
+    : 0;
+
+  // Determine preferred time of day
+  const hours = interactions
+    .filter(i => i.timestamp)
+    .map(i => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getHours());
+  
+  const morningCount = hours.filter(h => h >= 6 && h < 12).length;
+  const afternoonCount = hours.filter(h => h >= 12 && h < 18).length;
+  const eveningCount = hours.filter(h => h >= 18 || h < 6).length;
+
+  let preferredTimeOfDay: 'morning' | 'afternoon' | 'evening' = 'afternoon';
+  if (morningCount > afternoonCount && morningCount > eveningCount) preferredTimeOfDay = 'morning';
+  else if (eveningCount > afternoonCount && eveningCount > morningCount) preferredTimeOfDay = 'evening';
+
+  // Most active day
+  const days = interactions
+    .filter(i => i.timestamp)
+    .map(i => new Date(i.timestamp.toMillis ? i.timestamp.toMillis() : i.timestamp).getDay());
+  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+  days.forEach(d => dayCounts[d]++);
+  const mostActiveDay = dayCounts.indexOf(Math.max(...dayCounts));
+
+  // Weekly rates (divide by ~4 weeks)
+  const weeksInPeriod = 4;
+
+  return {
+    avgSessionDurationMinutes: Math.round(avgSessionDuration * 10) / 10,
+    preferredTimeOfDay,
+    mostActiveDay,
+    missionsCompletedPerWeek: Math.round(missionsCompleted.length / weeksInPeriod * 10) / 10,
+    reflectionResponseRate: missionsCompleted.length > 0 
+      ? Math.round(reflections.length / missionsCompleted.length * 100) / 100 
+      : 0,
+    appOpenFrequency: Math.round(appOpens.length / weeksInPeriod * 10) / 10,
+    streakDays: 0, // Would need more complex calculation
+    longestStreak: 0,
+    pauseBeforeSubmit: avgSessionDuration > 15,
+    seeksHelpFrequency: Math.round(helpRequests.length / weeksInPeriod * 10) / 10,
+    portfolioContributions: portfolioAdds.length,
+  };
+}
+
+function computeMotivatorScores(
+  feedbackData: any[], 
+  existingScores: Record<MotivationType, number>
+): Record<MotivationType, number> {
+  const scores: Record<MotivationType, number> = {
+    achievement: existingScores.achievement || 0.3,
+    social: existingScores.social || 0.3,
+    mastery: existingScores.mastery || 0.3,
+    autonomy: existingScores.autonomy || 0.3,
+    purpose: existingScores.purpose || 0.3,
+    competition: existingScores.competition || 0.3,
+    creativity: existingScores.creativity || 0.3,
+  };
+
+  if (feedbackData.length === 0) return scores;
+
+  // Count positive responses to each motivation type
+  const responseCounts: Record<MotivationType, number> = {
+    achievement: 0, social: 0, mastery: 0, autonomy: 0, 
+    purpose: 0, competition: 0, creativity: 0,
+  };
+
+  feedbackData.forEach(fb => {
+    (fb.respondedWellTo || []).forEach((type: MotivationType) => {
+      if (responseCounts[type] !== undefined) {
+        responseCounts[type]++;
+      }
+    });
+  });
+
+  const totalFeedback = feedbackData.length;
+
+  // Update scores with weighted average (existing 30%, new 70%)
+  Object.keys(responseCounts).forEach(type => {
+    const key = type as MotivationType;
+    const newScore = responseCounts[key] / totalFeedback;
+    scores[key] = Math.round((existingScores[key] * 0.3 + newScore * 0.7) * 100) / 100;
+  });
+
+  return scores;
+}
+
+function computeEngagementLevel(
+  patterns: Record<string, any>, 
+  feedbackData: any[]
+): EngagementLevel {
+  // Calculate engagement score (0-100)
+  let score = 50; // Base score
+
+  // From interaction patterns
+  if (patterns.missionsCompletedPerWeek >= 3) score += 15;
+  else if (patterns.missionsCompletedPerWeek >= 1) score += 5;
+  else score -= 10;
+
+  if (patterns.reflectionResponseRate >= 0.7) score += 10;
+  else if (patterns.reflectionResponseRate >= 0.3) score += 5;
+
+  if (patterns.appOpenFrequency >= 5) score += 10;
+  else if (patterns.appOpenFrequency >= 2) score += 5;
+  else score -= 5;
+
+  if (patterns.avgSessionDurationMinutes >= 20) score += 10;
+  else if (patterns.avgSessionDurationMinutes >= 10) score += 5;
+
+  // From educator feedback
+  if (feedbackData.length > 0) {
+    const avgEngagement = feedbackData.reduce((sum, fb) => sum + (fb.engagementLevel || 3), 0) / feedbackData.length;
+    score += (avgEngagement - 3) * 10; // -20 to +20 adjustment
+
+    // Participation type adjustments
+    const recentFeedback = feedbackData[0];
+    if (recentFeedback) {
+      if (recentFeedback.participationType === 'leader') score += 10;
+      else if (recentFeedback.participationType === 'active') score += 5;
+      else if (recentFeedback.participationType === 'reluctant') score -= 10;
+    }
+  }
+
+  // Map score to engagement level
+  if (score >= 80) return 'thriving';
+  if (score >= 60) return 'engaged';
+  if (score >= 40) return 'coasting';
+  if (score >= 20) return 'struggling';
+  return 'at-risk';
+}
+
+function computeEngagementTrend(
+  previous: EngagementLevel, 
+  current: EngagementLevel
+): 'improving' | 'stable' | 'declining' {
+  const levels: EngagementLevel[] = ['at-risk', 'struggling', 'coasting', 'engaged', 'thriving'];
+  const prevIndex = levels.indexOf(previous);
+  const currIndex = levels.indexOf(current);
+
+  if (currIndex > prevIndex) return 'improving';
+  if (currIndex < prevIndex) return 'declining';
+  return 'stable';
+}
+
+function extractEffectiveStrategies(
+  feedbackData: any[], 
+  existingStrategies: any[]
+): any[] {
+  const strategyMap = new Map<string, any>();
+
+  // Load existing strategies
+  existingStrategies.forEach(s => {
+    strategyMap.set(`${s.type}:${s.strategy}`, s);
+  });
+
+  // Add new strategies from feedback
+  feedbackData.forEach(fb => {
+    (fb.effectiveStrategies || []).forEach((s: any) => {
+      const key = `${s.type}:${s.strategy}`;
+      if (strategyMap.has(key)) {
+        const existing = strategyMap.get(key);
+        existing.usageCount++;
+        // Update effectiveness based on engagement level
+        const engagementBonus = (fb.engagementLevel - 3) * 0.1;
+        existing.effectiveness = Math.min(1, Math.max(0, 
+          (existing.effectiveness + engagementBonus + 0.1) / 2
+        ));
+      } else {
+        strategyMap.set(key, {
+          type: s.type,
+          strategy: s.strategy,
+          effectiveness: 0.5 + ((fb.engagementLevel - 3) * 0.1),
+          usageCount: 1,
+        });
+      }
+    });
+  });
+
+  return Array.from(strategyMap.values())
+    .sort((a, b) => b.effectiveness - a.effectiveness)
+    .slice(0, 10);
+}
+
+function generateInsights(
+  patterns: Record<string, any>,
+  feedbackData: any[],
+  motivatorScores: Record<MotivationType, number>,
+  engagementLevel: EngagementLevel
+): any[] {
+  const insights: any[] = [];
+  const now = admin.firestore.Timestamp.now();
+
+  // Strength insights
+  const topMotivator = Object.entries(motivatorScores)
+    .sort(([, a], [, b]) => (b as number) - (a as number))[0];
+  
+  if (topMotivator && (topMotivator[1] as number) > 0.6) {
+    insights.push({
+      id: `strength-${topMotivator[0]}`,
+      type: 'strength',
+      title: `Strong ${topMotivator[0]} motivation`,
+      description: `This learner responds particularly well to ${topMotivator[0]}-based approaches.`,
+      confidence: topMotivator[1],
+      basedOn: ['educator feedback patterns'],
+      suggestedActions: [`Use ${topMotivator[0]}-focused activities`, `Leverage this in challenging moments`],
+      createdAt: now,
+    });
+  }
+
+  // Celebration insight for high engagement
+  if (engagementLevel === 'thriving') {
+    insights.push({
+      id: 'celebration-thriving',
+      type: 'celebration',
+      title: 'Exceptional engagement!',
+      description: 'This learner is thriving and highly engaged.',
+      confidence: 0.9,
+      basedOn: ['interaction patterns', 'educator feedback'],
+      suggestedActions: ['Consider leadership opportunities', 'Encourage peer mentoring'],
+      createdAt: now,
+    });
+  }
+
+  // Warning insights
+  if (engagementLevel === 'at-risk' || engagementLevel === 'struggling') {
+    insights.push({
+      id: 'warning-engagement',
+      type: 'warning',
+      title: 'Needs extra support',
+      description: `Engagement is ${engagementLevel}. Consider checking in.`,
+      confidence: 0.8,
+      basedOn: ['interaction patterns', 'engagement metrics'],
+      suggestedActions: ['Schedule 1:1 check-in', 'Try different motivation approach'],
+      createdAt: now,
+    });
+  }
+
+  // Opportunity insights
+  if (patterns.reflectionResponseRate < 0.3) {
+    insights.push({
+      id: 'opportunity-reflection',
+      type: 'opportunity',
+      title: 'Reflection opportunity',
+      description: 'Low reflection completion. Could benefit from guided prompts.',
+      confidence: 0.7,
+      basedOn: ['reflection submission rate'],
+      suggestedActions: ['Use simpler reflection prompts', 'Try voice/video reflections'],
+      createdAt: now,
+    });
+  }
+
+  return insights.slice(0, 5); // Limit to 5 insights
+}
+
+async function updateStrategyEffectiveness(
+  learnerId: string, 
+  strategyType: MotivationType, 
+  outcome: 'helped' | 'partial' | 'no-change' | 'backfired'
+) {
+  const profileQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .where('learnerId', '==', learnerId)
+    .limit(1)
+    .get();
+
+  if (profileQuery.empty) return;
+
+  const profileRef = profileQuery.docs[0].ref;
+  const profile = profileQuery.docs[0].data();
+
+  const strategies = profile.effectiveStrategies || [];
+  const updated = strategies.map((s: any) => {
+    if (s.type === strategyType) {
+      let delta = 0;
+      if (outcome === 'helped') delta = 0.1;
+      else if (outcome === 'partial') delta = 0.05;
+      else if (outcome === 'backfired') delta = -0.15;
+      
+      return {
+        ...s,
+        effectiveness: Math.min(1, Math.max(0, s.effectiveness + delta)),
+        usageCount: s.usageCount + 1,
+        lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+    }
+    return s;
+  });
+
+  await profileRef.update({
+    effectiveStrategies: updated,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function generateNudgesForLearner(learnerId: string, siteId: string) {
+  // Get learner's motivation profile
+  const profileQuery = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_PROFILES)
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .limit(1)
+    .get();
+
+  if (profileQuery.empty) {
+    await createInitialMotivationProfile(learnerId, siteId);
+    return;
+  }
+
+  const profile = profileQuery.docs[0].data();
+  const primaryMotivator = profile.primaryMotivators?.[0] || 'achievement';
+
+  // Check existing pending nudges
+  const existingNudges = await admin.firestore()
+    .collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES)
+    .where('learnerId', '==', learnerId)
+    .where('status', '==', 'pending')
+    .get();
+
+  // Don't create too many nudges
+  if (existingNudges.size >= 3) return;
+
+  // Generate appropriate nudge based on engagement level and motivation type
+  const nudgeTemplates: Record<MotivationType, { title: string; message: string }[]> = {
+    achievement: [
+      { title: '🎯 Almost there!', message: 'You\'re so close to your next milestone. One more mission to go!' },
+      { title: '⭐ Challenge accepted?', message: 'Ready to tackle something new? Your skills are ready for the next level!' },
+    ],
+    social: [
+      { title: '👋 Your team misses you!', message: 'Join your classmates for today\'s group activity!' },
+      { title: '🤝 Collaboration time', message: 'A friend could use your help on their project. Ready to team up?' },
+    ],
+    mastery: [
+      { title: '📚 Deep dive time', message: 'Master today\'s skill with focused practice. You\'ve got this!' },
+      { title: '🧠 Level up your knowledge', message: 'New learning awaits! Take your time to really understand it.' },
+    ],
+    autonomy: [
+      { title: '🎨 Your choice today', message: 'Pick your own adventure! What skill do you want to work on?' },
+      { title: '🚀 Your path, your pace', message: 'Today\'s missions are flexible. Design your learning journey!' },
+    ],
+    purpose: [
+      { title: '🌍 Make an impact', message: 'Your work today can make a real difference. Ready to contribute?' },
+      { title: '💡 Meaningful work', message: 'This mission connects to real-world problems. Your ideas matter!' },
+    ],
+    competition: [
+      { title: '🏆 Leaderboard update', message: 'You\'re just 2 points behind! One mission could change that.' },
+      { title: '⚡ Quick challenge', message: 'Beat your personal best! Can you complete this faster than last time?' },
+    ],
+    creativity: [
+      { title: '🎨 Creative freedom', message: 'Today\'s mission lets you express yourself. What will you create?' },
+      { title: '✨ Imagination station', message: 'No wrong answers today! Let your creativity flow.' },
+    ],
+  };
+
+  const templates = nudgeTemplates[primaryMotivator] || nudgeTemplates.achievement;
+  const template = templates[Math.floor(Math.random() * templates.length)];
+
+  // Determine nudge type based on engagement
+  let nudgeType: 'reminder' | 'celebration' | 'challenge' | 'encouragement' | 'tip' = 'encouragement';
+  if (profile.currentEngagement === 'thriving') nudgeType = 'challenge';
+  else if (profile.currentEngagement === 'struggling' || profile.currentEngagement === 'at-risk') nudgeType = 'encouragement';
+
+  // Create the nudge
+  await admin.firestore().collection(MOTIVATION_COLLECTIONS.MOTIVATION_NUDGES).add({
+    learnerId,
+    siteId,
+    type: nudgeType,
+    title: template.title,
+    message: template.message,
+    motivationTypeTarget: primaryMotivator,
+    priority: profile.currentEngagement === 'at-risk' ? 'high' : 'medium',
+    status: 'pending',
+    generatedBy: 'system',
+    basedOnInsights: profile.insights?.slice(0, 2).map((i: any) => i.id) || [],
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  });
+}
