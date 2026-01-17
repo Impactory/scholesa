@@ -136,8 +136,20 @@ service cloud.firestore {
 
     // Notification Requests: Educators can read their own requests
     match /notificationRequests/{id} {
-      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isHQ());
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || resource.data.userId == request.auth.uid || isHQ());
       allow write: if false; // Server-only via Cloud Functions
+    }
+    
+    // Stripe Webhook Logs: HQ read only, server writes
+    match /stripeWebhookLogs/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only via webhooks
+    }
+    
+    // Stripe Disputes: HQ read only, server writes
+    match /stripeDisputes/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only via webhooks
     }
     
     // Default Deny

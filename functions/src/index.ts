@@ -894,7 +894,25 @@ export const createStripeSubscription = onCall(async (request: CallableRequest) 
 });
 
 /**
- * Stripe Webhook Handler - processes payment events
+ * Stripe Webhook Handler - processes all payment events comprehensively
+ * 
+ * Supported Events:
+ * - checkout.session.completed: One-time payment or subscription checkout completed
+ * - checkout.session.expired: Checkout session expired without completion
+ * - invoice.paid: Subscription invoice paid successfully
+ * - invoice.payment_failed: Subscription invoice payment failed
+ * - invoice.upcoming: Invoice will be created soon (for notifications)
+ * - customer.subscription.created: New subscription created
+ * - customer.subscription.updated: Subscription status changed
+ * - customer.subscription.deleted: Subscription cancelled/ended
+ * - customer.subscription.trial_will_end: Trial ending soon (3 days before)
+ * - payment_intent.succeeded: One-time payment succeeded
+ * - payment_intent.payment_failed: One-time payment failed
+ * - payment_method.attached: New payment method added
+ * - payment_method.detached: Payment method removed
+ * - charge.refunded: Payment was refunded
+ * - charge.dispute.created: Customer disputed a charge
+ * - charge.dispute.closed: Dispute was resolved
  */
 export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   if (req.method !== 'POST') {
@@ -916,7 +934,6 @@ export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
 
   let event: Stripe.Event;
   try {
-    // Get raw body for signature verification
     const rawBody = req.rawBody;
     event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err: any) {
@@ -925,15 +942,25 @@ export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
     return;
   }
 
-  // Handle the event
+  // Log all webhook events for audit trail
+  await logWebhookEvent(event);
+
   try {
     switch (event.type) {
+      // ============= CHECKOUT EVENTS =============
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         await handleCheckoutSessionCompleted(session);
         break;
       }
 
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutSessionExpired(session);
+        break;
+      }
+
+      // ============= INVOICE EVENTS =============
       case 'invoice.paid': {
         const invoice = event.data.object as Stripe.Invoice;
         await handleInvoicePaid(invoice);
@@ -943,6 +970,25 @@ export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         await handleInvoicePaymentFailed(invoice);
+        break;
+      }
+
+      case 'invoice.upcoming': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await handleInvoiceUpcoming(invoice);
+        break;
+      }
+
+      case 'invoice.finalized': {
+        const invoice = event.data.object as Stripe.Invoice;
+        console.log('Invoice finalized:', invoice.id);
+        break;
+      }
+
+      // ============= SUBSCRIPTION EVENTS =============
+      case 'customer.subscription.created': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionCreated(subscription);
         break;
       }
 
@@ -958,16 +1004,543 @@ export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
         break;
       }
 
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleTrialWillEnd(subscription);
+        break;
+      }
+
+      // ============= PAYMENT INTENT EVENTS =============
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await handlePaymentIntentSucceeded(paymentIntent);
+        break;
+      }
+
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await handlePaymentIntentFailed(paymentIntent);
+        break;
+      }
+
+      case 'payment_intent.canceled': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('Payment intent canceled:', paymentIntent.id);
+        break;
+      }
+
+      // ============= PAYMENT METHOD EVENTS =============
+      case 'payment_method.attached': {
+        const paymentMethod = event.data.object as Stripe.PaymentMethod;
+        await handlePaymentMethodAttached(paymentMethod);
+        break;
+      }
+
+      case 'payment_method.detached': {
+        const paymentMethod = event.data.object as Stripe.PaymentMethod;
+        await handlePaymentMethodDetached(paymentMethod);
+        break;
+      }
+
+      // ============= CHARGE/REFUND EVENTS =============
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge;
+        await handleChargeRefunded(charge);
+        break;
+      }
+
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute;
+        await handleDisputeCreated(dispute);
+        break;
+      }
+
+      case 'charge.dispute.closed': {
+        const dispute = event.data.object as Stripe.Dispute;
+        await handleDisputeClosed(dispute);
+        break;
+      }
+
+      // ============= CUSTOMER EVENTS =============
+      case 'customer.updated': {
+        const customer = event.data.object as Stripe.Customer;
+        await handleCustomerUpdated(customer);
+        break;
+      }
+
+      case 'customer.deleted': {
+        const customer = event.data.object as unknown as Stripe.DeletedCustomer;
+        await handleCustomerDeleted(customer);
+        break;
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    res.status(200).json({ received: true });
+    res.status(200).json({ received: true, type: event.type });
   } catch (err: any) {
     console.error('Error processing webhook:', err);
-    res.status(500).send(`Webhook processing error: ${err.message}`);
+    // Return 200 to prevent Stripe retries for non-retryable errors
+    // But log for investigation
+    res.status(200).json({ received: true, error: err.message });
   }
 });
+
+/**
+ * Log all webhook events for audit and debugging
+ */
+async function logWebhookEvent(event: Stripe.Event) {
+  try {
+    await admin.firestore().collection('stripeWebhookLogs').add({
+      eventId: event.id,
+      eventType: event.type,
+      livemode: event.livemode,
+      created: new Date(event.created * 1000),
+      receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      objectId: (event.data.object as any).id,
+    });
+  } catch (err) {
+    console.error('Failed to log webhook event:', err);
+  }
+}
+
+/**
+ * Handle expired checkout sessions
+ */
+async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
+  const intentId = session.metadata?.firebaseIntentId || session.client_reference_id;
+  if (!intentId) return;
+
+  const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId);
+  const intentSnap = await intentRef.get();
+  
+  if (intentSnap.exists && intentSnap.data()?.status === 'pending') {
+    await intentRef.update({
+      status: 'expired',
+      expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log('Checkout session expired:', intentId);
+  }
+}
+
+/**
+ * Handle upcoming invoice notification
+ */
+async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
+  const invoiceData = invoice as any;
+  const customerId = typeof invoiceData.customer === 'string' ? invoiceData.customer : invoiceData.customer?.id;
+  if (!customerId) return;
+
+  // Find user by Stripe customer ID
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .where('stripeCustomerId', '==', customerId)
+    .limit(1)
+    .get();
+
+  if (customerSnap.empty) return;
+
+  const userId = customerSnap.docs[0].id;
+
+  // Create notification for upcoming invoice
+  await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+    userId,
+    type: 'invoice_upcoming',
+    channel: 'email',
+    status: 'pending',
+    data: {
+      amount: invoiceData.amount_due,
+      currency: invoiceData.currency,
+      dueDate: invoiceData.due_date ? new Date(invoiceData.due_date * 1000) : null,
+      invoiceUrl: invoiceData.hosted_invoice_url,
+    },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Upcoming invoice notification created for user:', userId);
+}
+
+/**
+ * Handle new subscription created
+ */
+async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  const subData = subscription as any;
+  const customerId = typeof subData.customer === 'string' ? subData.customer : subData.customer?.id;
+  if (!customerId) return;
+
+  // Check if we already have this subscription
+  const existingSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscription.id)
+    .limit(1)
+    .get();
+
+  if (!existingSnap.empty) {
+    console.log('Subscription already exists:', subscription.id);
+    return;
+  }
+
+  // Find user by Stripe customer ID
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .where('stripeCustomerId', '==', customerId)
+    .limit(1)
+    .get();
+
+  if (customerSnap.empty) {
+    console.log('No user found for customer:', customerId);
+    return;
+  }
+
+  const userId = customerSnap.docs[0].id;
+  const productId = subscription.metadata?.productId as ProductId;
+  const siteId = subscription.metadata?.siteId || '';
+
+  // Create subscription record
+  await admin.firestore().collection(SUBSCRIPTIONS_COLLECTION).add({
+    userId,
+    siteId,
+    productId,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: customerId,
+    status: subscription.status,
+    currentPeriodStart: subData.current_period_start ? new Date(subData.current_period_start * 1000) : null,
+    currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
+    cancelAtPeriodEnd: subData.cancel_at_period_end,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Subscription created:', subscription.id, 'for user:', userId);
+}
+
+/**
+ * Handle trial ending notification
+ */
+async function handleTrialWillEnd(subscription: Stripe.Subscription) {
+  const subData = subscription as any;
+  const subSnap = await admin.firestore()
+    .collection(SUBSCRIPTIONS_COLLECTION)
+    .where('stripeSubscriptionId', '==', subscription.id)
+    .limit(1)
+    .get();
+
+  if (subSnap.empty) return;
+
+  const subDoc = subSnap.docs[0];
+  const sub = subDoc.data();
+
+  // Create notification for trial ending
+  await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+    userId: sub.userId,
+    type: 'trial_ending',
+    channel: 'email',
+    status: 'pending',
+    data: {
+      trialEnd: subData.trial_end ? new Date(subData.trial_end * 1000) : null,
+      productId: sub.productId,
+    },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Trial ending notification created for subscription:', subscription.id);
+}
+
+/**
+ * Handle successful payment intent (one-time payments)
+ */
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  const intentId = paymentIntent.metadata?.firebaseIntentId;
+  if (!intentId) {
+    console.log('No Firebase intent ID in payment intent:', paymentIntent.id);
+    return;
+  }
+
+  // This might already be handled by checkout.session.completed
+  // but we handle it here for direct payment intents
+  const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId);
+  const intentSnap = await intentRef.get();
+
+  if (!intentSnap.exists) return;
+
+  const intent = intentSnap.data() as any;
+  if (intent.status === 'paid') return;
+
+  await intentRef.update({
+    status: 'paid',
+    stripePaymentIntentId: paymentIntent.id,
+    paidAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Payment intent succeeded:', paymentIntent.id);
+}
+
+/**
+ * Handle failed payment intent
+ */
+async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
+  const intentId = paymentIntent.metadata?.firebaseIntentId;
+  if (!intentId) return;
+
+  const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc(intentId);
+  const intentSnap = await intentRef.get();
+
+  if (!intentSnap.exists) return;
+
+  const piData = paymentIntent as any;
+  await intentRef.update({
+    status: 'failed',
+    failureReason: piData.last_payment_error?.message || 'Payment failed',
+    failedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Create notification for failed payment
+  const intent = intentSnap.data() as any;
+  if (intent.userId) {
+    await admin.firestore().collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+      userId: intent.userId,
+      type: 'payment_failed',
+      channel: 'email',
+      status: 'pending',
+      data: {
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        reason: piData.last_payment_error?.message,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  console.log('Payment intent failed:', paymentIntent.id);
+}
+
+/**
+ * Handle payment method attached to customer
+ */
+async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) {
+  const pmData = paymentMethod as any;
+  const customerId = typeof pmData.customer === 'string' ? pmData.customer : pmData.customer?.id;
+  if (!customerId) return;
+
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .where('stripeCustomerId', '==', customerId)
+    .limit(1)
+    .get();
+
+  if (customerSnap.empty) return;
+
+  const customerDoc = customerSnap.docs[0];
+  await customerDoc.ref.update({
+    paymentMethods: admin.firestore.FieldValue.arrayUnion({
+      id: paymentMethod.id,
+      type: paymentMethod.type,
+      last4: pmData.card?.last4 || null,
+      brand: pmData.card?.brand || null,
+      addedAt: new Date(),
+    }),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Payment method attached:', paymentMethod.id);
+}
+
+/**
+ * Handle payment method detached from customer
+ */
+async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) {
+  // Find customer record with this payment method
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .get();
+
+  for (const doc of customerSnap.docs) {
+    const data = doc.data();
+    const paymentMethods = data.paymentMethods || [];
+    const filtered = paymentMethods.filter((pm: any) => pm.id !== paymentMethod.id);
+    
+    if (filtered.length !== paymentMethods.length) {
+      await doc.ref.update({
+        paymentMethods: filtered,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log('Payment method detached:', paymentMethod.id);
+      break;
+    }
+  }
+}
+
+/**
+ * Handle charge refunded
+ */
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  const chargeData = charge as any;
+  const paymentIntentId = typeof chargeData.payment_intent === 'string' 
+    ? chargeData.payment_intent 
+    : chargeData.payment_intent?.id;
+
+  // Find the order/intent by payment intent ID
+  const intentSnap = await admin.firestore()
+    .collection(CHECKOUT_INTENTS_COLLECTION)
+    .where('stripePaymentIntentId', '==', paymentIntentId)
+    .limit(1)
+    .get();
+
+  if (intentSnap.empty) {
+    console.log('No intent found for refunded charge:', charge.id);
+    return;
+  }
+
+  const intentDoc = intentSnap.docs[0];
+  const intent = intentDoc.data();
+
+  await intentDoc.ref.update({
+    refundedAt: admin.firestore.FieldValue.serverTimestamp(),
+    refundAmount: chargeData.amount_refunded,
+    refundStatus: charge.refunded ? 'full' : 'partial',
+  });
+
+  // Log audit event
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: 'stripe_webhook',
+    actorRole: 'system',
+    action: 'stripe.charge.refunded',
+    entityType: 'order',
+    entityId: intentDoc.id,
+    siteId: intent.siteId,
+    details: {
+      chargeId: charge.id,
+      amountRefunded: chargeData.amount_refunded,
+      currency: charge.currency,
+      refundReason: chargeData.refunds?.data?.[0]?.reason || 'unknown',
+    },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Optionally revoke entitlements on full refund
+  if (charge.refunded && intent.entitlementId) {
+    await admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc(intent.entitlementId).update({
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokeReason: 'refunded',
+    });
+  }
+
+  console.log('Charge refunded:', charge.id);
+}
+
+/**
+ * Handle dispute created
+ */
+async function handleDisputeCreated(dispute: Stripe.Dispute) {
+  const disputeData = dispute as any;
+  const chargeId = typeof disputeData.charge === 'string' ? disputeData.charge : disputeData.charge?.id;
+
+  await admin.firestore().collection('stripeDisputes').add({
+    disputeId: dispute.id,
+    chargeId,
+    amount: dispute.amount,
+    currency: dispute.currency,
+    reason: dispute.reason,
+    status: dispute.status,
+    evidenceDueBy: disputeData.evidence_details?.due_by ? new Date(disputeData.evidence_details.due_by * 1000) : null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Alert HQ about the dispute
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: 'stripe_webhook',
+    actorRole: 'system',
+    action: 'stripe.dispute.created',
+    entityType: 'dispute',
+    entityId: dispute.id,
+    details: {
+      chargeId,
+      amount: dispute.amount,
+      currency: dispute.currency,
+      reason: dispute.reason,
+    },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Dispute created:', dispute.id, 'reason:', dispute.reason);
+}
+
+/**
+ * Handle dispute closed
+ */
+async function handleDisputeClosed(dispute: Stripe.Dispute) {
+  const disputeSnap = await admin.firestore()
+    .collection('stripeDisputes')
+    .where('disputeId', '==', dispute.id)
+    .limit(1)
+    .get();
+
+  if (disputeSnap.empty) return;
+
+  await disputeSnap.docs[0].ref.update({
+    status: dispute.status,
+    closedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Log outcome
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: 'stripe_webhook',
+    actorRole: 'system',
+    action: 'stripe.dispute.closed',
+    entityType: 'dispute',
+    entityId: dispute.id,
+    details: {
+      status: dispute.status,
+      won: dispute.status === 'won',
+    },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Dispute closed:', dispute.id, 'status:', dispute.status);
+}
+
+/**
+ * Handle customer updated
+ */
+async function handleCustomerUpdated(customer: Stripe.Customer) {
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .where('stripeCustomerId', '==', customer.id)
+    .limit(1)
+    .get();
+
+  if (customerSnap.empty) return;
+
+  const customerDoc = customerSnap.docs[0];
+  await customerDoc.ref.update({
+    email: customer.email,
+    name: customer.name,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Customer updated:', customer.id);
+}
+
+/**
+ * Handle customer deleted
+ */
+async function handleCustomerDeleted(customer: Stripe.DeletedCustomer) {
+  const customerSnap = await admin.firestore()
+    .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .where('stripeCustomerId', '==', customer.id)
+    .limit(1)
+    .get();
+
+  if (customerSnap.empty) return;
+
+  const customerDoc = customerSnap.docs[0];
+  await customerDoc.ref.update({
+    deleted: true,
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log('Customer deleted:', customer.id);
+}
 
 /**
  * Handle successful checkout session completion
