@@ -13,6 +13,8 @@
 import type { ContextBlock } from './modelAdapter';
 import type { AgeBand } from '@/src/types/schema';
 import { getRubricForMission, formatRubricForAI, type AssessmentRubric } from './rubricManager';
+import { EmbeddingService, VectorStore, type SearchResult } from './vectorStore';
+import { Timestamp } from 'firebase/firestore';
 
 // ==================== TYPES ====================
 
@@ -50,21 +52,15 @@ export class RetrievalService {
   /**
    * Retrieve relevant context for a student question
    * 
-   * In production, this would:
-   * 1. Generate embedding for query
-   * 2. Vector search in your store (Pinecone, Weaviate, or Firestore vector search)
-   * 3. Re-rank by relevance
-   * 4. Return top-K
-   * 
-   * For now, simplified with keyword matching
+   * Uses hybrid approach:
+   * 1. Vector search for semantic similarity (when available)
+   * 2. Keyword filtering for specific metadata (mission, grade)
+   * 3. Re-ranking by relevance
    */
   static async retrieve(query: RetrievalQuery): Promise<ContextBlock[]> {
-    // TODO: Integrate with vector store
-    // For now, return mock data structure
-    
     const contextBlocks: ContextBlock[] = [];
     
-    // 1. Retrieve rubric criteria (if mission provided)
+    // 1. Retrieve rubric criteria (if mission provided) - Always high priority
     if (query.missionId) {
       const rubric = await this.getRubricForMission(query.missionId, query.gradeBand);
       if (rubric) {
@@ -77,23 +73,59 @@ export class RetrievalService {
       }
     }
     
-    // 2. Retrieve exemplars (good examples)
-    const exemplars = await this.getExemplars(query);
-    contextBlocks.push(...exemplars);
+    // 2. Vector search for semantic similarity (TODO: Enable in Phase 2)
+    const useVectorSearch = false; // Set to true once vectorStore is implemented
     
-    // 3. Retrieve common misconceptions
-    const misconceptions = await this.getMisconceptions(query);
-    contextBlocks.push(...misconceptions);
-    
-    // 4. Retrieve student's past work (if learner provided)
-    if (query.learnerId) {
-      const pastWork = await this.getStudentPastWork(query.learnerId, query.missionId);
-      contextBlocks.push(...pastWork);
+    if (useVectorSearch) {
+      try {
+        // Generate embedding for query
+        const queryEmbedding = await EmbeddingService.generateEmbedding(query.query);
+        
+        // Search vector store
+        const searchResults = await VectorStore.search(queryEmbedding, query.topK || 5, {
+          missionId: query.missionId,
+          gradeBand: query.gradeBand
+        });
+        
+        // Convert search results to context blocks (map vector types to context types)
+        for (const result of searchResults) {
+          const contextType: ContextBlock['type'] = 
+            result.document.metadata.type === 'student_work' ? 'artifact' :
+            result.document.metadata.type === 'feedback_pattern' ? 'feedback' :
+            result.document.metadata.type;
+          
+          contextBlocks.push({
+            type: contextType,
+            content: result.document.content,
+            id: result.document.id,
+            relevance: result.score
+          });
+        }
+      } catch (err) {
+        console.warn('Vector search failed, falling back to keyword search:', err);
+      }
     }
     
-    // 5. Retrieve teacher feedback patterns
-    const feedbackPatterns = await this.getTeacherFeedback(query);
-    contextBlocks.push(...feedbackPatterns);
+    // 3. Fallback: Keyword-based retrieval (used until vector search is implemented)
+    if (!useVectorSearch || contextBlocks.length === 0) {
+      // Retrieve exemplars (good examples)
+      const exemplars = await this.getExemplars(query);
+      contextBlocks.push(...exemplars);
+      
+      // Retrieve common misconceptions
+      const misconceptions = await this.getMisconceptions(query);
+      contextBlocks.push(...misconceptions);
+      
+      // Retrieve student's past work (if learner provided)
+      if (query.learnerId) {
+        const pastWork = await this.getStudentPastWork(query.learnerId, query.missionId);
+        contextBlocks.push(...pastWork);
+      }
+      
+      // Retrieve teacher feedback patterns
+      const feedbackPatterns = await this.getTeacherFeedback(query);
+      contextBlocks.push(...feedbackPatterns);
+    }
     
     // Filter by relevance threshold
     const filtered = contextBlocks.filter(
@@ -109,19 +141,51 @@ export class RetrievalService {
   
   /**
    * Store a document for future retrieval
+   * 
+   * Phase 2: Will store in vector DB for semantic search
    */
   static async store(document: StoredDocument): Promise<void> {
-    // TODO: Store in vector DB
-    // For now, just log
-    console.log('Storing document:', document.id, document.type);
+    // Convert to vector document and store
+    try {
+      const embedding = await EmbeddingService.generateEmbedding(document.content);
+      
+      await VectorStore.store({
+        content: document.content,
+        embedding,
+        metadata: {
+          type: document.type === 'artifact' ? 'student_work' :
+                document.type === 'feedback' ? 'feedback_pattern' :
+                document.type === 'mission_goal' ? 'misconception' : // Map mission_goal to misconception
+                document.type,
+          gradeBand: document.metadata.gradeBand,
+          missionId: document.metadata.missionId,
+          learnerId: document.metadata.learnerId,
+          skillIds: document.metadata.skillId ? [document.metadata.skillId] : undefined,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        }
+      });
+      
+      console.log('Stored document in vector store:', document.id, document.type);
+    } catch (err) {
+      console.warn('Vector store not available, skipping storage:', err);
+    }
   }
   
   /**
    * Update embeddings for a document (when content changes)
+   * 
+   * Phase 2: Will regenerate embedding and update vector DB
    */
   static async updateEmbedding(documentId: string, content: string): Promise<void> {
-    // TODO: Generate embedding and update
-    console.log('Updating embedding for:', documentId);
+    try {
+      const newEmbedding = await EmbeddingService.generateEmbedding(content);
+      await VectorStore.updateEmbedding(documentId, newEmbedding);
+      
+      console.log('Updated embedding for:', documentId);
+    } catch (err) {
+      console.warn('Vector store not available, skipping embedding update:', err);
+    }
   }
   
   // ===== PRIVATE RETRIEVAL METHODS =====

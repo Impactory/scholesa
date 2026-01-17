@@ -7,9 +7,13 @@ import { query, where, orderBy, addDoc, doc, updateDoc, Timestamp } from 'fireba
 import { enrolmentsCollection, missionsCollection, missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import { Mission, MissionAttempt } from '@/src/types/schema';
 import { ReflectionForm } from '@/ReflectionForm';
+import { usePageViewTracking, useAutonomyTracking, useCompetenceTracking } from '@/src/hooks/useTelemetry';
 
 export function MissionList() {
   const { user } = useAuthContext();
+  
+  // Track page view
+  usePageViewTracking('mission_list');
 
   // 1. Get Enrollments
   const [enrolmentsSnap, loadingEnrolments] = useCollection(
@@ -76,6 +80,10 @@ function CourseMissions({ courseId, userId, attempts }: { courseId: string, user
 function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?: MissionAttempt, userId: string }) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isReflecting, setIsReflecting] = React.useState(false);
+  
+  // Telemetry hooks
+  const trackAutonomy = useAutonomyTracking();
+  const trackCompetence = useCompetenceTracking();
 
   const handleStart = async () => {
     setIsSubmitting(true);
@@ -87,6 +95,14 @@ function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?:
         status: 'started',
         submittedAt: Timestamp.now(),
       } as any); // Cast for addDoc compatibility with typed collection
+      
+      // Track autonomy: Mission selected
+      trackAutonomy('mission_selected', {
+        missionId: mission.id,
+        missionTitle: mission.title,
+        xp: mission.xp,
+        pillars: mission.pillarCodes
+      });
     } catch (e) {
       console.error(e);
     } finally {
@@ -106,6 +122,13 @@ function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?:
       await updateDoc(doc(missionAttemptsCollection, attempt.id), {
         status: 'submitted',
         submittedAt: Timestamp.now(),
+      });
+      
+      // Track competence: Artifact submitted
+      trackCompetence('artifact_submitted', {
+        missionId: mission.id,
+        missionTitle: mission.title,
+        attemptId: attempt.id
       });
     } catch (e) {
       console.error(e);
