@@ -44,8 +44,6 @@ import type {
   MotivationAnalytics
 } from '@/src/types/schema';
 
-import type { TelemetryEvent } from '@/src/lib/telemetry/sdtTelemetry';
-
 // Helper to create a typed collection reference
 const createCollection = <T = DocumentData>(collectionName: string) => {
   return collection(firestore, collectionName) as CollectionReference<T>;
@@ -86,24 +84,3 @@ export const learnerInteractionsCollection = createCollection<LearnerInteraction
 export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
 export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
 export const motivationConfigCollection = createCollection<MotivationConfig>('configs');
-
-// SDT Framework Collections
-export const microSkillsCollection = createCollection<MicroSkill>('microSkills');
-export const missionVariantsCollection = createCollection<MissionVariant>('missionVariants');
-export const crewsCollection = createCollection<Crew>('crews');
-export const badgesCollection = createCollection<Badge>('badges');
-export const badgeAwardsCollection = createCollection<BadgeAward>('badgeAwards');
-export const skillEvidenceCollection = createCollection<SkillEvidence>('skillEvidence');
-export const sprintSessionsCollection = createCollection<SprintSession>('sprintSessions');
-export const checkpointsCollection = createCollection<Checkpoint>('checkpoints');
-export const showcaseSubmissionsCollection = createCollection<ShowcaseSubmission>('showcaseSubmissions');
-export const reflectionEntriesCollection = createCollection<ReflectionEntry>('reflectionEntries');
-export const aiCoachInteractionsCollection = createCollection<AICoachInteraction>('aiCoachInteractions');
-export const weeklyGoalsCollection = createCollection<WeeklyGoal>('weeklyGoals');
-export const learnerInterestProfilesCollection = createCollection<LearnerInterestProfile>('learnerInterestProfiles');
-export const parentSnapshotsCollection = createCollection<ParentSnapshot>('parentSnapshots');
-export const peerFeedbackCollection = createCollection<PeerFeedback>('peerFeedback');
-export const motivationAnalyticsCollection = createCollection<MotivationAnalytics>('motivationAnalytics');
-
-// Telemetry
-export const telemetryEventsCollection = createCollection<TelemetryEvent>('telemetryEvents');

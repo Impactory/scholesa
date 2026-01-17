@@ -458,3 +458,442 @@ export interface MotivationConfig {
   updatedAt: Timestamp;
   updatedBy: string;
 }
+
+// --- Self-Determination Theory (SDT) Framework ---
+
+/**
+ * Difficulty level for missions (Bronze/Silver/Gold)
+ */
+export type DifficultyLevel = 'bronze' | 'silver' | 'gold';
+
+/**
+ * Crew role types for team learning
+ */
+export type CrewRole = 'builder' | 'tester' | 'reporter';
+
+/**
+ * Recognition token types
+ */
+export type RecognitionType = 'helper' | 'debugger' | 'clear_communicator' | 'courage_to_try';
+
+/**
+ * Age bands for developmental appropriateness
+ */
+export type AgeBand = 'grades_1_3' | 'grades_4_6' | 'grades_7_9' | 'grades_10_12';
+
+/**
+ * Micro-skill that can be proven with evidence
+ */
+export interface MicroSkill {
+  id: string;
+  siteId: string;
+  name: string;
+  description: string;
+  pillarCode: PillarCode;
+  courseId?: string;
+  
+  // What evidence proves mastery
+  evidenceTypes: ('upload' | 'quiz' | 'demo' | 'version_history' | 'peer_review')[];
+  
+  // Success criteria
+  successCriteria: string;
+  
+  // Rubric simplified for students
+  rubric?: {
+    proficient: string;
+    developing: string;
+    emerging: string;
+  };
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Mission variant with difficulty level (autonomy)
+ */
+export interface MissionVariant {
+  id: string;
+  baseMissionId: string; // Links to the original Mission
+  siteId: string;
+  
+  difficultyLevel: DifficultyLevel;
+  title: string;
+  description: string;
+  successCriterion: string; // "Done looks like..."
+  
+  // Different theme/tool/context
+  theme?: string; // e.g., 'sports', 'music', 'gaming', 'environment'
+  estimatedMinutes: number;
+  
+  // Skills this variant proves
+  microSkillIds: string[];
+  
+  createdAt: Timestamp;
+  updatedBy: string;
+}
+
+/**
+ * Crew (stable team for 4-8 sessions)
+ */
+export interface Crew {
+  id: string;
+  siteId: string;
+  name: string;
+  
+  // Members
+  learnerIds: string[];
+  
+  // Team structure
+  currentRoles: Record<string, CrewRole>; // learnerId -> role
+  roleRotationSchedule?: Timestamp[]; // When to rotate
+  
+  // Active period
+  startDate: Timestamp;
+  endDate?: Timestamp;
+  sessionCount: number; // How many sessions together
+  
+  // Team goals
+  weeklyGoal?: string;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Evidence-based badge
+ */
+export interface Badge {
+  id: string;
+  siteId: string;
+  name: string;
+  description: string;
+  iconUrl?: string;
+  
+  // What proves this badge
+  requiredMicroSkillIds: string[];
+  requiredEvidenceCount: number; // How many pieces of evidence needed
+  
+  pillarCode?: PillarCode;
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * Badge award to a learner
+ */
+export interface BadgeAward {
+  id: string;
+  badgeId: string;
+  learnerId: string;
+  siteId: string;
+  
+  // Evidence that earned this badge
+  evidenceIds: string[]; // References to SkillEvidence
+  
+  awardedAt: Timestamp;
+  awardedBy?: string; // educatorId or 'system'
+}
+
+/**
+ * Skill evidence submission
+ */
+export interface SkillEvidence {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  microSkillId: string;
+  
+  // What was submitted
+  evidenceType: 'upload' | 'quiz' | 'demo' | 'version_history' | 'peer_review';
+  artifactUrl?: string;
+  description: string;
+  locationInWork?: string; // "Where in my work is it?"
+  
+  // Self-assessment
+  selfScore?: 'emerging' | 'developing' | 'proficient';
+  
+  // Teacher feedback
+  teacherScore?: 'emerging' | 'developing' | 'proficient';
+  teacherFeedback?: string;
+  teacherFeedbackAt?: Timestamp;
+  teacherFeedbackBy?: string;
+  
+  // Status
+  status: 'submitted' | 'approved' | 'needs_revision';
+  
+  submittedAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Sprint session (15-30 min focused work)
+ */
+export interface SprintSession {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  sessionOccurrenceId?: string;
+  
+  // What they're working on
+  missionVariantId: string;
+  difficultyLevel: DifficultyLevel;
+  
+  // Sprint timing
+  startedAt: Timestamp;
+  targetEndAt: Timestamp;
+  actualEndAt?: Timestamp;
+  
+  // Progress
+  checkpointsPassed: number;
+  totalCheckpoints: number;
+  
+  // Artifact
+  artifactUrl?: string;
+  showcaseReady: boolean;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Checkpoint (fast feedback point)
+ */
+export interface Checkpoint {
+  id: string;
+  sprintSessionId: string;
+  learnerId: string;
+  siteId: string;
+  
+  checkpointNumber: number; // 1, 2, 3...
+  
+  // What was submitted
+  uploadUrl?: string;
+  explainItBack: string; // Student explains their work
+  
+  // Feedback (teacher or AI)
+  feedbackGivenBy: 'teacher' | 'ai' | 'peer';
+  feedbackGivenByUserId?: string;
+  feedback: string;
+  nextStepSuggestion?: string;
+  
+  // Pass/needs revision
+  status: 'passed' | 'needs_revision';
+  attemptNumber: number;
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * Showcase submission (belonging)
+ */
+export interface ShowcaseSubmission {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  crewId?: string;
+  
+  // What they're showcasing
+  sprintSessionId?: string;
+  title: string;
+  artifactType: 'photo' | 'screenshot' | 'video' | 'code' | 'document';
+  artifactUrl: string;
+  description: string;
+  
+  // Micro-skills demonstrated
+  microSkillIds: string[];
+  
+  // Recognition received
+  recognitions: {
+    fromUserId: string;
+    recognitionType: RecognitionType;
+    comment?: string;
+    createdAt: Timestamp;
+  }[];
+  
+  // Visibility
+  visibleToCrew: boolean;
+  visibleToSite: boolean;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Reflection entry (identity building)
+ */
+export interface ReflectionEntry {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  
+  // Context
+  sprintSessionId?: string;
+  missionId?: string;
+  cycleId?: string; // Weekly cycle
+  
+  // Core prompts
+  proudOf: string; // "I'm proud of..."
+  nextIWill: string; // "Next I will..."
+  
+  // Optional emoji scale
+  effortLevel?: 1 | 2 | 3 | 4 | 5;
+  enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
+  
+  // What strategy worked
+  effectiveStrategy?: string;
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * AI Coach interaction log
+ */
+export interface AICoachInteraction {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  sprintSessionId?: string;
+  
+  // Which mode used
+  mode: 'hint' | 'rubric_check' | 'debug';
+  
+  // Conversation
+  studentQuestion: string;
+  aiResponse: string;
+  
+  // Guardrails
+  explainItBackRequired: boolean;
+  explainItBackProvided?: string;
+  explainItBackApproved?: boolean;
+  
+  // Version history check (anti-cheating)
+  versionHistoryChecked: boolean;
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * Weekly goal (autonomy)
+ */
+export interface WeeklyGoal {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  cycleId: string;
+  
+  goalType: 'try_stretch' | 'give_feedback' | 'revise_twice' | 'custom';
+  goalText: string;
+  
+  // Progress
+  targetCount?: number;
+  currentCount: number;
+  completed: boolean;
+  
+  createdAt: Timestamp;
+  completedAt?: Timestamp;
+}
+
+/**
+ * Interest profile (for mission skinning)
+ */
+export interface LearnerInterestProfile {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  
+  interests: string[]; // 'sports', 'music', 'gaming', 'environment', 'art', etc.
+  preferredDifficultyLevel?: DifficultyLevel;
+  
+  // History tracking
+  difficultyChoiceHistory: {
+    date: Timestamp;
+    level: DifficultyLevel;
+  }[];
+  
+  updatedAt: Timestamp;
+}
+
+/**
+ * Parent weekly snapshot
+ */
+export interface ParentSnapshot {
+  id: string;
+  learnerId: string;
+  parentId: string;
+  siteId: string;
+  cycleId: string;
+  
+  // Summary
+  whatTheyBuilt: string[];
+  skillsImproved: string[];
+  howToSupportAtHome: string[];
+  
+  // Stats
+  attendanceThisWeek: number;
+  missionsCompleted: number;
+  badgesEarned: number;
+  
+  // Highlights
+  showcaseHighlight?: {
+    title: string;
+    artifactUrl: string;
+    description: string;
+  };
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * Peer feedback
+ */
+export interface PeerFeedback {
+  id: string;
+  fromLearnerId: string;
+  toLearnerId: string;
+  siteId: string;
+  
+  // What they're giving feedback on
+  showcaseSubmissionId?: string;
+  
+  // Structured feedback
+  iLike: string;
+  iWonder: string;
+  nextStep: string;
+  
+  // Safety
+  flagged: boolean;
+  flagReason?: string;
+  moderatedBy?: string;
+  moderatedAt?: Timestamp;
+  
+  createdAt: Timestamp;
+}
+
+/**
+ * Motivation analytics (what to track)
+ */
+export interface MotivationAnalytics {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  cycleId: string;
+  
+  // Key metrics
+  proofOfLearningRate: number; // % of sessions with artifact + reflection
+  checkpointPassRate: number; // % passed on first attempt
+  averageAttemptsToMastery: number;
+  revisionsPerProject: number;
+  
+  // Belonging signals
+  peerFeedbackGiven: number;
+  roleRotationCompletions: number;
+  recognitionsReceived: number;
+  
+  // Autonomy signals
+  choiceDistribution: Record<DifficultyLevel, number>;
+  selfSelectedChallengeChanges: number;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
