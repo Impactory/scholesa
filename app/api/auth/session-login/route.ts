@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import admin from '@/src/firebase/admin-init';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getAdminAuth, getAdminDb } from '@/src/firebase/admin-init';
 
 export async function POST(request: Request) {
   const { idToken } = await request.json();
@@ -11,8 +9,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const auth = getAuth(admin.app());
-    const db = getFirestore(admin.app());
+    const auth = getAdminAuth();
+    const db = getAdminDb();
 
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;

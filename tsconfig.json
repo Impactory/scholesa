@@ -23,6 +23,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "lib/**/*.ts", "pages/**/*.ts", "pages/**/*.tsx", ".next/types/**/*.ts", "middleware.ts", "schema.ts", "scheduler.ts", "invariants.ts"],
+  "exclude": ["node_modules", "docs", "functions", "flutter", "apps", "scripts", "test", "dataconnect"]
 }

@@ -1,11 +1,8 @@
 import 'server-only';
-import { admin } from '@/src/firebase/admin-init';
-import { getAuth } from 'firebase-admin/auth';
+import { getAdminAuth } from '@/src/firebase/admin-init';
 import { cookies } from 'next/headers';
 
 export async function getCurrentUserServer() {
-  const auth = getAuth(admin.app());
-  
   const sessionCookie = cookies().get('__session')?.value;
 
   if (!sessionCookie) {
@@ -13,6 +10,7 @@ export async function getCurrentUserServer() {
   }
 
   try {
+    const auth = getAdminAuth();
     const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
     const user = await auth.getUser(decodedIdToken.uid);
     return user;

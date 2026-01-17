@@ -1,6 +1,5 @@
 import 'server-only';
-import { admin } from '@/src/firebase/admin-init';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getAdminDb } from '@/src/firebase/admin-init';
 import { getCurrentUserServer } from './getCurrentUserServer';
 
 export async function getUserRoleServer(): Promise<string | null> {
@@ -11,7 +10,7 @@ export async function getUserRoleServer(): Promise<string | null> {
   }
 
   try {
-    const firestore = getFirestore(admin.app());
+    const firestore = getAdminDb();
     const userDocRef = firestore.collection('users').doc(user.uid);
     const userDoc = await userDocRef.get();
 
