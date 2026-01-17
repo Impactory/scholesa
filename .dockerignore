@@ -19,6 +19,11 @@ apps/empire_flutter/app/coverage
 apps/empire_flutter/app/.idea
 apps/empire_flutter/app/.gradle
 apps/empire_flutter/app/.vscode
+apps/empire_flutter/app/build
+apps/empire_flutter/app/ios
+apps/empire_flutter/app/android
+apps
+flutter
 functions/node_modules
 functions/lib
 functions/.tsbuildinfo
@@ -34,3 +39,7 @@ pnpm-lock.yaml
 **/.venv
 **/__pycache__
 **/.pytest_cache
+docs
+dataconnect
+scripts
+test

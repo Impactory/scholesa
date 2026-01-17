@@ -7,32 +7,12 @@ node_modules/
 .idea/
 *.iml
 
-# Flutter build artifacts (except web which we need)
-apps/empire_flutter/app/build/app/
-apps/empire_flutter/app/build/flutter_assets/
-apps/empire_flutter/app/.dart_tool/
-apps/empire_flutter/app/android/
-apps/empire_flutter/app/ios/
-apps/empire_flutter/app/macos/
-apps/empire_flutter/app/windows/
-apps/empire_flutter/app/linux/
-apps/empire_flutter/app/.idea/
-
-# Flutter SDK and other apps we don't need
-apps/empire_flutter/.dart_tool/
-apps/empire_flutter/.git/
-apps/empire_flutter/dev/
-apps/empire_flutter/bin/
-apps/empire_flutter/flutter/
-apps/empire_flutter/lib/
-apps/empire_flutter/buildtools/
+# Flutter build artifacts 
+apps/
 flutter/
-scholesa_app/
 
-# Source code not needed for nginx container
-apps/empire_flutter/app/lib/
-apps/empire_flutter/app/test/
-apps/empire_flutter/app/assets/
+# Firebase functions
+functions/
 
 # Test files
 *.test.ts
@@ -46,7 +26,6 @@ docs/
 # Local env files
 .env
 .env.local
-*.log
 
 # Large unnecessary files
 *.xd
@@ -54,16 +33,8 @@ docs/
 *.zip
 *.class
 *.java
-
-# Firebase functions
-functions/node_modules/
+*.log
 
 # Other unnecessary folders
 dataconnect/
-components/
-locales/
-pages/
-public/
 scripts/
-src/
-lib/

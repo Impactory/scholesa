@@ -5,3 +5,4 @@ export { PricingPlans } from './PricingPlans';
 export { WebhookMonitor } from './WebhookMonitor';
 export { StripeDashboard } from './StripeDashboard';
 export { RefundManager } from './RefundManager';
+export { PlanManager } from './PlanManager';

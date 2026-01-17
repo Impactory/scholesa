@@ -2518,3 +2518,364 @@ export const getStripeMetrics = onCall(async (request: CallableRequest) => {
     throw new HttpsError('internal', err.message || 'Failed to get metrics');
   }
 });
+
+/**
+ * Get all Stripe products and prices - HQ only
+ */
+export const getStripeProducts = onCall(async (request: CallableRequest) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  try {
+    // Get all products
+    const products = await stripe.products.list({
+      limit: 100,
+      active: undefined, // Get both active and inactive
+    });
+
+    // Get all prices
+    const prices = await stripe.prices.list({
+      limit: 100,
+      active: undefined,
+    });
+
+    // Map prices to products
+    const productsWithPrices = products.data.map(product => {
+      const productPrices = prices.data.filter(p => p.product === product.id);
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        active: product.active,
+        metadata: product.metadata,
+        images: product.images,
+        created: product.created,
+        updated: product.updated,
+        prices: productPrices.map(price => ({
+          id: price.id,
+          active: price.active,
+          currency: price.currency,
+          unitAmount: price.unit_amount,
+          unitAmountFormatted: price.unit_amount 
+            ? `$${(price.unit_amount / 100).toFixed(2)}`
+            : 'Free',
+          recurring: price.recurring ? {
+            interval: price.recurring.interval,
+            intervalCount: price.recurring.interval_count,
+          } : null,
+          type: price.type,
+          nickname: price.nickname,
+          metadata: price.metadata,
+        })),
+      };
+    });
+
+    return { products: productsWithPrices };
+  } catch (err: any) {
+    console.error('Error getting Stripe products:', err);
+    throw new HttpsError('internal', err.message || 'Failed to get products');
+  }
+});
+
+/**
+ * Create a new Stripe product - HQ only
+ */
+export const createStripeProduct = onCall(async (request: CallableRequest<{
+  name: string;
+  description?: string;
+  metadata?: Record<string, string>;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { name, description, metadata } = request.data;
+
+  if (!name) {
+    throw new HttpsError('invalid-argument', 'Product name is required');
+  }
+
+  try {
+    const product = await stripe.products.create({
+      name,
+      description: description || undefined,
+      metadata: metadata || undefined,
+    });
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'stripe.product.created',
+      entityType: 'stripeProduct',
+      entityId: product.id,
+      details: { name, description },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      product: {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        active: product.active,
+      },
+    };
+  } catch (err: any) {
+    console.error('Error creating Stripe product:', err);
+    throw new HttpsError('internal', err.message || 'Failed to create product');
+  }
+});
+
+/**
+ * Update a Stripe product - HQ only
+ */
+export const updateStripeProduct = onCall(async (request: CallableRequest<{
+  productId: string;
+  name?: string;
+  description?: string;
+  active?: boolean;
+  metadata?: Record<string, string>;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { productId, name, description, active, metadata } = request.data;
+
+  if (!productId) {
+    throw new HttpsError('invalid-argument', 'Product ID is required');
+  }
+
+  try {
+    const updateParams: Stripe.ProductUpdateParams = {};
+    if (name !== undefined) updateParams.name = name;
+    if (description !== undefined) updateParams.description = description;
+    if (active !== undefined) updateParams.active = active;
+    if (metadata !== undefined) updateParams.metadata = metadata;
+
+    const product = await stripe.products.update(productId, updateParams);
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'stripe.product.updated',
+      entityType: 'stripeProduct',
+      entityId: productId,
+      details: updateParams,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      product: {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        active: product.active,
+      },
+    };
+  } catch (err: any) {
+    console.error('Error updating Stripe product:', err);
+    throw new HttpsError('internal', err.message || 'Failed to update product');
+  }
+});
+
+/**
+ * Create a new price for a product - HQ only
+ */
+export const createStripePrice = onCall(async (request: CallableRequest<{
+  productId: string;
+  unitAmount: number;
+  currency?: string;
+  recurring?: {
+    interval: 'day' | 'week' | 'month' | 'year';
+    intervalCount?: number;
+  };
+  nickname?: string;
+  metadata?: Record<string, string>;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { productId, unitAmount, currency = 'usd', recurring, nickname, metadata } = request.data;
+
+  if (!productId) {
+    throw new HttpsError('invalid-argument', 'Product ID is required');
+  }
+
+  if (unitAmount === undefined || unitAmount < 0) {
+    throw new HttpsError('invalid-argument', 'Valid unit amount is required (in cents)');
+  }
+
+  try {
+    const priceParams: Stripe.PriceCreateParams = {
+      product: productId,
+      unit_amount: unitAmount,
+      currency,
+      nickname: nickname || undefined,
+      metadata: metadata || undefined,
+    };
+
+    if (recurring) {
+      priceParams.recurring = {
+        interval: recurring.interval,
+        interval_count: recurring.intervalCount || 1,
+      };
+    }
+
+    const price = await stripe.prices.create(priceParams);
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'stripe.price.created',
+      entityType: 'stripePrice',
+      entityId: price.id,
+      details: { productId, unitAmount, currency, recurring, nickname },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      price: {
+        id: price.id,
+        active: price.active,
+        unitAmount: price.unit_amount,
+        currency: price.currency,
+        recurring: price.recurring,
+        nickname: price.nickname,
+      },
+    };
+  } catch (err: any) {
+    console.error('Error creating Stripe price:', err);
+    throw new HttpsError('internal', err.message || 'Failed to create price');
+  }
+});
+
+/**
+ * Update a price (can only deactivate, cannot change amount) - HQ only
+ */
+export const updateStripePrice = onCall(async (request: CallableRequest<{
+  priceId: string;
+  active?: boolean;
+  nickname?: string;
+  metadata?: Record<string, string>;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { priceId, active, nickname, metadata } = request.data;
+
+  if (!priceId) {
+    throw new HttpsError('invalid-argument', 'Price ID is required');
+  }
+
+  try {
+    const updateParams: Stripe.PriceUpdateParams = {};
+    if (active !== undefined) updateParams.active = active;
+    if (nickname !== undefined) updateParams.nickname = nickname;
+    if (metadata !== undefined) updateParams.metadata = metadata;
+
+    const price = await stripe.prices.update(priceId, updateParams);
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'stripe.price.updated',
+      entityType: 'stripePrice',
+      entityId: priceId,
+      details: updateParams,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      price: {
+        id: price.id,
+        active: price.active,
+        unitAmount: price.unit_amount,
+        currency: price.currency,
+        nickname: price.nickname,
+      },
+    };
+  } catch (err: any) {
+    console.error('Error updating Stripe price:', err);
+    throw new HttpsError('internal', err.message || 'Failed to update price');
+  }
+});
+
+/**
+ * Archive (deactivate) a Stripe product - HQ only
+ */
+export const archiveStripeProduct = onCall(async (request: CallableRequest<{
+  productId: string;
+}>) => {
+  await requireHq(request.auth?.uid);
+
+  if (!stripe) {
+    throw new HttpsError('unavailable', 'Stripe is not configured');
+  }
+
+  const { productId } = request.data;
+
+  if (!productId) {
+    throw new HttpsError('invalid-argument', 'Product ID is required');
+  }
+
+  try {
+    // First deactivate all prices for this product
+    const prices = await stripe.prices.list({
+      product: productId,
+      active: true,
+    });
+
+    for (const price of prices.data) {
+      await stripe.prices.update(price.id, { active: false });
+    }
+
+    // Then deactivate the product
+    const product = await stripe.products.update(productId, { active: false });
+
+    // Audit log
+    await admin.firestore().collection(AUDIT_COLLECTION).add({
+      actorId: request.auth!.uid,
+      actorRole: 'hq',
+      action: 'stripe.product.archived',
+      entityType: 'stripeProduct',
+      entityId: productId,
+      details: { pricesArchived: prices.data.length },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      product: {
+        id: product.id,
+        name: product.name,
+        active: product.active,
+      },
+      pricesArchived: prices.data.length,
+    };
+  } catch (err: any) {
+    console.error('Error archiving Stripe product:', err);
+    throw new HttpsError('internal', err.message || 'Failed to archive product');
+  }
+});
