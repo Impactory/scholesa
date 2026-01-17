@@ -21,9 +21,10 @@ import {
   SparklesIcon,
   Volume2Icon
 } from 'lucide-react';
-import { sdtMotivation, type AICoachRequest, type AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
 import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/gradeBandPolicy';
 import { trackAICoachUse } from '@/src/lib/telemetry/sdtTelemetry';
+import { AIService, recordFeedback as recordAIFeedback } from '@/src/lib/ai/aiService';
+import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognition extends EventTarget {
@@ -67,8 +68,10 @@ declare global {
 
 interface AICoachPopupProps {
   learnerId: string;
+  studentName: string;
   siteId: string;
   grade: number;
+  studentLevel?: 'emerging' | 'proficient' | 'advanced';
   sprintSessionId?: string;
   missionId?: string;
 }
@@ -104,8 +107,10 @@ const MODE_CONFIG = {
 
 export function AICoachPopup({
   learnerId,
+  studentName,
   siteId,
   grade,
+  studentLevel = 'proficient',
   sprintSessionId,
   missionId
 }: AICoachPopupProps) {
@@ -113,9 +118,10 @@ export function AICoachPopup({
   const [mode, setMode] = useState<CoachMode | null>(null);
   const [question, setQuestion] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [response, setResponse] = useState<AICoachResponse | null>(null);
+  const [response, setResponse] = useState<AIServiceResponse | null>(null);
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const policy = getPolicyForGrade(grade);
@@ -124,14 +130,14 @@ export function AICoachPopup({
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const SpeechRecognitionAPI = (window as WindowWithSpeech).webkitSpeechRecognition || (window as WindowWithSpeech).SpeechRecognition;
       if (!SpeechRecognitionAPI) return;
       
       recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       
-      recognitionRef.current.onresult = (event) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         setQuestion(prev => prev + ' ' + transcript);
         setIsListening(false);
@@ -167,17 +173,29 @@ export function AICoachPopup({
     try {
       setLoading(true);
 
-      const request: AICoachRequest = {
-        mode,
-        studentQuestion: question,
-        context: {
-          missionId,
-          sprintId: sprintSessionId
-        }
+      // Map mode to task type
+      const taskTypeMap = {
+        hint: 'hint_generation' as const,
+        rubric_check: 'rubric_check' as const,
+        debug: 'debug_assistance' as const,
+        critique: 'critique_feedback' as const
       };
 
-      const aiResponse = await sdtMotivation.requestAICoach(learnerId, siteId, request);
+      // Call new AI service (vendor-agnostic, with redaction & retrieval)
+      const aiResponse = await AIService.request({
+        learnerId,
+        studentName,
+        siteId,
+        grade,
+        studentLevel,
+        sessionId: sprintSessionId,
+        missionId,
+        taskType: taskTypeMap[mode],
+        question
+      });
+
       setResponse(aiResponse);
+      setCurrentLogId(aiResponse.logId);
 
       // Track telemetry
       if (sprintSessionId) {
@@ -192,6 +210,12 @@ export function AICoachPopup({
       }
     } catch (err) {
       console.error('AI Coach error:', err);
+      // Show friendly error
+      setResponse({
+        answer: "I'm having trouble right now. Try asking your question in a different way, or ask your teacher for help.",
+        modelUsed: 'error',
+        logId: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -199,6 +223,11 @@ export function AICoachPopup({
 
   const handleSubmitExplainBack = async () => {
     if (!explainBack.trim()) return;
+
+    // Record helpful feedback to training dataset
+    if (currentLogId && currentLogId !== 'error') {
+      await recordAIFeedback(currentLogId, true, 'Student completed explain-back');
+    }
 
     // Track explain-back telemetry
     if (sprintSessionId) {
@@ -210,6 +239,7 @@ export function AICoachPopup({
     setQuestion('');
     setExplainBack('');
     setMode(null);
+    setCurrentLogId(null);
     
     // Show success
     alert('Great explanation! 🎉');
@@ -405,19 +435,46 @@ export function AICoachPopup({
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
               <p className="font-medium text-purple-900 mb-2">AI Coach:</p>
-              <p className="text-gray-700 whitespace-pre-wrap">{response.response}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">{response.answer}</p>
+              
+              {/* Model attribution */}
+              {response.modelUsed && response.modelUsed !== 'error' && (
+                <p className="text-xs text-gray-500 mt-2">Powered by {response.modelUsed}</p>
+              )}
             </div>
 
-            {/* Rubric alignment */}
-            {response.rubricAlignment && response.rubricAlignment.length > 0 && (
+            {/* Feedback buttons (was this helpful?) */}
+            {currentLogId && currentLogId !== 'error' && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Was this helpful?</span>
+                <button
+                  onClick={async () => {
+                    await recordAIFeedback(currentLogId, true, 'Student marked helpful');
+                    alert('Thanks for the feedback! 👍');
+                  }}
+                  className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                >
+                  👍 Yes
+                </button>
+                <button
+                  onClick={async () => {
+                    await recordAIFeedback(currentLogId, false, 'Student marked not helpful');
+                    alert('Thanks for letting us know. Try asking differently.');
+                  }}
+                  className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                >
+                  👎 No
+                </button>
+              </div>
+            )}
+
+            {/* Citations (if any) */}
+            {response.citations && response.citations.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                <p className="font-medium text-gray-900">How you're doing:</p>
-                {response.rubricAlignment.map((item, idx) => (
-                  <div key={idx}>
-                    <p className="font-medium text-gray-700">{item.criterion}</p>
-                    <p className="text-gray-600 text-xs">
-                      Current: {item.currentLevel} → Target: {item.targetLevel}
-                    </p>
+                <p className="font-medium text-gray-900">Based on:</p>
+                {response.citations.map((citation, idx) => (
+                  <div key={idx} className="text-gray-700 text-xs">
+                    • {citation.type}: {citation.title}
                   </div>
                 ))}
               </div>
