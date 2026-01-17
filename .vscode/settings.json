@@ -3,5 +3,6 @@
     "geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyAYMo6e8sRQYgzuZtAdZvhwyMFPOm8JAWQ",
     "geminicodeassist.agentDebugMode": true,
     "geminicodeassist.project": "studio-3328096157-e3f79",
-    "cloudcode.project": "studio-3328096157-e3f79"
+    "cloudcode.project": "studio-3328096157-e3f79",
+    "java.configuration.updateBuildConfiguration": "automatic"
 }
