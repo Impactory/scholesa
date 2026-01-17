@@ -1,15 +1,30 @@
 import { createHmac } from 'crypto';
 import { onCall, onRequest, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 
 admin.initializeApp();
 
-// Initialize Stripe
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+// Define secrets for Firebase Functions v2
+const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
+const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
+
+// Lazy-initialized Stripe client
+let stripeClient: Stripe | null = null;
+
+function getStripe(): Stripe | null {
+  if (stripeClient) return stripeClient;
+  const key = stripeSecretKey.value();
+  if (key) {
+    stripeClient = new Stripe(key, {
+      apiVersion: '2024-12-18.acacia', // Latest Stripe API version
+      typescript: true,
+    });
+  }
+  return stripeClient;
+}
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -693,8 +708,9 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
 /**
  * Get or create a Stripe customer for a user
  */
-async function getOrCreateStripeCustomer(userId: string, email: string, name?: string): Promise<string> {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+async function getOrCreateStripeCustomer(userId: string, email: string, name?: string, stripeInstance?: Stripe): Promise<string> {
+  const stripeClient = stripeInstance || getStripe();
+  if (!stripeClient) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
   const customerRef = admin.firestore().collection(STRIPE_CUSTOMERS_COLLECTION).doc(userId);
   const customerSnap = await customerRef.get();
@@ -707,7 +723,7 @@ async function getOrCreateStripeCustomer(userId: string, email: string, name?: s
   }
 
   // Create new Stripe customer
-  const customer = await stripe.customers.create({
+  const customer = await stripeClient.customers.create({
     email,
     name: name ?? undefined,
     metadata: {
@@ -728,8 +744,11 @@ async function getOrCreateStripeCustomer(userId: string, email: string, name?: s
 /**
  * Create a Stripe Checkout Session for purchasing a product
  */
-export const createStripeCheckoutSession = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const createStripeCheckoutSession = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
@@ -756,7 +775,8 @@ export const createStripeCheckoutSession = onCall(async (request: CallableReques
   const stripeCustomerId = await getOrCreateStripeCustomer(
     targetUserId,
     targetUser.email,
-    targetUser.displayName
+    targetUser.displayName,
+    stripeInstance
   );
 
   // Create checkout intent record for tracking
@@ -775,7 +795,7 @@ export const createStripeCheckoutSession = onCall(async (request: CallableReques
   });
 
   // Create Stripe Checkout Session
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeInstance.checkout.sessions.create({
     customer: stripeCustomerId,
     payment_method_types: ['card'],
     line_items: [
@@ -823,8 +843,11 @@ export const createStripeCheckoutSession = onCall(async (request: CallableReques
 /**
  * Create a Stripe Checkout Session for subscriptions
  */
-export const createStripeSubscription = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const createStripeSubscription = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
 
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
@@ -859,7 +882,7 @@ export const createStripeSubscription = onCall(async (request: CallableRequest) 
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeInstance.checkout.sessions.create({
     customer: stripeCustomerId,
     payment_method_types: ['card'],
     line_items: [
@@ -914,14 +937,20 @@ export const createStripeSubscription = onCall(async (request: CallableRequest) 
  * - charge.dispute.created: Customer disputed a charge
  * - charge.dispute.closed: Dispute was resolved
  */
-export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
+export const stripeWebhook = onRequest({ 
+  cors: false,
+  secrets: [stripeSecretKey, stripeWebhookSecret],
+}, async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method not allowed');
     return;
   }
 
-  if (!stripe || !STRIPE_WEBHOOK_SECRET) {
-    console.error('Stripe not configured');
+  const stripeInstance = getStripe();
+  const webhookSecret = stripeWebhookSecret.value();
+
+  if (!stripeInstance || !webhookSecret) {
+    console.error('Stripe not configured - missing secrets');
     res.status(500).send('Stripe not configured');
     return;
   }
@@ -935,7 +964,7 @@ export const stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   let event: Stripe.Event;
   try {
     const rawBody = req.rawBody;
-    event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
+    event = stripeInstance.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
     res.status(400).send(`Webhook Error: ${err.message}`);
@@ -1824,8 +1853,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 /**
  * Get Stripe Customer Portal URL for managing subscriptions
  */
-export const createStripePortalSession = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const createStripePortalSession = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const returnUrl = typeof request.data?.returnUrl === 'string' ? request.data.returnUrl : '';
@@ -1837,7 +1869,7 @@ export const createStripePortalSession = onCall(async (request: CallableRequest)
   const stripeCustomerId = customerSnap.data()?.stripeCustomerId;
   if (!stripeCustomerId) throw new HttpsError('not-found', 'No Stripe customer ID');
 
-  const portalSession = await stripe.billingPortal.sessions.create({
+  const portalSession = await stripeInstance.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: returnUrl,
   });
@@ -1905,13 +1937,35 @@ export const getUserEntitlements = onCall(async (request: CallableRequest) => {
 /**
  * Health check endpoint for load balancers and monitoring
  */
-export const healthCheck = onRequest({ cors: true }, async (_req, res) => {
+export const healthCheck = onRequest({ 
+  cors: true,
+  secrets: [stripeSecretKey],
+}, async (_req, res) => {
   try {
     // Verify Firestore connectivity
-    await admin.firestore().collection('_healthCheck').doc('ping').get();
+    await admin.firestore().collection('_healthCheck').doc('ping').set({ 
+      lastPing: admin.firestore.FieldValue.serverTimestamp() 
+    });
     
-    // Verify Auth connectivity
-    await admin.auth().getUser('health-check-dummy').catch(() => {});
+    // Verify Auth connectivity (don't fail if user doesn't exist)
+    try {
+      await admin.auth().getUser('health-check-dummy');
+    } catch {
+      // Expected - user doesn't exist, but auth service is working
+    }
+
+    // Check Stripe configuration
+    const stripeInstance = getStripe();
+    let stripeStatus = 'not_configured';
+    if (stripeInstance) {
+      try {
+        // Verify Stripe connectivity with a simple API call
+        await stripeInstance.balance.retrieve();
+        stripeStatus = 'connected';
+      } catch (stripeErr: any) {
+        stripeStatus = `error: ${stripeErr.message}`;
+      }
+    }
 
     res.status(200).json({
       status: 'healthy',
@@ -1920,7 +1974,7 @@ export const healthCheck = onRequest({ cors: true }, async (_req, res) => {
       services: {
         firestore: 'ok',
         auth: 'ok',
-        stripe: stripe ? 'configured' : 'not_configured',
+        stripe: stripeStatus,
       },
     });
   } catch (err: any) {
@@ -2065,8 +2119,11 @@ export const cleanupExpiredIntents = onSchedule('0 */6 * * *', async () => {
 /**
  * Cancel a subscription (user-initiated)
  */
-export const cancelSubscription = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const cancelSubscription = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
@@ -2091,7 +2148,7 @@ export const cancelSubscription = onCall(async (request: CallableRequest) => {
 
   try {
     // Cancel in Stripe
-    const stripeSubscription = await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+    const stripeSubscription = await stripeInstance.subscriptions.update(sub.stripeSubscriptionId, {
       cancel_at_period_end: cancelAtPeriodEnd,
     });
 
@@ -2134,8 +2191,11 @@ export const cancelSubscription = onCall(async (request: CallableRequest) => {
 /**
  * Resume a cancelled subscription (if cancelled with cancel_at_period_end)
  */
-export const resumeSubscription = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const resumeSubscription = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const subscriptionId = typeof request.data?.subscriptionId === 'string' ? request.data.subscriptionId : '';
@@ -2159,7 +2219,7 @@ export const resumeSubscription = onCall(async (request: CallableRequest) => {
   }
 
   try {
-    await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+    await stripeInstance.subscriptions.update(sub.stripeSubscriptionId, {
       cancel_at_period_end: false,
     });
 
@@ -2189,8 +2249,11 @@ export const resumeSubscription = onCall(async (request: CallableRequest) => {
 /**
  * Update payment method for a subscription
  */
-export const updateSubscriptionPaymentMethod = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const updateSubscriptionPaymentMethod = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const paymentMethodId = typeof request.data?.paymentMethodId === 'string' ? request.data.paymentMethodId : '';
@@ -2205,10 +2268,10 @@ export const updateSubscriptionPaymentMethod = onCall(async (request: CallableRe
 
   try {
     // Attach payment method to customer
-    await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+    await stripeInstance.paymentMethods.attach(paymentMethodId, { customer: customerId });
 
     // Set as default payment method
-    await stripe.customers.update(customerId, {
+    await stripeInstance.customers.update(customerId, {
       invoice_settings: { default_payment_method: paymentMethodId },
     });
 
@@ -2222,8 +2285,11 @@ export const updateSubscriptionPaymentMethod = onCall(async (request: CallableRe
 /**
  * Get invoice history for a user
  */
-export const getInvoiceHistory = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const getInvoiceHistory = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const userId = typeof request.data?.userId === 'string' ? request.data.userId : request.auth.uid;
@@ -2239,7 +2305,7 @@ export const getInvoiceHistory = onCall(async (request: CallableRequest) => {
   if (!customerId) return { invoices: [] };
 
   try {
-    const invoices = await stripe.invoices.list({
+    const invoices = await stripeInstance.invoices.list({
       customer: customerId,
       limit: 50,
     });
@@ -2265,8 +2331,11 @@ export const getInvoiceHistory = onCall(async (request: CallableRequest) => {
 /**
  * Retry a failed invoice payment
  */
-export const retryInvoicePayment = onCall(async (request: CallableRequest) => {
-  if (!stripe) throw new HttpsError('failed-precondition', 'Stripe not configured');
+export const retryInvoicePayment = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) throw new HttpsError('failed-precondition', 'Stripe not configured');
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Authentication required');
 
   const invoiceId = typeof request.data?.invoiceId === 'string' ? request.data.invoiceId : '';
@@ -2279,7 +2348,7 @@ export const retryInvoicePayment = onCall(async (request: CallableRequest) => {
   const customerId = customerSnap.data()?.stripeCustomerId;
 
   try {
-    const invoice = await stripe.invoices.retrieve(invoiceId);
+    const invoice = await stripeInstance.invoices.retrieve(invoiceId);
     
     if (invoice.customer !== customerId) {
       await requireHq(request.auth.uid);
@@ -2289,7 +2358,7 @@ export const retryInvoicePayment = onCall(async (request: CallableRequest) => {
       throw new HttpsError('failed-precondition', 'Invoice is not payable');
     }
 
-    const paidInvoice = await stripe.invoices.pay(invoiceId);
+    const paidInvoice = await stripeInstance.invoices.pay(invoiceId);
 
     return {
       success: true,
@@ -2363,14 +2432,17 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
 /**
  * Process refund requests - callable by HQ only
  */
-export const processRefund = onCall(async (request: CallableRequest<{
+export const processRefund = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   paymentIntentId: string;
   amount?: number;
   reason?: string;
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2391,7 +2463,7 @@ export const processRefund = onCall(async (request: CallableRequest<{
       refundParams.amount = amount; // Amount in cents
     }
 
-    const refund = await stripe.refunds.create(refundParams);
+    const refund = await stripeInstance.refunds.create(refundParams);
 
     // Log the refund
     await admin.firestore().collection('refunds').add({
@@ -2470,10 +2542,13 @@ export const getWebhookLogs = onCall(async (request: CallableRequest<{
 /**
  * Get Stripe dashboard metrics - HQ only
  */
-export const getStripeMetrics = onCall(async (request: CallableRequest) => {
+export const getStripeMetrics = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2499,7 +2574,7 @@ export const getStripeMetrics = onCall(async (request: CallableRequest) => {
 
     // Get recent revenue from Stripe (last 30 days)
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-    const charges = await stripe.charges.list({
+    const charges = await stripeInstance.charges.list({
       created: { gte: thirtyDaysAgo },
       limit: 100,
     });
@@ -2522,22 +2597,25 @@ export const getStripeMetrics = onCall(async (request: CallableRequest) => {
 /**
  * Get all Stripe products and prices - HQ only
  */
-export const getStripeProducts = onCall(async (request: CallableRequest) => {
+export const getStripeProducts = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
   try {
     // Get all products
-    const products = await stripe.products.list({
+    const products = await stripeInstance.products.list({
       limit: 100,
       active: undefined, // Get both active and inactive
     });
 
     // Get all prices
-    const prices = await stripe.prices.list({
+    const prices = await stripeInstance.prices.list({
       limit: 100,
       active: undefined,
     });
@@ -2583,14 +2661,17 @@ export const getStripeProducts = onCall(async (request: CallableRequest) => {
 /**
  * Create a new Stripe product - HQ only
  */
-export const createStripeProduct = onCall(async (request: CallableRequest<{
+export const createStripeProduct = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   name: string;
   description?: string;
   metadata?: Record<string, string>;
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2601,7 +2682,7 @@ export const createStripeProduct = onCall(async (request: CallableRequest<{
   }
 
   try {
-    const product = await stripe.products.create({
+    const product = await stripeInstance.products.create({
       name,
       description: description || undefined,
       metadata: metadata || undefined,
@@ -2636,7 +2717,9 @@ export const createStripeProduct = onCall(async (request: CallableRequest<{
 /**
  * Update a Stripe product - HQ only
  */
-export const updateStripeProduct = onCall(async (request: CallableRequest<{
+export const updateStripeProduct = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   productId: string;
   name?: string;
   description?: string;
@@ -2645,7 +2728,8 @@ export const updateStripeProduct = onCall(async (request: CallableRequest<{
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2662,7 +2746,7 @@ export const updateStripeProduct = onCall(async (request: CallableRequest<{
     if (active !== undefined) updateParams.active = active;
     if (metadata !== undefined) updateParams.metadata = metadata;
 
-    const product = await stripe.products.update(productId, updateParams);
+    const product = await stripeInstance.products.update(productId, updateParams);
 
     // Audit log
     await admin.firestore().collection(AUDIT_COLLECTION).add({
@@ -2693,7 +2777,9 @@ export const updateStripeProduct = onCall(async (request: CallableRequest<{
 /**
  * Create a new price for a product - HQ only
  */
-export const createStripePrice = onCall(async (request: CallableRequest<{
+export const createStripePrice = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   productId: string;
   unitAmount: number;
   currency?: string;
@@ -2706,7 +2792,8 @@ export const createStripePrice = onCall(async (request: CallableRequest<{
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2736,7 +2823,7 @@ export const createStripePrice = onCall(async (request: CallableRequest<{
       };
     }
 
-    const price = await stripe.prices.create(priceParams);
+    const price = await stripeInstance.prices.create(priceParams);
 
     // Audit log
     await admin.firestore().collection(AUDIT_COLLECTION).add({
@@ -2769,7 +2856,9 @@ export const createStripePrice = onCall(async (request: CallableRequest<{
 /**
  * Update a price (can only deactivate, cannot change amount) - HQ only
  */
-export const updateStripePrice = onCall(async (request: CallableRequest<{
+export const updateStripePrice = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   priceId: string;
   active?: boolean;
   nickname?: string;
@@ -2777,7 +2866,8 @@ export const updateStripePrice = onCall(async (request: CallableRequest<{
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2793,7 +2883,7 @@ export const updateStripePrice = onCall(async (request: CallableRequest<{
     if (nickname !== undefined) updateParams.nickname = nickname;
     if (metadata !== undefined) updateParams.metadata = metadata;
 
-    const price = await stripe.prices.update(priceId, updateParams);
+    const price = await stripeInstance.prices.update(priceId, updateParams);
 
     // Audit log
     await admin.firestore().collection(AUDIT_COLLECTION).add({
@@ -2825,12 +2915,15 @@ export const updateStripePrice = onCall(async (request: CallableRequest<{
 /**
  * Archive (deactivate) a Stripe product - HQ only
  */
-export const archiveStripeProduct = onCall(async (request: CallableRequest<{
+export const archiveStripeProduct = onCall({
+  secrets: [stripeSecretKey],
+}, async (request: CallableRequest<{
   productId: string;
 }>) => {
   await requireHq(request.auth?.uid);
 
-  if (!stripe) {
+  const stripeInstance = getStripe();
+  if (!stripeInstance) {
     throw new HttpsError('unavailable', 'Stripe is not configured');
   }
 
@@ -2842,17 +2935,17 @@ export const archiveStripeProduct = onCall(async (request: CallableRequest<{
 
   try {
     // First deactivate all prices for this product
-    const prices = await stripe.prices.list({
+    const prices = await stripeInstance.prices.list({
       product: productId,
       active: true,
     });
 
     for (const price of prices.data) {
-      await stripe.prices.update(price.id, { active: false });
+      await stripeInstance.prices.update(price.id, { active: false });
     }
 
     // Then deactivate the product
-    const product = await stripe.products.update(productId, { active: false });
+    const product = await stripeInstance.products.update(productId, { active: false });
 
     // Audit log
     await admin.firestore().collection(AUDIT_COLLECTION).add({
