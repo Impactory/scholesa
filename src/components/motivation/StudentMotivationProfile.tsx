@@ -14,6 +14,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { db } from '@/src/firebase/client-init';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { GoalSettingForm } from '@/src/components/goals/GoalSettingForm';
 import { 
@@ -81,19 +83,76 @@ export function StudentMotivationProfile() {
         const overall = Math.round((rawScores.autonomy + rawScores.competence + rawScores.belonging) / 3);
         setSDTScores({ ...rawScores, overall });
         
-        // Fetch mastery data from CompetenceEngine
-        // For now, use summary stats (detailed skills/badges require additional Firestore queries)
-        // TODO: Query skillMastery and recognitionBadges collections directly for detailed lists
-        setSkills([]);
-        setBadges([]);
+        // Fetch skills from skillMastery collection
+        const skillsQuery = query(
+          collection(db, 'skillMastery'),
+          where('userId', '==', learnerId),
+          where('siteId', '==', siteId),
+          orderBy('lastUpdated', 'desc'),
+          limit(10)
+        );
+        const skillsSnapshot = await getDocs(skillsQuery);
+        const skillsData: SkillProgress[] = skillsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            skillId: doc.id,
+            skillName: data.skillName || 'Unnamed Skill',
+            evidenceCount: data.evidenceCount || 0,
+            level: data.masteryLevel || 'emerging'
+          };
+        });
+        setSkills(skillsData);
         
-        // Fetch goals from AutonomyEngine
-        // TODO: Implement getGoals() method and query learnerGoals collection
-        setGoals([]);
+        // Fetch badges from badgeAchievements collection
+        const badgesQuery = query(
+          collection(db, 'badgeAchievements'),
+          where('userId', '==', learnerId),
+          where('siteId', '==', siteId),
+          orderBy('createdAt', 'desc'),
+          limit(12)
+        );
+        const badgesSnapshot = await getDocs(badgesQuery);
+        const badgesData: Badge[] = badgesSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            badgeId: doc.id,
+            title: data.badgeName || 'Badge',
+            description: data.description || '',
+            earnedAt: data.createdAt?.toDate() || new Date(),
+            iconEmoji: data.iconEmoji || '🏆'
+          };
+        });
+        setBadges(badgesData);
         
-        // Fetch recognition count from BelongingEngine
-        // TODO: Query recognitionBadges collection
-        setRecognitionCount(0);
+        // Fetch goals from learnerGoals collection
+        const goalsQuery = query(
+          collection(db, 'learnerGoals'),
+          where('userId', '==', learnerId),
+          where('siteId', '==', siteId),
+          where('status', '==', 'active'),
+          orderBy('createdAt', 'desc'),
+          limit(5)
+        );
+        const goalsSnapshot = await getDocs(goalsQuery);
+        const goalsData: Goal[] = goalsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            goalId: doc.id,
+            description: data.description || 'Learning goal',
+            targetDate: data.targetDate?.toDate() || new Date(),
+            progress: data.progress || 0
+          };
+        });
+        setGoals(goalsData);
+        
+        // Fetch recognition count from recognitionBadges collection
+        const recognitionQuery = query(
+          collection(db, 'recognitionBadges'),
+          where('recipientId', '==', learnerId),
+          where('siteId', '==', siteId)
+        );
+        const recognitionSnapshot = await getDocs(recognitionQuery);
+        setRecognitionCount(recognitionSnapshot.size);
         
       } catch (err) {
         console.error('Failed to load motivation profile:', err);

@@ -11,7 +11,7 @@
  * Implementation Status: STUB - Ready for Phase 2
  */
 
-import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, doc, deleteDoc, updateDoc, limit } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
 import type { AgeBand } from '@/src/types/schema';
 
@@ -45,37 +45,99 @@ export class EmbeddingService {
    * 
    * Uses OpenAI text-embedding-3-small (1536 dimensions)
    * Cost: $0.02 / 1M tokens
-   * 
-   * TODO: Implement with OpenAI API or Vertex AI
    */
   static async generateEmbedding(text: string): Promise<number[]> {
-    // STUB: Mock embedding generation
-    // Production: Call OpenAI Embeddings API
+    // Check if OpenAI API key is available
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
     
-    if (process.env.NODE_ENV === 'development') {
-      // Return mock 1536-dim vector for development
-      return Array(1536).fill(0).map(() => Math.random());
+    if (!apiKey) {
+      console.warn('OpenAI API key not configured. Returning mock embedding for development.');
+      // Return deterministic mock embedding based on text hash
+      const hash = Array.from(text).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return Array(1536).fill(0).map((_, i) => Math.sin(hash * i) * 0.5 + 0.5);
     }
     
-    // Production implementation:
-    // const response = await openai.embeddings.create({
-    //   model: 'text-embedding-3-small',
-    //   input: text,
-    //   dimensions: 1536
-    // });
-    // return response.data[0].embedding;
-    
-    throw new Error('Embedding generation not implemented');
+    try {
+      const response = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: text,
+          dimensions: 1536
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.data[0].embedding;
+      
+    } catch (err) {
+      console.error('Failed to generate embedding:', err);
+      // Fallback to mock embedding on error
+      const hash = Array.from(text).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      return Array(1536).fill(0).map((_, i) => Math.sin(hash * i) * 0.5 + 0.5);
+    }
   }
   
   /**
    * Batch generate embeddings (more efficient)
+   * OpenAI allows up to 2048 inputs per request
    */
   static async generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
-    // TODO: Implement batch embedding generation
-    // OpenAI allows up to 2048 inputs per request
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
     
-    return Promise.all(texts.map(text => this.generateEmbedding(text)));
+    if (!apiKey) {
+      console.warn('OpenAI API key not configured. Returning mock embeddings.');
+      return Promise.all(texts.map(text => this.generateEmbedding(text)));
+    }
+    
+    // Split into batches of 100 to stay well under 2048 limit
+    const batchSize = 100;
+    const batches: string[][] = [];
+    for (let i = 0; i < texts.length; i += batchSize) {
+      batches.push(texts.slice(i, i + batchSize));
+    }
+    
+    const allEmbeddings: number[][] = [];
+    
+    for (const batch of batches) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'text-embedding-3-small',
+            input: batch,
+            dimensions: 1536
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        allEmbeddings.push(...data.data.map((item: { embedding: number[] }) => item.embedding));
+        
+      } catch (err) {
+        console.error('Failed to generate batch embeddings:', err);
+        // Fallback to individual generation
+        const fallbackEmbeddings = await Promise.all(batch.map(text => this.generateEmbedding(text)));
+        allEmbeddings.push(...fallbackEmbeddings);
+      }
+    }
+    
+    return allEmbeddings;
   }
 }
 
@@ -86,9 +148,8 @@ export class VectorStore {
    * Store document with embedding
    */
   static async store(doc: Omit<VectorDocument, 'id'>): Promise<string> {
-    // TODO: Implement Firestore Vector Search storage
-    
-    // For now, store in regular Firestore collection
+    // Store in Firestore with vector embedding
+    // Note: Firestore Vector Search requires specific index configuration
     const docRef = await addDoc(collection(db, 'vectorDocuments'), {
       ...doc,
       createdAt: Timestamp.now(),
@@ -101,7 +162,8 @@ export class VectorStore {
   /**
    * Semantic search using vector similarity
    * 
-   * TODO: Implement with Firestore Vector Search or Pinecone
+   * Uses in-memory cosine similarity for now.
+   * For production at scale, use Firestore Vector Search (requires index) or Pinecone.
    */
   static async search(
     queryEmbedding: number[],
@@ -112,33 +174,100 @@ export class VectorStore {
       gradeBand?: AgeBand;
     }
   ): Promise<SearchResult[]> {
-    // STUB: Placeholder implementation
-    // Production: Use Firestore Vector Search or Pinecone
+    try {
+      // Build Firestore query with filters
+      let q = query(collection(db, 'vectorDocuments'));
+      
+      if (filters?.type) {
+        q = query(q, where('metadata.type', '==', filters.type));
+      }
+      if (filters?.missionId) {
+        q = query(q, where('metadata.missionId', '==', filters.missionId));
+      }
+      if (filters?.gradeBand) {
+        q = query(q, where('metadata.gradeBand', '==', filters.gradeBand));
+      }
+      
+      // Fetch candidates (limit to 100 to avoid excessive memory usage)
+      q = query(q, limit(100));
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        return [];
+      }
+      
+      // Calculate cosine similarity for each document
+      const results: SearchResult[] = [];
+      
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const docEmbedding = data.embedding as number[];
+        
+        if (!docEmbedding || docEmbedding.length !== queryEmbedding.length) {
+          return; // Skip malformed embeddings
+        }
+        
+        const similarity = this.cosineSimilarity(queryEmbedding, docEmbedding);
+        
+        results.push({
+          document: {
+            id: docSnap.id,
+            content: data.content,
+            embedding: docEmbedding,
+            metadata: data.metadata
+          },
+          score: similarity
+        });
+      });
+      
+      // Sort by score descending and return top K
+      results.sort((a, b) => b.score - a.score);
+      return results.slice(0, topK);
+      
+    } catch (err) {
+      console.error('Vector search failed:', err);
+      return [];
+    }
+  }
+  
+  /**
+   * Calculate cosine similarity between two vectors
+   */
+  private static cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length) {
+      throw new Error('Vectors must have same dimensions');
+    }
     
-    console.warn('Vector search not implemented - returning empty results');
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
     
-    // Mock implementation for development:
-    // 1. Fetch filtered documents from Firestore
-    // 2. Calculate cosine similarity in-memory (inefficient but works for small datasets)
-    // 3. Sort by score and return top K
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
     
-    return [];
+    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+    return denominator === 0 ? 0 : dotProduct / denominator;
   }
   
   /**
    * Delete document from vector store
    */
   static async delete(documentId: string): Promise<void> {
-    // TODO: Implement document deletion
-    console.log('Deleting document:', documentId);
+    await deleteDoc(doc(db, 'vectorDocuments', documentId));
   }
   
   /**
    * Update document embedding (when content changes)
    */
-  static async updateEmbedding(documentId: string, newEmbedding: number[]): Promise<void> {
-    // TODO: Implement embedding update
-    console.log('Updating embedding for:', documentId);
+  static async updateEmbedding(documentId: string, newContent: string, newEmbedding: number[]): Promise<void> {
+    await updateDoc(doc(db, 'vectorDocuments', documentId), {
+      content: newContent,
+      embedding: newEmbedding,
+      'metadata.updatedAt': Timestamp.now()
+    });
   }
 }
 

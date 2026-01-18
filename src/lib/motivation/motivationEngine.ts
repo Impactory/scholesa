@@ -269,9 +269,43 @@ export class AutonomyEngine {
     grade: number,
     sessionOccurrenceId?: string
   ): Promise<MissionChoice[]> {
-    // TODO: Query missions collection filtered by grade/session
-    // For now, return mock data
-    return [];
+    try {
+      // Determine grade band for filtering
+      const gradeBand: AgeBand = grade <= 3 ? 'k-3' : grade <= 6 ? '4-6' : '7-9';
+      
+      // Query missions appropriate for grade band and site
+      let missionsQuery = query(
+        collection(db, 'missions'),
+        where('siteId', '==', siteId),
+        where('gradeBands', 'array-contains', gradeBand),
+        where('isActive', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+      );
+      
+      const missionsSnap = await getDocs(missionsQuery);
+      const missions: MissionChoice[] = [];
+      
+      missionsSnap.forEach(doc => {
+        const data = doc.data();
+        missions.push({
+          id: doc.id,
+          title: data.title || 'Untitled Mission',
+          description: data.description || '',
+          difficulty: data.difficulty || 'moderate',
+          estimatedMinutes: data.estimatedMinutes || 60,
+          skillIds: data.targetSkills || [],
+          theme: data.theme || 'general',
+          connectionToInterests: data.tags || [],
+          relevanceScore: 0.5 // Will be calculated later based on student profile
+        });
+      });
+      
+      return missions;
+    } catch (err) {
+      console.error('Failed to fetch missions:', err);
+      return [];
+    }
   }
   
   private static calculateRelevance(
@@ -454,12 +488,50 @@ export class CompetenceEngine {
     
     const badgesSnap = await getDocs(badgesQuery);
     
+    // Calculate next milestones from active missions
+    const nextMilestones: string[] = [];
+    
+    // Query active missions for this learner
+    const activeMissionsQuery = query(
+      collection(db, 'missionEnrollments'),
+      where('learnerId', '==', learnerId),
+      where('siteId', '==', siteId),
+      where('status', '==', 'active'),
+      limit(5)
+    );
+    
+    const activeMissionsSnap = await getDocs(activeMissionsQuery);
+    
+    for (const enrollmentDoc of activeMissionsSnap.docs) {
+      const enrollment = enrollmentDoc.data();
+      const missionId = enrollment.missionId;
+      
+      // Get mission details
+      const missionDoc = await getDoc(doc(db, 'missions', missionId));
+      if (!missionDoc.exists()) continue;
+      
+      const missionData = missionDoc.data();
+      const checkpoints = missionData.checkpoints || [];
+      
+      // Find next uncompleted checkpoint
+      const completedCheckpoints = enrollment.completedCheckpoints || [];
+      const nextCheckpoint = checkpoints.find(
+        (cp: { id: string }) => !completedCheckpoints.includes(cp.id)
+      );
+      
+      if (nextCheckpoint) {
+        nextMilestones.push(
+          `${missionData.title}: ${nextCheckpoint.title || nextCheckpoint.description || 'Next checkpoint'}`
+        );
+      }
+    }
+    
     return {
       skillsProven,
       skillsInProgress,
       badgesEarned: badgesSnap.size,
       checkpointsPassed: totalCheckpoints,
-      nextMilestones: [] // TODO: Calculate from mission progress
+      nextMilestones
     };
   }
 }

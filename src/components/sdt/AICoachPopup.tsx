@@ -25,6 +25,7 @@ import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/g
 import { useAITracking } from '@/src/hooks/useTelemetry';
 import { AIService, recordFeedback as recordAIFeedback } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
+import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognition extends EventTarget {
@@ -122,11 +123,26 @@ export function AICoachPopup({
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
+  const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
+
+  // Fetch SDT profile for personalization
+  useEffect(() => {
+    const fetchSDT = async () => {
+      try {
+        const profile = await TelemetryService.getSDTProfile(learnerId, siteId);
+        setSdtProfile(profile);
+      } catch (err) {
+        console.error('Failed to load SDT profile:', err);
+      }
+    };
+    
+    fetchSDT();
+  }, [learnerId, siteId]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -182,6 +198,43 @@ export function AICoachPopup({
         critique: 'critique_feedback' as const
       };
 
+      // Build personalized context from SDT profile
+      let personalizedContext = '';
+      if (sdtProfile) {
+        const weakDimensions: string[] = [];
+        if (sdtProfile.autonomy < 40) weakDimensions.push('autonomy (needs choice-making support)');
+        if (sdtProfile.competence < 40) weakDimensions.push('competence (needs skill-building)');
+        if (sdtProfile.belonging < 40) weakDimensions.push('belonging (needs community connection)');
+        
+        const strongDimensions: string[] = [];
+        if (sdtProfile.autonomy >= 70) strongDimensions.push('autonomy');
+        if (sdtProfile.competence >= 70) strongDimensions.push('competence');
+        if (sdtProfile.belonging >= 70) strongDimensions.push('belonging');
+        
+        personalizedContext = `
+Student Motivation Profile:
+- Autonomy: ${sdtProfile.autonomy}%
+- Competence: ${sdtProfile.competence}%
+- Belonging: ${sdtProfile.belonging}%
+
+${weakDimensions.length > 0 ? `Areas needing support: ${weakDimensions.join(', ')}` : ''}
+${strongDimensions.length > 0 ? `Strong areas: ${strongDimensions.join(', ')}` : ''}
+
+Guidance: ${
+  weakDimensions.includes('autonomy (needs choice-making support)')
+    ? 'Offer choices and let them decide next steps. '
+    : ''
+}${
+  weakDimensions.includes('competence (needs skill-building)')
+    ? 'Break down skills into smaller steps and celebrate progress. '
+    : ''
+}${
+  weakDimensions.includes('belonging (needs community connection)')
+    ? 'Encourage peer collaboration and recognition. '
+    : ''
+}`;
+      }
+
       // Call new AI service (vendor-agnostic, with redaction & retrieval)
       const aiResponse = await AIService.request({
         learnerId,
@@ -192,7 +245,9 @@ export function AICoachPopup({
         sessionId: sprintSessionId,
         missionId,
         taskType: taskTypeMap[mode],
-        question
+        question: personalizedContext 
+          ? `${personalizedContext}\n\nStudent Question: ${question}`
+          : question
       });
 
       setResponse(aiResponse);

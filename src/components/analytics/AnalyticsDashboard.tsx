@@ -10,11 +10,10 @@
  * - Weekly trends
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { db } from '@/src/firebase/client-init';
-import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
-import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import { useStudentAnalytics } from '@/src/hooks/useRealtimeAnalytics';
+import { AIInsightsPanel } from './AIInsightsPanel';
 import { 
   TrendingUpIcon, 
   TrendingDownIcon, 
@@ -34,173 +33,34 @@ interface StudentEngagement {
   autonomyScore: number; // 0-100
   competenceScore: number; // 0-100
   belongingScore: number; // 0-100
-  lastActive: Date;
+  lastActive: Date | null;
   eventCount: number;
-}
-
-interface WeeklyDataPoint {
-  date: string;
-  avgEngagement: number;
-  avgAutonomy: number;
-  avgCompetence: number;
-  avgBelonging: number;
 }
 
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
-  const [students, setStudents] = useState<StudentEngagement[]>([]);
-  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
-  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
   
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
-
-  useEffect(() => {
-    if (!siteId) return;
-    
-    const fetchAnalytics = async () => {
-      setLoading(true);
-      try {
-        // Calculate date range
-        const now = new Date();
-        const daysBack = timeRange === 'week' ? 7 : 30;
-        const startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - daysBack);
-        startDate.setHours(0, 0, 0, 0);
-        
-        // Fetch all learners in this site
-        const usersQuery = query(
-          collection(db, 'users'),
-          where('siteIds', 'array-contains', siteId),
-          where('role', '==', 'learner')
-        );
-        const usersSnapshot = await getDocs(usersQuery);
-        const learnerIds = usersSnapshot.docs.map(doc => doc.id);
-        
-        if (learnerIds.length === 0) {
-          setStudents([]);
-          setWeeklyData([]);
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch SDT profiles for all learners
-        const studentEngagementData: StudentEngagement[] = [];
-        
-        for (const learnerId of learnerIds) {
-          const userData = usersSnapshot.docs.find(doc => doc.id === learnerId)?.data();
-          const learnerName = userData?.displayName || userData?.email || 'Unknown';
-          
-          // Get SDT scores from telemetry
-          const sdtScores = await TelemetryService.getSDTProfile(learnerId, siteId);
-          
-          // Get event count and last active
-          const eventsQuery = query(
-            collection(db, 'telemetryEvents'),
-            where('userId', '==', learnerId),
-            where('siteId', '==', siteId),
-            where('timestamp', '>=', Timestamp.fromDate(startDate)),
-            orderBy('timestamp', 'desc')
-          );
-          const eventsSnapshot = await getDocs(eventsQuery);
-          
-          const eventCount = eventsSnapshot.size;
-          const lastActiveDoc = eventsSnapshot.docs[0];
-          const lastActive = lastActiveDoc 
-            ? lastActiveDoc.data().timestamp.toDate() 
-            : new Date(0);
-          
-          // Calculate overall engagement (average of SDT scores)
-          const engagementScore = Math.round(
-            (sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3
-          );
-          
-          studentEngagementData.push({
-            learnerId,
-            learnerName,
-            engagementScore,
-            autonomyScore: sdtScores.autonomy,
-            competenceScore: sdtScores.competence,
-            belongingScore: sdtScores.belonging,
-            lastActive,
-            eventCount
-          });
-        }
-        
-        setStudents(studentEngagementData.sort((a, b) => b.engagementScore - a.engagementScore));
-        
-        // Fetch weekly trends (aggregate by day)
-        const weeklyTrends: WeeklyDataPoint[] = [];
-        for (let i = daysBack - 1; i >= 0; i--) {
-          const dayDate = new Date(now);
-          dayDate.setDate(dayDate.getDate() - i);
-          dayDate.setHours(0, 0, 0, 0);
-          
-          const dayEnd = new Date(dayDate);
-          dayEnd.setHours(23, 59, 59, 999);
-          
-          // Query aggregates for this day (if they exist)
-          const aggregatesQuery = query(
-            collection(db, 'telemetryAggregates'),
-            where('siteId', '==', siteId),
-            where('date', '>=', Timestamp.fromDate(dayDate)),
-            where('date', '<=', Timestamp.fromDate(dayEnd))
-          );
-          const aggregatesSnapshot = await getDocs(aggregatesQuery);
-          
-          if (aggregatesSnapshot.size > 0) {
-            let totalEngagement = 0;
-            let totalAutonomy = 0;
-            let totalCompetence = 0;
-            let totalBelonging = 0;
-            
-            aggregatesSnapshot.forEach(doc => {
-              const agg = doc.data();
-              const sdtCounts = agg.sdtCounts || { autonomy: 0, competence: 0, belonging: 0 };
-              const total = sdtCounts.autonomy + sdtCounts.competence + sdtCounts.belonging;
-              
-              if (total > 0) {
-                totalAutonomy += (sdtCounts.autonomy / total) * 100;
-                totalCompetence += (sdtCounts.competence / total) * 100;
-                totalBelonging += (sdtCounts.belonging / total) * 100;
-                totalEngagement += agg.engagementScore || 0;
-              }
-            });
-            
-            const count = aggregatesSnapshot.size;
-            weeklyTrends.push({
-              date: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              avgEngagement: count > 0 ? Math.round(totalEngagement / count) : 0,
-              avgAutonomy: count > 0 ? Math.round(totalAutonomy / count) : 0,
-              avgCompetence: count > 0 ? Math.round(totalCompetence / count) : 0,
-              avgBelonging: count > 0 ? Math.round(totalBelonging / count) : 0
-            });
-          } else {
-            // No aggregates for this day, use 0s
-            weeklyTrends.push({
-              date: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              avgEngagement: 0,
-              avgAutonomy: 0,
-              avgCompetence: 0,
-              avgBelonging: 0
-            });
-          }
-        }
-        
-        setWeeklyData(weeklyTrends);
-        
-      } catch (err) {
-        console.error('Failed to load analytics:', err);
-        // Fallback to empty data
-        setStudents([]);
-        setWeeklyData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchAnalytics();
-  }, [siteId, timeRange]);
+  
+  // Use real-time hook for live data updates
+  const { students: realtimeStudents, loading, error } = useStudentAnalytics({ 
+    siteId, 
+    timeRange,
+    limit: 100 
+  });
+  
+  // Transform real-time data to match StudentEngagement interface
+  const students: StudentEngagement[] = realtimeStudents.map(s => ({
+    learnerId: s.userId,
+    learnerName: s.name,
+    engagementScore: s.engagementScore,
+    autonomyScore: s.autonomyScore,
+    competenceScore: s.competenceScore,
+    belongingScore: s.belongingScore,
+    lastActive: s.lastActive,
+    eventCount: 0 // Can be enhanced later
+  }));
   
   if (loading) {
     return (
@@ -211,6 +71,15 @@ export function AnalyticsDashboard() {
           ))}
         </div>
         <div className="h-96 bg-gray-200 rounded-lg" />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+        <AlertTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <p className="text-red-700">Failed to load analytics. Please try again.</p>
       </div>
     );
   }
@@ -418,6 +287,9 @@ export function AnalyticsDashboard() {
           </div>
         )}
       </div>
+      
+      {/* AI Insights Panel */}
+      <AIInsightsPanel students={students} timeRange={timeRange} />
     </div>
   );
 }
