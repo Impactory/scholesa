@@ -14,6 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { usePlatformStats } from '@/src/hooks/useRealtimeAnalytics';
 import {
   BuildingIcon,
   UsersIcon,
@@ -49,24 +50,22 @@ export function HQAnalyticsDashboard() {
   usePageViewTracking('hq_dashboard');
   
   const [sites, setSites] = useState<SiteMetrics[]>([]);
-  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'name' | 'engagement' | 'learners'>('engagement');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Real-time platform stats
+  const { stats: platformStats, loading: statsLoading } = usePlatformStats();
 
   useEffect(() => {
     const fetchPlatformData = async () => {
       setLoading(true);
       try {
-        // Fetch all sites
+        // Fetch all sites (platform stats now from real-time hook)
         const sitesQuery = query(collection(db, 'sites'));
         const sitesSnapshot = await getDocs(sitesQuery);
         
         const siteMetrics: SiteMetrics[] = [];
-        let totalPlatformLearners = 0;
-        let totalPlatformEducators = 0;
-        let totalPlatformEngagement = 0;
-        let activeSitesCount = 0;
         
         for (const siteDoc of sitesSnapshot.docs) {
           const siteData = siteDoc.data();
@@ -154,22 +153,10 @@ export function HQAnalyticsDashboard() {
             healthStatus,
             lastActivity: lastActivityDate
           });
-          
-          totalPlatformLearners += totalLearners;
-          totalPlatformEducators += totalEducators;
-          totalPlatformEngagement += avgEngagement;
         }
         
         setSites(siteMetrics);
-        setPlatformStats({
-          totalSites: sitesSnapshot.size,
-          totalLearners: totalPlatformLearners,
-          totalEducators: totalPlatformEducators,
-          avgEngagement: sitesSnapshot.size > 0 
-            ? Math.round(totalPlatformEngagement / sitesSnapshot.size)
-            : 0,
-          activeSites: activeSitesCount
-        });
+        // Platform stats now come from real-time hook
         
       } catch (err) {
         console.error('Failed to load platform data:', err);

@@ -7,10 +7,13 @@ import { query, where, addDoc, Timestamp } from 'firebase/firestore';
 import { enrolmentsCollection, missionsCollection, missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import { Mission, MissionAttempt } from '@/src/types/schema';
 import { UserProfile } from '@/src/types/user';
+import { useAutonomyTracking, useCompetenceTracking } from '@/src/hooks/useTelemetry';
 
 export function LearnerMissions() {
   const { user, profile: authProfile } = useAuthContext();
   const profile = authProfile as UserProfile | null;
+  const trackAutonomy = useAutonomyTracking();
+  const trackCompetence = useCompetenceTracking();
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +42,19 @@ export function LearnerMissions() {
     const attempt = attemptsSnap?.docs.find(d => d.data().missionId === missionId);
     return attempt?.data().status || 'todo';
   };
+  
+  const handleMissionSelect = (mission: Mission) => {
+    setSelectedMission(mission);
+    
+    // Track mission selection as autonomy event (learner chooses their path)
+    trackAutonomy('mission_selected', {
+      missionId: mission.id,
+      missionTitle: mission.title,
+      xpValue: mission.xp || 0,
+      pillars: mission.pillarCodes.join(','),
+      difficulty: mission.difficulty || 'medium'
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +72,16 @@ export function LearnerMissions() {
       };
       
       await addDoc(missionAttemptsCollection, attempt);
+      
+      // Track mission submission as competence event (demonstrating skill)
+      trackCompetence('mission_submitted', {
+        missionId: selectedMission.id,
+        missionTitle: selectedMission.title,
+        submissionLength: submissionContent.length,
+        pillars: selectedMission.pillarCodes.join(','),
+        xpValue: selectedMission.xp || 0
+      });
+      
       setSelectedMission(null);
       setSubmissionContent('');
     } catch (err) {
@@ -78,7 +104,7 @@ export function LearnerMissions() {
             return (
               <div 
                 key={doc.id}
-                onClick={() => setSelectedMission({ ...m, id: doc.id })}
+                onClick={() => handleMissionSelect({ ...m, id: doc.id })}
                 className={`cursor-pointer rounded-lg border p-4 transition-all ${
                   selectedMission?.id === doc.id 
                     ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' 

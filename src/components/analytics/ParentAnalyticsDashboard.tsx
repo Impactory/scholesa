@@ -15,7 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import { useChildActivity, useSDTScores } from '@/src/hooks/useRealtimeAnalytics';
 import {
   UserIcon,
   AwardIcon,
@@ -70,6 +70,10 @@ export function ParentAnalyticsDashboard() {
   
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
   const parentId = profile?.uid || '';
+  
+  // Real-time data for selected child
+  const { scores: childSDT, loading: sdtLoading } = useSDTScores(selectedChild || '', siteId);
+  const { activities: childActivities, loading: activitiesLoading } = useChildActivity(selectedChild || '', siteId, 10);
 
   useEffect(() => {
     if (!parentId || !siteId) return;
@@ -94,11 +98,11 @@ export function ParentAnalyticsDashboard() {
           const childId = userDoc.id;
           const childName = userData.displayName || userData.email || 'Student';
           
-          // Fetch SDT scores
-          const sdtScores = await TelemetryService.getSDTProfile(childId, siteId);
-          const engagementScore = Math.round((sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3);
+          // SDT scores will be fetched in real-time when child is selected
+          // For list view, use cached engagement or fetch once
+          const engagementScore = 0; // Placeholder, will update when selected
           
-          // Fetch recent activities (last 10)
+          // Fetch recent activities (now using real-time when selected)
           const eventsQuery = query(
             collection(db, 'telemetryEvents'),
             where('userId', '==', childId),

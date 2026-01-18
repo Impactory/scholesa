@@ -15,7 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
-import { useSDTScores } from '@/src/hooks/useRealtimeAnalytics';
+import { useSDTScores, useChildActivity } from '@/src/hooks/useRealtimeAnalytics';
 import {
   AwardIcon,
   TargetIcon,
@@ -50,7 +50,6 @@ export function StudentAnalyticsDashboard() {
   usePageViewTracking('student_analytics');
   
   const { profile } = useAuthContext();
-  const [sdtScores, setSDTScores] = useState({ autonomy: 0, competence: 0, belonging: 0, overall: 0 });
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +57,12 @@ export function StudentAnalyticsDashboard() {
   
   const learnerId = profile?.uid || '';
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
+  
+  // Real-time SDT scores
+  const { scores: sdtScores, loading: sdtLoading } = useSDTScores(learnerId, siteId);
+  
+  // Real-time activity feed
+  const { activities: recentActivities, loading: activitiesLoading } = useChildActivity(learnerId, siteId, 20);
 
   useEffect(() => {
     if (!learnerId || !siteId) return;
@@ -65,12 +70,7 @@ export function StudentAnalyticsDashboard() {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        // Fetch SDT scores
-        const rawScores = await TelemetryService.getSDTProfile(learnerId, siteId);
-        const overall = Math.round((rawScores.autonomy + rawScores.competence + rawScores.belonging) / 3);
-        setSDTScores({ ...rawScores, overall });
-        
-        // Fetch stats from various collections
+        // Fetch stats from various collections (SDT scores now from real-time hook)
         const daysBack = timeRange === 'week' ? 7 : 30;
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - daysBack);
@@ -185,7 +185,7 @@ export function StudentAnalyticsDashboard() {
     fetchAnalytics();
   }, [learnerId, siteId, timeRange]);
   
-  if (loading) {
+  if (loading || sdtLoading || activitiesLoading) {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-48 bg-gray-200 rounded-lg" />
