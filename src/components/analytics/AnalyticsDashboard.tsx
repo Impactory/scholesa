@@ -102,7 +102,7 @@ export function AnalyticsDashboard() {
       s.competenceScore.toString(),
       s.belongingScore.toString(),
       s.eventCount.toString(),
-      s.lastActive.toLocaleDateString()
+      s.lastActive ? s.lastActive.toLocaleDateString() : 'Never'
     ]);
     
     // Combine headers and rows

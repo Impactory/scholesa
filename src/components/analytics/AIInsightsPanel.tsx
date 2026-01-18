@@ -177,10 +177,10 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
       });
     }
 
-    // 7. Inactive students (last active > 7 days ago)
+    // 7. Inactive learners (last active > 7 days ago)
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const inactiveStudents = students.filter(s => s.lastActive < sevenDaysAgo);
+    const inactiveStudents = learners.filter(s => s.lastActive < sevenDaysAgo);
     if (inactiveStudents.length > 0) {
       generatedInsights.push({
         id: 'inactive-students',
@@ -188,7 +188,7 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         priority: 'high',
         title: `${inactiveStudents.length} Inactive Student${inactiveStudents.length > 1 ? 's' : ''}`,
         description: 'These students have not logged in for over a week.',
-        affectedStudents: inactiveStudents.map(s => s.learnerName),
+        affectedLearners: inactiveStudents.map(s => s.learnerName),
         actionItems: [
           'Send re-engagement email or message',
           'Contact parents/guardians',
@@ -198,9 +198,9 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 8. SDT Balance recommendation
-    const avgAutonomy = students.reduce((sum, s) => sum + s.autonomyScore, 0) / students.length || 0;
-    const avgCompetence = students.reduce((sum, s) => sum + s.competenceScore, 0) / students.length || 0;
-    const avgBelonging = students.reduce((sum, s) => sum + s.belongingScore, 0) / students.length || 0;
+    const avgAutonomy = learners.reduce((sum, s) => sum + s.autonomyScore, 0) / learners.length || 0;
+    const avgCompetence = learners.reduce((sum, s) => sum + s.competenceScore, 0) / learners.length || 0;
+    const avgBelonging = learners.reduce((sum, s) => sum + s.belongingScore, 0) / learners.length || 0;
     
     const maxDimension = Math.max(avgAutonomy, avgCompetence, avgBelonging);
     const minDimension = Math.min(avgAutonomy, avgCompetence, avgBelonging);
