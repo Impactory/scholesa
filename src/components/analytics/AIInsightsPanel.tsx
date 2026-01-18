@@ -26,7 +26,7 @@ interface LearnerData {
   autonomyScore: number;
   competenceScore: number;
   belongingScore: number;
-  lastActive: Date;
+  lastActive: Date | null;
   eventCount: number;
 }
 
@@ -180,7 +180,7 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     // 7. Inactive learners (last active > 7 days ago)
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const inactiveStudents = learners.filter(s => s.lastActive < sevenDaysAgo);
+    const inactiveStudents = learners.filter(s => s.lastActive && s.lastActive < sevenDaysAgo);
     if (inactiveStudents.length > 0) {
       generatedInsights.push({
         id: 'inactive-students',

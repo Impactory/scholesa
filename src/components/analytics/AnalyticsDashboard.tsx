@@ -274,19 +274,15 @@ export function AnalyticsDashboard() {
         </div>
       </div>
       
-      {/* Weekly Trends Chart */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      {/* Weekly Trends Chart - TODO: Add trend data generation */}
+      {/* <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {timeRange === 'week' ? 'Weekly' : 'Monthly'} Engagement Trends
         </h3>
-        {weeklyData.length > 0 ? (
-          <WeeklyTrendsChart data={weeklyData} />
-        ) : (
-          <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-            No trend data available yet. Data will appear after learners complete activities.
-          </div>
-        )}
-      </div>
+        <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+          Trend chart coming soon
+        </div>
+      </div> */}
       
       {/* AI Insights Panel */}
       <AIInsightsPanel learners={learners} timeRange={timeRange} />
@@ -379,7 +375,9 @@ function ScoreBar({ score, color }: ScoreBarProps) {
   );
 }
 
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return 'Never';
+  
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
