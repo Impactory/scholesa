@@ -26,6 +26,17 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.production
+.env.development
+
+# Service account keys and credentials
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!firebase.json
+!firestore.indexes.json
+!.vscode/*.json
 
 # vercel
 .vercel
