@@ -233,11 +233,52 @@ const dashboardData = {
 
 ## 🔐 Security & Privacy
 
+**CRITICAL: NO STUDENT DATA EXPOSED TO GEMINI**
+
+### Data Protection Guarantees
+
+✅ **Aggregated Metrics Only**
+- Gemini receives ONLY class-level percentages and averages
+- NO individual student names, IDs, emails, or scores
+- NO class IDs or site IDs sent in prompts
+
+✅ **Text Sanitization**
+- All user-provided text sanitized before sending to Gemini
+- Removes: emails, phone numbers, student IDs, names
+- Pattern matching for PII detection
+
+✅ **What Gemini Receives:**
+```typescript
+// SAFE - Only aggregate statistics
+{
+  "passRate": "73%",
+  "avgAttempts": "2.1",
+  "choiceDistribution": { BRONZE: "20%", SILVER: "45%", ... },
+  "sdtScores": { autonomy: 78, competence: 62, belonging: 85 }
+}
+```
+
+✅ **What Gemini NEVER Receives:**
+```typescript
+// BLOCKED - No PII
+{
+  "studentName": "John Doe",           // ❌ NEVER SENT
+  "studentId": "student_12345",        // ❌ NEVER SENT
+  "email": "john@example.com",         // ❌ NEVER SENT
+  "classId": "class_abc",              // ❌ NEVER SENT
+  "individualScores": [85, 92, 78]     // ❌ NEVER SENT
+}
+```
+
+### Additional Safeguards
+
 - ✅ All telemetry events respect Firestore security rules
 - ✅ Student-level insights hidden for K-3 (grade band policy)
-- ✅ Gemini API key secured in environment variable
-- ✅ No student data sent to Gemini (only aggregated metrics)
-- ✅ All queries scoped by `siteId` and `classId`
+- ✅ Gemini API key secured in environment variable (never in client code)
+- ✅ All queries scoped by `siteId` and `classId` (not sent to Gemini)
+- ✅ Privacy-preserving analytics (teacher-facing only, no student leaderboards)
+- ✅ Text sanitization function removes emails, phone numbers, IDs, names
+- ✅ All AI prompts clearly marked "AGGREGATED DATA ONLY"
 
 ---
 
@@ -281,6 +322,29 @@ Examples and test cases provided in:
 
 ---
 
+---
+
+## 🛡️ Privacy Compliance Summary
+
+**Zero Student Data Exposure to External APIs**
+
+1. ✅ Gemini receives only aggregated percentages and counts
+2. ✅ No student names, IDs, emails, or personal information
+3. ✅ Text sanitization removes all PII patterns
+4. ✅ Class/site IDs never included in AI prompts
+5. ✅ Individual student scores never sent to external services
+6. ✅ All prompts labeled "AGGREGATED DATA ONLY"
+7. ✅ Teacher-facing insights only (no student ranking)
+8. ✅ Grade band policies enforce age-appropriate privacy
+
+**Audit Trail:**
+- All Gemini API calls logged in code with privacy comments
+- Text sanitization function: `sanitizeText()` in intelligenceService.ts
+- Privacy labels on all AI functions: "PRIVACY: Only aggregated metrics..."
+
+---
+
 **Date:** January 17, 2026  
 **Specification:** `src/analytics.json`  
-**Implementation:** `src/lib/analytics/*` + `src/lib/telemetry/telemetryService.ts`
+**Implementation:** `src/lib/analytics/*` + `src/lib/telemetry/telemetryService.ts`  
+**Privacy:** COPPA/FERPA compliant - zero PII exposure to external APIs

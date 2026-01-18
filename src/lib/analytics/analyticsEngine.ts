@@ -415,6 +415,9 @@ export class AnalyticsEngine {
   
   /**
    * Generate AI-powered insights using Gemini
+   * 
+   * PRIVACY: Only sends aggregated class-level metrics (percentages, averages).
+   * NO student names, IDs, or individual student data sent to Gemini.
    */
   static async generateAIInsights(
     classId: string,
@@ -426,7 +429,7 @@ export class AnalyticsEngine {
       return [];
     }
     
-    // Gather metrics
+    // Gather metrics (ALL AGGREGATED - NO INDIVIDUAL STUDENT DATA)
     const [
       passRate,
       attemptsToMastery,
@@ -441,11 +444,11 @@ export class AnalyticsEngine {
       this.computeExplainItBackCompliance(classId, sessionId)
     ]);
     
-    // Build prompt for Gemini
+    // PRIVACY: Build prompt with ONLY aggregated metrics - NO class IDs, student data, or PII
     const prompt = `
 You are an educational analytics expert. Analyze the following class metrics and provide actionable insights for teachers.
 
-Class Metrics:
+Class Metrics (AGGREGATED DATA ONLY):
 - Checkpoint Pass Rate: ${(passRate * 100).toFixed(1)}%
 - Average Attempts to Mastery: ${attemptsToMastery.toFixed(1)}
 - Mission Choice Distribution:

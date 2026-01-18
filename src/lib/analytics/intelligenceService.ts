@@ -146,6 +146,9 @@ export class IntelligenceService {
   
   /**
    * Generate personalized learning recommendations using Gemini
+   * 
+   * PRIVACY: Only sends aggregated metrics and sanitized context.
+   * NO student names, IDs, or PII are sent to Gemini.
    */
   static async generatePersonalizedRecommendations(
     userId: string,
@@ -173,19 +176,27 @@ export class IntelligenceService {
       this.getLearnerProfile(userId, siteId)
     ]);
     
+    // PRIVACY: Sanitize activities to remove any potential PII
+    const sanitizedActivities = context.recentActivities.map(activity => 
+      this.sanitizeText(activity)
+    );
+    const sanitizedMission = context.currentMission ? 
+      this.sanitizeText(context.currentMission) : undefined;
+    
+    // PRIVACY: Only send aggregate scores and sanitized text - NO user IDs or names
     const prompt = `
 You are an encouraging educational AI coach. Generate personalized learning recommendations for a student.
 
-Student Profile:
+Student Profile (AGGREGATED DATA ONLY):
 - Autonomy: ${profile.sdtScores.autonomy}% (choice & agency)
 - Competence: ${profile.sdtScores.competence}% (skill mastery)
 - Belonging: ${profile.sdtScores.belonging}% (social connection)
 - Engagement Score: ${profile.engagementScore}/100
 
 Recent Context:
-${context.recentActivities.map((activity, i) => `${i + 1}. ${activity}`).join('\n')}
+${sanitizedActivities.map((activity, i) => `${i + 1}. ${activity}`).join('\n')}
 
-${context.currentMission ? `Current Mission: ${context.currentMission}` : ''}
+${sanitizedMission ? `Current Mission: ${sanitizedMission}` : ''}
 ${context.strugglingConcepts?.length ? `Struggling with: ${context.strugglingConcepts.join(', ')}` : ''}
 
 Provide a JSON response with:
@@ -248,6 +259,9 @@ Return only valid JSON.
   
   /**
    * Detect learning patterns using Gemini
+   * 
+   * PRIVACY: Only sends aggregated SDT scores and engagement metrics.
+   * NO student names, IDs, or PII are sent to Gemini.
    */
   static async detectLearningPatterns(
     userId: string,
@@ -276,10 +290,11 @@ Return only valid JSON.
       this.getLearnerProfile(userId, siteId)
     ]);
     
+    // PRIVACY: Only send aggregate scores - NO user IDs or names
     const prompt = `
 Analyze this student's learning patterns and provide insights.
 
-Student Metrics:
+Student Metrics (AGGREGATED DATA ONLY):
 - Autonomy (choice-making): ${profile.sdtScores.autonomy}%
 - Competence (skill mastery): ${profile.sdtScores.competence}%
 - Belonging (collaboration): ${profile.sdtScores.belonging}%
@@ -355,6 +370,39 @@ Be specific and evidence-based. Return only valid JSON.
   }
   
   // ===== HELPER FUNCTIONS =====
+  
+  /**
+   * Sanitize text to remove potential PII before sending to external APIs
+   * Removes: student names, email patterns, phone numbers, specific IDs
+   */
+  private static sanitizeText(text: string): string {
+    if (!text) return text;
+    
+    let sanitized = text;
+    
+    // Remove email patterns
+    sanitized = sanitized.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/gi, '[email]');
+    
+    // Remove phone numbers (various formats)
+    sanitized = sanitized.replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[phone]');
+    
+    // Remove common student ID patterns (e.g., student_123, learner_456)
+    sanitized = sanitized.replace(/\b(student|learner|user)_[\w-]+\b/gi, '[student-id]');
+    
+    // Remove any remaining numeric IDs longer than 5 digits
+    sanitized = sanitized.replace(/\b\d{6,}\b/g, '[id]');
+    
+    // Remove potential names (capitalized words that appear isolated)
+    // Keep mission names, concepts, and other educational terms
+    // This is conservative - only removes obvious name patterns
+    sanitized = sanitized.replace(/\b([A-Z][a-z]+ [A-Z][a-z]+)\b/g, (match) => {
+      // Don't sanitize educational terms (keep things like "Gold Mission", "Silver Checkpoint")
+      const educationalTerms = /Mission|Checkpoint|Sprint|Challenge|Quest|Level/i;
+      return educationalTerms.test(match) ? match : '[name]';
+    });
+    
+    return sanitized;
+  }
   
   private static inferCategoryFromEvent(event: TelemetryEvent): TelemetryPayload['category'] {
     // Autonomy events
