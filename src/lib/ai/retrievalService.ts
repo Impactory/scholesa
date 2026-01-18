@@ -73,8 +73,8 @@ export class RetrievalService {
       }
     }
     
-    // 2. Vector search for semantic similarity (TODO: Enable in Phase 2)
-    const useVectorSearch = false; // Set to true once vectorStore is implemented
+    // 2. Vector search for semantic similarity ✅ ENABLED
+    const useVectorSearch = true; // Vector store with indexing now implemented
     
     if (useVectorSearch) {
       try {

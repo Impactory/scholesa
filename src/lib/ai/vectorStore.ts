@@ -280,13 +280,71 @@ export class VectorIndexer {
   static async indexAllRubrics(): Promise<number> {
     console.log('Starting rubric indexing...');
     
-    // TODO: Implement rubric indexing
-    // 1. Fetch all rubrics from Firestore
-    // 2. Generate embeddings for each rubric
-    // 3. Store in vector DB
-    // 4. Return count indexed
-    
-    return 0;
+    try {
+      // 1. Fetch all active rubrics from Firestore
+      const rubricQuery = query(
+        collection(db, 'assessmentRubrics'),
+        where('status', '==', 'active')
+      );
+      const rubricSnap = await getDocs(rubricQuery);
+      
+      if (rubricSnap.empty) {
+        console.log('No rubrics found to index.');
+        return 0;
+      }
+      
+      let indexedCount = 0;
+      const rubrics = rubricSnap.docs;
+      
+      // 2. Process rubrics in batches for efficient embedding generation
+      const batchSize = 10;
+      for (let i = 0; i < rubrics.length; i += batchSize) {
+        const batch = rubrics.slice(i, i + batchSize);
+        
+        // Prepare content for embedding (combine rubric details)
+        const contents = batch.map(doc => {
+          const data = doc.data();
+          const criteriaText = (data.criteria || []).map((criterion: any) => 
+            `${criterion.name}: ${criterion.description}`
+          ).join('\n');
+          
+          return `Rubric: ${data.name}\n${data.description}\n\nCriteria:\n${criteriaText}`;
+        });
+        
+        // 3. Generate embeddings for batch
+        const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
+        
+        // 4. Store in vector DB
+        for (let j = 0; j < batch.length; j++) {
+          const doc = batch[j];
+          const data = doc.data();
+          
+          await VectorStore.store({
+            content: contents[j],
+            embedding: embeddings[j],
+            metadata: {
+              type: 'rubric',
+              gradeBand: data.grade ? (data.grade <= 3 ? 'k-3' : data.grade <= 6 ? '4-6' : '7-9') : undefined,
+              missionId: data.missionId,
+              skillIds: data.skillId ? [data.skillId] : [],
+              createdAt: data.createdAt || Timestamp.now(),
+              updatedAt: data.updatedAt || Timestamp.now()
+            }
+          });
+          
+          indexedCount++;
+        }
+        
+        console.log(`Indexed rubrics ${i + 1}-${Math.min(i + batchSize, rubrics.length)} of ${rubrics.length}`);
+      }
+      
+      console.log(`✓ Indexed ${indexedCount} rubrics`);
+      return indexedCount;
+      
+    } catch (err) {
+      console.error('Failed to index rubrics:', err);
+      return 0;
+    }
   }
   
   /**
@@ -295,10 +353,69 @@ export class VectorIndexer {
   static async indexAllExemplars(): Promise<number> {
     console.log('Starting exemplar indexing...');
     
-    // TODO: Implement exemplar indexing
-    // Similar to rubrics
-    
-    return 0;
+    try {
+      // 1. Fetch artifacts marked as exemplars (high quality student work)
+      const exemplarQuery = query(
+        collection(db, 'artifacts'),
+        where('isExemplar', '==', true),
+        where('status', '==', 'approved')
+      );
+      const exemplarSnap = await getDocs(exemplarQuery);
+      
+      if (exemplarSnap.empty) {
+        console.log('No exemplars found to index.');
+        return 0;
+      }
+      
+      let indexedCount = 0;
+      const exemplars = exemplarSnap.docs;
+      
+      // 2. Process exemplars in batches
+      const batchSize = 10;
+      for (let i = 0; i < exemplars.length; i += batchSize) {
+        const batch = exemplars.slice(i, i + batchSize);
+        
+        // Prepare content for embedding
+        const contents = batch.map(doc => {
+          const data = doc.data();
+          return `Exemplar Work:\nMission: ${data.missionTitle || 'Unknown'}\n\nStudent Work:\n${data.content || data.description}\n\nEducator Notes: ${data.exemplarNotes || ''}`;
+        });
+        
+        // 3. Generate embeddings for batch
+        const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
+        
+        // 4. Store in vector DB
+        for (let j = 0; j < batch.length; j++) {
+          const doc = batch[j];
+          const data = doc.data();
+          
+          await VectorStore.store({
+            content: contents[j],
+            embedding: embeddings[j],
+            metadata: {
+              type: 'exemplar',
+              gradeBand: data.grade ? (data.grade <= 3 ? 'k-3' : data.grade <= 6 ? '4-6' : '7-9') : undefined,
+              missionId: data.missionId,
+              learnerId: data.createdBy,
+              skillIds: data.skillIds || [],
+              createdAt: data.createdAt || Timestamp.now(),
+              updatedAt: data.updatedAt || Timestamp.now()
+            }
+          });
+          
+          indexedCount++;
+        }
+        
+        console.log(`Indexed exemplars ${i + 1}-${Math.min(i + batchSize, exemplars.length)} of ${exemplars.length}`);
+      }
+      
+      console.log(`✓ Indexed ${indexedCount} exemplars`);
+      return indexedCount;
+      
+    } catch (err) {
+      console.error('Failed to index exemplars:', err);
+      return 0;
+    }
   }
   
   /**
@@ -307,9 +424,120 @@ export class VectorIndexer {
   static async indexMisconceptions(): Promise<number> {
     console.log('Starting misconception indexing...');
     
-    // TODO: Implement misconception indexing
+    try {
+      // 1. Fetch all documented misconceptions from Firestore
+      // Misconceptions are stored per skill/topic to help AI provide better guidance
+      const misconceptionQuery = query(
+        collection(db, 'commonMisconceptions'),
+        where('isActive', '==', true)
+      );
+      const misconceptionSnap = await getDocs(misconceptionQuery);
+      
+      if (misconceptionSnap.empty) {
+        console.log('No misconceptions found to index. Creating default set...');
+        return await this.seedDefaultMisconceptions();
+      }
+      
+      let indexedCount = 0;
+      const misconceptions = misconceptionSnap.docs;
+      
+      // 2. Process misconceptions in batches
+      const batchSize = 10;
+      for (let i = 0; i < misconceptions.length; i += batchSize) {
+        const batch = misconceptions.slice(i, i + batchSize);
+        
+        // Prepare content for embedding
+        const contents = batch.map(doc => {
+          const data = doc.data();
+          return `Common Misconception:\nTopic: ${data.topic || 'General'}\nSkill: ${data.skillName || 'Unknown'}\n\nMisconception: ${data.misconception}\n\nWhy students think this: ${data.reasoning}\n\nCorrect understanding: ${data.correctUnderstanding}\n\nHow to address: ${data.teachingStrategy}`;
+        });
+        
+        // 3. Generate embeddings for batch
+        const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
+        
+        // 4. Store in vector DB
+        for (let j = 0; j < batch.length; j++) {
+          const doc = batch[j];
+          const data = doc.data();
+          
+          await VectorStore.store({
+            content: contents[j],
+            embedding: embeddings[j],
+            metadata: {
+              type: 'misconception',
+              gradeBand: data.gradeBand,
+              skillIds: data.skillId ? [data.skillId] : [],
+              createdAt: data.createdAt || Timestamp.now(),
+              updatedAt: data.updatedAt || Timestamp.now()
+            }
+          });
+          
+          indexedCount++;
+        }
+        
+        console.log(`Indexed misconceptions ${i + 1}-${Math.min(i + batchSize, misconceptions.length)} of ${misconceptions.length}`);
+      }
+      
+      console.log(`✓ Indexed ${indexedCount} misconceptions`);
+      return indexedCount;
+      
+    } catch (err) {
+      console.error('Failed to index misconceptions:', err);
+      return 0;
+    }
+  }
+  
+  /**
+   * Seed default misconceptions for common topics
+   * Run this once to populate the library
+   */
+  private static async seedDefaultMisconceptions(): Promise<number> {
+    console.log('Seeding default misconceptions...');
     
-    return 0;
+    const defaultMisconceptions = [
+      {
+        topic: 'Variables & Functions',
+        skillName: 'Programming',
+        gradeBand: '4-6' as AgeBand,
+        misconception: 'Variables store the code, not the value',
+        reasoning: 'Students confuse variable names with the value they hold',
+        correctUnderstanding: 'Variables are containers that store values. The variable name is a label for that container.',
+        teachingStrategy: 'Use physical box analogy: "x = 5" means putting the number 5 into a box labeled x',
+        isActive: true
+      },
+      {
+        topic: 'Loops',
+        skillName: 'Programming',
+        gradeBand: '4-6' as AgeBand,
+        misconception: 'Loop runs once per item in the list',
+        reasoning: 'Students think the loop counter and list position are different',
+        correctUnderstanding: 'For-each loop visits each item once. Counter loops run a specific number of times.',
+        teachingStrategy: 'Trace code step-by-step on paper, showing variable values changing each iteration',
+        isActive: true
+      },
+      {
+        topic: 'Fractions',
+        skillName: 'Mathematics',
+        gradeBand: 'k-3' as AgeBand,
+        misconception: 'Bigger denominator means bigger fraction',
+        reasoning: 'Students apply whole number logic (bigger number = more)',
+        correctUnderstanding: 'Larger denominator means smaller pieces. 1/8 of pizza is smaller than 1/4.',
+        teachingStrategy: 'Use visual models like pizza slices or fraction bars to show piece size',
+        isActive: true
+      }
+    ];
+    
+    // Store default misconceptions
+    for (const misc of defaultMisconceptions) {
+      await addDoc(collection(db, 'commonMisconceptions'), {
+        ...misc,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+    }
+    
+    // Now index them
+    return await this.indexMisconceptions();
   }
   
   /**

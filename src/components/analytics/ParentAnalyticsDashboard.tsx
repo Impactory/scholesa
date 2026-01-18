@@ -81,13 +81,13 @@ export function ParentAnalyticsDashboard() {
     const fetchChildren = async () => {
       setLoading(true);
       try {
-        // Fetch parent's children (assuming parent profile has linkedLearnerIds array)
-        // In production, this would query a parentChildRelationships collection
+        // Fetch parent's children using parentIds array-contains query
+        // Schema: User.parentIds is an array of parent user IDs
         const usersQuery = query(
           collection(db, 'users'),
           where('role', '==', 'learner'),
-          where('siteIds', 'array-contains', siteId)
-          // TODO: Add where('parentIds', 'array-contains', parentId) when schema supports it
+          where('siteIds', 'array-contains', siteId),
+          where('parentIds', 'array-contains', parentId) // Find learners where parentId is in their parentIds array
         );
         const usersSnapshot = await getDocs(usersQuery);
         
