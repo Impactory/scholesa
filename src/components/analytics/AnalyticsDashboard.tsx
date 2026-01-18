@@ -12,7 +12,7 @@
 
 import React, { useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { useStudentAnalytics } from '@/src/hooks/useRealtimeAnalytics';
+import { useLearnerAnalytics } from '@/src/hooks/useRealtimeAnalytics';
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { 
   TrendingUpIcon, 
@@ -26,7 +26,7 @@ import {
   DownloadIcon
 } from 'lucide-react';
 
-interface StudentEngagement {
+interface LearnerEngagement {
   learnerId: string;
   learnerName: string;
   engagementScore: number; // 0-100
@@ -44,14 +44,14 @@ export function AnalyticsDashboard() {
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
   
   // Use real-time hook for live data updates
-  const { students: realtimeStudents, loading, error } = useStudentAnalytics({ 
+  const { learners: realtimeLearners, loading, error } = useLearnerAnalytics({ 
     siteId, 
     timeRange,
     limit: 100 
   });
   
-  // Transform real-time data to match StudentEngagement interface
-  const students: StudentEngagement[] = realtimeStudents.map(s => ({
+  // Transform real-time data to match LearnerEngagement interface
+  const learners: LearnerEngagement[] = realtimeLearners.map(s => ({
     learnerId: s.userId,
     learnerName: s.name,
     engagementScore: s.engagementScore,
@@ -84,18 +84,18 @@ export function AnalyticsDashboard() {
     );
   }
   
-  const avgEngagement = students.reduce((sum, s) => sum + s.engagementScore, 0) / students.length || 0;
-  const atRiskCount = students.filter(s => s.engagementScore < 60).length;
-  const highPerformers = students.filter(s => s.engagementScore >= 80).length;
+  const avgEngagement = learners.reduce((sum, s) => sum + s.engagementScore, 0) / learners.length || 0;
+  const atRiskCount = learners.filter(s => s.engagementScore < 60).length;
+  const highPerformers = learners.filter(s => s.engagementScore >= 80).length;
   
   const handleExportCSV = () => {
-    if (students.length === 0) return;
+    if (learners.length === 0) return;
     
     // Prepare CSV headers
-    const headers = ['Student Name', 'Engagement %', 'Autonomy %', 'Competence %', 'Belonging %', 'Events', 'Last Active'];
+    const headers = ['Learner Name', 'Engagement %', 'Autonomy %', 'Competence %', 'Belonging %', 'Events', 'Last Active'];
     
     // Prepare CSV rows
-    const rows = students.map(s => [
+    const rows = learners.map(s => [
       s.learnerName,
       s.engagementScore.toString(),
       s.autonomyScore.toString(),
@@ -150,7 +150,7 @@ export function AnalyticsDashboard() {
         
         <button
           onClick={handleExportCSV}
-          disabled={students.length === 0}
+          disabled={learners.length === 0}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <DownloadIcon className="h-4 w-4" />
@@ -161,8 +161,8 @@ export function AnalyticsDashboard() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
-          title="Total Students"
-          value={students.length}
+          title="Total Learners"
+          value={learners.length}
           icon={UsersIcon}
           color="blue"
         />
@@ -195,7 +195,7 @@ export function AnalyticsDashboard() {
             <AlertTriangleIcon className="h-5 w-5 text-amber-600 mt-0.5 mr-3" />
             <div>
               <h3 className="text-sm font-medium text-amber-800">
-                {atRiskCount} student{atRiskCount > 1 ? 's' : ''} may need support
+                {atRiskCount} learner{atRiskCount > 1 ? 's' : ''} may need support
               </h3>
               <p className="mt-1 text-sm text-amber-700">
                 Students with engagement below 60% haven't been active recently or are showing low participation.
@@ -246,26 +246,26 @@ export function AnalyticsDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {students.map(student => (
-                <tr key={student.learnerId} className="hover:bg-gray-50">
+              {learners.map(learner => (
+                <tr key={learner.learnerId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{student.learnerName}</div>
-                    <div className="text-sm text-gray-500">{student.eventCount} events</div>
+                    <div className="text-sm font-medium text-gray-900">{learner.learnerName}</div>
+                    <div className="text-sm text-gray-500">{learner.eventCount} events</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={student.autonomyScore} color="purple" />
+                    <ScoreBar score={learner.autonomyScore} color="purple" />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={student.competenceScore} color="blue" />
+                    <ScoreBar score={learner.competenceScore} color="blue" />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={student.belongingScore} color="pink" />
+                    <ScoreBar score={learner.belongingScore} color="pink" />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={student.engagementScore} color="green" />
+                    <ScoreBar score={learner.engagementScore} color="green" />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatRelativeTime(student.lastActive)}
+                    {formatRelativeTime(learner.lastActive)}
                   </td>
                 </tr>
               ))}
@@ -283,13 +283,13 @@ export function AnalyticsDashboard() {
           <WeeklyTrendsChart data={weeklyData} />
         ) : (
           <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-            No trend data available yet. Data will appear after students complete activities.
+            No trend data available yet. Data will appear after learners complete activities.
           </div>
         )}
       </div>
       
       {/* AI Insights Panel */}
-      <AIInsightsPanel students={students} timeRange={timeRange} />
+      <AIInsightsPanel learners={learners} timeRange={timeRange} />
     </div>
   );
 }

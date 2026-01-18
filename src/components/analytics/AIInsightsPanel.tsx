@@ -4,8 +4,8 @@
  * AI Insights Panel for Educator Analytics
  * 
  * Provides AI-generated insights based on:
- * - Student engagement patterns
- * - At-risk student identification
+ * - Learner engagement patterns
+ * - At-risk learner identification
  * - Intervention recommendations
  * - Class trends and predictions
  */
@@ -19,7 +19,7 @@ import {
   TargetIcon
 } from 'lucide-react';
 
-interface StudentData {
+interface LearnerData {
   learnerId: string;
   learnerName: string;
   engagementScore: number;
@@ -37,36 +37,36 @@ interface AIInsight {
   title: string;
   description: string;
   actionItems?: string[];
-  affectedStudents?: string[];
+  affectedLearners?: string[];
 }
 
 interface AIInsightsPanelProps {
-  students: StudentData[];
+  learners: LearnerData[];
   timeRange: 'week' | 'month';
 }
 
-export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
+export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     generateInsights();
-  }, [students, timeRange]);
+  }, [learners, timeRange]);
 
   const generateInsights = () => {
     setLoading(true);
     const generatedInsights: AIInsight[] = [];
 
-    // 1. Identify at-risk students (engagement < 30%)
-    const atRiskStudents = students.filter(s => s.engagementScore < 30);
-    if (atRiskStudents.length > 0) {
+    // 1. Identify at-risk learners (engagement < 30%)
+    const atRiskLearners = learners.filter(s => s.engagementScore < 30);
+    if (atRiskLearners.length > 0) {
       generatedInsights.push({
         id: 'at-risk-alert',
         type: 'alert',
         priority: 'high',
-        title: `${atRiskStudents.length} Student${atRiskStudents.length > 1 ? 's' : ''} At Risk`,
-        description: 'These students show low engagement (< 30%) and may need immediate attention.',
-        affectedStudents: atRiskStudents.map(s => s.learnerName),
+        title: `${atRiskLearners.length} Learner${atRiskLearners.length > 1 ? 's' : ''} At Risk`,
+        description: 'These learners show low engagement (< 30%) and may need immediate attention.',
+        affectedLearners: atRiskLearners.map(s => s.learnerName),
         actionItems: [
           'Schedule one-on-one check-ins',
           'Review their mission history for blockers',
@@ -75,16 +75,16 @@ export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
       });
     }
 
-    // 2. Identify students with low autonomy (< 40%)
-    const lowAutonomyStudents = students.filter(s => s.autonomyScore < 40);
-    if (lowAutonomyStudents.length > 0 && lowAutonomyStudents.length < students.length * 0.5) {
+    // 2. Identify learners with low autonomy (< 40%)
+    const lowAutonomyLearners = learners.filter(s => s.autonomyScore < 40);
+    if (lowAutonomyLearners.length > 0 && lowAutonomyLearners.length < learners.length * 0.5) {
       generatedInsights.push({
         id: 'low-autonomy',
         type: 'recommendation',
         priority: 'medium',
-        title: 'Students Need More Choice',
-        description: `${lowAutonomyStudents.length} students show low autonomy scores. They may benefit from more self-directed learning.`,
-        affectedStudents: lowAutonomyStudents.map(s => s.learnerName),
+        title: 'Learners Need More Choice',
+        description: `${lowAutonomyLearners.length} learners show low autonomy scores. They may benefit from more self-directed learning.`,
+        affectedLearners: lowAutonomyLearners.map(s => s.learnerName),
         actionItems: [
           'Offer mission choice boards',
           'Encourage goal-setting activities',
@@ -93,34 +93,34 @@ export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
       });
     }
 
-    // 3. Identify students with low competence (< 40%)
-    const lowCompetenceStudents = students.filter(s => s.competenceScore < 40);
-    if (lowCompetenceStudents.length > 0 && lowCompetenceStudents.length < students.length * 0.5) {
+    // 3. Identify learners with low competence (< 40%)
+    const lowCompetenceLearners = learners.filter(s => s.competenceScore < 40);
+    if (lowCompetenceLearners.length > 0 && lowCompetenceLearners.length < learners.length * 0.5) {
       generatedInsights.push({
         id: 'low-competence',
         type: 'recommendation',
         priority: 'medium',
         title: 'Skill Mastery Support Needed',
-        description: `${lowCompetenceStudents.length} students need more skill-building opportunities.`,
-        affectedStudents: lowCompetenceStudents.map(s => s.learnerName),
+        description: `${lowCompetenceLearners.length} learners need more skill-building opportunities.`,
+        affectedLearners: lowCompetenceLearners.map(s => s.learnerName),
         actionItems: [
           'Provide scaffolded practice activities',
           'Celebrate small wins with badges',
-          'Offer peer tutoring opportunities'
+          'Offer peer mentoring opportunities'
         ]
       });
     }
 
-    // 4. Identify students with low belonging (< 40%)
-    const lowBelongingStudents = students.filter(s => s.belongingScore < 40);
-    if (lowBelongingStudents.length > 0 && lowBelongingStudents.length < students.length * 0.5) {
+    // 4. Identify learners with low belonging (< 40%)
+    const lowBelongingLearners = learners.filter(s => s.belongingScore < 40);
+    if (lowBelongingLearners.length > 0 && lowBelongingLearners.length < learners.length * 0.5) {
       generatedInsights.push({
         id: 'low-belonging',
         type: 'recommendation',
         priority: 'medium',
         title: 'Community Connection Needed',
-        description: `${lowBelongingStudents.length} students show low belonging scores. They may feel isolated.`,
-        affectedStudents: lowBelongingStudents.map(s => s.learnerName),
+        description: `${lowBelongingLearners.length} learners show low belonging scores. They may feel isolated.`,
+        affectedLearners: lowBelongingLearners.map(s => s.learnerName),
         actionItems: [
           'Facilitate peer collaboration activities',
           'Encourage showcase submissions',
@@ -129,16 +129,16 @@ export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
       });
     }
 
-    // 5. Identify thriving students (engagement > 80%)
-    const thrivingStudents = students.filter(s => s.engagementScore > 80);
-    if (thrivingStudents.length > 0) {
+    // 5. Identify thriving learners (engagement > 80%)
+    const thrivingLearners = learners.filter(s => s.engagementScore > 80);
+    if (thrivingLearners.length > 0) {
       generatedInsights.push({
-        id: 'thriving-students',
+        id: 'thriving-learners',
         type: 'trend',
         priority: 'low',
-        title: `${thrivingStudents.length} Student${thrivingStudents.length > 1 ? 's' : ''} Thriving`,
-        description: 'These students show exceptional engagement across all SDT dimensions.',
-        affectedStudents: thrivingStudents.map(s => s.learnerName),
+        title: `${thrivingLearners.length} Learner${thrivingLearners.length > 1 ? 's' : ''} Thriving`,
+        description: 'These learners show exceptional engagement across all SDT dimensions.',
+        affectedLearners: thrivingLearners.map(s => s.learnerName),
         actionItems: [
           'Offer advanced challenges',
           'Invite them to mentor struggling peers',
@@ -148,7 +148,7 @@ export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
     }
 
     // 6. Class-wide trend: Overall engagement
-    const avgEngagement = students.reduce((sum, s) => sum + s.engagementScore, 0) / students.length || 0;
+    const avgEngagement = learners.reduce((sum, s) => sum + s.engagementScore, 0) / learners.length || 0;
     if (avgEngagement < 50) {
       generatedInsights.push({
         id: 'class-engagement-low',
@@ -157,7 +157,7 @@ export function AIInsightsPanel({ students, timeRange }: AIInsightsPanelProps) {
         title: 'Class Engagement Below Target',
         description: `Average class engagement is ${Math.round(avgEngagement)}%. Consider adjusting curriculum or pacing.`,
         actionItems: [
-          'Survey students about interests and challenges',
+          'Survey learners about interests and challenges',
           'Introduce more variety in mission types',
           'Increase opportunities for student choice'
         ]
@@ -339,7 +339,7 @@ function InsightCard({ insight }: InsightCardProps) {
           
           <p className="text-sm text-gray-700 mt-1">{insight.description}</p>
           
-          {(insight.actionItems || insight.affectedStudents) && (
+          {(insight.actionItems || insight.affectedLearners) && (
             <button
               onClick={() => setExpanded(!expanded)}
               className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2"
@@ -350,11 +350,11 @@ function InsightCard({ insight }: InsightCardProps) {
           
           {expanded && (
             <div className="mt-3 space-y-3">
-              {insight.affectedStudents && insight.affectedStudents.length > 0 && (
+              {insight.affectedLearners && insight.affectedLearners.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-1">Affected Students:</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Affected Learners:</p>
                   <div className="flex flex-wrap gap-1">
-                    {insight.affectedStudents.map((name, idx) => (
+                    {insight.affectedLearners.map((name, idx) => (
                       <span key={idx} className="text-xs bg-white px-2 py-1 rounded border border-gray-200">
                         {name}
                       </span>

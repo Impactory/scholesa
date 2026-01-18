@@ -10,13 +10,13 @@ import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/f
 import { db } from '@/src/firebase/client-init';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 
-interface UseStudentAnalyticsOptions {
+interface UseLearnerAnalyticsOptions {
   siteId: string;
   timeRange?: 'week' | 'month';
   limit?: number;
 }
 
-interface StudentData {
+interface LearnerData {
   userId: string;
   name: string;
   engagementScore: number;
@@ -27,10 +27,10 @@ interface StudentData {
 }
 
 /**
- * Real-time student analytics for educators
+ * Real-time learner analytics for educators
  */
-export function useStudentAnalytics({ siteId, timeRange = 'week', limit: maxStudents = 50 }: UseStudentAnalyticsOptions) {
-  const [students, setStudents] = useState<StudentData[]>([]);
+export function useLearnerAnalytics({ siteId, timeRange = 'week', limit: maxLearners = 50 }: UseLearnerAnalyticsOptions) {
+  const [learners, setLearners] = useState<LearnerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -48,14 +48,14 @@ export function useStudentAnalytics({ siteId, timeRange = 'week', limit: maxStud
       collection(db, 'users'),
       where('role', '==', 'learner'),
       where('siteIds', 'array-contains', siteId),
-      limit(maxStudents)
+      limit(maxLearners)
     );
 
     unsubscribeUsers = onSnapshot(
       usersQuery,
       async (snapshot) => {
         try {
-          const studentsData: StudentData[] = [];
+          const learnersData: LearnerData[] = [];
 
           for (const userDoc of snapshot.docs) {
             const userData = userDoc.data();
@@ -79,9 +79,9 @@ export function useStudentAnalytics({ siteId, timeRange = 'week', limit: maxStud
               ? eventsSnapshot.docs[0].data().timestamp.toDate()
               : null;
 
-            studentsData.push({
+            learnersData.push({
               userId,
-              name: userData.displayName || userData.email || 'Student',
+              name: userData.displayName || userData.email || 'Learner',
               engagementScore,
               autonomyScore: sdtScores.autonomy,
               competenceScore: sdtScores.competence,
@@ -90,17 +90,17 @@ export function useStudentAnalytics({ siteId, timeRange = 'week', limit: maxStud
             });
           }
 
-          setStudents(studentsData);
+          setLearners(learnersData);
           setLoading(false);
           setError(null);
         } catch (err) {
-          console.error('Failed to load student analytics:', err);
+          console.error('Failed to load learner analytics:', err);
           setError(err as Error);
           setLoading(false);
         }
       },
       (err) => {
-        console.error('Student analytics subscription error:', err);
+        console.error('Learner analytics subscription error:', err);
         setError(err);
         setLoading(false);
       }
@@ -111,9 +111,9 @@ export function useStudentAnalytics({ siteId, timeRange = 'week', limit: maxStud
         unsubscribeUsers();
       }
     };
-  }, [siteId, timeRange, maxStudents]);
+  }, [siteId, timeRange, maxLearners]);
 
-  return { students, loading, error };
+  return { learners, loading, error };
 }
 
 /**

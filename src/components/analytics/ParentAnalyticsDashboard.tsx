@@ -96,7 +96,7 @@ export function ParentAnalyticsDashboard() {
         for (const userDoc of usersSnapshot.docs) {
           const userData = userDoc.data();
           const childId = userDoc.id;
-          const childName = userData.displayName || userData.email || 'Student';
+          const childName = userData.displayName || userData.email || 'Learner';
           
           // SDT scores will be fetched in real-time when child is selected
           // For list view, use cached engagement or fetch once
