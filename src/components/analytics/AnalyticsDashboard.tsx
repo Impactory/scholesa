@@ -37,6 +37,14 @@ interface LearnerEngagement {
   eventCount: number;
 }
 
+interface WeeklyDataPoint {
+  week: string;
+  avgEngagement: number;
+  avgAutonomy: number;
+  avgCompetence: number;
+  avgBelonging: number;
+}
+
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
@@ -537,7 +545,7 @@ function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
                 fill="#6b7280"
                 textAnchor="middle"
               >
-                {point.date}
+                {point.week}
               </text>
             );
           })}

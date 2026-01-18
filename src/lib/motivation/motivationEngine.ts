@@ -271,7 +271,7 @@ export class AutonomyEngine {
   ): Promise<MissionChoice[]> {
     try {
       // Determine grade band for filtering
-      const gradeBand: AgeBand = grade <= 3 ? 'k-3' : grade <= 6 ? '4-6' : '7-9';
+      const gradeBand: AgeBand = grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : 'grades_7_9';
       
       // Query missions appropriate for grade band and site
       let missionsQuery = query(

@@ -1,0 +1,33 @@
+
+> scholesa@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.production
+
+   Creating an optimized production build ...
+> [PWA] Compile server
+> [PWA] Compile server
+> [PWA] Compile client (static)
+> [PWA] Auto register service worker is disabled, please call following code in componentDidMount callback or useEffect hook
+> [PWA]   window.workbox.register()
+> [PWA] Service worker: /Users/simonluke/Library/CloudStorage/OneDrive-Personal/Desktop/My codes/scholesa-edu-2/public/sw.js
+> [PWA]   url: /sw.js
+> [PWA]   scope: /
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+ ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
+Failed to compile.
+
+./src/components/showcase/ShowcaseGallery.tsx:208:15
+Type error: Type '{ recipientId: string; recipientName: string; onClose: () => void; onRecognitionSent: (_recognitionId: any) => void; }' is not assignable to type 'IntrinsicAttributes & PeerRecognitionFormProps'.
+  Property 'onRecognitionSent' does not exist on type 'IntrinsicAttributes & PeerRecognitionFormProps'. Did you mean 'onRecognitionGiven'?
+
+[0m [90m 206 |[39m                 setSelectedItem([36mnull[39m)[33m;[39m[0m
+[0m [90m 207 |[39m               }}[0m
+[0m[31m[1m>[22m[39m[90m 208 |[39m               onRecognitionSent[33m=[39m{(_recognitionId) [33m=>[39m {[0m
+[0m [90m     |[39m               [31m[1m^[22m[39m[0m
+[0m [90m 209 |[39m                 setShowRecognitionForm([36mfalse[39m)[33m;[39m[0m
+[0m [90m 210 |[39m                 setSelectedItem([36mnull[39m)[33m;[39m[0m
+[0m [90m 211 |[39m                 [90m// Refresh gallery to update recognition counts[39m[0m
+Next.js build worker exited with code: 1 and signal: null

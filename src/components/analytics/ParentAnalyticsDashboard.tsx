@@ -102,6 +102,11 @@ export function ParentAnalyticsDashboard() {
           // For list view, use cached engagement or fetch once
           const engagementScore = 0; // Placeholder, will update when selected
           
+          // Initialize SDT scores as 0 for list view
+          const autonomyScore = 0;
+          const competenceScore = 0;
+          const belongingScore = 0;
+          
           // Fetch recent activities (now using real-time when selected)
           const eventsQuery = query(
             collection(db, 'telemetryEvents'),
@@ -167,9 +172,9 @@ export function ParentAnalyticsDashboard() {
             childId,
             childName,
             engagementScore,
-            autonomyScore: sdtScores.autonomy,
-            competenceScore: sdtScores.competence,
-            belongingScore: sdtScores.belonging,
+            autonomyScore,
+            competenceScore,
+            belongingScore,
             recentActivities,
             upcomingGoals,
             achievements

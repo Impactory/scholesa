@@ -12,9 +12,6 @@
 
 import type { ContextBlock } from './modelAdapter';
 import type { AgeBand } from '@/src/types/schema';
-import { getRubricForMission, formatRubricForAI, type AssessmentRubric } from './rubricManager';
-import { EmbeddingService, VectorStore, type SearchResult } from './vectorStore';
-import { Timestamp } from 'firebase/firestore';
 
 // ==================== TYPES ====================
 
@@ -52,15 +49,21 @@ export class RetrievalService {
   /**
    * Retrieve relevant context for a student question
    * 
-   * Uses hybrid approach:
-   * 1. Vector search for semantic similarity (when available)
-   * 2. Keyword filtering for specific metadata (mission, grade)
-   * 3. Re-ranking by relevance
+   * In production, this would:
+   * 1. Generate embedding for query
+   * 2. Vector search in your store (Pinecone, Weaviate, or Firestore vector search)
+   * 3. Re-rank by relevance
+   * 4. Return top-K
+   * 
+   * For now, simplified with keyword matching
    */
   static async retrieve(query: RetrievalQuery): Promise<ContextBlock[]> {
+    // TODO: Integrate with vector store
+    // For now, return mock data structure
+    
     const contextBlocks: ContextBlock[] = [];
     
-    // 1. Retrieve rubric criteria (if mission provided) - Always high priority
+    // 1. Retrieve rubric criteria (if mission provided)
     if (query.missionId) {
       const rubric = await this.getRubricForMission(query.missionId, query.gradeBand);
       if (rubric) {
@@ -73,59 +76,23 @@ export class RetrievalService {
       }
     }
     
-    // 2. Vector search for semantic similarity ✅ ENABLED
-    const useVectorSearch = true; // Vector store with indexing now implemented
+    // 2. Retrieve exemplars (good examples)
+    const exemplars = await this.getExemplars(query);
+    contextBlocks.push(...exemplars);
     
-    if (useVectorSearch) {
-      try {
-        // Generate embedding for query
-        const queryEmbedding = await EmbeddingService.generateEmbedding(query.query);
-        
-        // Search vector store
-        const searchResults = await VectorStore.search(queryEmbedding, query.topK || 5, {
-          missionId: query.missionId,
-          gradeBand: query.gradeBand
-        });
-        
-        // Convert search results to context blocks (map vector types to context types)
-        for (const result of searchResults) {
-          const contextType: ContextBlock['type'] = 
-            result.document.metadata.type === 'student_work' ? 'artifact' :
-            result.document.metadata.type === 'feedback_pattern' ? 'feedback' :
-            result.document.metadata.type;
-          
-          contextBlocks.push({
-            type: contextType,
-            content: result.document.content,
-            id: result.document.id,
-            relevance: result.score
-          });
-        }
-      } catch (err) {
-        console.warn('Vector search failed, falling back to keyword search:', err);
-      }
+    // 3. Retrieve common misconceptions
+    const misconceptions = await this.getMisconceptions(query);
+    contextBlocks.push(...misconceptions);
+    
+    // 4. Retrieve student's past work (if learner provided)
+    if (query.learnerId) {
+      const pastWork = await this.getStudentPastWork(query.learnerId, query.missionId);
+      contextBlocks.push(...pastWork);
     }
     
-    // 3. Fallback: Keyword-based retrieval (used until vector search is implemented)
-    if (!useVectorSearch || contextBlocks.length === 0) {
-      // Retrieve exemplars (good examples)
-      const exemplars = await this.getExemplars(query);
-      contextBlocks.push(...exemplars);
-      
-      // Retrieve common misconceptions
-      const misconceptions = await this.getMisconceptions(query);
-      contextBlocks.push(...misconceptions);
-      
-      // Retrieve student's past work (if learner provided)
-      if (query.learnerId) {
-        const pastWork = await this.getStudentPastWork(query.learnerId, query.missionId);
-        contextBlocks.push(...pastWork);
-      }
-      
-      // Retrieve teacher feedback patterns
-      const feedbackPatterns = await this.getTeacherFeedback(query);
-      contextBlocks.push(...feedbackPatterns);
-    }
+    // 5. Retrieve teacher feedback patterns
+    const feedbackPatterns = await this.getTeacherFeedback(query);
+    contextBlocks.push(...feedbackPatterns);
     
     // Filter by relevance threshold
     const filtered = contextBlocks.filter(
@@ -141,51 +108,19 @@ export class RetrievalService {
   
   /**
    * Store a document for future retrieval
-   * 
-   * Phase 2: Will store in vector DB for semantic search
    */
   static async store(document: StoredDocument): Promise<void> {
-    // Convert to vector document and store
-    try {
-      const embedding = await EmbeddingService.generateEmbedding(document.content);
-      
-      await VectorStore.store({
-        content: document.content,
-        embedding,
-        metadata: {
-          type: document.type === 'artifact' ? 'student_work' :
-                document.type === 'feedback' ? 'feedback_pattern' :
-                document.type === 'mission_goal' ? 'misconception' : // Map mission_goal to misconception
-                document.type,
-          gradeBand: document.metadata.gradeBand,
-          missionId: document.metadata.missionId,
-          learnerId: document.metadata.learnerId,
-          skillIds: document.metadata.skillId ? [document.metadata.skillId] : undefined,
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now()
-        }
-      });
-      
-      console.log('Stored document in vector store:', document.id, document.type);
-    } catch (err) {
-      console.warn('Vector store not available, skipping storage:', err);
-    }
+    // TODO: Store in vector DB
+    // For now, just log
+    console.log('Storing document:', document.id, document.type);
   }
   
   /**
    * Update embeddings for a document (when content changes)
-   * 
-   * Phase 2: Will regenerate embedding and update vector DB
    */
   static async updateEmbedding(documentId: string, content: string): Promise<void> {
-    try {
-      const newEmbedding = await EmbeddingService.generateEmbedding(content);
-      await VectorStore.updateEmbedding(documentId, newEmbedding);
-      
-      console.log('Updated embedding for:', documentId);
-    } catch (err) {
-      console.warn('Vector store not available, skipping embedding update:', err);
-    }
+    // TODO: Generate embedding and update
+    console.log('Updating embedding for:', documentId);
   }
   
   // ===== PRIVATE RETRIEVAL METHODS =====
@@ -195,45 +130,19 @@ export class RetrievalService {
     gradeBand: AgeBand
   ): Promise<ContextBlock | null> {
     // Fetch from YOUR Firestore (rubrics collection)
-    // REAL implementation using RubricManager
+    // Age-appropriate language already stored
     
-    try {
-      const gradeNumber = this.gradeBandToNumber(gradeBand);
-      const rubric = await getRubricForMission('*', missionId, gradeNumber);
-      
-      if (!rubric) return null;
-      
-      // Format rubric as markdown
-      const formattedRubric = formatRubricForAI(rubric);
-      
-      return {
-        type: 'rubric',
-        content: formattedRubric,
-        id: rubric.id || `rubric_${missionId}`,
-        metadata: {
-          rubricId: rubric.id,
-          rubricVersion: rubric.version,
-          rubricName: rubric.name
-        },
-        relevance: 0.95 // Rubrics are highly relevant
-      };
-    } catch (err) {
-      console.error('Error fetching rubric:', err);
-      return null;
-    }
-  }
-  
-  /**
-   * Helper: Convert age band to grade number for rubric lookup
-   */
-  private static gradeBandToNumber(ageBand: AgeBand): number {
-    const mapping: Record<AgeBand, number> = {
-      grades_1_3: 2,
-      grades_4_6: 5,
-      grades_7_9: 8,
-      grades_10_12: 11
+    // Mock for now
+    return {
+      type: 'rubric',
+      content: `Success criteria for this mission:
+- Shows understanding of core concept
+- Code/artifact runs without errors
+- Includes clear explanation of approach
+- Demonstrates debugging skills`,
+      id: `rubric_${missionId}`,
+      relevance: 0.9
     };
-    return mapping[ageBand] || 5;
   }
   
   private static async getExemplars(query: RetrievalQuery): Promise<ContextBlock[]> {

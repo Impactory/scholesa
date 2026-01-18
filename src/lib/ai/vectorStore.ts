@@ -324,7 +324,7 @@ export class VectorIndexer {
             embedding: embeddings[j],
             metadata: {
               type: 'rubric',
-              gradeBand: data.grade ? (data.grade <= 3 ? 'k-3' : data.grade <= 6 ? '4-6' : '7-9') : undefined,
+              gradeBand: data.grade ? (data.grade <= 3 ? 'grades_1_3' : data.grade <= 6 ? 'grades_4_6' : 'grades_7_9') : undefined,
               missionId: data.missionId,
               skillIds: data.skillId ? [data.skillId] : [],
               createdAt: data.createdAt || Timestamp.now(),
@@ -394,7 +394,7 @@ export class VectorIndexer {
             embedding: embeddings[j],
             metadata: {
               type: 'exemplar',
-              gradeBand: data.grade ? (data.grade <= 3 ? 'k-3' : data.grade <= 6 ? '4-6' : '7-9') : undefined,
+              gradeBand: data.grade ? (data.grade <= 3 ? 'grades_1_3' : data.grade <= 6 ? 'grades_4_6' : 'grades_7_9') : undefined,
               missionId: data.missionId,
               learnerId: data.createdBy,
               skillIds: data.skillIds || [],
@@ -498,7 +498,7 @@ export class VectorIndexer {
       {
         topic: 'Variables & Functions',
         skillName: 'Programming',
-        gradeBand: '4-6' as AgeBand,
+        gradeBand: 'grades_4_6' as AgeBand,
         misconception: 'Variables store the code, not the value',
         reasoning: 'Students confuse variable names with the value they hold',
         correctUnderstanding: 'Variables are containers that store values. The variable name is a label for that container.',
@@ -508,7 +508,7 @@ export class VectorIndexer {
       {
         topic: 'Loops',
         skillName: 'Programming',
-        gradeBand: '4-6' as AgeBand,
+        gradeBand: 'grades_4_6' as AgeBand,
         misconception: 'Loop runs once per item in the list',
         reasoning: 'Students think the loop counter and list position are different',
         correctUnderstanding: 'For-each loop visits each item once. Counter loops run a specific number of times.',
@@ -518,7 +518,7 @@ export class VectorIndexer {
       {
         topic: 'Fractions',
         skillName: 'Mathematics',
-        gradeBand: 'k-3' as AgeBand,
+        gradeBand: 'grades_1_3' as AgeBand,
         misconception: 'Bigger denominator means bigger fraction',
         reasoning: 'Students apply whole number logic (bigger number = more)',
         correctUnderstanding: 'Larger denominator means smaller pieces. 1/8 of pizza is smaller than 1/4.',

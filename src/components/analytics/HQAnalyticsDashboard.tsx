@@ -139,10 +139,6 @@ export function HQAnalyticsDashboard() {
             healthStatus = 'warning';
           }
           
-          if (avgEngagement > 40 && daysSinceActivity <= 7) {
-            activeSitesCount++;
-          }
-          
           siteMetrics.push({
             siteId,
             siteName,

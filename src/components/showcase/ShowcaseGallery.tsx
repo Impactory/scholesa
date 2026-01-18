@@ -184,7 +184,7 @@ export function ShowcaseGallery() {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <ShowcaseSubmissionForm
               onClose={() => setShowSubmitForm(false)}
-              onSubmit={(_submissionId) => {
+              onSubmitted={(_submissionId) => {
                 setShowSubmitForm(false);
                 // Refresh gallery
                 window.location.reload();
@@ -205,7 +205,7 @@ export function ShowcaseGallery() {
                 setShowRecognitionForm(false);
                 setSelectedItem(null);
               }}
-              onRecognitionSent={(_recognitionId) => {
+              onRecognitionGiven={() => {
                 setShowRecognitionForm(false);
                 setSelectedItem(null);
                 // Refresh gallery to update recognition counts

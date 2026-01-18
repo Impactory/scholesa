@@ -23,12 +23,10 @@ interface PeerRecognitionFormProps {
 }
 
 const RECOGNITION_TYPES = [
-  { value: 'helpful', label: '🤝 Helpful', description: 'Helped me understand something' },
-  { value: 'creative', label: '🎨 Creative', description: 'Showed amazing creativity' },
-  { value: 'perseverance', label: '💪 Perseverance', description: 'Never gave up' },
-  { value: 'leadership', label: '⭐ Leadership', description: 'Led by example' },
-  { value: 'collaboration', label: '👥 Collaboration', description: 'Great team player' },
-  { value: 'curiosity', label: '🔍 Curiosity', description: 'Asked great questions' }
+  { value: 'helper', label: '🤝 Helper', description: 'Helped me understand something' },
+  { value: 'debugger', label: '🔍 Debugger', description: 'Found and fixed problems' },
+  { value: 'clear_communicator', label: '💬 Clear Communicator', description: 'Explained things clearly' },
+  { value: 'courage_to_try', label: '💪 Courage to Try', description: 'Never gave up' }
 ];
 
 export function PeerRecognitionForm({ 
@@ -64,15 +62,17 @@ export function PeerRecognitionForm({
     try {
       // Give recognition via BelongingEngine
       await BelongingEngine.giveRecognition(
-        giverId,
-        recipientId,
-        siteId,
         {
-          type: selectedType as 'helpful' | 'creative' | 'perseverance' | 'leadership' | 'collaboration' | 'curiosity',
-          message: message.trim() || undefined,
-          contextType,
-          contextId
-        }
+          giverId,
+          giverName: profile?.displayName || profile?.email || 'Anonymous',
+          recipientId,
+          siteId,
+          sessionOccurrenceId: contextId || '',
+          recognitionType: selectedType as import('@/src/types/schema').RecognitionType,
+          message: message.trim(),
+          isPublic: true
+        },
+        5 // giverGrade - K-9, using 5 as default
       );
       
       // Track recognition event

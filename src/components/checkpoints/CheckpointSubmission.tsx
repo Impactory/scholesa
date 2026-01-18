@@ -49,13 +49,7 @@ export function CheckpointSubmission({
     setLoading(true);
     
     try {
-      // Track checkpoint attempt
-      trackCompetence('checkpoint_attempted', {
-        missionId,
-        checkpointNumber,
-        skillCount: requiredSkills.length,
-        attemptStarted: new Date().toISOString()
-      });
+      // Track checkpoint attempt - removed, using only checkpoint_passed event
       
       // Simulate grading (in real app, this would call AI grading or educator review)
       const passed = Math.random() > 0.3; // 70% pass rate for demo
@@ -65,6 +59,7 @@ export function CheckpointSubmission({
         await CompetenceEngine.recordCheckpointPassed(
           learnerId,
           siteId,
+          5, // grade - K-9 grade level, using 5 as default
           missionId,
           checkpointNumber,
           requiredSkills

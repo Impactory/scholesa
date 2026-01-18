@@ -48,9 +48,14 @@ export function GoalSettingForm({ onClose, onGoalSet }: GoalSettingFormProps) {
     
     try {
       // Set goal via AutonomyEngine
-      const goalId = await AutonomyEngine.setGoal(learnerId, siteId, {
+      const goalId = await AutonomyEngine.setGoal({
+        learnerId,
+        siteId,
+        goalType: 'skill_mastery', // Valid goal type
         description: description.trim(),
-        targetDate: new Date(targetDate)
+        targetDate: targetDate ? new Date(targetDate) : undefined,
+        progress: 0,
+        status: 'active'
       });
       
       // Track goal setting event
