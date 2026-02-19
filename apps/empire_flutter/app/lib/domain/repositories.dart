@@ -893,7 +893,7 @@ class PartnerDeliverableRepository {
           action: 'deliverable.accept',
           entityType: 'partnerDeliverable',
           entityId: id,
-          details: {
+          details: const {
             'status': 'accepted',
           },
         ),

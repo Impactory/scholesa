@@ -491,7 +491,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              value: _selectedGrade,
+              initialValue: _selectedGrade,
               decoration: const InputDecoration(
                 labelText: 'Grade Level',
                 prefixIcon: Icon(Icons.school),
@@ -719,7 +719,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               DropdownButtonFormField<String>(
-                value: _selectedParentId,
+                initialValue: _selectedParentId,
                 decoration: const InputDecoration(
                   labelText: 'Parent',
                   prefixIcon: Icon(Icons.family_restroom),
@@ -741,7 +741,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedLearnerId,
+                initialValue: _selectedLearnerId,
                 decoration: const InputDecoration(
                   labelText: 'Learner',
                   prefixIcon: Icon(Icons.child_care),
@@ -763,7 +763,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _relationship,
+                initialValue: _relationship,
                 decoration: const InputDecoration(
                   labelText: 'Relationship',
                   prefixIcon: Icon(Icons.people),

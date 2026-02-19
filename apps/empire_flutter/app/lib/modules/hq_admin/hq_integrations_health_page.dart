@@ -63,21 +63,21 @@ class HqIntegrationsHealthPage extends StatelessWidget {
 
   Widget _buildSiteIntegrations(BuildContext context) {
     final List<_SiteIntegration> sites = <_SiteIntegration>[
-      _SiteIntegration(
+      const _SiteIntegration(
         siteName: 'Downtown Studio',
         integrations: <_Integration>[
           _Integration(name: 'Google Classroom', status: _Status.healthy, lastSync: '5 min ago'),
           _Integration(name: 'GitHub', status: _Status.healthy, lastSync: '15 min ago'),
         ],
       ),
-      _SiteIntegration(
+      const _SiteIntegration(
         siteName: 'Westside Campus',
         integrations: <_Integration>[
           _Integration(name: 'Google Classroom', status: _Status.warning, lastSync: '2 hrs ago'),
           _Integration(name: 'Canvas LMS', status: _Status.healthy, lastSync: '30 min ago'),
         ],
       ),
-      _SiteIntegration(
+      const _SiteIntegration(
         siteName: 'North Branch',
         integrations: <_Integration>[
           _Integration(name: 'Google Classroom', status: _Status.error, lastSync: 'Failed'),

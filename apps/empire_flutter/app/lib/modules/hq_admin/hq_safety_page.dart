@@ -234,7 +234,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),

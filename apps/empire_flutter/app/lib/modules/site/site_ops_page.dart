@@ -12,9 +12,9 @@ class SiteOpsPage extends StatefulWidget {
 
 class _SiteOpsPageState extends State<SiteOpsPage> {
   bool _isDayOpen = true;
-  int _presentCount = 24;
-  int _pendingPickups = 5;
-  int _openIncidents = 2;
+  final int _presentCount = 24;
+  final int _pendingPickups = 5;
+  final int _openIncidents = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                 ),
               );
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.green.withValues(alpha: 0.6),
           ),
           const SizedBox(width: 8),
@@ -155,7 +155,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           ),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: ScholesaColors.textSecondary,
             ),
@@ -274,7 +274,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       title: Text(title),
       trailing: Text(
         time,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 12,
           color: ScholesaColors.textSecondary,
         ),

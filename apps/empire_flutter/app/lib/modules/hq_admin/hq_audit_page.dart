@@ -122,7 +122,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
     return Column(
       children: <Widget>[
         Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: TextStyle(fontSize: 11, color: ScholesaColors.textSecondary)),
+        Text(label, style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary)),
       ],
     );
   }
@@ -150,11 +150,11 @@ class _HqAuditPageState extends State<HqAuditPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(log.details, style: TextStyle(fontSize: 12, color: ScholesaColors.textSecondary)),
+            Text(log.details, style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
             Text(
               '${log.actor} • ${_formatTime(log.timestamp)}',
-              style: TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+              style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
             ),
           ],
         ),
@@ -248,7 +248,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
             _buildDetailRow('Time', _formatTime(log.timestamp)),
             if (log.ipAddress != null) _buildDetailRow('IP Address', log.ipAddress!),
             const SizedBox(height: 8),
-            Text('Details', style: TextStyle(fontWeight: FontWeight.w600, color: ScholesaColors.textSecondary)),
+            const Text('Details', style: TextStyle(fontWeight: FontWeight.w600, color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
             Text(log.details),
             const SizedBox(height: 24),
@@ -268,7 +268,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),

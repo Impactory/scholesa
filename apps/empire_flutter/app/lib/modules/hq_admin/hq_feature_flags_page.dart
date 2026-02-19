@@ -154,7 +154,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       const SizedBox(height: 4),
                       Text(
                         flag.description,
-                        style: TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),
@@ -170,7 +170,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       ),
                     );
                   },
-                  activeColor: Colors.green,
+                  activeThumbColor: Colors.green,
                 ),
               ],
             ),

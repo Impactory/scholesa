@@ -157,7 +157,7 @@ class CheckinService extends ChangeNotifier {
           checkedInBy: latestCheckin?.visitorName,
           checkedOutAt: latestCheckout?.timestamp,
           checkedOutBy: latestCheckout?.visitorName,
-          authorizedPickups: <AuthorizedPickup>[], // Will be loaded separately if needed
+          authorizedPickups: const <AuthorizedPickup>[], // Will be loaded separately if needed
         );
       }).toList();
 

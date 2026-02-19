@@ -62,7 +62,7 @@ class EducatorService extends ChangeNotifier {
           enrolledCount: data['enrolledCount'] as int? ?? 0,
           presentCount: data['presentCount'] as int? ?? 0,
           status: data['status'] as String? ?? 'upcoming',
-          learners: <EnrolledLearner>[],
+          learners: const <EnrolledLearner>[],
         );
       }).toList();
 

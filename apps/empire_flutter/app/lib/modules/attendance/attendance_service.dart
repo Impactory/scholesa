@@ -77,7 +77,7 @@ class AttendanceService extends ChangeNotifier {
             startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
             endTime: _parseTimestamp(data['endTime']),
             roomName: data['roomName'] as String?,
-            roster: <RosterLearner>[], // Roster loaded separately
+            roster: const <RosterLearner>[], // Roster loaded separately
             learnerCount: enrollmentsSnapshot.docs.length,
           );
         }),

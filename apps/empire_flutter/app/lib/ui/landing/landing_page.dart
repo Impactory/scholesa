@@ -769,12 +769,12 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(
         children: <Widget>[
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const ScholesaLogoSmall(size: 36),
-              const SizedBox(width: 8),
-              const Text(
+              ScholesaLogoSmall(size: 36),
+              SizedBox(width: 8),
+              Text(
                 'Scholesa',
                 style: TextStyle(
                   fontSize: 18,

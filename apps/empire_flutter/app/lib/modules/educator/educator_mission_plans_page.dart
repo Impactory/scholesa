@@ -37,7 +37,7 @@ class EducatorMissionPlansPage extends StatefulWidget {
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   final List<_MissionPlan> _missionPlans = <_MissionPlan>[
-    _MissionPlan(
+    const _MissionPlan(
       id: '1',
       title: 'AI Image Generator',
       pillar: 'Future Skills',
@@ -47,7 +47,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       assignedSessions: 3,
       completedBy: 12,
     ),
-    _MissionPlan(
+    const _MissionPlan(
       id: '2',
       title: 'Community Clean-up Project',
       pillar: 'Impact & Innovation',
@@ -57,7 +57,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       assignedSessions: 2,
       completedBy: 8,
     ),
-    _MissionPlan(
+    const _MissionPlan(
       id: '3',
       title: 'Student Council Campaign',
       pillar: 'Leadership & Agency',
@@ -239,7 +239,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         const SizedBox(width: 4),
         Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             color: ScholesaColors.textSecondary,
           ),

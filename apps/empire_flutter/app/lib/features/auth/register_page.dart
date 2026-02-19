@@ -66,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final gradient = const LinearGradient(
+    const gradient = LinearGradient(
       colors: [Color(0xFF0B1224), Color(0xFF0F172A), Color(0xFF0B1224)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -74,7 +74,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(gradient: gradient),
+        decoration: const BoxDecoration(gradient: gradient),
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {

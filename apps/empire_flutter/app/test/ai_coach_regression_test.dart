@@ -153,7 +153,7 @@ void main() {
     });
 
     test('AiCoachResponse.fromMap gracefully handles missing optional fields', () {
-      final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
+      final AiCoachResponse response = AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Hello!',
         'mode': 'hint',
       });
@@ -184,7 +184,7 @@ void main() {
         final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
           'message': 'Test message for ${mode.name}',
           'mode': mode.name,
-          'suggestedNextSteps': <String>['Step 1'],
+          'suggestedNextSteps': const <String>['Step 1'],
         });
 
         expect(response.message, isNotEmpty, reason: '${mode.name} should produce a message');
@@ -194,7 +194,7 @@ void main() {
 
     test('Verify mode always requires explain-back', () {
       // Per spec A1: verify mode checks evidence + self-verification
-      final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
+      final AiCoachResponse response = AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Let\'s check your work.',
         'mode': 'verify',
         'requiresExplainBack': true,
@@ -206,7 +206,7 @@ void main() {
     });
 
     test('Hint mode is low assist (no requiresExplainBack by default)', () {
-      final AiCoachResponse hintResponse = AiCoachResponse.fromMap(<String, dynamic>{
+      final AiCoachResponse hintResponse = AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Think about what you already know.',
         'mode': 'hint',
         'requiresExplainBack': false,
@@ -396,30 +396,27 @@ void main() {
 
   group('MVL Gating', () {
     test('MVL episode stores risk data per Math Contract §6-§7', () {
-      final MvlEpisode episode = MvlEpisode.fromDoc(_FakeDocumentSnapshot(
+      // Use direct constructor instead of fromDoc to avoid Firebase dependency.
+      const MvlEpisode episode = MvlEpisode(
         id: 'mvl1',
-        data: <String, dynamic>{
-          'siteId': 's1',
-          'learnerId': 'l1',
-          'sessionOccurrenceId': 'so1',
-          'triggerReason': 'integrity_below_threshold + high_autonomy_risk',
-          'reliability': <String, dynamic>{
-            'method': 'sep',
-            'K': 1,
-            'M': 1,
-            'H_sem': 0.0,
-            'riskScore': 0.7,
-            'threshold': 0.6,
-          },
-          'autonomy': <String, dynamic>{
-            'signals': <String>['rapid_submit'],
-            'riskScore': 0.6,
-            'threshold': 0.5,
-          },
-          'evidenceEventIds': <String>[],
-          'resolution': null,
-        },
-      ));
+        siteId: 's1',
+        learnerId: 'l1',
+        sessionOccurrenceId: 'so1',
+        triggerReason: 'integrity_below_threshold + high_autonomy_risk',
+        reliabilityRisk: ReliabilityRisk(
+          method: 'sep',
+          k: 1,
+          m: 1,
+          hSem: 0.0,
+          riskScore: 0.7,
+          threshold: 0.6,
+        ),
+        autonomyRisk: AutonomyRisk(
+          signals: <String>['rapid_submit'],
+          riskScore: 0.6,
+          threshold: 0.5,
+        ),
+      );
 
       expect(episode.reliabilityRisk, isNotNull);
       expect(episode.reliabilityRisk!.riskScore, equals(0.7));
@@ -444,37 +441,54 @@ void main() {
 
     test('MVL episode with 2+ evidence items resolves as passed', () {
       // V1 scoring: ≥2 evidence items = passed
-      final MvlEpisode passedEpisode = MvlEpisode.fromDoc(_FakeDocumentSnapshot(
+      const MvlEpisode passedEpisode = MvlEpisode(
         id: 'mvl2',
-        data: <String, dynamic>{
-          'siteId': 's1',
-          'learnerId': 'l1',
-          'sessionOccurrenceId': 'so1',
-          'triggerReason': 'test',
-          'evidenceEventIds': <String>['e1', 'e2'],
-          'resolution': 'passed',
-        },
-      ));
+        siteId: 's1',
+        learnerId: 'l1',
+        sessionOccurrenceId: 'so1',
+        triggerReason: 'test',
+        evidenceEventIds: <String>['e1', 'e2'],
+        resolution: 'passed',
+      );
 
       expect(passedEpisode.evidenceEventIds, hasLength(2));
       expect(passedEpisode.resolution, equals('passed'));
     });
 
     test('MVL episode with 0 evidence items resolves as failed', () {
-      final MvlEpisode failedEpisode = MvlEpisode.fromDoc(_FakeDocumentSnapshot(
+      const MvlEpisode failedEpisode = MvlEpisode(
         id: 'mvl3',
-        data: <String, dynamic>{
-          'siteId': 's1',
-          'learnerId': 'l1',
-          'sessionOccurrenceId': 'so1',
-          'triggerReason': 'test',
-          'evidenceEventIds': <String>[],
-          'resolution': 'failed',
-        },
-      ));
+        siteId: 's1',
+        learnerId: 'l1',
+        sessionOccurrenceId: 'so1',
+        triggerReason: 'test',
+        resolution: 'failed',
+      );
 
       expect(failedEpisode.evidenceEventIds, isEmpty);
       expect(failedEpisode.resolution, equals('failed'));
+    });
+
+    test('MVL toMap includes risk data when present', () {
+      const MvlEpisode episode = MvlEpisode(
+        id: 'mvl4',
+        siteId: 's1',
+        learnerId: 'l1',
+        sessionOccurrenceId: 'so1',
+        triggerReason: 'multi_risk',
+        reliabilityRisk: ReliabilityRisk(riskScore: 0.7, threshold: 0.6),
+        autonomyRisk: AutonomyRisk(
+          signals: <String>['heavy_ai_use'],
+          riskScore: 0.55,
+          threshold: 0.5,
+        ),
+      );
+
+      final Map<String, dynamic> map = episode.toMap();
+      expect(map.containsKey('reliability'), isTrue);
+      expect(map.containsKey('autonomy'), isTrue);
+      expect((map['reliability'] as Map<String, dynamic>)['riskScore'], equals(0.7));
+      expect((map['autonomy'] as Map<String, dynamic>)['riskScore'], equals(0.55));
     });
   });
 
@@ -484,7 +498,7 @@ void main() {
 
   group('Model & Version Regression', () {
     test('AiCoachResponse version field tracks contract version', () {
-      final AiCoachResponse v1 = AiCoachResponse.fromMap(<String, dynamic>{
+      final AiCoachResponse v1 = AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'test',
         'mode': 'hint',
         'meta': <String, dynamic>{'version': '1.0.0'},
@@ -579,7 +593,7 @@ void main() {
         'explain_it_back_submitted',
       ];
 
-      // Import and check the event bus allowlist
+      // Check against known allowlist (mirrored from BosEventBus)
       for (final String eventType in requiredAiEvents) {
         expect(
           _knownAllowedEvents.contains(eventType),
@@ -595,7 +609,7 @@ void main() {
   // ════════════════════════════════════════════════════
 
   group('Closed-Loop Runtime', () {
-    test('AI Coach is a control surface: Sense→Detect→Estimate→Control→Gate→Govern', () {
+    test('AI Coach is a control surface: Sense-Detect-Estimate-Control-Gate-Govern', () {
       // Verify the full loop is representable in the data model:
 
       // Sense: x_hat exists (learner state from orchestration)
@@ -620,8 +634,12 @@ void main() {
       );
       expect(intervention.type, equals(InterventionType.scaffold));
 
-      // Gate: MVL episode
-      // (would be triggered by sensor fusion rule)
+      // Gate: MVL episode (constructed directly)
+      const MvlEpisode gate = MvlEpisode(
+        id: 'gate1', siteId: 's1', learnerId: 'l1',
+        sessionOccurrenceId: 'so1', triggerReason: 'test',
+      );
+      expect(gate.id, isNotEmpty);
 
       // Govern: Policy terms are auditable
       const PolicyTerms policy = PolicyTerms(lambda: 0.5, mDagger: 0.6, omega: 0.2);
@@ -663,7 +681,7 @@ void main() {
 
     test('Contestability workflow is auditable', () {
       // Learner can contest MVL episodes
-      // The flow: contestability_requested → educator reviews → contestability_resolved
+      // The flow: contestability_requested -> educator reviews -> contestability_resolved
       expect(_knownAllowedEvents.contains('contestability_requested'), isTrue);
       expect(_knownAllowedEvents.contains('contestability_resolved'), isTrue);
     });
@@ -691,30 +709,3 @@ const Set<String> _knownAllowedEvents = <String>{
   'session_joined', 'session_left', 'idle_detected', 'focus_restored',
   'educator_class_view', 'educator_learner_drilldown',
 };
-
-/// Fake DocumentSnapshot for testing MvlEpisode.fromDoc without Firebase.
-class _FakeDocumentSnapshot implements DocumentSnapshot<Map<String, dynamic>> {
-  _FakeDocumentSnapshot({required this.id, required Map<String, dynamic> data}) : _data = data;
-
-  @override
-  final String id;
-  final Map<String, dynamic> _data;
-
-  @override
-  Map<String, dynamic>? data() => _data;
-
-  @override
-  bool get exists => true;
-
-  @override
-  dynamic get(Object field) => _data[field as String];
-
-  @override
-  dynamic operator [](Object field) => _data[field as String];
-
-  @override
-  SnapshotMetadata get metadata => throw UnimplementedError();
-
-  @override
-  DocumentReference<Map<String, dynamic>> get reference => throw UnimplementedError();
-}

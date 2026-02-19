@@ -83,7 +83,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Your contracts will appear here',
             style: TextStyle(
               fontSize: 14,
@@ -136,7 +136,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                         const SizedBox(height: 4),
                         Text(
                           'Site: ${contract.siteId}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 13,
                             color: ScholesaColors.textSecondary,
                           ),
@@ -156,7 +156,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
+                      const Text(
                         'Total Value',
                         style: TextStyle(
                           fontSize: 12,
@@ -176,7 +176,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
-                      Text(
+                      const Text(
                         'Deliverables',
                         style: TextStyle(
                           fontSize: 12,
@@ -295,7 +295,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
               ),
               const SizedBox(height: 12),
               if (contract.deliverables.isEmpty)
-                Text(
+                const Text(
                   'No deliverables defined',
                   style: TextStyle(color: ScholesaColors.textSecondary),
                 )
@@ -331,7 +331,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
         children: <Widget>[
           Text(
             label,
-            style: TextStyle(color: ScholesaColors.textSecondary),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
           ),
           Text(
             value,

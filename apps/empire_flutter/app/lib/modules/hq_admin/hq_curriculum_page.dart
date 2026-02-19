@@ -127,7 +127,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
           children: <Widget>[
             Icon(Icons.menu_book_rounded, size: 64, color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('No ${status.name} curricula', style: TextStyle(color: ScholesaColors.textSecondary)),
+            Text('No ${status.name} curricula', style: const TextStyle(color: ScholesaColors.textSecondary)),
           ],
         ),
       );
@@ -173,14 +173,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
                       color: ScholesaColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('v${curriculum.version}', style: TextStyle(fontSize: 12, color: ScholesaColors.primary)),
+                    child: Text('v${curriculum.version}', style: const TextStyle(fontSize: 12, color: ScholesaColors.primary)),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 'Updated ${_formatTime(curriculum.lastUpdated)}',
-                style: TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
+                style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
               ),
             ],
           ),
@@ -271,7 +271,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),

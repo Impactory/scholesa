@@ -291,7 +291,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ],
           ),
           const SizedBox(height: 12),
-          _ScheduleItem(
+          const _ScheduleItem(
             time: '9:00 AM',
             title: 'Python Programming',
             learner: 'Emma Johnson',
@@ -300,7 +300,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             pillarColor: ScholesaColors.futureSkills,
             status: 'completed',
           ),
-          _ScheduleItem(
+          const _ScheduleItem(
             time: '11:00 AM',
             title: 'Leadership Workshop',
             learner: 'Emma Johnson',
@@ -309,7 +309,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             pillarColor: ScholesaColors.leadership,
             status: 'in_progress',
           ),
-          _ScheduleItem(
+          const _ScheduleItem(
             time: '2:00 PM',
             title: 'Community Project',
             learner: 'Jack Johnson',
@@ -341,7 +341,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: Column(
+            child: const Column(
               children: <Widget>[
                 _WeekDayRow(
                   day: 'Monday',
@@ -349,25 +349,25 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   hours: '9 AM - 4 PM',
                   isToday: true,
                 ),
-                const Divider(),
+                Divider(),
                 _WeekDayRow(
                   day: 'Tuesday',
                   sessions: 2,
                   hours: '10 AM - 2 PM',
                 ),
-                const Divider(),
+                Divider(),
                 _WeekDayRow(
                   day: 'Wednesday',
                   sessions: 4,
                   hours: '9 AM - 5 PM',
                 ),
-                const Divider(),
+                Divider(),
                 _WeekDayRow(
                   day: 'Thursday',
                   sessions: 2,
                   hours: '11 AM - 3 PM',
                 ),
-                const Divider(),
+                Divider(),
                 _WeekDayRow(
                   day: 'Friday',
                   sessions: 3,
@@ -386,7 +386,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ),
             child: Row(
               children: <Widget>[
-                Expanded(
+                const Expanded(
                   child: _WeekStat(
                     label: 'Total Sessions',
                     value: '14',
@@ -399,7 +399,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                Expanded(
+                const Expanded(
                   child: _WeekStat(
                     label: 'Future Skills',
                     value: '6',
@@ -412,7 +412,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                Expanded(
+                const Expanded(
                   child: _WeekStat(
                     label: 'Leadership',
                     value: '4',
@@ -425,7 +425,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                Expanded(
+                const Expanded(
                   child: _WeekStat(
                     label: 'Impact',
                     value: '4',

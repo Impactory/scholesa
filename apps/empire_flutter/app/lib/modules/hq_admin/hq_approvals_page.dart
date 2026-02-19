@@ -114,7 +114,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
           children: <Widget>[
             Icon(Icons.check_circle_outline_rounded, size: 64, color: Colors.green.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No pending approvals',
               style: TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
@@ -136,7 +136,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
         .toList();
 
     if (completed.isEmpty) {
-      return Center(
+      return const Center(
         child: Text('No completed approvals', style: TextStyle(color: ScholesaColors.textSecondary)),
       );
     }
@@ -173,7 +173,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
                       const SizedBox(height: 4),
                       Text(
                         'By ${item.submittedBy}',
-                        style: TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),

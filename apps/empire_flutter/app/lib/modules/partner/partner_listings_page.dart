@@ -89,7 +89,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Create your first marketplace listing',
             style: TextStyle(
               fontSize: 14,
@@ -149,7 +149,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                     const SizedBox(height: 4),
                     Text(
                       listing.category,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         color: ScholesaColors.textSecondary,
                       ),
@@ -162,7 +162,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         if (listing.price != null)
                           Text(
                             '\$${listing.price!.toStringAsFixed(2)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: ScholesaColors.success,

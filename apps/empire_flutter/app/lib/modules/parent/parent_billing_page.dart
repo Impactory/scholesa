@@ -234,7 +234,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               ],
             ),
             const SizedBox(height: 20),
-            Row(
+            const Row(
               children: <Widget>[
                 Expanded(
                   child: _BalanceStatCard(
@@ -243,7 +243,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     icon: Icons.calendar_today,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: _BalanceStatCard(
                     label: 'Next Due',
@@ -251,7 +251,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     icon: Icons.event,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: _BalanceStatCard(
                     label: 'Total Paid',
@@ -436,23 +436,23 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                _PlanFeature(
+                const _PlanFeature(
                   icon: Icons.school,
                   text: 'Unlimited session access',
                 ),
-                _PlanFeature(
+                const _PlanFeature(
                   icon: Icons.rocket_launch,
                   text: 'All 3 pillars curriculum',
                 ),
-                _PlanFeature(
+                const _PlanFeature(
                   icon: Icons.person,
                   text: '1-on-1 educator support',
                 ),
-                _PlanFeature(
+                const _PlanFeature(
                   icon: Icons.insights,
                   text: 'Real-time progress reports',
                 ),
-                _PlanFeature(
+                const _PlanFeature(
                   icon: Icons.workspace_premium,
                   text: 'Certificates & badges',
                 ),

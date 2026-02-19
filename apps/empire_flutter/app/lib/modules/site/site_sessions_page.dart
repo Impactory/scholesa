@@ -601,7 +601,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _selectedRoom,
+                    initialValue: _selectedRoom,
                     decoration: InputDecoration(
                       labelText: 'Room',
                       filled: true,

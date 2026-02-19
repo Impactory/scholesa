@@ -157,11 +157,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         // Logo
-                        Row(
+                        const Row(
                           children: <Widget>[
-                            const ScholesaLogo(size: 56, showShadow: false),
-                            const SizedBox(width: 12),
-                            const Text(
+                            ScholesaLogo(size: 56, showShadow: false),
+                            SizedBox(width: 12),
+                            Text(
                               'Scholesa',
                               style: TextStyle(
                                 fontSize: 28,

@@ -1,5 +1,6 @@
 /// Partner module data models
 /// Based on docs/16_PARTNER_CONTRACTING_WORKFLOWS_SPEC.md
+library;
 
 /// Marketplace listing status
 enum ListingStatus {

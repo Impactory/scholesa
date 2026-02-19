@@ -17,7 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _darkMode = false;
   bool _biometricEnabled = false;
   String _language = 'en';
-  String _timeZone = 'auto';
+  final String _timeZone = 'auto';
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +274,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
+          const Text(
             'Danger Zone',
             style: TextStyle(
               color: ScholesaColors.error,
@@ -609,7 +609,7 @@ class _SettingsToggle extends StatelessWidget {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: ScholesaColors.success,
+        activeThumbColor: ScholesaColors.success,
       ),
     );
   }

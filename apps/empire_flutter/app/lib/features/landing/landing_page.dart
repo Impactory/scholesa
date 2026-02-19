@@ -100,10 +100,10 @@ class _LandingPageState extends State<LandingPage> {
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70, height: 1.5),
                             ),
                             const SizedBox(height: 22),
-                            Wrap(
+                            const Wrap(
                               spacing: 12,
                               runSpacing: 12,
-                              children: const [
+                              children: [
                                 _PillarChip(label: 'Future Skills', gradient: [Color(0xFF38BDF8), Color(0xFF6366F1)]),
                                 _PillarChip(label: 'Leadership & Agency', gradient: [Color(0xFFF472B6), Color(0xFFF97316)]),
                                 _PillarChip(label: 'Impact & Innovation', gradient: [Color(0xFF22C55E), Color(0xFF06B6D4)]),

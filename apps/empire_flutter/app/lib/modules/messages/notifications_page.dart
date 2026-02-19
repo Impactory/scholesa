@@ -106,7 +106,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'You\'re all caught up!',
             style: TextStyle(color: ScholesaColors.textSecondary),
           ),
@@ -183,14 +183,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       const SizedBox(height: 4),
                       Text(
                         notification.body,
-                        style: TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _formatTime(notification.createdAt),
-                        style: TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),

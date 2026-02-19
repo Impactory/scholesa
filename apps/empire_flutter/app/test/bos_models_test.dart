@@ -139,7 +139,7 @@ void main() {
 
   group('AiCoachRequest', () {
     test('toMap includes context', () {
-      final AiCoachRequest req = AiCoachRequest(
+      const AiCoachRequest req = AiCoachRequest(
         siteId: 'site1',
         learnerId: 'learner1',
         gradeBand: GradeBand.g4_6,
@@ -156,7 +156,7 @@ void main() {
 
   group('BosEvent', () {
     test('toMap includes all required fields', () {
-      final BosEvent event = BosEvent(
+      const BosEvent event = BosEvent(
         eventType: 'mission_started',
         siteId: 'site1',
         actorId: 'user1',

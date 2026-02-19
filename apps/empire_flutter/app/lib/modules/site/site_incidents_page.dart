@@ -133,7 +133,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
             const SizedBox(height: 16),
             Text(
               'No ${statusFilter.name} incidents',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: ScholesaColors.textSecondary,
               ),
@@ -184,21 +184,21 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
               const SizedBox(height: 12),
               Row(
                 children: <Widget>[
-                  Icon(Icons.person_rounded, size: 16, color: ScholesaColors.textSecondary),
+                  const Icon(Icons.person_rounded, size: 16, color: ScholesaColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     incident.learnerName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: ScholesaColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Icon(Icons.schedule_rounded, size: 16, color: ScholesaColors.textSecondary),
+                  const Icon(Icons.schedule_rounded, size: 16, color: ScholesaColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     _formatDateTime(incident.reportedAt),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: ScholesaColors.textSecondary,
                     ),
@@ -208,7 +208,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
               const SizedBox(height: 8),
               Text(
                 'Reported by ${incident.reportedBy}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
                 ),
@@ -335,7 +335,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
         children: <Widget>[
           Text(
             label,
-            style: TextStyle(color: ScholesaColors.textSecondary),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
           ),
           Text(
             value,
@@ -355,8 +355,8 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
-              decoration: const InputDecoration(
+            const TextField(
+              decoration: InputDecoration(
                 labelText: 'Incident Title',
                 border: OutlineInputBorder(),
               ),

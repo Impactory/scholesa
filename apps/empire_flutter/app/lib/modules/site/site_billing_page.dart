@@ -175,7 +175,7 @@ class SiteBillingPage extends StatelessWidget {
             ),
             Text(
               '${used.toStringAsFixed(unit.isNotEmpty ? 1 : 0)}$unit / ${total.toStringAsFixed(0)}$unit',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: ScholesaColors.textSecondary,
               ),

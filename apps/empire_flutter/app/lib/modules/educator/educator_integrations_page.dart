@@ -155,7 +155,7 @@ class EducatorIntegrationsPage extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           syncStatus,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: ScholesaColors.textSecondary,
                           ),

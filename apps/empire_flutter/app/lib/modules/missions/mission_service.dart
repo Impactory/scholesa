@@ -115,7 +115,7 @@ class MissionService extends ChangeNotifier {
             status: _parseStatus(assignData['status'] as String?),
             progress: (assignData['progress'] as num?)?.toDouble() ?? 0.0,
             steps: steps,
-            skills: <Skill>[],
+            skills: const <Skill>[],
             dueDate: _parseTimestamp(assignData['dueDate']),
             startedAt: _parseTimestamp(assignData['startedAt']),
             completedAt: _parseTimestamp(assignData['completedAt']),
@@ -198,7 +198,7 @@ class MissionService extends ChangeNotifier {
       xpToNextLevel: (level * 1000) - totalXp,
       missionsCompleted: completed,
       currentStreak: 5,
-      pillarProgress: <Pillar, int>{
+      pillarProgress: const <Pillar, int>{
         Pillar.futureSkills: 60,
         Pillar.leadership: 40,
         Pillar.impact: 50,

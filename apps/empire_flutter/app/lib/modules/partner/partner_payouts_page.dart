@@ -173,7 +173,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Your payout history will appear here',
             style: TextStyle(
               fontSize: 14,
@@ -224,7 +224,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
                     payout.contractId != null
                         ? 'Contract: ${payout.contractId}'
                         : 'General payout',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: ScholesaColors.textSecondary,
                     ),
@@ -236,7 +236,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
                         payout.paidAt != null
                             ? 'Paid ${_formatDate(payout.paidAt!)}'
                             : 'Requested ${_formatDate(payout.requestedAt!)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: ScholesaColors.textSecondary,
                         ),

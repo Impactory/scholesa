@@ -98,7 +98,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
           children: <Widget>[
             Icon(Icons.folder_open_rounded, size: 64, color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No items yet',
               style: TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
@@ -165,7 +165,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                       Expanded(
                         child: Text(
                           item.pillar,
-                          style: TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+                          style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -258,7 +258,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                   ),
                   child: Text(
                     item.type == _ItemType.badge ? 'Badge' : 'Project',
-                    style: TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
+                    style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
                   ),
                 ),
               ],
@@ -268,7 +268,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
             const SizedBox(height: 8),
             Text(
               'Completed ${_formatDate(item.completedAt)}',
-              style: TextStyle(color: ScholesaColors.textSecondary),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
             ),
             const SizedBox(height: 16),
             Text(item.description, style: const TextStyle(fontSize: 15)),

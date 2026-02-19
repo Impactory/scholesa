@@ -32,7 +32,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
       syncedItems: 23,
       errors: 3,
     ),
-    _Integration(
+    const _Integration(
       id: '3',
       name: 'Canvas LMS',
       icon: Icons.dashboard_rounded,
@@ -245,7 +245,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
         ),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 11,
             color: ScholesaColors.textSecondary,
           ),
