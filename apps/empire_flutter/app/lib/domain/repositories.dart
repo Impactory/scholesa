@@ -1243,3 +1243,161 @@ class AiDraftRepository {
     return snap.docs.map(AiDraftModel.fromDoc).toList();
   }
 }
+
+// ──────────────────────────────────────────────────────
+// Research & Assessment Repositories (Vibe Master §B)
+// ──────────────────────────────────────────────────────
+
+class ResearchConsentRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('researchConsents');
+
+  Future<void> upsert(ResearchConsentModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<ResearchConsentModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return ResearchConsentModel.fromDoc(doc);
+  }
+
+  Future<ResearchConsentModel?> getForLearner({
+    required String siteId,
+    required String learnerId,
+  }) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .where('learnerId', isEqualTo: learnerId)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return ResearchConsentModel.fromDoc(snap.docs.first);
+  }
+
+  Future<List<ResearchConsentModel>> listBySite(String siteId) async {
+    final snap = await _col.where('siteId', isEqualTo: siteId).get();
+    return snap.docs.map(ResearchConsentModel.fromDoc).toList();
+  }
+
+  Future<void> revoke(String id) => _col.doc(id).set(<String, dynamic>{
+        'consentGiven': false,
+        'revokedAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
+}
+
+class StudentAssentRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('studentAssents');
+
+  Future<void> upsert(StudentAssentModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<StudentAssentModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return StudentAssentModel.fromDoc(doc);
+  }
+
+  Future<StudentAssentModel?> getForLearner({
+    required String siteId,
+    required String learnerId,
+  }) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .where('learnerId', isEqualTo: learnerId)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return StudentAssentModel.fromDoc(snap.docs.first);
+  }
+
+  Future<void> revoke(String id) => _col.doc(id).set(<String, dynamic>{
+        'assentGiven': false,
+        'revokedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
+
+  Future<List<StudentAssentModel>> listBySite(String siteId) async {
+    final snap = await _col.where('siteId', isEqualTo: siteId).get();
+    return snap.docs.map(StudentAssentModel.fromDoc).toList();
+  }
+}
+
+class AssessmentInstrumentRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('assessmentInstruments');
+
+  Future<void> upsert(AssessmentInstrumentModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<AssessmentInstrumentModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return AssessmentInstrumentModel.fromDoc(doc);
+  }
+
+  Future<List<AssessmentInstrumentModel>> listBySite(String siteId) async {
+    final snap = await _col.where('siteId', isEqualTo: siteId).get();
+    return snap.docs.map(AssessmentInstrumentModel.fromDoc).toList();
+  }
+
+  Future<List<AssessmentInstrumentModel>> listByType({
+    required String siteId,
+    required String type,
+  }) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .where('type', isEqualTo: type)
+        .get();
+    return snap.docs.map(AssessmentInstrumentModel.fromDoc).toList();
+  }
+
+  Future<String> create(AssessmentInstrumentModel model) async {
+    final doc = _col.doc();
+    await doc.set(model.toMap());
+    return doc.id;
+  }
+}
+
+class ItemResponseRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('itemResponses');
+
+  Future<void> upsert(ItemResponseModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<ItemResponseModel>> listByLearner({
+    required String siteId,
+    required String learnerId,
+    String? instrumentId,
+    int limit = 100,
+  }) async {
+    Query<Map<String, dynamic>> q = _col
+        .where('siteId', isEqualTo: siteId)
+        .where('learnerId', isEqualTo: learnerId);
+    if (instrumentId != null) {
+      q = q.where('instrumentId', isEqualTo: instrumentId);
+    }
+    final snap = await q.limit(limit).get();
+    return snap.docs.map(ItemResponseModel.fromDoc).toList();
+  }
+
+  Future<List<ItemResponseModel>> listByInstrument({
+    required String siteId,
+    required String instrumentId,
+    int limit = 500,
+  }) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .where('instrumentId', isEqualTo: instrumentId)
+        .limit(limit)
+        .get();
+    return snap.docs.map(ItemResponseModel.fromDoc).toList();
+  }
+
+  Future<String> submit(ItemResponseModel model) async {
+    final doc = _col.doc();
+    await doc.set(model.toMap());
+    return doc.id;
+  }
+}

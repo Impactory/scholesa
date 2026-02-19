@@ -80,9 +80,14 @@ class BosEventBus {
     required String eventType,
     required String siteId,
     required GradeBand gradeBand,
+    String actorRole = 'learner',
     String? sessionOccurrenceId,
     String? missionId,
     String? checkpointId,
+    ContextMode contextMode = ContextMode.unknown,
+    String? actorIdPseudo,
+    String? assignmentId,
+    String? lessonId,
     Map<String, dynamic> payload = const <String, dynamic>{},
   }) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -92,11 +97,15 @@ class BosEventBus {
       eventType: eventType,
       siteId: siteId,
       actorId: user.uid,
-      actorRole: 'learner', // caller can override via BosEvent directly
+      actorRole: actorRole,
       gradeBand: gradeBand,
       sessionOccurrenceId: sessionOccurrenceId,
       missionId: missionId,
       checkpointId: checkpointId,
+      contextMode: contextMode,
+      actorIdPseudo: actorIdPseudo,
+      assignmentId: assignmentId,
+      lessonId: lessonId,
       payload: payload,
     ));
   }

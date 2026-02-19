@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../auth/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -37,8 +39,12 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      // TODO: Call AuthService.registerWithEmailAndPassword
-      await Future.delayed(const Duration(seconds: 1));
+      final AuthService authService = context.read<AuthService>();
+      await authService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        displayName: _nameController.text.trim(),
+      );
       
       if (mounted) {
         context.go('/');
