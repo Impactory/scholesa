@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
+
+const Uuid _uuid = Uuid();
 
 // ──────────────────────────────────────────────────────
 // BOS+MIA Core Models
@@ -509,10 +512,64 @@ class MvlEpisode {
 
 // ──── BOS Event Envelope (Event Schema) ────
 
-/// Standardized BOS event envelope.
+/// Context mode: whether the learner event occurs in-class or during homework.
+enum ContextMode {
+  inClass('in_class'),
+  homework('homework'),
+  unknown('unknown');
+
+  const ContextMode(this.code);
+  final String code;
+
+  static ContextMode fromString(String s) {
+    switch (s) {
+      case 'in_class':
+        return ContextMode.inClass;
+      case 'homework':
+        return ContextMode.homework;
+      default:
+        return ContextMode.unknown;
+    }
+  }
+}
+
+/// Client metadata attached to every event for reproducibility.
+@immutable
+class ClientInfo {
+  const ClientInfo({
+    required this.appVersion,
+    required this.platform,
+    this.buildNumber,
+  });
+
+  final String appVersion;
+  final String platform; // 'ios', 'android', 'web', 'macos', 'windows'
+  final String? buildNumber;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'appVersion': appVersion,
+        'platform': platform,
+        if (buildNumber != null) 'buildNumber': buildNumber,
+      };
+}
+
+/// Current app-level client info (set once at startup).
+ClientInfo? _globalClientInfo;
+
+/// Set the global client info at app startup.
+void setBosClientInfo(ClientInfo info) => _globalClientInfo = info;
+
+/// Standardized BOS event envelope (Vibe Master §D / research-grade).
+///
+/// Required fields for research export:
+/// - [eventId]: Client-generated UUID (unique per event)
+/// - [schemaVersion]: Envelope schema version for forward compatibility
+/// - [actorIdPseudo]: Pseudonymised learner ID (derived from actorId + site salt)
+/// - [contextMode]: Whether event is in_class or homework
+/// - [client]: App version + platform metadata
 @immutable
 class BosEvent {
-  const BosEvent({
+  BosEvent({
     required this.eventType,
     required this.siteId,
     required this.actorId,
@@ -522,7 +579,18 @@ class BosEvent {
     this.missionId,
     this.checkpointId,
     this.payload = const <String, dynamic>{},
-  });
+    this.contextMode = ContextMode.unknown,
+    this.actorIdPseudo,
+    this.assignmentId,
+    this.lessonId,
+    String? eventId,
+  }) : eventId = eventId ?? _uuid.v4();
+
+  /// Client-generated UUID — unique per event (research traceability).
+  final String eventId;
+
+  /// Envelope schema version for forward-compatible parsing.
+  static const String schemaVersion = '2.0.0';
 
   final String eventType;
   final String siteId;
@@ -534,16 +602,35 @@ class BosEvent {
   final String? checkpointId;
   final Map<String, dynamic> payload;
 
+  /// Whether event occurred in_class or during homework.
+  final ContextMode contextMode;
+
+  /// Pseudonymised actor ID for research export (generated server-side or via site-salt hash).
+  final String? actorIdPseudo;
+
+  /// Optional assignment ID for research linking.
+  final String? assignmentId;
+
+  /// Optional lesson ID for research linking.
+  final String? lessonId;
+
   Map<String, dynamic> toMap() => <String, dynamic>{
+        'eventId': eventId,
+        'schemaVersion': schemaVersion,
         'eventType': eventType,
         'siteId': siteId,
         'actorId': actorId,
         'actorRole': actorRole,
         'gradeBand': gradeBand.code,
+        'contextMode': contextMode.code,
+        if (actorIdPseudo != null) 'actorIdPseudo': actorIdPseudo,
         if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
         if (missionId != null) 'missionId': missionId,
         if (checkpointId != null) 'checkpointId': checkpointId,
+        if (assignmentId != null) 'assignmentId': assignmentId,
+        if (lessonId != null) 'lessonId': lessonId,
         'payload': payload,
+        if (_globalClientInfo != null) 'client': _globalClientInfo!.toMap(),
         'timestamp': FieldValue.serverTimestamp(),
       };
 }

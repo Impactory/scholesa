@@ -51,14 +51,14 @@ void main() {
       expect(pubspec.existsSync(), isTrue, reason: 'pubspec.yaml must exist');
 
       final String content = pubspec.readAsStringSync();
-      // Match `version: X.Y.Z+B`
-      final RegExp semverBuild = RegExp(r'version:\s+(\d+\.\d+\.\d+)\+(\d+)');
+      // Match `version: X.Y.Z[-prerelease]+B`
+      final RegExp semverBuild = RegExp(r'version:\s+(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)\+(\d+)');
       final RegExpMatch? match = semverBuild.firstMatch(content);
-      expect(match, isNotNull, reason: 'pubspec version must be semver+build (e.g., 1.0.0+1)');
+      expect(match, isNotNull, reason: 'pubspec version must be semver[+prerelease]+build (e.g., 1.0.0+1 or 1.0.0-rc.2+2)');
 
       final String semver = match!.group(1)!;
       final int buildNumber = int.parse(match.group(2)!);
-      expect(semver.split('.').length, equals(3));
+      expect(semver.split('.').length, greaterThanOrEqualTo(3));
       expect(buildNumber, greaterThan(0));
     });
 

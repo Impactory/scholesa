@@ -556,7 +556,7 @@ void main() {
 
   group('Event Contract', () {
     test('BosEvent envelope includes all required fields', () {
-      const BosEvent event = BosEvent(
+      final BosEvent event = BosEvent(
         eventType: 'ai_help_opened',
         siteId: 'site1',
         actorId: 'user1',
@@ -565,7 +565,7 @@ void main() {
         sessionOccurrenceId: 'so1',
         missionId: 'm1',
         checkpointId: 'cp1',
-        payload: <String, dynamic>{'mode': 'hint'},
+        payload: const <String, dynamic>{'mode': 'hint'},
       );
 
       final Map<String, dynamic> map = event.toMap();
@@ -577,6 +577,11 @@ void main() {
       expect(map['gradeBand'], equals('G4_6'));
       expect(map['sessionOccurrenceId'], equals('so1'));
       expect(map.containsKey('timestamp'), isTrue);
+
+      // Research-grade envelope fields (Vibe Master §D)
+      expect(map['eventId'], isNotNull);
+      expect(map['schemaVersion'], equals('2.0.0'));
+      expect(map['contextMode'], isNotNull);
     });
 
     test('AI-required events are in event bus allowlist', () {

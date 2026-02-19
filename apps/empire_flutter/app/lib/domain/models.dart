@@ -2971,3 +2971,296 @@ class AuditLogModel {
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
+
+// ──────────────────────────────────────────────────────
+// Research Consent Models (Vibe Master §D Research Gate)
+// ──────────────────────────────────────────────────────
+
+/// Parent/guardian consent for research data collection.
+class ResearchConsentModel {
+  ResearchConsentModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.parentId,
+    this.consentGiven = false,
+    this.dataShareScope = 'pseudonymised',
+    this.consentDocumentUrl,
+    this.consentVersion,
+    this.revokedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String parentId;
+
+  /// Whether the parent has given research consent.
+  final bool consentGiven;
+
+  /// Scope of data sharing: 'pseudonymised', 'identifiable', 'none'.
+  final String dataShareScope;
+
+  /// URL to the signed consent document (if uploaded).
+  final String? consentDocumentUrl;
+
+  /// Version of the consent document.
+  final String? consentVersion;
+
+  /// If consent was revoked, when.
+  final Timestamp? revokedAt;
+
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory ResearchConsentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    return ResearchConsentModel(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      learnerId: m['learnerId'] as String? ?? '',
+      parentId: m['parentId'] as String? ?? '',
+      consentGiven: m['consentGiven'] as bool? ?? false,
+      dataShareScope: m['dataShareScope'] as String? ?? 'pseudonymised',
+      consentDocumentUrl: m['consentDocumentUrl'] as String?,
+      consentVersion: m['consentVersion'] as String?,
+      revokedAt: m['revokedAt'] as Timestamp?,
+      createdAt: m['createdAt'] as Timestamp?,
+      updatedAt: m['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'parentId': parentId,
+        'consentGiven': consentGiven,
+        'dataShareScope': dataShareScope,
+        if (consentDocumentUrl != null) 'consentDocumentUrl': consentDocumentUrl,
+        if (consentVersion != null) 'consentVersion': consentVersion,
+        if (revokedAt != null) 'revokedAt': revokedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+/// Learner assent for research participation (age-appropriate).
+class StudentAssentModel {
+  StudentAssentModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    this.assentGiven = false,
+    this.assentVersion,
+    this.revokedAt,
+    this.createdAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final bool assentGiven;
+  final String? assentVersion;
+  final Timestamp? revokedAt;
+  final Timestamp? createdAt;
+
+  factory StudentAssentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    return StudentAssentModel(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      learnerId: m['learnerId'] as String? ?? '',
+      assentGiven: m['assentGiven'] as bool? ?? false,
+      assentVersion: m['assentVersion'] as String?,
+      revokedAt: m['revokedAt'] as Timestamp?,
+      createdAt: m['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'assentGiven': assentGiven,
+        if (assentVersion != null) 'assentVersion': assentVersion,
+        if (revokedAt != null) 'revokedAt': revokedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+// ──────────────────────────────────────────────────────
+// Assessment Instrument Framework (Vibe Master §B)
+// ──────────────────────────────────────────────────────
+
+/// An assessment instrument (pre-test, post-test, survey, etc.).
+class AssessmentInstrumentModel {
+  AssessmentInstrumentModel({
+    required this.id,
+    required this.siteId,
+    required this.title,
+    required this.type,
+    this.description,
+    this.items = const <AssessmentItem>[],
+    this.pillarCodes = const <String>[],
+    this.version,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String title;
+
+  /// Type: 'pre_test', 'post_test', 'survey', 'formative', 'summative'.
+  final String type;
+
+  final String? description;
+
+  /// The individual items/questions in the instrument.
+  final List<AssessmentItem> items;
+
+  final List<String> pillarCodes;
+  final String? version;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory AssessmentInstrumentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    final List<dynamic> rawItems = m['items'] as List<dynamic>? ?? <dynamic>[];
+    return AssessmentInstrumentModel(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      title: m['title'] as String? ?? '',
+      type: m['type'] as String? ?? 'formative',
+      description: m['description'] as String?,
+      items: rawItems
+          .map((dynamic e) => AssessmentItem.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      pillarCodes: ((m['pillarCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      version: m['version'] as String?,
+      createdAt: m['createdAt'] as Timestamp?,
+      updatedAt: m['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'title': title,
+        'type': type,
+        if (description != null) 'description': description,
+        'items': items.map((AssessmentItem e) => e.toMap()).toList(),
+        'pillarCodes': pillarCodes,
+        if (version != null) 'version': version,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+/// A single item/question within an assessment instrument.
+class AssessmentItem {
+  AssessmentItem({
+    required this.itemId,
+    required this.prompt,
+    this.itemType = 'multiple_choice',
+    this.options = const <String>[],
+    this.correctAnswer,
+    this.maxScore = 1,
+    this.skillCodes = const <String>[],
+  });
+
+  final String itemId;
+  final String prompt;
+
+  /// 'multiple_choice', 'short_answer', 'likert', 'open_ended'.
+  final String itemType;
+
+  final List<String> options;
+  final String? correctAnswer;
+  final int maxScore;
+  final List<String> skillCodes;
+
+  factory AssessmentItem.fromMap(Map<String, dynamic> m) => AssessmentItem(
+        itemId: m['itemId'] as String? ?? '',
+        prompt: m['prompt'] as String? ?? '',
+        itemType: m['itemType'] as String? ?? 'multiple_choice',
+        options: ((m['options'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        correctAnswer: m['correctAnswer'] as String?,
+        maxScore: m['maxScore'] as int? ?? 1,
+        skillCodes: ((m['skillCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      );
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'itemId': itemId,
+        'prompt': prompt,
+        'itemType': itemType,
+        if (options.isNotEmpty) 'options': options,
+        if (correctAnswer != null) 'correctAnswer': correctAnswer,
+        'maxScore': maxScore,
+        if (skillCodes.isNotEmpty) 'skillCodes': skillCodes,
+      };
+}
+
+/// An individual item-level response logged per learner per instrument.
+class ItemResponseModel {
+  ItemResponseModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.instrumentId,
+    required this.itemId,
+    this.response,
+    this.isCorrect,
+    this.score = 0,
+    this.timeSpentMs = 0,
+    this.confidenceLevel,
+    this.createdAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String instrumentId;
+  final String itemId;
+  final String? response;
+  final bool? isCorrect;
+  final int score;
+
+  /// Time spent on this item in milliseconds.
+  final int timeSpentMs;
+
+  /// Learner self-reported confidence (1–5 Likert).
+  final int? confidenceLevel;
+
+  final Timestamp? createdAt;
+
+  factory ItemResponseModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    return ItemResponseModel(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      learnerId: m['learnerId'] as String? ?? '',
+      instrumentId: m['instrumentId'] as String? ?? '',
+      itemId: m['itemId'] as String? ?? '',
+      response: m['response'] as String?,
+      isCorrect: m['isCorrect'] as bool?,
+      score: m['score'] as int? ?? 0,
+      timeSpentMs: m['timeSpentMs'] as int? ?? 0,
+      confidenceLevel: m['confidenceLevel'] as int?,
+      createdAt: m['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'instrumentId': instrumentId,
+        'itemId': itemId,
+        if (response != null) 'response': response,
+        if (isCorrect != null) 'isCorrect': isCorrect,
+        'score': score,
+        'timeSpentMs': timeSpentMs,
+        if (confidenceLevel != null) 'confidenceLevel': confidenceLevel,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}

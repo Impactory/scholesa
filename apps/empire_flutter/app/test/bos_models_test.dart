@@ -156,20 +156,90 @@ void main() {
 
   group('BosEvent', () {
     test('toMap includes all required fields', () {
-      const BosEvent event = BosEvent(
+      final BosEvent event = BosEvent(
         eventType: 'mission_started',
         siteId: 'site1',
         actorId: 'user1',
         actorRole: 'learner',
         gradeBand: GradeBand.g4_6,
         missionId: 'mission1',
-        payload: <String, dynamic>{'foo': 'bar'},
+        payload: const <String, dynamic>{'foo': 'bar'},
       );
       final Map<String, dynamic> map = event.toMap();
       expect(map['eventType'], 'mission_started');
       expect(map['gradeBand'], 'G4_6');
       expect(map['missionId'], 'mission1');
       expect((map['payload'] as Map<String, dynamic>)['foo'], 'bar');
+    });
+
+    test('toMap includes research-grade envelope fields', () {
+      final BosEvent event = BosEvent(
+        eventType: 'checkpoint_submitted',
+        siteId: 'site1',
+        actorId: 'user1',
+        actorRole: 'learner',
+        gradeBand: GradeBand.g7_9,
+        contextMode: ContextMode.inClass,
+        actorIdPseudo: 'pseudo_abc123',
+        assignmentId: 'assign1',
+        lessonId: 'lesson1',
+      );
+      final Map<String, dynamic> map = event.toMap();
+
+      // eventId is auto-generated UUID
+      expect(map['eventId'], isNotNull);
+      expect(map['eventId'], isA<String>());
+      expect((map['eventId'] as String).length, greaterThanOrEqualTo(32));
+
+      // schemaVersion
+      expect(map['schemaVersion'], '2.0.0');
+
+      // contextMode
+      expect(map['contextMode'], 'in_class');
+
+      // pseudonymised actor ID
+      expect(map['actorIdPseudo'], 'pseudo_abc123');
+
+      // assignment + lesson linking
+      expect(map['assignmentId'], 'assign1');
+      expect(map['lessonId'], 'lesson1');
+    });
+
+    test('eventId is unique per instance', () {
+      final BosEvent e1 = BosEvent(
+        eventType: 'test',
+        siteId: 's',
+        actorId: 'u',
+        actorRole: 'learner',
+        gradeBand: GradeBand.g4_6,
+      );
+      final BosEvent e2 = BosEvent(
+        eventType: 'test',
+        siteId: 's',
+        actorId: 'u',
+        actorRole: 'learner',
+        gradeBand: GradeBand.g4_6,
+      );
+      expect(e1.eventId, isNot(equals(e2.eventId)));
+    });
+
+    test('ContextMode fromString parses all modes', () {
+      expect(ContextMode.fromString('in_class'), ContextMode.inClass);
+      expect(ContextMode.fromString('homework'), ContextMode.homework);
+      expect(ContextMode.fromString('unknown'), ContextMode.unknown);
+      expect(ContextMode.fromString('garbage'), ContextMode.unknown);
+    });
+
+    test('ClientInfo toMap produces correct structure', () {
+      const ClientInfo info = ClientInfo(
+        appVersion: '1.0.0-rc.2+2',
+        platform: 'ios',
+        buildNumber: '2',
+      );
+      final Map<String, dynamic> map = info.toMap();
+      expect(map['appVersion'], '1.0.0-rc.2+2');
+      expect(map['platform'], 'ios');
+      expect(map['buildNumber'], '2');
     });
   });
 }
