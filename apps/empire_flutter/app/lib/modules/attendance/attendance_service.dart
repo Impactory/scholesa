@@ -15,6 +15,7 @@ class AttendanceService extends ChangeNotifier {
     this.siteId,
   })  : _apiClient = apiClient,
         _syncCoordinator = syncCoordinator;
+  // ignore: unused_field — reserved for future REST API migration
   final ApiClient _apiClient;
   final SyncCoordinator _syncCoordinator;
   final String? educatorId;
