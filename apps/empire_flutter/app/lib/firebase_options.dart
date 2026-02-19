@@ -59,8 +59,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCM26X4EXiP3c4uqmLiF1yqXSnRlnWRePY',
-    appId: '1:97120825720:ios:com_scholesa_app',
+    apiKey: 'AIzaSyDPClAxcvuy3hddlXjwgTGxXpL7YJOMqVM',
+    appId: '1:97120825720:ios:8bf1aacba9762af78bd88d',
     messagingSenderId: '97120825720',
     projectId: 'studio-3328096157-e3f79',
     storageBucket: 'studio-3328096157-e3f79.firebasestorage.app',
@@ -68,8 +68,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCM26X4EXiP3c4uqmLiF1yqXSnRlnWRePY',
-    appId: '1:97120825720:macos:com_scholesa_app',
+    apiKey: 'AIzaSyDPClAxcvuy3hddlXjwgTGxXpL7YJOMqVM',
+    appId: '1:97120825720:ios:8bf1aacba9762af78bd88d',
     messagingSenderId: '97120825720',
     projectId: 'studio-3328096157-e3f79',
     storageBucket: 'studio-3328096157-e3f79.firebasestorage.app',
@@ -78,7 +78,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyCM26X4EXiP3c4uqmLiF1yqXSnRlnWRePY',
-    appId: '1:97120825720:windows:scholesa_app',
+    appId: '1:97120825720:web:71fa701dd5d4561f8bd88d',
     messagingSenderId: '97120825720',
     projectId: 'studio-3328096157-e3f79',
     storageBucket: 'studio-3328096157-e3f79.firebasestorage.app',
