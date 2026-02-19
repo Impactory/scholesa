@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../services/telemetry_service.dart';
 import 'models.dart';
 
 class UserRepository {
@@ -862,6 +863,12 @@ class PartnerDeliverableRepository {
     } catch (_) {
       // Audit should not block deliverable submission.
     }
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'deliverable.submitted',
+        metadata: <String, dynamic>{'deliverableId': doc.id, 'contractId': contractId},
+      );
+    } catch (_) {}
     return doc.id;
   }
 
@@ -888,6 +895,12 @@ class PartnerDeliverableRepository {
     } catch (_) {
       // Audit should not block deliverable acceptance.
     }
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'deliverable.accepted',
+        metadata: <String, dynamic>{'deliverableId': id},
+      );
+    } catch (_) {}
   }
 
   Future<List<PartnerDeliverableModel>> listByContract(String contractId, {int limit = 20}) async {
@@ -1184,6 +1197,13 @@ class AiDraftRepository {
       updatedAt: Timestamp.now(),
     );
     await doc.set(model.toMap());
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'aiDraft.requested',
+        siteId: siteId,
+        metadata: <String, dynamic>{'draftId': doc.id},
+      );
+    } catch (_) {}
     return doc.id;
   }
 
@@ -1199,6 +1219,12 @@ class AiDraftRepository {
       'reviewNotes': notes,
       'updatedAt': Timestamp.now(),
     }, SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'aiDraft.reviewed',
+        metadata: <String, dynamic>{'draftId': id, 'status': status},
+      );
+    } catch (_) {}
   }
 
   Future<List<AiDraftModel>> listMine(String requesterId, {int limit = 20}) async {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/firestore_service.dart';
+import '../services/telemetry_service.dart';
 import 'app_state.dart';
 
 /// Service for handling Firebase authentication
@@ -84,6 +85,11 @@ class AuthService {
       // Ignore if not signed in with Google
     }
     await _auth.signOut();
+    try {
+      await TelemetryService.instance.logEvent(event: 'auth.logout');
+    } catch (_) {
+      // Best-effort telemetry
+    }
     _appState.clear();
   }
 
