@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto';
 import { onCall, onRequest, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { defineSecret } from 'firebase-functions/params';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 
@@ -29,6 +29,14 @@ export {
 // Define secrets for Firebase Functions v2
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
+
+// Stripe price IDs / notification config — defineString for v2 runtime
+const stripePriceLearner = defineString('STRIPE_PRICE_LEARNER', { default: 'price_learner_seat' });
+const stripePriceEducator = defineString('STRIPE_PRICE_EDUCATOR', { default: 'price_educator_seat' });
+const stripePriceParent = defineString('STRIPE_PRICE_PARENT', { default: 'price_parent_seat' });
+const stripePriceSite = defineString('STRIPE_PRICE_SITE', { default: 'price_site_license' });
+const notifyEndpoint = defineString('NOTIFY_ENDPOINT', { default: '' });
+const notifyApiKey = defineSecret('NOTIFY_API_KEY');
 
 // Lazy-initialized Stripe client
 let stripeClient: Stripe | null = null;
@@ -67,15 +75,15 @@ const NOTIFICATION_RATE_COLLECTION = 'notificationRateLimits';
 const CHECKOUT_INTENTS_COLLECTION = 'checkoutIntents';
 const STRIPE_CUSTOMERS_COLLECTION = 'stripeCustomers';
 const SUBSCRIPTIONS_COLLECTION = 'subscriptions';
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
-
-// Stripe Price IDs - map to your Stripe Dashboard products
-const STRIPE_PRICE_IDS: Record<ProductId, string> = {
-  'learner-seat': process.env.STRIPE_PRICE_LEARNER || 'price_learner_seat',
-  'educator-seat': process.env.STRIPE_PRICE_EDUCATOR || 'price_educator_seat',
-  'parent-seat': process.env.STRIPE_PRICE_PARENT || 'price_parent_seat',
-  'site-license': process.env.STRIPE_PRICE_SITE || 'price_site_license',
-};
+// Stripe Price IDs — resolved from defineString params
+function getStripePriceIds(): Record<ProductId, string> {
+  return {
+    'learner-seat': stripePriceLearner.value(),
+    'educator-seat': stripePriceEducator.value(),
+    'parent-seat': stripePriceParent.value(),
+    'site-license': stripePriceSite.value(),
+  };
+}
 
 const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'auth.login',
@@ -166,8 +174,8 @@ async function requireHq(authUid: string | undefined) {
 }
 
 async function sendNotification(payload: { channel: string; threadId: string; messageId: string; siteId: string }) {
-  const endpoint = process.env.NOTIFY_ENDPOINT;
-  const apiKey = process.env.NOTIFY_API_KEY;
+  const endpoint = notifyEndpoint.value();
+  const apiKey = notifyApiKey.value();
   if (!endpoint || !apiKey) {
     throw new Error('Notification provider not configured');
   }
@@ -742,8 +750,9 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
   const secret = req.headers['x-webhook-secret'];
   const signature = req.headers['x-webhook-signature'];
   const payload = JSON.stringify(req.body ?? {});
-  const expectedSig = WEBHOOK_SECRET ? createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex') : '';
-  if (!WEBHOOK_SECRET || secret !== WEBHOOK_SECRET || signature !== expectedSig) {
+  const webhookSecretVal = stripeWebhookSecret.value();
+  const expectedSig = webhookSecretVal ? createHmac('sha256', webhookSecretVal).update(payload).digest('hex') : '';
+  if (!webhookSecretVal || secret !== webhookSecretVal || signature !== expectedSig) {
     res.status(401).send('unauthorized');
     return;
   }
@@ -904,7 +913,7 @@ export const createStripeCheckoutSession = onCall({
   if (!targetUser.email) throw new HttpsError('failed-precondition', 'Target user has no email');
 
   const product = PRODUCT_CATALOG[productId as ProductId];
-  const priceId = STRIPE_PRICE_IDS[productId as ProductId];
+  const priceId = getStripePriceIds()[productId as ProductId];
 
   // Get or create Stripe customer
   const stripeCustomerId = await getOrCreateStripeCustomer(
@@ -999,7 +1008,7 @@ export const createStripeSubscription = onCall({
   if (!actorProfile?.email) throw new HttpsError('failed-precondition', 'User has no email');
 
   const product = PRODUCT_CATALOG[productId as ProductId];
-  const priceId = STRIPE_PRICE_IDS[productId as ProductId];
+  const priceId = getStripePriceIds()[productId as ProductId];
 
   const stripeCustomerId = await getOrCreateStripeCustomer(
     actor.uid,
