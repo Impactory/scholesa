@@ -630,3 +630,67 @@ class AiCoachRequest {
         if (studentInput != null) 'studentInput': studentInput,
       };
 }
+
+// ──── AI Coach Response ────
+
+/// AI Coach response from genAiCoach (BOS+MIA contract A2).
+@immutable
+class AiCoachResponse {
+  const AiCoachResponse({
+    required this.message,
+    required this.mode,
+    this.requiresExplainBack = false,
+    this.suggestedNextSteps = const <String>[],
+    this.learnerState,
+    this.reliabilityRisk,
+    this.autonomyRisk,
+    this.mvlGateActive = false,
+    this.mvlEpisodeId,
+    this.mvlReason,
+    this.version = '1.0.0',
+    this.aiHelpOpenedEventId,
+  });
+
+  final String message;
+  final AiCoachMode mode;
+  final bool requiresExplainBack;
+  final List<String> suggestedNextSteps;
+  final XHat? learnerState;
+  final ReliabilityRisk? reliabilityRisk;
+  final AutonomyRisk? autonomyRisk;
+  final bool mvlGateActive;
+  final String? mvlEpisodeId;
+  final String? mvlReason;
+  final String version;
+  final String? aiHelpOpenedEventId;
+
+  factory AiCoachResponse.fromMap(Map<String, dynamic> m) {
+    final Map<String, dynamic>? risk = m['risk'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? mvl = m['mvl'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? meta = m['meta'] as Map<String, dynamic>?;
+
+    return AiCoachResponse(
+      message: m['message'] as String? ?? '',
+      mode: AiCoachMode.values.firstWhere(
+        (AiCoachMode e) => e.name == m['mode'],
+        orElse: () => AiCoachMode.hint,
+      ),
+      requiresExplainBack: m['requiresExplainBack'] as bool? ?? false,
+      suggestedNextSteps: ((m['suggestedNextSteps'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      learnerState: m['learnerState'] != null
+          ? XHat.fromMap(m['learnerState'] as Map<String, dynamic>)
+          : null,
+      reliabilityRisk: risk != null && risk['reliability'] != null
+          ? ReliabilityRisk.fromMap(risk['reliability'] as Map<String, dynamic>)
+          : null,
+      autonomyRisk: risk != null && risk['autonomy'] != null
+          ? AutonomyRisk.fromMap(risk['autonomy'] as Map<String, dynamic>)
+          : null,
+      mvlGateActive: mvl?['gateActive'] as bool? ?? false,
+      mvlEpisodeId: mvl?['episodeId'] as String?,
+      mvlReason: mvl?['reason'] as String?,
+      version: meta?['version'] as String? ?? '1.0.0',
+      aiHelpOpenedEventId: meta?['aiHelpOpenedEventId'] as String?,
+    );
+  }
+}

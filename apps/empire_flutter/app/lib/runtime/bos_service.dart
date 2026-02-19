@@ -134,9 +134,9 @@ class BosService {
 
   // ── AI Coach (genAiCoach with BOS context) ────────
 
-  Future<Map<String, dynamic>> callAiCoach(AiCoachRequest request) async {
+  Future<AiCoachResponse> callAiCoach(AiCoachRequest request) async {
     final HttpsCallableResult<dynamic> result =
         await _fn.httpsCallable('genAiCoach').call(request.toMap());
-    return result.data as Map<String, dynamic>;
+    return AiCoachResponse.fromMap(result.data as Map<String, dynamic>);
   }
 }

@@ -251,6 +251,86 @@ async function scoreMvlEpisode(episodeId: string): Promise<string> {
 }
 
 // ──────────────────────────────────────────────────────
+// §6-§7  Risk Scoring (Reliability + Autonomy)
+// ──────────────────────────────────────────────────────
+
+interface AutonomyRiskFromEvents {
+  riskType: 'autonomy';
+  signals: string[];
+  riskScore: number;
+  threshold: number;
+}
+
+/**
+ * Compute autonomy risk from pre-fetched event data (Math Contract §7).
+ * Pure function — no I/O.
+ */
+function computeAutonomyRiskFromEvents(
+  _learnerId: string,
+  _sessionOccurrenceId: string,
+  state: StateEstimate,
+  gradeBand: string,
+  events: FirebaseFirestore.DocumentData[],
+): AutonomyRiskFromEvents {
+  const signals: string[] = [];
+  let riskScore = 0;
+  const totalEvents = events.length;
+
+  if (totalEvents < 3) {
+    return { riskType: 'autonomy', signals, riskScore: 0, threshold: 0.5 };
+  }
+
+  // Signal 1: Heavy AI use — >40% of events are ai_help_*
+  const aiEvents = events.filter(e =>
+    e.eventType === 'ai_help_used' || e.eventType === 'ai_help_opened'
+  ).length;
+  if (aiEvents / totalEvents > 0.4) {
+    signals.push('heavy_ai_use');
+    riskScore += 0.25;
+  }
+
+  // Signal 2: Rapid submit after AI help
+  for (let i = 0; i < events.length - 1; i++) {
+    if (events[i].eventType === 'checkpoint_submitted' && events[i + 1].eventType === 'ai_help_used') {
+      signals.push('rapid_submit');
+      riskScore += 0.2;
+      break;
+    }
+  }
+
+  // Signal 3: Verification gap — no explain_it_back after AI use
+  const hasExplainBack = events.some(e => e.eventType === 'explain_it_back_submitted');
+  if (aiEvents > 0 && !hasExplainBack) {
+    signals.push('verification_gap');
+    riskScore += 0.15;
+  }
+
+  // Signal 4: Repeated hints without independent attempt
+  const hintCount = events.filter(e => e.eventType === 'ai_help_used').length;
+  const attempts = events.filter(e =>
+    e.eventType === 'checkpoint_submitted' || e.eventType === 'artifact_submitted'
+  ).length;
+  if (hintCount > 3 && attempts === 0) {
+    signals.push('repeated_hints_no_attempt');
+    riskScore += 0.25;
+  }
+
+  // Signal 5: Low integrity state
+  const mDagger = M_DAGGER[gradeBand] ?? 0.60;
+  if (state.x_hat.integrity < mDagger) {
+    signals.push('low_integrity_state');
+    riskScore += 0.15;
+  }
+
+  return {
+    riskType: 'autonomy',
+    signals: [...new Set(signals)],
+    riskScore: Math.min(1.0, Math.round(riskScore * 1000) / 1000),
+    threshold: 0.5,
+  };
+}
+
+// ──────────────────────────────────────────────────────
 // Callable Cloud Functions
 // ──────────────────────────────────────────────────────
 
@@ -364,31 +444,93 @@ export const bosGetIntervention = onCall(
     const gBand = gradeBand || 'G4_6';
     const intervention = computeIntervention(newState, gBand);
 
-    // Save intervention
+    // Step 3b: Compute autonomy risk from behavioral signals (Math Contract §7)
+    const autonomyRiskResult = computeAutonomyRiskFromEvents(targetLearnerId, sessionOccurrenceId, newState, gBand,
+      (await db.collection('interactionEvents')
+        .where('actorId', '==', targetLearnerId)
+        .where('sessionOccurrenceId', '==', sessionOccurrenceId)
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get()).docs.map(d => d.data()),
+    );
+
+    // Step 3c: Compute reliability risk proxy (Math Contract §6)
+    const reliabilityRiskResult = {
+      riskType: 'reliability' as const,
+      method: 'sep' as const,
+      K: 1, M: 1, H_sem: 0,
+      riskScore: Math.round((1 - newState.P.confidence) * 0.5 * 1000) / 1000,
+      threshold: 0.6,
+    };
+
+    // Augment intervention with risk data
+    const riskSources: string[] = [];
+    const mDaggerVal = M_DAGGER[gBand] ?? 0.60;
+    if (newState.x_hat.integrity < mDaggerVal) riskSources.push('integrity_below_threshold');
+    if (autonomyRiskResult.riskScore > autonomyRiskResult.threshold) riskSources.push('high_autonomy_risk');
+    if (reliabilityRiskResult.riskScore > reliabilityRiskResult.threshold) riskSources.push('high_reliability_risk');
+
+    // Sensor fusion: override triggerMvl if ≥2 risk sources (even if policy didn't trigger it)
+    const shouldTriggerMvl = intervention.triggerMvl || riskSources.length >= 2;
+    const mvlReason = shouldTriggerMvl
+      ? (riskSources.length >= 2 ? riskSources.join(' + ') : (intervention.mvlReason || 'policy_triggered'))
+      : undefined;
+
+    // Save intervention with risk data
     const interventionDoc = {
       siteId,
       learnerId: targetLearnerId,
       sessionOccurrenceId,
       gradeBand: gBand,
       ...intervention,
+      triggerMvl: shouldTriggerMvl,
+      mvlReason,
+      autonomyRisk: autonomyRiskResult,
+      reliabilityRisk: reliabilityRiskResult,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     await db.collection('interventions').add(interventionDoc);
 
-    // Step 4: If MVL triggered, create episode
-    if (intervention.triggerMvl) {
-      await db.collection('mvlEpisodes').add({
-        siteId,
-        learnerId: targetLearnerId,
-        sessionOccurrenceId,
-        triggerReason: intervention.mvlReason || 'policy_triggered',
-        evidenceEventIds: [],
-        resolution: null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+    // Step 4: If MVL triggered, create episode with risk data (Math Contract §6-§7)
+    let mvlEpisodeId: string | null = null;
+    if (shouldTriggerMvl) {
+      // Check for existing active MVL before creating a new one
+      const existingMvl = await db.collection('mvlEpisodes')
+        .where('learnerId', '==', targetLearnerId)
+        .where('sessionOccurrenceId', '==', sessionOccurrenceId)
+        .where('resolution', '==', null)
+        .limit(1)
+        .get();
+
+      if (existingMvl.empty) {
+        const mvlRef = await db.collection('mvlEpisodes').add({
+          siteId,
+          learnerId: targetLearnerId,
+          sessionOccurrenceId,
+          triggerReason: mvlReason || 'policy_triggered',
+          riskSources,
+          reliability: reliabilityRiskResult,
+          autonomy: autonomyRiskResult,
+          evidenceEventIds: [],
+          resolution: null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        mvlEpisodeId = mvlRef.id;
+      } else {
+        mvlEpisodeId = existingMvl.docs[0].id;
+      }
     }
 
-    return { intervention, state: newState };
+    return {
+      intervention: { ...intervention, triggerMvl: shouldTriggerMvl, mvlReason },
+      state: newState,
+      risk: {
+        reliability: reliabilityRiskResult,
+        autonomy: autonomyRiskResult,
+        riskSources,
+      },
+      mvlEpisodeId,
+    };
   }
 );
 

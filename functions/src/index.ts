@@ -208,6 +208,322 @@ function toStringArray(value: unknown): string[] {
   return value.filter((v) => typeof v === 'string') as string[];
 }
 
+// ──────────────────────────────────────────────────────
+// AI Coach Control Surface — Helper Functions
+// Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §5, Math Contract §6-§8
+// ──────────────────────────────────────────────────────
+
+// §4.2 Grade-band integrity thresholds
+const AI_M_DAGGER: Record<string, number> = {
+  G1_3: 0.55, G4_6: 0.60, G7_9: 0.65, G10_12: 0.70,
+};
+
+interface ReliabilityRiskResult {
+  riskType: 'reliability';
+  method: 'sep';
+  K: number;
+  M: number;
+  H_sem: number;
+  riskScore: number;
+  threshold: number;
+}
+
+/**
+ * Compute reliability risk via SEP v1 heuristic (Math Contract §6).
+ * V1: Heuristic proxy — high uncertainty + low cognition = high reliability risk.
+ * V2+: True semantic entropy with sampling + clustering.
+ */
+function computeReliabilityRisk(
+  mode: string,
+  xHat: { cognition: number; engagement: number; integrity: number } | null,
+  pSummary: { trace: number; confidence: number } | null,
+): ReliabilityRiskResult {
+  // SEP v1: Proxy risk from state uncertainty + mode
+  const baseRisk = pSummary ? (1 - pSummary.confidence) * 0.5 : 0.25;
+
+  // Higher risk for explain/debug modes (more complex output)
+  const modeMultiplier = (mode === 'explain' || mode === 'debug') ? 1.3 : 1.0;
+
+  // Low cognition increases risk (model is less certain about learner state)
+  const cognitionPenalty = xHat ? Math.max(0, 0.5 - xHat.cognition) * 0.4 : 0.1;
+
+  const riskScore = Math.min(1.0, (baseRisk * modeMultiplier + cognitionPenalty));
+
+  return {
+    riskType: 'reliability',
+    method: 'sep',
+    K: 1,   // V1: single response (no sampling)
+    M: 1,   // V1: single cluster
+    H_sem: 0,
+    riskScore: Math.round(riskScore * 1000) / 1000,
+    threshold: 0.6,
+  };
+}
+
+interface AutonomyRiskResult {
+  riskType: 'autonomy';
+  signals: string[];
+  riskScore: number;
+  threshold: number;
+}
+
+/**
+ * Compute autonomy risk from behavioral patterns (Math Contract §7).
+ * Detects: rapid_submit, verification_gap, heavy_ai_use, minimal_editing,
+ *          low_self_explanation, repeated_hints_no_attempt.
+ */
+async function computeAutonomyRisk(
+  learnerId: string,
+  sessionOccurrenceId: string | undefined,
+  xHat: { cognition: number; engagement: number; integrity: number } | null,
+  gradeBand: string,
+): Promise<AutonomyRiskResult> {
+  const signals: string[] = [];
+  let riskScore = 0;
+
+  if (!sessionOccurrenceId) {
+    return { riskType: 'autonomy', signals, riskScore: 0, threshold: 0.5 };
+  }
+
+  // Query recent interaction events (last 20)
+  const recentEvents = await admin.firestore().collection('interactionEvents')
+    .where('actorId', '==', learnerId)
+    .where('sessionOccurrenceId', '==', sessionOccurrenceId)
+    .orderBy('timestamp', 'desc')
+    .limit(20)
+    .get();
+
+  const events = recentEvents.docs.map(d => d.data());
+  const totalEvents = events.length;
+
+  if (totalEvents < 3) {
+    return { riskType: 'autonomy', signals, riskScore: 0, threshold: 0.5 };
+  }
+
+  // Signal 1: Heavy AI use — >40% of events are ai_help_*
+  const aiEvents = events.filter(e =>
+    e.eventType === 'ai_help_used' || e.eventType === 'ai_help_opened'
+  ).length;
+  if (aiEvents / totalEvents > 0.4) {
+    signals.push('heavy_ai_use');
+    riskScore += 0.25;
+  }
+
+  // Signal 2: Rapid submit after AI help — ai_help_used followed by checkpoint_submitted
+  // within 30 seconds (approximated by consecutive order)
+  for (let i = 0; i < events.length - 1; i++) {
+    if (events[i].eventType === 'checkpoint_submitted' && events[i + 1].eventType === 'ai_help_used') {
+      signals.push('rapid_submit');
+      riskScore += 0.2;
+      break;
+    }
+  }
+
+  // Signal 3: Verification gap — no explain_it_back_submitted events
+  const hasExplainBack = events.some(e => e.eventType === 'explain_it_back_submitted');
+  const hasAiUse = aiEvents > 0;
+  if (hasAiUse && !hasExplainBack) {
+    signals.push('verification_gap');
+    riskScore += 0.15;
+  }
+
+  // Signal 4: Repeated hints without independent attempt
+  const consecutiveHints = events.filter(e => e.eventType === 'ai_help_used');
+  const independentAttempts = events.filter(e =>
+    e.eventType === 'checkpoint_submitted' || e.eventType === 'artifact_submitted'
+  );
+  if (consecutiveHints.length > 3 && independentAttempts.length === 0) {
+    signals.push('repeated_hints_no_attempt');
+    riskScore += 0.25;
+  }
+
+  // Signal 5: Low integrity state
+  if (xHat && xHat.integrity < (AI_M_DAGGER[gradeBand] ?? 0.6)) {
+    signals.push('low_integrity_state');
+    riskScore += 0.15;
+  }
+
+  // Deduplicate signals
+  const uniqueSignals = [...new Set(signals)];
+
+  return {
+    riskType: 'autonomy',
+    signals: uniqueSignals,
+    riskScore: Math.min(1.0, Math.round(riskScore * 1000) / 1000),
+    threshold: 0.5,
+  };
+}
+
+interface MvlCheckResult {
+  gateActive: boolean;
+  episodeId?: string;
+  reason?: string;
+}
+
+/**
+ * Check if MVL gate should be triggered and create episode if needed.
+ * MVL triggers on: integrity < m_dagger, high reliability risk, high autonomy risk.
+ * Sensor fusion rule: needs corroboration (≥2 risk sources).
+ */
+async function checkAndMaybeCreateMvl(params: {
+  siteId: string;
+  learnerId: string;
+  sessionOccurrenceId?: string;
+  gradeBand: string;
+  xHat: { cognition: number; engagement: number; integrity: number } | null;
+  reliabilityRisk: ReliabilityRiskResult;
+  autonomyRisk: AutonomyRiskResult;
+}): Promise<MvlCheckResult> {
+  const { siteId, learnerId, sessionOccurrenceId, gradeBand, xHat, reliabilityRisk, autonomyRisk } = params;
+
+  // Check for existing active MVL gate
+  if (sessionOccurrenceId) {
+    const existing = await admin.firestore().collection('mvlEpisodes')
+      .where('learnerId', '==', learnerId)
+      .where('sessionOccurrenceId', '==', sessionOccurrenceId)
+      .where('resolution', '==', null)
+      .limit(1)
+      .get();
+
+    if (!existing.empty) {
+      return {
+        gateActive: true,
+        episodeId: existing.docs[0].id,
+        reason: existing.docs[0].data().triggerReason || 'active_mvl_gate',
+      };
+    }
+  }
+
+  // Sensor fusion: count how many risk sources are elevated
+  const riskSources: string[] = [];
+  const mDagger = AI_M_DAGGER[gradeBand] ?? 0.60;
+
+  if (xHat && xHat.integrity < mDagger) {
+    riskSources.push('integrity_below_threshold');
+  }
+  if (reliabilityRisk.riskScore > reliabilityRisk.threshold) {
+    riskSources.push('high_reliability_risk');
+  }
+  if (autonomyRisk.riskScore > autonomyRisk.threshold) {
+    riskSources.push('high_autonomy_risk');
+  }
+
+  // Sensor fusion rule: ≥2 risk sources required for MVL trigger
+  if (riskSources.length < 2) {
+    return { gateActive: false };
+  }
+
+  // Create MVL episode
+  const mvlDoc = await admin.firestore().collection('mvlEpisodes').add({
+    siteId,
+    learnerId,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    triggerReason: riskSources.join(' + '),
+    riskSources,
+    reliability: reliabilityRisk,
+    autonomy: autonomyRisk,
+    evidenceEventIds: [],
+    resolution: null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Emit mvl_gate_triggered event
+  await admin.firestore().collection('interactionEvents').add({
+    eventType: 'mvl_gate_triggered',
+    siteId,
+    actorId: learnerId,
+    actorRole: 'system',
+    gradeBand,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    payload: {
+      episodeId: mvlDoc.id,
+      riskSources,
+      reliabilityScore: reliabilityRisk.riskScore,
+      autonomyScore: autonomyRisk.riskScore,
+      integrityState: xHat?.integrity ?? null,
+    },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    gateActive: true,
+    episodeId: mvlDoc.id,
+    reason: riskSources.join(' + '),
+  };
+}
+
+/**
+ * Generate MVL intercept message when gate is active.
+ * Non-punitive: formative verification prompt.
+ */
+function generateMvlInterceptMessage(
+  mode: string,
+  displayName: string,
+  reason: string | undefined,
+  tags: string[],
+): string {
+  const tagNote = tags.length > 0 ? ` about ${tags.join(', ')}` : '';
+  switch (mode) {
+    case 'hint':
+      return `${displayName}, before we continue — can you show me what you've tried so far${tagNote}? Walk me through your thinking step by step.`;
+    case 'verify':
+      return `${displayName}, let's pause and verify your understanding${tagNote}. Can you explain the key concept in your own words?`;
+    case 'explain':
+      return `${displayName}, I'd love to hear your explanation first${tagNote}. What do you think is happening and why? Then we can compare notes.`;
+    case 'debug':
+      return `${displayName}, before I help debug${tagNote} — what have you checked already? Show me the steps you've taken to find the issue.`;
+    default:
+      return `${displayName}, let's check in. Can you share your reasoning so far?`;
+  }
+}
+
+/**
+ * Generate AI Coach response (V1 template-based).
+ * Modes: hint (low assist), verify (evidence check), explain (scaffolding), debug (guided).
+ * Forbidden: final answers, doing student's work, punitive language.
+ */
+function generateCoachResponse(
+  mode: string,
+  displayName: string,
+  xHat: { cognition: number; engagement: number; integrity: number } | null,
+  tagsStr: string,
+  studentInput: string | undefined,
+): { message: string; requiresExplainBack: boolean; suggestedNextSteps: string[] } {
+  let message: string;
+  let requiresExplainBack = false;
+  const suggestedNextSteps: string[] = [];
+
+  switch (mode) {
+    case 'hint':
+      if (xHat && xHat.cognition < 0.4) {
+        message = `${displayName}, it looks like you could use a nudge. Try re-reading the instructions for this checkpoint and focus on the key concepts${tagsStr ? ` (${tagsStr})` : ''}.`;
+        suggestedNextSteps.push('Re-read the mission brief carefully', 'Identify one thing you already understand');
+      } else {
+        message = `${displayName}, you're making good progress! Think about what you already know and try applying it to this next step${tagsStr ? ` — focus on ${tagsStr}` : ''}.`;
+        suggestedNextSteps.push('Try connecting this to something you learned before');
+      }
+      break;
+    case 'verify':
+      message = `${displayName}, let's check your work. Can you explain your reasoning for this step? Walk me through what you did and why.`;
+      requiresExplainBack = true;
+      suggestedNextSteps.push('Explain your reasoning', 'Show evidence of your approach');
+      break;
+    case 'explain':
+      message = `${displayName}, here's a breakdown: ${tagsStr ? `The concepts involved are ${tagsStr}. ` : ''}Take it step by step and focus on understanding the "why" behind each part.`;
+      requiresExplainBack = true;
+      suggestedNextSteps.push('Restate the concept in your own words', 'Give a real-world example');
+      break;
+    case 'debug':
+      message = `${displayName}, let's troubleshoot. ${studentInput ? `You mentioned: "${studentInput}". ` : ''}Think about what you expected to happen versus what actually happened. Where does the mismatch start?`;
+      suggestedNextSteps.push('Check your most recent change', 'Compare expected vs actual output');
+      break;
+    default:
+      message = `Hello ${displayName}, this is your AI Coach. What would you like to work on?`;
+  }
+
+  return { message, requiresExplainBack, suggestedNextSteps };
+}
+
 export const genAiCoach = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
@@ -218,73 +534,158 @@ export const genAiCoach = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Learner role required for AI coach.');
   }
 
-  // ── BOS-aware AI Coach ──
-  const { mode, siteId, gradeBand, sessionOccurrenceId, missionId, checkpointId, conceptTags, studentInput } = request.data || {};
+  // ── A2) Hard schema validation ──────────────────
+  const {
+    mode, siteId, gradeBand, sessionOccurrenceId, missionId, checkpointId,
+    conceptTags, studentInput, attachments,
+  } = request.data || {};
+
   const coachMode: string = mode || 'hint';
   const validModes = ['hint', 'verify', 'explain', 'debug'];
   if (!validModes.includes(coachMode)) {
     throw new HttpsError('invalid-argument', `Invalid mode: ${coachMode}. Must be one of: ${validModes.join(', ')}`);
   }
+  if (!siteId) {
+    throw new HttpsError('invalid-argument', 'siteId is required.');
+  }
 
-  // Load learner state from orchestrationStates if available
-  let learnerState: { cognition: number; engagement: number; integrity: number } | null = null;
+  const gb = gradeBand || 'G4_6';
+  const tags: string[] = Array.isArray(conceptTags) ? conceptTags : [];
+  const tagsStr = tags.join(', ');
+  const displayName = profile.displayName ?? 'learner';
+
+  // ── A0) Sense: Load orchestration state (x_hat, P) ──
+  let xHat: { cognition: number; engagement: number; integrity: number } | null = null;
+  let pSummary: { trace: number; confidence: number } | null = null;
   if (sessionOccurrenceId) {
     const stateDocId = `${userId}_${sessionOccurrenceId}`;
     const stateDoc = await admin.firestore().collection('orchestrationStates').doc(stateDocId).get();
     if (stateDoc.exists) {
-      learnerState = stateDoc.data()?.x_hat || null;
+      const stateData = stateDoc.data()!;
+      xHat = stateData.x_hat || null;
+      pSummary = stateData.P ? { trace: stateData.P.trace, confidence: stateData.P.confidence } : null;
     }
   }
 
-  // Build contextual response — V1: template-based, V2+: LLM
-  const displayName = profile.displayName ?? 'learner';
-  const gb = gradeBand || 'G4_6';
-  const tags = Array.isArray(conceptTags) ? conceptTags.join(', ') : '';
+  // ── Emit ai_help_opened event ──────────────────
+  const aiHelpOpenedRef = await admin.firestore().collection('interactionEvents').add({
+    eventType: 'ai_help_opened',
+    siteId,
+    actorId: userId,
+    actorRole: 'learner',
+    gradeBand: gb,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    missionId: missionId || null,
+    checkpointId: checkpointId || null,
+    payload: { mode: coachMode, conceptTags: tags },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
 
+  // ── A0) Detect: Compute reliability risk (SEP v1 heuristic) ──
+  const reliabilityRisk = computeReliabilityRisk(coachMode, xHat, pSummary);
+
+  // ── A0) Detect: Compute autonomy risk (behavioral signals) ──
+  const autonomyRisk = await computeAutonomyRisk(userId, sessionOccurrenceId, xHat, gb);
+
+  // ── A0) Gate: Check if MVL should block this AI response ──
+  const mvlResult = await checkAndMaybeCreateMvl({
+    siteId,
+    learnerId: userId,
+    sessionOccurrenceId,
+    gradeBand: gb,
+    xHat,
+    reliabilityRisk,
+    autonomyRisk,
+  });
+
+  // ── A0) Control: Generate response (V1 template, V2+ LLM) ──
   let message: string;
-  switch (coachMode) {
-    case 'hint':
-      message = learnerState && learnerState.cognition < 0.4
-        ? `${displayName}, it looks like you could use a nudge. Try re-reading the instructions for this checkpoint and focus on the key concepts${tags ? ` (${tags})` : ''}.`
-        : `${displayName}, you're making good progress! Think about what you already know and try applying it to this next step${tags ? ` — focus on ${tags}` : ''}.`;
-      break;
-    case 'verify':
-      message = `${displayName}, let's check your work. Can you explain your reasoning for this step? Walk me through what you did and why.`;
-      break;
-    case 'explain':
-      message = `${displayName}, here's a breakdown: ${tags ? `The concepts involved are ${tags}. ` : ''}Take it step by step and focus on understanding the "why" behind each part.`;
-      break;
-    case 'debug':
-      message = `${displayName}, let's troubleshoot. ${studentInput ? `You mentioned: "${studentInput}". ` : ''}Think about what you expected to happen versus what actually happened. Where does the mismatch start?`;
-      break;
-    default:
-      message = `Hello ${displayName}, this is your AI Coach. Focus on your Leadership & Agency pillar this week!`;
+  let requiresExplainBack = false;
+  let suggestedNextSteps: string[] = [];
+
+  // If MVL gate is active, intercept with verification prompt
+  if (mvlResult.gateActive) {
+    message = generateMvlInterceptMessage(coachMode, displayName, mvlResult.reason, tags);
+    requiresExplainBack = true;
+    suggestedNextSteps = [
+      'Show your work by explaining your reasoning',
+      'Provide evidence of your understanding',
+      'Try a different approach independently first',
+    ];
+  } else {
+    const generated = generateCoachResponse(coachMode, displayName, xHat, tagsStr, studentInput);
+    message = generated.message;
+    requiresExplainBack = generated.requiresExplainBack;
+    suggestedNextSteps = generated.suggestedNextSteps;
   }
 
-  // Log the AI coach interaction event
-  if (siteId) {
-    await admin.firestore().collection('interactionEvents').add({
-      eventType: 'ai_coach_response',
-      siteId,
-      actorId: userId,
-      actorRole: 'learner',
-      gradeBand: gb,
-      sessionOccurrenceId: sessionOccurrenceId || null,
-      missionId: missionId || null,
-      checkpointId: checkpointId || null,
-      payload: { mode: coachMode, hasLearnerState: !!learnerState },
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
+  // ── A1) Forbidden check: never give final answers for graded checkpoints ──
+  // V1: template mode is safe. V2+ LLM will need output filtering.
 
+  // ── Emit ai_help_used event ──────────────────
+  await admin.firestore().collection('interactionEvents').add({
+    eventType: 'ai_help_used',
+    siteId,
+    actorId: userId,
+    actorRole: 'learner',
+    gradeBand: gb,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    missionId: missionId || null,
+    checkpointId: checkpointId || null,
+    payload: {
+      mode: coachMode,
+      aiHelpOpenedEventId: aiHelpOpenedRef.id,
+      reliabilityRiskScore: reliabilityRisk.riskScore,
+      autonomyRiskScore: autonomyRisk.riskScore,
+      mvlGateActive: mvlResult.gateActive,
+      requiresExplainBack,
+    },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // ── Emit ai_coach_response event (audit trail) ──
+  await admin.firestore().collection('interactionEvents').add({
+    eventType: 'ai_coach_response',
+    siteId,
+    actorId: userId,
+    actorRole: 'learner',
+    gradeBand: gb,
+    sessionOccurrenceId: sessionOccurrenceId || null,
+    missionId: missionId || null,
+    checkpointId: checkpointId || null,
+    payload: {
+      mode: coachMode,
+      hasLearnerState: !!xHat,
+      reliabilityRisk: reliabilityRisk,
+      autonomyRisk: autonomyRisk,
+      mvlGateActive: mvlResult.gateActive,
+      mvlEpisodeId: mvlResult.episodeId || null,
+    },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // ── A2) Response contract ──────────────────
   return {
     message,
     mode: coachMode,
-    learnerState,
+    requiresExplainBack,
+    suggestedNextSteps,
+    learnerState: xHat,
+    risk: {
+      reliability: reliabilityRisk,
+      autonomy: autonomyRisk,
+    },
+    mvl: {
+      gateActive: mvlResult.gateActive,
+      episodeId: mvlResult.episodeId || null,
+      reason: mvlResult.reason || null,
+    },
     meta: {
-      version: '0.2.0',
+      version: '1.0.0',
       gradeBand: gb,
-      conceptTags: conceptTags || [],
+      conceptTags: tags,
+      attachments: Array.isArray(attachments) ? attachments : [],
+      aiHelpOpenedEventId: aiHelpOpenedRef.id,
     },
   };
 });

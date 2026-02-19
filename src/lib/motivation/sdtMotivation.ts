@@ -84,26 +84,38 @@ export interface ProgressInsights {
   };
 }
 
+/**
+ * AI Coach Request — aligned to BOS+MIA contract (HOW_TO §5, A2).
+ * Modes: hint (low assist), verify (evidence check), explain (scaffolding), debug (guided).
+ * Forbidden: final answers, doing student's work, punitive language.
+ */
 export interface AICoachRequest {
-  mode: 'hint' | 'rubric_check' | 'debug' | 'critique';
-  studentQuestion: string;
-  context?: {
-    missionId?: string;
-    sprintId?: string;
-    codeSnippet?: string;
-  };
+  mode: 'hint' | 'verify' | 'explain' | 'debug';
+  gradeBand?: 'G1_3' | 'G4_6' | 'G7_9' | 'G10_12';
+  sessionOccurrenceId?: string;
+  missionId?: string;
+  checkpointId?: string;
+  conceptTags?: string[];
+  studentInput?: string;
+  attachments?: Array<{ type: 'artifact_ref' | 'evidence_ref'; id: string; version?: string; mvlEpisodeId?: string }>;
 }
 
+/**
+ * AI Coach Response — aligned to BOS+MIA contract.
+ * Includes risk assessment, MVL gating, and audit metadata.
+ */
 export interface AICoachResponse {
-  response: string;
+  message: string;
+  mode: string;
   requiresExplainBack: boolean;
-  suggestedNextSteps?: string[];
-  rubricAlignment?: {
-    criterion: string;
-    currentLevel: string;
-    targetLevel: string;
-    gap: string;
-  }[];
+  suggestedNextSteps: string[];
+  learnerState: { cognition: number; engagement: number; integrity: number } | null;
+  risk: {
+    reliability: { riskType: string; method: string; riskScore: number; threshold: number };
+    autonomy: { riskType: string; signals: string[]; riskScore: number; threshold: number };
+  };
+  mvl: { gateActive: boolean; episodeId: string | null; reason: string | null };
+  meta: { version: string; gradeBand: string; conceptTags: string[]; aiHelpOpenedEventId: string };
 }
 
 // ===== LABELS & CONSTANTS =====
@@ -414,10 +426,11 @@ class SDTMotivationService {
     siteId: string,
     request: AICoachRequest
   ): Promise<AICoachResponse> {
+    // Route to genAiCoach (BOS contract-aligned Cloud Function)
     const callable = httpsCallable<
       AICoachRequest & { learnerId: string; siteId: string },
       AICoachResponse
-    >(functions, 'requestAICoach');
+    >(functions, 'genAiCoach');
     
     const result = await callable({ ...request, learnerId, siteId });
     return result.data;
