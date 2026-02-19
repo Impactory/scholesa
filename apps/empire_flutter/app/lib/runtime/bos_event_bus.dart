@@ -33,19 +33,28 @@ class BosEventBus {
     'artifact_created',
     'artifact_submitted',
     'artifact_reviewed',
-    // ── AI Coach
+    'artifact_version_saved',
+    'debug_attempted',
+    // ── AI Coach (A0 control surface)
     'ai_help_opened',
     'ai_help_used',
     'ai_coach_response',
     'ai_coach_feedback',
-    // ── MVL
+    // ── Metacognition (feeds FDM y_t — Math Contract §8)
+    'explain_it_back_submitted',
+    'source_check_performed',
+    'retrieval_attempted',
+    'reflection_submitted',
+    // ── MVL (Metacognitive Verification Loop)
     'mvl_gate_triggered',
     'mvl_evidence_attached',
     'mvl_passed',
     'mvl_failed',
-    // ── Teacher override
+    'mvl_needs_more_evidence',
+    // ── Teacher override (supervisory control g_t)
     'teacher_override_mvl',
     'teacher_override_intervention',
+    'teacher_override_applied',
     // ── Contestability
     'contestability_requested',
     'contestability_resolved',
