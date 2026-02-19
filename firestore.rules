@@ -549,6 +549,58 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // ── BOS+MIA Runtime Collections ──────────────────
+
+    // interactionEvents: client writes, server reads for FDM pipeline
+    match /interactionEvents/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create: if isAuthenticated();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // fdmFeatures: server-written feature windows, read by server only
+    match /fdmFeatures/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update: if false;
+      allow delete: if false;
+    }
+
+    // orchestrationStates: server writes x_hat + P, learner/educator reads own
+    match /orchestrationStates/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if false;
+      allow delete: if false;
+    }
+
+    // interventions: server writes, client reads own interventions
+    match /interventions/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if false;
+      allow delete: if false;
+    }
+
+    // mvlEpisodes: server creates gate, client can submit evidence
+    match /mvlEpisodes/{id} {
+      allow read: if isAuthenticated();
+      allow create: if false;
+      allow update: if isAuthenticated()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['evidenceEventIds']);
+      allow delete: if false;
+    }
+
+    // fairnessAudits: server writes, HQ reads
+    match /fairnessAudits/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update, delete: if false;
+    }
+
+    // classInsights: server writes, educator reads own site
+    match /classInsights/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ() || isAdminOrHQ());
+      allow create, update, delete: if false;
+    }
+
     // Default Deny
     match /{document=**} {
       allow read, write: if false;
