@@ -215,13 +215,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildFilterOption(String label, _AuditCategory? category) {
     return ListTile(
       title: Text(label),
-      leading: Radio<_AuditCategory?>(
-        value: category,
+      leading: RadioGroup<_AuditCategory?>(
         groupValue: _filterCategory,
         onChanged: (_AuditCategory? value) {
           setState(() => _filterCategory = value);
           Navigator.pop(context);
         },
+        child: Radio<_AuditCategory?>(
+          value: category,
+        ),
       ),
       onTap: () {
         setState(() => _filterCategory = category);

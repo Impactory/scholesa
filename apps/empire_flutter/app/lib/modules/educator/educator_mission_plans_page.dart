@@ -276,10 +276,12 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   Widget _buildFilterOption(String label) {
     return ListTile(
       title: Text(label),
-      leading: Radio<String>(
-        value: label,
+      leading: RadioGroup<String>(
         groupValue: 'All Pillars',
         onChanged: (_) {},
+        child: Radio<String>(
+          value: label,
+        ),
       ),
     );
   }
