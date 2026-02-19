@@ -134,6 +134,95 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final TextEditingController resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+
+    final bool? sent = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) {
+        String? dialogError;
+        bool sending = false;
+
+        return StatefulBuilder(
+          builder: (BuildContext ctx, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Text('Reset Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Text(
+                    'Enter your email address and we\'ll send you a link to reset your password.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: resetEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      errorText: dialogError,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: sending ? null : () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          final String email = resetEmailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            setDialogState(() {
+                              dialogError = 'Please enter a valid email';
+                            });
+                            return;
+                          }
+                          setDialogState(() {
+                            sending = true;
+                            dialogError = null;
+                          });
+                          try {
+                            await FirebaseAuth.instance
+                                .sendPasswordResetEmail(email: email);
+                            if (ctx.mounted) Navigator.pop(ctx, true);
+                          } on FirebaseAuthException catch (e) {
+                            setDialogState(() {
+                              sending = false;
+                              dialogError = e.message ?? 'Failed to send reset email';
+                            });
+                          }
+                        },
+                  child: sending
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send Reset Link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset email sent. Check your inbox.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
