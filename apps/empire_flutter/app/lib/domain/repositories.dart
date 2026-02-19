@@ -798,6 +798,12 @@ class PartnerContractRepository {
       createdAt: Timestamp.now(),
     );
     await doc.set(model.toMap());
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'contract.created',
+        metadata: <String, dynamic>{'contractId': doc.id, 'partnerOrgId': partnerOrgId},
+      );
+    } catch (_) {}
     return doc.id;
   }
 

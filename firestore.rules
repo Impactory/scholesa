@@ -474,6 +474,81 @@ service cloud.firestore {
       allow write: if false; // Server-only — identity federation
     }
 
+    // ── Additional collections discovered in Flutter services ──
+    match /presenceRecords/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+    match /missionAssignments/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isEducator();
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+    match /conversations/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+    match /incidents/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+    match /skillAssessments/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isEducator();
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+    match /learnerProgress/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-only writes
+    }
+    match /activities/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-only writes
+    }
+    match /events/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isEducator();
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+    match /billingAccounts/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-only — billing is admin-managed
+    }
+    match /payments/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-only — payment records
+    }
+    match /habitLogs/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+    match /offlineDemoActions/{id} {
+      allow read, write: if isAuthenticated(); // Demo/test only
+    }
+    match /checkins/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+    match /drafts/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
     // Default Deny
     match /{document=**} {
       allow read, write: if false;
