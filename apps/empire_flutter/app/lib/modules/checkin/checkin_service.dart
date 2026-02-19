@@ -12,7 +12,7 @@ class CheckinService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String siteId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<LearnerDaySummary> _learnerSummaries = <LearnerDaySummary>[];
   List<CheckRecord> _todayRecords = <CheckRecord>[];

@@ -10,7 +10,7 @@ class HqCurriculumPage extends StatefulWidget {
   State<HqCurriculumPage> createState() => _HqCurriculumPageState();
 }
 
-enum _CurriculumStatus { draft, review, published, archived }
+enum _CurriculumStatus { draft, review, published, archived } // ignore: unused_field
 
 class _Curriculum {
   const _Curriculum({

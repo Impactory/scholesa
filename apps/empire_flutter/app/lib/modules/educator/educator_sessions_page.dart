@@ -327,7 +327,7 @@ class _SessionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        session.pillar!,
+                        session.pillar,
                         style: TextStyle(
                           color: _getPillarColor(),
                           fontSize: 10,
@@ -484,7 +484,7 @@ class _SessionDetailSheet extends StatelessWidget {
                   _DetailRow(
                     icon: Icons.category,
                     label: 'Pillar',
-                    value: session.pillar!,
+                    value: session.pillar,
                   ),
                   const SizedBox(height: 24),
                   SizedBox(

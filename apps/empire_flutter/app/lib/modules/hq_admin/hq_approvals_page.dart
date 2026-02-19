@@ -21,7 +21,6 @@ class _ApprovalItem {
     required this.submittedBy,
     required this.submittedAt,
     required this.status,
-    this.notes,
   });
 
   final String id;
@@ -30,7 +29,6 @@ class _ApprovalItem {
   final String submittedBy;
   final DateTime submittedAt;
   final _ApprovalStatus status;
-  final String? notes;
 }
 
 class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProviderStateMixin {

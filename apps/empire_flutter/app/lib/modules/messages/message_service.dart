@@ -12,7 +12,7 @@ class MessageService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String userId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<Message> _messages = <Message>[];
   List<Conversation> _conversations = <Conversation>[];

@@ -12,7 +12,7 @@ class HabitService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String learnerId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<Habit> _habits = <Habit>[];
   List<HabitLog> _recentLogs = <HabitLog>[];
@@ -155,7 +155,7 @@ class HabitService extends ChangeNotifier {
 
     for (final HabitLog log in _recentLogs) {
       completionsByHabit[log.habitId] = (completionsByHabit[log.habitId] ?? 0) + 1;
-      totalMinutes += log.durationMinutes ?? 0;
+      totalMinutes += log.durationMinutes;
       
       final int dayIndex = log.completedAt.weekday - 1;
       if (dayIndex >= 0 && dayIndex < 7) {

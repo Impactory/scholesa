@@ -12,7 +12,7 @@ class EducatorService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String educatorId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<TodayClass> _todayClasses = <TodayClass>[];
   EducatorDayStats? _dayStats;

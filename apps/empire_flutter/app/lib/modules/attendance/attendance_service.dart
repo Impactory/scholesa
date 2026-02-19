@@ -19,7 +19,7 @@ class AttendanceService extends ChangeNotifier {
   final SyncCoordinator _syncCoordinator;
   final String? educatorId;
   final String? siteId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   List<SessionOccurrence> _todayOccurrences = <SessionOccurrence>[];
   SessionOccurrence? _currentOccurrence;

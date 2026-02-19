@@ -12,7 +12,7 @@ class MissionService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String learnerId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<Mission> _missions = <Mission>[];
   LearnerProgress? _progress;

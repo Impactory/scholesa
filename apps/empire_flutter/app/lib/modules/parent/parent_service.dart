@@ -12,7 +12,7 @@ class ParentService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String parentId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
   BillingSummary? _billingSummary;
