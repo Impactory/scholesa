@@ -41,9 +41,9 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.educator.withOpacity(0.05),
+              ScholesaColors.educator.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.futureSkills.withOpacity(0.03),
+              ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -108,7 +108,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.educator.withOpacity(0.3),
+                    color: ScholesaColors.educator.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -264,7 +264,7 @@ class _SessionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: _getPillarColor().withOpacity(0.1),
+                        color: _getPillarColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -296,7 +296,7 @@ class _SessionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _getStatusColor().withOpacity(0.1),
+                        color: _getStatusColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -323,7 +323,7 @@ class _SessionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _getPillarColor().withOpacity(0.1),
+                        color: _getPillarColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -410,7 +410,7 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : chipColor.withOpacity(0.1),
+          color: isSelected ? chipColor : chipColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -529,7 +529,7 @@ class _DetailRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: ScholesaColors.educator.withOpacity(0.1),
+            color: ScholesaColors.educator.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 18, color: ScholesaColors.educator),

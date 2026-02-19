@@ -41,9 +41,9 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.learner.withOpacity(0.05),
+              ScholesaColors.learner.withValues(alpha: 0.05),
               Colors.white,
-              const Color(0xFFF59E0B).withOpacity(0.03),
+              const Color(0xFFF59E0B).withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -74,7 +74,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
               borderRadius: BorderRadius.circular(16),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -115,12 +115,12 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withOpacity(0.8)],
+              colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withValues(alpha: 0.8)],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: ScholesaColors.learner.withOpacity(0.3),
+                color: ScholesaColors.learner.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -134,7 +134,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Center(
@@ -167,7 +167,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                             Text(
                               '${progress.xpToNextLevel} to next level',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 12,
                               ),
                             ),
@@ -178,7 +178,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: progress.levelProgress,
-                            backgroundColor: Colors.white.withOpacity(0.3),
+                            backgroundColor: Colors.white.withValues(alpha: 0.3),
                             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         ),
@@ -348,7 +348,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.learner.withOpacity(0.1),
+              color: ScholesaColors.learner.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 48, color: ScholesaColors.learner),
@@ -419,7 +419,7 @@ class _ProgressStat extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 11,
           ),
         ),
@@ -449,7 +449,7 @@ class _PillarChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
-        color: selected ? chipColor : chipColor.withOpacity(0.1),
+        color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -520,7 +520,7 @@ class _MissionCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: _pillarColor.withOpacity(0.2)),
+        side: BorderSide(color: _pillarColor.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -536,7 +536,7 @@ class _MissionCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _pillarColor.withOpacity(0.1),
+                      color: _pillarColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -560,7 +560,7 @@ class _MissionCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.1),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -607,7 +607,7 @@ class _MissionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: mission.progress,
-                          backgroundColor: _pillarColor.withOpacity(0.1),
+                          backgroundColor: _pillarColor.withValues(alpha: 0.1),
                           valueColor: AlwaysStoppedAnimation<Color>(_pillarColor),
                         ),
                       ),
@@ -655,7 +655,7 @@ class _MissionCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _statusColor.withOpacity(0.1),
+                      color: _statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -725,12 +725,12 @@ class _MissionDetailsSheet extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: <Color>[_pillarColor.withOpacity(0.8), _pillarColor],
+                            colors: <Color>[_pillarColor.withValues(alpha: 0.8), _pillarColor],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: <BoxShadow>[
                             BoxShadow(
-                              color: _pillarColor.withOpacity(0.3),
+                              color: _pillarColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -749,7 +749,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: _pillarColor.withOpacity(0.1),
+                                color: _pillarColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -831,7 +831,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                       children: mission.skills.map((Skill skill) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _pillarColor.withOpacity(0.1),
+                          color: _pillarColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -863,9 +863,9 @@ class _MissionDetailsSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.success.withOpacity(0.1),
+                        color: ScholesaColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: ScholesaColors.success.withOpacity(0.3)),
+                        border: Border.all(color: ScholesaColors.success.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1006,7 +1006,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

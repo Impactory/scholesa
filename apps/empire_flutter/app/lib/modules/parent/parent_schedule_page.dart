@@ -23,9 +23,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withOpacity(0.05),
+              ScholesaColors.parent.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.leadership.withOpacity(0.03),
+              ScholesaColors.leadership.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -58,7 +58,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.parent.withOpacity(0.3),
+                    color: ScholesaColors.parent.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -87,7 +87,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: ScholesaColors.parent.withOpacity(0.1),
+                color: ScholesaColors.parent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -176,7 +176,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   color: isSelected
                       ? ScholesaColors.parent
                       : isToday
-                          ? ScholesaColors.parent.withOpacity(0.1)
+                          ? ScholesaColors.parent.withValues(alpha: 0.1)
                           : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -229,8 +229,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withOpacity(0.1),
-              ScholesaColors.leadership.withOpacity(0.05),
+              ScholesaColors.parent.withValues(alpha: 0.1),
+              ScholesaColors.leadership.withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
@@ -590,7 +590,7 @@ class _ScheduleItem extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: pillarColor.withOpacity(0.1),
+                                    color: pillarColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(

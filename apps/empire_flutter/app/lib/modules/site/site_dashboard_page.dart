@@ -21,9 +21,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.site.withOpacity(0.05),
+              ScholesaColors.site.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.futureSkills.withOpacity(0.03),
+              ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -56,7 +56,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.site.withOpacity(0.3),
+                    color: ScholesaColors.site.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -88,7 +88,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ScholesaColors.site.withOpacity(0.1),
+                  color: ScholesaColors.site.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.site),
@@ -223,7 +223,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.success.withOpacity(0.1),
+                    color: ScholesaColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
@@ -382,7 +382,7 @@ class _PeriodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? ScholesaColors.site : ScholesaColors.site.withOpacity(0.1),
+          color: isSelected ? ScholesaColors.site : ScholesaColors.site.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -433,7 +433,7 @@ class _MetricCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -442,8 +442,8 @@ class _MetricCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: trendUp
-                      ? ScholesaColors.success.withOpacity(0.1)
-                      : ScholesaColors.error.withOpacity(0.1),
+                      ? ScholesaColors.success.withValues(alpha: 0.1)
+                      : ScholesaColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -536,7 +536,7 @@ class _PillarProgressRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -561,7 +561,7 @@ class _PillarProgressRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: color.withOpacity(0.2),
+                  backgroundColor: color.withValues(alpha: 0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                   minHeight: 6,
                 ),
@@ -605,7 +605,7 @@ class _ActivityItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 20),

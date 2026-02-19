@@ -43,9 +43,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.site.withOpacity(0.05),
+              ScholesaColors.site.withValues(alpha: 0.05),
               Colors.white,
-              const Color(0xFF3B82F6).withOpacity(0.03),
+              const Color(0xFF3B82F6).withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -79,7 +79,7 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
               borderRadius: BorderRadius.circular(16),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: const Color(0xFF3B82F6).withOpacity(0.3),
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -178,7 +178,7 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -344,7 +344,7 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 48, color: const Color(0xFF3B82F6)),
@@ -423,9 +423,9 @@ class _StatMiniCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: <Widget>[
@@ -469,7 +469,7 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
-        color: selected ? chipColor : chipColor.withOpacity(0.1),
+        color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -528,7 +528,7 @@ class _LearnerCheckinCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: _statusColor.withOpacity(0.2)),
+        side: BorderSide(color: _statusColor.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -542,12 +542,12 @@ class _LearnerCheckinCard extends StatelessWidget {
                   height: 52,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: <Color>[ScholesaColors.learner.withOpacity(0.8), ScholesaColors.learner],
+                      colors: <Color>[ScholesaColors.learner.withValues(alpha: 0.8), ScholesaColors.learner],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
-                        color: ScholesaColors.learner.withOpacity(0.3),
+                        color: ScholesaColors.learner.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -584,7 +584,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _statusColor.withOpacity(0.1),
+                              color: _statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -710,7 +710,7 @@ class _LearnerCheckinCard extends StatelessWidget {
             ...summary.authorizedPickups.map((AuthorizedPickup pickup) => ListTile(
               leading: CircleAvatar(
                 backgroundColor: pickup.isPrimaryContact
-                    ? ScholesaColors.success.withOpacity(0.1)
+                    ? ScholesaColors.success.withValues(alpha: 0.1)
                     : Colors.grey[100],
                 child: Icon(
                   Icons.person,
@@ -725,7 +725,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.success.withOpacity(0.1),
+                        color: ScholesaColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -772,7 +772,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -837,7 +837,7 @@ class _CheckRecordCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -847,7 +847,7 @@ class _CheckRecordCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _statusColor.withOpacity(0.1),
+                color: _statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(_statusIcon, color: _statusColor, size: 20),
@@ -867,7 +867,7 @@ class _CheckRecordCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _statusColor.withOpacity(0.1),
+                          color: _statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -972,7 +972,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -1160,10 +1160,10 @@ class _PickupOption extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? ScholesaColors.success.withOpacity(0.1) : Colors.grey[50],
+          color: selected ? ScholesaColors.success.withValues(alpha: 0.1) : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? ScholesaColors.success : Colors.grey.withOpacity(0.2),
+            color: selected ? ScholesaColors.success : Colors.grey.withValues(alpha: 0.2),
             width: selected ? 2 : 1,
           ),
         ),
@@ -1171,7 +1171,7 @@ class _PickupOption extends StatelessWidget {
           children: <Widget>[
             CircleAvatar(
               backgroundColor: pickup.isPrimaryContact
-                  ? ScholesaColors.success.withOpacity(0.2)
+                  ? ScholesaColors.success.withValues(alpha: 0.2)
                   : Colors.grey[200],
               child: Icon(
                 Icons.person,
@@ -1194,7 +1194,7 @@ class _PickupOption extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: ScholesaColors.success.withOpacity(0.1),
+                            color: ScholesaColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(

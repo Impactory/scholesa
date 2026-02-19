@@ -498,7 +498,7 @@ class _StatusButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+            color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
             border: Border.all(
               color: isSelected ? color : Colors.grey[300]!,
               width: isSelected ? 2 : 1,

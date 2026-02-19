@@ -46,9 +46,9 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withOpacity(0.05),
+              ScholesaColors.hq.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.purple.withOpacity(0.03),
+              ScholesaColors.purple.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -82,7 +82,7 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
               borderRadius: BorderRadius.circular(16),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: ScholesaColors.hq.withOpacity(0.3),
+                  color: ScholesaColors.hq.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -181,7 +181,7 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -376,7 +376,7 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.hq.withOpacity(0.1),
+              color: ScholesaColors.hq.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 48, color: ScholesaColors.hq),
@@ -466,9 +466,9 @@ class _StatMiniCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: <Widget>[
@@ -512,7 +512,7 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
-        color: selected ? chipColor : chipColor.withOpacity(0.1),
+        color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -582,7 +582,7 @@ class _UserCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: _roleColor.withOpacity(0.2)),
+        side: BorderSide(color: _roleColor.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -599,12 +599,12 @@ class _UserCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: <Color>[_roleColor.withOpacity(0.8), _roleColor],
+                    colors: <Color>[_roleColor.withValues(alpha: 0.8), _roleColor],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: _roleColor.withOpacity(0.3),
+                      color: _roleColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -641,7 +641,7 @@ class _UserCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _statusColor.withOpacity(0.1),
+                            color: _statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -680,7 +680,7 @@ class _UserCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _roleColor.withOpacity(0.1),
+                            color: _roleColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -735,7 +735,7 @@ class _SiteCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: ScholesaColors.site.withOpacity(0.2)),
+        side: BorderSide(color: ScholesaColors.site.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -746,7 +746,7 @@ class _SiteCard extends StatelessWidget {
               height: 52,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: <Color>[ScholesaColors.site.withOpacity(0.8), ScholesaColors.site],
+                  colors: <Color>[ScholesaColors.site.withValues(alpha: 0.8), ScholesaColors.site],
                 ),
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -853,7 +853,7 @@ class _AuditLogCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -863,7 +863,7 @@ class _AuditLogCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _actionColor.withOpacity(0.1),
+                color: _actionColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(_actionIcon, color: _actionColor, size: 20),
@@ -964,12 +964,12 @@ class _UserDetailsSheet extends StatelessWidget {
                         height: 72,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: <Color>[_roleColor.withOpacity(0.8), _roleColor],
+                            colors: <Color>[_roleColor.withValues(alpha: 0.8), _roleColor],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: <BoxShadow>[
                             BoxShadow(
-                              color: _roleColor.withOpacity(0.3),
+                              color: _roleColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -1008,7 +1008,7 @@ class _UserDetailsSheet extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: _roleColor.withOpacity(0.1),
+                                    color: _roleColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -1229,7 +1229,7 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Material(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -1353,7 +1353,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: ScholesaColors.hq.withOpacity(0.1),
+              color: ScholesaColors.hq.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.person_add, color: ScholesaColors.hq),
@@ -1406,7 +1406,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     label: Text(role.label),
                     selected: isSelected,
                     onSelected: (_) => setState(() => _selectedRole = role),
-                    selectedColor: color.withOpacity(0.2),
+                    selectedColor: color.withValues(alpha: 0.2),
                     labelStyle: TextStyle(
                       color: isSelected ? color : Colors.grey[700],
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

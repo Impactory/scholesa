@@ -35,9 +35,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withOpacity(0.05),
+              ScholesaColors.parent.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.success.withOpacity(0.03),
+              ScholesaColors.success.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -77,7 +77,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.parent.withOpacity(0.3),
+                    color: ScholesaColors.parent.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -110,7 +110,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ScholesaColors.parent.withOpacity(0.1),
+                  color: ScholesaColors.parent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.parent),
@@ -161,13 +161,13 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.parent,
-              ScholesaColors.parent.withOpacity(0.8),
+              ScholesaColors.parent.withValues(alpha: 0.8),
             ],
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: ScholesaColors.parent.withOpacity(0.3),
+              color: ScholesaColors.parent.withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -202,7 +202,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -222,7 +222,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -379,7 +379,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: ScholesaColors.parent.withOpacity(0.3)),
+              border: Border.all(color: ScholesaColors.parent.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +392,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.parent.withOpacity(0.1),
+                        color: ScholesaColors.parent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -472,7 +472,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.parent.withOpacity(0.1),
+                    color: ScholesaColors.parent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.credit_card, color: ScholesaColors.parent),
@@ -583,7 +583,7 @@ class _BalanceStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -631,7 +631,7 @@ class _InvoiceCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _isPaid ? Colors.grey.shade200 : ScholesaColors.warning.withOpacity(0.3),
+            color: _isPaid ? Colors.grey.shade200 : ScholesaColors.warning.withValues(alpha: 0.3),
           ),
         ),
         child: Column(
@@ -642,7 +642,7 @@ class _InvoiceCard extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: (_isPaid ? ScholesaColors.success : ScholesaColors.warning)
-                        .withOpacity(0.1),
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -683,7 +683,7 @@ class _InvoiceCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: (_isPaid ? ScholesaColors.success : ScholesaColors.warning)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -756,7 +756,7 @@ class _PaymentCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: ScholesaColors.success.withOpacity(0.1),
+                color: ScholesaColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.check_circle, color: ScholesaColors.success),

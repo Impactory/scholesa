@@ -29,9 +29,9 @@ class _HqSitesPageState extends State<HqSitesPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withOpacity(0.05),
+              ScholesaColors.hq.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.site.withOpacity(0.03),
+              ScholesaColors.site.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -111,7 +111,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.hq.withOpacity(0.3),
+                    color: ScholesaColors.hq.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -326,7 +326,7 @@ class _SiteCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.site.withOpacity(0.1),
+                        color: ScholesaColors.site.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -366,7 +366,7 @@ class _SiteCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _statusColor.withOpacity(0.1),
+                        color: _statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -470,7 +470,7 @@ class _HealthScore extends StatelessWidget {
             children: <Widget>[
               CircularProgressIndicator(
                 value: score / 100,
-                backgroundColor: _color.withOpacity(0.2),
+                backgroundColor: _color.withValues(alpha: 0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(_color),
                 strokeWidth: 3,
               ),
@@ -516,7 +516,7 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : chipColor.withOpacity(0.1),
+          color: isSelected ? chipColor : chipColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(

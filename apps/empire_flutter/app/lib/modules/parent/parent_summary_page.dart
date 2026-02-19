@@ -32,9 +32,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withOpacity(0.05),
+              ScholesaColors.parent.withValues(alpha: 0.05),
               Colors.white,
-              const Color(0xFFEC4899).withOpacity(0.03),
+              const Color(0xFFEC4899).withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -86,7 +86,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.parent.withOpacity(0.3),
+                    color: ScholesaColors.parent.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -143,13 +143,13 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 color: isSelected ? ScholesaColors.parent : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? ScholesaColors.parent : Colors.grey.withOpacity(0.2),
+                  color: isSelected ? ScholesaColors.parent : Colors.grey.withValues(alpha: 0.2),
                   width: 2,
                 ),
                 boxShadow: isSelected
                     ? <BoxShadow>[
                         BoxShadow(
-                          color: ScholesaColors.parent.withOpacity(0.3),
+                          color: ScholesaColors.parent.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -164,8 +164,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isSelected
-                            ? <Color>[Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.2)]
-                            : <Color>[ScholesaColors.learner.withOpacity(0.8), ScholesaColors.learner],
+                            ? <Color>[Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0.2)]
+                            : <Color>[ScholesaColors.learner.withValues(alpha: 0.8), ScholesaColors.learner],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -218,12 +218,12 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withOpacity(0.8)],
+          colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: ScholesaColors.learner.withOpacity(0.3),
+            color: ScholesaColors.learner.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -237,7 +237,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
@@ -247,7 +247,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       Text(
                         'Lv',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12,
                         ),
                       ),
@@ -280,7 +280,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     Text(
                       '${learner.totalXp} XP earned',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
                       ),
                     ),
@@ -418,7 +418,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.parent.withOpacity(0.1),
+              color: ScholesaColors.parent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.family_restroom, size: 48, color: ScholesaColors.parent),
@@ -481,7 +481,7 @@ class _ProgressStat extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 12,
           ),
         ),
@@ -512,7 +512,7 @@ class _PillarProgressBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -524,7 +524,7 @@ class _PillarProgressBar extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -561,7 +561,7 @@ class _PillarProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                     minHeight: 8,
                   ),
@@ -670,7 +670,7 @@ class _EventCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: _typeColor.withOpacity(0.2)),
+        side: BorderSide(color: _typeColor.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -680,7 +680,7 @@ class _EventCard extends StatelessWidget {
               width: 52,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: _typeColor.withOpacity(0.1),
+                color: _typeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(

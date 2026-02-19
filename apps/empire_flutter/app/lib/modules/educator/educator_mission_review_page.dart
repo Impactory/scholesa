@@ -31,9 +31,9 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.educator.withOpacity(0.05),
+              ScholesaColors.educator.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.futureSkills.withOpacity(0.03),
+              ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -99,7 +99,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.educator.withOpacity(0.3),
+                    color: ScholesaColors.educator.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -206,13 +206,13 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.educator.withOpacity(0.1),
+              color: ScholesaColors.educator.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.check_circle_outline,
               size: 64,
-              color: ScholesaColors.educator.withOpacity(0.5),
+              color: ScholesaColors.educator.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
@@ -278,7 +278,7 @@ class _SubmissionCard extends StatelessWidget {
                   children: <Widget>[
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: ScholesaColors.learner.withOpacity(0.1),
+                      backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
                       child: Text(
                         submission.learnerInitials,
                         style: const TextStyle(
@@ -338,7 +338,7 @@ class _SubmissionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _getPillarColor().withOpacity(0.1),
+                        color: _getPillarColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -412,7 +412,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -450,7 +450,7 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : chipColor.withOpacity(0.1),
+          color: isSelected ? chipColor : chipColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -469,7 +469,7 @@ class _FilterChip extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.2) : chipColor,
+                  color: isSelected ? Colors.white.withValues(alpha: 0.2) : chipColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -516,7 +516,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -593,7 +593,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: ScholesaColors.learner.withOpacity(0.1),
+                        backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
                         child: Text(
                           widget.submission.learnerInitials,
                           style: const TextStyle(

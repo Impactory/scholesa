@@ -22,9 +22,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.site.withOpacity(0.05),
+              ScholesaColors.site.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.scheduleGradient.colors.first.withOpacity(0.03),
+              ScholesaColors.scheduleGradient.colors.first.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -123,7 +123,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.site.withOpacity(0.3),
+                    color: ScholesaColors.site.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -229,7 +229,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       color: isSelected
                           ? ScholesaColors.site
                           : isToday
-                              ? ScholesaColors.site.withOpacity(0.1)
+                              ? ScholesaColors.site.withValues(alpha: 0.1)
                               : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -441,7 +441,7 @@ class _SessionCard extends StatelessWidget {
           border: Border(left: BorderSide(color: _pillarColor, width: 4)),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -461,7 +461,7 @@ class _SessionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _pillarColor.withOpacity(0.1),
+                    color: _pillarColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -676,7 +676,7 @@ class _PillarOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withOpacity(0.1),
+          color: isSelected ? color : color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,

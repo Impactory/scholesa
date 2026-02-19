@@ -22,9 +22,9 @@ class ProfilePage extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: <Color>[
-                  roleColor.withOpacity(0.05),
+                  roleColor.withValues(alpha: 0.05),
                   Colors.white,
-                  Colors.grey.withOpacity(0.02),
+                  Colors.grey.withValues(alpha: 0.02),
                 ],
               ),
             ),
@@ -86,12 +86,12 @@ class ProfilePage extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[roleColor, roleColor.withOpacity(0.8)],
+          colors: <Color>[roleColor, roleColor.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: roleColor.withOpacity(0.3),
+            color: roleColor.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -103,7 +103,7 @@ class ProfilePage extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Center(
@@ -134,7 +134,7 @@ class ProfilePage extends StatelessWidget {
                 Text(
                   email,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                   ),
                 ),
@@ -142,7 +142,7 @@ class ProfilePage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -294,7 +294,7 @@ class ProfilePage extends StatelessWidget {
           label: const Text('Sign Out'),
           style: OutlinedButton.styleFrom(
             foregroundColor: ScholesaColors.error,
-            side: BorderSide(color: ScholesaColors.error.withOpacity(0.5)),
+            side: BorderSide(color: ScholesaColors.error.withValues(alpha: 0.5)),
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -334,7 +334,7 @@ class _SettingsTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: ListTile(
         onTap: onTap,

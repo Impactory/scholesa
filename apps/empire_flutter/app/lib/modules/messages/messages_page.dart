@@ -39,9 +39,9 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              const Color(0xFF6366F1).withOpacity(0.05),
+              const Color(0xFF6366F1).withValues(alpha: 0.05),
               Colors.white,
-              const Color(0xFF8B5CF6).withOpacity(0.03),
+              const Color(0xFF8B5CF6).withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -74,7 +74,7 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -255,7 +255,7 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.1),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 48, color: const Color(0xFF6366F1)),
@@ -316,7 +316,7 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
-        color: selected ? chipColor : chipColor.withOpacity(0.1),
+        color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -395,8 +395,8 @@ class _NotificationCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: message.isRead
-                ? Colors.grey.withOpacity(0.2)
-                : _typeColor.withOpacity(0.3),
+                ? Colors.grey.withValues(alpha: 0.2)
+                : _typeColor.withValues(alpha: 0.3),
             width: message.isRead ? 1 : 2,
           ),
         ),
@@ -412,7 +412,7 @@ class _NotificationCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: _typeColor.withOpacity(0.1),
+                    color: _typeColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -486,8 +486,8 @@ class _NotificationCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: message.priority == MessagePriority.urgent
-                                    ? ScholesaColors.error.withOpacity(0.1)
-                                    : ScholesaColors.warning.withOpacity(0.1),
+                                    ? ScholesaColors.error.withValues(alpha: 0.1)
+                                    : ScholesaColors.warning.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -547,7 +547,7 @@ class _ConversationCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
@@ -663,7 +663,7 @@ class _MessageDetailSheet extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: _getTypeColor(message.type).withOpacity(0.1),
+                    color: _getTypeColor(message.type).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(

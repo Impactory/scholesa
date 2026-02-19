@@ -40,9 +40,9 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.educator.withOpacity(0.05),
+              ScholesaColors.educator.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.learner.withOpacity(0.03),
+              ScholesaColors.learner.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -102,7 +102,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.educator.withOpacity(0.3),
+                    color: ScholesaColors.educator.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -285,7 +285,7 @@ class _LearnerCard extends StatelessWidget {
               children: <Widget>[
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: ScholesaColors.learner.withOpacity(0.1),
+                  backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
                   child: Text(
                     learner.initials,
                     style: const TextStyle(
@@ -316,7 +316,7 @@ class _LearnerCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: ScholesaColors.success.withOpacity(0.1),
+                                color: ScholesaColors.success.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
@@ -397,7 +397,7 @@ class _PillarProgress extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -427,7 +427,7 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? ScholesaColors.educator
-              : ScholesaColors.educator.withOpacity(0.1),
+              : ScholesaColors.educator.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -471,7 +471,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -534,7 +534,7 @@ class _LearnerDetailSheet extends StatelessWidget {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor: ScholesaColors.learner.withOpacity(0.1),
+                        backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
                         child: Text(
                           learner.initials,
                           style: const TextStyle(
@@ -664,7 +664,7 @@ class _ProgressBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: color.withOpacity(0.2),
+            backgroundColor: color.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 8,
           ),

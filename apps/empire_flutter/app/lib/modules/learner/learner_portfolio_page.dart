@@ -34,9 +34,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.learner.withOpacity(0.05),
+              ScholesaColors.learner.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.futureSkills.withOpacity(0.03),
+              ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -83,7 +83,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.learner.withOpacity(0.3),
+                    color: ScholesaColors.learner.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -116,7 +116,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ScholesaColors.learner.withOpacity(0.1),
+                  color: ScholesaColors.learner.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.edit, color: ScholesaColors.learner),
@@ -139,13 +139,13 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.learner,
-              ScholesaColors.learner.withOpacity(0.8),
+              ScholesaColors.learner.withValues(alpha: 0.8),
             ],
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: ScholesaColors.learner.withOpacity(0.3),
+              color: ScholesaColors.learner.withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -157,9 +157,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
               ),
               child: const Icon(Icons.person, color: Colors.white, size: 48),
             ),
@@ -180,7 +180,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   Text(
                     'Future Innovator • Singapore',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
                     ),
                   ),
@@ -233,7 +233,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.futureSkills.withOpacity(0.1),
+                        color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.rocket_launch,
@@ -261,7 +261,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.futureSkills.withOpacity(0.1),
+                    color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -280,7 +280,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: 0.75,
-                backgroundColor: ScholesaColors.futureSkills.withOpacity(0.2),
+                backgroundColor: ScholesaColors.futureSkills.withValues(alpha: 0.2),
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   ScholesaColors.futureSkills,
                 ),
@@ -571,7 +571,7 @@ class _PillarStatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -611,7 +611,7 @@ class _BadgeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: earned
-              ? (badge['color'] as Color).withOpacity(0.3)
+              ? (badge['color'] as Color).withValues(alpha: 0.3)
               : Colors.grey.shade200,
         ),
       ),
@@ -623,7 +623,7 @@ class _BadgeCard extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               color: earned
-                  ? (badge['color'] as Color).withOpacity(0.15)
+                  ? (badge['color'] as Color).withValues(alpha: 0.15)
                   : Colors.grey.shade100,
               shape: BoxShape.circle,
             ),
@@ -723,7 +723,7 @@ class _SkillCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: (skill['color'] as Color).withOpacity(0.1),
+                    color: (skill['color'] as Color).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -742,7 +742,7 @@ class _SkillCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: skill['progress'] as double,
-                backgroundColor: (skill['color'] as Color).withOpacity(0.2),
+                backgroundColor: (skill['color'] as Color).withValues(alpha: 0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   skill['color'] as Color,
                 ),
@@ -803,7 +803,7 @@ class _ProjectCard extends StatelessWidget {
               height: 120,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: (project['color'] as Color).withOpacity(0.15),
+                color: (project['color'] as Color).withValues(alpha: 0.15),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
@@ -829,7 +829,7 @@ class _ProjectCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: (project['color'] as Color).withOpacity(0.1),
+                          color: (project['color'] as Color).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

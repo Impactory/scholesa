@@ -18,9 +18,9 @@ class HqRoleSwitcherPage extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withOpacity(0.05),
+              ScholesaColors.hq.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.purple.withOpacity(0.03),
+              ScholesaColors.purple.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -57,7 +57,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: ScholesaColors.hq.withOpacity(0.3),
+                  color: ScholesaColors.hq.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -108,7 +108,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
             border: Border.all(color: ScholesaColors.border),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
               ),
             ],
@@ -145,10 +145,10 @@ class HqRoleSwitcherPage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: viewingAs.name.roleColor.withOpacity(0.1),
+                    color: viewingAs.name.roleColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: viewingAs.name.roleColor.withOpacity(0.3),
+                      color: viewingAs.name.roleColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -262,9 +262,9 @@ class HqRoleSwitcherPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: ScholesaColors.warning.withOpacity(0.1),
+        color: ScholesaColors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ScholesaColors.warning.withOpacity(0.3)),
+        border: Border.all(color: ScholesaColors.warning.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: <Widget>[
@@ -276,7 +276,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
               'Any actions taken will be attributed to your HQ account.',
               style: TextStyle(
                 fontSize: 13,
-                color: ScholesaColors.warning.withOpacity(0.8),
+                color: ScholesaColors.warning.withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -327,8 +327,8 @@ class _RoleCard extends StatelessWidget {
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: isActive
-                    ? roleColor.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05),
+                    ? roleColor.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.05),
                 blurRadius: isActive ? 20 : 10,
                 offset: const Offset(0, 4),
               ),
@@ -437,7 +437,7 @@ class _RoleCard extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: roleColor.withOpacity(0.1),
+                            color: roleColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

@@ -64,7 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
+                    color: Colors.grey.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -287,7 +287,7 @@ class _SettingsPageState extends State<SettingsPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ScholesaColors.error.withOpacity(0.3)),
+              border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: <Widget>[
@@ -559,7 +559,7 @@ class _SettingsTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (iconColor ?? Colors.grey).withOpacity(0.1),
+          color: (iconColor ?? Colors.grey).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: iconColor ?? Colors.grey[700], size: 20),
@@ -596,7 +596,7 @@ class _SettingsToggle extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: Colors.grey[700], size: 20),

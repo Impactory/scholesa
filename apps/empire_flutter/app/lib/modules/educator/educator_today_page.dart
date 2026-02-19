@@ -31,9 +31,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.educator.withOpacity(0.05),
+              ScholesaColors.educator.withValues(alpha: 0.05),
               Colors.white,
-              const Color(0xFF10B981).withOpacity(0.03),
+              const Color(0xFF10B981).withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -89,7 +89,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.educator.withOpacity(0.3),
+                    color: ScholesaColors.educator.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -119,7 +119,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: ScholesaColors.educator.withOpacity(0.1),
+                color: ScholesaColors.educator.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -228,7 +228,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: ScholesaColors.educator.withOpacity(0.3),
+            color: ScholesaColors.educator.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -242,7 +242,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -272,7 +272,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               Text(
                 '${_formatTime(currentClass.startTime)} - ${_formatTime(currentClass.endTime)}',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 13,
                 ),
               ),
@@ -290,18 +290,18 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           const SizedBox(height: 8),
           Row(
             children: <Widget>[
-              Icon(Icons.location_on, size: 16, color: Colors.white.withOpacity(0.8)),
+              Icon(Icons.location_on, size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
                 currentClass.location ?? 'No location',
-                style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.people, size: 16, color: Colors.white.withOpacity(0.8)),
+              Icon(Icons.people, size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
                 '${currentClass.presentCount}/${currentClass.enrolledCount} present',
-                style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
             ],
           ),
@@ -406,7 +406,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -453,7 +453,7 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -511,7 +511,7 @@ class _ClassCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: _statusColor.withOpacity(isCompleted ? 0.2 : 0.3),
+          color: _statusColor.withValues(alpha: isCompleted ? 0.2 : 0.3),
         ),
       ),
       child: InkWell(
@@ -589,7 +589,7 @@ class _ClassCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.1),
+                  color: _statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -691,7 +691,7 @@ class _ClassDetailSheet extends StatelessWidget {
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: ScholesaColors.learner.withOpacity(0.1),
+                          backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
                           child: Text(
                             _getInitials(learner.name),
                             style: const TextStyle(
@@ -763,7 +763,7 @@ class _ClassDetailSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

@@ -36,9 +36,9 @@ class _HqBillingPageState extends State<HqBillingPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withOpacity(0.05),
+              ScholesaColors.hq.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.success.withOpacity(0.03),
+              ScholesaColors.success.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -84,7 +84,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.hq.withOpacity(0.3),
+                    color: ScholesaColors.hq.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -117,7 +117,7 @@ class _HqBillingPageState extends State<HqBillingPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ScholesaColors.hq.withOpacity(0.1),
+                  color: ScholesaColors.hq.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.hq),
@@ -198,13 +198,13 @@ class _HqBillingPageState extends State<HqBillingPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.hq,
-              ScholesaColors.hq.withOpacity(0.8),
+              ScholesaColors.hq.withValues(alpha: 0.8),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: ScholesaColors.hq.withOpacity(0.3),
+              color: ScholesaColors.hq.withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -239,7 +239,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -259,7 +259,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -475,7 +475,7 @@ class _RevenueStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -540,7 +540,7 @@ class _InvoiceCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.hq.withOpacity(0.1),
+                    color: ScholesaColors.hq.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.receipt_long, color: ScholesaColors.hq),
@@ -577,7 +577,7 @@ class _InvoiceCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _statusColor.withOpacity(0.1),
+                        color: _statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -645,7 +645,7 @@ class _PaymentCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: ScholesaColors.success.withOpacity(0.1),
+                color: ScholesaColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.check_circle, color: ScholesaColors.success),
@@ -726,7 +726,7 @@ class _SubscriptionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.hq.withOpacity(0.1),
+                    color: ScholesaColors.hq.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.autorenew, color: ScholesaColors.hq),
@@ -753,7 +753,7 @@ class _SubscriptionCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor.withOpacity(0.1),
+                    color: _statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

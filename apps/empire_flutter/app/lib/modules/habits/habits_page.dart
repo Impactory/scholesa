@@ -70,7 +70,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.learner,
-              ScholesaColors.learner.withOpacity(0.8),
+              ScholesaColors.learner.withValues(alpha: 0.8),
               const Color(0xFF10B981), // Green accent
             ],
           ),
@@ -98,7 +98,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -124,7 +124,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                             'Build powerful daily routines',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                             ),
                           ),
                         ],
@@ -152,7 +152,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(30),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -231,7 +231,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(24),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: Colors.orange.withOpacity(0.3),
+                color: Colors.orange.withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -280,7 +280,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -329,8 +329,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 color: completed
                     ? Colors.white
                     : isToday
-                        ? Colors.white.withOpacity(0.3)
-                        : Colors.white.withOpacity(0.1),
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: isToday
                     ? Border.all(color: Colors.white, width: 2)
@@ -396,7 +396,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
             _selectedCategory = category;
           });
         },
-        selectedColor: ScholesaColors.learner.withOpacity(0.2),
+        selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
         checkmarkColor: ScholesaColors.learner,
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
@@ -476,7 +476,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
             : null,
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -498,8 +498,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: <Color>[
-                      categoryColor.withOpacity(0.2),
-                      categoryColor.withOpacity(0.1),
+                      categoryColor.withValues(alpha: 0.2),
+                      categoryColor.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
@@ -645,14 +645,14 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
               : LinearGradient(
                   colors: <Color>[
                     ScholesaColors.learner,
-                    ScholesaColors.learner.withOpacity(0.8),
+                    ScholesaColors.learner.withValues(alpha: 0.8),
                   ],
                 ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: <BoxShadow>[
             BoxShadow(
               color: (isCompleted ? Colors.green : ScholesaColors.learner)
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -752,7 +752,7 @@ class _HabitDetailSheet extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: ScholesaColors.learner.withOpacity(0.1),
+                    color: ScholesaColors.learner.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Center(
@@ -781,7 +781,7 @@ class _HabitDetailSheet extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: ScholesaColors.learner.withOpacity(0.1),
+                          color: ScholesaColors.learner.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -893,7 +893,7 @@ class _HabitDetailSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1048,7 +1048,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                     height: 44,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? ScholesaColors.learner.withOpacity(0.2)
+                          ? ScholesaColors.learner.withValues(alpha: 0.2)
                           : Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
                       border: isSelected
@@ -1115,7 +1115,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                   label: Text('${cat.emoji} ${cat.label}'),
                   selected: isSelected,
                   onSelected: (_) => setState(() => _selectedCategory = cat),
-                  selectedColor: ScholesaColors.learner.withOpacity(0.2),
+                  selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
                 );
               }).toList(),
             ),
@@ -1138,7 +1138,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                   label: Text(freq.name),
                   selected: isSelected,
                   onSelected: (_) => setState(() => _selectedFrequency = freq),
-                  selectedColor: ScholesaColors.learner.withOpacity(0.2),
+                  selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
                 );
               }).toList(),
             ),

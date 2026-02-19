@@ -22,9 +22,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.hq.withOpacity(0.05),
+              ScholesaColors.hq.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.futureSkills.withOpacity(0.03),
+              ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -58,7 +58,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: ScholesaColors.hq.withOpacity(0.3),
+                    color: ScholesaColors.hq.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -90,7 +90,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ScholesaColors.hq.withOpacity(0.1),
+                  color: ScholesaColors.hq.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.hq),
@@ -251,7 +251,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.success.withOpacity(0.1),
+                    color: ScholesaColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
@@ -482,7 +482,7 @@ class _MetricCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -491,8 +491,8 @@ class _MetricCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: trendUp
-                      ? ScholesaColors.success.withOpacity(0.1)
-                      : ScholesaColors.error.withOpacity(0.1),
+                      ? ScholesaColors.success.withValues(alpha: 0.1)
+                      : ScholesaColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -590,7 +590,7 @@ class _PillarAnalyticsRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: color, size: 24),
@@ -607,7 +607,7 @@ class _PillarAnalyticsRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: color.withOpacity(0.2),
+                  backgroundColor: color.withValues(alpha: 0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                   minHeight: 6,
                 ),
@@ -772,7 +772,7 @@ class _TopPerformerCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _rankColor.withOpacity(0.2),
+                color: _rankColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Center(
