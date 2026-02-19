@@ -92,7 +92,7 @@ class SyncCoordinator extends ChangeNotifier {
 
         try {
           // Process operation based on type using Firestore
-          await _processOperation(op);
+          await processOperation(op);
           await _queue.updateStatus(op.id, OpStatus.synced);
           synced++;
         } catch (e) {
@@ -113,19 +113,32 @@ class SyncCoordinator extends ChangeNotifier {
     );
   }
 
-  /// Process a single queued operation
-  Future<void> _processOperation(QueuedOp op) async {
+  /// Process a single queued operation.
+  ///
+  /// Uses idempotency keys as Firestore document IDs so that retries
+  /// overwrite the same document instead of creating duplicates (W4 fix).
+  @visibleForTesting
+  Future<void> processOperation(QueuedOp op) async {
     final firestore = _firestoreService.firestore;
     final Map<String, dynamic> payload = Map<String, dynamic>.from(op.payload);
+    // Attach the idempotency key to the payload for server-side tracking
+    if (op.idempotencyKey != null) {
+      payload['idempotencyKey'] = op.idempotencyKey;
+    }
 
     switch (op.type) {
       case OpType.attendanceRecord:
-        await firestore.collection('attendanceRecords').add(payload);
+        await firestore.collection('attendanceRecords')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
       case OpType.presenceCheckin:
-        await firestore.collection('checkins').add(payload);
+        await firestore.collection('checkins')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
       case OpType.presenceCheckout:
+        // Checkout updates an existing checkin doc — already idempotent
         final String docId = payload['checkinId'] as String? ?? '';
         if (docId.isNotEmpty) {
           payload.remove('checkinId');
@@ -133,13 +146,19 @@ class SyncCoordinator extends ChangeNotifier {
         }
         break;
       case OpType.incidentSubmit:
-        await firestore.collection('incidents').add(payload);
+        await firestore.collection('incidents')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
       case OpType.messageSend:
-        await firestore.collection('messages').add(payload);
+        await firestore.collection('messages')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
       case OpType.attemptSaveDraft:
-        await firestore.collection('drafts').add(payload);
+        await firestore.collection('drafts')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
     }
   }

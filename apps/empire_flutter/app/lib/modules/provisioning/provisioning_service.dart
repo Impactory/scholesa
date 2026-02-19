@@ -205,6 +205,87 @@ class ProvisioningService extends ChangeNotifier {
     }
   }
 
+  /// Update an existing learner profile
+  Future<LearnerProfile?> updateLearner({
+    required String siteId,
+    required String learnerId,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final Map<String, dynamic> response = await _apiClient.patch(
+        '/v1/sites/$siteId/learners/$learnerId',
+        body: <String, dynamic>{
+          'displayName': displayName,
+          if (gradeLevel != null) 'gradeLevel': gradeLevel,
+          if (dateOfBirth != null)
+            'dateOfBirth': dateOfBirth.millisecondsSinceEpoch,
+          if (notes != null) 'notes': notes,
+        },
+      );
+
+      final LearnerProfile updated = LearnerProfile.fromJson(response);
+      final int idx = _learners.indexWhere((LearnerProfile l) => l.id == learnerId);
+      if (idx >= 0) {
+        _learners[idx] = updated;
+      }
+      notifyListeners();
+      return updated;
+    } catch (e) {
+      _error = 'Failed to update learner: $e';
+      debugPrint(_error);
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Update an existing parent profile
+  Future<ParentProfile?> updateParent({
+    required String siteId,
+    required String parentId,
+    required String displayName,
+    String? phone,
+    String? email,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final Map<String, dynamic> response = await _apiClient.patch(
+        '/v1/sites/$siteId/parents/$parentId',
+        body: <String, dynamic>{
+          'displayName': displayName,
+          if (phone != null) 'phone': phone,
+          if (email != null) 'email': email,
+        },
+      );
+
+      final ParentProfile updated = ParentProfile.fromJson(response);
+      final int idx = _parents.indexWhere((ParentProfile p) => p.id == parentId);
+      if (idx >= 0) {
+        _parents[idx] = updated;
+      }
+      notifyListeners();
+      return updated;
+    } catch (e) {
+      _error = 'Failed to update parent: $e';
+      debugPrint(_error);
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Clear error
   void clearError() {
     _error = null;

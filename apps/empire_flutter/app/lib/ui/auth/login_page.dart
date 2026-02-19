@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -385,9 +386,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: () {
-                                      // TODO: Navigate to forgot password
-                                    },
+                                    onPressed: _showForgotPasswordDialog,
                                     child: const Text('Forgot password?'),
                                   ),
                                 ),

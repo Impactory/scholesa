@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'bos_models.dart';
 
 // ──────────────────────────────────────────────────────
-// BOS Event Bus
+// BOS Event Bus  (36 allowed event types)
 // Spec: BOS_MIA_EVENT_SCHEMA.md / HOW_TO §1 (endpoint 1)
 // ──────────────────────────────────────────────────────
 
