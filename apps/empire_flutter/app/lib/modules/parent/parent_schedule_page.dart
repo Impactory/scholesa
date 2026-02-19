@@ -447,7 +447,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   bool _hasEvents(DateTime date) {
-    // TODO: Wire to actual schedule data - currently shows indicator for weekdays
+    // RC2: Weekday heuristic until SessionOccurrence queries are available.
+    // Will be replaced with actual schedule data from Firestore in a future release.
     return date.weekday <= 5;
   }
 }

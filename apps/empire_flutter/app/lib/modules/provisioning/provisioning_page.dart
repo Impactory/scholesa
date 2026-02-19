@@ -185,7 +185,10 @@ class _LearnersTab extends StatelessWidget {
             title: const Text('Edit Learner'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Implement edit dialog
+              showDialog(
+                context: context,
+                builder: (BuildContext ctx) => _EditLearnerDialog(learner: learner),
+              );
             },
           ),
           ListTile(
@@ -193,7 +196,10 @@ class _LearnersTab extends StatelessWidget {
             title: const Text('Manage Guardian Links'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to links filtered by learner
+              // Switch to Links tab (index 2) — links are already loaded
+              final _ProvisioningPageState? pageState =
+                  context.findAncestorStateOfType<_ProvisioningPageState>();
+              pageState?._tabController.animateTo(2);
             },
           ),
         ],
@@ -273,7 +279,10 @@ class _ParentsTab extends StatelessWidget {
             title: const Text('Edit Parent'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Implement edit dialog
+              showDialog(
+                context: context,
+                builder: (BuildContext ctx) => _EditParentDialog(parent: parent),
+              );
             },
           ),
           ListTile(
@@ -281,7 +290,10 @@ class _ParentsTab extends StatelessWidget {
             title: const Text('Manage Learner Links'),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to links filtered by parent
+              // Switch to Links tab (index 2) — links are already loaded
+              final _ProvisioningPageState? pageState =
+                  context.findAncestorStateOfType<_ProvisioningPageState>();
+              pageState?._tabController.animateTo(2);
             },
           ),
         ],
@@ -802,6 +814,243 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Edit learner dialog — pre-populated from existing profile
+class _EditLearnerDialog extends StatefulWidget {
+  const _EditLearnerDialog({required this.learner});
+  final LearnerProfile learner;
+
+  @override
+  State<_EditLearnerDialog> createState() => _EditLearnerDialogState();
+}
+
+class _EditLearnerDialogState extends State<_EditLearnerDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  int? _selectedGrade;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.learner.displayName);
+    _selectedGrade = widget.learner.gradeLevel;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) return;
+
+    final service = context.read<ProvisioningService>();
+    final result = await service.updateLearner(
+      siteId: siteId,
+      learnerId: widget.learner.id,
+      displayName: _nameController.text.trim(),
+      gradeLevel: _selectedGrade,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Learner updated')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to update learner')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Learner'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<int>(
+              initialValue: _selectedGrade,
+              decoration: const InputDecoration(
+                labelText: 'Grade Level',
+                prefixIcon: Icon(Icons.school),
+              ),
+              items: List.generate(9, (int i) => i + 1)
+                  .map((int g) => DropdownMenuItem(value: g, child: Text('Grade $g')))
+                  .toList(),
+              onChanged: (int? v) => setState(() => _selectedGrade = v),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Edit parent dialog — pre-populated from existing profile
+class _EditParentDialog extends StatefulWidget {
+  const _EditParentDialog({required this.parent});
+  final ParentProfile parent;
+
+  @override
+  State<_EditParentDialog> createState() => _EditParentDialogState();
+}
+
+class _EditParentDialogState extends State<_EditParentDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.parent.displayName);
+    _emailController = TextEditingController(text: widget.parent.email ?? '');
+    _phoneController = TextEditingController(text: widget.parent.phone ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    final appState = context.read<AppState>();
+    final siteId = appState.activeSiteId;
+    if (siteId == null) return;
+
+    final service = context.read<ProvisioningService>();
+    final phone = _phoneController.text.trim();
+    final email = _emailController.text.trim();
+    final result = await service.updateParent(
+      siteId: siteId,
+      parentId: widget.parent.id,
+      displayName: _nameController.text.trim(),
+      phone: phone.isNotEmpty ? phone : null,
+      email: email.isNotEmpty ? email : null,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Parent updated')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to update parent')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Parent'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Phone',
+                prefixIcon: Icon(Icons.phone),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
     );
   }
 }
