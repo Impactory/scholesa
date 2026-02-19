@@ -51,7 +51,6 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/educator/mission-plans': true,
   '/educator/learner-supports': true,
   '/educator/integrations': true,
-  '/educator/review-queue': true, // alias for missions/review
   
   // Parent
   '/parent/summary': true,
