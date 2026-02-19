@@ -46,7 +46,7 @@ function getStripe(): Stripe | null {
   const key = stripeSecretKey.value();
   if (key) {
     stripeClient = new Stripe(key, {
-      apiVersion: '2025-12-15.clover', // Latest Stripe API version
+      apiVersion: '2026-01-28.clover',
       typescript: true,
     });
   }
@@ -3537,9 +3537,9 @@ export const getClassInsights = onCall(async (request: CallableRequest<{
   sessionOccurrenceId?: string;
   learnerIds?: string[];
 }>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
 
-  const { siteId, sessionOccurrenceId, learnerIds } = request.data;
+  const { siteId, learnerIds } = request.data;
 
   // Build query for motivation profiles
   let profilesQuery: FirebaseFirestore.Query = admin.firestore()
@@ -4133,7 +4133,7 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
     ],
   };
 
-  const templates = nudgeTemplates[primaryMotivator] || nudgeTemplates.achievement;
+  const templates = nudgeTemplates[primaryMotivator as MotivationType] || nudgeTemplates.achievement;
   const template = templates[Math.floor(Math.random() * templates.length)];
 
   // Determine nudge type based on engagement
