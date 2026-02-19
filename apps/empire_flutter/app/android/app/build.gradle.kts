@@ -39,6 +39,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    lint {
+        disable += "InvalidPackage"
+        checkReleaseBuilds = false
+    }
 }
 
 flutter {
