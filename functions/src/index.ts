@@ -14,6 +14,18 @@ export {
   triggerTelemetryAggregation,
 } from './telemetryAggregator';
 
+// Export BOS+MIA runtime functions
+export {
+  bosIngestEvent,
+  bosGetOrchestrationState,
+  bosGetIntervention,
+  bosScoreMvl,
+  bosSubmitMvlEvidence,
+  bosTeacherOverrideMvl,
+  bosGetClassInsights,
+  bosContestability,
+} from './bosRuntime';
+
 // Define secrets for Firebase Functions v2
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
@@ -197,7 +209,76 @@ export const genAiCoach = onCall(async (request) => {
   if (!profile || profile.role !== 'learner') {
     throw new HttpsError('permission-denied', 'Learner role required for AI coach.');
   }
-  return { message: `Hello ${profile.displayName ?? 'learner'}, this is your AI Coach. Focus on your Leadership & Agency pillar this week!` };
+
+  // ── BOS-aware AI Coach ──
+  const { mode, siteId, gradeBand, sessionOccurrenceId, missionId, checkpointId, conceptTags, studentInput } = request.data || {};
+  const coachMode: string = mode || 'hint';
+  const validModes = ['hint', 'verify', 'explain', 'debug'];
+  if (!validModes.includes(coachMode)) {
+    throw new HttpsError('invalid-argument', `Invalid mode: ${coachMode}. Must be one of: ${validModes.join(', ')}`);
+  }
+
+  // Load learner state from orchestrationStates if available
+  let learnerState: { cognition: number; engagement: number; integrity: number } | null = null;
+  if (sessionOccurrenceId) {
+    const stateDocId = `${userId}_${sessionOccurrenceId}`;
+    const stateDoc = await admin.firestore().collection('orchestrationStates').doc(stateDocId).get();
+    if (stateDoc.exists) {
+      learnerState = stateDoc.data()?.x_hat || null;
+    }
+  }
+
+  // Build contextual response — V1: template-based, V2+: LLM
+  const displayName = profile.displayName ?? 'learner';
+  const gb = gradeBand || 'G4_6';
+  const tags = Array.isArray(conceptTags) ? conceptTags.join(', ') : '';
+
+  let message: string;
+  switch (coachMode) {
+    case 'hint':
+      message = learnerState && learnerState.cognition < 0.4
+        ? `${displayName}, it looks like you could use a nudge. Try re-reading the instructions for this checkpoint and focus on the key concepts${tags ? ` (${tags})` : ''}.`
+        : `${displayName}, you're making good progress! Think about what you already know and try applying it to this next step${tags ? ` — focus on ${tags}` : ''}.`;
+      break;
+    case 'verify':
+      message = `${displayName}, let's check your work. Can you explain your reasoning for this step? Walk me through what you did and why.`;
+      break;
+    case 'explain':
+      message = `${displayName}, here's a breakdown: ${tags ? `The concepts involved are ${tags}. ` : ''}Take it step by step and focus on understanding the "why" behind each part.`;
+      break;
+    case 'debug':
+      message = `${displayName}, let's troubleshoot. ${studentInput ? `You mentioned: "${studentInput}". ` : ''}Think about what you expected to happen versus what actually happened. Where does the mismatch start?`;
+      break;
+    default:
+      message = `Hello ${displayName}, this is your AI Coach. Focus on your Leadership & Agency pillar this week!`;
+  }
+
+  // Log the AI coach interaction event
+  if (siteId) {
+    await admin.firestore().collection('interactionEvents').add({
+      eventType: 'ai_coach_response',
+      siteId,
+      actorId: userId,
+      actorRole: 'learner',
+      gradeBand: gb,
+      sessionOccurrenceId: sessionOccurrenceId || null,
+      missionId: missionId || null,
+      checkpointId: checkpointId || null,
+      payload: { mode: coachMode, hasLearnerState: !!learnerState },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  return {
+    message,
+    mode: coachMode,
+    learnerState,
+    meta: {
+      version: '0.2.0',
+      gradeBand: gb,
+      conceptTags: conceptTags || [],
+    },
+  };
 });
 
 async function getUserProfile(uid: string) {
