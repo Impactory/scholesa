@@ -43,7 +43,7 @@ service cloud.firestore {
     // Content (Sites, Rooms, Programs, Courses, Missions):
     // - Read: All authenticated users.
     // - Write: HQ or Site Leads (depending on scope, defaulting to HQ/Educator for simplicity).
-    match /sites/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /sites/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /rooms/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
     match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
@@ -52,19 +52,21 @@ service cloud.firestore {
     // Operational (Sessions, Occurrences):
     // - Read: All authenticated users (could be scoped to site).
     // - Write: Educators.
-    match /sessions/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
-    match /sessionOccurrences/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /sessions/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
+    match /sessionOccurrences/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
 
-    // Student Data (Enrolments, Attendance):
+    // Student Data (Enrollments, Attendance):
     // - Read: Owner or Educator.
     // - Write: Educator.
-    match /enrolments/{id} {
+    match /enrollments/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
-      allow write: if isEducator();
+      allow create, update: if isEducator();
+      allow delete: if false;
     }
-    match /attendance/{id} {
+    match /attendanceRecords/{id} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
-      allow write: if isEducator();
+      allow create, update: if isEducator();
+      allow delete: if false;
     }
 
     // Learning Artifacts (MissionAttempts, Reflections):
@@ -84,8 +86,8 @@ service cloud.firestore {
     }
 
     // Accountability & Portfolios
-    match /accountabilityCycles/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
-    match /accountabilityKPIs/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /accountabilityCycles/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
+    match /accountabilityKPIs/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
     match /portfolioItems/{id} {
       allow read: if isAuthenticated(); // Portfolios might be public within school?
       allow write: if isOwner(resource.data.learnerId) || isEducator();
@@ -225,6 +227,253 @@ service cloud.firestore {
       allow write: if false; // Server-only via webhooks
     }
     
+    // --- Missing Collections (Flutter app coverage) ---
+
+    // Learner/Parent Profiles & GuardianLinks
+    match /learnerProfiles/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow delete: if false;
+    }
+    match /parentProfiles/{id} {
+      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+    match /guardianLinks/{id} {
+      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator() || isHQ();
+      allow delete: if false;
+    }
+
+    // Habits
+    match /habits/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow delete: if false;
+    }
+
+    // Reference Data (Pillars, Skills)
+    match /pillars/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
+    match /skills/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
+
+    // Mission Plans & Snapshots
+    match /missionPlans/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+    match /missionSnapshots/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isEducator();
+      allow update, delete: if false;
+    }
+
+    // Portfolios (container)
+    match /portfolios/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow delete: if false;
+    }
+
+    // Credentials
+    match /credentials/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Accountability sub-collections
+    match /accountabilityCommitments/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+    match /accountabilityReviews/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator() || isHQ();
+      allow delete: if false;
+    }
+
+    // Announcements
+    match /announcements/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator();
+      allow delete: if isHQ();
+    }
+
+    // CMS Pages: Public read for published content, HQ writes
+    match /cmsPages/{id} {
+      allow read: if true; // Public pages readable without auth
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Leads: Unauthenticated create for lead capture, HQ reads
+    match /leads/{id} {
+      allow create: if true; // Public lead capture
+      allow read: if isHQ();
+      allow update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Messaging
+    match /messageThreads/{id} {
+      allow read: if isAuthenticated() && (request.auth.uid in resource.data.participantIds || isHQ());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.participantIds;
+      allow delete: if false;
+    }
+    match /messages/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable once sent
+    }
+
+    // Fulfillments: Server-managed, HQ read
+    match /fulfillments/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isHQ());
+      allow write: if false; // Server-only
+    }
+
+    // Rubrics
+    match /rubrics/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+    match /rubricApplications/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Marketplace
+    match /marketplaceListings/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ() || (isAuthenticated() && resource.data.partnerId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // --- Safeguarding Collections (HIGH priority) ---
+
+    // Media Consents
+    match /mediaConsents/{id} {
+      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && (request.resource.data.parentId == request.auth.uid || isEducator());
+      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+
+    // Pickup Authorizations
+    match /pickupAuthorizations/{id} {
+      allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && (request.resource.data.parentId == request.auth.uid || isEducator());
+      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+
+    // Incident Reports
+    match /incidentReports/{id} {
+      allow read: if isEducator() || isHQ();
+      allow create: if isEducator();
+      allow update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Site Check In/Out
+    match /siteCheckInOut/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isEducator();
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+
+    // --- Partner & Contracting ---
+
+    match /partnerOrgs/{id} {
+      allow read: if isAuthenticated() && (resource.data.ownerId == request.auth.uid || isHQ());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.ownerId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+    match /partnerContracts/{id} {
+      allow read: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+    match /partnerDeliverables/{id} {
+      allow read: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow create: if isAuthenticated() && request.resource.data.partnerId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow delete: if false;
+    }
+    match /payouts/{id} {
+      allow read: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // --- AI Drafts ---
+    match /aiDrafts/{id} {
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isEducator());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isEducator());
+      allow delete: if false;
+    }
+
+    // --- Integration Collections (HQ/Server only) ---
+
+    match /integrationConnections/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+    match /externalCourseLinks/{id} {
+      allow read: if isEducator();
+      allow write: if false; // Server-only
+    }
+    match /externalUserLinks/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+    match /externalCourseworkLinks/{id} {
+      allow read: if isEducator();
+      allow write: if false; // Server-only
+    }
+    match /syncJobs/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+    match /syncCursors/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+    match /githubConnections/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only — contains OAuth tokens
+    }
+    match /externalRepoLinks/{id} {
+      allow read: if isEducator();
+      allow write: if false; // Server-only
+    }
+    match /externalPullRequestLinks/{id} {
+      allow read: if isEducator();
+      allow write: if false; // Server-only
+    }
+    match /githubWebhookDeliveries/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only
+    }
+    match /externalIdentityLinks/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only — identity federation
+    }
+
     // Default Deny
     match /{document=**} {
       allow read, write: if false;
