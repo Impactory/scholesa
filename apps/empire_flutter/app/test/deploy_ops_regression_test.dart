@@ -195,6 +195,65 @@ void main() {
       );
     });
 
+    // ── 2.3b Stripe env vars contain price IDs, not API keys ──
+    test('Functions env does not leak Stripe API keys in price ID fields', () {
+      // Check all .env* files under functions/ for leaked keys
+      final Directory functionsDir = Directory('$root/functions');
+      final List<File> envFiles = functionsDir
+          .listSync()
+          .whereType<File>()
+          .where((File f) => f.path.contains('.env'))
+          .toList();
+
+      for (final File envFile in envFiles) {
+        final String content = envFile.readAsStringSync();
+
+        // No restricted keys (rk_live_, rk_test_) in price ID fields
+        expect(
+          RegExp(r'STRIPE_PRICE_\w+=rk_').hasMatch(content),
+          isFalse,
+          reason: '${envFile.path} has a Stripe restricted key in a PRICE field — use price_xxx IDs',
+        );
+
+        // No secret keys (sk_live_, sk_test_) anywhere in env files
+        expect(
+          content.contains('sk_live_') || content.contains('sk_test_'),
+          isFalse,
+          reason: '${envFile.path} leaks a Stripe secret key — use Firebase Secrets instead',
+        );
+
+        // No restricted keys in non-Stripe fields either
+        expect(
+          RegExp(r'NOTIFY_ENDPOINT=rk_').hasMatch(content),
+          isFalse,
+          reason: '${envFile.path} has a Stripe key in NOTIFY_ENDPOINT',
+        );
+      }
+    });
+
+    // ── 2.3c defineSecret vs defineString separation is correct ──
+    test('Stripe secrets use defineSecret, price IDs use defineString', () {
+      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+
+      // STRIPE_SECRET_KEY must be defineSecret
+      expect(funcSrc.contains("defineSecret('STRIPE_SECRET_KEY')"), isTrue,
+          reason: 'STRIPE_SECRET_KEY must use defineSecret');
+
+      // STRIPE_WEBHOOK_SECRET must be defineSecret
+      expect(funcSrc.contains("defineSecret('STRIPE_WEBHOOK_SECRET')"), isTrue,
+          reason: 'STRIPE_WEBHOOK_SECRET must use defineSecret');
+
+      // STRIPE_PRICE_* must be defineString (not defineSecret)
+      expect(funcSrc.contains("defineString('STRIPE_PRICE_LEARNER'"), isTrue,
+          reason: 'STRIPE_PRICE_LEARNER must use defineString');
+      expect(funcSrc.contains("defineString('STRIPE_PRICE_EDUCATOR'"), isTrue,
+          reason: 'STRIPE_PRICE_EDUCATOR must use defineString');
+      expect(funcSrc.contains("defineString('STRIPE_PRICE_PARENT'"), isTrue,
+          reason: 'STRIPE_PRICE_PARENT must use defineString');
+      expect(funcSrc.contains("defineString('STRIPE_PRICE_SITE'"), isTrue,
+          reason: 'STRIPE_PRICE_SITE must use defineString');
+    });
+
     // ── 2.4 Firebase project ID is consistent across configs ──
     test('Firebase project ID is consistent (.firebaserc ↔ firebase.json)', () {
       final File firebaserc = File('$root/.firebaserc');
@@ -543,6 +602,44 @@ void main() {
       // Should have a manual trigger for ops
       expect(aggSrc.contains('triggerTelemetryAggregation'), isTrue,
           reason: 'Manual trigger endpoint should exist for ops');
+    });
+
+    // ── 5.5b All exported functions use v2 imports (no v1→v2 upgrade errors) ──
+    test('All Cloud Functions use v2 imports exclusively', () {
+      final String indexSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String aggSrc =
+          File('$root/functions/src/telemetryAggregator.ts').readAsStringSync();
+      final String bosSrc =
+          File('$root/functions/src/bosRuntime.ts').readAsStringSync();
+
+      // Index must import from v2
+      expect(indexSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
+          reason: 'index.ts must use firebase-functions/v2/https');
+      expect(indexSrc.contains("from 'firebase-functions/v2/scheduler'"), isTrue,
+          reason: 'index.ts must use firebase-functions/v2/scheduler');
+
+      // Telemetry aggregator must import from v2
+      expect(aggSrc.contains("from 'firebase-functions/v2/scheduler'"), isTrue,
+          reason: 'telemetryAggregator must use v2 scheduler');
+      expect(aggSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
+          reason: 'telemetryAggregator must use v2 https');
+
+      // BOS runtime must import from v2
+      expect(bosSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
+          reason: 'bosRuntime must use v2 https');
+
+      // No v1 imports in any source file
+      for (final MapEntry<String, String> entry in <String, String>{
+        'index.ts': indexSrc,
+        'telemetryAggregator.ts': aggSrc,
+        'bosRuntime.ts': bosSrc,
+      }.entries) {
+        expect(
+          RegExp(r"from\s+'firebase-functions'(?!/v2)").hasMatch(entry.value),
+          isFalse,
+          reason: '${entry.key} must not import from firebase-functions v1 (use /v2/)',
+        );
+      }
     });
 
     // ── 5.6 BOS runtime has observable endpoints ──
