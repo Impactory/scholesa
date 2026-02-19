@@ -1,0 +1,632 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
+// ──────────────────────────────────────────────────────
+// BOS+MIA Core Models
+// Spec: BOS_MIA_MATH_CONTRACT.md §1–§8
+// ──────────────────────────────────────────────────────
+
+/// Grade bands per BOS spec §4.2
+enum GradeBand {
+  g1_3('G1_3'),
+  g4_6('G4_6'),
+  g7_9('G7_9'),
+  g10_12('G10_12');
+
+  const GradeBand(this.code);
+  final String code;
+
+  static GradeBand fromString(String s) {
+    switch (s.toUpperCase()) {
+      case 'G1_3':
+        return GradeBand.g1_3;
+      case 'G4_6':
+        return GradeBand.g4_6;
+      case 'G7_9':
+        return GradeBand.g7_9;
+      case 'G10_12':
+        return GradeBand.g10_12;
+      default:
+        return GradeBand.g4_6;
+    }
+  }
+}
+
+// ──── §1.1  Latent learner state x_t ────
+
+/// Collapsed 3D state estimate (Math Contract §1.1).
+@immutable
+class XHat {
+  const XHat({
+    this.cognition = 0.5,
+    this.engagement = 0.5,
+    this.integrity = 0.5,
+  });
+
+  /// Proxy for c_t — mastery/cognition (0..1)
+  final double cognition;
+
+  /// Proxy for a_t — affect & engagement (0..1)
+  final double engagement;
+
+  /// Proxy for m_t — metacognitive integrity (0..1)
+  final double integrity;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'cognition': cognition,
+        'engagement': engagement,
+        'integrity': integrity,
+      };
+
+  factory XHat.fromMap(Map<String, dynamic> m) => XHat(
+        cognition: (m['cognition'] as num?)?.toDouble() ?? 0.5,
+        engagement: (m['engagement'] as num?)?.toDouble() ?? 0.5,
+        integrity: (m['integrity'] as num?)?.toDouble() ?? 0.5,
+      );
+
+  List<double> toVec() => <double>[cognition, engagement, integrity];
+}
+
+// ──── §3.2  Covariance summary P ────
+
+/// Uncertainty / covariance summary (Math Contract §3.2).
+@immutable
+class CovarianceSummary {
+  const CovarianceSummary({
+    this.diag = const <double>[0.25, 0.25, 0.25],
+    this.trace = 0.75,
+    this.confidence = 0.25,
+  });
+
+  /// Diagonal elements of P matrix
+  final List<double> diag;
+
+  /// tr(P)
+  final double trace;
+
+  /// 1 − tr(P)/d  (higher = more confident)
+  final double confidence;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'diag': diag,
+        'trace': trace,
+        'confidence': confidence,
+      };
+
+  factory CovarianceSummary.fromMap(Map<String, dynamic> m) => CovarianceSummary(
+        diag: ((m['diag'] as List<dynamic>?)?.map((dynamic e) => (e as num).toDouble()).toList()) ?? <double>[0.25, 0.25, 0.25],
+        trace: (m['trace'] as num?)?.toDouble() ?? 0.75,
+        confidence: (m['confidence'] as num?)?.toDouble() ?? 0.25,
+      );
+}
+
+// ──── §3.2  Orchestration state composite ────
+
+/// Full orchestration state document (Math Contract §3.2).
+@immutable
+class OrchestrationState {
+  const OrchestrationState({
+    required this.siteId,
+    required this.learnerId,
+    required this.sessionOccurrenceId,
+    required this.xHat,
+    required this.p,
+    required this.model,
+    required this.fusion,
+    this.lastUpdatedAt,
+  });
+
+  final String siteId;
+  final String learnerId;
+  final String sessionOccurrenceId;
+  final XHat xHat;
+  final CovarianceSummary p;
+  final EstimatorModel model;
+  final FusionInfo fusion;
+  final Timestamp? lastUpdatedAt;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'sessionOccurrenceId': sessionOccurrenceId,
+        'x_hat': xHat.toMap(),
+        'P': p.toMap(),
+        'model': model.toMap(),
+        'fusion': fusion.toMap(),
+        'lastUpdatedAt': lastUpdatedAt ?? FieldValue.serverTimestamp(),
+      };
+
+  factory OrchestrationState.fromMap(Map<String, dynamic> m) => OrchestrationState(
+        siteId: m['siteId'] as String? ?? '',
+        learnerId: m['learnerId'] as String? ?? '',
+        sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
+        xHat: XHat.fromMap(m['x_hat'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        p: CovarianceSummary.fromMap(m['P'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        model: EstimatorModel.fromMap(m['model'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        fusion: FusionInfo.fromMap(m['fusion'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        lastUpdatedAt: m['lastUpdatedAt'] as Timestamp?,
+      );
+}
+
+@immutable
+class EstimatorModel {
+  const EstimatorModel({
+    this.estimator = 'ekf-lite',
+    this.version = '0.1.0',
+    this.qVersion = 'v1',
+    this.rVersion = 'v1',
+  });
+
+  final String estimator;
+  final String version;
+  final String qVersion;
+  final String rVersion;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'estimator': estimator,
+        'version': version,
+        'Q_version': qVersion,
+        'R_version': rVersion,
+      };
+
+  factory EstimatorModel.fromMap(Map<String, dynamic> m) => EstimatorModel(
+        estimator: m['estimator'] as String? ?? 'ekf-lite',
+        version: m['version'] as String? ?? '0.1.0',
+        qVersion: m['Q_version'] as String? ?? 'v1',
+        rVersion: m['R_version'] as String? ?? 'v1',
+      );
+}
+
+@immutable
+class FusionInfo {
+  const FusionInfo({
+    this.familiesPresent = const <String>[],
+    this.sensorFusionMet = false,
+  });
+
+  final List<String> familiesPresent;
+  final bool sensorFusionMet;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'familiesPresent': familiesPresent,
+        'sensorFusionMet': sensorFusionMet,
+      };
+
+  factory FusionInfo.fromMap(Map<String, dynamic> m) => FusionInfo(
+        familiesPresent: ((m['familiesPresent'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        sensorFusionMet: m['sensorFusionMet'] as bool? ?? false,
+      );
+}
+
+// ──── §1.2  Control input u_t / Intervention ────
+
+/// BOS Intervention (Math Contract §1.2 + §4.3).
+@immutable
+class BosIntervention {
+  const BosIntervention({
+    required this.type,
+    required this.salience,
+    this.mode,
+    this.reasonCodes = const <String>[],
+    this.policy,
+    this.outcome,
+    this.supervision,
+  });
+
+  final InterventionType type;
+  final Salience salience;
+  final AiCoachMode? mode;
+  final List<String> reasonCodes;
+  final PolicyTerms? policy;
+  final String? outcome; // accepted | dismissed | completed | timeout
+  final SupervisoryControl? supervision;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'type': type.name,
+        'salience': salience.name,
+        if (mode != null) 'mode': mode!.name,
+        'reasonCodes': reasonCodes,
+        if (policy != null) 'policy': policy!.toMap(),
+        if (outcome != null) 'outcome': outcome,
+        if (supervision != null) 'supervision': supervision!.toMap(),
+      };
+
+  factory BosIntervention.fromMap(Map<String, dynamic> m) => BosIntervention(
+        type: InterventionType.values.firstWhere(
+          (InterventionType e) => e.name == m['type'],
+          orElse: () => InterventionType.nudge,
+        ),
+        salience: Salience.values.firstWhere(
+          (Salience e) => e.name == m['salience'],
+          orElse: () => Salience.low,
+        ),
+        mode: m['mode'] != null
+            ? AiCoachMode.values.firstWhere(
+                (AiCoachMode e) => e.name == m['mode'],
+                orElse: () => AiCoachMode.hint,
+              )
+            : null,
+        reasonCodes: ((m['reasonCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        policy: m['policy'] != null ? PolicyTerms.fromMap(m['policy'] as Map<String, dynamic>) : null,
+        outcome: m['outcome'] as String?,
+        supervision: m['supervision'] != null ? SupervisoryControl.fromMap(m['supervision'] as Map<String, dynamic>) : null,
+      );
+}
+
+enum InterventionType { nudge, scaffold, handoff, revisit, pace }
+enum Salience { low, medium, high }
+enum AiCoachMode { hint, verify, explain, debug }
+
+// ──── §4.3  Policy terms ────
+
+/// Policy terms for audit (Math Contract §4.3).
+@immutable
+class PolicyTerms {
+  const PolicyTerms({
+    this.lambda = 0.5,
+    this.mDagger = 0.6,
+    this.highAssist = false,
+    this.omega = 0.0,
+  });
+
+  final double lambda;
+  final double mDagger;
+  final bool highAssist;
+  final double omega;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'lambda': lambda,
+        'm_dagger': mDagger,
+        'highAssist': highAssist,
+        'omega': omega,
+      };
+
+  factory PolicyTerms.fromMap(Map<String, dynamic> m) => PolicyTerms(
+        lambda: (m['lambda'] as num?)?.toDouble() ?? 0.5,
+        mDagger: (m['m_dagger'] as num?)?.toDouble() ?? 0.6,
+        highAssist: m['highAssist'] as bool? ?? false,
+        omega: (m['omega'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+// ──── §5  Teacher override / supervisory control ────
+
+/// Supervisory control g_t (Math Contract §5).
+@immutable
+class SupervisoryControl {
+  const SupervisoryControl({
+    required this.g,
+    this.uBos,
+    this.uTeacher,
+    this.reason,
+  });
+
+  /// 0 = BOS control, 1 = teacher override
+  final int g;
+  final Map<String, dynamic>? uBos;
+  final Map<String, dynamic>? uTeacher;
+  final String? reason;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'g': g,
+        if (uBos != null) 'u_bos': uBos,
+        if (uTeacher != null) 'u_teacher': uTeacher,
+        if (reason != null) 'reason': reason,
+      };
+
+  factory SupervisoryControl.fromMap(Map<String, dynamic> m) => SupervisoryControl(
+        g: m['g'] as int? ?? 0,
+        uBos: m['u_bos'] as Map<String, dynamic>?,
+        uTeacher: m['u_teacher'] as Map<String, dynamic>?,
+        reason: m['reason'] as String?,
+      );
+}
+
+// ──── §1.3  Observation vector y_t ────
+
+/// Feature window (Math Contract §1.3).
+@immutable
+class FeatureWindow {
+  const FeatureWindow({
+    required this.window,
+    this.features = const <String, dynamic>{},
+    this.yVec,
+    this.quality,
+  });
+
+  final String window; // '30s' | '5m' | 'session'
+  final Map<String, dynamic> features;
+  final List<double>? yVec;
+  final FeatureQuality? quality;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'window': window,
+        'features': features,
+        if (yVec != null) 'y_vec': yVec,
+        if (quality != null) 'quality': quality!.toMap(),
+      };
+
+  factory FeatureWindow.fromMap(Map<String, dynamic> m) => FeatureWindow(
+        window: m['window'] as String? ?? 'session',
+        features: m['features'] as Map<String, dynamic>? ?? <String, dynamic>{},
+        yVec: (m['y_vec'] as List<dynamic>?)?.map((dynamic e) => (e as num).toDouble()).toList(),
+        quality: m['quality'] != null ? FeatureQuality.fromMap(m['quality'] as Map<String, dynamic>) : null,
+      );
+}
+
+@immutable
+class FeatureQuality {
+  const FeatureQuality({
+    this.missingness = 0.0,
+    this.driftFlag = false,
+    this.fusionFamiliesPresent = const <String>[],
+  });
+
+  final double missingness;
+  final bool driftFlag;
+  final List<String> fusionFamiliesPresent;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'missingness': missingness,
+        'driftFlag': driftFlag,
+        'fusionFamiliesPresent': fusionFamiliesPresent,
+      };
+
+  factory FeatureQuality.fromMap(Map<String, dynamic> m) => FeatureQuality(
+        missingness: (m['missingness'] as num?)?.toDouble() ?? 0.0,
+        driftFlag: m['driftFlag'] as bool? ?? false,
+        fusionFamiliesPresent: ((m['fusionFamiliesPresent'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      );
+}
+
+// ──── §6  Reliability risk (semantic entropy) ────
+
+@immutable
+class ReliabilityRisk {
+  const ReliabilityRisk({
+    this.method = 'sep',
+    this.k = 0,
+    this.m = 0,
+    this.hSem = 0.0,
+    this.riskScore = 0.0,
+    this.threshold = 0.5,
+  });
+
+  final String method; // 'semantic-entropy' | 'sep'
+  final int k;
+  final int m;
+  final double hSem;
+  final double riskScore;
+  final double threshold;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'method': method,
+        'K': k,
+        'M': m,
+        'H_sem': hSem,
+        'riskScore': riskScore,
+        'threshold': threshold,
+      };
+
+  factory ReliabilityRisk.fromMap(Map<String, dynamic> m2) => ReliabilityRisk(
+        method: m2['method'] as String? ?? 'sep',
+        k: m2['K'] as int? ?? 0,
+        m: m2['M'] as int? ?? 0,
+        hSem: (m2['H_sem'] as num?)?.toDouble() ?? 0.0,
+        riskScore: (m2['riskScore'] as num?)?.toDouble() ?? 0.0,
+        threshold: (m2['threshold'] as num?)?.toDouble() ?? 0.5,
+      );
+}
+
+// ──── §7  Autonomy risk ────
+
+@immutable
+class AutonomyRisk {
+  const AutonomyRisk({
+    this.signals = const <String>[],
+    this.riskScore = 0.0,
+    this.threshold = 0.5,
+  });
+
+  final List<String> signals; // 'rapid_submit', 'verification_gap', etc.
+  final double riskScore;
+  final double threshold;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'signals': signals,
+        'riskScore': riskScore,
+        'threshold': threshold,
+      };
+
+  factory AutonomyRisk.fromMap(Map<String, dynamic> m) => AutonomyRisk(
+        signals: ((m['signals'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        riskScore: (m['riskScore'] as num?)?.toDouble() ?? 0.0,
+        threshold: (m['threshold'] as num?)?.toDouble() ?? 0.5,
+      );
+}
+
+// ──── §8  MVL Episode ────
+
+/// MVL episode (Math Contract §8 + HOW_TO §4 endpoint 4).
+@immutable
+class MvlEpisode {
+  const MvlEpisode({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.sessionOccurrenceId,
+    required this.triggerReason,
+    this.reliabilityRisk,
+    this.autonomyRisk,
+    this.evidenceEventIds = const <String>[],
+    this.resolution,
+    this.resolvedAt,
+    this.createdAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String sessionOccurrenceId;
+  final String triggerReason;
+  final ReliabilityRisk? reliabilityRisk;
+  final AutonomyRisk? autonomyRisk;
+  final List<String> evidenceEventIds;
+  final String? resolution; // 'passed' | 'failed' | 'needs_more_evidence'
+  final Timestamp? resolvedAt;
+  final Timestamp? createdAt;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'sessionOccurrenceId': sessionOccurrenceId,
+        'triggerReason': triggerReason,
+        if (reliabilityRisk != null) 'reliability': reliabilityRisk!.toMap(),
+        if (autonomyRisk != null) 'autonomy': autonomyRisk!.toMap(),
+        'evidenceEventIds': evidenceEventIds,
+        if (resolution != null) 'resolution': resolution,
+        if (resolvedAt != null) 'resolvedAt': resolvedAt,
+        'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      };
+
+  factory MvlEpisode.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    return MvlEpisode(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      learnerId: m['learnerId'] as String? ?? '',
+      sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
+      triggerReason: m['triggerReason'] as String? ?? '',
+      reliabilityRisk: m['reliability'] != null ? ReliabilityRisk.fromMap(m['reliability'] as Map<String, dynamic>) : null,
+      autonomyRisk: m['autonomy'] != null ? AutonomyRisk.fromMap(m['autonomy'] as Map<String, dynamic>) : null,
+      evidenceEventIds: ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      resolution: m['resolution'] as String?,
+      resolvedAt: m['resolvedAt'] as Timestamp?,
+      createdAt: m['createdAt'] as Timestamp?,
+    );
+  }
+}
+
+// ──── BOS Event Envelope (Event Schema) ────
+
+/// Standardized BOS event envelope.
+@immutable
+class BosEvent {
+  const BosEvent({
+    required this.eventType,
+    required this.siteId,
+    required this.actorId,
+    required this.actorRole,
+    required this.gradeBand,
+    this.sessionOccurrenceId,
+    this.missionId,
+    this.checkpointId,
+    this.payload = const <String, dynamic>{},
+  });
+
+  final String eventType;
+  final String siteId;
+  final String actorId;
+  final String actorRole;
+  final GradeBand gradeBand;
+  final String? sessionOccurrenceId;
+  final String? missionId;
+  final String? checkpointId;
+  final Map<String, dynamic> payload;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'eventType': eventType,
+        'siteId': siteId,
+        'actorId': actorId,
+        'actorRole': actorRole,
+        'gradeBand': gradeBand.code,
+        if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
+        if (missionId != null) 'missionId': missionId,
+        if (checkpointId != null) 'checkpointId': checkpointId,
+        'payload': payload,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+}
+
+// ──── §4.2  Grade-band policy thresholds ────
+
+/// M_DAGGER thresholds per grade band (Math Contract §4.2).
+class GradeBandPolicy {
+  GradeBandPolicy._();
+
+  static const Map<GradeBand, double> mDagger = <GradeBand, double>{
+    GradeBand.g1_3: 0.55,
+    GradeBand.g4_6: 0.60,
+    GradeBand.g7_9: 0.65,
+    GradeBand.g10_12: 0.70,
+  };
+
+  /// Returns true if the intervention is "high assist"
+  static bool isHighAssist(BosIntervention intervention) {
+    if (intervention.salience == Salience.high) return true;
+    if (intervention.type == InterventionType.scaffold && intervention.mode == AiCoachMode.hint) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Compute autonomy cost Ω(u_t, x_t) per Math Contract §4.2
+  static double autonomyCost({
+    required BosIntervention intervention,
+    required XHat xHat,
+    required GradeBand gradeBand,
+  }) {
+    if (!isHighAssist(intervention)) return 0.0;
+    final double mDaggerVal = mDagger[gradeBand] ?? 0.6;
+    final double gap = mDaggerVal - xHat.integrity;
+    return gap > 0 ? gap : 0.0;
+  }
+}
+
+// ──── AI Coach Request/Response ────
+
+/// AI Coach request (HOW_TO §5).
+@immutable
+class AiCoachRequest {
+  const AiCoachRequest({
+    required this.siteId,
+    required this.learnerId,
+    required this.gradeBand,
+    required this.mode,
+    this.sessionOccurrenceId,
+    this.missionId,
+    this.checkpointId,
+    this.conceptTags = const <String>[],
+    this.learnerState,
+    this.recentEventsRef = const <String>[],
+    this.studentInput,
+  });
+
+  final String siteId;
+  final String learnerId;
+  final GradeBand gradeBand;
+  final AiCoachMode mode;
+  final String? sessionOccurrenceId;
+  final String? missionId;
+  final String? checkpointId;
+  final List<String> conceptTags;
+  final XHat? learnerState;
+  final List<String> recentEventsRef;
+  final String? studentInput;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'gradeBand': gradeBand.code,
+        'mode': mode.name,
+        if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
+        'context': <String, dynamic>{
+          if (missionId != null) 'missionId': missionId,
+          if (checkpointId != null) 'checkpointId': checkpointId,
+          'conceptTags': conceptTags,
+          if (learnerState != null) 'learnerState': learnerState!.toMap(),
+          'recentEventsRef': recentEventsRef,
+        },
+        if (studentInput != null) 'studentInput': studentInput,
+      };
+}
