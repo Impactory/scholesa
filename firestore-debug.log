@@ -1,4 +1,4 @@
-Feb 20, 2026 1:13:13 P.M. com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+Feb 20, 2026 1:13:31 P.M. com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
 INFO: Started WebSocket server on ws://127.0.0.1:9150
 API endpoint: http://127.0.0.1:8080
 If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
@@ -12,18 +12,18 @@ If you are running a Firestore in Datastore Mode project, run:
 Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
 Dev App Server is now running.
 
-Feb 20, 2026 1:13:14 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 20, 2026 1:13:32 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected non-HTTP/2 connection.
-Feb 20, 2026 1:13:14 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 20, 2026 1:13:32 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 20, 2026 1:13:33 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected non-HTTP/2 connection.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 20, 2026 1:13:33 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 20, 2026 1:13:33 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
@@ -38,7 +38,7 @@ Multiple projectIds are not recommended in single project mode. Requested projec
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 20, 2026 1:13:33 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
 evaluation error at L44:24 for 'update' @ L44, false for 'update' @ L610, false for 'update' @ L44, false for 'update' @ L610
 com.google.cloud.datastore.core.exception.DatastoreException: 
@@ -82,7 +82,7 @@ Multiple projectIds are not recommended in single project mode. Requested projec
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 20, 2026 1:13:33 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
 evaluation error at L50:84 for 'create' @ L50, false for 'create' @ L610, evaluation error at L50:84 for 'update' @ L50, false for 'update' @ L610, false for 'create' @ L50, false for 'create' @ L610
 com.google.cloud.datastore.core.exception.DatastoreException: 
@@ -126,7 +126,7 @@ Multiple projectIds are not recommended in single project mode. Requested projec
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:15 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 20, 2026 1:13:33 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
 evaluation error at L72:32 for 'create' @ L72, false for 'create' @ L610, evaluation error at L72:32 for 'update' @ L72, false for 'update' @ L610, false for 'create' @ L72, false for 'create' @ L610
 com.google.cloud.datastore.core.exception.DatastoreException: 
@@ -165,7 +165,7 @@ Multiple projectIds are not recommended in single project mode. Requested projec
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 20, 2026 1:13:16 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 20, 2026 1:13:34 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
 false for 'create' @ L82, false for 'create' @ L610, evaluation error at L83:24 for 'update' @ L83, false for 'update' @ L610, false for 'create' @ L82, false for 'create' @ L610
 com.google.cloud.datastore.core.exception.DatastoreException: 
