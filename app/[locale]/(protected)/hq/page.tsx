@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { query, getDocs, limit } from 'firebase/firestore';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
 import type { Site } from '@/schema';
 
 export default function HQDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const trackInteraction = useInteractionTracking();
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,9 +67,13 @@ export default function HQDashboard() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium leading-6 text-gray-900">Network Sites</h2>
-                <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <Link
+                  href={`/${locale}/hq`}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  onClick={() => trackInteraction('feature_discovered', { cta: 'hq_view_all_sites' })}
+                >
                   View All
-                </button>
+                </Link>
               </div>
               
               {sites.length === 0 ? (
@@ -88,9 +98,13 @@ export default function HQDashboard() {
                       </div>
                       <div className="bg-gray-50 px-5 py-3">
                         <div className="text-sm">
-                          <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">
+                          <Link
+                            href={`/${locale}/hq`}
+                            className="font-medium text-indigo-700 hover:text-indigo-900"
+                            onClick={() => trackInteraction('feature_discovered', { cta: 'hq_manage_site', siteId: site.id })}
+                          >
                             Manage Site
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -128,15 +142,27 @@ export default function HQDashboard() {
               <div className="p-5">
                 <h3 className="text-base font-semibold leading-6 text-gray-900">Admin Actions</h3>
                 <div className="mt-4 space-y-3">
-                  <button className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                  <Link
+                    href={`/${locale}/hq`}
+                    className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_add_new_site' })}
+                  >
                     Add New Site
-                  </button>
-                  <button className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  </Link>
+                  <Link
+                    href={`/${locale}/hq`}
+                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_user_management' })}
+                  >
                     User Management
-                  </button>
-                  <button className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  </Link>
+                  <Link
+                    href={`/${locale}/hq`}
+                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_global_settings' })}
+                  >
                     Global Settings
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

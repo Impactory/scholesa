@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { Loader2, Sparkles, Check } from 'lucide-react';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import type { UserRole } from '@/src/types/schema';
 
 interface PricingPlan {
   id: string;
@@ -132,12 +135,33 @@ function PricingCard({ plan, onSubscribe, loading }: PricingCardProps) {
 export function PricingPlans() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { user, profile } = useAuthContext();
+
+  const trackPricingCTA = async (metadata: Record<string, unknown>) => {
+    if (!user || !profile) return;
+    const siteId = profile.activeSiteId || profile.siteIds?.[0] || 'global';
+    await TelemetryService.track({
+      event: 'feature_discovered',
+      category: 'navigation',
+      userId: user.uid,
+      userRole: profile.role as UserRole,
+      siteId,
+      metadata: {
+        surface: 'pricing_plans',
+        ...metadata,
+      },
+    });
+  };
 
   const handleSubscribe = async (planId: string) => {
     setLoading(planId);
     setError(null);
 
     try {
+      await trackPricingCTA({
+        cta: 'pricing_get_started',
+        planId,
+      });
       const createCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
       const result = await createCheckoutSession({
         productId: planId,
@@ -184,7 +208,13 @@ export function PricingPlans() {
 
         <p className="mt-12 text-center text-sm text-gray-500">
           All prices in USD. Cancel anytime. Need a custom plan?{' '}
-          <a href="mailto:support@scholesa.com" className="text-indigo-600 hover:text-indigo-500">
+          <a
+            href="mailto:support@scholesa.com"
+            className="text-indigo-600 hover:text-indigo-500"
+            onClick={() => {
+              trackPricingCTA({ cta: 'pricing_contact_support' }).catch(() => undefined);
+            }}
+          >
             Contact us
           </a>
         </p>

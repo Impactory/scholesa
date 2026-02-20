@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
 import type { Site } from '@/schema';
 
 export default function SiteDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const trackInteraction = useInteractionTracking();
   const [site, setSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +101,13 @@ export default function SiteDashboard() {
             </div>
             <div className="bg-gray-50 px-5 py-3">
               <div className="text-sm">
-                <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">View all</a>
+                <Link
+                  href={`/${locale}/site`}
+                  className="font-medium text-indigo-700 hover:text-indigo-900"
+                  onClick={() => trackInteraction('feature_discovered', { cta: 'site_view_all' })}
+                >
+                  View all
+                </Link>
               </div>
             </div>
           </div>
@@ -121,7 +133,13 @@ export default function SiteDashboard() {
             </div>
             <div className="bg-gray-50 px-5 py-3">
               <div className="text-sm">
-                <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">Manage schedule</a>
+                <Link
+                  href={`/${locale}/site`}
+                  className="font-medium text-indigo-700 hover:text-indigo-900"
+                  onClick={() => trackInteraction('feature_discovered', { cta: 'site_manage_schedule' })}
+                >
+                  Manage schedule
+                </Link>
               </div>
             </div>
           </div>

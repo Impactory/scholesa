@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 export default function LoginPage() {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const trackInteraction = useInteractionTracking();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -82,6 +84,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
+              onClick={() => trackInteraction('help_accessed', { cta: 'auth_login_submit' })}
               className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign in'}
@@ -89,7 +92,11 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center text-sm">
-            <a href={`/${locale}/register`} className="font-medium text-indigo-600 hover:text-indigo-500">
+            <a
+              href={`/${locale}/register`}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+              onClick={() => trackInteraction('feature_discovered', { cta: 'auth_login_to_register' })}
+            >
               Don&apos;t have an account? Sign up
             </a>
           </div>

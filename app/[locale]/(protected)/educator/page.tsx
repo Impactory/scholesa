@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { query, where, getDocs } from 'firebase/firestore';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sessionsCollection } from '@/src/lib/firestore/collections';
 import type { Session } from '@/schema';
 
 export default function EducatorDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const trackInteraction = useInteractionTracking();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -82,9 +88,13 @@ export default function EducatorDashboard() {
                       </div>
                       <div className="bg-gray-50 px-5 py-3">
                         <div className="text-sm">
-                          <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">
+                          <Link
+                            href={`/${locale}/educator`}
+                            className="font-medium text-indigo-700 hover:text-indigo-900"
+                            onClick={() => trackInteraction('feature_discovered', { cta: 'educator_view_details', sessionId: session.id })}
+                          >
                             View details
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -100,12 +110,20 @@ export default function EducatorDashboard() {
               <div className="p-5">
                 <h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>
                 <div className="mt-4 space-y-4">
-                  <button className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                  <Link
+                    href={`/${locale}/educator`}
+                    className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'educator_take_attendance' })}
+                  >
                     Take Attendance
-                  </button>
-                  <button className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  </Link>
+                  <Link
+                    href={`/${locale}/educator`}
+                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'educator_create_mission' })}
+                  >
                     Create Mission
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

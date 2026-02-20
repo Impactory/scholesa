@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { query, where, getDocs, documentId } from 'firebase/firestore';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
 import type { Site } from '@/schema';
 
 export default function PartnerDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const trackInteraction = useInteractionTracking();
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,9 +93,13 @@ export default function PartnerDashboard() {
                       </div>
                       <div className="bg-gray-50 px-5 py-3">
                         <div className="text-sm">
-                          <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">
+                          <Link
+                            href={`/${locale}/partner`}
+                            className="font-medium text-indigo-700 hover:text-indigo-900"
+                            onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_reports', siteId: site.id })}
+                          >
                             View Reports
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -123,8 +133,20 @@ export default function PartnerDashboard() {
               <div className="p-5">
                 <h3 className="text-base font-semibold leading-6 text-gray-900">Resources</h3>
                 <div className="mt-4 space-y-2">
-                  <a href="#" className="block text-sm text-indigo-600 hover:text-indigo-500">Download Impact Report</a>
-                  <a href="#" className="block text-sm text-indigo-600 hover:text-indigo-500">Partner Guidelines</a>
+                  <Link
+                    href={`/${locale}/partner`}
+                    className="block text-sm text-indigo-600 hover:text-indigo-500"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'partner_download_impact_report' })}
+                  >
+                    Download Impact Report
+                  </Link>
+                  <Link
+                    href={`/${locale}/partner`}
+                    className="block text-sm text-indigo-600 hover:text-indigo-500"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_guidelines' })}
+                  >
+                    Partner Guidelines
+                  </Link>
                 </div>
               </div>
             </div>

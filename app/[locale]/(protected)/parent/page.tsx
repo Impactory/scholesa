@@ -6,9 +6,14 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { usersCollection } from '@/src/lib/firestore/collections';
 import type { User } from '@/schema';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 export default function ParentDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const trackInteraction = useInteractionTracking();
   const [learners, setLearners] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +72,11 @@ export default function ParentDashboard() {
                 <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
                   <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">Welcome Parent</h1>
                   <p className="mt-4 text-lg text-gray-600">You don&apos;t have any learners associated with your account yet.</p>
-                  <Link href="/learner-registration" className="mt-8 px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                  <Link
+                    href={`/${locale}/learner`}
+                    className="mt-8 px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'parent_register_learner' })}
+                  >
                     Register a Learner
                   </Link>
                 </div>
@@ -88,9 +97,13 @@ export default function ParentDashboard() {
                       </div>
                       <div className="bg-gray-50 px-5 py-3">
                         <div className="text-sm">
-                          <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">
+                          <Link
+                            href={`/${locale}/parent`}
+                            className="font-medium text-indigo-700 hover:text-indigo-900"
+                            onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_progress', learnerId: learner.uid })}
+                          >
                             View Progress
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -106,12 +119,20 @@ export default function ParentDashboard() {
               <div className="p-5">
                 <h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>
                 <div className="mt-4 space-y-4">
-                  <button className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                  <Link
+                    href={`/${locale}/parent`}
+                    className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'parent_message_educator' })}
+                  >
                     Message Educator
-                  </button>
-                  <button className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  </Link>
+                  <Link
+                    href={`/${locale}/parent`}
+                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_schedule' })}
+                  >
                     View Schedule
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
