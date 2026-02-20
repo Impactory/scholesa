@@ -5,7 +5,7 @@
  * and that Gemini API integration is working
  */
 
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, jest, afterAll } from '@jest/globals';
 import {
   AnalyticsEngine,
   IntelligenceService,
@@ -13,11 +13,25 @@ import {
   type MissionSelectedEvent,
   type CheckpointSubmittedEvent
 } from '@/src/lib/analytics';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, terminate, setLogLevel } from 'firebase/firestore';
+import { deleteApp } from 'firebase/app';
+import { app, firestore } from '@/src/firebase/client-init';
 
 // Mock environment
 process.env.NEXT_PUBLIC_GEMINI_API_KEY = 'test_key';
 jest.setTimeout(60000);
+setLogLevel('error');
+
+afterAll(async () => {
+  try {
+    await terminate(firestore);
+  } catch {
+  }
+  try {
+    await deleteApp(app);
+  } catch {
+  }
+});
 
 describe('Analytics Implementation', () => {
   describe('Event Tracking', () => {
@@ -254,9 +268,3 @@ describe('Analytics Implementation', () => {
     });
   });
 });
-
-// Run tests
-console.log('Analytics Implementation Test Suite');
-console.log('====================================');
-console.log('All tests verify analytics.json specification compliance');
-console.log('Gemini API key configured:', !!process.env.NEXT_PUBLIC_GEMINI_API_KEY);
