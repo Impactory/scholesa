@@ -27,7 +27,7 @@ interface AICoachScreenProps {
   missionId?: string;
 }
 
-type CoachMode = 'hint' | 'rubric_check' | 'debug';
+type CoachMode = 'hint' | 'verify' | 'debug';
 
 export function AICoachScreen({
   learnerId,
@@ -146,7 +146,7 @@ export function AICoachScreen({
           <button
             onClick={() => {
               trackInteraction('feature_discovered', { cta: 'ai_coach_mode_rubric_check' });
-              setMode('rubric_check');
+              setMode('verify');
             }}
             className="group bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-indigo-500 hover:shadow-lg transition-all"
           >
@@ -198,7 +198,7 @@ export function AICoachScreen({
                 placeholder={
                   mode === 'hint'
                     ? 'Example: I\'m trying to make the button change color but it\'s not working...'
-                    : mode === 'rubric_check'
+                    : mode === 'verify'
                     ? 'Example: I finished my project. Can you check if I met all the requirements?'
                     : 'Example: My code runs but the answer is wrong. I\'ve checked my logic three times...'
                 }
