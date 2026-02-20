@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.unexpected');
         setState(() {
-          _errorMessage = fallbackMessage;
+          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.googleFailed');
         setState(() {
-          _errorMessage = fallbackMessage;
+          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -145,7 +145,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.microsoftFailed');
         setState(() {
-          _errorMessage = fallbackMessage;
+          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -697,5 +697,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       default:
         return fallback ?? AppStrings.of(context, 'auth.error.generic');
     }
+  }
+
+  String _normalizeAuthExceptionMessage(BuildContext context, Object error, String fallback) {
+    final RegExp codePattern = RegExp(r'firebase_auth\/([a-z\-]+)');
+    final Match? match = codePattern.firstMatch(error.toString().toLowerCase());
+    if (match != null && match.groupCount >= 1) {
+      final String normalizedCode = match.group(1)!;
+      return _authErrorMessage(context, normalizedCode, fallback: fallback);
+    }
+
+    return fallback;
   }
 }

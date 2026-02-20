@@ -1,5 +1,7 @@
 # QA Runbook (run from repo root)
 
+Quick link: one-page staging PITR drill checklist in STAGING_PITR_DRILL_CHECKLIST.md.
+
 ## Web stack (paused but retained)
 - Env vars set (.env).
 - Firebase emulators or test project.
@@ -93,3 +95,26 @@
 
 ### FL-THEME-01 Visual Sweep
 1) Check landing/login/register/role selector/dashboards use dark gradient + glass aesthetic with Manrope typography.
+
+## Managed Firestore Operations (staging/prod)
+
+### DB-IDX-01 Composite Index Rollout + Query Validation
+1) Deploy indexes from repo root: `firebase deploy --only firestore:indexes`.
+2) Wait for index build completion in Firebase Console → Firestore → Indexes.
+3) Validate target query in app/functions path (`missionAttempts` filtered by `siteId` + `status`, ordered by `startedAt desc`).
+4) Record p50/p95 latency and confirm no missing-index errors in logs.
+
+### DB-BKP-01 Managed Backup + Restore Drill
+1) In staging project, create identifiable drill docs (e.g., `backupDrill/{timestamp-*}`) across critical collections.
+2) Trigger a managed backup (Firebase/GCP Backup service) and record backup ID + timestamp.
+3) Mutate/delete drill docs to simulate incident.
+4) Restore from backup into a restore target (preferred isolated project/database).
+5) Verify restored docs match pre-incident values and relationships expected by app logic.
+6) Document RTO (time to restore) and RPO (data loss window) observed.
+
+### DB-PITR-01 Point-in-Time Recovery Drill (if enabled)
+1) Confirm PITR is enabled for the target Firestore database.
+2) Create a PITR marker doc, wait 2-3 minutes, then apply controlled mutation/delete.
+3) Execute PITR restore to a timestamp immediately before mutation.
+4) Verify marker/doc state restored correctly and application can read restored data.
+5) Capture drill evidence: restore timestamp, completion time, validation queries, rollback decision.

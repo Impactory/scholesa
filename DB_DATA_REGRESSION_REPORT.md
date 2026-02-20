@@ -1,8 +1,8 @@
 # DB + Data Regression Report
 
-- Generated: 2026-02-20T15:20:16.322Z
+- Generated: 2026-02-20T15:24:46.397Z
 - Scope: Firestore emulator regression run (15 checks)
-- Summary: PASS=11, WARN=4, FAIL=0
+- Summary: PASS=12, WARN=3, FAIL=0
 
 ## CRUD regression
 
@@ -37,8 +37,8 @@
 
 | Status | Check | Details |
 |---|---|---|
-| PASS | Critical filtered + ordered query returns with acceptable latency | Returned 25 docs in 14.45ms (emulator timing) |
-| WARN | Composite index definition exists for high-traffic missionAttempts query | Missing composite index definition for siteId+status+startedAt |
+| PASS | Critical filtered + ordered query returns with acceptable latency | Returned 25 docs in 21.71ms (emulator timing) |
+| PASS | Composite index definition exists for high-traffic missionAttempts query | Index entry present in firestore.indexes.json |
 
 ## Backup/restore regression
 
@@ -51,7 +51,7 @@
 
 | Status | Check | Details |
 |---|---|---|
-| PASS | Double-write race on same deterministic ID rejects one writer | Settled results: fulfilled/rejected |
+| PASS | Double-write race on same deterministic ID rejects one writer | Settled results: rejected/fulfilled |
 | PASS | High-contention transactional updates avoid lost writes | credits=25 |
 
 ## Notes

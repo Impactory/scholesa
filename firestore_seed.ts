@@ -50,12 +50,32 @@ const site: Site = {
   createdAt: now,
 };
 
+const baseUsers: User[] = [
+  { uid: 'u-learner', email: 'learner@scholesa.dev', role: 'learner', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-educator', email: 'educator@scholesa.dev', role: 'educator', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-parent', email: 'parent@scholesa.dev', role: 'parent', siteIds: [site.id], parentIds: ['u-learner'], createdAt: now, updatedAt: now },
+  { uid: 'u-sitelead', email: 'site@scholesa.dev', role: 'site', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-hq', email: 'hq@scholesa.dev', role: 'hq', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-partner', email: 'partner@scholesa.dev', role: 'partner', siteIds: [site.id], createdAt: now, updatedAt: now },
+];
+
+const aliasUsers: User[] = [
+  { uid: 'u-learner-test', email: 'learner@scholesa.test', role: 'learner', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-educator-test', email: 'educator@scholesa.test', role: 'educator', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-parent-test', email: 'parent@scholesa.test', role: 'parent', siteIds: [site.id], parentIds: ['u-learner-test'], createdAt: now, updatedAt: now },
+  { uid: 'u-sitelead-test', email: 'site@scholesa.test', role: 'site', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-hq-test', email: 'hq@scholesa.test', role: 'hq', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-partner-test', email: 'partner@scholesa.test', role: 'partner', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-learner-example', email: 'learner@example.com', role: 'learner', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-educator-example', email: 'educator@example.com', role: 'educator', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-parent-example', email: 'parent@example.com', role: 'parent', siteIds: [site.id], parentIds: ['u-learner-example'], createdAt: now, updatedAt: now },
+  { uid: 'u-sitelead-example', email: 'sitelead@example.com', role: 'site', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-hq-example', email: 'hq@example.com', role: 'hq', siteIds: [site.id], createdAt: now, updatedAt: now },
+];
+
 const users: User[] = [
-  { uid: 'u-learner', email: 'learner@example.com', role: 'learner', siteIds: [site.id], createdAt: now, updatedAt: now },
-  { uid: 'u-educator', email: 'educator@example.com', role: 'educator', siteIds: [site.id], createdAt: now, updatedAt: now },
-  { uid: 'u-parent', email: 'parent@example.com', role: 'parent', siteIds: [site.id], parentIds: ['u-learner'], createdAt: now, updatedAt: now },
-  { uid: 'u-sitelead', email: 'sitelead@example.com', role: 'site', siteIds: [site.id], createdAt: now, updatedAt: now },
-  { uid: 'u-hq', email: 'hq@example.com', role: 'hq', siteIds: [site.id], createdAt: now, updatedAt: now },
+  ...baseUsers,
+  ...aliasUsers,
   {
     uid: 'u-master-admin',
     email: 'simon.luke@impactoryinstitute.com',
@@ -163,8 +183,8 @@ const contracts = [
   },
 ];
 
-  const standardTestPassword = process.env.SEED_TEST_PASSWORD ?? process.env.TEST_LOGIN_PASSWORD ?? 'Scholesa123!';
-  const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD ?? standardTestPassword;
+const standardTestPassword = process.env.SEED_TEST_PASSWORD ?? process.env.TEST_LOGIN_PASSWORD ?? 'Test123!';
+const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD ?? standardTestPassword;
 
   if (!process.env.SEED_TEST_PASSWORD && !process.env.TEST_LOGIN_PASSWORD) {
     console.warn('Using default test password for seeded accounts. Set SEED_TEST_PASSWORD to override.');
@@ -206,12 +226,16 @@ const contracts = [
 }
 
 async function main() {
-    const seededAuthUsers: SeedAuthUser[] = [
-      { uid: 'u-learner', email: 'learner@example.com', displayName: 'Learner User', password: standardTestPassword, role: 'learner' },
-      { uid: 'u-educator', email: 'educator@example.com', displayName: 'Educator User', password: standardTestPassword, role: 'educator' },
-      { uid: 'u-parent', email: 'parent@example.com', displayName: 'Parent User', password: standardTestPassword, role: 'parent' },
-      { uid: 'u-sitelead', email: 'sitelead@example.com', displayName: 'Site Lead User', password: standardTestPassword, role: 'site' },
-      { uid: 'u-hq', email: 'hq@example.com', displayName: 'HQ User', password: standardTestPassword, role: 'hq' },
+  const seededAuthUsers: SeedAuthUser[] = [
+    ...users
+      .filter((user) => user.uid !== 'u-master-admin')
+      .map((user) => ({
+        uid: user.uid,
+        email: user.email,
+        displayName: `Test ${user.role.toUpperCase()} (${user.email})`,
+        password: standardTestPassword,
+        role: user.role,
+      })),
       {
         uid: 'u-master-admin',
         email: 'simon.luke@impactoryinstitute.com',
@@ -222,7 +246,7 @@ async function main() {
       },
     ];
 
-    await Promise.all(seededAuthUsers.map((seededUser) => upsertAuthUser(seededUser)));
+  await Promise.all(seededAuthUsers.map((seededUser) => upsertAuthUser(seededUser)));
   await db.collection('sites').doc(site.id).set(site);
   await Promise.all(users.map((u) => db.collection('users').doc(u.uid).set(u)));
   await Promise.all(pillars.map((p) => db.collection('pillars').doc(p.code).set(p)));
@@ -234,6 +258,8 @@ async function main() {
   await db.collection('enrollments').doc(enrollment.id).set(enrollment);
   await Promise.all(portfolioItems.map((item) => db.collection('portfolioItems').doc(item.id).set(item)));
   await Promise.all(contracts.map((c) => db.collection('contracts').doc(c.id).set(c)));
+  console.log('Test login password:', standardTestPassword);
+  console.log('Primary testing accounts: learner@scholesa.dev, educator@scholesa.dev, parent@scholesa.dev, site@scholesa.dev, hq@scholesa.dev, partner@scholesa.dev');
   console.log('Seed complete');
 }
 

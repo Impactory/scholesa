@@ -23,7 +23,6 @@ class ScholesaLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double radius = borderRadius ?? size * 0.22;
-    final double fontSize = size * 0.55;
     final double shadowBlur = showShadow ? size * 0.25 : 0;
     final double shadowSpread = showShadow ? size * 0.04 : 0;
 
@@ -56,19 +55,68 @@ class ScholesaLogo extends StatelessWidget {
               ]
             : null,
       ),
-      child: Center(
-        child: Text(
-          'S',
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0f172a), // Dark navy
-            height: 1,
-          ),
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.14),
+        child: CustomPaint(
+          painter: _ScholesaGlyphPainter(),
+          size: Size.square(size),
         ),
       ),
     );
   }
+}
+
+class _ScholesaGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final double outerRadius = size.width * 0.38;
+    final double nodeRadius = size.width * 0.055;
+
+    final Paint ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.09
+      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.95)
+      ..strokeCap = StrokeCap.round;
+
+    final Paint linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.07
+      ..color = const Color(0xFFFFFFFF)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final Paint nodeBlue = Paint()..color = ScholesaColors.futureSkills;
+    final Paint nodePurple = Paint()..color = ScholesaColors.leadership;
+    final Paint nodeGreen = Paint()..color = ScholesaColors.impact;
+
+    canvas.drawCircle(center, outerRadius, ringPaint);
+
+    final Path hexPath = Path()
+      ..moveTo(center.dx, size.height * 0.18)
+      ..lineTo(size.width * 0.74, size.height * 0.33)
+      ..lineTo(size.width * 0.74, size.height * 0.67)
+      ..lineTo(center.dx, size.height * 0.82)
+      ..lineTo(size.width * 0.26, size.height * 0.67)
+      ..lineTo(size.width * 0.26, size.height * 0.33)
+      ..close();
+    canvas.drawPath(hexPath, linePaint);
+
+    final Path mesh = Path()
+      ..moveTo(center.dx, size.height * 0.33)
+      ..lineTo(center.dx, size.height * 0.67)
+      ..moveTo(size.width * 0.26, size.height * 0.5)
+      ..lineTo(center.dx, size.height * 0.67)
+      ..lineTo(size.width * 0.74, size.height * 0.5);
+    canvas.drawPath(mesh, linePaint);
+
+    canvas.drawCircle(Offset(size.width * 0.12, center.dy), nodeRadius, nodeBlue);
+    canvas.drawCircle(Offset(size.width * 0.88, center.dy), nodeRadius, nodePurple);
+    canvas.drawCircle(Offset(center.dx, size.height * 0.88), nodeRadius, nodeGreen);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Small Scholesa logo for app bars, list items, etc.
