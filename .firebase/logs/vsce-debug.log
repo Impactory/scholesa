@@ -10108,3 +10108,15 @@ I0220 11:58:49.347885   91593 dev.go:104] Listening on address (HTTP + gRPC): 12
 [debug] [2026-02-20T21:51:05.282Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
 [debug] [2026-02-20T21:51:05.283Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"firestore":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"name":"firestore","host":"127.0.0.1","port":8080,"pid":44206,"reservedPorts":[9150],"webSocketHost":"127.0.0.1","webSocketPort":9150}}
 [debug] [2026-02-20T21:51:08.110Z] [Firebase Plugin] Received emulators shutdown notification.
+[debug] [2026-02-20T21:53:25.012Z] [Firebase Plugin] Received emulators started notification. Running detection.
+[debug] [2026-02-20T21:53:25.013Z] Found emulator hub locator: {"version":"15.6.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":49925}
+[debug] [2026-02-20T21:53:25.014Z] >>> [apiv2][query] GET http://127.0.0.1:4400/emulators [none]
+[debug] [2026-02-20T21:53:25.021Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
+[debug] [2026-02-20T21:53:25.021Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"firestore":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"name":"firestore","host":"127.0.0.1","port":8080,"pid":50023,"reservedPorts":[9150],"webSocketHost":"127.0.0.1","webSocketPort":9150}}
+[debug] [2026-02-20T21:53:28.674Z] [Firebase Plugin] Received emulators shutdown notification.
+[debug] [2026-02-20T21:53:30.143Z] [Firebase Plugin] Received emulators started notification. Running detection.
+[debug] [2026-02-20T21:53:30.143Z] Found emulator hub locator: {"version":"15.6.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":50286}
+[debug] [2026-02-20T21:53:30.143Z] >>> [apiv2][query] GET http://127.0.0.1:4400/emulators [none]
+[debug] [2026-02-20T21:53:30.150Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
+[debug] [2026-02-20T21:53:30.151Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"firestore":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"name":"firestore","host":"127.0.0.1","port":8080,"pid":50375,"reservedPorts":[9150],"webSocketHost":"127.0.0.1","webSocketPort":9150}}
+[debug] [2026-02-20T21:53:32.991Z] [Firebase Plugin] Received emulators shutdown notification.
