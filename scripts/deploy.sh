@@ -3,11 +3,12 @@
 # Scholesa – Full-stack deploy script
 #
 # Usage:
-#   ./scripts/deploy.sh              # Deploy everything (functions + rules + hosting)
+#   ./scripts/deploy.sh              # Deploy everything (functions + rules + Cloud Run web)
 #   ./scripts/deploy.sh functions    # Deploy only Cloud Functions
 #   ./scripts/deploy.sh rules        # Deploy Firestore + Storage rules
-#   ./scripts/deploy.sh hosting      # Deploy Firebase Hosting only
-#   ./scripts/deploy.sh flutter-web  # Build Flutter web & deploy to Hosting
+#   ./scripts/deploy.sh cloudrun-web # Build Flutter web & deploy to Cloud Run
+#   ./scripts/deploy.sh flutter-web  # Alias of cloudrun-web
+#   ./scripts/deploy.sh hosting      # Legacy override: deploy Firebase Hosting only
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-android # Build Flutter Android (release APK)
 # ──────────────────────────────────────────────────────────────
@@ -39,8 +40,12 @@ preflight() {
     fail "Node 22.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 22"
   fi
 
-  if [[ "$TARGET" == flutter-* ]]; then
+  if [[ "$TARGET" == flutter-* || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
     command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH"
+  fi
+
+  if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "all" ]]; then
+    command -v gcloud >/dev/null 2>&1 || fail "gcloud not found on PATH"
   fi
 }
 
@@ -85,6 +90,7 @@ deploy_rules() {
 }
 
 deploy_hosting() {
+  warn "Using legacy Firebase Hosting deploy target. Preferred default is Cloud Run web."
   log "Building Flutter web (release)..."
   (cd "$FLUTTER_APP" && flutter build web --release)
 
@@ -93,14 +99,29 @@ deploy_hosting() {
   log "Hosting deployed ✓"
 }
 
-deploy_flutter_web() {
+deploy_cloud_run_web() {
   flutter_gate
-  log "Building Flutter web (release)..."
-  (cd "$FLUTTER_APP" && flutter build web --release)
-  log "Flutter web build complete. Output: $FLUTTER_APP/build/web"
-  log "Deploying Firebase Hosting..."
-  (cd "$REPO_ROOT" && firebase deploy --only hosting)
-  log "Hosting deployed ✓"
+
+  local project_id
+  project_id="${GCP_PROJECT_ID:-}"
+  if [[ -z "$project_id" ]]; then
+    project_id="$(cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})')"
+  fi
+
+  [[ -n "$project_id" ]] || fail "Unable to resolve GCP project ID. Set GCP_PROJECT_ID in env."
+
+  local region service image_tag
+  region="${GCP_REGION:-us-central1}"
+  service="${CLOUD_RUN_SERVICE:-empire-web}"
+  image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
+
+  log "Deploying Flutter web to Cloud Run (project=$project_id service=$service region=$region tag=$image_tag)..."
+  (cd "$REPO_ROOT" && bash ./scripts/deploy-cloud-run.sh "$project_id" "$region" "$service" "$image_tag")
+  log "Cloud Run web deployed ✓"
+}
+
+deploy_flutter_web() {
+  deploy_cloud_run_web
 }
 
 deploy_flutter_ios() {
@@ -121,7 +142,7 @@ deploy_all() {
   flutter_gate
   deploy_functions
   deploy_rules
-  deploy_hosting
+  deploy_cloud_run_web
   log "Full deploy complete ✓"
 }
 
@@ -132,9 +153,10 @@ case "$TARGET" in
   all)              deploy_all ;;
   functions)        deploy_functions ;;
   rules)            deploy_rules ;;
+  cloudrun-web)     deploy_cloud_run_web ;;
   hosting)          deploy_hosting ;;
   flutter-web)      deploy_flutter_web ;;
   flutter-ios)      deploy_flutter_ios ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | hosting | flutter-web | flutter-ios | flutter-android" ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | hosting | flutter-web | flutter-ios | flutter-android" ;;
 esac

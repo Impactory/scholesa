@@ -12,22 +12,26 @@ if [ -z "$GCP_PROJECT_ID" ]; then
   exit 1
 fi
 
-IMAGE=gcr.io/${GCP_PROJECT_ID}/scholesa:${IMAGE_TAG}
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
+IMAGE=gcr.io/${GCP_PROJECT_ID}/empire-web:${IMAGE_TAG}
 
-echo "Building image $IMAGE"
-docker build -t "$IMAGE" .
+command -v gcloud >/dev/null 2>&1 || { echo "gcloud not found on PATH"; exit 1; }
+command -v flutter >/dev/null 2>&1 || { echo "flutter not found on PATH"; exit 1; }
 
-echo "Pushing image"
-docker push "$IMAGE"
+echo "Building Flutter web release bundle"
+(cd "$FLUTTER_APP" && flutter build web --release)
+
+echo "Submitting Docker build with Dockerfile.flutter for $IMAGE"
+gcloud builds submit "$REPO_ROOT" --project "$GCP_PROJECT_ID" --config "$REPO_ROOT/cloudbuild.flutter.yaml" --substitutions "_TAG=${IMAGE_TAG}"
 
 echo "Deploying to Cloud Run: service=$CLOUD_RUN_SERVICE region=$GCP_REGION"
 
 gcloud run deploy "$CLOUD_RUN_SERVICE" \
   --image "$IMAGE" \
+  --project "$GCP_PROJECT_ID" \
   --region "$GCP_REGION" \
   --platform managed \
-  --allow-unauthenticated \
-  --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY:-}","NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" \
-  --update-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest"
+  --allow-unauthenticated
 
 echo "Deployment finished."
