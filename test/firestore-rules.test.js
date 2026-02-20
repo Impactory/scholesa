@@ -25,13 +25,15 @@ beforeAll(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: {
-      rules: fs.readFileSync(path.resolve(__dirname, '../../firestore.rules'), 'utf8'),
+      rules: fs.readFileSync(path.resolve(__dirname, '../firestore.rules'), 'utf8'),
     },
   });
 });
 
 afterAll(async () => {
-  await testEnv.cleanup();
+  if (testEnv) {
+    await testEnv.cleanup();
+  }
 });
 
 beforeEach(async () => {

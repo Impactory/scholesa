@@ -9,4 +9,5 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   modulePathIgnorePatterns: ['<rootDir>/functions/', '<rootDir>/apps/empire_flutter/app/'],
+  setupFiles: ['<rootDir>/jest.setup.js'],
 };
