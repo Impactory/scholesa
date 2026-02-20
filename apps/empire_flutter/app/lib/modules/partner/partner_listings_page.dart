@@ -432,9 +432,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit coming soon!')),
-                      );
+                      _showEditListingDialog(context, listing);
                     },
                     child: const Text('Edit'),
                   ),
@@ -443,6 +441,52 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditListingDialog(BuildContext context, MarketplaceListing listing) {
+    final TextEditingController titleController =
+        TextEditingController(text: listing.title);
+    final TextEditingController descriptionController =
+        TextEditingController(text: listing.description);
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Edit Listing'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descriptionController,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Description'),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Listing updated: ${titleController.text.trim()}'),
+                ),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }

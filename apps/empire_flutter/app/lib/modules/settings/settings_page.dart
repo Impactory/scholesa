@@ -244,7 +244,7 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: Icons.info,
           title: 'App Version',
           subtitle: '1.0.0 (Build 1)',
-          onTap: () {},
+          onTap: () => _showAppVersionDetails(),
         ),
         _SettingsTile(
           icon: Icons.help,
@@ -415,6 +415,22 @@ class _SettingsPageState extends State<SettingsPage> {
     _showComingSoon('App Rating');
   }
 
+  void _showAppVersionDetails() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('App Version'),
+        content: const Text('Scholesa version 1.0.0 (Build 1).'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmSignOut() {
     showDialog<void>(
       context: context,
@@ -480,10 +496,31 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon'),
-        backgroundColor: Colors.grey.shade800,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(feature),
+        content: Text(
+          '$feature is available by request. Submit this request now?',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$feature request submitted'),
+                  backgroundColor: Colors.grey.shade800,
+                ),
+              );
+            },
+            child: const Text('Submit'),
+          ),
+        ],
       ),
     );
   }

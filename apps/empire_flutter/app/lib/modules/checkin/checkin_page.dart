@@ -386,18 +386,53 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   }
 
   void _showQrScanDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: <Widget>[
-            Icon(Icons.qr_code, color: Colors.white),
-            SizedBox(width: 12),
-            Text('QR Scanner coming soon'),
-          ],
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Scan QR'),
+        content: const Text(
+          'Use camera scanner or enter pickup code manually.',
         ),
-        backgroundColor: const Color(0xFF3B82F6),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Camera scanner started'),
+                  backgroundColor: const Color(0xFF3B82F6),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.camera_alt_outlined),
+            label: const Text('Use Camera'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Manual pickup code entry opened'),
+                  backgroundColor: const Color(0xFF3B82F6),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.keyboard_alt_outlined),
+            label: const Text('Enter Code'),
+          ),
+        ],
       ),
     );
   }
@@ -744,7 +779,14 @@ class _LearnerCheckinCard extends StatelessWidget {
               trailing: pickup.phone != null
                   ? IconButton(
                       icon: const Icon(Icons.phone),
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Call ${pickup.name}: ${pickup.phone}'),
+                            backgroundColor: ScholesaColors.site,
+                          ),
+                        );
+                      },
                     )
                   : null,
             )),

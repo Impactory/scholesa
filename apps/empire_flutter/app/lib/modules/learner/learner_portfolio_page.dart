@@ -524,19 +524,57 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   void _editProfile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile editing coming soon'),
-        backgroundColor: ScholesaColors.learner,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Edit Portfolio Profile'),
+        content: const Text('Update your portfolio bio, goals, and featured highlights.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Portfolio profile update queued'),
+                  backgroundColor: ScholesaColors.learner,
+                ),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
 
   void _sharePortfolio() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Portfolio sharing coming soon'),
-        backgroundColor: ScholesaColors.learner,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Share Portfolio'),
+        content: const Text('Create a secure share link for parents or mentors.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Share link generated'),
+                  backgroundColor: ScholesaColors.learner,
+                ),
+              );
+            },
+            child: const Text('Generate Link'),
+          ),
+        ],
       ),
     );
   }

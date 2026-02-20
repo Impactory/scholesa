@@ -33,7 +33,7 @@ class ProfilePage extends StatelessWidget {
                 SliverToBoxAdapter(child: _buildHeader(context, appState, roleColor)),
                 SliverToBoxAdapter(child: _buildProfileCard(appState, roleColor)),
                 SliverToBoxAdapter(child: _buildSettingsSection(context)),
-                SliverToBoxAdapter(child: _buildAboutSection()),
+                SliverToBoxAdapter(child: _buildAboutSection(context)),
                 SliverToBoxAdapter(child: _buildLogoutButton(context, appState)),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
               ],
@@ -65,7 +65,7 @@ class ProfilePage extends StatelessWidget {
             ),
             const Spacer(),
             IconButton(
-              onPressed: () {},
+              onPressed: () => _showEditProfileDialog(context, appState),
               icon: Icon(Icons.edit, color: roleColor),
             ),
           ],
@@ -182,38 +182,58 @@ class ProfilePage extends StatelessWidget {
             icon: Icons.notifications_outlined,
             title: 'Notifications',
             subtitle: 'Manage notification preferences',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Notifications',
+              message: 'Open notification preferences and delivery channels.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.lock_outline,
             title: 'Privacy & Security',
             subtitle: 'Password, two-factor auth',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Privacy & Security',
+              message: 'Review password, MFA, and device session settings.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.language,
             title: 'Language',
             subtitle: 'English',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Language',
+              message: 'Choose your preferred language for the app.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.dark_mode_outlined,
             title: 'Appearance',
             subtitle: 'Light mode',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Appearance',
+              message: 'Switch between light and dark display modes.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.cloud_sync_outlined,
             title: 'Sync & Data',
             subtitle: 'Last synced: Just now',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Sync & Data',
+              message: 'Manage sync cadence and data usage options.',
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -232,23 +252,39 @@ class ProfilePage extends StatelessWidget {
           _SettingsTile(
             icon: Icons.help_outline,
             title: 'Help & Support',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Help & Support',
+              message: 'Open help docs and contact support.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.description_outlined,
             title: 'Terms of Service',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Terms of Service',
+              message: 'Review terms and platform usage rules.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Privacy Policy',
+              message: 'Review data handling and privacy commitments.',
+            ),
           ),
           _SettingsTile(
             icon: Icons.info_outline,
             title: 'Version',
             subtitle: '1.0.0 (Build 1)',
-            onTap: () {},
+            onTap: () => _showFeatureDialog(
+              context,
+              title: 'Version',
+              message: 'App version 1.0.0 (Build 1).',
+            ),
           ),
         ],
       ),
@@ -311,6 +347,75 @@ class ProfilePage extends StatelessWidget {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  void _showEditProfileDialog(BuildContext context, AppState appState) {
+    final TextEditingController nameController =
+        TextEditingController(text: appState.displayName ?? '');
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Display Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    nameController.text.trim().isEmpty
+                        ? 'No profile changes applied'
+                        : 'Profile update request saved for ${nameController.text.trim()}',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFeatureDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$title opened')),
+              );
+            },
+            child: const Text('Open'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

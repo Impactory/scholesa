@@ -140,7 +140,7 @@ class GradientCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          'Coming Soon',
+                          'Unavailable',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,

@@ -55,11 +55,7 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.search_rounded),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search coming soon')),
-              );
-            },
+            onPressed: _showSearchDialog,
           ),
         ],
       ),
@@ -386,6 +382,43 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showSearchDialog() {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Search Learner Supports'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter learner name or support tag',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final String query = controller.text.trim().toLowerCase();
+              final int matches = _learnerSupports
+                  .where((support) => support.learnerName.toLowerCase().contains(query))
+                  .length;
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Found $matches matching support plans')),
+              );
+            },
+            child: const Text('Search'),
+          ),
+        ],
       ),
     );
   }

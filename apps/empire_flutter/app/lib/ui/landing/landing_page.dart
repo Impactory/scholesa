@@ -160,11 +160,29 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           const Spacer(),
           // Nav links (wide only)
           if (isWide) ...<Widget>[
-            _NavLink(label: 'Features', onTap: () {}),
+            _NavLink(
+              label: 'Features',
+              onTap: () => _showSectionPreview(
+                title: 'Features',
+                detail: 'Mission-based learning, AI coaching, portfolios, analytics, and offline support.',
+              ),
+            ),
             const SizedBox(width: 32),
-            _NavLink(label: 'Pillars', onTap: () {}),
+            _NavLink(
+              label: 'Pillars',
+              onTap: () => _showSectionPreview(
+                title: 'Pillars',
+                detail: 'Future Skills, Leadership & Agency, and Impact & Innovation.',
+              ),
+            ),
             const SizedBox(width: 32),
-            _NavLink(label: 'For Schools', onTap: () {}),
+            _NavLink(
+              label: 'For Schools',
+              onTap: () => _showSectionPreview(
+                title: 'For Schools',
+                detail: 'Role-based dashboards for learners, educators, parents, site teams, and HQ.',
+              ),
+            ),
             const SizedBox(width: 32),
           ],
           // CTA Buttons
@@ -297,7 +315,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => _showDemoDialog(context),
               icon: const Icon(Icons.play_circle_outline_rounded),
               label: const Text('Watch Demo'),
               style: OutlinedButton.styleFrom(
@@ -316,6 +334,50 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ],
         ),
       ],
+    );
+  }
+
+  void _showDemoDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Scholesa Demo'),
+        content: const Text(
+          'Demo walkthrough includes:\n'
+          '• Role dashboards\n'
+          '• CTA action flows\n'
+          '• Mission and attendance lifecycle',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.go('/login');
+            },
+            child: const Text('Try Live'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSectionPreview({required String title, required String detail}) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(detail),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
   }
 

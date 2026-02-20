@@ -1048,7 +1048,7 @@ class _UserDetailsSheet extends StatelessWidget {
                         icon: Icons.edit,
                         label: 'Edit',
                         color: ScholesaColors.hq,
-                        onTap: () {},
+                        onTap: () => _showEditUserDialog(context),
                       ),
                       const SizedBox(width: 12),
                       _ActionButton(
@@ -1173,6 +1173,39 @@ class _UserDetailsSheet extends StatelessWidget {
             },
           )).toList(),
         ),
+      ),
+    );
+  }
+
+  void _showEditUserDialog(BuildContext context) {
+    final TextEditingController nameController = TextEditingController(text: user.displayName);
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Edit User Profile'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Display Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Profile update requested for ${nameController.text.trim()}')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }

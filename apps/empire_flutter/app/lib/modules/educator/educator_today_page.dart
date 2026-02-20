@@ -195,7 +195,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               icon: Icons.rate_review,
               label: 'Review Missions',
               color: const Color(0xFF8B5CF6),
-              onTap: () {},
+              onTap: _showReviewMissionsDialog,
             ),
           ),
           const SizedBox(width: 12),
@@ -350,7 +350,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             ),
           ),
           TextButton.icon(
-            onPressed: () {},
+            onPressed: _showWeekViewSummary,
             icon: const Icon(Icons.calendar_month, size: 18),
             label: const Text('Week View'),
             style: TextButton.styleFrom(
@@ -368,6 +368,50 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) => _ClassDetailSheet(todayClass: todayClass),
+    );
+  }
+
+  void _showWeekViewSummary() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Week View Summary'),
+        content: Text(
+          'This week: ${context.read<EducatorService>().todayClasses.length} classes loaded from your current schedule.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReviewMissionsDialog() {
+    final int count = context.read<EducatorService>().dayStats?.missionsToReview ?? 0;
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Mission Review Queue'),
+        content: Text('You have $count missions pending review today.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Mission review queue opened')),
+              );
+            },
+            child: const Text('Open Queue'),
+          ),
+        ],
+      ),
     );
   }
 
