@@ -43,10 +43,9 @@ post_install do |installer|
       if config.build_settings['MACOSX_DEPLOYMENT_TARGET'].to_f < 11.0
         config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '11.0'
       end
-      other_ldflags = Array(config.build_settings['OTHER_LDFLAGS'])
-      unless other_ldflags.any? { |f| f.include?('-Wl,-no_warn_duplicate_libraries') }
-        other_ldflags << '-Wl,-no_warn_duplicate_libraries'
-        config.build_settings['OTHER_LDFLAGS'] = other_ldflags
+      other_ldflags = config.build_settings['OTHER_LDFLAGS'] || '$(inherited)'
+      unless other_ldflags.include?('-Wl,-no_warn_duplicate_libraries')
+        config.build_settings['OTHER_LDFLAGS'] = "#{other_ldflags} -Wl,-no_warn_duplicate_libraries".strip
       end
     end
   end
