@@ -6,6 +6,10 @@
 
 AUDIT_REPORT="AUDIT_REPORT.md"
 
+if [ -x "scripts/check-env-hygiene.sh" ]; then
+  scripts/check-env-hygiene.sh
+fi
+
 # 0. Check for bypass flag
 if [ "$SKIP_AUDIT" = "1" ]; then
   exit 0

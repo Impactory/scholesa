@@ -31,6 +31,14 @@ fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
 # ── Pre-flight checks ──────────────────────────────────────────
 preflight() {
   command -v firebase >/dev/null 2>&1 || fail "firebase CLI not found. Install: npm i -g firebase-tools"
+  command -v node >/dev/null 2>&1 || fail "node not found on PATH"
+
+  local node_major
+  node_major="$(node -p "process.versions.node.split('.')[0]")"
+  if [[ "$node_major" != "20" ]]; then
+    fail "Node 20.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 20"
+  fi
+
   if [[ "$TARGET" == flutter-* ]]; then
     command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH"
   fi
