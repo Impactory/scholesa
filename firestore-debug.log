@@ -143,3 +143,6 @@ false for 'create' @ L140, false for 'create' @ L610
 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
+*** shutting down gRPC server since JVM is shutting down
+*** server shut down
+260220 13:38:37.902:I 1 [main] [com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer.stop:80] Stopping WebSocket server...
