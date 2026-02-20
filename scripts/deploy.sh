@@ -35,8 +35,8 @@ preflight() {
 
   local node_major
   node_major="$(node -p "process.versions.node.split('.')[0]")"
-  if [[ "$node_major" != "20" ]]; then
-    fail "Node 20.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 20"
+  if [[ "$node_major" != "22" ]]; then
+    fail "Node 22.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 22"
   fi
 
   if [[ "$TARGET" == flutter-* ]]; then

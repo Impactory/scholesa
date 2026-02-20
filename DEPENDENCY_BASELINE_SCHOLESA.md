@@ -6,11 +6,11 @@ This document serves as the single source of truth for the minimum and target ve
 
 | Dependency | Current Locked Version | Supported Range & Notes |
 |---|---|---|
-| Node.js (repo + functions runtime) | 20.x | 20.x only. Do not run CI/CD or deploy scripts on Node 22+. |
+| Node.js (repo + functions runtime) | 22.x | 22.x only. Do not run CI/CD or deploy scripts on Node 20.x. |
 | Next.js | 14.2.35 | 14.x only. Do not upgrade to 15.x without a migration plan. |
 | React / ReactDOM | ^18 | 18.x only. |
 | TypeScript | ^5.5.3 | 5.x only. |
-| Firebase SDKs | firebase: ^11.1.0, firebase-admin: ^13.6.0 | Use latest stable versions compatible with Node 20 and Next 14.x. |
+| Firebase SDKs | firebase: ^11.1.0, firebase-admin: ^13.6.0 | Use latest stable versions compatible with Node 22 and Next 14.x. |
 | TailwindCSS | ^3.4.6 | 3.x only. |
 | Testing Libraries | N/A | No testing libraries are currently in use. |
 | PWA / Service Workers | N/A | Manual service worker implementation. No specific libraries used. |

@@ -8,19 +8,18 @@ Scope: Install/Upgrade, Config, CI/CD, Rollback, Monitoring/Alert
 
 - Overall: **PASS**
 - Blocking failures: **0**
-- Warnings: **1**
-  1. Node engine mismatch in local environment for functions install/build (`node v22` vs required `node 20`).
+- Warnings: **0**
 
 ### Post-Remediation Update (2026-02-20)
 
-- ✅ Added root engine pin (`package.json` -> `"engines": { "node": "20.x" }`).
-- ✅ Added deploy-time Node 20 preflight enforcement in `scripts/deploy.sh`.
+- ✅ Added root engine pin (`package.json` -> `"engines": { "node": "22.x" }`).
+- ✅ Added deploy-time Node 22 preflight enforcement in `scripts/deploy.sh`.
 - ✅ Added env hygiene guard (`scripts/check-env-hygiene.sh`) and wired into `pre-commit` + `pre-commit.sh`.
 - ✅ Removed tracked `/.env.production` and replaced with `/.env.production.example` template.
 
 ---
 
-## 1) Install/Upgrade Regression — PASS (with warning)
+## 1) Install/Upgrade Regression — PASS
 
 ### Evidence
 
@@ -48,11 +47,10 @@ cd /Users/simonluke/dev/scholesa/functions && npm ci && npm run build
 Result:
 - `npm ci` succeeded.
 - `npm run build` (`tsc`) succeeded.
-- Warning: `EBADENGINE` because local Node is `v22.20.0` while package requires `20`.
+- No engine mismatch warning under Node 22 baseline.
 
 ### Assessment
 - Regression objective met: install and build paths are reproducible and do not fail.
-- Warning requires environment standardization for strict parity with production runtime.
 
 ---
 
@@ -68,7 +66,7 @@ Observed:
 - Hosting public dir: `apps/empire_flutter/app/build/web`
 - SPA rewrite present:
   - `{"source": "**", "destination": "/index.html"}`
-- Functions runtime: `nodejs20`
+- Functions runtime: `nodejs22`
 
 ### Assessment
 - Hosting and runtime config are aligned with Flutter web deployment model.
@@ -76,7 +74,7 @@ Observed:
 
 ---
 
-## 3) CI/CD Regression — PASS (with warning)
+## 3) CI/CD Regression — PASS
 
 ### Evidence
 
@@ -106,7 +104,6 @@ cd /Users/simonluke/dev/scholesa/functions && npm ci && npm run build
 ```
 Result:
 - Build succeeded.
-- Same Node engine warning noted above.
 
 ### Assessment
 - CI/CD-style gates pass end-to-end for frontend and backend build/test.
@@ -180,11 +177,7 @@ Result:
 ## Findings & Actions
 
 ### Non-blocking findings
-1. **Node engine parity warning**
-   - Finding: local shell used Node 22 while functions package requires Node 20.
-   - Action: run CI and local functions build on Node 20 (via `.nvmrc`/toolchain pinning).
-
-2. **Environment file hygiene warning (closed)**
+1. **Environment file hygiene warning (closed)**
   - Finding: deployment/ops regression test warned about `.env.local` and `.env.production` at repo root.
   - Action taken: added tracked-env blocker and removed tracked `/.env.production` from repository.
 
