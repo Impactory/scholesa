@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site integrations health page
@@ -56,6 +57,14 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_integrations_health',
+                  'cta_id': 'refresh_integrations',
+                  'surface': 'appbar',
+                },
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Refreshing integrations...')),
               );
@@ -184,7 +193,18 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_vert_rounded),
-                  onPressed: () => _showIntegrationOptions(integration),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'site_integrations_health',
+                        'cta_id': 'open_integration_options',
+                        'surface': 'integration_card',
+                        'integration_id': integration.id,
+                      },
+                    );
+                    _showIntegrationOptions(integration);
+                  },
                 ),
               ],
             ),
@@ -207,6 +227,15 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'site_integrations_health',
+                        'cta_id': 'connect_integration',
+                        'surface': 'integration_card',
+                        'integration_id': integration.id,
+                      },
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Connecting ${integration.name}...')),
                     );
@@ -296,6 +325,15 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
               leading: const Icon(Icons.sync_rounded),
               title: const Text('Force Sync'),
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'site_integrations_health',
+                    'cta_id': 'force_sync_integration',
+                    'surface': 'integration_options_sheet',
+                    'integration_id': integration.id,
+                  },
+                );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Syncing ${integration.name}...')),
@@ -306,6 +344,15 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
               leading: const Icon(Icons.refresh_rounded),
               title: const Text('Retry Failed'),
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'site_integrations_health',
+                    'cta_id': 'retry_failed_syncs',
+                    'surface': 'integration_options_sheet',
+                    'integration_id': integration.id,
+                  },
+                );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Retrying failed syncs...')),
@@ -323,6 +370,15 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
               leading: const Icon(Icons.link_off_rounded, color: Colors.red),
               title: const Text('Disconnect', style: TextStyle(color: Colors.red)),
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'site_integrations_health',
+                    'cta_id': 'disconnect_integration',
+                    'surface': 'integration_options_sheet',
+                    'integration_id': integration.id,
+                  },
+                );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('${integration.name} disconnected')),

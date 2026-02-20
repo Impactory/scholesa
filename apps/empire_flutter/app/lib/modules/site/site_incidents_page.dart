@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site incidents management page
@@ -99,7 +100,17 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateIncidentDialog(),
+        onPressed: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'site_incidents',
+              'cta_id': 'open_create_incident_dialog',
+              'surface': 'floating_action_button',
+            },
+          );
+          _showCreateIncidentDialog();
+        },
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Report Incident'),
@@ -254,6 +265,16 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
   }
 
   void _showIncidentDetails(_Incident incident) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_incidents',
+        'cta_id': 'open_incident_details',
+        'surface': 'incident_card',
+        'incident_id': incident.id,
+        'status': incident.status.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -300,6 +321,17 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'module': 'site_incidents',
+                            'cta_id': incident.status == _Status.submitted
+                                ? 'review_incident'
+                                : 'close_incident',
+                            'surface': 'incident_details_sheet',
+                            'incident_id': incident.id,
+                          },
+                        );
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Incident updated')),
@@ -382,6 +414,14 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_incidents',
+                  'cta_id': 'submit_incident_report',
+                  'surface': 'create_incident_dialog',
+                },
+              );
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Incident reported')),

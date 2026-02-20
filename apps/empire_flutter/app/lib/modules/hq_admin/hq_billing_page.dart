@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Billing Page - Platform-wide billing and revenue management
@@ -153,7 +154,18 @@ class _HqBillingPageState extends State<HqBillingPage>
                   DropdownMenuItem<String>(value: 'jkt', child: Text('Jakarta')),
                 ],
                 onChanged: (String? value) {
-                  if (value != null) setState(() => _selectedSite = value);
+                  if (value != null) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_billing',
+                        'cta_id': 'set_site_filter',
+                        'surface': 'filters',
+                        'site': value,
+                      },
+                    );
+                    setState(() => _selectedSite = value);
+                  }
                 },
               ),
             ),
@@ -177,7 +189,18 @@ class _HqBillingPageState extends State<HqBillingPage>
                   DropdownMenuItem<String>(value: 'year', child: Text('This Year')),
                 ],
                 onChanged: (String? value) {
-                  if (value != null) setState(() => _selectedPeriod = value);
+                  if (value != null) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_billing',
+                        'cta_id': 'set_period_filter',
+                        'surface': 'filters',
+                        'period': value,
+                      },
+                    );
+                    setState(() => _selectedPeriod = value);
+                  }
                 },
               ),
             ),
@@ -439,6 +462,14 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   void _createInvoice() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'open_create_invoice_sheet',
+        'surface': 'floating_action_button',
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -448,6 +479,14 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   void _exportFinancials() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'open_export_financials_dialog',
+        'surface': 'header',
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -462,6 +501,14 @@ class _HqBillingPageState extends State<HqBillingPage>
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_billing',
+                  'cta_id': 'confirm_export_financials',
+                  'surface': 'export_financials_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -544,6 +591,15 @@ class _InvoiceCard extends StatelessWidget {
   }
 
   void _viewInvoice(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'view_invoice',
+        'surface': 'invoice_card',
+        'invoice_id': invoice['id'],
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -567,6 +623,15 @@ class _InvoiceCard extends StatelessWidget {
   }
 
   void _sendInvoice(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'send_invoice',
+        'surface': 'invoice_card',
+        'invoice_id': invoice['id'],
+      },
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Invoice ${invoice['id']} queued for sending'),
@@ -1039,6 +1104,16 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 
   void _createInvoice() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'submit_create_invoice',
+        'surface': 'create_invoice_sheet',
+        'parent_id': _selectedParent,
+        'learner_id': _selectedLearner,
+      },
+    );
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

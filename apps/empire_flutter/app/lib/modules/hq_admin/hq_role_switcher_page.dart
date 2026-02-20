@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Role Switcher Page
@@ -45,7 +46,17 @@ class HqRoleSwitcherPage extends StatelessWidget {
         children: <Widget>[
           IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_role_switcher',
+                  'cta_id': 'navigate_back',
+                  'surface': 'header',
+                },
+              );
+              context.go('/');
+            },
           ),
           const SizedBox(width: 8),
           Container(
@@ -174,7 +185,17 @@ class HqRoleSwitcherPage extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
-                  onPressed: () => appState.clearImpersonation(),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_role_switcher',
+                        'cta_id': 'clear_impersonation',
+                        'surface': 'current_role_info',
+                      },
+                    );
+                    appState.clearImpersonation();
+                  },
                   tooltip: 'Exit impersonation',
                 ),
               ],
@@ -340,8 +361,26 @@ class _RoleCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               onTap: () {
                 if (isActive) {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_role_switcher',
+                      'cta_id': 'deactivate_role_impersonation',
+                      'surface': 'role_card',
+                      'role': option.role.name,
+                    },
+                  );
                   appState.clearImpersonation();
                 } else {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_role_switcher',
+                      'cta_id': 'activate_role_impersonation',
+                      'surface': 'role_card',
+                      'role': option.role.name,
+                    },
+                  );
                   appState.setImpersonation(option.role);
                   context.go('/');
                 }

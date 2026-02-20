@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Educator integrations page for managing external tool connections
@@ -170,6 +171,16 @@ class EducatorIntegrationsPage extends StatelessWidget {
                 ? PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert_rounded),
                     onSelected: (String value) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'educator_integrations',
+                          'cta_id': 'integration_menu_action',
+                          'surface': 'connected_integration_card',
+                          'integration_name': name,
+                          'action': value,
+                        },
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('$value $name')),
                       );
@@ -182,6 +193,15 @@ class EducatorIntegrationsPage extends StatelessWidget {
                   )
                 : ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'educator_integrations',
+                          'cta_id': 'connect_integration',
+                          'surface': 'available_integration_card',
+                          'integration_name': name,
+                        },
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Connecting $name...')),
                       );

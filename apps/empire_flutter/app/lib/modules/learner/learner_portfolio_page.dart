@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Learner Portfolio Page - Achievements, badges, and skill showcase
@@ -61,7 +62,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _sharePortfolio,
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'learner_portfolio',
+                  'cta_id': 'open_share_portfolio_dialog',
+                  'surface': 'floating_action_button',
+                },
+              );
+              _sharePortfolio();
+            },
         backgroundColor: ScholesaColors.learner,
         icon: const Icon(Icons.share),
         label: const Text('Share'),
@@ -112,7 +123,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               ),
             ),
             IconButton(
-              onPressed: _editProfile,
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'learner_portfolio',
+                        'cta_id': 'open_edit_profile_dialog',
+                        'surface': 'header',
+                      },
+                    );
+                    _editProfile();
+                  },
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -536,6 +557,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           ),
           ElevatedButton(
             onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'learner_portfolio',
+                      'cta_id': 'save_profile_changes',
+                      'surface': 'edit_profile_dialog',
+                    },
+                  );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -564,6 +593,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           ),
           ElevatedButton(
             onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'learner_portfolio',
+                      'cta_id': 'generate_share_link',
+                      'surface': 'share_portfolio_dialog',
+                    },
+                  );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Feature Flags page for managing feature toggles
@@ -80,6 +81,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           IconButton(
             icon: const Icon(Icons.history_rounded),
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_feature_flags',
+                  'cta_id': 'open_change_history',
+                  'surface': 'appbar',
+                },
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Opening change history...')),
               );
@@ -162,6 +171,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 Switch(
                   value: flag.isEnabled,
                   onChanged: (bool value) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_feature_flags',
+                        'cta_id': 'toggle_feature_flag',
+                        'surface': 'flag_card',
+                        'flag_id': flag.id,
+                        'flag_name': flag.name,
+                        'enabled': value,
+                      },
+                    );
                     setState(() => flag.isEnabled = value);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

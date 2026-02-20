@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Analytics Page - Platform-wide analytics and insights
@@ -126,7 +127,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   DropdownMenuItem<String>(value: 'jkt', child: Text('Jakarta')),
                 ],
                 onChanged: (String? value) {
-                  if (value != null) setState(() => _selectedSite = value);
+                  if (value != null) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{'cta': 'hq_analytics_site_filter', 'site': value},
+                    );
+                    setState(() => _selectedSite = value);
+                  }
                 },
               ),
             ),
@@ -151,7 +158,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   DropdownMenuItem<String>(value: 'year', child: Text('This Year')),
                 ],
                 onChanged: (String? value) {
-                  if (value != null) setState(() => _selectedPeriod = value);
+                  if (value != null) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{'cta': 'hq_analytics_period_filter', 'period': value},
+                    );
+                    setState(() => _selectedPeriod = value);
+                  }
                 },
               ),
             ),
@@ -438,6 +451,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   void _exportReport() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'hq_analytics_export_report',
+        'site': _selectedSite,
+        'period': _selectedPeriod,
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -468,6 +489,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   void _showAllTopPerformers() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'hq_analytics_view_all_top_performers'},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,

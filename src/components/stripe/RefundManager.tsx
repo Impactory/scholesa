@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/client-init';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { 
   RotateCcw, 
   AlertTriangle, 
@@ -25,6 +26,7 @@ interface RefundResult {
 }
 
 export function RefundManager() {
+  const trackInteraction = useInteractionTracking();
   const [formData, setFormData] = useState<RefundFormData>({
     paymentIntentId: '',
     amount: '',
@@ -36,6 +38,11 @@ export function RefundManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackInteraction('help_accessed', {
+      cta: 'refund_manager_submit',
+      hasAmount: Boolean(formData.amount.trim()),
+      reason: formData.reason,
+    });
     setError(null);
     setSuccess(null);
 

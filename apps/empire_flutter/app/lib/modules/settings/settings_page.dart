@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Settings Page - App settings and preferences
@@ -325,6 +326,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _navigateTo(String route) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'settings_navigate', 'route': route},
+    );
     // Navigation handled by parent
   }
 
@@ -341,10 +346,18 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showNotificationPreferences() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_notification_preferences'},
+    );
     _showComingSoon('Notification Preferences');
   }
 
   void _showLanguageSelector() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_language_selector'},
+    );
     showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) {
@@ -369,6 +382,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       ? const Icon(Icons.check, color: ScholesaColors.success)
                       : null,
                   onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'settings_select_language',
+                        'language': code,
+                      },
+                    );
                     setState(() => _language = code);
                     Navigator.pop(context);
                   },
@@ -395,6 +415,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _requestDataDownload() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_download_my_data'},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Data download request submitted'),
@@ -432,6 +456,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmSignOut() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_sign_out_dialog'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -445,6 +473,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             ElevatedButton(
               onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'settings_confirm_sign_out'},
+                );
                 Navigator.pop(context);
                 // Sign out logic
               },
@@ -463,6 +495,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmDeleteAccount() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_delete_account_dialog'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -478,6 +514,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             ElevatedButton(
               onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'settings_confirm_delete_account'},
+                );
                 Navigator.pop(context);
                 // Delete account logic
               },

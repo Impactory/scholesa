@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Parent Billing Page - View payment history and invoices
@@ -522,6 +523,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _downloadStatements() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'parent_billing_download_statements'},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Downloading statements...'),
@@ -531,6 +536,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _payInvoice(Map<String, dynamic> invoice) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'parent_billing_pay_invoice', 'invoice_id': invoice['id']},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Paying invoice ${invoice['id']}...'),
@@ -540,6 +549,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _viewInvoice(Map<String, dynamic> invoice) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'parent_billing_view_invoice', 'invoice_id': invoice['id']},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Viewing invoice ${invoice['id']}...'),
@@ -549,6 +562,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _updatePaymentMethod() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'parent_billing_update_payment_method'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -579,6 +596,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _managePlan() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'parent_billing_manage_plan'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(

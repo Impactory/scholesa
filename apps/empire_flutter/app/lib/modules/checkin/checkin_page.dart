@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'checkin_models.dart';
 import 'checkin_service.dart';
@@ -106,7 +107,13 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
           ),
           const Spacer(),
           IconButton(
-            onPressed: () => context.read<CheckinService>().loadTodayData(),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'checkin_refresh'},
+              );
+              context.read<CheckinService>().loadTodayData();
+            },
             icon: const Icon(Icons.refresh, color: Color(0xFF3B82F6)),
             tooltip: 'Refresh',
           ),
@@ -360,7 +367,13 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
 
   Widget _buildFab() {
     return FloatingActionButton.extended(
-      onPressed: () => _showQrScanDialog(),
+      onPressed: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: const <String, dynamic>{'cta': 'checkin_open_qr_scan'},
+        );
+        _showQrScanDialog();
+      },
       backgroundColor: const Color(0xFF3B82F6),
       icon: const Icon(Icons.qr_code_scanner),
       label: const Text('Scan QR'),
@@ -368,6 +381,10 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   }
 
   void _showCheckInDialog(LearnerDaySummary summary) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'checkin_open_check_in', 'learner_id': summary.learnerId},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -377,6 +394,10 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   }
 
   void _showCheckOutDialog(LearnerDaySummary summary) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'checkin_open_check_out', 'learner_id': summary.learnerId},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -386,6 +407,10 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   }
 
   void _showQrScanDialog() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'checkin_qr_dialog_opened'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -1140,6 +1165,15 @@ class _CheckInSheetState extends State<_CheckInSheet> {
 
   Future<void> _submit() async {
     if (_selectedPickup == null) return;
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': widget.isCheckOut ? 'checkin_confirm_check_out' : 'checkin_confirm_check_in',
+        'learner_id': widget.summary.learnerId,
+        'pickup_id': _selectedPickup!.id,
+      },
+    );
     
     setState(() => _isLoading = true);
     

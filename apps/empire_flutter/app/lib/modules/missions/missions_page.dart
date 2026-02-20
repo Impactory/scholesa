@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'mission_models.dart';
 import 'mission_service.dart';
@@ -363,6 +364,14 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
   }
 
   void _showMissionDetails(Mission mission) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'missions_open_details',
+        'mission_id': mission.id,
+        'status': mission.status.name,
+      },
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -900,6 +909,13 @@ class _MissionDetailsSheet extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta': 'missions_start_mission',
+                              'mission_id': mission.id,
+                            },
+                          );
                           context.read<MissionService>().startMission(mission.id);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -943,6 +959,13 @@ class _MissionDetailsSheet extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta': 'missions_submit_for_review',
+                              'mission_id': mission.id,
+                            },
+                          );
                           context.read<MissionService>().submitMission(mission.id);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(

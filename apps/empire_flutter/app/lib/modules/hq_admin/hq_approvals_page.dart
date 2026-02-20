@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Approvals page for approving partner contracts, curriculum, etc.
@@ -263,12 +264,20 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
   }
 
   void _handleApprove(_ApprovalItem item) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'hq_approvals_approve', 'approval_id': item.id},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Approved: ${item.title}'), backgroundColor: Colors.green),
     );
   }
 
   void _handleReject(_ApprovalItem item) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'hq_approvals_reject', 'approval_id': item.id},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Rejected: ${item.title}'), backgroundColor: Colors.red),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Profile Page - User profile and settings
@@ -350,6 +351,10 @@ class ProfilePage extends StatelessWidget {
   }
 
   void _showEditProfileDialog(BuildContext context, AppState appState) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'profile_open_edit_dialog'},
+    );
     final TextEditingController nameController =
         TextEditingController(text: appState.displayName ?? '');
 
@@ -371,6 +376,13 @@ class ProfilePage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'profile_save_edit',
+                  'has_name': nameController.text.trim().isNotEmpty,
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -406,6 +418,10 @@ class ProfilePage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{'cta': 'profile_open_feature', 'feature': title},
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('$title opened')),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
@@ -96,7 +97,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             ),
             const Spacer(),
             IconButton(
-              onPressed: () => context.push('/messages'),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'learner_today_open_messages'},
+                );
+                context.push('/messages');
+              },
               icon: Stack(
                 children: <Widget>[
                   Icon(Icons.notifications_outlined, color: Colors.grey[600], size: 28),
@@ -303,7 +310,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.push('/learner/habits'),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{'cta': 'learner_today_see_all_habits'},
+                      );
+                      context.push('/learner/habits');
+                    },
                     child: const Text(
                       'See all',
                       style: TextStyle(color: ScholesaColors.learner),
@@ -342,7 +355,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.push('/learner/missions'),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{'cta': 'learner_today_see_all_missions'},
+                      );
+                      context.push('/learner/missions');
+                    },
                     child: const Text(
                       'See all',
                       style: TextStyle(color: ScholesaColors.learner),

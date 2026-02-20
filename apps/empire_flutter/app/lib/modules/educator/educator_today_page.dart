@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
@@ -186,7 +187,13 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               icon: Icons.how_to_reg,
               label: 'Take Attendance',
               color: ScholesaColors.educator,
-              onTap: () => context.push('/educator/attendance'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_today_take_attendance'},
+                );
+                context.push('/educator/attendance');
+              },
             ),
           ),
           const SizedBox(width: 12),
@@ -204,7 +211,13 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               icon: Icons.message,
               label: 'Messages',
               color: const Color(0xFF3B82F6),
-              onTap: () => context.push('/messages'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_today_open_messages'},
+                );
+                context.push('/messages');
+              },
             ),
           ),
         ],
@@ -363,6 +376,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   }
 
   void _openClassDetail(TodayClass todayClass) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'educator_today_open_class_detail', 'class_id': todayClass.id},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -372,6 +389,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   }
 
   void _showWeekViewSummary() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'educator_today_week_view'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -391,6 +412,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
 
   void _showReviewMissionsDialog() {
     final int count = context.read<EducatorService>().dayStats?.missionsToReview ?? 0;
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'educator_today_open_review_queue_dialog', 'count': count},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -403,6 +428,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'educator_today_open_review_queue'},
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Mission review queue opened')),

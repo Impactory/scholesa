@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test:cta-report": "python3 -m unittest scripts/test_cta_report_policy.py",
+    "test:cta-report:generate": "npm run test:cta-report && python3 scripts/generate_cta_report.py",
+    "test:cta-report:gate": "npm run test:cta-report:generate && python3 scripts/check_cta_report_gate.py"
   },
   "dependencies": {
     "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",

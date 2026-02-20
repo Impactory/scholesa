@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
@@ -33,7 +34,17 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            onPressed: () => _showCreateListingDialog(context),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_listings',
+                  'cta_id': 'open_create_listing',
+                  'surface': 'appbar',
+                },
+              );
+              _showCreateListingDialog(context);
+            },
           ),
         ],
       ),
@@ -48,7 +59,17 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => service.loadListings(),
+            onRefresh: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_listings',
+                  'cta_id': 'refresh_listings',
+                  'surface': 'listings_list',
+                },
+              );
+              return service.loadListings();
+            },
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: service.listings.length,
@@ -98,7 +119,17 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => _showCreateListingDialog(context),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_listings',
+                  'cta_id': 'open_create_listing',
+                  'surface': 'empty_state',
+                },
+              );
+              _showCreateListingDialog(context);
+            },
             icon: const Icon(Icons.add_rounded),
             label: const Text('Create Listing'),
             style: ElevatedButton.styleFrom(
@@ -223,6 +254,14 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
   }
 
   void _showCreateListingDialog(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'partner_listings',
+        'cta_id': 'open_create_listing_dialog',
+        'surface': 'dialog',
+      },
+    );
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
@@ -360,6 +399,16 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       titleController.dispose();
                       descriptionController.dispose();
                       priceController.dispose();
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'partner_listings',
+                          'cta_id': 'submit_create_listing',
+                          'surface': 'create_listing_dialog',
+                          'listing_id': created.id,
+                          'category': created.category,
+                        },
+                      );
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -382,6 +431,16 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
   }
 
   void _showListingDetails(MarketplaceListing listing) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'partner_listings',
+        'cta_id': 'open_listing_details',
+        'surface': 'listing_card',
+        'listing_id': listing.id,
+        'status': listing.status.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -431,6 +490,15 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'partner_listings',
+                          'cta_id': 'open_edit_listing',
+                          'surface': 'listing_details_sheet',
+                          'listing_id': listing.id,
+                        },
+                      );
                       Navigator.pop(context);
                       _showEditListingDialog(context, listing);
                     },
@@ -477,6 +545,15 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_listings',
+                  'cta_id': 'save_edit_listing',
+                  'surface': 'edit_listing_dialog',
+                  'listing_id': listing.id,
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

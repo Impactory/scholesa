@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
@@ -42,7 +43,17 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => service.loadContracts(),
+            onRefresh: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_contracts',
+                  'cta_id': 'refresh_contracts',
+                  'surface': 'contracts_list',
+                },
+              );
+              return service.loadContracts();
+            },
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: service.contracts.length,
@@ -247,6 +258,16 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
   }
 
   void _showContractDetails(PartnerContract contract) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'partner_contracts',
+        'cta_id': 'open_contract_details',
+        'surface': 'contract_card',
+        'contract_id': contract.id,
+        'status': contract.status.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,

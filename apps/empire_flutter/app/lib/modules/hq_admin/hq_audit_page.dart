@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Audit page for viewing audit logs and compliance reports
@@ -82,11 +83,29 @@ class _HqAuditPageState extends State<HqAuditPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () => _showFilterDialog(),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_audit',
+                  'cta_id': 'open_filter_dialog',
+                  'surface': 'appbar',
+                },
+              );
+              _showFilterDialog();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.download_rounded),
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_audit',
+                  'cta_id': 'export_audit_logs',
+                  'surface': 'appbar',
+                },
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Exporting audit logs...')),
               );
@@ -233,6 +252,16 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   void _showLogDetails(_AuditLog log) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_audit',
+        'cta_id': 'open_audit_log_details',
+        'surface': 'audit_list',
+        'log_id': log.id,
+        'category': log.category.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,

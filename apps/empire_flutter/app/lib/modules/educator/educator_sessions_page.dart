@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
@@ -216,6 +217,10 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   }
 
   void _openSessionDetail(EducatorSession session) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'educator_sessions_open_detail', 'session_id': session.id},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,6 +230,10 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   }
 
   void _createNewSession() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'educator_sessions_open_create_dialog'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => const _CreateSessionDialog(),
@@ -259,6 +268,14 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'educator_sessions_create_submit',
+        'pillar': _pillar,
+      },
+    );
 
     setState(() => _isSubmitting = true);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site Sessions Page - Schedule and manage sessions
@@ -178,21 +179,54 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               child: _ViewToggleButton(
                 label: 'Day',
                 isSelected: _viewMode == 'day',
-                onTap: () => setState(() => _viewMode = 'day'),
+                onTap: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_sessions',
+                      'cta_id': 'set_view_mode',
+                      'surface': 'view_toggle',
+                      'view_mode': 'day',
+                    },
+                  );
+                  setState(() => _viewMode = 'day');
+                },
               ),
             ),
             Expanded(
               child: _ViewToggleButton(
                 label: 'Week',
                 isSelected: _viewMode == 'week',
-                onTap: () => setState(() => _viewMode = 'week'),
+                onTap: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_sessions',
+                      'cta_id': 'set_view_mode',
+                      'surface': 'view_toggle',
+                      'view_mode': 'week',
+                    },
+                  );
+                  setState(() => _viewMode = 'week');
+                },
               ),
             ),
             Expanded(
               child: _ViewToggleButton(
                 label: 'Month',
                 isSelected: _viewMode == 'month',
-                onTap: () => setState(() => _viewMode = 'month'),
+                onTap: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_sessions',
+                      'cta_id': 'set_view_mode',
+                      'surface': 'view_toggle',
+                      'view_mode': 'month',
+                    },
+                  );
+                  setState(() => _viewMode = 'month');
+                },
               ),
             ),
           ],
@@ -214,6 +248,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         children: <Widget>[
           IconButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_sessions',
+                  'cta_id': 'navigate_previous_week',
+                  'surface': 'calendar_strip',
+                },
+              );
               setState(() {
                 _selectedDate = _selectedDate.subtract(const Duration(days: 7));
               });
@@ -229,7 +271,18 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 final bool isToday =
                     date.day == today.day && date.month == today.month;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedDate = date),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'site_sessions',
+                        'cta_id': 'select_calendar_date',
+                        'surface': 'calendar_strip',
+                        'date': date.toIso8601String(),
+                      },
+                    );
+                    setState(() => _selectedDate = date);
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -275,6 +328,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
           ),
           IconButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_sessions',
+                  'cta_id': 'navigate_next_week',
+                  'surface': 'calendar_strip',
+                },
+              );
               setState(() {
                 _selectedDate = _selectedDate.add(const Duration(days: 7));
               });
@@ -297,7 +358,17 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           TextButton.icon(
-            onPressed: _showFilterSheet,
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_sessions',
+                  'cta_id': 'open_filter_sheet',
+                  'surface': 'sessions_header',
+                },
+              );
+              _showFilterSheet();
+            },
             icon: const Icon(Icons.filter_list, size: 18),
             label: const Text('Filter'),
           ),
@@ -333,6 +404,15 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                         label: Text(mode.toUpperCase()),
                         selected: _viewMode == mode,
                         onSelected: (_) {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'module': 'site_sessions',
+                              'cta_id': 'apply_filter_view_mode',
+                              'surface': 'filter_sheet',
+                              'view_mode': mode,
+                            },
+                          );
                           setState(() => _viewMode = mode);
                           Navigator.pop(sheetContext);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -367,6 +447,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   Future<void> _createNewSession() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_sessions',
+        'cta_id': 'open_create_session_sheet',
+        'surface': 'floating_action_button',
+      },
+    );
     final _NewSessionResult? result = await showModalBottomSheet<_NewSessionResult>(
       context: context,
       isScrollControlled: true,
@@ -382,6 +470,17 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       _sessionsByTime.putIfAbsent(result.time, () => <_SessionData>[]);
       _sessionsByTime[result.time]!.add(result.session);
     });
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_sessions',
+        'cta_id': 'submit_create_session',
+        'surface': 'create_session_sheet',
+        'time_slot': result.time,
+        'pillar': result.session.pillar,
+      },
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

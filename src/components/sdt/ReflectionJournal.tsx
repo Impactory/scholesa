@@ -9,6 +9,7 @@
  */
 
 import React, { useState } from 'react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
   SparklesIcon,
   TrendingUpIcon,
@@ -35,6 +36,7 @@ export function ReflectionJournal({
   cycleId: _cycleId,
   onComplete
 }: ReflectionJournalProps) {
+  const trackInteraction = useInteractionTracking();
   // Form state
   const [proudOf, setProudOf] = useState('');
   const [nextIWill, setNextIWill] = useState('');
@@ -49,6 +51,13 @@ export function ReflectionJournal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    trackInteraction('help_accessed', {
+      cta: 'reflection_journal_submit',
+      hasEffort: effortLevel !== null,
+      hasEnjoyment: enjoymentLevel !== null,
+      hasStrategy: Boolean(effectiveStrategy.trim()),
+    });
 
     if (!proudOf.trim() || !nextIWill.trim()) {
       setError('Please answer both reflection questions');
@@ -299,12 +308,15 @@ export function QuickReflection({
   sprintSessionId: string;
   onComplete?: () => void;
 }) {
+  const trackInteraction = useInteractionTracking();
   const [proudOf, setProudOf] = useState('');
   const [nextIWill, setNextIWill] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!proudOf.trim() || !nextIWill.trim()) return;
+
+    trackInteraction('help_accessed', { cta: 'quick_reflection_save' });
 
     try {
       setLoading(true);

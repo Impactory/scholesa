@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
   LockIcon,
   CheckCircle2Icon,
@@ -40,6 +41,7 @@ export function LearningPathMap({
   const [path, setPath] = useState<LearningPathProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const trackInteraction = useInteractionTracking();
 
   useEffect(() => {
     const fetchPath = async () => {
@@ -64,6 +66,7 @@ export function LearningPathMap({
   }, [learnerId, siteId, courseId]);
 
   const toggleUnit = (unitId: string) => {
+    trackInteraction('feature_discovered', { cta: 'learning_path_toggle_unit', unitId });
     setExpandedUnits(prev => {
       const next = new Set(prev);
       if (next.has(unitId)) {
@@ -150,6 +153,7 @@ interface UnitCardProps {
   unit: LearningPathProgress;
   isExpanded: boolean;
   onToggle: () => void;
+  onTrackInteraction?: (eventName: string, metadata?: Record<string, unknown>) => void;
   onSelectMission?: (missionId: string) => void;
   isFirst: boolean;
   isLast: boolean;
@@ -258,6 +262,11 @@ function UnitCard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      onTrackInteraction?.('feature_discovered', {
+                        cta: 'learning_path_start_next_mission',
+                        unitId: unit.unitId,
+                        missionId: unit.nextMission!.id,
+                      });
                       onSelectMission?.(unit.nextMission!.id);
                     }}
                     className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
@@ -276,6 +285,7 @@ function UnitCard({
                   <div
                     key={skillId}
                     className="flex items-center gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-lg"
+                onTrackInteraction={trackInteraction}
                   >
                     <TrophyIcon className="w-4 h-4" />
                     <span className="font-medium">Skill {skillId}</span>

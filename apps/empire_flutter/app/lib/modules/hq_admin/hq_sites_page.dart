@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Sites Page - Manage all sites across the platform
@@ -253,6 +254,10 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   void _openSiteDetail(String siteId) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'hq_sites_open_detail', 'site_id': siteId},
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Opening site: $siteId'),
@@ -262,6 +267,10 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   void _createNewSite() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'hq_sites_open_create_site'},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

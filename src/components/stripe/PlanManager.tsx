@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/client-init';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { 
   Package, 
   Plus, 
@@ -47,6 +48,7 @@ interface Product {
 type ModalType = 'createProduct' | 'editProduct' | 'createPrice' | 'editPrice' | null;
 
 export function PlanManager() {
+  const trackInteraction = useInteractionTracking();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,6 +73,7 @@ export function PlanManager() {
   });
 
   const fetchProducts = async () => {
+    trackInteraction('help_accessed', { cta: 'plan_manager_refresh' });
     try {
       setRefreshing(true);
       const getStripeProducts = httpsCallable<void, { products: Product[] }>(
@@ -100,6 +103,7 @@ export function PlanManager() {
     }
 
     setActionLoading(true);
+    trackInteraction('feature_discovered', { cta: 'plan_manager_create_product' });
     try {
       const createStripeProduct = httpsCallable<
         { name: string; description?: string },
@@ -126,6 +130,7 @@ export function PlanManager() {
     if (!selectedProduct) return;
 
     setActionLoading(true);
+    trackInteraction('feature_discovered', { cta: 'plan_manager_update_product', productId: selectedProduct.id });
     try {
       const updateStripeProduct = httpsCallable<
         { productId: string; name?: string; description?: string; active?: boolean },
@@ -160,6 +165,7 @@ export function PlanManager() {
     }
 
     setActionLoading(true);
+    trackInteraction('feature_discovered', { cta: 'plan_manager_create_price', productId: selectedProduct.id });
     try {
       const createStripePrice = httpsCallable<
         {
@@ -218,6 +224,7 @@ export function PlanManager() {
 
   const handleTogglePriceActive = async (priceId: string, currentActive: boolean) => {
     setActionLoading(true);
+    trackInteraction('feature_discovered', { cta: 'plan_manager_toggle_price_active', priceId, nextActive: !currentActive });
     try {
       const updateStripePrice = httpsCallable<
         { priceId: string; active: boolean },
@@ -244,6 +251,7 @@ export function PlanManager() {
     }
 
     setActionLoading(true);
+    trackInteraction('help_accessed', { cta: 'plan_manager_archive_product', productId: product.id });
     try {
       const archiveStripeProduct = httpsCallable<
         { productId: string },

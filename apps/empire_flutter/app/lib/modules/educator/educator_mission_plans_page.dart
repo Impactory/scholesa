@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Educator mission plans page for planning and managing missions
@@ -250,6 +251,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   void _showFilterDialog() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'educator_mission_plans_open_filter'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -288,6 +293,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   void _showMissionDetails(_MissionPlan plan) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'educator_mission_plans_open_details', 'plan_id': plan.id},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -346,6 +355,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   void _showCreateMissionDialog() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'educator_mission_plans_open_create_dialog'},
+    );
     final TextEditingController titleController = TextEditingController();
     String selectedPillar = 'Future Skills';
 
@@ -403,6 +416,14 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   );
                   return;
                 }
+
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'educator_mission_plans_create_submit',
+                    'pillar': selectedPillar,
+                  },
+                );
 
                 setState(() {
                   _missionPlans.insert(

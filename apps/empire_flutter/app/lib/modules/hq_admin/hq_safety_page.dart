@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Safety page for monitoring safety incidents across all sites
@@ -186,6 +187,16 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
   }
 
   void _showIncidentDetails(_SafetyIncident incident) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_safety',
+        'cta_id': 'open_incident_details',
+        'surface': 'incident_list',
+        'incident_id': incident.id,
+        'severity': incident.severity.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -212,6 +223,15 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'hq_safety',
+                          'cta_id': 'view_full_incident_report',
+                          'surface': 'incident_details_sheet',
+                          'incident_id': incident.id,
+                        },
+                      );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Opening full incident report...')),

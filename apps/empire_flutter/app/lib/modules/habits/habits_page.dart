@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'habit_models.dart';
 import 'habit_service.dart';
@@ -669,7 +670,13 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
 
   Widget _buildAddHabitFab() {
     return FloatingActionButton.extended(
-      onPressed: _showCreateHabitSheet,
+      onPressed: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: const <String, dynamic>{'cta': 'habits_open_create_sheet'},
+        );
+        _showCreateHabitSheet();
+      },
       backgroundColor: ScholesaColors.learner,
       icon: const Icon(Icons.add),
       label: const Text('New Habit'),
@@ -677,6 +684,10 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
   }
 
   void _showHabitDetail(Habit habit) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'habits_open_detail', 'habit_id': habit.id},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -686,6 +697,10 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
   }
 
   void _showCreateHabitSheet() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'habits_create_sheet_opened'},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1208,6 +1223,15 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
       );
       return;
     }
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'habits_create_habit',
+        'category': _selectedCategory.name,
+        'frequency': _selectedFrequency.name,
+      },
+    );
 
     context.read<HabitService>().createHabit(
           title: _titleController.text,

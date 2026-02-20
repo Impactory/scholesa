@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site identity resolution page
@@ -299,6 +300,16 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   void _handleApprove(_IdentityMatch match) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_identity',
+        'cta_id': 'approve_identity_match',
+        'surface': 'identity_match_card',
+        'match_id': match.id,
+        'provider': match.provider,
+      },
+    );
     setState(() {
       _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
     });
@@ -311,6 +322,16 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   void _handleIgnore(_IdentityMatch match) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_identity',
+        'cta_id': 'ignore_identity_match',
+        'surface': 'identity_match_card',
+        'match_id': match.id,
+        'provider': match.provider,
+      },
+    );
     setState(() {
       _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
     });

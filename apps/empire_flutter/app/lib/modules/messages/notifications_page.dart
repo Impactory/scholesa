@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Notifications page for all user roles
@@ -232,6 +233,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _handleNotificationTap(_Notification notification) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'notifications_open_item',
+        'notification_id': notification.id,
+        'notification_type': notification.type.name,
+      },
+    );
     setState(() {
       notification.isRead = true;
     });
@@ -242,6 +251,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _markAllAsRead() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'notifications_mark_all_read'},
+    );
     setState(() {
       for (final _Notification n in _notifications) {
         n.isRead = true;

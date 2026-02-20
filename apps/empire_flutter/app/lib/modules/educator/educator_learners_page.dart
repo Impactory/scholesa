@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
@@ -140,7 +141,9 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
         controller: _searchController,
-        onChanged: (String value) => setState(() => _searchQuery = value),
+        onChanged: (String value) {
+          setState(() => _searchQuery = value);
+        },
         decoration: InputDecoration(
           hintText: 'Search learners...',
           prefixIcon: const Icon(Icons.search),
@@ -148,6 +151,14 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
               ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'educator_learners',
+                        'cta_id': 'clear_search_query',
+                        'surface': 'search_bar',
+                      },
+                    );
                     _searchController.clear();
                     setState(() => _searchQuery = '');
                   },
@@ -178,7 +189,18 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             _FilterChip(
               label: 'All Sessions',
               isSelected: _selectedSession == 'all',
-              onTap: () => setState(() => _selectedSession = 'all'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'educator_learners',
+                    'cta_id': 'set_session_filter',
+                    'surface': 'session_filter',
+                    'session_id': 'all',
+                  },
+                );
+                setState(() => _selectedSession = 'all');
+              },
             ),
             const SizedBox(width: 8),
             ...service.sessions.map(
@@ -187,7 +209,18 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 child: _FilterChip(
                   label: session.title,
                   isSelected: _selectedSession == session.id,
-                  onTap: () => setState(() => _selectedSession = session.id),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'educator_learners',
+                        'cta_id': 'set_session_filter',
+                        'surface': 'session_filter',
+                        'session_id': session.id,
+                      },
+                    );
+                    setState(() => _selectedSession = session.id);
+                  },
                 ),
               ),
             ),
@@ -250,6 +283,15 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   }
 
   void _openLearnerDetail(EducatorLearner learner) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'educator_learners',
+        'cta_id': 'open_learner_detail',
+        'surface': 'learner_card',
+        'learner_id': learner.id,
+      },
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site Dashboard Page - Analytics and overview for site administrators
@@ -366,6 +367,13 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   void _exportReport() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'site_dashboard_export_report',
+        'period': _selectedPeriod,
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -380,6 +388,13 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'site_dashboard_generate_report',
+                  'period': _selectedPeriod,
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -396,6 +411,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   void _showAllRecentActivity() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'site_dashboard_view_all_recent_activity'},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,

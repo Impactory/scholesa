@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import '../router/app_router.dart';
+import '../services/telemetry_service.dart';
 import '../ui/theme/scholesa_theme.dart';
 import '../ui/widgets/cards.dart';
 
@@ -724,6 +725,15 @@ class RoleDashboard extends StatelessWidget {
   }
 
   void _handleCardTap(BuildContext context, DashboardCard card, bool isEnabled) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'role_dashboard_card_tap',
+        'card_id': card.id,
+        'route': card.route,
+        'enabled': isEnabled,
+      },
+    );
     if (isEnabled) {
       context.push(card.route);
     } else {
@@ -732,6 +742,10 @@ class RoleDashboard extends StatelessWidget {
   }
 
   void _showAllActionsSheet(BuildContext context, List<DashboardCard> cards) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'role_dashboard_view_all_actions'},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -859,6 +873,10 @@ class RoleDashboard extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'role_dashboard_open_sign_out_dialog'},
+    );
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -878,6 +896,10 @@ class RoleDashboard extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'role_dashboard_confirm_sign_out'},
+              );
               Navigator.pop(dialogContext);
               // Clear app state and go to login
               final AppState appState = context.read<AppState>();

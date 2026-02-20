@@ -17,6 +17,7 @@ import {
   CheckCircle2Icon,
   AlertCircleIcon
 } from 'lucide-react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sdtMotivation, type AICoachRequest, type AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
 
 interface AICoachScreenProps {
@@ -34,6 +35,7 @@ export function AICoachScreen({
   sprintSessionId,
   missionId
 }: AICoachScreenProps) {
+  const trackInteraction = useInteractionTracking();
   const [mode, setMode] = useState<CoachMode | null>(null);
   const [question, setQuestion] = useState('');
   const [response, setResponse] = useState<AICoachResponse | null>(null);
@@ -43,6 +45,12 @@ export function AICoachScreen({
 
   const handleSubmitQuestion = async () => {
     if (!question.trim() || !mode) return;
+
+    trackInteraction('help_accessed', {
+      cta: 'ai_coach_submit_question',
+      mode,
+      hasMissionContext: Boolean(missionId),
+    });
 
     try {
       setLoading(true);
@@ -69,6 +77,12 @@ export function AICoachScreen({
 
   const handleSubmitExplainBack = async () => {
     if (!explainBack.trim() || !response) return;
+
+    trackInteraction('feature_discovered', {
+      cta: 'ai_coach_submit_explain_back',
+      mode,
+      explainLength: explainBack.trim().length,
+    });
 
     try {
       setLoading(true);
@@ -116,7 +130,10 @@ export function AICoachScreen({
       {!mode && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => setMode('hint')}
+            onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'ai_coach_mode_hint' });
+              setMode('hint');
+            }}
             className="group bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-purple-500 hover:shadow-lg transition-all"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-200">
@@ -127,7 +144,10 @@ export function AICoachScreen({
           </button>
 
           <button
-            onClick={() => setMode('rubric_check')}
+            onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'ai_coach_mode_rubric_check' });
+              setMode('rubric_check');
+            }}
             className="group bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-indigo-500 hover:shadow-lg transition-all"
           >
             <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-indigo-200">
@@ -138,7 +158,10 @@ export function AICoachScreen({
           </button>
 
           <button
-            onClick={() => setMode('debug')}
+            onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'ai_coach_mode_debug' });
+              setMode('debug');
+            }}
             className="group bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-blue-500 hover:shadow-lg transition-all"
           >
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-200">
@@ -155,6 +178,7 @@ export function AICoachScreen({
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <button
             onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'ai_coach_back_to_modes' });
               setMode(null);
               setQuestion('');
             }}
@@ -277,6 +301,7 @@ export function AICoachScreen({
 
           <button
             onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'ai_coach_ask_another_question' });
               setResponse(null);
               setQuestion('');
               setExplainBack('');

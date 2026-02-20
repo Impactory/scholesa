@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { 
   SparklesIcon, 
   TrendingUpIcon,
@@ -299,6 +300,7 @@ interface InsightCardProps {
 
 function InsightCard({ insight }: InsightCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const trackInteraction = useInteractionTracking();
   
   const iconMap = {
     alert: AlertTriangleIcon,
@@ -341,7 +343,15 @@ function InsightCard({ insight }: InsightCardProps) {
           
           {(insight.actionItems || insight.affectedLearners) && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={() => {
+                trackInteraction('feature_discovered', {
+                  cta: expanded ? 'ai_insight_show_less' : 'ai_insight_show_details',
+                  insightId: insight.id,
+                  insightType: insight.type,
+                  priority: insight.priority,
+                });
+                setExpanded(!expanded);
+              }}
               className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2"
             >
               {expanded ? 'Show less' : 'Show details'}

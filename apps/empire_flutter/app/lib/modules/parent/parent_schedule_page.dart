@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
@@ -137,7 +138,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             DropdownMenuItem<String>(value: 'jack', child: Text('Jack Johnson')),
           ],
           onChanged: (String? value) {
-            if (value != null) setState(() => _selectedLearner = value);
+            if (value != null) {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{'cta': 'parent_schedule_select_learner', 'learner': value},
+              );
+              setState(() => _selectedLearner = value);
+            }
           },
         ),
       ),
@@ -324,6 +331,14 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   void _showNextSessionDetails() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'parent_schedule_open_next_session_details',
+        'view_mode': _viewMode,
+        'selected_learner': _selectedLearner,
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(

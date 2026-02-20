@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Parent portfolio page for viewing learner's work and achievements
@@ -205,6 +206,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
   }
 
   void _showItemDetails(_PortfolioItem item) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'parent_portfolio_open_item', 'item_id': item.id},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -278,6 +283,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{'cta': 'parent_portfolio_share_item', 'item_id': item.id},
+                      );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Sharing...')),
@@ -290,7 +299,13 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{'cta': 'parent_portfolio_download_item', 'item_id': item.id},
+                      );
+                      Navigator.pop(context);
+                    },
                     icon: const Icon(Icons.download_rounded),
                     label: const Text('Download'),
                   ),

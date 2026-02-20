@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { MotivationType } from '@/src/types/schema';
 import { 
   Star, 
@@ -67,6 +68,7 @@ export function EducatorFeedbackForm({
   onCancel,
 }: EducatorFeedbackFormProps) {
   const { user } = useAuthContext();
+  const trackInteraction = useInteractionTracking();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export function EducatorFeedbackForm({
 
   const addHighlight = () => {
     if (newHighlight.trim()) {
+      trackInteraction('feature_discovered', { cta: 'educator_feedback_add_highlight' });
       setHighlights(prev => [...prev, newHighlight.trim()]);
       setNewHighlight('');
     }
@@ -113,6 +116,13 @@ export function EducatorFeedbackForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    trackInteraction('help_accessed', {
+      cta: 'educator_feedback_submit',
+      learnerId,
+      motivationCount: respondedWellTo.length,
+      highlightsCount: highlights.length,
+    });
 
     setIsSubmitting(true);
     setError(null);
@@ -303,7 +313,12 @@ export function EducatorFeedbackForm({
       <div className="border-t pt-4">
         <button
           type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
+          onClick={() => {
+            trackInteraction('feature_discovered', {
+              cta: showAdvanced ? 'educator_feedback_hide_advanced' : 'educator_feedback_show_advanced',
+            });
+            setShowAdvanced(!showAdvanced);
+          }}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
         >
           {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

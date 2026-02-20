@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Callable
+from cta_report_policy import (
+    NON_ACTIONABLE_BLOCKER_PATHS,
+    NON_ACTIONABLE_WEB_PATHS,
+    ROUTE_SURFACE_FILE_NAMES,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,13 +39,20 @@ def collect_entries(base: Path, exts: set[str], pattern: re.Pattern[str]) -> lis
     return entries
 
 
-def scan_pattern(base: Path, exts: set[str], pattern: re.Pattern[str]) -> list[tuple[str, int, str]]:
+def scan_pattern(
+    base: Path,
+    exts: set[str],
+    pattern: re.Pattern[str],
+    include_file: Callable[[Path], bool] | None = None,
+) -> list[tuple[str, int, str]]:
     findings: list[tuple[str, int, str]] = []
     if not base.exists():
         return findings
 
     for file_path in base.rglob("*"):
         if file_path.suffix.lower() not in exts:
+            continue
+        if include_file and not include_file(file_path):
             continue
         try:
             lines = file_path.read_text(errors="ignore").splitlines()
@@ -54,6 +67,10 @@ def scan_pattern(base: Path, exts: set[str], pattern: re.Pattern[str]) -> list[t
     return findings
 
 
+def is_route_surface_file(path: Path) -> bool:
+    return path.name in ROUTE_SURFACE_FILE_NAMES
+
+
 def main() -> None:
     web_pattern = re.compile(r"(onClick=|<button|<a href=|Link href=)")
     flutter_pattern = re.compile(
@@ -63,6 +80,11 @@ def main() -> None:
     web_entries = []
     for folder in ("app", "src"):
         web_entries.extend(collect_entries(ROOT / folder, WEB_EXTS, web_pattern))
+
+    excluded_web_entries = [
+        entry for entry in web_entries if entry[0] in NON_ACTIONABLE_WEB_PATHS
+    ]
+    web_entries = [entry for entry in web_entries if entry[0] not in NON_ACTIONABLE_WEB_PATHS]
 
     flutter_entries = collect_entries(ROOT / "apps/empire_flutter/app/lib", DART_EXTS, flutter_pattern)
 
@@ -99,16 +121,37 @@ def main() -> None:
         "Dead registration path (`/learner-registration`)": scan_pattern(
             ROOT / "app", WEB_EXTS, re.compile(r"/learner-registration")
         ),
-        "Web TODO/FIXME in routes": scan_pattern(ROOT / "app", WEB_EXTS, re.compile(r"TODO|FIXME")),
+        "Web TODO/FIXME in routes": scan_pattern(
+            ROOT / "app",
+            WEB_EXTS,
+            re.compile(r"TODO|FIXME"),
+            include_file=is_route_surface_file,
+        ),
         "Flutter unimplemented handlers (`UnimplementedError`/`UnsupportedError`)": scan_pattern(
             ROOT / "apps/empire_flutter/app/lib", DART_EXTS, re.compile(r"UnimplementedError|throw UnsupportedError")
         ),
     }
 
+    excluded_blocker_scans: dict[str, list[tuple[str, int, str]]] = {}
+    for label, findings in blocker_scans.items():
+        excluded_paths = NON_ACTIONABLE_BLOCKER_PATHS.get(label, set())
+        excluded_findings = [item for item in findings if item[0] in excluded_paths]
+        filtered_findings = [item for item in findings if item[0] not in excluded_paths]
+        blocker_scans[label] = filtered_findings
+        if excluded_findings:
+            excluded_blocker_scans[label] = excluded_findings
+
     lines: list[str] = []
     lines.append("# CTA Regression Inventory")
     lines.append("")
     lines.append("Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/app/lib/`.")
+    lines.append("")
+    lines.append("## Scan Policy")
+    lines.append("")
+    lines.append("- Actionable CTA coverage includes UI files with direct user-interaction markers and expected telemetry hooks/calls.")
+    lines.append("- Excluded non-actionable web files are utility/type-only paths listed in `NON_ACTIONABLE_WEB_PATHS`.")
+    lines.append("- Blocker findings exclude known generated/framework stubs listed in `NON_ACTIONABLE_BLOCKER_PATHS`.")
+    lines.append("- Route TODO/FIXME blocker scan is restricted to route surfaces (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `route.ts`).")
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -121,6 +164,9 @@ def main() -> None:
     lines.append("")
     for label, findings in blocker_scans.items():
         lines.append(f"- {label}: **{len(findings)}**")
+    if excluded_blocker_scans:
+        excluded_total = sum(len(items) for items in excluded_blocker_scans.values())
+        lines.append(f"- Excluded non-actionable blocker findings: **{excluded_total}**")
     lines.append("")
 
     web_with_telemetry = sum(1 for _, has in web_coverage if has)
@@ -142,6 +188,13 @@ def main() -> None:
         lines.append(f"- `{path}`: **{status}**")
     lines.append("")
 
+    if excluded_web_entries:
+        lines.append("### Excluded Web Utility/Type Files")
+        lines.append("")
+        for path, _ in sorted(excluded_web_entries):
+            lines.append(f"- `{path}`: **excluded_non_actionable**")
+        lines.append("")
+
     lines.append("### Flutter Coverage Matrix")
     lines.append("")
     for path, has in flutter_coverage:
@@ -159,6 +212,18 @@ def main() -> None:
         if len(findings) > 80:
             lines.append(f"- ... {len(findings) - 80} more")
         lines.append("")
+
+    if excluded_blocker_scans:
+        lines.append("## Excluded Blocker Findings")
+        lines.append("")
+        for label, findings in excluded_blocker_scans.items():
+            lines.append(f"### {label}")
+            lines.append("")
+            for path, line_number, snippet in findings[:80]:
+                lines.append(f"- `{path}:L{line_number}` `{snippet}`")
+            if len(findings) > 80:
+                lines.append(f"- ... {len(findings) - 80} more")
+            lines.append("")
 
     lines.append("## Web CTA Files")
     lines.append("")

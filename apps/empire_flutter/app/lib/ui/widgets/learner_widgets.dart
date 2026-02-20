@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
+
+void _logLearnerWidgetsCta(String ctaId, {Map<String, dynamic>? metadata}) {
+  TelemetryService.instance.logEvent(
+    event: 'cta.clicked',
+    metadata: <String, dynamic>{
+      'module': 'ui_learner_widgets',
+      'cta_id': ctaId,
+      ...?metadata,
+    },
+  );
+}
 
 /// A beautiful mission card for displaying learning missions
 class MissionCard extends StatelessWidget {
@@ -100,7 +112,15 @@ class MissionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                _logLearnerWidgetsCta(
+                  'tap_mission_card',
+                  metadata: <String, dynamic>{'title': title, 'status': status},
+                );
+                onTap?.call();
+              },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -239,7 +259,18 @@ class MissionCard extends StatelessWidget {
                         if (onContinue != null && status != 'reviewed') ...<Widget>[
                           const SizedBox(width: 16),
                           ElevatedButton(
-                            onPressed: onContinue,
+                            onPressed: onContinue == null
+                                ? null
+                                : () {
+                                    _logLearnerWidgetsCta(
+                                      'press_continue_mission',
+                                      metadata: <String, dynamic>{
+                                        'title': title,
+                                        'status': status,
+                                      },
+                                    );
+                                    onContinue?.call();
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: pillarColor,
                               foregroundColor: Colors.white,
@@ -333,7 +364,15 @@ class MissionListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: onTap,
+      onTap: onTap == null
+          ? null
+          : () {
+              _logLearnerWidgetsCta(
+                'tap_mission_list_tile',
+                metadata: <String, dynamic>{'title': title},
+              );
+              onTap?.call();
+            },
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -411,7 +450,15 @@ class HabitStreakCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: onTap == null
+              ? null
+              : () {
+                  _logLearnerWidgetsCta(
+                    'tap_habit_streak_card',
+                    metadata: <String, dynamic>{'habit_name': habitName},
+                  );
+                  onTap?.call();
+                },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -459,7 +506,15 @@ class HabitStreakCard extends StatelessWidget {
                     // Complete button
                     if (onComplete != null)
                       IconButton(
-                        onPressed: onComplete,
+                        onPressed: onComplete == null
+                            ? null
+                            : () {
+                                _logLearnerWidgetsCta(
+                                  'press_complete_habit',
+                                  metadata: <String, dynamic>{'habit_name': habitName},
+                                );
+                                onComplete?.call();
+                              },
                         icon: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -615,7 +670,15 @@ class PortfolioCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                _logLearnerWidgetsCta(
+                  'tap_portfolio_card',
+                  metadata: <String, dynamic>{'title': title, 'type': type},
+                );
+                onTap?.call();
+              },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -744,7 +807,15 @@ class SkillProgressWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: onTap,
+      onTap: onTap == null
+          ? null
+          : () {
+              _logLearnerWidgetsCta(
+                'tap_skill_progress',
+                metadata: <String, dynamic>{'skill_name': skillName, 'pillar': pillar},
+              );
+              onTap?.call();
+            },
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Container(
         width: 48,

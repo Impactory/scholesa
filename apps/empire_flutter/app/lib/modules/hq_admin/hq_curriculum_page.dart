@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Curriculum page for managing curriculum versions and rubrics
@@ -101,7 +102,17 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateDialog(),
+        onPressed: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'hq_curriculum',
+              'cta_id': 'open_create_curriculum_dialog',
+              'surface': 'floating_action_button',
+            },
+          );
+          _showCreateDialog();
+        },
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         icon: const Icon(Icons.add_rounded),
         label: const Text('New Curriculum'),
@@ -224,6 +235,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
   }
 
   void _showCurriculumDetails(_Curriculum curriculum) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_curriculum',
+        'cta_id': 'open_curriculum_details',
+        'surface': 'curriculum_card',
+        'curriculum_id': curriculum.id,
+        'status': curriculum.status.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -249,6 +270,15 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'hq_curriculum',
+                          'cta_id': 'open_curriculum_editor',
+                          'surface': 'curriculum_details_sheet',
+                          'curriculum_id': curriculum.id,
+                        },
+                      );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Opening curriculum editor...')),
@@ -304,6 +334,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_curriculum',
+                  'cta_id': 'submit_create_curriculum',
+                  'surface': 'create_curriculum_dialog',
+                },
+              );
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Curriculum created')));
             },

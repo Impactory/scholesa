@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
+import '../services/telemetry_service.dart';
 
 // ──────────────────────────────────────────────────────
 // AI Coach Widget — Control Surface
@@ -53,6 +54,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   Future<void> _sendMessage() async {
     final String input = _inputController.text.trim();
     if (_loading) return;
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'ai_coach_widget',
+        'cta_id': 'send_message',
+        'surface': 'input_bar',
+        'mode': _selectedMode.name,
+        'has_input': input.isNotEmpty,
+      },
+    );
 
     setState(() {
       if (input.isNotEmpty) {
@@ -120,6 +132,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   void _sendFeedback(bool helpful) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'ai_coach_widget',
+        'cta_id': helpful ? 'feedback_helpful' : 'feedback_not_helpful',
+        'surface': 'chat_bubble',
+        'mode': _selectedMode.name,
+      },
+    );
     widget.runtime.trackEvent(
       'ai_coach_feedback',
       missionId: widget.missionId,
@@ -149,7 +170,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         // ── Mode selector ──
         _ModeSelector(
           selected: _selectedMode,
-          onChanged: (AiCoachMode mode) => setState(() => _selectedMode = mode),
+          onChanged: (AiCoachMode mode) {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'ai_coach_widget',
+                'cta_id': 'set_coach_mode',
+                'surface': 'mode_selector',
+                'mode': mode.name,
+              },
+            );
+            setState(() => _selectedMode = mode);
+          },
         ),
 
         if (hasMvl)

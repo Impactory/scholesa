@@ -13,6 +13,7 @@
 import React, { useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useLearnerAnalytics } from '@/src/hooks/useRealtimeAnalytics';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { 
   TrendingUpIcon, 
@@ -48,6 +49,7 @@ interface WeeklyDataPoint {
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+  const trackInteraction = useInteractionTracking();
   
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
   
@@ -97,6 +99,7 @@ export function AnalyticsDashboard() {
   const highPerformers = learners.filter(s => s.engagementScore >= 80).length;
   
   const handleExportCSV = () => {
+    trackInteraction('help_accessed', { cta: 'analytics_export_csv', timeRange, siteId });
     if (learners.length === 0) return;
     
     // Prepare CSV headers
@@ -135,7 +138,10 @@ export function AnalyticsDashboard() {
       <div className="flex justify-between items-center">
         <div className="inline-flex rounded-md shadow-sm">
           <button
-            onClick={() => setTimeRange('week')}
+            onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'analytics_time_range_week' });
+              setTimeRange('week');
+            }}
             className={`px-4 py-2 text-sm font-medium rounded-l-md ${
               timeRange === 'week'
                 ? 'bg-indigo-600 text-white'
@@ -145,7 +151,10 @@ export function AnalyticsDashboard() {
             This Week
           </button>
           <button
-            onClick={() => setTimeRange('month')}
+            onClick={() => {
+              trackInteraction('feature_discovered', { cta: 'analytics_time_range_month' });
+              setTimeRange('month');
+            }}
             className={`px-4 py-2 text-sm font-medium rounded-r-md ${
               timeRange === 'month'
                 ? 'bg-indigo-600 text-white'

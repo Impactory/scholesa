@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../missions/mission_service.dart';
 
@@ -240,6 +241,10 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
   }
 
   void _openReviewSheet(MissionSubmission submission) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'educator_mission_review_open_sheet', 'submission_id': submission.id},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -693,6 +698,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'cta': 'educator_mission_review_request_revision',
+                                'submission_id': widget.submission.id,
+                              },
+                            );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -716,6 +728,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'cta': 'educator_mission_review_approve',
+                                'submission_id': widget.submission.id,
+                              },
+                            );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

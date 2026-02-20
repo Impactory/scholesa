@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site operations page for daily operations overview
@@ -28,6 +29,15 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           Switch(
             value: _isDayOpen,
             onChanged: (bool value) {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_ops',
+                  'cta_id': 'toggle_day_open',
+                  'surface': 'appbar_switch',
+                  'is_day_open': value,
+                },
+              );
               setState(() => _isDayOpen = value);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -202,6 +212,16 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'site_ops',
+              'cta_id': 'quick_action',
+              'surface': 'quick_actions',
+              'label': label,
+              'route': route,
+            },
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Navigating to $label...')),
           );

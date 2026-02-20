@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
@@ -113,7 +114,13 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ),
             const Spacer(),
             IconButton(
-              onPressed: () => service.loadParentData(),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'parent_summary_refresh'},
+                );
+                service.loadParentData();
+              },
               icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
             ),
           ],
@@ -134,7 +141,16 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           final bool isSelected = index == _selectedLearnerIndex;
           
           return GestureDetector(
-            onTap: () => setState(() => _selectedLearnerIndex = index),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'parent_summary_select_learner',
+                  'learner_index': index,
+                },
+              );
+              setState(() => _selectedLearnerIndex = index);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.only(right: 12),
@@ -411,6 +427,10 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   void _showAllActivities(LearnerSummary learner) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'parent_summary_view_all_activities', 'learner': learner.learnerName},
+    );
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

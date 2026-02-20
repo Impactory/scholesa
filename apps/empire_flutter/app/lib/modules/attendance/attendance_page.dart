@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../auth/app_state.dart';
 import '../../offline/sync_status_widget.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/common/loading.dart';
 import '../../ui/common/empty_state.dart';
 import '../../ui/common/error_state.dart';
@@ -131,6 +132,13 @@ class _OccurrenceSelector extends StatelessWidget {
                 label: Text('${occ.learnerCount ?? occ.roster.length} students'),
               ),
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'attendance_open_roster',
+                    'occurrence_id': occ.id,
+                  },
+                );
                 Navigator.push(
                   context,
                   MaterialPageRoute<void>(
@@ -326,6 +334,14 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   }
 
   void _markAll(List<RosterLearner> roster, AttendanceStatus status) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'attendance_mark_all',
+        'status': status.name,
+        'count': roster.length,
+      },
+    );
     setState(() {
       for (final RosterLearner learner in roster) {
         _attendance[learner.id] = status;
@@ -334,6 +350,14 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   }
 
   Future<void> _saveAttendance(AttendanceService service, AppState appState) async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'attendance_save',
+        'occurrence_id': widget.occurrenceId,
+        'records_count': _attendance.length,
+      },
+    );
     final List<AttendanceRecord> records = _attendance.entries.map((MapEntry<String, AttendanceStatus> entry) {
       return AttendanceRecord(
         id: '',

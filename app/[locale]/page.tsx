@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 export default function LandingPage() {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const trackInteraction = useInteractionTracking();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4">
@@ -20,10 +22,15 @@ export default function LandingPage() {
           <Link
             href={`/${locale}/login`}
             className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            onClick={() => trackInteraction('feature_discovered', { cta: 'landing_login' })}
           >
             Log in
           </Link>
-          <Link href={`/${locale}/register`} className="text-sm font-semibold leading-6 text-gray-900">
+          <Link
+            href={`/${locale}/register`}
+            className="text-sm font-semibold leading-6 text-gray-900"
+            onClick={() => trackInteraction('feature_discovered', { cta: 'landing_register' })}
+          >
             Register <span aria-hidden="true">→</span>
           </Link>
         </div>

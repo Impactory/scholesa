@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/common/empty_state.dart';
 import 'provisioning_models.dart';
 import 'provisioning_service.dart';
+
+void _logProvisioningCta(String ctaId, {Map<String, dynamic>? metadata}) {
+  TelemetryService.instance.logEvent(
+    event: 'cta.clicked',
+    metadata: <String, dynamic>{
+      'module': 'provisioning',
+      'cta_id': ctaId,
+      ...?metadata,
+    },
+  );
+}
 
 /// Provisioning page for site admins
 class ProvisioningPage extends StatefulWidget {
@@ -75,7 +87,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateDialog(context),
+        onPressed: () {
+          _logProvisioningCta(
+            'open_create_dialog',
+            metadata: <String, dynamic>{'tab_index': _tabController.index},
+          );
+          _showCreateDialog(context);
+        },
         child: const Icon(Icons.add),
       ),
     );
@@ -83,6 +101,10 @@ class _ProvisioningPageState extends State<ProvisioningPage>
 
   void _showCreateDialog(BuildContext context) {
     final int currentTab = _tabController.index;
+    _logProvisioningCta(
+      'select_create_dialog_type',
+      metadata: <String, dynamic>{'tab_index': currentTab},
+    );
     
     switch (currentTab) {
       case 0:
@@ -95,6 +117,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateLearnerDialog(BuildContext context) {
+    _logProvisioningCta('open_create_learner_dialog');
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateLearnerDialog(),
@@ -102,6 +125,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateParentDialog(BuildContext context) {
+    _logProvisioningCta('open_create_parent_dialog');
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateParentDialog(),
@@ -109,6 +133,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateLinkDialog(BuildContext context) {
+    _logProvisioningCta('open_create_guardian_link_dialog');
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateLinkDialog(),
@@ -140,6 +165,7 @@ class _LearnersTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
+            _logProvisioningCta('refresh_learners_tab');
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -163,7 +189,13 @@ class _LearnersTab extends StatelessWidget {
                       : null,
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
-                    onPressed: () => _showLearnerOptions(context, learner),
+                    onPressed: () {
+                      _logProvisioningCta(
+                        'open_learner_options',
+                        metadata: <String, dynamic>{'learner_id': learner.id},
+                      );
+                      _showLearnerOptions(context, learner);
+                    },
                   ),
                 ),
               );
@@ -184,6 +216,10 @@ class _LearnersTab extends StatelessWidget {
             leading: const Icon(Icons.edit),
             title: const Text('Edit Learner'),
             onTap: () {
+              _logProvisioningCta(
+                'open_edit_learner_dialog',
+                metadata: <String, dynamic>{'learner_id': learner.id},
+              );
               Navigator.pop(context);
               showDialog(
                 context: context,
@@ -195,6 +231,10 @@ class _LearnersTab extends StatelessWidget {
             leading: const Icon(Icons.link),
             title: const Text('Manage Guardian Links'),
             onTap: () {
+              _logProvisioningCta(
+                'open_manage_guardian_links',
+                metadata: <String, dynamic>{'learner_id': learner.id},
+              );
               Navigator.pop(context);
               // Switch to Links tab (index 2) — links are already loaded
               final _ProvisioningPageState? pageState =
@@ -232,6 +272,7 @@ class _ParentsTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
+            _logProvisioningCta('refresh_parents_tab');
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -257,7 +298,13 @@ class _ParentsTab extends StatelessWidget {
                   subtitle: Text(parent.email ?? ''),
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
-                    onPressed: () => _showParentOptions(context, parent),
+                    onPressed: () {
+                      _logProvisioningCta(
+                        'open_parent_options',
+                        metadata: <String, dynamic>{'parent_id': parent.id},
+                      );
+                      _showParentOptions(context, parent);
+                    },
                   ),
                 ),
               );
@@ -278,6 +325,10 @@ class _ParentsTab extends StatelessWidget {
             leading: const Icon(Icons.edit),
             title: const Text('Edit Parent'),
             onTap: () {
+              _logProvisioningCta(
+                'open_edit_parent_dialog',
+                metadata: <String, dynamic>{'parent_id': parent.id},
+              );
               Navigator.pop(context);
               showDialog(
                 context: context,
@@ -289,6 +340,10 @@ class _ParentsTab extends StatelessWidget {
             leading: const Icon(Icons.link),
             title: const Text('Manage Learner Links'),
             onTap: () {
+              _logProvisioningCta(
+                'open_manage_learner_links',
+                metadata: <String, dynamic>{'parent_id': parent.id},
+              );
               Navigator.pop(context);
               // Switch to Links tab (index 2) — links are already loaded
               final _ProvisioningPageState? pageState =
@@ -326,6 +381,7 @@ class _LinksTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
+            _logProvisioningCta('refresh_links_tab');
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -366,7 +422,13 @@ class _LinksTab extends StatelessWidget {
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => _confirmDelete(context, link, service),
+                    onPressed: () {
+                      _logProvisioningCta(
+                        'open_delete_guardian_link_confirm',
+                        metadata: <String, dynamic>{'link_id': link.id},
+                      );
+                      _confirmDelete(context, link, service);
+                    },
                   ),
                 ),
               );
@@ -392,6 +454,10 @@ class _LinksTab extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
+              _logProvisioningCta(
+                'delete_guardian_link',
+                metadata: <String, dynamic>{'link_id': link.id},
+              );
               Navigator.pop(context);
               final bool success = await service.deleteGuardianLink(link.id);
               if (context.mounted) {

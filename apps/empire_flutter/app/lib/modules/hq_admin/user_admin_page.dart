@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart' show UserRole, UserRoleExtension;
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../ui/widgets/cards.dart';
 import 'user_models.dart';
@@ -109,7 +110,13 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
           ),
           const Spacer(),
           IconButton(
-            onPressed: () => context.read<UserAdminService>().loadUsers(),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'user_admin_refresh'},
+              );
+              context.read<UserAdminService>().loadUsers();
+            },
             icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
             tooltip: 'Refresh',
           ),
@@ -400,6 +407,10 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
   }
 
   void _showUserDetails(UserModel user) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{'cta': 'user_admin_open_user_details', 'user_id': user.uid},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -409,6 +420,10 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
   }
 
   void _showCreateUserDialog() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'user_admin_open_create_user_dialog'},
+    );
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateUserDialog(),

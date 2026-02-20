@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'message_models.dart';
 import 'message_service.dart';
@@ -102,7 +103,13 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
               const Spacer(),
               if (service.unreadCount > 0)
                 TextButton.icon(
-                  onPressed: () => service.markAllAsRead(),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{'cta': 'messages_mark_all_read'},
+                    );
+                    service.markAllAsRead();
+                  },
                   icon: const Icon(Icons.done_all, size: 18),
                   label: const Text('Mark all read'),
                   style: TextButton.styleFrom(
@@ -270,6 +277,14 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
   }
 
   void _openMessage(Message message) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'messages_open_message',
+        'message_id': message.id,
+        'message_type': message.type.name,
+      },
+    );
     context.read<MessageService>().markAsRead(message.id);
     showModalBottomSheet(
       context: context,
@@ -736,6 +751,13 @@ class _MessageDetailSheet extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'messages_view_details',
+                        'message_id': message.id,
+                      },
+                    );
                     Navigator.pop(context);
                     // Navigate to action URL
                   },

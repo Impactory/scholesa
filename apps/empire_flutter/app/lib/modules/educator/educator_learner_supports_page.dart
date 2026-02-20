@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Educator learner supports page for tracking learner wellbeing & accommodations
@@ -274,6 +275,16 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
   }
 
   void _showSupportDetails(_LearnerSupport support) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'educator_learner_supports',
+        'cta_id': 'open_support_details',
+        'surface': 'support_card',
+        'learner_id': support.learnerId,
+        'priority': support.priority.name,
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -370,6 +381,15 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'educator_learner_supports',
+                          'cta_id': 'edit_support_plan',
+                          'surface': 'support_details_sheet',
+                          'learner_id': support.learnerId,
+                        },
+                      );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Edit support plan')),
@@ -387,6 +407,14 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
   }
 
   void _showSearchDialog() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'educator_learner_supports',
+        'cta_id': 'open_search_dialog',
+        'surface': 'appbar',
+      },
+    );
     final TextEditingController controller = TextEditingController();
 
     showDialog<void>(
@@ -411,6 +439,16 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
               final int matches = _learnerSupports
                   .where((support) => support.learnerName.toLowerCase().contains(query))
                   .length;
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'educator_learner_supports',
+                  'cta_id': 'submit_search',
+                  'surface': 'search_dialog',
+                  'query_length': query.length,
+                  'matches': matches,
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Found $matches matching support plans')),

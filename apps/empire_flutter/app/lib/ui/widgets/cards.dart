@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
+
+void _logCardsCta(String ctaId, {Map<String, dynamic>? metadata}) {
+  TelemetryService.instance.logEvent(
+    event: 'cta.clicked',
+    metadata: <String, dynamic>{
+      'module': 'ui_cards',
+      'cta_id': ctaId,
+      ...?metadata,
+    },
+  );
+}
 
 /// A beautiful gradient card widget for dashboards
 class GradientCard extends StatelessWidget {
@@ -33,7 +45,15 @@ class GradientCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onTap,
+          onTap: onTap == null
+              ? null
+              : () {
+                  _logCardsCta(
+                    'tap_gradient_card',
+                    metadata: <String, dynamic>{'title': title},
+                  );
+                  onTap?.call();
+                },
           borderRadius: BorderRadius.circular(20),
           child: Container(
             decoration: BoxDecoration(
@@ -187,7 +207,15 @@ class StatCard extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                _logCardsCta(
+                  'tap_stat_card',
+                  metadata: <String, dynamic>{'label': label},
+                );
+                onTap?.call();
+              },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -345,7 +373,15 @@ class QuickActionButton extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                _logCardsCta(
+                  'tap_quick_action',
+                  metadata: <String, dynamic>{'label': label},
+                );
+                onTap?.call();
+              },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -608,7 +644,15 @@ class ColorfulListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: onTap,
+      onTap: onTap == null
+          ? null
+          : () {
+              _logCardsCta(
+                'tap_colorful_list_tile',
+                metadata: <String, dynamic>{'title': title},
+              );
+              onTap?.call();
+            },
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(

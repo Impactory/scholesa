@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Integrations Health page for monitoring all site integrations
@@ -18,6 +19,14 @@ class HqIntegrationsHealthPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'hq_integrations_health',
+                  'cta_id': 'refresh_integrations_health',
+                  'surface': 'appbar',
+                },
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Refreshing all integrations...')),
               );
@@ -158,6 +167,15 @@ class HqIntegrationsHealthPage extends StatelessWidget {
       trailing: integration.status == _Status.error
           ? TextButton(
               onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'hq_integrations_health',
+                    'cta_id': 'retry_integration',
+                    'surface': 'integration_row',
+                    'integration_name': integration.name,
+                  },
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Retrying ${integration.name}...')),
                 );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site billing page
@@ -111,7 +112,17 @@ class SiteBillingPage extends StatelessWidget {
                 ],
               ),
               OutlinedButton(
-                onPressed: () => _showManagePlanDialog(context),
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_billing',
+                      'cta_id': 'open_manage_plan_dialog',
+                      'surface': 'subscription_card',
+                    },
+                  );
+                  _showManagePlanDialog(context);
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white54),
@@ -214,7 +225,17 @@ class SiteBillingPage extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => _showAllInvoices(context),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'site_billing',
+                    'cta_id': 'open_all_invoices',
+                    'surface': 'recent_invoices_header',
+                  },
+                );
+                _showAllInvoices(context);
+              },
               child: const Text('View All'),
             ),
           ],
@@ -288,6 +309,14 @@ class SiteBillingPage extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_billing',
+                  'cta_id': 'submit_manage_plan_request',
+                  'surface': 'manage_plan_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -304,6 +333,14 @@ class SiteBillingPage extends StatelessWidget {
   }
 
   void _showAllInvoices(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_billing',
+        'cta_id': 'view_all_invoices_sheet',
+        'surface': 'invoices',
+      },
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
