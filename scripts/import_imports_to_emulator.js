@@ -223,17 +223,20 @@ async function main() {
       return 'hq';
     })();
     const parentIds = parentIdsByLearner.get(user.user_id) || [];
-    writer.set(db.collection('users').doc(user.user_id), {
+    const userDoc = {
       uid: user.user_id,
       email: user.email,
-      displayName: `${user.first_name} ${user.last_name}`.trim(),
+      displayName: `${user.first_name} ${user.last_name}`.trim() || user.email,
       role,
       siteIds: siteIds.length ? siteIds : [primarySiteId],
-      parentIds: role === 'learner' && parentIds.length ? parentIds : undefined,
       createdAt: now,
       updatedAt: now,
       status: user.status,
-    });
+    };
+    if (role === 'learner') {
+      userDoc.parentIds = parentIds.length ? parentIds : [];
+    }
+    writer.set(db.collection('users').doc(user.user_id), userDoc);
     await upsertAuthUser({
       uid: user.user_id,
       email: user.email,
