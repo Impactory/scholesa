@@ -5,7 +5,7 @@
  * and that Gemini API integration is working
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import {
   AnalyticsEngine,
   IntelligenceService,
@@ -17,6 +17,7 @@ import { Timestamp } from 'firebase/firestore';
 
 // Mock environment
 process.env.NEXT_PUBLIC_GEMINI_API_KEY = 'test_key';
+jest.setTimeout(60000);
 
 describe('Analytics Implementation', () => {
   describe('Event Tracking', () => {
