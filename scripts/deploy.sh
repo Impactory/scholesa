@@ -9,6 +9,7 @@
 #   ./scripts/deploy.sh cloudrun-web # Build Flutter web & deploy to Cloud Run
 #   ./scripts/deploy.sh flutter-web  # Alias of cloudrun-web
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
+#   ./scripts/deploy.sh flutter-macos # Build Flutter macOS app (release)
 #   ./scripts/deploy.sh flutter-android # Build Flutter Android (release APK)
 # ──────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -120,6 +121,13 @@ deploy_flutter_ios() {
   log "iOS build complete. Open Xcode to archive and distribute."
 }
 
+deploy_flutter_macos() {
+  flutter_gate
+  log "Building Flutter macOS (release)..."
+  (cd "$FLUTTER_APP" && flutter build macos --release)
+  log "macOS build complete. Sign + notarize before distribution."
+}
+
 deploy_flutter_android() {
   flutter_gate
   log "Building Flutter Android APK (release)..."
@@ -145,6 +153,7 @@ case "$TARGET" in
   cloudrun-web)     deploy_cloud_run_web ;;
   flutter-web)      deploy_flutter_web ;;
   flutter-ios)      deploy_flutter_ios ;;
+  flutter-macos)    deploy_flutter_macos ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | flutter-web | flutter-ios | flutter-android" ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
 esac
