@@ -214,22 +214,22 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L346: `onClick={() => {`
 
 ### `src/components/analytics/AnalyticsDashboard.tsx` (6)
-- L140: `<button`
-- L141: `onClick={() => {`
-- L153: `<button`
-- L154: `onClick={() => {`
-- L168: `<button`
-- L169: `onClick={handleExportCSV}`
+- L132: `<button`
+- L133: `onClick={() => {`
+- L145: `<button`
+- L146: `onClick={() => {`
+- L160: `<button`
+- L161: `onClick={handleExportCSV}`
 
 ### `src/components/analytics/HQAnalyticsDashboard.tsx` (4)
-- L230: `<button`
-- L231: `onClick={exportToCSV}`
-- L310: `<button`
-- L311: `onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}`
+- L222: `<button`
+- L223: `onClick={exportToCSV}`
+- L302: `<button`
+- L303: `onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}`
 
 ### `src/components/analytics/ParentAnalyticsDashboard.tsx` (2)
-- L235: `<button`
-- L237: `onClick={() => setSelectedChild(child.childId)}`
+- L230: `<button`
+- L232: `onClick={() => setSelectedChild(child.childId)}`
 
 ### `src/components/analytics/StudentAnalyticsDashboard.tsx` (4)
 - L217: `<button`

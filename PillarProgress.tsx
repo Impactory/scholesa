@@ -3,7 +3,7 @@
 import React from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { query, where, limit, orderBy } from 'firebase/firestore';
+import { query, where, limit } from 'firebase/firestore';
 import { accountabilityKPIsCollection } from '@/src/firebase/firestore/collections';
 import { PillarCode } from '@/src/types/schema';
 

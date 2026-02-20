@@ -15,7 +15,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { useChildActivity, useSDTScores } from '@/src/hooks/useRealtimeAnalytics';
 import {
   UserIcon,
   AwardIcon,
@@ -70,10 +69,6 @@ export function ParentAnalyticsDashboard() {
   
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
   const parentId = profile?.uid || '';
-  
-  // Real-time data for selected child
-  const { scores: childSDT, loading: sdtLoading } = useSDTScores(selectedChild || '', siteId);
-  const { activities: childActivities, loading: activitiesLoading } = useChildActivity(selectedChild || '', siteId, 10);
 
   useEffect(() => {
     if (!parentId || !siteId) return;

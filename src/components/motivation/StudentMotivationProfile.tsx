@@ -310,7 +310,7 @@ export function StudentMotivationProfile() {
           <div className="bg-white rounded-lg max-w-md w-full">
             <GoalSettingForm 
               onClose={() => setShowGoalForm(false)}
-              onGoalSet={(goalId) => {
+              onGoalSet={(_goalId) => {
                 // Refresh goals list
                 setShowGoalForm(false);
                 // In production, refetch goals from Firestore

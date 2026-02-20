@@ -20,6 +20,6 @@ export function MotivationNudges(_props: MotivationNudgesProps) {
   );
 }
 
-export function NudgeIndicator({ count }: { count?: number }) {
+export function NudgeIndicator({ count: _count }: { count?: number }) {
   return null;
 }

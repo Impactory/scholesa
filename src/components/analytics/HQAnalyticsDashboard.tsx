@@ -38,14 +38,6 @@ interface SiteMetrics {
   lastActivity: Date;
 }
 
-interface PlatformStats {
-  totalSites: number;
-  totalLearners: number;
-  totalEducators: number;
-  avgEngagement: number;
-  activeSites: number;
-}
-
 export function HQAnalyticsDashboard() {
   usePageViewTracking('hq_dashboard');
   
@@ -55,7 +47,7 @@ export function HQAnalyticsDashboard() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Real-time platform stats
-  const { stats: platformStats, loading: statsLoading } = usePlatformStats();
+  const { stats: platformStats } = usePlatformStats();
 
   useEffect(() => {
     const fetchPlatformData = async () => {

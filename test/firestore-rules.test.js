@@ -6,7 +6,7 @@
  */
 
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 
@@ -191,7 +191,6 @@ describe('Cross-Site Access Denial', () => {
   test('educator from site2 cannot access site1 attendance', async () => {
     // Note: Current rules don't enforce cross-site restrictions at rule level
     // This test documents expected behavior when site-scoping is added
-    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
     // Currently passes because rules only check role, not siteId
     // When site-scoping is added, this should fail:
     // await assertFails(getDoc(doc(db, 'attendance', 'att-1')));

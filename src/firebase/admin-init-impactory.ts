@@ -22,7 +22,7 @@ if (!admin.apps.length) {
           try {
             const decoded = Buffer.from(maybeJson, 'base64').toString('utf8');
             serviceAccount = JSON.parse(decoded);
-          } catch (e) {
+          } catch {
             throw new Error('Unable to parse FIREBASE_SERVICE_ACCOUNT');
           }
         }

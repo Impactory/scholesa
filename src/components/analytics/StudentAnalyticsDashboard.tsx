@@ -62,7 +62,7 @@ export function StudentAnalyticsDashboard() {
   const { scores: sdtScores, loading: sdtLoading } = useSDTScores(learnerId, siteId);
   
   // Real-time activity feed
-  const { activities: recentActivities, loading: activitiesLoading } = useChildActivity(learnerId, siteId, 20);
+  const { loading: activitiesLoading } = useChildActivity(learnerId, siteId, 20);
 
   useEffect(() => {
     if (!learnerId || !siteId) return;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { AccountabilityCycle, AccountabilityKPI, UserProfile, PillarCode } from '@/src/types/schema';
+import { UserProfile, PillarCode } from '@/src/types/schema';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { query, where, orderBy, limit } from 'firebase/firestore';
 import { accountabilityCyclesCollection, accountabilityKPIsCollection } from '@/src/firebase/firestore/collections';
