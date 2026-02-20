@@ -15,15 +15,36 @@ fi
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 IMAGE=gcr.io/${GCP_PROJECT_ID}/empire-web:${IMAGE_TAG}
+STAGING_DIR="$(mktemp -d)"
 
 command -v gcloud >/dev/null 2>&1 || { echo "gcloud not found on PATH"; exit 1; }
-command -v flutter >/dev/null 2>&1 || { echo "flutter not found on PATH"; exit 1; }
+command -v rsync >/dev/null 2>&1 || { echo "rsync not found on PATH"; exit 1; }
 
-echo "Building Flutter web release bundle"
-(cd "$FLUTTER_APP" && flutter build web --release)
+cleanup() {
+  rm -rf "$STAGING_DIR"
+}
+trap cleanup EXIT
+
+mkdir -p "$STAGING_DIR/apps/empire_flutter"
+cp "$REPO_ROOT/Dockerfile.flutter" "$STAGING_DIR/Dockerfile.flutter"
+cp "$REPO_ROOT/cloudbuild.flutter.yaml" "$STAGING_DIR/cloudbuild.flutter.yaml"
+
+echo "Staging minimal Cloud Build context"
+rsync -a \
+  --exclude build \
+  --exclude .dart_tool \
+  --exclude .firebase \
+  --exclude .flutter-plugins-dependencies \
+  --exclude .flutter-plugins \
+  --exclude .pub-cache \
+  --exclude .fvm \
+  --exclude .git \
+  --exclude .idea \
+  --exclude .vscode \
+  "$FLUTTER_APP/" "$STAGING_DIR/apps/empire_flutter/app/"
 
 echo "Submitting Docker build with Dockerfile.flutter for $IMAGE"
-gcloud builds submit "$REPO_ROOT" --project "$GCP_PROJECT_ID" --config "$REPO_ROOT/cloudbuild.flutter.yaml" --substitutions "_TAG=${IMAGE_TAG}"
+gcloud builds submit "$STAGING_DIR" --project "$GCP_PROJECT_ID" --config "$STAGING_DIR/cloudbuild.flutter.yaml" --substitutions "_TAG=${IMAGE_TAG}"
 
 echo "Deploying to Cloud Run: service=$CLOUD_RUN_SERVICE region=$GCP_REGION"
 

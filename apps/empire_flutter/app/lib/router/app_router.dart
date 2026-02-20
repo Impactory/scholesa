@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/app_state.dart';
 import 'role_gate.dart';
@@ -96,9 +97,11 @@ bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
 
 /// Create the app router
 GoRouter createAppRouter(AppState appState) {
+  final String unauthenticatedEntry = kIsWeb ? '/welcome' : '/login';
+
   return GoRouter(
     refreshListenable: appState,
-    initialLocation: '/welcome',
+    initialLocation: unauthenticatedEntry,
     debugLogDiagnostics: true,
     
     redirect: (BuildContext context, GoRouterState state) {
@@ -114,11 +117,11 @@ GoRouter createAppRouter(AppState appState) {
       // Still loading and on public route, stay there (show landing page while loading)
       if (isLoading && isPublicRoute) return null;
       
-      // Still loading and NOT on public route, go to welcome page
-      if (isLoading && !isPublicRoute) return '/welcome';
+      // Still loading and NOT on public route, go to the platform entry route
+      if (isLoading && !isPublicRoute) return unauthenticatedEntry;
       
-      // Not logged in and not on public route -> go to landing page
-      if (!isLoggedIn && !isPublicRoute) return '/welcome';
+      // Not logged in and not on public route -> go to platform entry route
+      if (!isLoggedIn && !isPublicRoute) return unauthenticatedEntry;
       
       // Logged in and on public route -> go to dashboard
       if (isLoggedIn && isPublicRoute) return '/';
