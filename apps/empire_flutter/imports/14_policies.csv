@@ -1,0 +1,3 @@
+policy_id,site_id,policy_name,value_json
+POL-PRIVACY-001,SCH-DEMO-001,student_privacy_mode,"{""default_visibility"": ""private"", ""share_within_section"": ""teacher_approved""}"
+POL-AI-LOG-001,SCH-DEMO-001,ai_prompt_logging,"{""enabled"": true, ""required_for_submissions"": true, ""fields"": [""prompt"", ""tool"", ""changes_made"", ""student_explanation""]}"

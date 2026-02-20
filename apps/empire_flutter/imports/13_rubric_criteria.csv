@@ -1,0 +1,17 @@
+criterion_id,rubric_id,criterion_name,criterion_description,weight
+RUB-001-C01,RUB-001,Problem/Goal Clarity,Defines the problem/goal and user clearly.,0.25
+RUB-001-C02,RUB-001,Evidence & Iteration,Uses evidence to improve and explains changes.,0.25
+RUB-001-C03,RUB-001,Collaboration/Leadership,"Uses roles, listens, and contributes responsibly.",0.25
+RUB-001-C04,RUB-001,Communication,Explains thinking and shares work clearly.,0.25
+RUB-002-C01,RUB-002,Problem/Goal Clarity,Defines the problem/goal and user clearly.,0.25
+RUB-002-C02,RUB-002,Evidence & Iteration,Uses evidence to improve and explains changes.,0.25
+RUB-002-C03,RUB-002,Collaboration/Leadership,"Uses roles, listens, and contributes responsibly.",0.25
+RUB-002-C04,RUB-002,Communication,Explains thinking and shares work clearly.,0.25
+RUB-003-C01,RUB-003,Problem/Goal Clarity,Defines the problem/goal and user clearly.,0.25
+RUB-003-C02,RUB-003,Evidence & Iteration,Uses evidence to improve and explains changes.,0.25
+RUB-003-C03,RUB-003,Collaboration/Leadership,"Uses roles, listens, and contributes responsibly.",0.25
+RUB-003-C04,RUB-003,Communication,Explains thinking and shares work clearly.,0.25
+RUB-004-C01,RUB-004,Problem/Goal Clarity,Defines the problem/goal and user clearly.,0.25
+RUB-004-C02,RUB-004,Evidence & Iteration,Uses evidence to improve and explains changes.,0.25
+RUB-004-C03,RUB-004,Collaboration/Leadership,"Uses roles, listens, and contributes responsibly.",0.25
+RUB-004-C04,RUB-004,Communication,Explains thinking and shares work clearly.,0.25

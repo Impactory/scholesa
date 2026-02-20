@@ -1,0 +1,193 @@
+mission_id,session_id,mission_number,mission_title,mission_description,mission_type,estimated_minutes,requires_submission,submission_type,ai_allowed,status
+C-01-03-HELPFUL-INVENTION-S01-M01,C-01-03-HELPFUL-INVENTION-S01,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S01-M02,C-01-03-HELPFUL-INVENTION-S01,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S01-M03,C-01-03-HELPFUL-INVENTION-S01,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S01-M04,C-01-03-HELPFUL-INVENTION-S01,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S01-M05,C-01-03-HELPFUL-INVENTION-S01,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S01-M06,C-01-03-HELPFUL-INVENTION-S01,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M01,C-01-03-HELPFUL-INVENTION-S02,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M02,C-01-03-HELPFUL-INVENTION-S02,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M03,C-01-03-HELPFUL-INVENTION-S02,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M04,C-01-03-HELPFUL-INVENTION-S02,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M05,C-01-03-HELPFUL-INVENTION-S02,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S02-M06,C-01-03-HELPFUL-INVENTION-S02,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M01,C-01-03-HELPFUL-INVENTION-S03,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M02,C-01-03-HELPFUL-INVENTION-S03,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M03,C-01-03-HELPFUL-INVENTION-S03,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M04,C-01-03-HELPFUL-INVENTION-S03,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M05,C-01-03-HELPFUL-INVENTION-S03,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S03-M06,C-01-03-HELPFUL-INVENTION-S03,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M01,C-01-03-HELPFUL-INVENTION-S04,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M02,C-01-03-HELPFUL-INVENTION-S04,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M03,C-01-03-HELPFUL-INVENTION-S04,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M04,C-01-03-HELPFUL-INVENTION-S04,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M05,C-01-03-HELPFUL-INVENTION-S04,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S04-M06,C-01-03-HELPFUL-INVENTION-S04,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M01,C-01-03-HELPFUL-INVENTION-S05,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M02,C-01-03-HELPFUL-INVENTION-S05,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M03,C-01-03-HELPFUL-INVENTION-S05,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M04,C-01-03-HELPFUL-INVENTION-S05,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M05,C-01-03-HELPFUL-INVENTION-S05,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S05-M06,C-01-03-HELPFUL-INVENTION-S05,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M01,C-01-03-HELPFUL-INVENTION-S06,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M02,C-01-03-HELPFUL-INVENTION-S06,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M03,C-01-03-HELPFUL-INVENTION-S06,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M04,C-01-03-HELPFUL-INVENTION-S06,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M05,C-01-03-HELPFUL-INVENTION-S06,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S06-M06,C-01-03-HELPFUL-INVENTION-S06,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M01,C-01-03-HELPFUL-INVENTION-S07,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M02,C-01-03-HELPFUL-INVENTION-S07,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M03,C-01-03-HELPFUL-INVENTION-S07,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M04,C-01-03-HELPFUL-INVENTION-S07,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M05,C-01-03-HELPFUL-INVENTION-S07,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S07-M06,C-01-03-HELPFUL-INVENTION-S07,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M01,C-01-03-HELPFUL-INVENTION-S08,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M02,C-01-03-HELPFUL-INVENTION-S08,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M03,C-01-03-HELPFUL-INVENTION-S08,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M04,C-01-03-HELPFUL-INVENTION-S08,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M05,C-01-03-HELPFUL-INVENTION-S08,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-01-03-HELPFUL-INVENTION-S08-M06,C-01-03-HELPFUL-INVENTION-S08,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S01-M01,C-04-06-ECO-SMART-CITY-S01,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S01-M02,C-04-06-ECO-SMART-CITY-S01,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S01-M03,C-04-06-ECO-SMART-CITY-S01,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S01-M04,C-04-06-ECO-SMART-CITY-S01,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S01-M05,C-04-06-ECO-SMART-CITY-S01,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S01-M06,C-04-06-ECO-SMART-CITY-S01,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S02-M01,C-04-06-ECO-SMART-CITY-S02,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S02-M02,C-04-06-ECO-SMART-CITY-S02,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S02-M03,C-04-06-ECO-SMART-CITY-S02,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S02-M04,C-04-06-ECO-SMART-CITY-S02,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S02-M05,C-04-06-ECO-SMART-CITY-S02,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S02-M06,C-04-06-ECO-SMART-CITY-S02,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S03-M01,C-04-06-ECO-SMART-CITY-S03,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S03-M02,C-04-06-ECO-SMART-CITY-S03,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S03-M03,C-04-06-ECO-SMART-CITY-S03,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S03-M04,C-04-06-ECO-SMART-CITY-S03,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S03-M05,C-04-06-ECO-SMART-CITY-S03,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S03-M06,C-04-06-ECO-SMART-CITY-S03,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S04-M01,C-04-06-ECO-SMART-CITY-S04,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S04-M02,C-04-06-ECO-SMART-CITY-S04,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S04-M03,C-04-06-ECO-SMART-CITY-S04,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S04-M04,C-04-06-ECO-SMART-CITY-S04,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S04-M05,C-04-06-ECO-SMART-CITY-S04,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S04-M06,C-04-06-ECO-SMART-CITY-S04,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S05-M01,C-04-06-ECO-SMART-CITY-S05,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S05-M02,C-04-06-ECO-SMART-CITY-S05,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S05-M03,C-04-06-ECO-SMART-CITY-S05,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S05-M04,C-04-06-ECO-SMART-CITY-S05,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S05-M05,C-04-06-ECO-SMART-CITY-S05,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S05-M06,C-04-06-ECO-SMART-CITY-S05,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S06-M01,C-04-06-ECO-SMART-CITY-S06,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S06-M02,C-04-06-ECO-SMART-CITY-S06,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S06-M03,C-04-06-ECO-SMART-CITY-S06,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S06-M04,C-04-06-ECO-SMART-CITY-S06,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S06-M05,C-04-06-ECO-SMART-CITY-S06,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S06-M06,C-04-06-ECO-SMART-CITY-S06,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S07-M01,C-04-06-ECO-SMART-CITY-S07,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S07-M02,C-04-06-ECO-SMART-CITY-S07,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S07-M03,C-04-06-ECO-SMART-CITY-S07,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S07-M04,C-04-06-ECO-SMART-CITY-S07,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S07-M05,C-04-06-ECO-SMART-CITY-S07,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S07-M06,C-04-06-ECO-SMART-CITY-S07,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-04-06-ECO-SMART-CITY-S08-M01,C-04-06-ECO-SMART-CITY-S08,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-04-06-ECO-SMART-CITY-S08-M02,C-04-06-ECO-SMART-CITY-S08,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-04-06-ECO-SMART-CITY-S08-M03,C-04-06-ECO-SMART-CITY-S08,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-04-06-ECO-SMART-CITY-S08-M04,C-04-06-ECO-SMART-CITY-S08,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-04-06-ECO-SMART-CITY-S08-M05,C-04-06-ECO-SMART-CITY-S08,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-04-06-ECO-SMART-CITY-S08-M06,C-04-06-ECO-SMART-CITY-S08,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M01,C-07-09-AI-MEDIA-DETECTIVE-S01,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M02,C-07-09-AI-MEDIA-DETECTIVE-S01,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M03,C-07-09-AI-MEDIA-DETECTIVE-S01,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M04,C-07-09-AI-MEDIA-DETECTIVE-S01,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M05,C-07-09-AI-MEDIA-DETECTIVE-S01,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S01-M06,C-07-09-AI-MEDIA-DETECTIVE-S01,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M01,C-07-09-AI-MEDIA-DETECTIVE-S02,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M02,C-07-09-AI-MEDIA-DETECTIVE-S02,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M03,C-07-09-AI-MEDIA-DETECTIVE-S02,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M04,C-07-09-AI-MEDIA-DETECTIVE-S02,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M05,C-07-09-AI-MEDIA-DETECTIVE-S02,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S02-M06,C-07-09-AI-MEDIA-DETECTIVE-S02,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M01,C-07-09-AI-MEDIA-DETECTIVE-S03,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M02,C-07-09-AI-MEDIA-DETECTIVE-S03,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M03,C-07-09-AI-MEDIA-DETECTIVE-S03,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M04,C-07-09-AI-MEDIA-DETECTIVE-S03,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M05,C-07-09-AI-MEDIA-DETECTIVE-S03,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S03-M06,C-07-09-AI-MEDIA-DETECTIVE-S03,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M01,C-07-09-AI-MEDIA-DETECTIVE-S04,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M02,C-07-09-AI-MEDIA-DETECTIVE-S04,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M03,C-07-09-AI-MEDIA-DETECTIVE-S04,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M04,C-07-09-AI-MEDIA-DETECTIVE-S04,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M05,C-07-09-AI-MEDIA-DETECTIVE-S04,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S04-M06,C-07-09-AI-MEDIA-DETECTIVE-S04,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M01,C-07-09-AI-MEDIA-DETECTIVE-S05,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M02,C-07-09-AI-MEDIA-DETECTIVE-S05,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M03,C-07-09-AI-MEDIA-DETECTIVE-S05,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M04,C-07-09-AI-MEDIA-DETECTIVE-S05,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M05,C-07-09-AI-MEDIA-DETECTIVE-S05,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S05-M06,C-07-09-AI-MEDIA-DETECTIVE-S05,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M01,C-07-09-AI-MEDIA-DETECTIVE-S06,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M02,C-07-09-AI-MEDIA-DETECTIVE-S06,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M03,C-07-09-AI-MEDIA-DETECTIVE-S06,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M04,C-07-09-AI-MEDIA-DETECTIVE-S06,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M05,C-07-09-AI-MEDIA-DETECTIVE-S06,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S06-M06,C-07-09-AI-MEDIA-DETECTIVE-S06,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M01,C-07-09-AI-MEDIA-DETECTIVE-S07,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M02,C-07-09-AI-MEDIA-DETECTIVE-S07,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M03,C-07-09-AI-MEDIA-DETECTIVE-S07,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M04,C-07-09-AI-MEDIA-DETECTIVE-S07,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M05,C-07-09-AI-MEDIA-DETECTIVE-S07,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S07-M06,C-07-09-AI-MEDIA-DETECTIVE-S07,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M01,C-07-09-AI-MEDIA-DETECTIVE-S08,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M02,C-07-09-AI-MEDIA-DETECTIVE-S08,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M03,C-07-09-AI-MEDIA-DETECTIVE-S08,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M04,C-07-09-AI-MEDIA-DETECTIVE-S08,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M05,C-07-09-AI-MEDIA-DETECTIVE-S08,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-07-09-AI-MEDIA-DETECTIVE-S08-M06,C-07-09-AI-MEDIA-DETECTIVE-S08,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S01-M01,C-10-12-VENTURE-SPRINT-S01,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S01-M02,C-10-12-VENTURE-SPRINT-S01,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S01-M03,C-10-12-VENTURE-SPRINT-S01,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S01-M04,C-10-12-VENTURE-SPRINT-S01,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S01-M05,C-10-12-VENTURE-SPRINT-S01,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S01-M06,C-10-12-VENTURE-SPRINT-S01,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S02-M01,C-10-12-VENTURE-SPRINT-S02,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S02-M02,C-10-12-VENTURE-SPRINT-S02,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S02-M03,C-10-12-VENTURE-SPRINT-S02,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S02-M04,C-10-12-VENTURE-SPRINT-S02,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S02-M05,C-10-12-VENTURE-SPRINT-S02,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S02-M06,C-10-12-VENTURE-SPRINT-S02,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S03-M01,C-10-12-VENTURE-SPRINT-S03,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S03-M02,C-10-12-VENTURE-SPRINT-S03,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S03-M03,C-10-12-VENTURE-SPRINT-S03,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S03-M04,C-10-12-VENTURE-SPRINT-S03,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S03-M05,C-10-12-VENTURE-SPRINT-S03,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S03-M06,C-10-12-VENTURE-SPRINT-S03,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S04-M01,C-10-12-VENTURE-SPRINT-S04,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S04-M02,C-10-12-VENTURE-SPRINT-S04,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S04-M03,C-10-12-VENTURE-SPRINT-S04,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S04-M04,C-10-12-VENTURE-SPRINT-S04,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S04-M05,C-10-12-VENTURE-SPRINT-S04,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S04-M06,C-10-12-VENTURE-SPRINT-S04,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S05-M01,C-10-12-VENTURE-SPRINT-S05,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S05-M02,C-10-12-VENTURE-SPRINT-S05,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S05-M03,C-10-12-VENTURE-SPRINT-S05,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S05-M04,C-10-12-VENTURE-SPRINT-S05,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S05-M05,C-10-12-VENTURE-SPRINT-S05,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S05-M06,C-10-12-VENTURE-SPRINT-S05,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S06-M01,C-10-12-VENTURE-SPRINT-S06,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S06-M02,C-10-12-VENTURE-SPRINT-S06,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S06-M03,C-10-12-VENTURE-SPRINT-S06,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S06-M04,C-10-12-VENTURE-SPRINT-S06,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S06-M05,C-10-12-VENTURE-SPRINT-S06,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S06-M06,C-10-12-VENTURE-SPRINT-S06,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S07-M01,C-10-12-VENTURE-SPRINT-S07,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S07-M02,C-10-12-VENTURE-SPRINT-S07,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S07-M03,C-10-12-VENTURE-SPRINT-S07,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S07-M04,C-10-12-VENTURE-SPRINT-S07,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S07-M05,C-10-12-VENTURE-SPRINT-S07,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S07-M06,C-10-12-VENTURE-SPRINT-S07,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active
+C-10-12-VENTURE-SPRINT-S08-M01,C-10-12-VENTURE-SPRINT-S08,1,Warm‑Up Retrieval,Quick recall + explain‑it‑back to activate prior knowledge.,warmup,7,no,,yes,active
+C-10-12-VENTURE-SPRINT-S08-M02,C-10-12-VENTURE-SPRINT-S08,2,Micro‑Skill,"Learn one targeted skill with a worked example, then try it.",microskill,10,no,,yes,active
+C-10-12-VENTURE-SPRINT-S08-M03,C-10-12-VENTURE-SPRINT-S08,3,Build Sprint,Hands‑on build time with team roles (Facilitator/Builder/Tester/Reporter).,build,25,no,,yes,active
+C-10-12-VENTURE-SPRINT-S08-M04,C-10-12-VENTURE-SPRINT-S08,4,Checkpoint,Submit evidence (photo/screenshot + 1–2 sentences).,checkpoint,5,yes,photo_or_file,yes,active
+C-10-12-VENTURE-SPRINT-S08-M05,C-10-12-VENTURE-SPRINT-S08,5,Share‑Out,Short share + peer feedback using a sentence frame.,shareout,8,no,,yes,active
+C-10-12-VENTURE-SPRINT-S08-M06,C-10-12-VENTURE-SPRINT-S08,6,Reflection + Next Step,"Reflect: one learning, one struggle, one next step.",reflection,5,yes,text_or_audio,yes,active

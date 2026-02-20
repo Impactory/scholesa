@@ -1,0 +1,33 @@
+session_id,course_id,session_number,session_title,overview,estimated_minutes,status
+C-01-03-HELPFUL-INVENTION-S01,C-01-03-HELPFUL-INVENTION,1,"Notice Problems, Pick One",Session 1 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S02,C-01-03-HELPFUL-INVENTION,2,"Meet the User, Ask Good Questions",Session 2 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S03,C-01-03-HELPFUL-INVENTION,3,"Ideas Burst: Sketch 5, Choose 1",Session 3 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S04,C-01-03-HELPFUL-INVENTION,4,Build a Mini Prototype,Session 4 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S05,C-01-03-HELPFUL-INVENTION,5,Test & Improve (Iteration),Session 5 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S06,C-01-03-HELPFUL-INVENTION,6,Tell the Story of Your Invention,Session 6 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S07,C-01-03-HELPFUL-INVENTION,7,Practice Leadership Roles,Session 7 of 8 for My Helpful Invention Studio.,60,active
+C-01-03-HELPFUL-INVENTION-S08,C-01-03-HELPFUL-INVENTION,8,Showcase Day + Reflection,Session 8 of 8 for My Helpful Invention Studio.,60,active
+C-04-06-ECO-SMART-CITY-S01,C-04-06-ECO-SMART-CITY,1,Define a Community Challenge,Session 1 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S02,C-04-06-ECO-SMART-CITY,2,Map the System (Causes & Effects),Session 2 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S03,C-04-06-ECO-SMART-CITY,3,Gather Quick Data,Session 3 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S04,C-04-06-ECO-SMART-CITY,4,Design a Solution Prototype,Session 4 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S05,C-04-06-ECO-SMART-CITY,5,Test with Constraints,Session 5 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S06,C-04-06-ECO-SMART-CITY,6,Improve Using Evidence,Session 6 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S07,C-04-06-ECO-SMART-CITY,7,Communicate to Stakeholders,Session 7 of 8 for Eco‑Smart City Lab.,60,active
+C-04-06-ECO-SMART-CITY-S08,C-04-06-ECO-SMART-CITY,8,City Expo + Reflection,Session 8 of 8 for Eco‑Smart City Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S01,C-07-09-AI-MEDIA-DETECTIVE,1,Claims vs Evidence,Session 1 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S02,C-07-09-AI-MEDIA-DETECTIVE,2,How Algorithms Shape Feeds,Session 2 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S03,C-07-09-AI-MEDIA-DETECTIVE,3,Spot Misinformation Patterns,Session 3 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S04,C-07-09-AI-MEDIA-DETECTIVE,4,Evaluate AI Outputs,Session 4 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S05,C-07-09-AI-MEDIA-DETECTIVE,5,Build a Verification Workflow,Session 5 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S06,C-07-09-AI-MEDIA-DETECTIVE,6,"Bias, Fairness & Ethics",Session 6 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S07,C-07-09-AI-MEDIA-DETECTIVE,7,Create a Public Guide,Session 7 of 8 for AI Media Detective Lab.,60,active
+C-07-09-AI-MEDIA-DETECTIVE-S08,C-07-09-AI-MEDIA-DETECTIVE,8,Publish + Reflection,Session 8 of 8 for AI Media Detective Lab.,60,active
+C-10-12-VENTURE-SPRINT-S01,C-10-12-VENTURE-SPRINT,1,Problem Worth Solving,Session 1 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S02,C-10-12-VENTURE-SPRINT,2,Customer Discovery Sprint,Session 2 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S03,C-10-12-VENTURE-SPRINT,3,Value Proposition & Differentiation,Session 3 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S04,C-10-12-VENTURE-SPRINT,4,MVP Prototype,Session 4 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S05,C-10-12-VENTURE-SPRINT,5,Experiment + Metrics,Session 5 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S06,C-10-12-VENTURE-SPRINT,6,"Ethics, Risk & Compliance",Session 6 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S07,C-10-12-VENTURE-SPRINT,7,Pitch Deck + Story,Session 7 of 8 for Venture Sprint.,60,active
+C-10-12-VENTURE-SPRINT-S08,C-10-12-VENTURE-SPRINT,8,Demo Day + Post‑Mortem,Session 8 of 8 for Venture Sprint.,60,active

@@ -1,0 +1,5 @@
+template_id,course_id,title,artifact_types
+PORT-01,C-01-03-HELPFUL-INVENTION,Invention Portfolio,"photo,drawing,short_video,reflection"
+PORT-02,C-04-06-ECO-SMART-CITY,City Lab Portfolio,"diagram,photo,slide_deck,reflection"
+PORT-03,C-07-09-AI-MEDIA-DETECTIVE,Media Detective Portfolio,"checklist,report,slide_deck,reflection"
+PORT-04,C-10-12-VENTURE-SPRINT,Venture Sprint Portfolio,"pitch_deck,mvp_link,experiment_log,reflection"

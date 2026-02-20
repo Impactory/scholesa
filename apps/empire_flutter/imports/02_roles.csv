@@ -1,0 +1,5 @@
+role_id,role_name
+ROLE-ADMIN,Admin
+ROLE-TEACHER,Teacher
+ROLE-STUDENT,Student
+ROLE-PARENT,Parent

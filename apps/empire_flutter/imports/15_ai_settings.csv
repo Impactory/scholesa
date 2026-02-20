@@ -1,0 +1,5 @@
+ai_setting_id,site_id,grade_band,mode,allowed_tools,log_prompts
+AI-01-03,SCH-DEMO-001,1-3,teacher_led_only,none,n/a
+AI-04-06,SCH-DEMO-001,4-6,scaffolded,"brainstorming,feedback",yes
+AI-07-09,SCH-DEMO-001,7-9,guided,"brainstorming,debugging,feedback",yes
+AI-10-12,SCH-DEMO-001,10-12,guided_plus,"brainstorming,debugging,feedback,outline",yes

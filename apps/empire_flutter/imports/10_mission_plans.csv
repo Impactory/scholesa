@@ -1,0 +1,577 @@
+mission_plan_id,mission_id,tier,udl_supports,success_criteria
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M01,C-01-03-HELPFUL-INVENTION-S01-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M01,C-01-03-HELPFUL-INVENTION-S01-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M01,C-01-03-HELPFUL-INVENTION-S01-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M02,C-01-03-HELPFUL-INVENTION-S01-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M02,C-01-03-HELPFUL-INVENTION-S01-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M02,C-01-03-HELPFUL-INVENTION-S01-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M03,C-01-03-HELPFUL-INVENTION-S01-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M03,C-01-03-HELPFUL-INVENTION-S01-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M03,C-01-03-HELPFUL-INVENTION-S01-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M04,C-01-03-HELPFUL-INVENTION-S01-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M04,C-01-03-HELPFUL-INVENTION-S01-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M04,C-01-03-HELPFUL-INVENTION-S01-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M05,C-01-03-HELPFUL-INVENTION-S01-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M05,C-01-03-HELPFUL-INVENTION-S01-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M05,C-01-03-HELPFUL-INVENTION-S01-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S01-M06,C-01-03-HELPFUL-INVENTION-S01-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S01-M06,C-01-03-HELPFUL-INVENTION-S01-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S01-M06,C-01-03-HELPFUL-INVENTION-S01-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M01,C-01-03-HELPFUL-INVENTION-S02-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M01,C-01-03-HELPFUL-INVENTION-S02-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M01,C-01-03-HELPFUL-INVENTION-S02-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M02,C-01-03-HELPFUL-INVENTION-S02-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M02,C-01-03-HELPFUL-INVENTION-S02-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M02,C-01-03-HELPFUL-INVENTION-S02-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M03,C-01-03-HELPFUL-INVENTION-S02-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M03,C-01-03-HELPFUL-INVENTION-S02-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M03,C-01-03-HELPFUL-INVENTION-S02-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M04,C-01-03-HELPFUL-INVENTION-S02-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M04,C-01-03-HELPFUL-INVENTION-S02-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M04,C-01-03-HELPFUL-INVENTION-S02-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M05,C-01-03-HELPFUL-INVENTION-S02-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M05,C-01-03-HELPFUL-INVENTION-S02-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M05,C-01-03-HELPFUL-INVENTION-S02-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S02-M06,C-01-03-HELPFUL-INVENTION-S02-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S02-M06,C-01-03-HELPFUL-INVENTION-S02-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S02-M06,C-01-03-HELPFUL-INVENTION-S02-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M01,C-01-03-HELPFUL-INVENTION-S03-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M01,C-01-03-HELPFUL-INVENTION-S03-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M01,C-01-03-HELPFUL-INVENTION-S03-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M02,C-01-03-HELPFUL-INVENTION-S03-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M02,C-01-03-HELPFUL-INVENTION-S03-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M02,C-01-03-HELPFUL-INVENTION-S03-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M03,C-01-03-HELPFUL-INVENTION-S03-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M03,C-01-03-HELPFUL-INVENTION-S03-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M03,C-01-03-HELPFUL-INVENTION-S03-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M04,C-01-03-HELPFUL-INVENTION-S03-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M04,C-01-03-HELPFUL-INVENTION-S03-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M04,C-01-03-HELPFUL-INVENTION-S03-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M05,C-01-03-HELPFUL-INVENTION-S03-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M05,C-01-03-HELPFUL-INVENTION-S03-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M05,C-01-03-HELPFUL-INVENTION-S03-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S03-M06,C-01-03-HELPFUL-INVENTION-S03-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S03-M06,C-01-03-HELPFUL-INVENTION-S03-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S03-M06,C-01-03-HELPFUL-INVENTION-S03-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M01,C-01-03-HELPFUL-INVENTION-S04-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M01,C-01-03-HELPFUL-INVENTION-S04-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M01,C-01-03-HELPFUL-INVENTION-S04-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M02,C-01-03-HELPFUL-INVENTION-S04-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M02,C-01-03-HELPFUL-INVENTION-S04-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M02,C-01-03-HELPFUL-INVENTION-S04-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M03,C-01-03-HELPFUL-INVENTION-S04-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M03,C-01-03-HELPFUL-INVENTION-S04-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M03,C-01-03-HELPFUL-INVENTION-S04-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M04,C-01-03-HELPFUL-INVENTION-S04-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M04,C-01-03-HELPFUL-INVENTION-S04-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M04,C-01-03-HELPFUL-INVENTION-S04-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M05,C-01-03-HELPFUL-INVENTION-S04-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M05,C-01-03-HELPFUL-INVENTION-S04-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M05,C-01-03-HELPFUL-INVENTION-S04-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S04-M06,C-01-03-HELPFUL-INVENTION-S04-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S04-M06,C-01-03-HELPFUL-INVENTION-S04-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S04-M06,C-01-03-HELPFUL-INVENTION-S04-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M01,C-01-03-HELPFUL-INVENTION-S05-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M01,C-01-03-HELPFUL-INVENTION-S05-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M01,C-01-03-HELPFUL-INVENTION-S05-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M02,C-01-03-HELPFUL-INVENTION-S05-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M02,C-01-03-HELPFUL-INVENTION-S05-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M02,C-01-03-HELPFUL-INVENTION-S05-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M03,C-01-03-HELPFUL-INVENTION-S05-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M03,C-01-03-HELPFUL-INVENTION-S05-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M03,C-01-03-HELPFUL-INVENTION-S05-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M04,C-01-03-HELPFUL-INVENTION-S05-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M04,C-01-03-HELPFUL-INVENTION-S05-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M04,C-01-03-HELPFUL-INVENTION-S05-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M05,C-01-03-HELPFUL-INVENTION-S05-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M05,C-01-03-HELPFUL-INVENTION-S05-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M05,C-01-03-HELPFUL-INVENTION-S05-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S05-M06,C-01-03-HELPFUL-INVENTION-S05-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S05-M06,C-01-03-HELPFUL-INVENTION-S05-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S05-M06,C-01-03-HELPFUL-INVENTION-S05-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M01,C-01-03-HELPFUL-INVENTION-S06-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M01,C-01-03-HELPFUL-INVENTION-S06-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M01,C-01-03-HELPFUL-INVENTION-S06-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M02,C-01-03-HELPFUL-INVENTION-S06-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M02,C-01-03-HELPFUL-INVENTION-S06-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M02,C-01-03-HELPFUL-INVENTION-S06-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M03,C-01-03-HELPFUL-INVENTION-S06-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M03,C-01-03-HELPFUL-INVENTION-S06-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M03,C-01-03-HELPFUL-INVENTION-S06-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M04,C-01-03-HELPFUL-INVENTION-S06-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M04,C-01-03-HELPFUL-INVENTION-S06-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M04,C-01-03-HELPFUL-INVENTION-S06-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M05,C-01-03-HELPFUL-INVENTION-S06-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M05,C-01-03-HELPFUL-INVENTION-S06-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M05,C-01-03-HELPFUL-INVENTION-S06-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S06-M06,C-01-03-HELPFUL-INVENTION-S06-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S06-M06,C-01-03-HELPFUL-INVENTION-S06-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S06-M06,C-01-03-HELPFUL-INVENTION-S06-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M01,C-01-03-HELPFUL-INVENTION-S07-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M01,C-01-03-HELPFUL-INVENTION-S07-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M01,C-01-03-HELPFUL-INVENTION-S07-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M02,C-01-03-HELPFUL-INVENTION-S07-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M02,C-01-03-HELPFUL-INVENTION-S07-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M02,C-01-03-HELPFUL-INVENTION-S07-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M03,C-01-03-HELPFUL-INVENTION-S07-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M03,C-01-03-HELPFUL-INVENTION-S07-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M03,C-01-03-HELPFUL-INVENTION-S07-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M04,C-01-03-HELPFUL-INVENTION-S07-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M04,C-01-03-HELPFUL-INVENTION-S07-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M04,C-01-03-HELPFUL-INVENTION-S07-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M05,C-01-03-HELPFUL-INVENTION-S07-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M05,C-01-03-HELPFUL-INVENTION-S07-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M05,C-01-03-HELPFUL-INVENTION-S07-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S07-M06,C-01-03-HELPFUL-INVENTION-S07-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S07-M06,C-01-03-HELPFUL-INVENTION-S07-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S07-M06,C-01-03-HELPFUL-INVENTION-S07-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M01,C-01-03-HELPFUL-INVENTION-S08-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M01,C-01-03-HELPFUL-INVENTION-S08-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M01,C-01-03-HELPFUL-INVENTION-S08-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M02,C-01-03-HELPFUL-INVENTION-S08-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M02,C-01-03-HELPFUL-INVENTION-S08-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M02,C-01-03-HELPFUL-INVENTION-S08-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M03,C-01-03-HELPFUL-INVENTION-S08-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M03,C-01-03-HELPFUL-INVENTION-S08-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M03,C-01-03-HELPFUL-INVENTION-S08-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M04,C-01-03-HELPFUL-INVENTION-S08-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M04,C-01-03-HELPFUL-INVENTION-S08-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M04,C-01-03-HELPFUL-INVENTION-S08-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M05,C-01-03-HELPFUL-INVENTION-S08-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M05,C-01-03-HELPFUL-INVENTION-S08-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M05,C-01-03-HELPFUL-INVENTION-S08-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-01-03-HELPFUL-INVENTION-S08-M06,C-01-03-HELPFUL-INVENTION-S08-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-01-03-HELPFUL-INVENTION-S08-M06,C-01-03-HELPFUL-INVENTION-S08-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-01-03-HELPFUL-INVENTION-S08-M06,C-01-03-HELPFUL-INVENTION-S08-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M01,C-04-06-ECO-SMART-CITY-S01-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M01,C-04-06-ECO-SMART-CITY-S01-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M01,C-04-06-ECO-SMART-CITY-S01-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M02,C-04-06-ECO-SMART-CITY-S01-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M02,C-04-06-ECO-SMART-CITY-S01-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M02,C-04-06-ECO-SMART-CITY-S01-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M03,C-04-06-ECO-SMART-CITY-S01-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M03,C-04-06-ECO-SMART-CITY-S01-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M03,C-04-06-ECO-SMART-CITY-S01-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M04,C-04-06-ECO-SMART-CITY-S01-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M04,C-04-06-ECO-SMART-CITY-S01-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M04,C-04-06-ECO-SMART-CITY-S01-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M05,C-04-06-ECO-SMART-CITY-S01-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M05,C-04-06-ECO-SMART-CITY-S01-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M05,C-04-06-ECO-SMART-CITY-S01-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S01-M06,C-04-06-ECO-SMART-CITY-S01-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S01-M06,C-04-06-ECO-SMART-CITY-S01-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S01-M06,C-04-06-ECO-SMART-CITY-S01-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M01,C-04-06-ECO-SMART-CITY-S02-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M01,C-04-06-ECO-SMART-CITY-S02-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M01,C-04-06-ECO-SMART-CITY-S02-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M02,C-04-06-ECO-SMART-CITY-S02-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M02,C-04-06-ECO-SMART-CITY-S02-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M02,C-04-06-ECO-SMART-CITY-S02-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M03,C-04-06-ECO-SMART-CITY-S02-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M03,C-04-06-ECO-SMART-CITY-S02-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M03,C-04-06-ECO-SMART-CITY-S02-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M04,C-04-06-ECO-SMART-CITY-S02-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M04,C-04-06-ECO-SMART-CITY-S02-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M04,C-04-06-ECO-SMART-CITY-S02-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M05,C-04-06-ECO-SMART-CITY-S02-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M05,C-04-06-ECO-SMART-CITY-S02-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M05,C-04-06-ECO-SMART-CITY-S02-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S02-M06,C-04-06-ECO-SMART-CITY-S02-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S02-M06,C-04-06-ECO-SMART-CITY-S02-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S02-M06,C-04-06-ECO-SMART-CITY-S02-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M01,C-04-06-ECO-SMART-CITY-S03-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M01,C-04-06-ECO-SMART-CITY-S03-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M01,C-04-06-ECO-SMART-CITY-S03-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M02,C-04-06-ECO-SMART-CITY-S03-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M02,C-04-06-ECO-SMART-CITY-S03-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M02,C-04-06-ECO-SMART-CITY-S03-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M03,C-04-06-ECO-SMART-CITY-S03-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M03,C-04-06-ECO-SMART-CITY-S03-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M03,C-04-06-ECO-SMART-CITY-S03-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M04,C-04-06-ECO-SMART-CITY-S03-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M04,C-04-06-ECO-SMART-CITY-S03-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M04,C-04-06-ECO-SMART-CITY-S03-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M05,C-04-06-ECO-SMART-CITY-S03-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M05,C-04-06-ECO-SMART-CITY-S03-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M05,C-04-06-ECO-SMART-CITY-S03-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S03-M06,C-04-06-ECO-SMART-CITY-S03-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S03-M06,C-04-06-ECO-SMART-CITY-S03-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S03-M06,C-04-06-ECO-SMART-CITY-S03-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M01,C-04-06-ECO-SMART-CITY-S04-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M01,C-04-06-ECO-SMART-CITY-S04-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M01,C-04-06-ECO-SMART-CITY-S04-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M02,C-04-06-ECO-SMART-CITY-S04-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M02,C-04-06-ECO-SMART-CITY-S04-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M02,C-04-06-ECO-SMART-CITY-S04-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M03,C-04-06-ECO-SMART-CITY-S04-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M03,C-04-06-ECO-SMART-CITY-S04-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M03,C-04-06-ECO-SMART-CITY-S04-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M04,C-04-06-ECO-SMART-CITY-S04-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M04,C-04-06-ECO-SMART-CITY-S04-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M04,C-04-06-ECO-SMART-CITY-S04-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M05,C-04-06-ECO-SMART-CITY-S04-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M05,C-04-06-ECO-SMART-CITY-S04-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M05,C-04-06-ECO-SMART-CITY-S04-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S04-M06,C-04-06-ECO-SMART-CITY-S04-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S04-M06,C-04-06-ECO-SMART-CITY-S04-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S04-M06,C-04-06-ECO-SMART-CITY-S04-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M01,C-04-06-ECO-SMART-CITY-S05-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M01,C-04-06-ECO-SMART-CITY-S05-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M01,C-04-06-ECO-SMART-CITY-S05-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M02,C-04-06-ECO-SMART-CITY-S05-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M02,C-04-06-ECO-SMART-CITY-S05-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M02,C-04-06-ECO-SMART-CITY-S05-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M03,C-04-06-ECO-SMART-CITY-S05-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M03,C-04-06-ECO-SMART-CITY-S05-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M03,C-04-06-ECO-SMART-CITY-S05-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M04,C-04-06-ECO-SMART-CITY-S05-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M04,C-04-06-ECO-SMART-CITY-S05-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M04,C-04-06-ECO-SMART-CITY-S05-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M05,C-04-06-ECO-SMART-CITY-S05-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M05,C-04-06-ECO-SMART-CITY-S05-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M05,C-04-06-ECO-SMART-CITY-S05-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S05-M06,C-04-06-ECO-SMART-CITY-S05-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S05-M06,C-04-06-ECO-SMART-CITY-S05-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S05-M06,C-04-06-ECO-SMART-CITY-S05-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M01,C-04-06-ECO-SMART-CITY-S06-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M01,C-04-06-ECO-SMART-CITY-S06-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M01,C-04-06-ECO-SMART-CITY-S06-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M02,C-04-06-ECO-SMART-CITY-S06-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M02,C-04-06-ECO-SMART-CITY-S06-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M02,C-04-06-ECO-SMART-CITY-S06-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M03,C-04-06-ECO-SMART-CITY-S06-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M03,C-04-06-ECO-SMART-CITY-S06-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M03,C-04-06-ECO-SMART-CITY-S06-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M04,C-04-06-ECO-SMART-CITY-S06-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M04,C-04-06-ECO-SMART-CITY-S06-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M04,C-04-06-ECO-SMART-CITY-S06-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M05,C-04-06-ECO-SMART-CITY-S06-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M05,C-04-06-ECO-SMART-CITY-S06-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M05,C-04-06-ECO-SMART-CITY-S06-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S06-M06,C-04-06-ECO-SMART-CITY-S06-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S06-M06,C-04-06-ECO-SMART-CITY-S06-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S06-M06,C-04-06-ECO-SMART-CITY-S06-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M01,C-04-06-ECO-SMART-CITY-S07-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M01,C-04-06-ECO-SMART-CITY-S07-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M01,C-04-06-ECO-SMART-CITY-S07-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M02,C-04-06-ECO-SMART-CITY-S07-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M02,C-04-06-ECO-SMART-CITY-S07-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M02,C-04-06-ECO-SMART-CITY-S07-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M03,C-04-06-ECO-SMART-CITY-S07-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M03,C-04-06-ECO-SMART-CITY-S07-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M03,C-04-06-ECO-SMART-CITY-S07-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M04,C-04-06-ECO-SMART-CITY-S07-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M04,C-04-06-ECO-SMART-CITY-S07-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M04,C-04-06-ECO-SMART-CITY-S07-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M05,C-04-06-ECO-SMART-CITY-S07-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M05,C-04-06-ECO-SMART-CITY-S07-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M05,C-04-06-ECO-SMART-CITY-S07-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S07-M06,C-04-06-ECO-SMART-CITY-S07-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S07-M06,C-04-06-ECO-SMART-CITY-S07-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S07-M06,C-04-06-ECO-SMART-CITY-S07-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M01,C-04-06-ECO-SMART-CITY-S08-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M01,C-04-06-ECO-SMART-CITY-S08-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M01,C-04-06-ECO-SMART-CITY-S08-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M02,C-04-06-ECO-SMART-CITY-S08-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M02,C-04-06-ECO-SMART-CITY-S08-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M02,C-04-06-ECO-SMART-CITY-S08-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M03,C-04-06-ECO-SMART-CITY-S08-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M03,C-04-06-ECO-SMART-CITY-S08-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M03,C-04-06-ECO-SMART-CITY-S08-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M04,C-04-06-ECO-SMART-CITY-S08-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M04,C-04-06-ECO-SMART-CITY-S08-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M04,C-04-06-ECO-SMART-CITY-S08-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M05,C-04-06-ECO-SMART-CITY-S08-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M05,C-04-06-ECO-SMART-CITY-S08-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M05,C-04-06-ECO-SMART-CITY-S08-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-04-06-ECO-SMART-CITY-S08-M06,C-04-06-ECO-SMART-CITY-S08-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-04-06-ECO-SMART-CITY-S08-M06,C-04-06-ECO-SMART-CITY-S08-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-04-06-ECO-SMART-CITY-S08-M06,C-04-06-ECO-SMART-CITY-S08-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M01,C-07-09-AI-MEDIA-DETECTIVE-S01-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M01,C-07-09-AI-MEDIA-DETECTIVE-S01-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M01,C-07-09-AI-MEDIA-DETECTIVE-S01-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M02,C-07-09-AI-MEDIA-DETECTIVE-S01-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M02,C-07-09-AI-MEDIA-DETECTIVE-S01-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M02,C-07-09-AI-MEDIA-DETECTIVE-S01-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M03,C-07-09-AI-MEDIA-DETECTIVE-S01-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M03,C-07-09-AI-MEDIA-DETECTIVE-S01-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M03,C-07-09-AI-MEDIA-DETECTIVE-S01-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M04,C-07-09-AI-MEDIA-DETECTIVE-S01-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M04,C-07-09-AI-MEDIA-DETECTIVE-S01-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M04,C-07-09-AI-MEDIA-DETECTIVE-S01-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M05,C-07-09-AI-MEDIA-DETECTIVE-S01-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M05,C-07-09-AI-MEDIA-DETECTIVE-S01-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M05,C-07-09-AI-MEDIA-DETECTIVE-S01-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S01-M06,C-07-09-AI-MEDIA-DETECTIVE-S01-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S01-M06,C-07-09-AI-MEDIA-DETECTIVE-S01-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S01-M06,C-07-09-AI-MEDIA-DETECTIVE-S01-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M01,C-07-09-AI-MEDIA-DETECTIVE-S02-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M01,C-07-09-AI-MEDIA-DETECTIVE-S02-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M01,C-07-09-AI-MEDIA-DETECTIVE-S02-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M02,C-07-09-AI-MEDIA-DETECTIVE-S02-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M02,C-07-09-AI-MEDIA-DETECTIVE-S02-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M02,C-07-09-AI-MEDIA-DETECTIVE-S02-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M03,C-07-09-AI-MEDIA-DETECTIVE-S02-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M03,C-07-09-AI-MEDIA-DETECTIVE-S02-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M03,C-07-09-AI-MEDIA-DETECTIVE-S02-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M04,C-07-09-AI-MEDIA-DETECTIVE-S02-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M04,C-07-09-AI-MEDIA-DETECTIVE-S02-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M04,C-07-09-AI-MEDIA-DETECTIVE-S02-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M05,C-07-09-AI-MEDIA-DETECTIVE-S02-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M05,C-07-09-AI-MEDIA-DETECTIVE-S02-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M05,C-07-09-AI-MEDIA-DETECTIVE-S02-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S02-M06,C-07-09-AI-MEDIA-DETECTIVE-S02-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S02-M06,C-07-09-AI-MEDIA-DETECTIVE-S02-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S02-M06,C-07-09-AI-MEDIA-DETECTIVE-S02-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M01,C-07-09-AI-MEDIA-DETECTIVE-S03-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M01,C-07-09-AI-MEDIA-DETECTIVE-S03-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M01,C-07-09-AI-MEDIA-DETECTIVE-S03-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M02,C-07-09-AI-MEDIA-DETECTIVE-S03-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M02,C-07-09-AI-MEDIA-DETECTIVE-S03-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M02,C-07-09-AI-MEDIA-DETECTIVE-S03-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M03,C-07-09-AI-MEDIA-DETECTIVE-S03-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M03,C-07-09-AI-MEDIA-DETECTIVE-S03-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M03,C-07-09-AI-MEDIA-DETECTIVE-S03-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M04,C-07-09-AI-MEDIA-DETECTIVE-S03-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M04,C-07-09-AI-MEDIA-DETECTIVE-S03-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M04,C-07-09-AI-MEDIA-DETECTIVE-S03-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M05,C-07-09-AI-MEDIA-DETECTIVE-S03-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M05,C-07-09-AI-MEDIA-DETECTIVE-S03-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M05,C-07-09-AI-MEDIA-DETECTIVE-S03-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S03-M06,C-07-09-AI-MEDIA-DETECTIVE-S03-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S03-M06,C-07-09-AI-MEDIA-DETECTIVE-S03-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S03-M06,C-07-09-AI-MEDIA-DETECTIVE-S03-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M01,C-07-09-AI-MEDIA-DETECTIVE-S04-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M01,C-07-09-AI-MEDIA-DETECTIVE-S04-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M01,C-07-09-AI-MEDIA-DETECTIVE-S04-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M02,C-07-09-AI-MEDIA-DETECTIVE-S04-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M02,C-07-09-AI-MEDIA-DETECTIVE-S04-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M02,C-07-09-AI-MEDIA-DETECTIVE-S04-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M03,C-07-09-AI-MEDIA-DETECTIVE-S04-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M03,C-07-09-AI-MEDIA-DETECTIVE-S04-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M03,C-07-09-AI-MEDIA-DETECTIVE-S04-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M04,C-07-09-AI-MEDIA-DETECTIVE-S04-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M04,C-07-09-AI-MEDIA-DETECTIVE-S04-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M04,C-07-09-AI-MEDIA-DETECTIVE-S04-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M05,C-07-09-AI-MEDIA-DETECTIVE-S04-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M05,C-07-09-AI-MEDIA-DETECTIVE-S04-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M05,C-07-09-AI-MEDIA-DETECTIVE-S04-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S04-M06,C-07-09-AI-MEDIA-DETECTIVE-S04-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S04-M06,C-07-09-AI-MEDIA-DETECTIVE-S04-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S04-M06,C-07-09-AI-MEDIA-DETECTIVE-S04-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M01,C-07-09-AI-MEDIA-DETECTIVE-S05-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M01,C-07-09-AI-MEDIA-DETECTIVE-S05-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M01,C-07-09-AI-MEDIA-DETECTIVE-S05-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M02,C-07-09-AI-MEDIA-DETECTIVE-S05-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M02,C-07-09-AI-MEDIA-DETECTIVE-S05-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M02,C-07-09-AI-MEDIA-DETECTIVE-S05-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M03,C-07-09-AI-MEDIA-DETECTIVE-S05-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M03,C-07-09-AI-MEDIA-DETECTIVE-S05-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M03,C-07-09-AI-MEDIA-DETECTIVE-S05-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M04,C-07-09-AI-MEDIA-DETECTIVE-S05-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M04,C-07-09-AI-MEDIA-DETECTIVE-S05-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M04,C-07-09-AI-MEDIA-DETECTIVE-S05-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M05,C-07-09-AI-MEDIA-DETECTIVE-S05-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M05,C-07-09-AI-MEDIA-DETECTIVE-S05-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M05,C-07-09-AI-MEDIA-DETECTIVE-S05-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S05-M06,C-07-09-AI-MEDIA-DETECTIVE-S05-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S05-M06,C-07-09-AI-MEDIA-DETECTIVE-S05-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S05-M06,C-07-09-AI-MEDIA-DETECTIVE-S05-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M01,C-07-09-AI-MEDIA-DETECTIVE-S06-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M01,C-07-09-AI-MEDIA-DETECTIVE-S06-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M01,C-07-09-AI-MEDIA-DETECTIVE-S06-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M02,C-07-09-AI-MEDIA-DETECTIVE-S06-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M02,C-07-09-AI-MEDIA-DETECTIVE-S06-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M02,C-07-09-AI-MEDIA-DETECTIVE-S06-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M03,C-07-09-AI-MEDIA-DETECTIVE-S06-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M03,C-07-09-AI-MEDIA-DETECTIVE-S06-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M03,C-07-09-AI-MEDIA-DETECTIVE-S06-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M04,C-07-09-AI-MEDIA-DETECTIVE-S06-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M04,C-07-09-AI-MEDIA-DETECTIVE-S06-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M04,C-07-09-AI-MEDIA-DETECTIVE-S06-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M05,C-07-09-AI-MEDIA-DETECTIVE-S06-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M05,C-07-09-AI-MEDIA-DETECTIVE-S06-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M05,C-07-09-AI-MEDIA-DETECTIVE-S06-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S06-M06,C-07-09-AI-MEDIA-DETECTIVE-S06-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S06-M06,C-07-09-AI-MEDIA-DETECTIVE-S06-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S06-M06,C-07-09-AI-MEDIA-DETECTIVE-S06-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M01,C-07-09-AI-MEDIA-DETECTIVE-S07-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M01,C-07-09-AI-MEDIA-DETECTIVE-S07-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M01,C-07-09-AI-MEDIA-DETECTIVE-S07-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M02,C-07-09-AI-MEDIA-DETECTIVE-S07-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M02,C-07-09-AI-MEDIA-DETECTIVE-S07-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M02,C-07-09-AI-MEDIA-DETECTIVE-S07-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M03,C-07-09-AI-MEDIA-DETECTIVE-S07-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M03,C-07-09-AI-MEDIA-DETECTIVE-S07-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M03,C-07-09-AI-MEDIA-DETECTIVE-S07-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M04,C-07-09-AI-MEDIA-DETECTIVE-S07-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M04,C-07-09-AI-MEDIA-DETECTIVE-S07-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M04,C-07-09-AI-MEDIA-DETECTIVE-S07-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M05,C-07-09-AI-MEDIA-DETECTIVE-S07-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M05,C-07-09-AI-MEDIA-DETECTIVE-S07-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M05,C-07-09-AI-MEDIA-DETECTIVE-S07-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S07-M06,C-07-09-AI-MEDIA-DETECTIVE-S07-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S07-M06,C-07-09-AI-MEDIA-DETECTIVE-S07-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S07-M06,C-07-09-AI-MEDIA-DETECTIVE-S07-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M01,C-07-09-AI-MEDIA-DETECTIVE-S08-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M01,C-07-09-AI-MEDIA-DETECTIVE-S08-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M01,C-07-09-AI-MEDIA-DETECTIVE-S08-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M02,C-07-09-AI-MEDIA-DETECTIVE-S08-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M02,C-07-09-AI-MEDIA-DETECTIVE-S08-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M02,C-07-09-AI-MEDIA-DETECTIVE-S08-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M03,C-07-09-AI-MEDIA-DETECTIVE-S08-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M03,C-07-09-AI-MEDIA-DETECTIVE-S08-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M03,C-07-09-AI-MEDIA-DETECTIVE-S08-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M04,C-07-09-AI-MEDIA-DETECTIVE-S08-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M04,C-07-09-AI-MEDIA-DETECTIVE-S08-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M04,C-07-09-AI-MEDIA-DETECTIVE-S08-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M05,C-07-09-AI-MEDIA-DETECTIVE-S08-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M05,C-07-09-AI-MEDIA-DETECTIVE-S08-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M05,C-07-09-AI-MEDIA-DETECTIVE-S08-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-07-09-AI-MEDIA-DETECTIVE-S08-M06,C-07-09-AI-MEDIA-DETECTIVE-S08-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-07-09-AI-MEDIA-DETECTIVE-S08-M06,C-07-09-AI-MEDIA-DETECTIVE-S08-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-07-09-AI-MEDIA-DETECTIVE-S08-M06,C-07-09-AI-MEDIA-DETECTIVE-S08-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M01,C-10-12-VENTURE-SPRINT-S01-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M01,C-10-12-VENTURE-SPRINT-S01-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M01,C-10-12-VENTURE-SPRINT-S01-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M02,C-10-12-VENTURE-SPRINT-S01-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M02,C-10-12-VENTURE-SPRINT-S01-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M02,C-10-12-VENTURE-SPRINT-S01-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M03,C-10-12-VENTURE-SPRINT-S01-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M03,C-10-12-VENTURE-SPRINT-S01-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M03,C-10-12-VENTURE-SPRINT-S01-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M04,C-10-12-VENTURE-SPRINT-S01-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M04,C-10-12-VENTURE-SPRINT-S01-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M04,C-10-12-VENTURE-SPRINT-S01-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M05,C-10-12-VENTURE-SPRINT-S01-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M05,C-10-12-VENTURE-SPRINT-S01-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M05,C-10-12-VENTURE-SPRINT-S01-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S01-M06,C-10-12-VENTURE-SPRINT-S01-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S01-M06,C-10-12-VENTURE-SPRINT-S01-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S01-M06,C-10-12-VENTURE-SPRINT-S01-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M01,C-10-12-VENTURE-SPRINT-S02-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M01,C-10-12-VENTURE-SPRINT-S02-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M01,C-10-12-VENTURE-SPRINT-S02-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M02,C-10-12-VENTURE-SPRINT-S02-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M02,C-10-12-VENTURE-SPRINT-S02-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M02,C-10-12-VENTURE-SPRINT-S02-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M03,C-10-12-VENTURE-SPRINT-S02-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M03,C-10-12-VENTURE-SPRINT-S02-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M03,C-10-12-VENTURE-SPRINT-S02-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M04,C-10-12-VENTURE-SPRINT-S02-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M04,C-10-12-VENTURE-SPRINT-S02-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M04,C-10-12-VENTURE-SPRINT-S02-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M05,C-10-12-VENTURE-SPRINT-S02-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M05,C-10-12-VENTURE-SPRINT-S02-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M05,C-10-12-VENTURE-SPRINT-S02-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S02-M06,C-10-12-VENTURE-SPRINT-S02-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S02-M06,C-10-12-VENTURE-SPRINT-S02-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S02-M06,C-10-12-VENTURE-SPRINT-S02-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M01,C-10-12-VENTURE-SPRINT-S03-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M01,C-10-12-VENTURE-SPRINT-S03-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M01,C-10-12-VENTURE-SPRINT-S03-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M02,C-10-12-VENTURE-SPRINT-S03-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M02,C-10-12-VENTURE-SPRINT-S03-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M02,C-10-12-VENTURE-SPRINT-S03-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M03,C-10-12-VENTURE-SPRINT-S03-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M03,C-10-12-VENTURE-SPRINT-S03-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M03,C-10-12-VENTURE-SPRINT-S03-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M04,C-10-12-VENTURE-SPRINT-S03-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M04,C-10-12-VENTURE-SPRINT-S03-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M04,C-10-12-VENTURE-SPRINT-S03-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M05,C-10-12-VENTURE-SPRINT-S03-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M05,C-10-12-VENTURE-SPRINT-S03-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M05,C-10-12-VENTURE-SPRINT-S03-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S03-M06,C-10-12-VENTURE-SPRINT-S03-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S03-M06,C-10-12-VENTURE-SPRINT-S03-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S03-M06,C-10-12-VENTURE-SPRINT-S03-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M01,C-10-12-VENTURE-SPRINT-S04-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M01,C-10-12-VENTURE-SPRINT-S04-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M01,C-10-12-VENTURE-SPRINT-S04-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M02,C-10-12-VENTURE-SPRINT-S04-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M02,C-10-12-VENTURE-SPRINT-S04-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M02,C-10-12-VENTURE-SPRINT-S04-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M03,C-10-12-VENTURE-SPRINT-S04-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M03,C-10-12-VENTURE-SPRINT-S04-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M03,C-10-12-VENTURE-SPRINT-S04-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M04,C-10-12-VENTURE-SPRINT-S04-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M04,C-10-12-VENTURE-SPRINT-S04-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M04,C-10-12-VENTURE-SPRINT-S04-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M05,C-10-12-VENTURE-SPRINT-S04-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M05,C-10-12-VENTURE-SPRINT-S04-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M05,C-10-12-VENTURE-SPRINT-S04-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S04-M06,C-10-12-VENTURE-SPRINT-S04-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S04-M06,C-10-12-VENTURE-SPRINT-S04-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S04-M06,C-10-12-VENTURE-SPRINT-S04-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M01,C-10-12-VENTURE-SPRINT-S05-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M01,C-10-12-VENTURE-SPRINT-S05-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M01,C-10-12-VENTURE-SPRINT-S05-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M02,C-10-12-VENTURE-SPRINT-S05-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M02,C-10-12-VENTURE-SPRINT-S05-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M02,C-10-12-VENTURE-SPRINT-S05-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M03,C-10-12-VENTURE-SPRINT-S05-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M03,C-10-12-VENTURE-SPRINT-S05-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M03,C-10-12-VENTURE-SPRINT-S05-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M04,C-10-12-VENTURE-SPRINT-S05-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M04,C-10-12-VENTURE-SPRINT-S05-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M04,C-10-12-VENTURE-SPRINT-S05-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M05,C-10-12-VENTURE-SPRINT-S05-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M05,C-10-12-VENTURE-SPRINT-S05-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M05,C-10-12-VENTURE-SPRINT-S05-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S05-M06,C-10-12-VENTURE-SPRINT-S05-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S05-M06,C-10-12-VENTURE-SPRINT-S05-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S05-M06,C-10-12-VENTURE-SPRINT-S05-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M01,C-10-12-VENTURE-SPRINT-S06-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M01,C-10-12-VENTURE-SPRINT-S06-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M01,C-10-12-VENTURE-SPRINT-S06-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M02,C-10-12-VENTURE-SPRINT-S06-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M02,C-10-12-VENTURE-SPRINT-S06-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M02,C-10-12-VENTURE-SPRINT-S06-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M03,C-10-12-VENTURE-SPRINT-S06-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M03,C-10-12-VENTURE-SPRINT-S06-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M03,C-10-12-VENTURE-SPRINT-S06-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M04,C-10-12-VENTURE-SPRINT-S06-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M04,C-10-12-VENTURE-SPRINT-S06-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M04,C-10-12-VENTURE-SPRINT-S06-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M05,C-10-12-VENTURE-SPRINT-S06-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M05,C-10-12-VENTURE-SPRINT-S06-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M05,C-10-12-VENTURE-SPRINT-S06-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S06-M06,C-10-12-VENTURE-SPRINT-S06-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S06-M06,C-10-12-VENTURE-SPRINT-S06-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S06-M06,C-10-12-VENTURE-SPRINT-S06-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M01,C-10-12-VENTURE-SPRINT-S07-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M01,C-10-12-VENTURE-SPRINT-S07-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M01,C-10-12-VENTURE-SPRINT-S07-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M02,C-10-12-VENTURE-SPRINT-S07-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M02,C-10-12-VENTURE-SPRINT-S07-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M02,C-10-12-VENTURE-SPRINT-S07-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M03,C-10-12-VENTURE-SPRINT-S07-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M03,C-10-12-VENTURE-SPRINT-S07-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M03,C-10-12-VENTURE-SPRINT-S07-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M04,C-10-12-VENTURE-SPRINT-S07-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M04,C-10-12-VENTURE-SPRINT-S07-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M04,C-10-12-VENTURE-SPRINT-S07-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M05,C-10-12-VENTURE-SPRINT-S07-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M05,C-10-12-VENTURE-SPRINT-S07-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M05,C-10-12-VENTURE-SPRINT-S07-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S07-M06,C-10-12-VENTURE-SPRINT-S07-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S07-M06,C-10-12-VENTURE-SPRINT-S07-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S07-M06,C-10-12-VENTURE-SPRINT-S07-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M01,C-10-12-VENTURE-SPRINT-S08-M01,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M01,C-10-12-VENTURE-SPRINT-S08-M01,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M01,C-10-12-VENTURE-SPRINT-S08-M01,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M02,C-10-12-VENTURE-SPRINT-S08-M02,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M02,C-10-12-VENTURE-SPRINT-S08-M02,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M02,C-10-12-VENTURE-SPRINT-S08-M02,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M03,C-10-12-VENTURE-SPRINT-S08-M03,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M03,C-10-12-VENTURE-SPRINT-S08-M03,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M03,C-10-12-VENTURE-SPRINT-S08-M03,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M04,C-10-12-VENTURE-SPRINT-S08-M04,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M04,C-10-12-VENTURE-SPRINT-S08-M04,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M04,C-10-12-VENTURE-SPRINT-S08-M04,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M05,C-10-12-VENTURE-SPRINT-S08-M05,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M05,C-10-12-VENTURE-SPRINT-S08-M05,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M05,C-10-12-VENTURE-SPRINT-S08-M05,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
+MP-B-C-10-12-VENTURE-SPRINT-S08-M06,C-10-12-VENTURE-SPRINT-S08-M06,Bronze,audio_option;visual_aids;chunking,Complete mission and provide evidence. More scaffolds + sentence frames.
+MP-S-C-10-12-VENTURE-SPRINT-S08-M06,C-10-12-VENTURE-SPRINT-S08-M06,Silver,audio_option;visual_aids;chunking,"Complete mission and provide evidence. Standard supports, peer feedback."
+MP-G-C-10-12-VENTURE-SPRINT-S08-M06,C-10-12-VENTURE-SPRINT-S08-M06,Gold,audio_option;visual_aids;chunking,Complete mission and provide evidence. Extension: add a constraint or deeper analysis.
