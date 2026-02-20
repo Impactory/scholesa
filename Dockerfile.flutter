@@ -1,10 +1,19 @@
 # Flutter web static container for Cloud Run (empire-web)
-# Assumes `flutter build web --release` has already produced apps/empire_flutter/app/build/web
+
+FROM ghcr.io/cirruslabs/flutter:3.38.9 AS builder
+WORKDIR /workspace
+
+# Copy only app source for deterministic web build
+COPY apps/empire_flutter/app /workspace/app
+
+WORKDIR /workspace/app
+RUN flutter pub get
+RUN flutter build web --release
 
 FROM nginx:1.25-alpine
 
-# Copy compiled Flutter web assets
-COPY apps/empire_flutter/app/build/web /usr/share/nginx/html
+# Copy compiled Flutter web assets from build stage
+COPY --from=builder /workspace/app/build/web /usr/share/nginx/html
 
 # Nginx config for single-page app routing, cache-safe index, and Cloud Run port 8080
 RUN printf '\

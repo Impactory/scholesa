@@ -7,8 +7,7 @@ node_modules/
 .idea/
 *.iml
 
-# Flutter build artifacts 
-apps/
+# Flutter SDK mirror (do not upload)
 flutter/
 
 # Firebase functions
@@ -37,4 +36,3 @@ docs/
 
 # Other unnecessary folders
 dataconnect/
-scripts/
