@@ -150,13 +150,13 @@ export class TelemetryService {
   static async track(payload: TelemetryPayload): Promise<string> {
     try {
       // Add automatic fields
-      const enrichedPayload: TelemetryPayload = {
+      const enrichedPayload = this.removeUndefined({
         ...payload,
         timestamp: Timestamp.now(),
         deviceType: this.getDeviceType(),
         browser: this.getBrowser(),
         ageBand: payload.ageBand || (payload.grade ? getAgeBandFromGrade(payload.grade) : undefined)
-      };
+      }) as TelemetryPayload;
       
       // Store in telemetry collection
       const docRef = await addDoc(collection(db, 'telemetryEvents'), enrichedPayload);
@@ -168,7 +168,9 @@ export class TelemetryService {
       
       return docRef.id;
     } catch (err) {
-      console.error('Telemetry tracking failed:', err);
+      if (!this.isExpectedTelemetryWriteError(err)) {
+        console.error('Telemetry tracking failed:', err);
+      }
       // Don't throw - telemetry failures shouldn't break app
       return 'error';
     }
@@ -520,6 +522,28 @@ export class TelemetryService {
     if (ua.includes('Chrome')) return 'Chrome';
     if (ua.includes('Safari')) return 'Safari';
     return 'Other';
+  }
+
+  private static removeUndefined<T>(value: T): T {
+    if (Array.isArray(value)) {
+      return value
+        .filter(item => item !== undefined)
+        .map(item => this.removeUndefined(item)) as T;
+    }
+
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, this.removeUndefined(v)]);
+      return Object.fromEntries(entries) as T;
+    }
+
+    return value;
+  }
+
+  private static isExpectedTelemetryWriteError(error: unknown): boolean {
+    const code = (error as { code?: string } | null)?.code;
+    return code === 'permission-denied' || code === 'invalid-argument';
   }
 }
 

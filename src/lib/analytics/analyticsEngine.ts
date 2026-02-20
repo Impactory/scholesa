@@ -232,7 +232,9 @@ export class AnalyticsEngine {
       
       return docRef.id;
     } catch (error) {
-      console.error('Failed to track analytics event:', error);
+      if (!this.isExpectedWriteError(error)) {
+        console.error('Failed to track analytics event:', error);
+      }
       return 'error';
     }
   }
@@ -533,7 +535,9 @@ Return only valid JSON, no additional text.
       
       return [];
     } catch (error) {
-      console.error('Failed to generate AI insights:', error);
+      if (!this.isExpectedExternalAIError(error)) {
+        console.error('Failed to generate AI insights:', error);
+      }
       return [];
     }
   }
@@ -623,6 +627,16 @@ Return only valid JSON, no additional text.
       return 'mobile';
     }
     return 'desktop';
+  }
+
+  private static isExpectedWriteError(error: unknown): boolean {
+    const code = (error as { code?: string } | null)?.code;
+    return code === 'permission-denied' || code === 'invalid-argument';
+  }
+
+  private static isExpectedExternalAIError(error: unknown): boolean {
+    const message = (error as { message?: string } | null)?.message ?? '';
+    return message.includes('Gemini API error: Bad Request');
   }
 }
 

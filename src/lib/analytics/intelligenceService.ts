@@ -248,7 +248,9 @@ Return only valid JSON.
         encouragement: 'Keep up the great work!'
       };
     } catch (error) {
-      console.error('Failed to generate personalized recommendations:', error);
+      if (!this.isExpectedExternalAIError(error)) {
+        console.error('Failed to generate personalized recommendations:', error);
+      }
       return {
         recommendations: ['Continue working on your current mission'],
         nextSteps: ['Complete the next checkpoint'],
@@ -360,7 +362,9 @@ Be specific and evidence-based. Return only valid JSON.
         growthAreas: []
       };
     } catch (error) {
-      console.error('Failed to detect learning patterns:', error);
+      if (!this.isExpectedExternalAIError(error)) {
+        console.error('Failed to detect learning patterns:', error);
+      }
       return {
         patterns: [],
         strengths: [],
@@ -433,6 +437,11 @@ Be specific and evidence-based. Return only valid JSON.
     // Session/engagement events
     if (event.startsWith('session_')) {
       return 'engagement';
+    }
+
+    private static isExpectedExternalAIError(error: unknown): boolean {
+      const message = (error as { message?: string } | null)?.message ?? '';
+      return message.includes('Gemini API error: Bad Request');
     }
     
     // Performance events
