@@ -19,6 +19,26 @@ Security/test signal updates:
 - ✅ Expected simulated sync-failure test logging was quieted; tests now run cleanly.
 - ⚠️ iOS still shows expected `--no-codesign` warning when building unsigned artifacts.
 
+## User profile acceptance state (2026-02-20)
+
+| Profile Type | Current State | Flow Coverage |
+|---|---|---|
+| learner | ✅ Active | login → learner dashboard → missions/habits/today validated in live regression build/tests |
+| educator | ✅ Active | login → educator dashboard → attendance/today validated in live regression build/tests |
+| parent | ✅ Active | login → parent dashboard + summary flows validated in current deployed release |
+| site | ✅ Active | login → provisioning/check-in route availability validated in release build |
+| hq | ✅ Active | login → HQ user admin route availability validated in release build |
+| partner | ✅ Active (route-level) | login → partner route availability validated; partner-specific deep UAT remains checklist-driven |
+
+## Core flow status (live)
+
+- ✅ Auth + role routing
+- ✅ Dashboard rendering by user profile type
+- ✅ Educator attendance + learner/parent summary continuity
+- ✅ Offline sync engine regression clean (tests)
+- ✅ Security boundary checks in deployed rules + role scoping
+- ⚠️ Integrations (Classroom/Add-on/GitHub) remain manual UAT gates before full enablement
+
 ## Automated checks (must pass)
 Flutter:
 - flutter analyze

@@ -7,6 +7,24 @@ QA script for Classroom integration (Phase 1 + 2)
 - This Classroom integration QA script remains **required manual UAT** and was **not fully re-executed** in the latest live-only core regression pass.
 - Treat all steps below as the active acceptance checklist for Google Classroom before enabling broad production rollout.
 
+## User profile mapping for this UAT
+
+| Profile Type | Expected Participation in Classroom Flow | Current State |
+|---|---|---|
+| educator | Connect, map, publish, sync summary | ⏳ Manual UAT required |
+| learner | Open assignment, complete mission attempt | ⏳ Manual UAT required |
+| parent | Weekly summary only (no mapping/admin actions) | ✅ Boundary expected; confirm in manual UAT |
+| site | Optional support role for mapping/operations | ⏳ Manual UAT required |
+| hq | Oversight/audit visibility | ⏳ Manual UAT required |
+| partner | Not primary actor in Classroom core flow | N/A |
+
+## Flow-level status
+
+- ✅ Core platform dependencies are live (auth, routing, functions/rules/storage, Cloud Run web).
+- ⏳ Classroom Connect/Link/Roster/Publish flow: pending fresh manual run.
+- ⏳ Classroom pull/push grading flow: pending fresh manual run.
+- ⏳ Classroom failure scenarios (token revoke/429): pending fresh manual run.
+
 ## Test accounts
 - Teacher account (Classroom teacher)
 - Student account (Classroom student)

@@ -7,6 +7,12 @@ This QA script validates:
 - GitHub link-based task flow
 - GitHub webhook ingestion (optional advanced)
 
+## UAT status snapshot (2026-02-20)
+
+- Core stack is currently green and deployed live.
+- Add-on + GitHub UAT remains **manual acceptance scope** and has not been fully rerun as part of the latest core live-only regression pass.
+- Keep this script as the go/no-go checklist before enabling add-on + GitHub flows for all production sites.
+
 ---
 
 ## Test setup
