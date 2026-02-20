@@ -21,6 +21,7 @@ class TelemetryService {
     'aiDraft.requested',
     'aiDraft.reviewed',
     'order.intent',
+    'cta.clicked',
     // BOS+MIA Runtime Events
     'mission_viewed',
     'mission_selected',

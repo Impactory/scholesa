@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/telemetry_service.dart';
 import 'sync_coordinator.dart';
 
 /// Sync status indicator widget
@@ -73,7 +74,13 @@ class OfflineBanner extends StatelessWidget {
           leading: const Icon(Icons.cloud_off, color: Colors.white),
           actions: <Widget>[
             TextButton(
-              onPressed: () => sync.retryFailed(),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{'cta': 'offline_retry_failed'},
+                );
+                sync.retryFailed();
+              },
               child: const Text(
                 'RETRY',
                 style: TextStyle(color: Colors.white),

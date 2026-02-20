@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
+import '../../services/telemetry_service.dart';
 import '../localization/app_strings.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
@@ -61,6 +62,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      await TelemetryService.instance.logEvent(
+        event: 'auth.login',
+        metadata: <String, dynamic>{'method': 'email'},
+      );
       
       if (mounted) {
         context.go('/');
@@ -96,6 +101,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     try {
       final AuthService authService = context.read<AuthService>();
       await authService.signInWithGoogle();
+      await TelemetryService.instance.logEvent(
+        event: 'auth.login',
+        metadata: <String, dynamic>{'method': 'google'},
+      );
       
       if (mounted) {
         context.go('/');
@@ -131,6 +140,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     try {
       final AuthService authService = context.read<AuthService>();
       await authService.signInWithMicrosoft();
+      await TelemetryService.instance.logEvent(
+        event: 'auth.login',
+        metadata: <String, dynamic>{'method': 'microsoft'},
+      );
       
       if (mounted) {
         context.go('/');

@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { SubscriptionCard } from './SubscriptionCard';
 import { Loader2, Package } from 'lucide-react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 interface Subscription {
   id: string;
@@ -20,8 +21,10 @@ export function SubscriptionManager() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const trackInteraction = useInteractionTracking();
 
   const fetchSubscriptions = async () => {
+    trackInteraction('help_accessed', { cta: 'subscription_manager_refresh' });
     setLoading(true);
     setError(null);
 

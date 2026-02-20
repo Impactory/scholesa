@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/client-init';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { 
   DollarSign, 
   Users, 
@@ -30,8 +31,10 @@ export function StripeDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const trackInteraction = useInteractionTracking();
 
   const fetchMetrics = async () => {
+    trackInteraction('help_accessed', { cta: 'stripe_dashboard_refresh' });
     try {
       setRefreshing(true);
       const getStripeMetrics = httpsCallable<void, StripeMetrics>(functions, 'getStripeMetrics');

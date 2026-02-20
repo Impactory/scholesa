@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase/client-init';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { 
   Activity, 
   AlertTriangle, 
@@ -26,8 +27,10 @@ export function WebhookMonitor() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const trackInteraction = useInteractionTracking();
 
   const fetchLogs = async () => {
+    trackInteraction('help_accessed', { cta: 'webhook_monitor_refresh', statusFilter });
     try {
       setRefreshing(true);
       const getWebhookLogs = httpsCallable<
@@ -150,7 +153,10 @@ export function WebhookMonitor() {
           <select
             id="status-filter"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              trackInteraction('feature_discovered', { cta: 'webhook_monitor_filter', value: e.target.value });
+              setStatusFilter(e.target.value);
+            }}
             className="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="all">All Events</option>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { FileText, Download, RefreshCw, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 interface Invoice {
   id: string;
@@ -30,8 +31,10 @@ export function InvoiceHistory() {
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const trackInteraction = useInteractionTracking();
 
   const fetchInvoices = async () => {
+    trackInteraction('help_accessed', { cta: 'invoice_history_refresh' });
     setLoading(true);
     setError(null);
 
@@ -48,6 +51,7 @@ export function InvoiceHistory() {
   };
 
   const handleRetryPayment = async (invoiceId: string) => {
+    trackInteraction('feature_discovered', { cta: 'invoice_retry_payment', invoiceId });
     setRetrying(invoiceId);
 
     try {
@@ -182,6 +186,7 @@ export function InvoiceHistory() {
                         href={invoice.hosted_invoice_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackInteraction('feature_discovered', { cta: 'invoice_view', invoiceId: invoice.id })}
                         className="text-gray-600 hover:text-gray-500"
                       >
                         View
@@ -192,6 +197,7 @@ export function InvoiceHistory() {
                         href={invoice.invoice_pdf}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackInteraction('feature_discovered', { cta: 'invoice_pdf_download', invoiceId: invoice.id })}
                         className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-500"
                       >
                         <Download className="h-4 w-4" />

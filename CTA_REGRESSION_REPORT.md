@@ -6,7 +6,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 - Web files with CTA markers: **42**
 - Flutter files with CTA markers: **50**
-- Web CTA marker instances: **207**
+- Web CTA marker instances: **209**
 - Flutter CTA marker instances: **267**
 
 ## Blocker Scan
@@ -18,13 +18,13 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 ## CTA Telemetry Coverage
 
-- Web CTA files with direct telemetry hooks/calls: **17/42**
-- Flutter CTA files with direct telemetry import/calls: **0/50**
+- Web CTA files with direct telemetry hooks/calls: **20/42**
+- Flutter CTA files with direct telemetry import/calls: **2/50**
 
 ### Web Coverage Matrix
 
-- `app/[locale]/(auth)/login/page.tsx`: **missing**
-- `app/[locale]/(auth)/register/page.tsx`: **missing**
+- `app/[locale]/(auth)/login/page.tsx`: **covered**
+- `app/[locale]/(auth)/register/page.tsx`: **covered**
 - `app/[locale]/(protected)/educator/page.tsx`: **covered**
 - `app/[locale]/(protected)/hq/page.tsx`: **covered**
 - `app/[locale]/(protected)/parent/page.tsx`: **covered**
@@ -52,7 +52,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `src/components/showcase/ShowcaseSubmissionForm.tsx`: **covered**
 - `src/components/stripe/InvoiceHistory.tsx`: **missing**
 - `src/components/stripe/PlanManager.tsx`: **missing**
-- `src/components/stripe/PricingPlans.tsx`: **missing**
+- `src/components/stripe/PricingPlans.tsx`: **covered**
 - `src/components/stripe/RefundManager.tsx`: **missing**
 - `src/components/stripe/StripeDashboard.tsx`: **missing**
 - `src/components/stripe/SubscriptionCard.tsx`: **missing**
@@ -114,8 +114,8 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `apps/empire_flutter/app/lib/offline/sync_status_widget.dart`: **missing**
 - `apps/empire_flutter/app/lib/router/role_gate.dart`: **missing**
 - `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart`: **missing**
-- `apps/empire_flutter/app/lib/ui/auth/login_page.dart`: **missing**
-- `apps/empire_flutter/app/lib/ui/landing/landing_page.dart`: **missing**
+- `apps/empire_flutter/app/lib/ui/auth/login_page.dart`: **covered**
+- `apps/empire_flutter/app/lib/ui/landing/landing_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/ui/widgets/cards.dart`: **missing**
 - `apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart`: **missing**
 
@@ -126,13 +126,15 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 ## Web CTA Files
 
-### `app/[locale]/(auth)/login/page.tsx` (2)
-- L82: `<button`
-- L92: `<a href={`/${locale}/register`} className="font-medium text-indigo-600 hover:text-indigo-500">`
+### `app/[locale]/(auth)/login/page.tsx` (3)
+- L84: `<button`
+- L87: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_login_submit' })}`
+- L98: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_login_to_register' })}`
 
-### `app/[locale]/(auth)/register/page.tsx` (2)
-- L132: `<button`
-- L142: `<a href={`/${locale}/login`} className="font-medium text-indigo-600 hover:text-indigo-500">`
+### `app/[locale]/(auth)/register/page.tsx` (3)
+- L134: `<button`
+- L137: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}`
+- L148: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}`
 
 ### `app/[locale]/(protected)/educator/page.tsx` (3)
 - L94: `onClick={() => trackInteraction('feature_discovered', { cta: 'educator_view_details', sessionId: session.id })}`
@@ -356,9 +358,9 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L643: `onClick={() => {`
 
 ### `src/components/stripe/PricingPlans.tsx` (3)
-- L113: `<button`
-- L114: `onClick={() => onSubscribe(plan.id)}`
-- L187: `<a href="mailto:support@scholesa.com" className="text-indigo-600 hover:text-indigo-500">`
+- L116: `<button`
+- L117: `onClick={() => onSubscribe(plan.id)}`
+- L214: `onClick={() => {`
 
 ### `src/components/stripe/RefundManager.tsx` (1)
 - L196: `<button`
@@ -752,19 +754,19 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L443: `InkWell(`
 
 ### `apps/empire_flutter/app/lib/ui/auth/login_page.dart` (5)
-- L194: `TextButton(`
-- L198: `ElevatedButton(`
-- L473: `suffixIcon: IconButton(`
-- L501: `child: TextButton(`
-- L512: `child: ElevatedButton(`
+- L207: `TextButton(`
+- L211: `ElevatedButton(`
+- L486: `suffixIcon: IconButton(`
+- L514: `child: TextButton(`
+- L525: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/ui/landing/landing_page.dart` (6)
-- L189: `TextButton(`
-- L352: `TextButton(`
-- L356: `ElevatedButton(`
-- L375: `TextButton(`
-- L812: `ElevatedButton(`
-- L875: `return InkWell(`
+- L200: `TextButton(`
+- L369: `TextButton(`
+- L373: `ElevatedButton(`
+- L393: `TextButton(`
+- L830: `ElevatedButton(`
+- L896: `return InkWell(`
 
 ### `apps/empire_flutter/app/lib/ui/widgets/cards.dart` (5)
 - L35: `child: InkWell(`

@@ -3,10 +3,12 @@
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Button } from '@/src/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 export function Navigation() {
   const { user, signOut } = useAuthContext();
   const router = useRouter();
+  const trackInteraction = useInteractionTracking();
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,7 +32,14 @@ export function Navigation() {
             <span className="mr-4 text-sm text-gray-700">
               {user.displayName || user.email}
             </span>
-            <Button onClick={handleSignOut} variant="ghost" size="sm">
+            <Button
+              onClick={() => {
+                trackInteraction('help_accessed', { cta: 'navigation_sign_out' });
+                handleSignOut();
+              }}
+              variant="ghost"
+              size="sm"
+            >
               Sign out
             </Button>
           </div>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
@@ -49,6 +50,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     _heroController.dispose();
     _featuresController.dispose();
     super.dispose();
+  }
+
+  Future<void> _trackSignInCTA(String source) async {
+    await TelemetryService.instance.logEvent(
+      event: 'auth.login',
+      metadata: <String, dynamic>{
+        'source': source,
+        'action': 'cta_click',
+      },
+    );
   }
 
   @override
@@ -187,7 +198,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ],
           // CTA Buttons
           TextButton(
-            onPressed: () => context.go('/login'),
+            onPressed: () {
+              _trackSignInCTA('landing_nav_sign_in');
+              context.go('/login');
+            },
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 36),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -298,7 +312,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           runSpacing: 16,
           children: <Widget>[
             ElevatedButton.icon(
-              onPressed: () => context.go('/login'),
+              onPressed: () {
+                _trackSignInCTA('landing_hero_sign_in');
+                context.go('/login');
+              },
               icon: const Icon(Icons.login_rounded),
               label: const Text('Sign In'),
               style: ElevatedButton.styleFrom(
@@ -356,6 +373,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
+              _trackSignInCTA('landing_try_live');
               context.go('/login');
             },
             child: const Text('Try Live'),
@@ -810,7 +828,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ),
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () => context.go('/login'),
+            onPressed: () {
+              _trackSignInCTA('landing_bottom_sign_in');
+              context.go('/login');
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: ScholesaColors.primary,

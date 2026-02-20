@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { CreditCard, Calendar, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 interface Subscription {
   id: string;
@@ -31,11 +32,13 @@ const statusConfig: Record<string, { color: string; icon: typeof CheckCircle; la
 export function SubscriptionCard({ subscription, onUpdate }: SubscriptionCardProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const trackInteraction = useInteractionTracking();
 
   const status = statusConfig[subscription.status] || statusConfig.active;
   const StatusIcon = status.icon;
 
   const handleCancel = async () => {
+    trackInteraction('help_accessed', { cta: 'subscription_cancel', subscriptionId: subscription.id });
     if (!confirm('Are you sure you want to cancel this subscription? It will remain active until the end of the billing period.')) {
       return;
     }
@@ -58,6 +61,7 @@ export function SubscriptionCard({ subscription, onUpdate }: SubscriptionCardPro
   };
 
   const handleResume = async () => {
+    trackInteraction('feature_discovered', { cta: 'subscription_resume', subscriptionId: subscription.id });
     setLoading('resume');
     setError(null);
 
@@ -73,6 +77,7 @@ export function SubscriptionCard({ subscription, onUpdate }: SubscriptionCardPro
   };
 
   const handleManageBilling = async () => {
+    trackInteraction('feature_discovered', { cta: 'subscription_manage_billing', subscriptionId: subscription.id });
     setLoading('portal');
     setError(null);
 

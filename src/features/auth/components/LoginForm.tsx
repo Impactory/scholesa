@@ -5,6 +5,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useRouter, useParams } from 'next/navigation';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -13,14 +14,17 @@ export function LoginForm() {
   const router = useRouter();
   const params = useParams();
   const locale = params ? ((params as any).locale as string) || 'en' : 'en';
+  const trackInteraction = useInteractionTracking();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    trackInteraction('help_accessed', { cta: 'legacy_login_email_submit' });
     console.log('Email/password login not fully implemented yet, use Google Sign-In');
   };
 
   const handleGoogleSignIn = async () => {
     try {
+      trackInteraction('feature_discovered', { cta: 'legacy_login_google' });
       await signInWithGoogle();
       router.push(`/${locale}/dashboard`);
     } catch (error) {

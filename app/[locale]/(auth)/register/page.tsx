@@ -5,12 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
 import { createUserDocument } from '@/src/lib/auth/createUser';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { Role } from '@/schema';
 
 export default function RegisterPage() {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const trackInteraction = useInteractionTracking();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -132,6 +134,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
+              onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}
               className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Sign up'}
@@ -139,7 +142,11 @@ export default function RegisterPage() {
           </div>
           
           <div className="text-center text-sm">
-            <a href={`/${locale}/login`} className="font-medium text-indigo-600 hover:text-indigo-500">
+            <a
+              href={`/${locale}/login`}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+              onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}
+            >
               Already have an account? Log in
             </a>
           </div>
