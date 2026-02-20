@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
+import '../services/telemetry_service.dart';
 
 /// Gate that restricts access to routes based on user role
 class RoleGate extends StatelessWidget {
@@ -74,7 +75,13 @@ class _AccessDeniedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{'cta': 'role_gate_go_back', 'role': role.name},
+                  );
+                  Navigator.of(context).pop();
+                },
                 child: const Text('Go Back'),
               ),
             ],
