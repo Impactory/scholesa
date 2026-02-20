@@ -97,7 +97,7 @@ bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
 
 /// Create the app router
 GoRouter createAppRouter(AppState appState) {
-  final String unauthenticatedEntry = kIsWeb ? '/welcome' : '/login';
+  const String unauthenticatedEntry = kIsWeb ? '/welcome' : '/login';
 
   return GoRouter(
     refreshListenable: appState,
