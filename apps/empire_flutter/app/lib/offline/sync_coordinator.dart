@@ -11,12 +11,15 @@ class SyncCoordinator extends ChangeNotifier {
     required OfflineQueue queue,
     required FirestoreService firestoreService,
     Connectivity? connectivity,
+    void Function(Object error)? onSyncError,
   })  : _queue = queue,
         _firestoreService = firestoreService,
-        _connectivity = connectivity ?? Connectivity();
+        _connectivity = connectivity ?? Connectivity(),
+        _onSyncError = onSyncError;
   final OfflineQueue _queue;
   final FirestoreService _firestoreService;
   final Connectivity _connectivity;
+  final void Function(Object error)? _onSyncError;
 
   bool _isOnline = true;
   bool _isSyncing = false;
@@ -96,7 +99,11 @@ class SyncCoordinator extends ChangeNotifier {
           await _queue.updateStatus(op.id, OpStatus.synced);
           synced++;
         } catch (e) {
-          debugPrint('Sync operation failed: $e');
+          if (_onSyncError != null) {
+            _onSyncError(e);
+          } else {
+            debugPrint('Sync operation failed: $e');
+          }
           await _queue.updateStatus(op.id, OpStatus.failed, error: e.toString());
           failed++;
         }
