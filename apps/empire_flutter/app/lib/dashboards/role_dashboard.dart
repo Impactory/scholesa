@@ -611,7 +611,7 @@ class RoleDashboard extends StatelessWidget {
                       ),
                       const Spacer(),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => _showAllActionsSheet(context, cards),
                         child: const Text('View All'),
                       ),
                     ],
@@ -727,25 +727,82 @@ class RoleDashboard extends StatelessWidget {
     if (isEnabled) {
       context.push(card.route);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: <Widget>[
-              const Icon(Icons.info_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text('${card.title} is coming soon!'),
-              ),
-            ],
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: ScholesaColors.textPrimary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      _showUnavailableActionDialog(context, card);
     }
+  }
+
+  void _showAllActionsSheet(BuildContext context, List<DashboardCard> cards) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          itemCount: cards.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (BuildContext context, int index) {
+            if (index == 0) {
+              return const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'All Quick Actions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              );
+            }
+
+            final DashboardCard card = cards[index - 1];
+            final bool enabled = isRouteEnabled(card.route);
+            return ListTile(
+              leading: Icon(card.icon, color: enabled ? null : ScholesaColors.textMuted),
+              title: Text(card.title),
+              subtitle: Text(card.subtitle ?? ''),
+              trailing: Icon(
+                enabled ? Icons.arrow_forward_ios : Icons.lock_outline,
+                size: 16,
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _handleCardTap(context, card, enabled);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showUnavailableActionDialog(BuildContext context, DashboardCard card) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(card.title),
+        content: const Text(
+          'This action is not available for your current role or site setup. You can review your access in Settings.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.push('/settings');
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSiteSwitcher(BuildContext context, AppState appState) {

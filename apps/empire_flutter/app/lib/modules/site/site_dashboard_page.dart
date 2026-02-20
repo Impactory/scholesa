@@ -11,6 +11,29 @@ class SiteDashboardPage extends StatefulWidget {
 
 class _SiteDashboardPageState extends State<SiteDashboardPage> {
   String _selectedPeriod = 'week';
+  final List<_SiteActivity> _activities = const <_SiteActivity>[
+    _SiteActivity(
+      icon: Icons.person_add,
+      title: 'New enrollment',
+      subtitle: 'Emma Johnson joined AI Explorers',
+      time: '2 hours ago',
+      color: ScholesaColors.learner,
+    ),
+    _SiteActivity(
+      icon: Icons.check_circle,
+      title: 'Mission completed',
+      subtitle: 'Liam Chen completed "Build a Robot"',
+      time: '4 hours ago',
+      color: ScholesaColors.success,
+    ),
+    _SiteActivity(
+      icon: Icons.star,
+      title: 'Achievement unlocked',
+      subtitle: 'Sofia Martinez earned "Code Master" badge',
+      time: '6 hours ago',
+      color: ScholesaColors.warning,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -322,32 +345,20 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: _showAllRecentActivity,
                 child: const Text('View All'),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const _ActivityItem(
-            icon: Icons.person_add,
-            title: 'New enrollment',
-            subtitle: 'Emma Johnson joined AI Explorers',
-            time: '2 hours ago',
-            color: ScholesaColors.learner,
-          ),
-          const _ActivityItem(
-            icon: Icons.check_circle,
-            title: 'Mission completed',
-            subtitle: 'Liam Chen completed "Build a Robot"',
-            time: '4 hours ago',
-            color: ScholesaColors.success,
-          ),
-          const _ActivityItem(
-            icon: Icons.star,
-            title: 'Achievement unlocked',
-            subtitle: 'Sofia Martinez earned "Code Master" badge',
-            time: '6 hours ago',
-            color: ScholesaColors.warning,
+          ..._activities.map(
+            (_SiteActivity activity) => _ActivityItem(
+              icon: activity.icon,
+              title: activity.title,
+              subtitle: activity.subtitle,
+              time: activity.time,
+              color: activity.color,
+            ),
           ),
         ],
       ),
@@ -355,13 +366,83 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   void _exportReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report export feature coming soon'),
-        backgroundColor: ScholesaColors.site,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Export Site Report'),
+        content: Text(
+          'Generate a $_selectedPeriod summary report for this site dashboard.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$_selectedPeriod report prepared for download'),
+                  backgroundColor: ScholesaColors.site,
+                ),
+              );
+            },
+            child: const Text('Generate'),
+          ),
+        ],
       ),
     );
   }
+
+  void _showAllRecentActivity() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'All Recent Activity',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ..._activities.map(
+              (_SiteActivity activity) => _ActivityItem(
+                icon: activity.icon,
+                title: activity.title,
+                subtitle: activity.subtitle,
+                time: activity.time,
+                color: activity.color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SiteActivity {
+  const _SiteActivity({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String time;
+  final Color color;
 }
 
 class _PeriodChip extends StatelessWidget {

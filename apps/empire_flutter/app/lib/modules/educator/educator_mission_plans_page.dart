@@ -355,40 +355,41 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         builder: (BuildContext context, void Function(void Function()) setLocalState) => AlertDialog(
           backgroundColor: ScholesaColors.surface,
           title: const Text('Create New Mission'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Mission Title',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mission Title',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: selectedPillar,
-                decoration: const InputDecoration(
-                  labelText: 'Pillar',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedPillar,
+                  decoration: const InputDecoration(
+                    labelText: 'Pillar',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
+                    DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
+                    DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedPillar = value);
+                    }
+                  },
                 ),
-                items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
-                  DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
-                  DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
-                ],
-                onChanged: (String? value) {
-                  if (value != null) {
-                    setLocalState(() => selectedPillar = value);
-                  }
-                },
-              ),
-            ],
+              ],
+            ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                titleController.dispose();
                 Navigator.pop(dialogContext);
               },
               child: const Text('Cancel'),
@@ -419,7 +420,6 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   );
                 });
 
-                titleController.dispose();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Mission created and added to list')),

@@ -373,7 +373,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => _showAllActivities(learner),
                 child: const Text(
                   'See all',
                   style: TextStyle(color: ScholesaColors.parent),
@@ -406,6 +406,40 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           const SizedBox(height: 12),
           ...learner.upcomingEvents.map((UpcomingEvent event) => _EventCard(event: event)),
         ],
+      ),
+    );
+  }
+
+  void _showAllActivities(LearnerSummary learner) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'All Recent Activity',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                shrinkWrap: true,
+                children: learner.recentActivities
+                    .map((RecentActivity activity) => _ActivityItem(activity: activity))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
