@@ -143,6 +143,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
   Widget build(BuildContext context) {
     if (_initError != null) {
       return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ScholesaTheme.light,
+        darkTheme: ScholesaTheme.dark,
+        themeMode: ThemeMode.system,
         home: _ErrorBootstrapScreen(
           error: _initError!,
           onRetry: () {
@@ -160,6 +164,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ScholesaTheme.light,
+        darkTheme: ScholesaTheme.dark,
+        themeMode: ThemeMode.system,
         home: const SplashScreen(),
       );
     }
@@ -222,6 +228,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
         title: 'Scholesa',
         debugShowCheckedModeBanner: false,
         theme: ScholesaTheme.light,
+        darkTheme: ScholesaTheme.dark,
+        themeMode: ThemeMode.system,
         routerConfig: _router!,
       ),
     );
@@ -239,6 +247,9 @@ class _ErrorBootstrapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -247,15 +258,15 @@ class _ErrorBootstrapScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.error_outline,
                   size: 64,
-                  color: Colors.red,
+                  color: colorScheme.error,
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Failed to start Scholesa',
-                  style: TextStyle(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -264,8 +275,8 @@ class _ErrorBootstrapScreen extends StatelessWidget {
                 Text(
                   error,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey[600],
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 24),

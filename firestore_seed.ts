@@ -40,28 +40,29 @@ const serviceAccount = await loadServiceAccount();
 initializeApp({ credential: cert(serviceAccount) });
 const db = getFirestore();
 const auth = getAuth();
+const now = Date.now();
 
 const site: Site = {
   id: 'site-1',
   name: 'Downtown Lab',
   location: 'City Center',
   siteLeadIds: ['u-sitelead'],
-  createdAt: Date.now(),
+  createdAt: now,
 };
 
 const users: User[] = [
-  { uid: 'u-learner', email: 'learner@example.com', role: 'learner', siteIds: [site.id], createdAt: Date.now(), updatedAt: Date.now() },
-  { uid: 'u-educator', email: 'educator@example.com', role: 'educator', siteIds: [site.id], createdAt: Date.now(), updatedAt: Date.now() },
-  { uid: 'u-parent', email: 'parent@example.com', role: 'parent', siteIds: [site.id], parentIds: ['u-learner'], createdAt: Date.now(), updatedAt: Date.now() },
-  { uid: 'u-sitelead', email: 'sitelead@example.com', role: 'site', siteIds: [site.id], createdAt: Date.now(), updatedAt: Date.now() },
-  { uid: 'u-hq', email: 'hq@example.com', role: 'hq', siteIds: [site.id], createdAt: Date.now(), updatedAt: Date.now() },
+  { uid: 'u-learner', email: 'learner@example.com', role: 'learner', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-educator', email: 'educator@example.com', role: 'educator', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-parent', email: 'parent@example.com', role: 'parent', siteIds: [site.id], parentIds: ['u-learner'], createdAt: now, updatedAt: now },
+  { uid: 'u-sitelead', email: 'sitelead@example.com', role: 'site', siteIds: [site.id], createdAt: now, updatedAt: now },
+  { uid: 'u-hq', email: 'hq@example.com', role: 'hq', siteIds: [site.id], createdAt: now, updatedAt: now },
   {
     uid: 'u-master-admin',
     email: 'simon.luke@impactoryinstitute.com',
     role: 'hq',
     siteIds: [site.id],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
     // Marks the platform master account for downstream role checks.
     masterAdmin: true,
   },
@@ -158,37 +159,70 @@ const contracts = [
     title: 'After-school partnership',
     siteId: site.id,
     status: 'active',
-    createdAt: Date.now(),
+    createdAt: now,
   },
 ];
 
-async function ensureAuthUser(opts: { uid: string; email: string; displayName: string; passwordEnv: string }): Promise<void> {
-  const { uid, email, displayName, passwordEnv } = opts;
-  const password = process.env[passwordEnv];
-  try {
-    await auth.getUser(uid);
-    return;
-  } catch (error) {
-    // falls through to creation
+  const standardTestPassword = process.env.SEED_TEST_PASSWORD ?? process.env.TEST_LOGIN_PASSWORD ?? 'Scholesa123!';
+  const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD ?? standardTestPassword;
+
+  if (!process.env.SEED_TEST_PASSWORD && !process.env.TEST_LOGIN_PASSWORD) {
+    console.warn('Using default test password for seeded accounts. Set SEED_TEST_PASSWORD to override.');
   }
 
-  if (!password) {
-    console.warn(`Skipping auth user ${email}; set ${passwordEnv} to seed password.`);
-    return;
+  type SeedAuthUser = {
+    uid: string;
+    email: string;
+    displayName: string;
+    password: string;
+    role: User['role'];
+    masterAdmin?: boolean;
+  };
+
+  function authClaimsForUser(user: SeedAuthUser): Record<string, unknown> {
+    if (user.masterAdmin) {
+      return { role: 'hq', masterAdmin: true, superuser: true, roles: ['hq', 'superuser'] };
+    }
+
+    return { role: user.role, roles: [user.role] };
+  }
+
+  async function upsertAuthUser(user: SeedAuthUser): Promise<void> {
+    const { uid, email, displayName, password } = user;
+
+  try {
+      await auth.getUser(uid);
+      await auth.updateUser(uid, { email, displayName, password, emailVerified: true, disabled: false });
+      await auth.setCustomUserClaims(uid, authClaimsForUser(user));
+      console.log(`Updated auth user ${email} with uid ${uid}`);
+      return;
+    } catch {
+      // falls through to create
   }
 
   await auth.createUser({ uid, email, displayName, password, emailVerified: true, disabled: false });
-  await auth.setCustomUserClaims(uid, { role: 'hq', masterAdmin: true, superuser: true, roles: ['hq', 'superuser'] });
-  console.log(`Created auth user ${email} with uid ${uid} (claims role=hq, masterAdmin=true, superuser=true)`);
+    await auth.setCustomUserClaims(uid, authClaimsForUser(user));
+    console.log(`Created auth user ${email} with uid ${uid}`);
 }
 
 async function main() {
-  await ensureAuthUser({
-    uid: 'u-master-admin',
-    email: 'simon.luke@impactoryinstitute.com',
-    displayName: 'Simon Luke (Master Admin)',
-    passwordEnv: 'ADMIN_SEED_PASSWORD',
-  });
+    const seededAuthUsers: SeedAuthUser[] = [
+      { uid: 'u-learner', email: 'learner@example.com', displayName: 'Learner User', password: standardTestPassword, role: 'learner' },
+      { uid: 'u-educator', email: 'educator@example.com', displayName: 'Educator User', password: standardTestPassword, role: 'educator' },
+      { uid: 'u-parent', email: 'parent@example.com', displayName: 'Parent User', password: standardTestPassword, role: 'parent' },
+      { uid: 'u-sitelead', email: 'sitelead@example.com', displayName: 'Site Lead User', password: standardTestPassword, role: 'site' },
+      { uid: 'u-hq', email: 'hq@example.com', displayName: 'HQ User', password: standardTestPassword, role: 'hq' },
+      {
+        uid: 'u-master-admin',
+        email: 'simon.luke@impactoryinstitute.com',
+        displayName: 'Simon Luke (Master Admin)',
+        password: adminSeedPassword,
+        role: 'hq',
+        masterAdmin: true,
+      },
+    ];
+
+    await Promise.all(seededAuthUsers.map((seededUser) => upsertAuthUser(seededUser)));
   await db.collection('sites').doc(site.id).set(site);
   await Promise.all(users.map((u) => db.collection('users').doc(u.uid).set(u)));
   await Promise.all(pillars.map((p) => db.collection('pillars').doc(p.code).set(p)));
