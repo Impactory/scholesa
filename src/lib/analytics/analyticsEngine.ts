@@ -246,22 +246,26 @@ export class AnalyticsEngine {
     missionId?: string,
     skillId?: string
   ): Promise<number> {
-    const q = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'checkpoint_submitted'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : []),
-      ...(missionId ? [where('mission_id', '==', missionId)] : []),
-      ...(skillId ? [where('skill_id', '==', skillId)] : [])
-    );
-    
-    const snapshot = await getDocs(q);
-    const events = snapshot.docs.map(doc => doc.data() as CheckpointSubmittedEvent);
-    
-    if (events.length === 0) return 0;
-    
-    const passes = events.filter(e => e.passed).length;
-    return passes / events.length;
+    try {
+      const q = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'checkpoint_submitted'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : []),
+        ...(missionId ? [where('mission_id', '==', missionId)] : []),
+        ...(skillId ? [where('skill_id', '==', skillId)] : [])
+      );
+
+      const snapshot = await getDocs(q);
+      const events = snapshot.docs.map(doc => doc.data() as CheckpointSubmittedEvent);
+
+      if (events.length === 0) return 0;
+
+      const passes = events.filter(e => e.passed).length;
+      return passes / events.length;
+    } catch {
+      return 0;
+    }
   }
   
   /**
@@ -273,38 +277,40 @@ export class AnalyticsEngine {
     missionId?: string,
     skillId?: string
   ): Promise<number> {
-    const q = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'checkpoint_submitted'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : []),
-      ...(missionId ? [where('mission_id', '==', missionId)] : []),
-      ...(skillId ? [where('skill_id', '==', skillId)] : [])
-    );
-    
-    const snapshot = await getDocs(q);
-    const events = snapshot.docs.map(doc => doc.data() as CheckpointSubmittedEvent);
-    
-    // Group by student
-    const studentAttempts: Record<string, number[]> = {};
-    
-    events.forEach(event => {
-      if (!studentAttempts[event.student_id]) {
-        studentAttempts[event.student_id] = [];
-      }
-      if (event.passed) {
-        studentAttempts[event.student_id].push(event.attempt_no);
-      }
-    });
-    
-    // Get first pass attempt for each student
-    const firstPassAttempts = Object.values(studentAttempts)
-      .map(attempts => Math.min(...attempts))
-      .filter(n => !isNaN(n));
-    
-    if (firstPassAttempts.length === 0) return 0;
-    
-    return firstPassAttempts.reduce((a, b) => a + b, 0) / firstPassAttempts.length;
+    try {
+      const q = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'checkpoint_submitted'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : []),
+        ...(missionId ? [where('mission_id', '==', missionId)] : []),
+        ...(skillId ? [where('skill_id', '==', skillId)] : [])
+      );
+
+      const snapshot = await getDocs(q);
+      const events = snapshot.docs.map(doc => doc.data() as CheckpointSubmittedEvent);
+
+      const studentAttempts: Record<string, number[]> = {};
+
+      events.forEach(event => {
+        if (!studentAttempts[event.student_id]) {
+          studentAttempts[event.student_id] = [];
+        }
+        if (event.passed) {
+          studentAttempts[event.student_id].push(event.attempt_no);
+        }
+      });
+
+      const firstPassAttempts = Object.values(studentAttempts)
+        .map(attempts => Math.min(...attempts))
+        .filter(n => !isNaN(n));
+
+      if (firstPassAttempts.length === 0) return 0;
+
+      return firstPassAttempts.reduce((a, b) => a + b, 0) / firstPassAttempts.length;
+    } catch {
+      return 0;
+    }
   }
   
   /**
@@ -314,35 +320,38 @@ export class AnalyticsEngine {
     classId: string,
     sessionId?: string
   ): Promise<ChoiceDistribution> {
-    const q = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'mission_selected'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : [])
-    );
-    
-    const snapshot = await getDocs(q);
-    const events = snapshot.docs.map(doc => doc.data() as MissionSelectedEvent);
-    
-    const distribution: ChoiceDistribution = {
-      BRONZE: 0,
-      SILVER: 0,
-      GOLD: 0,
-      BRIDGE: 0
-    };
-    
-    events.forEach(event => {
-      distribution[event.level]++;
-    });
-    
-    // Convert to percentages
-    const total = events.length || 1;
-    return {
-      BRONZE: distribution.BRONZE / total,
-      SILVER: distribution.SILVER / total,
-      GOLD: distribution.GOLD / total,
-      BRIDGE: distribution.BRIDGE / total
-    };
+    try {
+      const q = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'mission_selected'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : [])
+      );
+
+      const snapshot = await getDocs(q);
+      const events = snapshot.docs.map(doc => doc.data() as MissionSelectedEvent);
+
+      const distribution: ChoiceDistribution = {
+        BRONZE: 0,
+        SILVER: 0,
+        GOLD: 0,
+        BRIDGE: 0
+      };
+
+      events.forEach(event => {
+        distribution[event.level]++;
+      });
+
+      const total = events.length || 1;
+      return {
+        BRONZE: distribution.BRONZE / total,
+        SILVER: distribution.SILVER / total,
+        GOLD: distribution.GOLD / total,
+        BRIDGE: distribution.BRIDGE / total
+      };
+    } catch {
+      return { BRONZE: 0, SILVER: 0, GOLD: 0, BRIDGE: 0 };
+    }
   }
   
   /**
@@ -352,33 +361,37 @@ export class AnalyticsEngine {
     classId: string,
     sessionId?: string
   ): Promise<number> {
-    const aiQuery = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'ai_coach_used'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : [])
-    );
-    
-    const checkpointQuery = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'checkpoint_submitted'),
-      where('class_id', '==', classId),
-      where('passed', '==', true),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : [])
-    );
-    
-    const [aiSnapshot, checkpointSnapshot] = await Promise.all([
-      getDocs(aiQuery),
-      getDocs(checkpointQuery)
-    ]);
-    
-    const totalTurns = aiSnapshot.docs
-      .map(doc => (doc.data() as AICoachUsedEvent).turns)
-      .reduce((a, b) => a + b, 0);
-    
-    const checkpointPasses = checkpointSnapshot.size;
-    
-    return checkpointPasses > 0 ? totalTurns / checkpointPasses : 0;
+    try {
+      const aiQuery = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'ai_coach_used'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : [])
+      );
+
+      const checkpointQuery = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'checkpoint_submitted'),
+        where('class_id', '==', classId),
+        where('passed', '==', true),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : [])
+      );
+
+      const [aiSnapshot, checkpointSnapshot] = await Promise.all([
+        getDocs(aiQuery),
+        getDocs(checkpointQuery)
+      ]);
+
+      const totalTurns = aiSnapshot.docs
+        .map(doc => (doc.data() as AICoachUsedEvent).turns)
+        .reduce((a, b) => a + b, 0);
+
+      const checkpointPasses = checkpointSnapshot.size;
+
+      return checkpointPasses > 0 ? totalTurns / checkpointPasses : 0;
+    } catch {
+      return 0;
+    }
   }
   
   /**
@@ -388,29 +401,33 @@ export class AnalyticsEngine {
     classId: string,
     sessionId?: string
   ): Promise<number> {
-    const aiQuery = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'ai_coach_used'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : [])
-    );
-    
-    const explainQuery = query(
-      collection(db, 'analyticsEvents'),
-      where('event_name', '==', 'explain_it_back_submitted'),
-      where('class_id', '==', classId),
-      ...(sessionId ? [where('session_id', '==', sessionId)] : [])
-    );
-    
-    const [aiSnapshot, explainSnapshot] = await Promise.all([
-      getDocs(aiQuery),
-      getDocs(explainQuery)
-    ]);
-    
-    const aiUsages = aiSnapshot.size;
-    const explainSubmissions = explainSnapshot.size;
-    
-    return aiUsages > 0 ? explainSubmissions / aiUsages : 0;
+    try {
+      const aiQuery = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'ai_coach_used'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : [])
+      );
+
+      const explainQuery = query(
+        collection(db, 'analyticsEvents'),
+        where('event_name', '==', 'explain_it_back_submitted'),
+        where('class_id', '==', classId),
+        ...(sessionId ? [where('session_id', '==', sessionId)] : [])
+      );
+
+      const [aiSnapshot, explainSnapshot] = await Promise.all([
+        getDocs(aiQuery),
+        getDocs(explainQuery)
+      ]);
+
+      const aiUsages = aiSnapshot.size;
+      const explainSubmissions = explainSnapshot.size;
+
+      return aiUsages > 0 ? explainSubmissions / aiUsages : 0;
+    } catch {
+      return 0;
+    }
   }
   
   /**

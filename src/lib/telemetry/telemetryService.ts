@@ -409,35 +409,37 @@ export class TelemetryService {
     siteId: string,
     days: number = 7
   ): Promise<number> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    
-    const q = query(
-      collection(db, 'telemetryEvents'),
-      where('userId', '==', userId),
-      where('siteId', '==', siteId),
-      where('timestamp', '>=', Timestamp.fromDate(startDate))
-    );
-    
-    const snapshot = await getDocs(q);
-    
-    // Simplified engagement score
-    const totalEvents = snapshot.size;
-    const checkpointsPassed = snapshot.docs.filter(
-      doc => doc.data().event === 'checkpoint_passed'
-    ).length;
-    const reflections = snapshot.docs.filter(
-      doc => doc.data().category === 'reflection'
-    ).length;
-    
-    // Weight different activities
-    const score = Math.min(100, (
-      totalEvents * 0.5 +
-      checkpointsPassed * 10 +
-      reflections * 5
-    ));
-    
-    return Math.round(score);
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const q = query(
+        collection(db, 'telemetryEvents'),
+        where('userId', '==', userId),
+        where('siteId', '==', siteId),
+        where('timestamp', '>=', Timestamp.fromDate(startDate))
+      );
+
+      const snapshot = await getDocs(q);
+
+      const totalEvents = snapshot.size;
+      const checkpointsPassed = snapshot.docs.filter(
+        doc => doc.data().event === 'checkpoint_passed'
+      ).length;
+      const reflections = snapshot.docs.filter(
+        doc => doc.data().category === 'reflection'
+      ).length;
+
+      const score = Math.min(100, (
+        totalEvents * 0.5 +
+        checkpointsPassed * 10 +
+        reflections * 5
+      ));
+
+      return Math.round(score);
+    } catch {
+      return 0;
+    }
   }
   
   /**
@@ -452,38 +454,46 @@ export class TelemetryService {
     competence: number;
     belonging: number;
   }> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    
-    const q = query(
-      collection(db, 'telemetryEvents'),
-      where('userId', '==', userId),
-      where('siteId', '==', siteId),
-      where('timestamp', '>=', Timestamp.fromDate(startDate))
-    );
-    
-    const snapshot = await getDocs(q);
-    
-    const categoryCount = {
-      autonomy: 0,
-      competence: 0,
-      belonging: 0
-    };
-    
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.category in categoryCount) {
-        categoryCount[data.category as keyof typeof categoryCount]++;
-      }
-    });
-    
-    const total = Object.values(categoryCount).reduce((a, b) => a + b, 0) || 1;
-    
-    return {
-      autonomy: Math.round((categoryCount.autonomy / total) * 100),
-      competence: Math.round((categoryCount.competence / total) * 100),
-      belonging: Math.round((categoryCount.belonging / total) * 100)
-    };
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const q = query(
+        collection(db, 'telemetryEvents'),
+        where('userId', '==', userId),
+        where('siteId', '==', siteId),
+        where('timestamp', '>=', Timestamp.fromDate(startDate))
+      );
+
+      const snapshot = await getDocs(q);
+
+      const categoryCount = {
+        autonomy: 0,
+        competence: 0,
+        belonging: 0
+      };
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.category in categoryCount) {
+          categoryCount[data.category as keyof typeof categoryCount]++;
+        }
+      });
+
+      const total = Object.values(categoryCount).reduce((a, b) => a + b, 0) || 1;
+
+      return {
+        autonomy: Math.round((categoryCount.autonomy / total) * 100),
+        competence: Math.round((categoryCount.competence / total) * 100),
+        belonging: Math.round((categoryCount.belonging / total) * 100)
+      };
+    } catch {
+      return {
+        autonomy: 0,
+        competence: 0,
+        belonging: 0
+      };
+    }
   }
   
   // ===== UTILITY FUNCTIONS =====
