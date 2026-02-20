@@ -1,0 +1,384 @@
+id,file,line,event,label,flow,handler,isCancelCta,isNoop,blocker
+1,apps/empire_flutter/app/lib/main.dart,284,onPressed,Retry,callback/action,onRetry,False,False,none
+2,apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart,245,onPressed,,callback/action,_loading ? null : _sendMessage,False,False,none
+3,apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart,435,onTap,,callback/action,() => onFeedback!(true),False,False,none
+4,apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart,444,onTap,,callback/action,() => onFeedback!(false),False,False,none
+5,apps/empire_flutter/app/lib/runtime/mvl_gate_widget.dart,294,onPressed,,callback/action,_submitting ? null : _submitExplainItBack,False,False,none
+6,apps/empire_flutter/app/lib/runtime/mvl_gate_widget.dart,311,onPressed,,callback/action,_requestContestability,False,False,none
+7,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,573,onPressed,Switch site,callback/action,() => _showSiteSwitcher(context,False,False,none
+8,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,578,onPressed,Switch site,navigate,() => context.push('/settings'),False,False,none
+9,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,583,onPressed,Settings,callback/action,() => _showLogoutDialog(context),False,False,none
+10,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,614,onPressed,View All,callback/action,() => _showAllActionsSheet(context,False,False,none
+11,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,638,onTap,,callback/action,() => _handleCardTap(context,False,False,none
+12,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,772,onTap,,callback/action,() {,False,False,none
+13,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,793,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+14,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,797,onPressed,Close,callback/action,() {,True,False,none
+15,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,849,onTap,,callback/action,() {,False,False,none
+16,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,876,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+17,apps/empire_flutter/app/lib/dashboards/role_dashboard.dart,880,onPressed,Cancel,callback/action,() async {,True,False,none
+18,apps/empire_flutter/app/lib/offline/sync_status_widget.dart,76,onPressed,,callback/action,() => sync.retryFailed(),False,False,none
+19,apps/empire_flutter/app/lib/router/role_gate.dart,77,onPressed,Go Back,callback/action,() => Navigator.of(context).pop(),True,False,none
+20,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,102,onPressed,Refresh,callback/action,onRefresh,False,False,none
+21,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,133,onTap,${occ.learnerCount ?? occ.roster.length} students,callback/action,() {,False,False,none
+22,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,261,onPressed,All Present,callback/action,() => _markAll(roster,False,False,none
+23,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,269,onPressed,All Absent,callback/action,() => _markAll(roster,False,False,none
+24,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,316,onPressed,Save Attendance (${_attendance.length}/${roster.length}),callback/action,_attendance.length == roster.length,False,False,none
+25,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,429,onTap,,callback/action,() => onStatusChanged(AttendanceStatus.present),False,False,none
+26,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,437,onTap,,callback/action,() => onStatusChanged(AttendanceStatus.late),False,False,none
+27,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,445,onTap,,callback/action,() => onStatusChanged(AttendanceStatus.absent),False,False,none
+28,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,453,onTap,,callback/action,() => onStatusChanged(AttendanceStatus.excused),False,False,none
+29,apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart,496,onTap,,callback/action,onTap,False,False,none
+30,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,65,onPressed,New Invoice,callback/action,_createInvoice,False,False,none
+31,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,116,onPressed,,callback/action,_exportFinancials,False,False,none
+32,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,460,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+33,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,464,onPressed,Cancel,callback/action,() {,True,False,none
+34,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,561,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+35,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,660,onPressed,,callback/action,() => _viewInvoice(context),False,False,none
+36,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,665,onPressed,,callback/action,() => _sendInvoice(context),False,False,none
+37,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,903,onPressed,,cancel/close,() => Navigator.pop(context),True,False,none
+38,apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart,1015,onPressed,,callback/action,_createInvoice,False,False,none
+39,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,104,onPressed,New Curriculum,callback/action,() => _showCreateDialog(),False,False,none
+40,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,149,onTap,,callback/action,() => _showCurriculumDetails(curriculum),False,False,none
+41,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,247,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+42,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,251,onPressed,Close,callback/action,() {,True,False,none
+43,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,304,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+44,apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart,306,onPressed,Cancel,callback/action,() {,True,False,none
+45,apps/empire_flutter/app/lib/modules/hq_admin/hq_safety_page.dart,163,onPressed,${incident.site} • ${_formatTime(incident.reportedAt)},callback/action,() => _showIncidentDetails(incident),False,False,none
+46,apps/empire_flutter/app/lib/modules/hq_admin/hq_safety_page.dart,165,onTap,${incident.site} • ${_formatTime(incident.reportedAt)},callback/action,() => _showIncidentDetails(incident),False,False,none
+47,apps/empire_flutter/app/lib/modules/hq_admin/hq_safety_page.dart,209,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+48,apps/empire_flutter/app/lib/modules/hq_admin/hq_safety_page.dart,214,onPressed,Close,callback/action,() {,True,False,none
+49,apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart,82,onPressed,Feature Flags,callback/action,() {,False,False,none
+50,apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart,89,onPressed,,callback/action,_exportReport,False,False,none
+51,apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart,408,onPressed,View All,callback/action,_showAllTopPerformers,False,False,none
+52,apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart,450,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+53,apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart,454,onPressed,Cancel,callback/action,() {,True,False,none
+54,apps/empire_flutter/app/lib/modules/hq_admin/hq_approvals_page.dart,190,onPressed,Reject,callback/action,() => _handleReject(item),False,False,none
+55,apps/empire_flutter/app/lib/modules/hq_admin/hq_approvals_page.dart,198,onPressed,Reject,callback/action,() => _handleApprove(item),False,False,none
+56,apps/empire_flutter/app/lib/modules/hq_admin/hq_role_switcher_page.dart,48,onPressed,,navigate,() => context.go('/'),False,False,none
+57,apps/empire_flutter/app/lib/modules/hq_admin/hq_role_switcher_page.dart,177,onPressed,Exit impersonation,callback/action,() => appState.clearImpersonation(),False,False,none
+58,apps/empire_flutter/app/lib/modules/hq_admin/hq_role_switcher_page.dart,341,onTap,,callback/action,() {,False,False,none
+59,apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart,85,onPressed,Audit Logs,callback/action,() => _showFilterDialog(),False,False,none
+60,apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart,89,onPressed,,callback/action,() {,False,False,none
+61,apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart,162,onTap,,callback/action,() => _showLogDetails(log),False,False,none
+62,apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart,228,onTap,,callback/action,() {,False,False,none
+63,apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart,259,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+64,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,55,onTap,,callback/action,() => _openSiteDetail('pilot-sg'),False,False,none
+65,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,64,onTap,,callback/action,() => _openSiteDetail('hub-kl'),False,False,none
+66,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,73,onTap,,callback/action,() => _openSiteDetail('academy-jkt'),False,False,none
+67,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,82,onTap,,callback/action,() => _openSiteDetail('lab-mnl'),False,False,none
+68,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,92,onPressed,Add Site,callback/action,_createNewSite,False,False,none
+69,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,159,onPressed,,callback/action,() {,False,False,none
+70,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,190,onTap,,callback/action,() => setState(() => _filterStatus = 'all'),False,False,none
+71,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,197,onTap,,callback/action,() => setState(() => _filterStatus = 'active'),False,False,none
+72,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,204,onTap,,callback/action,() => setState(() => _filterStatus = 'onboarding'),False,False,none
+73,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,211,onTap,,callback/action,() => setState(() => _filterStatus = 'pending'),False,False,none
+74,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,314,onTap,,callback/action,onTap,False,False,none
+75,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,515,onTap,,callback/action,onTap,False,False,none
+76,apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart,659,onPressed,,callback/action,() {,False,False,none
+77,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,112,onPressed,Refresh,callback/action,() => context.read<UserAdminService>().loadUsers(),False,False,none
+78,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,199,onPressed,,callback/action,() {,False,False,none
+79,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,219,onTap,,callback/action,() => service.setRoleFilter(null),False,False,none
+80,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,224,onTap,,callback/action,() => service.setRoleFilter(role),False,False,none
+81,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,233,onTap,,callback/action,() => service.setStatusFilter(null),False,False,none
+82,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,238,onTap,,callback/action,() => service.setStatusFilter(status),False,False,none
+83,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,311,onTap,,callback/action,() => _showUserDetails(user),False,False,none
+84,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,395,onPressed,Add User,callback/action,() => _showCreateUserDialog(),False,False,none
+85,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,518,onTap,,callback/action,onTap,False,False,none
+86,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,588,onTap,,callback/action,onTap,False,False,none
+87,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1051,onTap,,callback/action,() => _showEditUserDialog(context),False,False,none
+88,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1058,onTap,,callback/action,() => _toggleStatus(context),False,False,none
+89,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1065,onTap,,callback/action,() => _showRoleChangeDialog(context),False,False,none
+90,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1163,onTap,,callback/action,() {,False,False,none
+91,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1195,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+92,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1199,onPressed,Cancel,callback/action,() {,True,False,none
+93,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1268,onTap,,callback/action,onTap,False,False,none
+94,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1479,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+95,apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart,1483,onPressed,Cancel,callback/action,_isLoading ? null : _createUser,True,False,none
+96,apps/empire_flutter/app/lib/modules/hq_admin/hq_integrations_health_page.dart,20,onPressed,Integrations Health,callback/action,() {,False,False,none
+97,apps/empire_flutter/app/lib/modules/hq_admin/hq_integrations_health_page.dart,160,onPressed,Retry,callback/action,() {,False,False,none
+98,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,107,onTap,,callback/action,() => _navigateTo('profile'),False,False,none
+99,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,113,onTap,,callback/action,() => _showChangePasswordSheet(),False,False,none
+100,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,119,onTap,,callback/action,() => _showChangeEmailSheet(),False,False,none
+101,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,125,onTap,,callback/action,() => _showChangePhoneSheet(),False,False,none
+102,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,168,onTap,,callback/action,() => _showNotificationPreferences(),False,False,none
+103,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,192,onTap,,callback/action,() => _showLanguageSelector(),False,False,none
+104,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,198,onTap,,callback/action,() => _showTimeZoneSelector(),False,False,none
+105,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,221,onTap,,callback/action,() => _openPrivacyPolicy(),False,False,none
+106,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,227,onTap,,callback/action,() => _openTermsOfService(),False,False,none
+107,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,233,onTap,,callback/action,() => _requestDataDownload(),False,False,none
+108,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,247,onTap,,callback/action,() => _showAppVersionDetails(),False,False,none
+109,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,253,onTap,,callback/action,() => _openHelpCenter(),False,False,none
+110,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,259,onTap,,callback/action,() => _showFeedbackSheet(),False,False,none
+111,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,265,onTap,,callback/action,() => _rateApp(),False,False,none
+112,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,299,onTap,,callback/action,() => _confirmSignOut(),False,False,none
+113,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,307,onTap,,callback/action,() => _confirmDeleteAccount(),False,False,none
+114,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,371,onTap,,callback/action,() {,False,False,none
+115,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,426,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+116,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,443,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+117,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,447,onPressed,Cancel,callback/action,() {,True,False,none
+118,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,476,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+119,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,480,onPressed,Cancel,callback/action,() {,True,False,none
+120,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,508,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+121,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,512,onPressed,Cancel,callback/action,() {,True,False,none
+122,apps/empire_flutter/app/lib/modules/settings/settings_page.dart,610,onTap,,callback/action,onTap,False,False,none
+123,apps/empire_flutter/app/lib/modules/messages/notifications_page.dart,82,onPressed,Notifications,callback/action,_markAllAsRead,False,False,none
+124,apps/empire_flutter/app/lib/modules/messages/notifications_page.dart,148,onTap,,callback/action,() => _handleNotificationTap(notification),False,False,none
+125,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,105,onPressed,Mark all read,callback/action,() => service.markAllAsRead(),False,False,none
+126,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,184,onTap,,callback/action,() => _openMessage(message),False,False,none
+127,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,206,onTap,,callback/action,() => service.setTypeFilter(null),False,False,none
+128,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,214,onTap,,callback/action,() => service.setTypeFilter(type),False,False,none
+129,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,322,onTap,,callback/action,onTap,False,False,none
+130,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,404,onTap,,callback/action,onTap,False,False,none
+131,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,697,onPressed,,cancel/close,() => Navigator.pop(context),True,False,none
+132,apps/empire_flutter/app/lib/modules/messages/messages_page.dart,738,onPressed,,callback/action,() {,False,False,none
+133,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,231,onTap,,callback/action,() => service.setPillarFilter(null),False,False,none
+134,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,237,onTap,,callback/action,() => service.setPillarFilter(pillar),False,False,none
+135,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,312,onTap,,callback/action,() => _showMissionDetails(mission),False,False,none
+136,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,455,onTap,,callback/action,onTap,False,False,none
+137,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,526,onTap,,callback/action,onTap,False,False,none
+138,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,902,onPressed,,callback/action,() {,False,False,none
+139,apps/empire_flutter/app/lib/modules/missions/missions_page.dart,945,onPressed,,callback/action,() {,False,False,none
+140,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,88,onPressed,,callback/action,() => Navigator.of(context).pop(),False,False,none
+141,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,486,onTap,,callback/action,() => _showHabitDetail(habit),False,False,none
+142,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,613,onTap,,callback/action,isCompleted,False,False,none
+143,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,672,onPressed,New Habit,callback/action,_showCreateHabitSheet,False,False,none
+144,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,800,onPressed,,cancel/close,() => Navigator.pop(context),True,False,none
+145,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,1024,onPressed,,cancel/close,() => Navigator.pop(context),True,False,none
+146,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,1045,onTap,,callback/action,() => setState(() => _selectedEmoji = emoji),False,False,none
+147,apps/empire_flutter/app/lib/modules/habits/habits_page.dart,1180,onPressed,,callback/action,_createHabit,False,False,none
+148,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,78,onPressed,,callback/action,() => _showCreateDialog(context),False,False,none
+149,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,166,onPressed,,callback/action,() => _showLearnerOptions(context,False,False,none
+150,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,186,onTap,Edit Learner,callback/action,() {,False,False,none
+151,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,197,onTap,Manage Guardian Links,callback/action,() {,False,False,none
+152,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,260,onPressed,,callback/action,() => _showParentOptions(context,False,False,none
+153,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,280,onTap,Edit Parent,callback/action,() {,False,False,none
+154,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,291,onTap,Manage Learner Links,callback/action,() {,False,False,none
+155,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,369,onPressed,,callback/action,() => _confirmDelete(context,False,False,none
+156,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,390,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+157,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,394,onPressed,Cancel,callback/action,() async {,True,False,none
+158,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,524,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+159,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,528,onPressed,Cancel,callback/action,_isSubmitting ? null : _submit,True,False,none
+160,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,648,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+161,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,652,onPressed,Cancel,callback/action,_isSubmitting ? null : _submit,True,False,none
+162,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,799,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+163,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,803,onPressed,Cancel,callback/action,_isSubmitting || _selectedParentId == null || _selectedLearnerId == null,True,False,none
+164,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,915,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+165,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,919,onPressed,Cancel,callback/action,_isSubmitting ? null : _submit,True,False,none
+166,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,1040,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+167,apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart,1044,onPressed,Cancel,callback/action,_isSubmitting ? null : _submit,True,False,none
+168,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,36,onPressed,My Listings,callback/action,() => _showCreateListingDialog(context),False,False,none
+169,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,101,onPressed,Create Listing,callback/action,() => _showCreateListingDialog(context),False,False,none
+170,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,121,onTap,,callback/action,() => _showListingDetails(listing),False,False,none
+171,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,305,onPressed,Cancel,callback/action,isSubmitting,True,False,none
+172,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,316,onPressed,Cancel,callback/action,isSubmitting,True,False,none
+173,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,426,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+174,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,433,onPressed,Close,callback/action,() {,True,False,none
+175,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,475,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+176,apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart,479,onPressed,Cancel,callback/action,() {,True,False,none
+177,apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart,104,onTap,,callback/action,() => _showContractDetails(contract),False,False,none
+178,apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart,316,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+179,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,75,onTap,,callback/action,() => _openLearnerDetail(learners[index]),False,False,none
+180,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,150,onPressed,,callback/action,() {,False,False,none
+181,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,181,onTap,,callback/action,() => setState(() => _selectedSession = 'all'),False,False,none
+182,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,190,onTap,,callback/action,() => setState(() => _selectedSession = session.id),False,False,none
+183,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,276,onTap,,callback/action,onTap,False,False,none
+184,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,424,onTap,,callback/action,onTap,False,False,none
+185,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,596,onPressed,Message,cancel/close,() => Navigator.pop(context),True,False,none
+186,apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart,612,onPressed,Full Profile,cancel/close,() => Navigator.pop(context),True,False,none
+187,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,58,onPressed,Learner Supports,callback/action,_showSearchDialog,False,False,none
+188,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,154,onTap,,callback/action,() => _showSupportDetails(support),False,False,none
+189,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,365,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+190,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,372,onPressed,Close,callback/action,() {,True,False,none
+191,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,405,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+192,apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart,409,onPressed,Cancel,callback/action,() {,True,False,none
+193,apps/empire_flutter/app/lib/modules/educator/educator_integrations_page.dart,184,onPressed,Sync Now,callback/action,() {,False,False,none
+194,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,75,onTap,,callback/action,() => _openSessionDetail(sessions[index]),False,False,none
+195,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,89,onPressed,New Session,callback/action,_createNewSession,False,False,none
+196,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,180,onTap,,callback/action,() => setState(() => _filterStatus = 'all'),False,False,none
+197,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,187,onTap,,callback/action,() => setState(() => _filterStatus = 'future_skills'),False,False,none
+198,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,194,onTap,,callback/action,() => setState(() => _filterStatus = 'leadership'),False,False,none
+199,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,201,onTap,,callback/action,() => setState(() => _filterStatus = 'impact'),False,False,none
+200,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,355,onPressed,Cancel,cancel/close,_isSubmitting ? null : () => Navigator.pop(context),True,False,none
+201,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,359,onPressed,Cancel,callback/action,_isSubmitting ? null : _submit,True,False,none
+202,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,387,onTap,,callback/action,onTap,False,False,none
+203,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,545,onTap,,callback/action,onTap,False,False,none
+204,apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart,629,onPressed,View Full Details,cancel/close,() => Navigator.pop(context),True,False,none
+205,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,59,onTap,,callback/action,() => _openClassDetail(service.todayClasses[index]),False,False,none
+206,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,189,onTap,,navigate,() => context.push('/educator/attendance'),False,False,none
+207,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,198,onTap,,callback/action,_showReviewMissionsDialog,False,False,none
+208,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,207,onTap,,navigate,() => context.push('/messages'),False,False,none
+209,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,312,onPressed,,navigate,() => context.push('/educator/attendance'),False,False,none
+210,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,353,onPressed,Week View,callback/action,_showWeekViewSummary,False,False,none
+211,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,384,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+212,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,401,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+213,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,405,onPressed,Close,callback/action,() {,True,False,none
+214,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,503,onTap,,callback/action,onTap,False,False,none
+215,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,562,onTap,,callback/action,onTap,False,False,none
+216,apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart,757,onPressed,,callback/action,() {,False,False,none
+217,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,84,onPressed,New Mission,callback/action,() => _showFilterDialog(),False,False,none
+218,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,89,onPressed,New Mission,callback/action,() => _showCreateMissionDialog(),False,False,none
+219,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,110,onTap,,callback/action,() => _showMissionDetails(plan),False,False,none
+220,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,269,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+221,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,324,onPressed,Edit,cancel/close,() => Navigator.pop(context),True,False,none
+222,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,331,onPressed,Edit,callback/action,() {,False,False,none
+223,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,392,onPressed,Cancel,callback/action,() {,True,False,none
+224,apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart,398,onPressed,Cancel,callback/action,() {,True,False,none
+225,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,70,onTap,,callback/action,() => _openReviewSheet(submissions[index]),False,False,none
+226,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,146,onTap,,callback/action,() => setState(() => _filterStatus = 'pending'),False,False,none
+227,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,152,onTap,,callback/action,() => setState(() => _filterStatus = 'reviewed'),False,False,none
+228,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,159,onTap,,callback/action,() => setState(() => _filterStatus = 'revision'),False,False,none
+229,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,166,onTap,,callback/action,() => setState(() => _filterStatus = 'approved'),False,False,none
+230,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,266,onTap,,callback/action,onTap,False,False,none
+231,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,449,onTap,,callback/action,onTap,False,False,none
+232,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,655,onTap,,callback/action,() => setState(() => _rating = index + 1),False,False,none
+233,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,695,onPressed,,callback/action,() {,False,False,none
+234,apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart,718,onPressed,Request Revision,callback/action,() {,False,False,none
+235,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,64,onPressed,Share,callback/action,_sharePortfolio,False,False,none
+236,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,115,onPressed,,callback/action,_editProfile,False,False,none
+237,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,534,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+238,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,538,onPressed,Cancel,callback/action,() {,True,False,none
+239,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,562,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+240,apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart,566,onPressed,Cancel,callback/action,() {,True,False,none
+241,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,99,onPressed,,navigate,() => context.push('/messages'),False,False,none
+242,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,258,onTap,,navigate,() => context.push('/learner/habits'),False,False,none
+243,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,267,onTap,,navigate,() => context.push('/learner/missions'),False,False,none
+244,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,276,onTap,,navigate,() => context.push('/messages'),False,False,none
+245,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,306,onPressed,,navigate,() => context.push('/learner/habits'),False,False,none
+246,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,345,onPressed,,navigate,() => context.push('/learner/missions'),False,False,none
+247,apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart,483,onTap,,callback/action,onTap,False,False,none
+248,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,55,onPressed,,callback/action,() => context.pop(),False,False,none
+249,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,68,onPressed,,callback/action,() => _showEditProfileDialog(context,False,False,none
+250,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,185,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+251,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,195,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+252,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,205,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+253,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,215,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+254,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,225,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+255,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,255,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+256,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,264,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+257,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,273,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+258,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,283,onTap,,callback/action,() => _showFeatureDialog(,False,False,none
+259,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,300,onPressed,Sign Out,callback/action,() async {,False,False,none
+260,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,308,onPressed,Cancel,cancel/close,() => Navigator.pop(context,True,False,none
+261,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,312,onPressed,Cancel,cancel/close,() => Navigator.pop(context,True,False,none
+262,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,369,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+263,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,373,onPressed,Cancel,callback/action,() {,True,False,none
+264,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,404,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+265,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,408,onPressed,Close,callback/action,() {,True,False,none
+266,apps/empire_flutter/app/lib/modules/profile/profile_page.dart,445,onTap,,callback/action,onTap,False,False,none
+267,apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart,116,onPressed,,callback/action,() => service.loadParentData(),False,False,none
+268,apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart,137,onTap,,callback/action,() => setState(() => _selectedLearnerIndex = index),False,False,none
+269,apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart,376,onPressed,,callback/action,() => _showAllActivities(learner),False,False,none
+270,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,98,onTap,,callback/action,() => setState(() => _viewMode = 'day'),False,False,none
+271,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,103,onTap,,callback/action,() => setState(() => _viewMode = 'week'),False,False,none
+272,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,108,onTap,,callback/action,() => setState(() => _viewMode = 'month'),False,False,none
+273,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,172,onTap,,callback/action,() => setState(() => _selectedDate = date),False,False,none
+274,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,265,onPressed,Details,callback/action,_showNextSessionDetails,False,False,none
+275,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,339,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+276,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,343,onPressed,Close,callback/action,() {,True,False,none
+277,apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart,503,onTap,,callback/action,onTap,False,False,none
+278,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,109,onPressed,,callback/action,_downloadStatements,False,False,none
+279,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,497,onPressed,Update,callback/action,_updatePaymentMethod,False,False,none
+280,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,507,onPressed,,callback/action,_managePlan,False,False,none
+281,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,561,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+282,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,565,onPressed,Cancel,callback/action,() {,True,False,none
+283,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,591,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+284,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,595,onPressed,Close,callback/action,() {,True,False,none
+285,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,750,onPressed,View,callback/action,onView,False,False,none
+286,apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart,760,onPressed,View,callback/action,onPay,False,False,none
+287,apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart,129,onTap,,callback/action,() => _showItemDetails(item),False,False,none
+288,apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart,280,onPressed,Share,callback/action,() {,False,False,none
+289,apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart,293,onPressed,Share,cancel/close,() => Navigator.pop(context),True,False,none
+290,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,111,onPressed,New Session,callback/action,_createNewSession,False,False,none
+291,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,181,onTap,,callback/action,() => setState(() => _viewMode = 'day'),False,False,none
+292,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,188,onTap,,callback/action,() => setState(() => _viewMode = 'week'),False,False,none
+293,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,195,onTap,,callback/action,() => setState(() => _viewMode = 'month'),False,False,none
+294,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,216,onPressed,,callback/action,() {,False,False,none
+295,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,232,onTap,,callback/action,() => setState(() => _selectedDate = date),False,False,none
+296,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,277,onPressed,,callback/action,() {,False,False,none
+297,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,300,onPressed,Filter,callback/action,_showFilterSheet,False,False,none
+298,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,416,onTap,,callback/action,onTap,False,False,none
+299,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,668,onTap,,callback/action,() => setState(() => _selectedPillar = 'Future Skills'),False,False,none
+300,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,675,onTap,,callback/action,() => setState(() => _selectedPillar = 'Leadership'),False,False,none
+301,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,682,onTap,,callback/action,() => setState(() => _selectedPillar = 'Impact'),False,False,none
+302,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,765,onPressed,,callback/action,() {,False,False,none
+303,apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart,831,onTap,,callback/action,onTap,False,False,none
+304,apps/empire_flutter/app/lib/modules/site/site_ops_page.dart,204,onTap,,callback/action,() {,False,False,none
+305,apps/empire_flutter/app/lib/modules/site/site_identity_page.dart,193,onPressed,Ignore,callback/action,() => _handleIgnore(match),False,False,none
+306,apps/empire_flutter/app/lib/modules/site/site_identity_page.dart,203,onPressed,Ignore,callback/action,() => _handleApprove(match),False,False,none
+307,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,102,onPressed,Report Incident,callback/action,() => _showCreateIncidentDialog(),False,False,none
+308,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,161,onTap,,callback/action,() => _showIncidentDetails(incident),False,False,none
+309,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,295,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+310,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,302,onPressed,Close,callback/action,() {,True,False,none
+311,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,320,onPressed,Close,cancel/close,() => Navigator.pop(context),True,False,none
+312,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,380,onPressed,Cancel,cancel/close,() => Navigator.pop(context),True,False,none
+313,apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart,384,onPressed,Cancel,callback/action,() {,True,False,none
+314,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,58,onPressed,Integrations Health,callback/action,() {,False,False,none
+315,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,187,onPressed,,callback/action,() => _showIntegrationOptions(integration),False,False,none
+316,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,209,onPressed,Connect,callback/action,() {,False,False,none
+317,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,298,onTap,Force Sync,callback/action,() {,False,False,none
+318,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,308,onTap,Retry Failed,callback/action,() {,False,False,none
+319,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,318,onTap,Settings,callback/action,() {,False,False,none
+320,apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart,325,onTap,,callback/action,() {,False,False,none
+321,apps/empire_flutter/app/lib/modules/site/site_billing_page.dart,114,onPressed,Manage Plan,callback/action,() => _showManagePlanDialog(context),False,False,none
+322,apps/empire_flutter/app/lib/modules/site/site_billing_page.dart,217,onPressed,View All,callback/action,() => _showAllInvoices(context),False,False,none
+323,apps/empire_flutter/app/lib/modules/site/site_billing_page.dart,286,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+324,apps/empire_flutter/app/lib/modules/site/site_billing_page.dart,290,onPressed,Close,callback/action,() {,True,False,none
+325,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,110,onPressed,,callback/action,_exportReport,False,False,none
+326,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,134,onTap,,callback/action,() => setState(() => _selectedPeriod = 'today'),False,False,none
+327,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,140,onTap,,callback/action,() => setState(() => _selectedPeriod = 'week'),False,False,none
+328,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,146,onTap,,callback/action,() => setState(() => _selectedPeriod = 'month'),False,False,none
+329,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,152,onTap,,callback/action,() => setState(() => _selectedPeriod = 'term'),False,False,none
+330,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,348,onPressed,View All,callback/action,_showAllRecentActivity,False,False,none
+331,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,378,onPressed,Cancel,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+332,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,382,onPressed,Cancel,callback/action,() {,True,False,none
+333,apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart,462,onTap,,callback/action,onTap,False,False,none
+334,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,109,onPressed,Refresh,callback/action,() => context.read<CheckinService>().loadTodayData(),False,False,none
+335,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,196,onPressed,,callback/action,() {,False,False,none
+336,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,216,onTap,,callback/action,() => service.setStatusFilter(null),False,False,none
+337,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,221,onTap,,callback/action,() => service.setStatusFilter(CheckStatus.checkedIn),False,False,none
+338,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,227,onTap,,callback/action,() => service.setStatusFilter(CheckStatus.late),False,False,none
+339,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,233,onTap,,callback/action,() => service.setStatusFilter(CheckStatus.checkedOut),False,False,none
+340,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,363,onPressed,Scan QR,callback/action,() => _showQrScanDialog(),False,False,none
+341,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,398,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+342,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,402,onPressed,Close,callback/action,() {,True,False,none
+343,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,419,onPressed,Use Camera,callback/action,() {,False,False,none
+344,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,510,onTap,,callback/action,onTap,False,False,none
+345,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,678,onTap,,callback/action,onCheckIn,False,False,none
+346,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,687,onTap,,callback/action,onCheckOut,False,False,none
+347,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,694,onPressed,Authorized pickups,callback/action,() => _showAuthorizedPickups(context),False,False,none
+348,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,782,onPressed,,callback/action,() {,False,False,none
+349,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,820,onTap,,callback/action,onTap,False,False,none
+350,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,1076,onTap,,callback/action,() => setState(() => _selectedPickup = pickup),False,False,none
+351,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,1103,onPressed,,callback/action,_isLoading || _selectedPickup == null,False,False,none
+352,apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart,1199,onTap,,callback/action,onTap,False,False,none
+353,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,165,onTap,,callback/action,() => _showSectionPreview(,False,False,none
+354,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,173,onTap,,callback/action,() => _showSectionPreview(,False,False,none
+355,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,181,onTap,,callback/action,() => _showSectionPreview(,False,False,none
+356,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,190,onPressed,,navigate,() => context.go('/login'),False,False,none
+357,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,301,onPressed,Sign In,navigate,() => context.go('/login'),False,False,none
+358,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,318,onPressed,Watch Demo,callback/action,() => _showDemoDialog(context),False,False,none
+359,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,353,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+360,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,357,onPressed,Close,callback/action,() {,True,False,none
+361,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,376,onPressed,Close,cancel/close,() => Navigator.pop(dialogContext),True,False,none
+362,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,813,onPressed,,navigate,() => context.go('/login'),False,False,none
+363,apps/empire_flutter/app/lib/ui/landing/landing_page.dart,876,onTap,,callback/action,onTap,False,False,none
+364,apps/empire_flutter/app/lib/ui/auth/login_page.dart,195,onPressed,,cancel/close,sending ? null : () => Navigator.pop(ctx,True,False,none
+365,apps/empire_flutter/app/lib/ui/auth/login_page.dart,199,onPressed,,callback/action,sending,False,False,none
+366,apps/empire_flutter/app/lib/ui/auth/login_page.dart,479,onPressed,,callback/action,() {,False,False,none
+367,apps/empire_flutter/app/lib/ui/auth/login_page.dart,502,onPressed,,callback/action,_showForgotPasswordDialog,False,False,none
+368,apps/empire_flutter/app/lib/ui/auth/login_page.dart,513,onPressed,,callback/action,_isLoading ? null : _handleLogin,False,False,none
+369,apps/empire_flutter/app/lib/ui/auth/login_page.dart,573,onPressed,,callback/action,_isLoading ? null : _handleGoogleSignIn,False,False,none
+370,apps/empire_flutter/app/lib/ui/auth/login_page.dart,592,onPressed,,callback/action,_isLoading ? null : _handleMicrosoftSignIn,False,False,none
+371,apps/empire_flutter/app/lib/ui/common/error_state.dart,45,onPressed,Retry,callback/action,onRetry,False,False,none
+372,apps/empire_flutter/app/lib/ui/error/fatal_error_screen.dart,48,onPressed,Try Again,callback/action,onRetry,False,False,none
+373,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,103,onTap,,callback/action,onTap,False,False,none
+374,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,242,onPressed,,callback/action,onContinue,False,False,none
+375,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,336,onTap,,callback/action,onTap,False,False,none
+376,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,414,onTap,,callback/action,onTap,False,False,none
+377,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,462,onPressed,,callback/action,onComplete,False,False,none
+378,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,618,onTap,,callback/action,onTap,False,False,none
+379,apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart,747,onTap,,callback/action,onTap,False,False,none
+380,apps/empire_flutter/app/lib/ui/widgets/cards.dart,36,onTap,,callback/action,onTap,False,False,none
+381,apps/empire_flutter/app/lib/ui/widgets/cards.dart,190,onTap,,callback/action,onTap,False,False,none
+382,apps/empire_flutter/app/lib/ui/widgets/cards.dart,348,onTap,,callback/action,onTap,False,False,none
+383,apps/empire_flutter/app/lib/ui/widgets/cards.dart,611,onTap,,callback/action,onTap,False,False,none
