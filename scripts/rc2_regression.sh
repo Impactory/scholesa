@@ -22,7 +22,7 @@ run_step "Jest analytics live integration" npm --prefix "$ROOT_DIR" run test:int
 run_step "Functions build" npm --prefix "$FUNCTIONS_DIR" run build
 run_step "Flutter analyze" bash -lc "cd '$FLUTTER_DIR' && flutter analyze"
 run_step "Flutter test" bash -lc "cd '$FLUTTER_DIR' && flutter test"
-run_step "Flutter web release build" bash -lc "cd '$FLUTTER_DIR' && flutter build web --release"
+run_step "Flutter web release build" bash -lc "cd '$FLUTTER_DIR' && flutter build web --release --no-tree-shake-icons"
 
 echo ""
 echo "✅ RC2 regression chain completed successfully."

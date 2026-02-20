@@ -117,14 +117,14 @@ deploy_flutter_web() {
 deploy_flutter_ios() {
   flutter_gate
   log "Building Flutter iOS (release)..."
-  (cd "$FLUTTER_APP" && flutter build ios --release --no-codesign)
+  (cd "$FLUTTER_APP" && flutter build ios --release --no-codesign --no-tree-shake-icons)
   log "iOS build complete. Open Xcode to archive and distribute."
 }
 
 deploy_flutter_macos() {
   flutter_gate
   log "Building Flutter macOS (release)..."
-  (cd "$FLUTTER_APP" && flutter build macos --release)
+  (cd "$FLUTTER_APP" && flutter build macos --release --no-tree-shake-icons)
   log "macOS build complete. Sign + notarize before distribution."
 }
 
