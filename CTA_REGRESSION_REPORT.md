@@ -288,26 +288,26 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L574: `onClick={reset}`
 
 ### `src/components/sdt/AICoachScreen.tsx` (14)
-- L132: `<button`
-- L133: `onClick={() => {`
-- L146: `<button`
-- L147: `onClick={() => {`
-- L160: `<button`
-- L161: `onClick={() => {`
-- L179: `<button`
-- L180: `onClick={() => {`
-- L210: `<button`
-- L211: `onClick={handleSubmitQuestion}`
-- L290: `<button`
-- L291: `onClick={handleSubmitExplainBack}`
-- L302: `<button`
-- L303: `onClick={() => {`
+- L130: `<button`
+- L131: `onClick={() => {`
+- L144: `<button`
+- L145: `onClick={() => {`
+- L158: `<button`
+- L159: `onClick={() => {`
+- L177: `<button`
+- L178: `onClick={() => {`
+- L208: `<button`
+- L209: `onClick={handleSubmitQuestion}`
+- L270: `<button`
+- L271: `onClick={handleSubmitExplainBack}`
+- L282: `<button`
+- L283: `onClick={() => {`
 
 ### `src/components/sdt/LearningPathMap.tsx` (4)
-- L191: `<button`
-- L192: `onClick={onToggle}`
-- L262: `<button`
-- L263: `onClick={(e) => {`
+- L196: `<button`
+- L197: `onClick={onToggle}`
+- L267: `<button`
+- L268: `onClick={(e) => {`
 
 ### `src/components/sdt/ReflectionJournal.tsx` (7)
 - L164: `<button`

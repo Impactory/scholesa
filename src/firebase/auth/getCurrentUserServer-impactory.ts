@@ -5,8 +5,9 @@ import { cookies } from 'next/headers';
 
 export async function getCurrentUserServer() {
   const auth = getAuth(admin.app());
-  
-  const sessionCookie = cookies().get('__session')?.value;
+
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('__session')?.value;
 
   if (!sessionCookie) {
     return null;

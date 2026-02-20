@@ -116,6 +116,7 @@ export function LearningPathMap({
             unit={unit}
             isExpanded={expandedUnits.has(unit.unitId)}
             onToggle={() => toggleUnit(unit.unitId)}
+            onTrackInteraction={trackInteraction}
             onSelectMission={onSelectMission}
             isFirst={idx === 0}
             isLast={idx === path.length - 1}
@@ -153,7 +154,10 @@ interface UnitCardProps {
   unit: LearningPathProgress;
   isExpanded: boolean;
   onToggle: () => void;
-  onTrackInteraction?: (eventName: string, metadata?: Record<string, unknown>) => void;
+  onTrackInteraction?: (
+    eventName: 'page_viewed' | 'feature_discovered' | 'help_accessed',
+    metadata?: Record<string, any>
+  ) => void;
   onSelectMission?: (missionId: string) => void;
   isFirst: boolean;
   isLast: boolean;
@@ -163,6 +167,7 @@ function UnitCard({
   unit,
   isExpanded,
   onToggle,
+  onTrackInteraction,
   onSelectMission,
   isFirst: _isFirst,
   isLast
@@ -285,7 +290,6 @@ function UnitCard({
                   <div
                     key={skillId}
                     className="flex items-center gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-lg"
-                onTrackInteraction={trackInteraction}
                   >
                     <TrophyIcon className="w-4 h-4" />
                     <span className="font-medium">Skill {skillId}</span>

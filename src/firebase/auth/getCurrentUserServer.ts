@@ -3,7 +3,8 @@ import { getAdminAuth } from '@/src/firebase/admin-init';
 import { cookies } from 'next/headers';
 
 export async function getCurrentUserServer() {
-  const sessionCookie = cookies().get('__session')?.value;
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('__session')?.value;
 
   if (!sessionCookie) {
     return null;
