@@ -16,6 +16,8 @@ Scope: Install/Upgrade, Config, CI/CD, Rollback, Monitoring/Alert
 - ✅ Added deploy-time Node 22 preflight enforcement in `scripts/deploy.sh`.
 - ✅ Added env hygiene guard (`scripts/check-env-hygiene.sh`) and wired into `pre-commit` + `pre-commit.sh`.
 - ✅ Removed tracked `/.env.production` and replaced with `/.env.production.example` template.
+- ✅ Verified live `firebase deploy --only functions` on Node 22 runtime (`studio-3328096157-e3f79`) completed successfully.
+- ℹ️ Observed one transient `503` during `processCheckout` update, followed by successful completion in the same deploy run.
 
 ---
 
