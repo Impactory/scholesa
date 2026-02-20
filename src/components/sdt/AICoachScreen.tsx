@@ -58,11 +58,9 @@ export function AICoachScreen({
 
       const request: AICoachRequest = {
         mode,
-        studentQuestion: question,
-        context: {
-          missionId,
-          sprintId: sprintSessionId
-        }
+        studentInput: question,
+        missionId,
+        sessionOccurrenceId: sprintSessionId,
       };
 
       const aiResponse = await sdtMotivation.requestAICoach(learnerId, siteId, request);
