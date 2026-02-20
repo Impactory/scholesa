@@ -201,15 +201,38 @@ async function main() {
   }
 
   const parentIdsByLearner = new Map();
+  const childIdsByParent = new Map();
   for (const link of parentLinks) {
     if (!parentIdsByLearner.has(link.student_user_id)) parentIdsByLearner.set(link.student_user_id, []);
     parentIdsByLearner.get(link.student_user_id).push(link.parent_user_id);
+    if (!childIdsByParent.has(link.parent_user_id)) childIdsByParent.set(link.parent_user_id, []);
+    childIdsByParent.get(link.parent_user_id).push(link.student_user_id);
     writer.set(db.collection('parentLinks').doc(link.parent_link_id), {
       parentUserId: link.parent_user_id,
       studentUserId: link.student_user_id,
       relationship: link.relationship,
       visibility: link.visibility,
       createdAt: now,
+    });
+  }
+
+  const educatorSessions = new Map();
+  for (const section of sectionById.values()) {
+    for (const eduId of section.educatorIds || []) {
+      if (!educatorSessions.has(eduId)) educatorSessions.set(eduId, new Set());
+      educatorSessions.get(eduId).add(section.id);
+    }
+  }
+
+  const learnerSessions = new Map();
+  const educatorLearners = new Map();
+  for (const enr of enrollments) {
+    if (!learnerSessions.has(enr.user_id)) learnerSessions.set(enr.user_id, new Set());
+    learnerSessions.get(enr.user_id).add(enr.section_id);
+    const session = sectionById.get(enr.section_id);
+    (session?.educatorIds || []).forEach((eduId) => {
+      if (!educatorLearners.has(eduId)) educatorLearners.set(eduId, new Set());
+      educatorLearners.get(eduId).add(enr.user_id);
     });
   }
 
@@ -235,6 +258,14 @@ async function main() {
     };
     if (role === 'learner') {
       userDoc.parentIds = parentIds.length ? parentIds : [];
+      userDoc.enrolledSessionIds = Array.from(learnerSessions.get(user.user_id) || []);
+    }
+    if (role === 'parent') {
+      userDoc.childIds = Array.from(childIdsByParent.get(user.user_id) || []);
+    }
+    if (role === 'educator') {
+      userDoc.taughtSessionIds = Array.from(educatorSessions.get(user.user_id) || []);
+      userDoc.learnerIds = Array.from(educatorLearners.get(user.user_id) || []);
     }
     writer.set(db.collection('users').doc(user.user_id), userDoc);
     await upsertAuthUser({
