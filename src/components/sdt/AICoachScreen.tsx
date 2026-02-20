@@ -235,27 +235,9 @@ export function AICoachScreen({
             </div>
             <div className="flex-1">
               <p className="font-medium text-gray-900 mb-2">AI Coach says:</p>
-              <p className="text-gray-700 whitespace-pre-wrap">{response.response}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">{response.message}</p>
             </div>
           </div>
-
-          {/* Rubric Alignment (if rubric_check mode) */}
-          {response.rubricAlignment && response.rubricAlignment.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <p className="font-medium text-gray-900">Rubric Check:</p>
-              {response.rubricAlignment.map((item, idx) => (
-                <div key={idx} className="text-sm">
-                  <p className="font-medium text-gray-700">{item.criterion}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-gray-600">Current: {item.currentLevel}</span>
-                    <span>→</span>
-                    <span className="text-indigo-600">Target: {item.targetLevel}</span>
-                  </div>
-                  {item.gap && <p className="text-gray-600 mt-1">Gap: {item.gap}</p>}
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Suggested Next Steps */}
           {response.suggestedNextSteps && response.suggestedNextSteps.length > 0 && (
