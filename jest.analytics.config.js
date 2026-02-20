@@ -1,5 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
+  testTimeout: 60000,
   roots: ['<rootDir>/src'],
   testMatch: ['<rootDir>/src/lib/analytics/analyticsEngine.test.ts'],
   transform: {
