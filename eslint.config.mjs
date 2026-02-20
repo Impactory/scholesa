@@ -55,6 +55,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ["next-env.d.ts"],
+    rules: {
+      quotes: "off",
+    },
+  },
+  {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/test/**/*.ts", "**/test/**/*.js"],
     languageOptions: {
       globals: {
