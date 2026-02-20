@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 WEB_EXTS = {".tsx", ".ts", ".jsx", ".js"}
 DART_EXTS = {".dart"}
+OUTPUT_REPORT = "CTA_FULL_INVENTORY.md"
 
 
 def collect_entries(base: Path, exts: set[str], pattern: re.Pattern[str]) -> list[tuple[str, list[tuple[int, str]]]]:
@@ -73,20 +74,34 @@ def is_route_surface_file(path: Path) -> bool:
 
 def main() -> None:
     web_pattern = re.compile(r"(onClick=|<button|<a href=|Link href=)")
+    web_quick_action_pattern = re.compile(r"Quick Action|Quick Actions|quick[_\s-]?action")
     flutter_pattern = re.compile(
         r"(ElevatedButton\(|TextButton\(|OutlinedButton\(|FilledButton\(|IconButton\(|FloatingActionButton\(|InkWell\(|GestureDetector\(|ListTile\()"
     )
+    flutter_quick_action_pattern = re.compile(r"Quick Action|Quick Actions|quick[_\s-]?action")
 
     web_entries = []
     for folder in ("app", "src"):
         web_entries.extend(collect_entries(ROOT / folder, WEB_EXTS, web_pattern))
 
+    web_quick_action_entries = []
+    for folder in ("app", "src"):
+        web_quick_action_entries.extend(
+            collect_entries(ROOT / folder, WEB_EXTS, web_quick_action_pattern)
+        )
+
     excluded_web_entries = [
         entry for entry in web_entries if entry[0] in NON_ACTIONABLE_WEB_PATHS
     ]
     web_entries = [entry for entry in web_entries if entry[0] not in NON_ACTIONABLE_WEB_PATHS]
+    web_quick_action_entries = [
+        entry for entry in web_quick_action_entries if entry[0] not in NON_ACTIONABLE_WEB_PATHS
+    ]
 
     flutter_entries = collect_entries(ROOT / "apps/empire_flutter/app/lib", DART_EXTS, flutter_pattern)
+    flutter_quick_action_entries = collect_entries(
+        ROOT / "apps/empire_flutter/app/lib", DART_EXTS, flutter_quick_action_pattern
+    )
 
     web_telemetry_patterns = [
         re.compile(r"useTelemetry|usePageViewTracking|useAutonomyTracking|useCompetenceTracking|useBelongingTracking|useAITracking"),
@@ -110,11 +125,25 @@ def main() -> None:
         has_telemetry = file_has_any_pattern(absolute_path, web_telemetry_patterns)
         web_coverage.append((relative_path, has_telemetry))
 
+    web_quick_action_paths = {path for path, _ in web_quick_action_entries}
+    web_quick_action_coverage: list[tuple[str, bool]] = []
+    for relative_path in sorted(web_quick_action_paths):
+        absolute_path = ROOT / relative_path
+        has_telemetry = file_has_any_pattern(absolute_path, web_telemetry_patterns)
+        web_quick_action_coverage.append((relative_path, has_telemetry))
+
     flutter_coverage: list[tuple[str, bool]] = []
     for relative_path, _ in sorted(flutter_entries):
         absolute_path = ROOT / relative_path
         has_telemetry = file_has_any_pattern(absolute_path, flutter_telemetry_patterns)
         flutter_coverage.append((relative_path, has_telemetry))
+
+    flutter_quick_action_paths = {path for path, _ in flutter_quick_action_entries}
+    flutter_quick_action_coverage: list[tuple[str, bool]] = []
+    for relative_path in sorted(flutter_quick_action_paths):
+        absolute_path = ROOT / relative_path
+        has_telemetry = file_has_any_pattern(absolute_path, flutter_telemetry_patterns)
+        flutter_quick_action_coverage.append((relative_path, has_telemetry))
 
     blocker_scans = {
         "Placeholder links (`href=\"#\"`)": scan_pattern(ROOT / "app", WEB_EXTS, re.compile(r'href="#"')),
@@ -142,7 +171,7 @@ def main() -> None:
             excluded_blocker_scans[label] = excluded_findings
 
     lines: list[str] = []
-    lines.append("# CTA Regression Inventory")
+    lines.append("# CTA Full Inventory & Regression Source")
     lines.append("")
     lines.append("Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/app/lib/`.")
     lines.append("")
@@ -159,6 +188,14 @@ def main() -> None:
     lines.append(f"- Flutter files with CTA markers: **{len(flutter_entries)}**")
     lines.append(f"- Web CTA marker instances: **{sum(len(h) for _, h in web_entries)}**")
     lines.append(f"- Flutter CTA marker instances: **{sum(len(h) for _, h in flutter_entries)}**")
+    lines.append(f"- Web files with quick-action markers: **{len(web_quick_action_entries)}**")
+    lines.append(f"- Flutter files with quick-action markers: **{len(flutter_quick_action_entries)}**")
+    lines.append(
+        f"- Web quick-action marker instances: **{sum(len(h) for _, h in web_quick_action_entries)}**"
+    )
+    lines.append(
+        f"- Flutter quick-action marker instances: **{sum(len(h) for _, h in flutter_quick_action_entries)}**"
+    )
     lines.append("")
     lines.append("## Blocker Scan")
     lines.append("")
@@ -179,6 +216,42 @@ def main() -> None:
     lines.append(
         f"- Flutter CTA files with direct telemetry import/calls: **{flutter_with_telemetry}/{len(flutter_coverage)}**"
     )
+    lines.append("")
+
+    web_quick_action_with_telemetry = sum(1 for _, has in web_quick_action_coverage if has)
+    flutter_quick_action_with_telemetry = sum(
+        1 for _, has in flutter_quick_action_coverage if has
+    )
+    lines.append("## Quick Actions Coverage")
+    lines.append("")
+    lines.append(
+        "- Web quick-action files with direct telemetry hooks/calls: "
+        f"**{web_quick_action_with_telemetry}/{len(web_quick_action_coverage)}**"
+    )
+    lines.append(
+        "- Flutter quick-action files with direct telemetry import/calls: "
+        f"**{flutter_quick_action_with_telemetry}/{len(flutter_quick_action_coverage)}**"
+    )
+    lines.append("")
+
+    lines.append("### Web Quick Actions Coverage Matrix")
+    lines.append("")
+    if web_quick_action_coverage:
+        for path, has in web_quick_action_coverage:
+            status = "covered" if has else "missing"
+            lines.append(f"- `{path}`: **{status}**")
+    else:
+        lines.append("- _none detected_")
+    lines.append("")
+
+    lines.append("### Flutter Quick Actions Coverage Matrix")
+    lines.append("")
+    if flutter_quick_action_coverage:
+        for path, has in flutter_quick_action_coverage:
+            status = "covered" if has else "missing"
+            lines.append(f"- `{path}`: **{status}**")
+    else:
+        lines.append("- _none detected_")
     lines.append("")
 
     lines.append("### Web Coverage Matrix")
@@ -245,8 +318,32 @@ def main() -> None:
             lines.append(f"- ... {len(hits) - 20} more")
         lines.append("")
 
-    out_path = ROOT / "CTA_REGRESSION_REPORT.md"
-    out_path.write_text("\n".join(lines) + "\n")
+    lines.append("## Web Quick Actions Files")
+    lines.append("")
+    for path, hits in sorted(web_quick_action_entries):
+        lines.append(f"### `{path}` ({len(hits)})")
+        for line_number, snippet in hits[:20]:
+            lines.append(f"- L{line_number}: `{snippet}`")
+        if len(hits) > 20:
+            lines.append(f"- ... {len(hits) - 20} more")
+        lines.append("")
+
+    lines.append("## Flutter Quick Actions Files")
+    lines.append("")
+    for path, hits in sorted(flutter_quick_action_entries):
+        lines.append(f"### `{path}` ({len(hits)})")
+        for line_number, snippet in hits[:20]:
+            lines.append(f"- L{line_number}: `{snippet}`")
+        if len(hits) > 20:
+            lines.append(f"- ... {len(hits) - 20} more")
+        lines.append("")
+
+    out_path = ROOT / OUTPUT_REPORT
+    legacy_path = ROOT / "CTA_REGRESSION_REPORT.md"
+
+    rendered = "\n".join(lines) + "\n"
+    out_path.write_text(rendered)
+    legacy_path.write_text(rendered)
     print(out_path.as_posix())
 
 

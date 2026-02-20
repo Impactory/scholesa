@@ -1,11 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Scholesa icon">
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Scholesa logo">
   <defs>
-    <linearGradient id="g1" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop stop-color="#4f46e5" offset="0%"/>
-      <stop stop-color="#0ea5e9" offset="50%"/>
-      <stop stop-color="#22d3ee" offset="100%"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#10B981"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g1)"/>
-  <path fill="#0f172a" d="M18 44c2.5 2.2 6.4 3.8 11.1 3.8 6.6 0 11-3.2 11-8.4 0-4.2-2.7-6.5-8.3-7.8l-2.9-.6c-2.8-.6-4-1.5-4-3 0-1.8 1.8-3 4.8-3 2.5 0 4.9.8 7 2.4l4-5.3C37.6 19.7 34 18 29.7 18c-6.1 0-10.4 3.4-10.4 8.5 0 4.3 2.7 6.8 8.5 8.1l2.7.6c2.8.6 4 1.5 4 3.1 0 1.8-1.8 3-4.8 3-3.1 0-5.8-1-8.3-3.1z"/>
+
+  <rect x="12" y="12" width="232" height="232" rx="52" fill="url(#bg)"/>
+
+  <g>
+    <circle cx="128" cy="128" r="62" fill="none" stroke="#FFFFFF" stroke-width="12"/>
+    <path d="M128 72 L166 94 L166 138 L128 160 L90 138 L90 94 Z"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="10"
+          stroke-linejoin="round"/>
+    <path d="M128 94 L128 138 M90 116 L128 138 L166 116"
+          fill="none"
+          stroke="#FFFFFF"
+          stroke-width="8"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+    <circle cx="66" cy="128" r="8" fill="#38BDF8"/>
+    <circle cx="190" cy="128" r="8" fill="#A78BFA"/>
+    <circle cx="128" cy="190" r="8" fill="#34D399"/>
+  </g>
 </svg>
