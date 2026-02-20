@@ -1,6 +1,12 @@
 # 32_GOOGLE_CLASSROOM_QA_SCRIPT.md
 QA script for Classroom integration (Phase 1 + 2)
 
+## UAT status snapshot (2026-02-20)
+
+- Core platform is live and deployed (functions/rules/storage + Cloud Run web).
+- This Classroom integration QA script remains **required manual UAT** and was **not fully re-executed** in the latest live-only core regression pass.
+- Treat all steps below as the active acceptance checklist for Google Classroom before enabling broad production rollout.
+
 ## Test accounts
 - Teacher account (Classroom teacher)
 - Student account (Classroom student)

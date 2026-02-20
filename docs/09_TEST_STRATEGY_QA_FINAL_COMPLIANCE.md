@@ -2,6 +2,23 @@
 
 This is the final QA script used before any release.
 
+## Current UAT/QA status (2026-02-20)
+
+Latest live-only regression run (no emulators) completed with:
+- ✅ `npm run lint`
+- ✅ `npm run build`
+- ✅ `npm test`
+- ✅ `flutter analyze`
+- ✅ `flutter test` (157/157)
+- ✅ `flutter build web --release --no-tree-shake-icons --no-wasm-dry-run`
+- ✅ `flutter build macos --release --no-tree-shake-icons`
+- ✅ `flutter build ios --release --no-codesign --no-tree-shake-icons`
+
+Security/test signal updates:
+- ✅ `SECURITY_FINDING_001` remediated by removing root `.env.local`.
+- ✅ Expected simulated sync-failure test logging was quieted; tests now run cleanly.
+- ⚠️ iOS still shows expected `--no-codesign` warning when building unsigned artifacts.
+
 ## Automated checks (must pass)
 Flutter:
 - flutter analyze
