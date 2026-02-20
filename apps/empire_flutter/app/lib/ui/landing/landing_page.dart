@@ -137,15 +137,24 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       ),
       child: Row(
         children: <Widget>[
-          // Logo
-          const ScholesaLogoSmall(size: 44),
-          const SizedBox(width: 12),
-          const Text(
-            'Scholesa',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const ScholesaLogoSmall(size: 44),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    'Scholesa',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isWide ? 24 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const Spacer(),
@@ -161,6 +170,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           // CTA Buttons
           TextButton(
             onPressed: () => context.go('/login'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: const Text(
               'Sign In',
               style: TextStyle(
@@ -217,17 +231,20 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               color: ScholesaColors.primary.withValues(alpha: 0.3),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.auto_awesome, size: 16, color: ScholesaColors.primary),
-              SizedBox(width: 8),
-              Text(
-                'Education 2.0 Platform',
-                style: TextStyle(
-                  color: ScholesaColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              const Icon(Icons.auto_awesome, size: 16, color: ScholesaColors.primary),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Education 2.0 Platform',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: ScholesaColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
