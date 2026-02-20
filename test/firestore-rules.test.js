@@ -6,7 +6,7 @@
  */
 
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, setLogLevel } = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 
@@ -22,6 +22,7 @@ const learnerUser = { uid: 'learner-1', email: 'learner@example.com' };
 const otherSiteUser = { uid: 'other-site-user', email: 'other@site2.com' };
 
 beforeAll(async () => {
+  setLogLevel('error');
   const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
   const [host, portRaw] = emulatorHost.split(':');
   const port = Number(portRaw || '8080');
