@@ -1,6 +1,12 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  getFirestore,
+  connectFirestoreEmulator,
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
@@ -30,6 +36,12 @@ export const db = typeof window !== 'undefined'
       }),
     })
   : getFirestore(app);
+
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+  const [host, portRaw] = process.env.FIRESTORE_EMULATOR_HOST.split(':');
+  const port = Number(portRaw || '8080');
+  connectFirestoreEmulator(db, host, port);
+}
 
 export const firestore = db;
 export const storage = getStorage(app);
