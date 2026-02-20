@@ -231,16 +231,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               color: ScholesaColors.primary.withValues(alpha: 0.3),
             ),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.auto_awesome, size: 16, color: ScholesaColors.primary),
-              const SizedBox(width: 8),
+              Icon(Icons.auto_awesome, size: 16, color: ScholesaColors.primary),
+              SizedBox(width: 8),
               Flexible(
                 child: Text(
                   'Education 2.0 Platform',
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: ScholesaColors.primary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
