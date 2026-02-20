@@ -87,7 +87,7 @@ beforeEach(async () => {
     });
     
     // Create test attendance record
-    await setDoc(doc(db, 'attendance', 'att-1'), {
+    await setDoc(doc(db, 'attendanceRecords', 'att-1'), {
       siteId: 'site1',
       occurrenceId: 'occ-1',
       userId: learnerUser.uid,
@@ -163,22 +163,22 @@ describe('Sites Collection', () => {
 describe('Attendance Collection', () => {
   test('learner can read their own attendance', async () => {
     const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
-    await assertSucceeds(getDoc(doc(db, 'attendance', 'att-1')));
+    await assertSucceeds(getDoc(doc(db, 'attendanceRecords', 'att-1')));
   });
 
   test('educator can read any attendance', async () => {
     const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
-    await assertSucceeds(getDoc(doc(db, 'attendance', 'att-1')));
+    await assertSucceeds(getDoc(doc(db, 'attendanceRecords', 'att-1')));
   });
 
   test('parent cannot read attendance directly', async () => {
     const db = testEnv.authenticatedContext(parentUser.uid).firestore();
-    await assertFails(getDoc(doc(db, 'attendance', 'att-1')));
+    await assertFails(getDoc(doc(db, 'attendanceRecords', 'att-1')));
   });
 
   test('only educators can write attendance', async () => {
     const educatorDb = testEnv.authenticatedContext(educatorUser.uid).firestore();
-    await assertSucceeds(setDoc(doc(educatorDb, 'attendance', 'att-2'), {
+    await assertSucceeds(setDoc(doc(educatorDb, 'attendanceRecords', 'att-2'), {
       siteId: 'site1',
       occurrenceId: 'occ-1',
       userId: learnerUser.uid,
@@ -186,7 +186,7 @@ describe('Attendance Collection', () => {
     }));
 
     const learnerDb = testEnv.authenticatedContext(learnerUser.uid).firestore();
-    await assertFails(setDoc(doc(learnerDb, 'attendance', 'att-3'), {
+    await assertFails(setDoc(doc(learnerDb, 'attendanceRecords', 'att-3'), {
       siteId: 'site1',
       occurrenceId: 'occ-1',
       userId: learnerUser.uid,
