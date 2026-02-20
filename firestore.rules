@@ -29,6 +29,10 @@ service cloud.firestore {
       return hasRole('hq');
     }
 
+    function isAdminOrHQ() {
+      return hasRole('admin') || isHQ();
+    }
+
     // --- Collection Rules ---
 
     // Users: 

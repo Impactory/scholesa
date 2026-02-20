@@ -7,7 +7,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": ".next",
+    "public": "apps/empire_flutter/app/build/web",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -16,7 +16,7 @@
     "rewrites": [
       {
         "source": "**",
-        "function": "nextServer"
+        "destination": "/index.html"
       }
     ]
   },

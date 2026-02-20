@@ -77,6 +77,9 @@ deploy_rules() {
 }
 
 deploy_hosting() {
+  log "Building Flutter web (release)..."
+  (cd "$FLUTTER_APP" && flutter build web --release)
+
   log "Deploying Firebase Hosting..."
   (cd "$REPO_ROOT" && firebase deploy --only hosting)
   log "Hosting deployed ✓"
@@ -87,12 +90,9 @@ deploy_flutter_web() {
   log "Building Flutter web (release)..."
   (cd "$FLUTTER_APP" && flutter build web --release)
   log "Flutter web build complete. Output: $FLUTTER_APP/build/web"
-
-  # Copy to Firebase hosting public dir if configured
-  if [ -d "$FLUTTER_APP/build/web" ]; then
-    log "You can serve this via: cd $FLUTTER_APP/build/web && python3 -m http.server 8080"
-    log "Or configure firebase.json hosting.public to point to Flutter web output."
-  fi
+  log "Deploying Firebase Hosting..."
+  (cd "$REPO_ROOT" && firebase deploy --only hosting)
+  log "Hosting deployed ✓"
 }
 
 deploy_flutter_ios() {
