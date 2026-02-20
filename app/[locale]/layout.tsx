@@ -11,13 +11,14 @@ export const metadata: Metadata = {
   description: 'Future Skills Academy',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-  params: { locale },
+  params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
   return (
     <html lang={locale}>
       <body className={inter.className}>

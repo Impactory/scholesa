@@ -2510,7 +2510,7 @@ export const healthCheck = onRequest({
     }
     
     // Verify Auth connectivity (don't fail if user doesn't exist)
-    let authStatus = 'ok';
+    const authStatus = 'ok';
     try {
       await admin.auth().getUser('health-check-dummy');
     } catch {
@@ -3900,7 +3900,7 @@ export const generateMotivationNudges = onCall(async (request: CallableRequest<{
   const { siteId, learnerIds } = request.data;
 
   // Get learners to process
-  let learnersQuery: FirebaseFirestore.Query = admin.firestore()
+  const learnersQuery: FirebaseFirestore.Query = admin.firestore()
     .collection(USERS_COLLECTION)
     .where('role', '==', 'learner')
     .where('siteIds', 'array-contains', siteId);
@@ -4385,7 +4385,7 @@ function generateInsights(
       description: `This learner responds particularly well to ${topMotivator[0]}-based approaches.`,
       confidence: topMotivator[1],
       basedOn: ['educator feedback patterns'],
-      suggestedActions: [`Use ${topMotivator[0]}-focused activities`, `Leverage this in challenging moments`],
+      suggestedActions: [`Use ${topMotivator[0]}-focused activities`, 'Leverage this in challenging moments'],
       createdAt: now,
     });
   }

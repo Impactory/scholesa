@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 
-export default function DashboardRedirect({ params }: { params: { locale: string } }) {
+export default function DashboardRedirect() {
   const { user, profile, loading } = useAuthContext();
   const router = useRouter();
-  const locale = params.locale || 'en';
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale || 'en';
 
   useEffect(() => {
     if (loading) return;
