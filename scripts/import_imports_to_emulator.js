@@ -217,23 +217,44 @@ async function main() {
   }
 
   const educatorSessions = new Map();
+  const educatorSiteIds = new Map();
   for (const section of sectionById.values()) {
     for (const eduId of section.educatorIds || []) {
       if (!educatorSessions.has(eduId)) educatorSessions.set(eduId, new Set());
       educatorSessions.get(eduId).add(section.id);
+      if (!educatorSiteIds.has(eduId)) educatorSiteIds.set(eduId, new Set());
+      if (section.siteId) educatorSiteIds.get(eduId).add(section.siteId);
     }
   }
 
   const learnerSessions = new Map();
+  const learnerSiteIds = new Map();
   const educatorLearners = new Map();
   for (const enr of enrollments) {
     if (!learnerSessions.has(enr.user_id)) learnerSessions.set(enr.user_id, new Set());
     learnerSessions.get(enr.user_id).add(enr.section_id);
     const session = sectionById.get(enr.section_id);
+    if (session?.siteId) {
+      if (!learnerSiteIds.has(enr.user_id)) learnerSiteIds.set(enr.user_id, new Set());
+      learnerSiteIds.get(enr.user_id).add(session.siteId);
+    }
     (session?.educatorIds || []).forEach((eduId) => {
       if (!educatorLearners.has(eduId)) educatorLearners.set(eduId, new Set());
       educatorLearners.get(eduId).add(enr.user_id);
     });
+  }
+
+  const parentSessionIds = new Map();
+  const parentSiteIds = new Map();
+  for (const [parentId, childIds] of childIdsByParent.entries()) {
+    const sessions = new Set();
+    const sites = new Set();
+    for (const childId of childIds) {
+      (learnerSessions.get(childId) || []).forEach((sid) => sessions.add(sid));
+      (learnerSiteIds.get(childId) || []).forEach((site) => sites.add(site));
+    }
+    parentSessionIds.set(parentId, sessions);
+    parentSiteIds.set(parentId, sites);
   }
 
   for (const user of users) {
@@ -246,12 +267,19 @@ async function main() {
       return 'hq';
     })();
     const parentIds = parentIdsByLearner.get(user.user_id) || [];
+    const defaultSiteIds = siteIds.length ? siteIds : [primarySiteId];
+    const roleSiteIds = (() => {
+      if (role === 'learner') return Array.from(learnerSiteIds.get(user.user_id) || []);
+      if (role === 'parent') return Array.from(parentSiteIds.get(user.user_id) || []);
+      if (role === 'educator') return Array.from(educatorSiteIds.get(user.user_id) || []);
+      return defaultSiteIds;
+    })();
     const userDoc = {
       uid: user.user_id,
       email: user.email,
       displayName: `${user.first_name} ${user.last_name}`.trim() || user.email,
       role,
-      siteIds: siteIds.length ? siteIds : [primarySiteId],
+      siteIds: roleSiteIds.length ? roleSiteIds : defaultSiteIds,
       createdAt: now,
       updatedAt: now,
       status: user.status,
@@ -262,10 +290,13 @@ async function main() {
     }
     if (role === 'parent') {
       userDoc.childIds = Array.from(childIdsByParent.get(user.user_id) || []);
+      userDoc.childSessionIds = Array.from(parentSessionIds.get(user.user_id) || []);
+      userDoc.childSiteIds = Array.from(parentSiteIds.get(user.user_id) || []);
     }
     if (role === 'educator') {
       userDoc.taughtSessionIds = Array.from(educatorSessions.get(user.user_id) || []);
       userDoc.learnerIds = Array.from(educatorLearners.get(user.user_id) || []);
+      userDoc.taughtSiteIds = Array.from(educatorSiteIds.get(user.user_id) || []);
     }
     writer.set(db.collection('users').doc(user.user_id), userDoc);
     await upsertAuthUser({
