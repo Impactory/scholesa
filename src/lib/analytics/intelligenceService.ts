@@ -438,11 +438,6 @@ Be specific and evidence-based. Return only valid JSON.
     if (event.startsWith('session_')) {
       return 'engagement';
     }
-
-    private static isExpectedExternalAIError(error: unknown): boolean {
-      const message = (error as { message?: string } | null)?.message ?? '';
-      return message.includes('Gemini API error: Bad Request');
-    }
     
     // Performance events
     if (['page_load_time', 'api_error', 'client_error', 'slow_query_detected'].includes(event)) {
@@ -451,6 +446,11 @@ Be specific and evidence-based. Return only valid JSON.
     
     // Default to navigation
     return 'navigation';
+  }
+
+  private static isExpectedExternalAIError(error: unknown): boolean {
+    const message = (error as { message?: string } | null)?.message ?? '';
+    return message.includes('Gemini API error: Bad Request');
   }
 }
 
