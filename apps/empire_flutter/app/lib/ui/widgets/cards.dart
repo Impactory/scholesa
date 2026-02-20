@@ -83,18 +83,25 @@ class GradientCard extends StatelessWidget {
                         ),
                         const Spacer(),
                         if (badgeText != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              badgeText!,
-                              style: TextStyle(
-                                color: isEnabled ? Colors.white : ScholesaColors.textMuted,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  badgeText!,
+                                  style: TextStyle(
+                                    color: isEnabled ? Colors.white : ScholesaColors.textMuted,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ),
@@ -188,68 +195,84 @@ class StatCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: ScholesaColors.border),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final bool compact = constraints.maxHeight < 90 || constraints.maxWidth < 130;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 20),
-                  ),
-                  if (trend != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: (isPositive ? ScholesaColors.success : ScholesaColors.error)
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Container(
+                        padding: EdgeInsets.all(compact ? 6 : 8),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(icon, color: color, size: compact ? 16 : 20),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(
-                            isPositive ? Icons.trending_up : Icons.trending_down,
-                            size: 12,
-                            color: isPositive ? ScholesaColors.success : ScholesaColors.error,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            trend!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isPositive ? ScholesaColors.success : ScholesaColors.error,
+                      if (trend != null)
+                        Flexible(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: (isPositive ? ScholesaColors.success : ScholesaColors.error)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(
+                                  isPositive ? Icons.trending_up : Icons.trending_down,
+                                  size: compact ? 10 : 12,
+                                  color: isPositive ? ScholesaColors.success : ScholesaColors.error,
+                                ),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    trend!,
+                                    style: TextStyle(
+                                      fontSize: compact ? 10 : 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isPositive ? ScholesaColors.success : ScholesaColors.error,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: compact ? 6 : 10),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 20 : 28,
+                      fontWeight: FontWeight.bold,
+                      color: ScholesaColors.textPrimary,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 13,
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
                 ],
-              ),
-              const Spacer(),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: ScholesaColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: ScholesaColors.textSecondary,
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

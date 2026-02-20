@@ -5,9 +5,10 @@ Scope: Key screens/flows, visual checks, navigation, forms (Flutter app)
 
 ## Executive Summary
 
-- Overall status: **PASS (coverage-limited for pixel-level visual diffing)**
-- Automated regression tests: **145 passed, 0 failed**
+- Overall status: **PASS**
+- Automated regression tests (existing suite): **145 passed, 0 failed**
 - Targeted UI/auth/navigation tests: **22 passed, 0 failed**
+- New golden UI tests: **4 passed, 0 failed**
 - High-severity UI blockers: **0**
 
 ---
@@ -28,22 +29,30 @@ Scope: Key screens/flows, visual checks, navigation, forms (Flutter app)
 
 ---
 
-## 2) Visual Checks — PASS (static/code-level)
+## 2) Visual Checks — PASS
 
 ### Checked
 - Login page uses `ScholesaColors` tokens and shared themed styles.
 - Landing and dashboard render complete scaffolded UI sections and role card structures.
 - No render-time test failures in widget smoke test.
+- Golden baselines created and passing for landing/login on mobile + desktop breakpoints.
+- Resolved mobile overflow issues in `LandingPage` navbar badge layout to support narrow-screen rendering.
 
 ### Evidence
 - Login theme usage and layout: `lib/ui/auth/login_page.dart`
 - Landing layout sections and CTA placement: `lib/ui/landing/landing_page.dart`
 - Dashboard card rendering structure: `lib/dashboards/role_dashboard.dart`
 - Widget smoke test passing: `test/widget_test.dart`
+- Golden tests: `test/ui_golden_test.dart`
+- Golden image baselines:
+  - `test/goldens/landing_mobile.png`
+  - `test/goldens/landing_desktop.png`
+  - `test/goldens/login_mobile.png`
+  - `test/goldens/login_desktop.png`
 
 ### Coverage note
-- No golden/snapshot visual tests are present for pixel-level regression detection.
-- This pass confirms structural and behavior-level UI stability, not screenshot-level deltas.
+- Golden coverage now exists for landing/login key surfaces.
+- `RoleDashboard` and role-specific module screens do not yet have golden baselines.
 
 ---
 
@@ -94,16 +103,19 @@ Scope: Key screens/flows, visual checks, navigation, forms (Flutter app)
   - `test/router_redirect_test.dart`
   - `test/auth_service_test.dart`
   - Result: **22 passed, 0 failed**
+- Golden UI tests:
+  - `test/ui_golden_test.dart`
+  - Result: **4 passed, 0 failed**
 
 ---
 
 ## Residual Risk / Follow-up
 
 1. **Pixel-level visual drift risk (low-medium)**
-   - Add Flutter golden tests for:
-     - `LandingPage` (mobile + desktop breakpoints)
-     - `LoginPage` (idle, error, loading states)
+   - Extend golden tests to:
+     - `LoginPage` error and loading states
      - `RoleDashboard` per role card set
+     - Selected role module entry screens
 
 2. **Flow-level UI automation gap (medium)**
    - Add widget/integration tests for:
