@@ -12,8 +12,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest --runInBand --passWithNoTests",
-    "test:integration:rules": "firebase emulators:exec --only firestore \"npx jest --runInBand --testPathIgnorePatterns=\\\"$^\\\" test/firestore-rules.test.js\"",
-    "test:integration:analytics": "jest --runInBand --testPathIgnorePatterns=\"$^\" src/lib/analytics/analyticsEngine.test.ts",
+    "test:integration:rules": "firebase emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
+    "test:integration:analytics": "jest --runInBand --config jest.analytics.config.js",
     "test:cta-report": "python3 -m unittest scripts/test_cta_report_policy.py",
     "test:cta-report:generate": "npm run test:cta-report && python3 scripts/generate_cta_report.py",
     "test:cta-report:gate": "npm run test:cta-report:generate && python3 scripts/check_cta_report_gate.py"
