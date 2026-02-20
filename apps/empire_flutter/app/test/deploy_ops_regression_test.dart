@@ -481,14 +481,13 @@ void main() {
       // Each of these should be independently deployable:
       // `firebase deploy --only firestore:rules`
       // `firebase deploy --only functions`
-      // `firebase deploy --only hosting`
       // `firebase deploy --only storage`
       expect(firebase.containsKey('firestore'), isTrue,
           reason: 'Firestore config must be present for independent deploy');
       expect(firebase.containsKey('functions'), isTrue,
           reason: 'Functions config must be present for independent deploy');
-      expect(firebase.containsKey('hosting'), isTrue,
-          reason: 'Hosting config must be present for independent deploy');
+      expect(firebase.containsKey('hosting'), isFalse,
+        reason: 'Hosting config should be absent when Cloud Run is the web deploy target');
       expect(firebase.containsKey('storage'), isTrue,
           reason: 'Storage config must be present for independent deploy');
     });
