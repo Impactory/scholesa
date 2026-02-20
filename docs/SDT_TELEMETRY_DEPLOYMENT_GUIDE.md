@@ -84,8 +84,8 @@ npm run start
 # Deploy to Vercel (if using Vercel)
 vercel --prod
 
-# OR deploy to Firebase Hosting
-firebase deploy --only hosting
+# OR deploy to Cloud Run
+./scripts/deploy.sh cloudrun-web
 ```
 
 ### Step 4: Deploy Cloud Functions (If Using Aggregation)

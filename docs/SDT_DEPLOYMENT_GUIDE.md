@@ -111,10 +111,9 @@ gcloud run deploy scholesa-web \
   --allow-unauthenticated
 ```
 
-**Option C: Firebase Hosting**
+**Web deployment standard**
 ```bash
-npm run build
-firebase deploy --only hosting
+./scripts/deploy.sh cloudrun-web
 ```
 
 ---

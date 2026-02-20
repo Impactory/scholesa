@@ -218,17 +218,21 @@ async function main() {
 
   const educatorSessions = new Map();
   const educatorSiteIds = new Map();
+  const educatorCourseIds = new Map();
   for (const section of sectionById.values()) {
     for (const eduId of section.educatorIds || []) {
       if (!educatorSessions.has(eduId)) educatorSessions.set(eduId, new Set());
       educatorSessions.get(eduId).add(section.id);
       if (!educatorSiteIds.has(eduId)) educatorSiteIds.set(eduId, new Set());
       if (section.siteId) educatorSiteIds.get(eduId).add(section.siteId);
+      if (!educatorCourseIds.has(eduId)) educatorCourseIds.set(eduId, new Set());
+      if (section.courseId) educatorCourseIds.get(eduId).add(section.courseId);
     }
   }
 
   const learnerSessions = new Map();
   const learnerSiteIds = new Map();
+  const learnerCourseIds = new Map();
   const educatorLearners = new Map();
   for (const enr of enrollments) {
     if (!learnerSessions.has(enr.user_id)) learnerSessions.set(enr.user_id, new Set());
@@ -238,6 +242,10 @@ async function main() {
       if (!learnerSiteIds.has(enr.user_id)) learnerSiteIds.set(enr.user_id, new Set());
       learnerSiteIds.get(enr.user_id).add(session.siteId);
     }
+    if (session?.courseId) {
+      if (!learnerCourseIds.has(enr.user_id)) learnerCourseIds.set(enr.user_id, new Set());
+      learnerCourseIds.get(enr.user_id).add(session.courseId);
+    }
     (session?.educatorIds || []).forEach((eduId) => {
       if (!educatorLearners.has(eduId)) educatorLearners.set(eduId, new Set());
       educatorLearners.get(eduId).add(enr.user_id);
@@ -246,15 +254,41 @@ async function main() {
 
   const parentSessionIds = new Map();
   const parentSiteIds = new Map();
+  const parentCourseIds = new Map();
+  const missionIdsByCourseId = new Map();
+  for (const mission of missions) {
+    const courseId = courseSessions.find((s) => s.session_id === mission.session_id)?.course_id;
+    if (!courseId) continue;
+    if (!missionIdsByCourseId.has(courseId)) missionIdsByCourseId.set(courseId, new Set());
+    missionIdsByCourseId.get(courseId).add(mission.mission_id);
+  }
+  const parentMissionIds = new Map();
+  const educatorMissionIds = new Map();
+  for (const [educatorId, courseIds] of educatorCourseIds.entries()) {
+    const missionIds = new Set();
+    for (const courseId of courseIds) {
+      (missionIdsByCourseId.get(courseId) || []).forEach((missionId) => missionIds.add(missionId));
+    }
+    educatorMissionIds.set(educatorId, missionIds);
+  }
+
   for (const [parentId, childIds] of childIdsByParent.entries()) {
     const sessions = new Set();
     const sites = new Set();
+    const courses = new Set();
+    const missionIds = new Set();
     for (const childId of childIds) {
       (learnerSessions.get(childId) || []).forEach((sid) => sessions.add(sid));
       (learnerSiteIds.get(childId) || []).forEach((site) => sites.add(site));
+      (learnerCourseIds.get(childId) || []).forEach((courseId) => {
+        courses.add(courseId);
+        (missionIdsByCourseId.get(courseId) || []).forEach((missionId) => missionIds.add(missionId));
+      });
     }
     parentSessionIds.set(parentId, sessions);
     parentSiteIds.set(parentId, sites);
+    parentCourseIds.set(parentId, courses);
+    parentMissionIds.set(parentId, missionIds);
   }
 
   for (const user of users) {
@@ -292,11 +326,15 @@ async function main() {
       userDoc.childIds = Array.from(childIdsByParent.get(user.user_id) || []);
       userDoc.childSessionIds = Array.from(parentSessionIds.get(user.user_id) || []);
       userDoc.childSiteIds = Array.from(parentSiteIds.get(user.user_id) || []);
+      userDoc.childCourseIds = Array.from(parentCourseIds.get(user.user_id) || []);
+      userDoc.childMissionIds = Array.from(parentMissionIds.get(user.user_id) || []);
     }
     if (role === 'educator') {
       userDoc.taughtSessionIds = Array.from(educatorSessions.get(user.user_id) || []);
       userDoc.learnerIds = Array.from(educatorLearners.get(user.user_id) || []);
       userDoc.taughtSiteIds = Array.from(educatorSiteIds.get(user.user_id) || []);
+      userDoc.courseIds = Array.from(educatorCourseIds.get(user.user_id) || []);
+      userDoc.missionIds = Array.from(educatorMissionIds.get(user.user_id) || []);
     }
     writer.set(db.collection('users').doc(user.user_id), userDoc);
     await upsertAuthUser({
