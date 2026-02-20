@@ -22,10 +22,16 @@ const learnerUser = { uid: 'learner-1', email: 'learner@example.com' };
 const otherSiteUser = { uid: 'other-site-user', email: 'other@site2.com' };
 
 beforeAll(async () => {
+  const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
+  const [host, portRaw] = emulatorHost.split(':');
+  const port = Number(portRaw || '8080');
+
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: {
       rules: fs.readFileSync(path.resolve(__dirname, '../firestore.rules'), 'utf8'),
+      host,
+      port,
     },
   });
 });
