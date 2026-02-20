@@ -185,6 +185,59 @@ class EducatorService extends ChangeNotifier {
     }
   }
 
+  /// Create a new session and reflect it immediately in local state
+  Future<EducatorSession?> createSession({
+    required String title,
+    required String pillar,
+    required DateTime startTime,
+    required DateTime endTime,
+    String? description,
+    String? location,
+    int maxCapacity = 20,
+  }) async {
+    _error = null;
+    notifyListeners();
+
+    try {
+      final String sessionId = await _firestoreService.createDocument(
+        'sessions',
+        <String, dynamic>{
+          'educatorId': educatorId,
+          'title': title,
+          'description': description ?? '',
+          'pillar': pillar,
+          'startTime': Timestamp.fromDate(startTime),
+          'endTime': Timestamp.fromDate(endTime),
+          'location': location ?? '',
+          'enrolledCount': 0,
+          'maxCapacity': maxCapacity,
+          'status': 'upcoming',
+        },
+      );
+
+      final EducatorSession created = EducatorSession(
+        id: sessionId,
+        title: title,
+        description: description,
+        pillar: pillar,
+        startTime: startTime,
+        endTime: endTime,
+        location: location ?? '',
+        enrolledCount: 0,
+        maxCapacity: maxCapacity,
+        status: 'upcoming',
+      );
+
+      _sessions = <EducatorSession>[created, ..._sessions];
+      notifyListeners();
+      return created;
+    } catch (e) {
+      _error = 'Failed to create session: $e';
+      notifyListeners();
+      return null;
+    }
+  }
+
   // ========== Learners Management ==========
   List<EducatorLearner> _learners = <EducatorLearner>[];
   List<EducatorLearner> get learners => _learners;

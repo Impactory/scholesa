@@ -58,6 +58,50 @@ class PartnerService extends ChangeNotifier {
     }
   }
 
+  /// Create a new listing and reflect it immediately in local state
+  Future<MarketplaceListing?> createListing({
+    required String title,
+    required String description,
+    required String category,
+    double? price,
+  }) async {
+    _error = null;
+    notifyListeners();
+
+    try {
+      final String listingId = await _firestoreService.createDocument(
+        'marketplaceListings',
+        <String, dynamic>{
+          'partnerId': _partnerId,
+          'title': title,
+          'description': description,
+          'category': category,
+          'price': price,
+          'status': 'draft',
+        },
+      );
+
+      final MarketplaceListing listing = MarketplaceListing(
+        id: listingId,
+        partnerId: _partnerId,
+        title: title,
+        description: description,
+        status: ListingStatus.draft,
+        category: category,
+        price: price,
+      );
+
+      _listings = <MarketplaceListing>[listing, ..._listings];
+      notifyListeners();
+      return listing;
+    } catch (e) {
+      debugPrint('Failed to create listing: $e');
+      _error = 'Failed to create listing';
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// Load contracts for this partner
   Future<void> loadContracts() async {
     _isLoading = true;

@@ -68,6 +68,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       completedBy: 0,
     ),
   ];
+  int _nextMissionId = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -345,50 +346,89 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   void _showCreateMissionDialog() {
+    final TextEditingController titleController = TextEditingController();
+    String selectedPillar = 'Future Skills';
+
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
-        title: const Text('Create New Mission'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Mission Title',
-                border: OutlineInputBorder(),
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context, void Function(void Function()) setLocalState) => AlertDialog(
+          backgroundColor: ScholesaColors.surface,
+          title: const Text('Create New Mission'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Mission Title',
+                  border: OutlineInputBorder(),
+                ),
               ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: selectedPillar,
+                decoration: const InputDecoration(
+                  labelText: 'Pillar',
+                  border: OutlineInputBorder(),
+                ),
+                items: const <DropdownMenuItem<String>>[
+                  DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
+                  DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
+                  DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
+                ],
+                onChanged: (String? value) {
+                  if (value != null) {
+                    setLocalState(() => selectedPillar = value);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                titleController.dispose();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'Pillar',
-                border: OutlineInputBorder(),
-              ),
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
-                DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
-                DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
-              ],
-              onChanged: (_) {},
+            ElevatedButton(
+              onPressed: () {
+                final String title = titleController.text.trim();
+                if (title.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Mission title is required')),
+                  );
+                  return;
+                }
+
+                setState(() {
+                  _missionPlans.insert(
+                    0,
+                    _MissionPlan(
+                      id: (_nextMissionId++).toString(),
+                      title: title,
+                      pillar: selectedPillar,
+                      duration: '4 weeks',
+                      targetGrade: '6-8',
+                      status: _PlanStatus.draft,
+                      assignedSessions: 0,
+                      completedBy: 0,
+                    ),
+                  );
+                });
+
+                titleController.dispose();
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Mission created and added to list')),
+                );
+              },
+              child: const Text('Create'),
             ),
           ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Mission created')),
-              );
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
     );
   }

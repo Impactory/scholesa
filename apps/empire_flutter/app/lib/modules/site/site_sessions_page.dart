@@ -12,9 +12,58 @@ class SiteSessionsPage extends StatefulWidget {
 class _SiteSessionsPageState extends State<SiteSessionsPage> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week';
+  final Map<String, List<_SessionData>> _sessionsByTime =
+      <String, List<_SessionData>>{
+    '9:00 AM': <_SessionData>[
+      const _SessionData(
+        title: 'AI Explorers - Level 1',
+        educator: 'Ms. Sarah Chen',
+        room: 'Lab A',
+        learnerCount: 12,
+        pillar: 'Future Skills',
+      ),
+    ],
+    '10:30 AM': <_SessionData>[
+      const _SessionData(
+        title: 'Leadership Workshop',
+        educator: 'Mr. James Wilson',
+        room: 'Main Hall',
+        learnerCount: 15,
+        pillar: 'Leadership',
+      ),
+      const _SessionData(
+        title: 'Coding Fundamentals',
+        educator: 'Ms. Emily Park',
+        room: 'Lab B',
+        learnerCount: 10,
+        pillar: 'Future Skills',
+      ),
+    ],
+    '1:00 PM': <_SessionData>[
+      const _SessionData(
+        title: 'Community Project',
+        educator: 'Dr. Michael Brown',
+        room: 'Garden Area',
+        learnerCount: 18,
+        pillar: 'Impact',
+      ),
+    ],
+    '2:30 PM': <_SessionData>[
+      const _SessionData(
+        title: 'Robotics Club',
+        educator: 'Ms. Sarah Chen',
+        room: 'Lab A',
+        learnerCount: 8,
+        pillar: 'Future Skills',
+      ),
+    ],
+  };
 
   @override
   Widget build(BuildContext context) {
+    final List<MapEntry<String, List<_SessionData>>> timeSlots =
+        _sessionsByTime.entries.toList(growable: false);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -37,63 +86,21 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(<Widget>[
-                  const _SessionTimeSlot(
-                    time: '9:00 AM',
-                    sessions: <_SessionData>[
-                      _SessionData(
-                        title: 'AI Explorers - Level 1',
-                        educator: 'Ms. Sarah Chen',
-                        room: 'Lab A',
-                        learnerCount: 12,
-                        pillar: 'Future Skills',
-                      ),
-                    ],
-                  ),
-                  const _SessionTimeSlot(
-                    time: '10:30 AM',
-                    sessions: <_SessionData>[
-                      _SessionData(
-                        title: 'Leadership Workshop',
-                        educator: 'Mr. James Wilson',
-                        room: 'Main Hall',
-                        learnerCount: 15,
-                        pillar: 'Leadership',
-                      ),
-                      _SessionData(
-                        title: 'Coding Fundamentals',
-                        educator: 'Ms. Emily Park',
-                        room: 'Lab B',
-                        learnerCount: 10,
-                        pillar: 'Future Skills',
-                      ),
-                    ],
-                  ),
-                  const _SessionTimeSlot(
-                    time: '1:00 PM',
-                    sessions: <_SessionData>[
-                      _SessionData(
-                        title: 'Community Project',
-                        educator: 'Dr. Michael Brown',
-                        room: 'Garden Area',
-                        learnerCount: 18,
-                        pillar: 'Impact',
-                      ),
-                    ],
-                  ),
-                  const _SessionTimeSlot(
-                    time: '2:30 PM',
-                    sessions: <_SessionData>[
-                      _SessionData(
-                        title: 'Robotics Club',
-                        educator: 'Ms. Sarah Chen',
-                        room: 'Lab A',
-                        learnerCount: 8,
-                        pillar: 'Future Skills',
-                      ),
-                    ],
-                  ),
-                ]),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    if (index >= timeSlots.length) {
+                      return null;
+                    }
+
+                    final MapEntry<String, List<_SessionData>> slot =
+                        timeSlots[index];
+                    return _SessionTimeSlot(
+                      time: slot.key,
+                      sessions: slot.value,
+                    );
+                  },
+                  childCount: timeSlots.length,
+                ),
               ),
             ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
@@ -312,14 +319,37 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     return '${months[_selectedDate.month - 1]} ${_selectedDate.day}, ${_selectedDate.year}';
   }
 
-  void _createNewSession() {
-    showModalBottomSheet(
+  Future<void> _createNewSession() async {
+    final _NewSessionResult? result = await showModalBottomSheet<_NewSessionResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext ctx) => const _CreateSessionSheet(),
     );
+
+    if (result == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _sessionsByTime.putIfAbsent(result.time, () => <_SessionData>[]);
+      _sessionsByTime[result.time]!.add(result.session);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Session created successfully'),
+        backgroundColor: ScholesaColors.success,
+      ),
+    );
   }
+}
+
+class _NewSessionResult {
+  const _NewSessionResult({required this.time, required this.session});
+
+  final String time;
+  final _SessionData session;
 }
 
 class _ViewToggleButton extends StatelessWidget {
@@ -516,12 +546,19 @@ class _CreateSessionSheet extends StatefulWidget {
 
 class _CreateSessionSheetState extends State<_CreateSessionSheet> {
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _educatorController =
+      TextEditingController(text: 'Ms. Sarah Chen');
+  final TextEditingController _learnerCountController =
+      TextEditingController(text: '12');
   String _selectedPillar = 'Future Skills';
   String _selectedRoom = 'Lab A';
+  String _selectedTime = '9:00 AM';
 
   @override
   void dispose() {
     _titleController.dispose();
+    _educatorController.dispose();
+    _learnerCountController.dispose();
     super.dispose();
   }
 
@@ -601,6 +638,57 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
+                    initialValue: _selectedTime,
+                    decoration: InputDecoration(
+                      labelText: 'Time Slot',
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: <String>['9:00 AM', '10:30 AM', '1:00 PM', '2:30 PM', '4:00 PM']
+                        .map((String time) => DropdownMenuItem<String>(
+                              value: time,
+                              child: Text(time),
+                            ))
+                        .toList(),
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() => _selectedTime = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _educatorController,
+                    decoration: InputDecoration(
+                      labelText: 'Educator',
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _learnerCountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Learner Count',
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
                     initialValue: _selectedRoom,
                     decoration: InputDecoration(
                       labelText: 'Room',
@@ -628,11 +716,32 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Session created successfully'),
-                            backgroundColor: ScholesaColors.success,
+                        final String title = _titleController.text.trim();
+                        if (title.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Session title is required'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final int learnerCount =
+                            int.tryParse(_learnerCountController.text.trim()) ?? 0;
+
+                        Navigator.pop(
+                          context,
+                          _NewSessionResult(
+                            time: _selectedTime,
+                            session: _SessionData(
+                              title: title,
+                              educator: _educatorController.text.trim().isEmpty
+                                  ? 'Unassigned'
+                                  : _educatorController.text.trim(),
+                              room: _selectedRoom,
+                              learnerCount: learnerCount,
+                              pillar: _selectedPillar,
+                            ),
                           ),
                         );
                       },

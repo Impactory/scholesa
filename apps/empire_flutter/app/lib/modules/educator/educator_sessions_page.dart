@@ -225,11 +225,147 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   }
 
   void _createNewSession() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => const _CreateSessionDialog(),
+    );
+  }
+}
+
+class _CreateSessionDialog extends StatefulWidget {
+  const _CreateSessionDialog();
+
+  @override
+  State<_CreateSessionDialog> createState() => _CreateSessionDialogState();
+}
+
+class _CreateSessionDialogState extends State<_CreateSessionDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  String _pillar = 'Future Skills';
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    final DateTime now = DateTime.now();
+    final DateTime start = now.add(const Duration(hours: 1));
+    final DateTime end = start.add(const Duration(hours: 1));
+
+    final EducatorService service = context.read<EducatorService>();
+    final EducatorSession? created = await service.createSession(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      location: _locationController.text.trim(),
+      pillar: _pillar,
+      startTime: start,
+      endTime: end,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _isSubmitting = false);
+
+    if (created == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(service.error ?? 'Failed to create session')),
+      );
+      return;
+    }
+
+    Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Create session feature coming soon'),
-        backgroundColor: ScholesaColors.educator,
+        content: Text('Session created and added to your list'),
+        backgroundColor: ScholesaColors.success,
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Session'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextFormField(
+              controller: _titleController,
+              decoration: const InputDecoration(labelText: 'Session title'),
+              validator: (String? value) =>
+                  value == null || value.trim().isEmpty ? 'Title is required' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(labelText: 'Description (optional)'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _locationController,
+              decoration: const InputDecoration(labelText: 'Location (optional)'),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _pillar,
+              decoration: const InputDecoration(labelText: 'Pillar'),
+              items: const <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                  value: 'Future Skills',
+                  child: Text('Future Skills'),
+                ),
+                DropdownMenuItem<String>(
+                  value: 'Leadership',
+                  child: Text('Leadership'),
+                ),
+                DropdownMenuItem<String>(
+                  value: 'Impact',
+                  child: Text('Impact'),
+                ),
+              ],
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() => _pillar = value);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Create'),
+        ),
+      ],
     );
   }
 }

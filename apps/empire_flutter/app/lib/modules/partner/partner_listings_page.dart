@@ -223,27 +223,160 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
   }
 
   void _showCreateListingDialog(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    final TextEditingController priceController = TextEditingController();
+    String selectedCategory = 'Programs';
+    bool isSubmitting = false;
+
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
-        title: const Text('Create Listing'),
-        content: const Text('Listing creation form would go here.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context, void Function(void Function()) setLocalState) =>
+            AlertDialog(
+          backgroundColor: ScholesaColors.surface,
+          title: const Text('Create Listing'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'Programs',
+                      child: Text('Programs'),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Workshops',
+                      child: Text('Workshops'),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Resources',
+                      child: Text('Resources'),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'General',
+                      child: Text('General'),
+                    ),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedCategory = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Price (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Listing creation coming soon!')),
-              );
-            },
-            child: const Text('Create'),
-          ),
-        ],
+          actions: <Widget>[
+            TextButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () {
+                      titleController.dispose();
+                      descriptionController.dispose();
+                      priceController.dispose();
+                      Navigator.pop(dialogContext);
+                    },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final String title = titleController.text.trim();
+                      final String description = descriptionController.text.trim();
+                      if (title.isEmpty || description.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Title and description are required'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      setLocalState(() => isSubmitting = true);
+                      final double? price =
+                          double.tryParse(priceController.text.trim());
+                      final PartnerService service =
+                          context.read<PartnerService>();
+                      final MarketplaceListing? created =
+                          await service.createListing(
+                        title: title,
+                        description: description,
+                        category: selectedCategory,
+                        price: price,
+                      );
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      setLocalState(() => isSubmitting = false);
+
+                      if (created == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              service.error ?? 'Failed to create listing',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      titleController.dispose();
+                      descriptionController.dispose();
+                      priceController.dispose();
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Listing created and added to list'),
+                        ),
+                      );
+                    },
+              child: isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Create'),
+            ),
+          ],
+        ),
       ),
     );
   }
