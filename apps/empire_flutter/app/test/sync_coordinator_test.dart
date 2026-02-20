@@ -19,6 +19,7 @@ class TestableSyncCoordinator extends SyncCoordinator {
     required super.queue,
     required super.firestoreService,
     super.connectivity,
+    super.onSyncError,
     this.shouldThrow = false,
   });
 
@@ -225,6 +226,7 @@ void main() {
         queue: mockQueue,
         firestoreService: mockFirestore,
         connectivity: mockConnectivity,
+        onSyncError: (_) {},
         shouldThrow: true,
       );
 
