@@ -44,10 +44,10 @@ npm run build
 
 ### Deployment
 
-To deploy the application to Firebase:
+Deploy web via Cloud Run and Firebase resources separately:
 
 ```bash
-firebase deploy
+./scripts/deploy.sh all
 ```
 
 To deploy only the Firebase Functions:
@@ -76,7 +76,7 @@ This project expects runtime configuration via environment variables. Do NOT com
 Deployment tips:
 
 - Vercel: Add the env vars in the Project Settings → Environment Variables. For `FIREBASE_SERVICE_ACCOUNT`, paste the JSON or base64 string as a secret (mark it as protected if needed). Vercel will expose `process.env` at build/runtime depending on variable naming (`NEXT_PUBLIC_` are exposed to client builds).
-- Firebase Hosting / Functions: Use `firebase functions:config:set` or set env vars in your CI. For server-side service accounts prefer using `GOOGLE_APPLICATION_CREDENTIALS` on CI with the service account file stored in secrets.
+- Firebase Functions: Use `firebase functions:config:set` or set env vars in your CI. For server-side service accounts prefer using `GOOGLE_APPLICATION_CREDENTIALS` on CI with the service account file stored in secrets.
 
 ### Google Cloud (Cloud Run) + Firebase
 

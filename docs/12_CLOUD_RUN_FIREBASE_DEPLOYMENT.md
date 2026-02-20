@@ -15,8 +15,7 @@ Secrets:
 - store in Secret Manager (not repo)
 
 ## Flutter web hosting
-Choose ONE and standardize:
-- Firebase Hosting (recommended)
+Standardized target:
 - Cloud Run static hosting
 
 PWA:

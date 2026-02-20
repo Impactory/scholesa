@@ -8,7 +8,6 @@
 #   ./scripts/deploy.sh rules        # Deploy Firestore + Storage rules
 #   ./scripts/deploy.sh cloudrun-web # Build Flutter web & deploy to Cloud Run
 #   ./scripts/deploy.sh flutter-web  # Alias of cloudrun-web
-#   ./scripts/deploy.sh hosting      # Legacy override: deploy Firebase Hosting only
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-android # Build Flutter Android (release APK)
 # ──────────────────────────────────────────────────────────────
@@ -89,16 +88,6 @@ deploy_rules() {
   log "Rules deployed ✓"
 }
 
-deploy_hosting() {
-  warn "Using legacy Firebase Hosting deploy target. Preferred default is Cloud Run web."
-  log "Building Flutter web (release)..."
-  (cd "$FLUTTER_APP" && flutter build web --release)
-
-  log "Deploying Firebase Hosting..."
-  (cd "$REPO_ROOT" && firebase deploy --only hosting)
-  log "Hosting deployed ✓"
-}
-
 deploy_cloud_run_web() {
   flutter_gate
 
@@ -154,9 +143,8 @@ case "$TARGET" in
   functions)        deploy_functions ;;
   rules)            deploy_rules ;;
   cloudrun-web)     deploy_cloud_run_web ;;
-  hosting)          deploy_hosting ;;
   flutter-web)      deploy_flutter_web ;;
   flutter-ios)      deploy_flutter_ios ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | hosting | flutter-web | flutter-ios | flutter-android" ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | flutter-web | flutter-ios | flutter-android" ;;
 esac

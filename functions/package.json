@@ -2,7 +2,7 @@
   "name": "functions",
   "scripts": {
     "build": "tsc",
-    "serve": "firebase emulators:start --only functions,firestore,hosting",
+    "serve": "firebase emulators:start --only functions,firestore",
     "deploy": "firebase deploy --only functions"
   },
   "engines": {
