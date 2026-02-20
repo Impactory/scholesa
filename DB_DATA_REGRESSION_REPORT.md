@@ -1,6 +1,6 @@
 # DB + Data Regression Report
 
-- Generated: 2026-02-20T15:24:46.397Z
+- Generated: 2026-02-20T23:11:56.238Z
 - Scope: Firestore emulator regression run (15 checks)
 - Summary: PASS=12, WARN=3, FAIL=0
 
@@ -37,7 +37,7 @@
 
 | Status | Check | Details |
 |---|---|---|
-| PASS | Critical filtered + ordered query returns with acceptable latency | Returned 25 docs in 21.71ms (emulator timing) |
+| PASS | Critical filtered + ordered query returns with acceptable latency | Returned 25 docs in 12.01ms (emulator timing) |
 | PASS | Composite index definition exists for high-traffic missionAttempts query | Index entry present in firestore.indexes.json |
 
 ## Backup/restore regression
@@ -51,7 +51,7 @@
 
 | Status | Check | Details |
 |---|---|---|
-| PASS | Double-write race on same deterministic ID rejects one writer | Settled results: rejected/fulfilled |
+| PASS | Double-write race on same deterministic ID rejects one writer | Settled results: fulfilled/rejected |
 | PASS | High-contention transactional updates avoid lost writes | credits=25 |
 
 ## Notes
