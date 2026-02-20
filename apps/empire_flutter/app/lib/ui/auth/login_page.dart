@@ -585,23 +585,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           ),
                           
                           const SizedBox(height: 32),
-                          
-                          // Sign up link
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text(
-                                "Don't have an account? ",
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                              TextButton(
-                                onPressed: () => context.push('/register'),
-                                child: const Text(
-                                  'Sign up',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ],
+
+                          Text(
+                            'Accounts are provisioned by your site or HQ admin.',
+                            style: TextStyle(color: Colors.grey[600]),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),

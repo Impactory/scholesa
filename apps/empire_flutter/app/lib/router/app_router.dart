@@ -4,7 +4,6 @@ import '../auth/app_state.dart';
 import 'role_gate.dart';
 import '../ui/landing/landing_page.dart';
 import '../ui/auth/login_page.dart';
-import '../ui/auth/register_page.dart';
 import '../ui/error/fatal_error_screen.dart';
 import '../dashboards/role_dashboard.dart';
 import '../modules/attendance/attendance_page.dart';
@@ -30,7 +29,6 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   
   // Auth
   '/login': true,
-  '/register': true,
   
   // Dashboard
   '/': true,
@@ -109,7 +107,9 @@ GoRouter createAppRouter(AppState appState) {
       final bool isWelcomeRoute = state.matchedLocation == '/welcome';
       final bool isLoginRoute = state.matchedLocation == '/login';
       final bool isRegisterRoute = state.matchedLocation == '/register';
-      final bool isPublicRoute = isWelcomeRoute || isLoginRoute || isRegisterRoute;
+      final bool isPublicRoute = isWelcomeRoute || isLoginRoute;
+
+      if (isRegisterRoute) return '/login';
       
       // Still loading and on public route, stay there (show landing page while loading)
       if (isLoading && isPublicRoute) return null;
@@ -145,7 +145,7 @@ GoRouter createAppRouter(AppState appState) {
       ),
       GoRoute(
         path: '/register',
-        builder: (BuildContext context, GoRouterState state) => const RegisterPage(),
+        redirect: (BuildContext context, GoRouterState state) => '/login',
       ),
       
       // Dashboard - redirects to role-specific dashboard

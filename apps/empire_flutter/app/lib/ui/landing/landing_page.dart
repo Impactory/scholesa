@@ -169,19 +169,6 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () => context.go('/register'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ScholesaColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Get Started'),
-          ),
         ],
       ),
     );
@@ -276,9 +263,9 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           runSpacing: 16,
           children: <Widget>[
             ElevatedButton.icon(
-              onPressed: () => context.go('/register'),
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Start Free Trial'),
+              onPressed: () => context.go('/login'),
+              icon: const Icon(Icons.login_rounded),
+              label: const Text('Sign In'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.primary,
                 foregroundColor: Colors.white,
@@ -744,7 +731,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           ),
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () => context.go('/register'),
+            onPressed: () => context.go('/login'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: ScholesaColors.primary,
@@ -757,7 +744,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 fontWeight: FontWeight.w600,
               ),
             ),
-            child: const Text('Get Started Free'),
+            child: const Text('Sign In'),
           ),
         ],
       ),

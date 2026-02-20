@@ -74,6 +74,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
   late final SyncCoordinator _syncCoordinator;
   late final AuthService _authService;
   late final SessionBootstrap _sessionBootstrap;
+  GoRouter? _router;
 
   bool _isInitialized = false;
   String? _initError;
@@ -118,6 +119,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
 
       // Start listening to auth changes
       _sessionBootstrap.listenToAuthChanges();
+
+      _router = createAppRouter(_appState);
 
       setState(() {
         _isInitialized = true;
@@ -215,17 +218,11 @@ class _ScholesaAppState extends State<ScholesaApp> {
           ),
         ),
       ],
-      child: Consumer<AppState>(
-        builder: (BuildContext context, AppState appState, _) {
-          final GoRouter router = createAppRouter(appState);
-
-          return MaterialApp.router(
-            title: 'Scholesa',
-            debugShowCheckedModeBanner: false,
-            theme: ScholesaTheme.light,
-            routerConfig: router,
-          );
-        },
+      child: MaterialApp.router(
+        title: 'Scholesa',
+        debugShowCheckedModeBanner: false,
+        theme: ScholesaTheme.light,
+        routerConfig: _router!,
       ),
     );
   }
