@@ -12,5 +12,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Skip web pipeline
-        run: echo "Next.js/React/PWA pipeline disabled; focusing on Flutter."
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Jest baseline
+        run: npm run test
+
+      - name: Jest rules integration
+        run: npm run test:integration:rules
+
+      - name: Jest analytics integration (opt-in)
+        run: npm run test:integration:analytics
