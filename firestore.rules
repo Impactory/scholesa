@@ -36,7 +36,7 @@ service cloud.firestore {
     // - Educators/HQ can read profiles (to view learners).
     match /users/{userId} {
       allow read: if isOwner(userId) || isEducator();
-      allow create: if isOwner(userId); // Needed for AuthProvider.signUp
+      allow create: if isHQ();
       allow update: if isOwner(userId) || isHQ();
     }
 

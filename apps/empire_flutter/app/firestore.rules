@@ -55,7 +55,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read, update: if isSignedIn() && (isOwner(userId) || isStaff());
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && isStaff();
       allow delete: if false; 
     }
 

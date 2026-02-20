@@ -51,31 +51,6 @@ class AuthService {
     }
   }
 
-  /// Register with email and password
-  Future<void> registerWithEmailAndPassword({
-    required String email,
-    required String password,
-    required String displayName,
-  }) async {
-    try {
-      _appState.setLoading(true);
-      final UserCredential credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      await credential.user?.updateDisplayName(displayName);
-      // Create user profile in Firestore
-      await _firestoreService.createUserProfile(displayName: displayName);
-      await _bootstrapSession();
-    } on FirebaseAuthException catch (e) {
-      _appState.setError(_mapAuthError(e.code));
-      rethrow;
-    } catch (e) {
-      _appState.setError('An unexpected error occurred');
-      rethrow;
-    }
-  }
-
   /// Sign out
   Future<void> signOut() async {
     // Sign out from Google if signed in with Google
