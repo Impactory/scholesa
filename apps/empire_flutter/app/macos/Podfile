@@ -48,5 +48,24 @@ post_install do |installer|
         config.build_settings['OTHER_LDFLAGS'] = "#{other_ldflags} -Wl,-no_warn_duplicate_libraries".strip
       end
     end
+
+    target.shell_script_build_phases.each do |phase|
+      next unless phase.name == 'Create Symlinks to Header Folders'
+      if phase.output_paths.nil? || phase.output_paths.empty?
+        phase.output_paths = ["$(DERIVED_FILE_DIR)/#{target.name}_symlink_headers.stamp"]
+      end
+    end
+  end
+
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      native_target.shell_script_build_phases.each do |phase|
+        next unless ['Flutter Assemble', 'Run Script'].include?(phase.name)
+        if phase.output_paths.nil? || phase.output_paths.empty?
+          phase.output_paths = ["$(DERIVED_FILE_DIR)/#{native_target.name}_#{phase.name.gsub(' ', '_').downcase}.stamp"]
+        end
+      end
+    end
+    aggregate_target.user_project.save
   end
 end

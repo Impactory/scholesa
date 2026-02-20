@@ -396,6 +396,7 @@
 				Flutter/ephemeral/FlutterOutputs.xcfilelist,
 			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/flutter_assemble_runner.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
