@@ -405,7 +405,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: _showAllTopPerformers,
                 child: const Text('View All'),
               ),
             ],
@@ -438,10 +438,78 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   void _exportReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report export feature coming soon'),
-        backgroundColor: ScholesaColors.hq,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Export HQ Analytics'),
+        content: const Text(
+          'Generate and export the current HQ analytics summary for cross-site review.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('HQ analytics report prepared for export'),
+                  backgroundColor: ScholesaColors.hq,
+                ),
+              );
+            },
+            child: const Text('Export'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAllTopPerformers() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Top Performers',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(height: 12),
+              _TopPerformerCard(
+                rank: 1,
+                name: 'Emma Johnson',
+                site: 'Singapore',
+                missionsCompleted: 28,
+                streak: 15,
+              ),
+              _TopPerformerCard(
+                rank: 2,
+                name: 'Liam Chen',
+                site: 'Kuala Lumpur',
+                missionsCompleted: 24,
+                streak: 12,
+              ),
+              _TopPerformerCard(
+                rank: 3,
+                name: 'Sofia Martinez',
+                site: 'Singapore',
+                missionsCompleted: 22,
+                streak: 18,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

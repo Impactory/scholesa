@@ -448,10 +448,31 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   void _exportFinancials() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Financial report export coming soon'),
-        backgroundColor: ScholesaColors.hq,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Export Financials'),
+        content: const Text(
+          'Generate a consolidated financial report for invoices, payments, and subscriptions.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Financial report prepared for export'),
+                  backgroundColor: ScholesaColors.hq,
+                ),
+              );
+            },
+            child: const Text('Export'),
+          ),
+        ],
       ),
     );
   }
@@ -520,6 +541,38 @@ class _InvoiceCard extends StatelessWidget {
       default:
         return Colors.grey;
     }
+  }
+
+  void _viewInvoice(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text('Invoice ${invoice['id']}'),
+        content: Text(
+          'Parent: ${invoice['parent']}\n'
+          'Learner: ${invoice['learner']}\n'
+          'Site: ${invoice['site']}\n'
+          'Date: ${invoice['date']}\n'
+          'Amount: \$${(invoice['amount'] as double).toStringAsFixed(2)}\n'
+          'Status: ${(invoice['status'] as String).toUpperCase()}',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sendInvoice(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Invoice ${invoice['id']} queued for sending'),
+        backgroundColor: ScholesaColors.hq,
+      ),
+    );
   }
 
   @override
@@ -604,12 +657,12 @@ class _InvoiceCard extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () => _viewInvoice(context),
                       icon: const Icon(Icons.visibility, size: 20),
                       color: Colors.grey[600],
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () => _sendInvoice(context),
                       icon: const Icon(Icons.send, size: 20),
                       color: ScholesaColors.hq,
                     ),

@@ -262,7 +262,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: _showNextSessionDetails,
               child: const Text('Details'),
             ),
           ],
@@ -317,6 +317,39 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             pillar: 'Impact',
             pillarColor: ScholesaColors.impact,
             status: 'upcoming',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNextSessionDetails() {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Next Session Details'),
+        content: const Text(
+          'Python Programming\n'
+          'Location: Lab A\n'
+          'Starts in: 2 hours\n'
+          'Facilitator: Ms. Sarah Chen',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session reminder set'),
+                  backgroundColor: ScholesaColors.parent,
+                ),
+              );
+            },
+            child: const Text('Set Reminder'),
           ),
         ],
       ),

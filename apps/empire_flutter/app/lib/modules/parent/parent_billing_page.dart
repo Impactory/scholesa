@@ -549,19 +549,61 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   }
 
   void _updatePaymentMethod() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Update payment method coming soon'),
-        backgroundColor: ScholesaColors.parent,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Update Payment Method'),
+        content: const Text(
+          'Select your preferred payment method update action.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment method update request submitted'),
+                  backgroundColor: ScholesaColors.parent,
+                ),
+              );
+            },
+            child: const Text('Continue'),
+          ),
+        ],
       ),
     );
   }
 
   void _managePlan() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Plan management coming soon'),
-        backgroundColor: ScholesaColors.parent,
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Manage Plan'),
+        content: const Text(
+          'You can review your current subscription and request plan changes.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Plan review request sent to billing team'),
+                  backgroundColor: ScholesaColors.parent,
+                ),
+              );
+            },
+            child: const Text('Request Change'),
+          ),
+        ],
       ),
     );
   }

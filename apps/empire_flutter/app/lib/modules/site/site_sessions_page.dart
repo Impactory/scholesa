@@ -297,11 +297,58 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           TextButton.icon(
-            onPressed: () {},
+            onPressed: _showFilterSheet,
             icon: const Icon(Icons.filter_list, size: 18),
             label: const Text('Filter'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text(
+                'Session Filters',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: <String>['day', 'week', 'month']
+                    .map(
+                      (String mode) => ChoiceChip(
+                        label: Text(mode.toUpperCase()),
+                        selected: _viewMode == mode,
+                        onSelected: (_) {
+                          setState(() => _viewMode = mode);
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Showing ${mode.toUpperCase()} view'),
+                              backgroundColor: ScholesaColors.site,
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

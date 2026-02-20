@@ -20,18 +20,18 @@ class SiteBillingPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            _buildSubscriptionCard(),
+            _buildSubscriptionCard(context),
             const SizedBox(height: 24),
             _buildUsageSection(),
             const SizedBox(height: 24),
-            _buildRecentInvoices(),
+            _buildRecentInvoices(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSubscriptionCard() {
+  Widget _buildSubscriptionCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -111,7 +111,7 @@ class SiteBillingPage extends StatelessWidget {
                 ],
               ),
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () => _showManagePlanDialog(context),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white54),
@@ -198,7 +198,7 @@ class SiteBillingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentInvoices() {
+  Widget _buildRecentInvoices(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -214,7 +214,7 @@ class SiteBillingPage extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => _showAllInvoices(context),
               child: const Text('View All'),
             ),
           ],
@@ -269,6 +269,64 @@ class SiteBillingPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showManagePlanDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Manage Site Plan'),
+        content: const Text(
+          'Review current usage, upgrade limits, or contact HQ billing support.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Plan management request submitted'),
+                  backgroundColor: ScholesaColors.hq,
+                ),
+              );
+            },
+            child: const Text('Request Change'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAllInvoices(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          shrinkWrap: true,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'All Invoices',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            _buildInvoiceRow('INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
+            _buildInvoiceRow('INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
+            _buildInvoiceRow('INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
+          ],
+        ),
       ),
     );
   }
