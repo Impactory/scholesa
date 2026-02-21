@@ -714,14 +714,10 @@ void main() {
     });
 
     // ── 5.9 No server secrets committed to repo ──
-    // NOTE: .env.local and .env.production exist with real API keys.
-    // These are KNOWN FINDINGS that need remediation (git history cleanup).
-    // See: SECURITY_FINDINGS section below.
     test('No server secret files committed to repo root', () {
-      // KNOWN: .env.local and .env.production are currently committed.
-      // TODO(security): Remove these files and clean git history.
-      // For now, verify that dangerous _deployment_ env files aren't added:
       const List<String> criticalSecretFiles = <String>[
+        '.env.local',
+        '.env.production',
         '.env.staging',
       ];
 
@@ -729,16 +725,6 @@ void main() {
         final File f = File('$root/$pattern');
         expect(f.existsSync(), isFalse,
             reason: '$pattern should not be committed to the repository');
-      }
-
-      // Flag but don't block: .env.local and .env.production exist
-      // This is tracked as SECURITY_FINDING_001: committed env files
-      final bool hasEnvLocal = File('$root/.env.local').existsSync();
-      final bool hasEnvProduction = File('$root/.env.production').existsSync();
-      if (hasEnvLocal || hasEnvProduction) {
-        // ignore: avoid_print
-        print('⚠ SECURITY_FINDING_001: .env.local=${hasEnvLocal ? "EXISTS" : "ok"}, '
-            '.env.production=${hasEnvProduction ? "EXISTS" : "ok"} — needs remediation');
       }
     });
 
