@@ -15,6 +15,10 @@ WEB_EXTS = {".tsx", ".ts", ".jsx", ".js"}
 DART_EXTS = {".dart"}
 OUTPUT_REPORT = "CTA_FULL_INVENTORY.md"
 
+FLUTTER_WIDGET_MARKER_PATTERN = re.compile(
+    r"(\bElevatedButton\(|\bTextButton\(|\bOutlinedButton\(|\bFilledButton\(|\bIconButton\(|\bFloatingActionButton\(|\bInkWell\(|\bGestureDetector\(|\bListTile\()"
+)
+
 
 def collect_entries(base: Path, exts: set[str], pattern: re.Pattern[str]) -> list[tuple[str, list[tuple[int, str]]]]:
     entries: list[tuple[str, list[tuple[int, str]]]] = []
@@ -75,9 +79,7 @@ def is_route_surface_file(path: Path) -> bool:
 def main() -> None:
     web_pattern = re.compile(r"(onClick=|<button|<a href=|Link href=)")
     web_quick_action_pattern = re.compile(r"Quick Action|Quick Actions|quick[_\s-]?action")
-    flutter_pattern = re.compile(
-        r"(ElevatedButton\(|TextButton\(|OutlinedButton\(|FilledButton\(|IconButton\(|FloatingActionButton\(|InkWell\(|GestureDetector\(|ListTile\()"
-    )
+    flutter_pattern = FLUTTER_WIDGET_MARKER_PATTERN
     flutter_quick_action_pattern = re.compile(r"Quick Action|Quick Actions|quick[_\s-]?action")
 
     web_entries = []
