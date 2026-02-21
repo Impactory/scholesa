@@ -55,7 +55,11 @@ class HqRoleSwitcherPage extends StatelessWidget {
                   'surface': 'header',
                 },
               );
-              context.go('/');
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
             },
           ),
           const SizedBox(width: 8),
@@ -382,7 +386,11 @@ class _RoleCard extends StatelessWidget {
                     },
                   );
                   appState.setImpersonation(option.role);
-                  context.go('/');
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
                 }
               },
               child: Padding(
