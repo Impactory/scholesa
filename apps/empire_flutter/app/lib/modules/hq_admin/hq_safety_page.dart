@@ -161,7 +161,18 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         subtitle: Text('${incident.site} • ${_formatTime(incident.reportedAt)}'),
         trailing: IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
-          onPressed: () => _showIncidentDetails(incident),
+          onPressed: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'hq_safety',
+                'cta_id': 'open_incident_details_chevron',
+                'surface': 'incident_list',
+                'incident_id': incident.id,
+              },
+            );
+            _showIncidentDetails(incident);
+          },
         ),
         onTap: () => _showIncidentDetails(incident),
       ),
