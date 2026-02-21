@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 
 /// Error state widget with retry
 class ErrorState extends StatelessWidget {
@@ -42,7 +43,16 @@ class ErrorState extends StatelessWidget {
             if (onRetry != null) ...<Widget>[
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: onRetry,
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'cta': 'shared_error_retry',
+                      'surface': 'error_state',
+                    },
+                  );
+                  onRetry!();
+                },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),

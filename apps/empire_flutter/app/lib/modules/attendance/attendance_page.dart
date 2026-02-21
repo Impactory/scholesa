@@ -71,7 +71,16 @@ class _AttendancePageState extends State<AttendancePage> {
     if (service.error != null) {
       return ErrorState(
         message: service.error!,
-        onRetry: _loadOccurrences,
+        onRetry: () async {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: const <String, dynamic>{
+              'cta': 'attendance_retry_occurrences',
+              'surface': 'attendance_error_state',
+            },
+          );
+          await _loadOccurrences();
+        },
       );
     }
 
@@ -100,7 +109,16 @@ class _OccurrenceSelector extends StatelessWidget {
         title: 'No classes today',
         message: 'You have no scheduled classes for today.',
         action: TextButton.icon(
-          onPressed: onRefresh,
+          onPressed: () async {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'cta': 'attendance_refresh_empty_state',
+                'surface': 'attendance_occurrence_empty_state',
+              },
+            );
+            await onRefresh();
+          },
           icon: const Icon(Icons.refresh),
           label: const Text('Refresh'),
         ),
@@ -108,7 +126,16 @@ class _OccurrenceSelector extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: () async {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: const <String, dynamic>{
+            'cta': 'attendance_pull_to_refresh',
+            'surface': 'attendance_occurrence_list',
+          },
+        );
+        await onRefresh();
+      },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: occurrences.length,
@@ -226,7 +253,16 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
         appBar: AppBar(title: const Text('Class Roster')),
         body: ErrorState(
           message: service.error!,
-          onRetry: _loadRoster,
+          onRetry: () async {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'cta': 'attendance_retry_roster',
+                'surface': 'attendance_roster_error_state',
+              },
+            );
+            await _loadRoster();
+          },
         ),
       );
     }

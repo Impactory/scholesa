@@ -15,6 +15,7 @@ import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
 import 'services/storage_service.dart';
 import 'services/session_bootstrap.dart';
+import 'services/telemetry_service.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
 import 'router/app_router.dart';
@@ -294,7 +295,16 @@ class _ErrorBootstrapScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: onRetry,
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{
+                        'cta': 'bootstrap_retry',
+                        'surface': 'error_bootstrap_screen',
+                      },
+                    );
+                    onRetry();
+                  },
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                 ),

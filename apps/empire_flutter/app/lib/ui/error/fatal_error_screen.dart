@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/telemetry_service.dart';
 
 /// Fatal error screen with retry option
 class FatalErrorScreen extends StatelessWidget {
@@ -45,7 +46,16 @@ class FatalErrorScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 if (onRetry != null)
                   ElevatedButton.icon(
-                    onPressed: onRetry,
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'fatal_error_retry',
+                          'surface': 'fatal_error_screen',
+                        },
+                      );
+                      onRetry!();
+                    },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Try Again'),
                   ),
