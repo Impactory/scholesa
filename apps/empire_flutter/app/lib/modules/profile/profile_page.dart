@@ -458,7 +458,16 @@ class _SettingsTile extends StatelessWidget {
         side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: ListTile(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'profile_settings_tile',
+              'title': title,
+            },
+          );
+          onTap();
+        },
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(

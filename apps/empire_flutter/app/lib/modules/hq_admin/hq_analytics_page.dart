@@ -468,11 +468,27 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'hq_analytics_cancel_export',
+                  'surface': 'export_report_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'hq_analytics_confirm_export',
+                  'surface': 'export_report_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

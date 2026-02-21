@@ -530,7 +530,16 @@ class _FilterChip extends StatelessWidget {
         color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'user_admin_filter_chip',
+                'label': label,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1280,7 +1289,16 @@ class _ActionButton extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'user_admin_action_button',
+                'label': label,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),

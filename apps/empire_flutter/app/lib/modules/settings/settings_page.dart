@@ -709,7 +709,16 @@ class _SettingsTile extends StatelessWidget {
         style: TextStyle(color: Colors.grey[600], fontSize: 12),
       ),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'settings_tile',
+            'title': title,
+          },
+        );
+        onTap();
+      },
     );
   }
 }
@@ -747,7 +756,17 @@ class _SettingsToggle extends StatelessWidget {
       ),
       trailing: Switch(
         value: value,
-        onChanged: onChanged,
+        onChanged: (bool nextValue) {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'settings_toggle',
+              'title': title,
+              'value': nextValue,
+            },
+          );
+          onChanged(nextValue);
+        },
         activeThumbColor: ScholesaColors.success,
       ),
     );

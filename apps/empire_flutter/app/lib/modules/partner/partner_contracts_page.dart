@@ -334,7 +334,18 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                 )),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'partner_contracts',
+                      'cta_id': 'close_contract_details',
+                      'surface': 'contract_details_sheet',
+                      'contract_id': contract.id,
+                    },
+                  );
+                  Navigator.pop(context);
+                },
                 child: const Text('Close'),
               ),
             ],

@@ -229,13 +229,32 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                   label: 'All',
                   emoji: '🎯',
                   selected: service.pillarFilter == null,
-                  onTap: () => service.setPillarFilter(null),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{
+                        'cta': 'missions_filter_all',
+                        'surface': 'missions_pillar_filters',
+                      },
+                    );
+                    service.setPillarFilter(null);
+                  },
                 ),
                 ...Pillar.values.map((Pillar pillar) => _PillarChip(
                   label: pillar.label,
                   emoji: pillar.emoji,
                   selected: service.pillarFilter == pillar,
-                  onTap: () => service.setPillarFilter(pillar),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'missions_filter_pillar',
+                        'surface': 'missions_pillar_filters',
+                        'pillar': pillar.name,
+                      },
+                    );
+                    service.setPillarFilter(pillar);
+                  },
                   color: _getPillarColor(pillar),
                 )),
               ],

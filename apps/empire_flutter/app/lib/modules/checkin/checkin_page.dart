@@ -532,7 +532,16 @@ class _FilterChip extends StatelessWidget {
         color: selected ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'checkin_filter_chip',
+                'label': label,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(20),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -842,7 +851,16 @@ class _ActionButton extends StatelessWidget {
       color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'checkin_action_button',
+              'label': label,
+            },
+          );
+          onTap();
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -1230,7 +1248,16 @@ class _PickupOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'checkin_pickup_option',
+            'pickup_name': pickup.name,
+          },
+        );
+        onTap();
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),

@@ -158,6 +158,13 @@ class _HqSitesPageState extends State<HqSitesPage> {
               ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{
+                        'cta': 'hq_sites_clear_search',
+                        'surface': 'sites_search_bar',
+                      },
+                    );
                     _searchController.clear();
                     setState(() => _searchQuery = '');
                   },
@@ -188,28 +195,64 @@ class _HqSitesPageState extends State<HqSitesPage> {
             _FilterChip(
               label: 'All Sites',
               isSelected: _filterStatus == 'all',
-              onTap: () => setState(() => _filterStatus = 'all'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'hq_sites_filter_all',
+                    'surface': 'sites_filter_chips',
+                  },
+                );
+                setState(() => _filterStatus = 'all');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Active',
               isSelected: _filterStatus == 'active',
               color: ScholesaColors.success,
-              onTap: () => setState(() => _filterStatus = 'active'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'hq_sites_filter_active',
+                    'surface': 'sites_filter_chips',
+                  },
+                );
+                setState(() => _filterStatus = 'active');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Onboarding',
               isSelected: _filterStatus == 'onboarding',
               color: ScholesaColors.warning,
-              onTap: () => setState(() => _filterStatus = 'onboarding'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'hq_sites_filter_onboarding',
+                    'surface': 'sites_filter_chips',
+                  },
+                );
+                setState(() => _filterStatus = 'onboarding');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Pending',
               isSelected: _filterStatus == 'pending',
               color: Colors.grey,
-              onTap: () => setState(() => _filterStatus = 'pending'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'hq_sites_filter_pending',
+                    'surface': 'sites_filter_chips',
+                  },
+                );
+                setState(() => _filterStatus = 'pending');
+              },
             ),
           ],
         ),

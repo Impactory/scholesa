@@ -189,7 +189,17 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
                   return _NotificationCard(
                     message: message,
                     onTap: () => _openMessage(message),
-                    onDismiss: () => service.deleteMessage(message.id),
+                    onDismiss: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'messages_dismiss_notification',
+                          'message_id': message.id,
+                          'message_type': message.type.name,
+                        },
+                      );
+                      service.deleteMessage(message.id);
+                    },
                   );
                 },
               ),
@@ -210,7 +220,16 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
             _FilterChip(
               label: 'All',
               selected: service.typeFilter == null,
-              onTap: () => service.setTypeFilter(null),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'messages_filter_all',
+                    'surface': 'messages_filter_chips',
+                  },
+                );
+                service.setTypeFilter(null);
+              },
             ),
             ...MessageType.values
                 .where((MessageType t) => t != MessageType.direct)
@@ -218,7 +237,17 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
                       label: type.label,
                       emoji: type.emoji,
                       selected: service.typeFilter == type,
-                      onTap: () => service.setTypeFilter(type),
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'messages_filter_type',
+                            'surface': 'messages_filter_chips',
+                            'type': type.name,
+                          },
+                        );
+                        service.setTypeFilter(type);
+                      },
                       color: _getTypeColor(type),
                     )),
           ],
@@ -709,7 +738,16 @@ class _MessageDetailSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'messages_close_detail',
+                        'message_id': message.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                  },
                   icon: const Icon(Icons.close),
                 ),
               ],
