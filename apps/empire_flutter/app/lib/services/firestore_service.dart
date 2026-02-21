@@ -23,27 +23,7 @@ class FirestoreService {
         await _firestore.collection('users').doc(user.uid).get();
 
     if (!doc.exists) {
-      // Create default profile if doesn't exist
-      final Map<String, dynamic> defaultProfile = <String, dynamic>{
-        'email': user.email ?? '',
-        'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-        'role': 'learner',
-        'siteIds': <String>[],
-        'entitlements': <Map<String, dynamic>>[],
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      await _firestore.collection('users').doc(user.uid).set(defaultProfile);
-      
-      return <String, dynamic>{
-        'userId': user.uid,
-        'email': defaultProfile['email'],
-        'displayName': defaultProfile['displayName'],
-        'role': defaultProfile['role'],
-        'activeSiteId': null,
-        'siteIds': <String>[],
-        'entitlements': <Map<String, dynamic>>[],
-      };
+      return _buildFallbackProfile(user);
     }
 
     final Map<String, dynamic> data = doc.data()!;
@@ -55,6 +35,29 @@ class FirestoreService {
       'activeSiteId': data['activeSiteId'] ?? (data['siteIds'] as List<dynamic>?)?.firstOrNull,
       'siteIds': List<String>.from(data['siteIds'] ?? <dynamic>[]),
       'entitlements': List<Map<String, dynamic>>.from(data['entitlements'] ?? <dynamic>[]),
+    };
+  }
+
+  Future<Map<String, dynamic>> _buildFallbackProfile(User user) async {
+    String role = 'learner';
+    try {
+      final IdTokenResult tokenResult = await user.getIdTokenResult(true);
+      final Object? roleClaim = tokenResult.claims?['role'];
+      if (roleClaim is String && roleClaim.isNotEmpty) {
+        role = roleClaim;
+      }
+    } catch (_) {
+      // Non-blocking fallback: keep default learner role
+    }
+
+    return <String, dynamic>{
+      'userId': user.uid,
+      'email': user.email ?? '',
+      'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+      'role': role,
+      'activeSiteId': null,
+      'siteIds': <String>[],
+      'entitlements': <Map<String, dynamic>>[],
     };
   }
 

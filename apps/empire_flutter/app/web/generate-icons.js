@@ -2,7 +2,7 @@
 /**
  * Scholesa Icon Generator
  * 
- * Generates PNG icons from the SVG source for web/PWA
+ * Generates PNG icons from the authoritative launcher PNG source for web/PWA
  * Run: node generate-icons.js
  * 
  * Prerequisites:
@@ -13,10 +13,12 @@ const fs = require('fs');
 const path = require('path');
 
 async function generateIcons() {
-  const svgPath = path.join(__dirname, 'icons', 'icon.svg');
+  const sourcePngPath = path.join(__dirname, '..', 'assets', 'icons', 'android', 'android-launchericon-512-512.png');
   const iconsDir = path.join(__dirname, 'icons');
-  
-  const svgContent = fs.readFileSync(svgPath, 'utf8');
+
+  if (!fs.existsSync(sourcePngPath)) {
+    throw new Error(`Authoritative PNG source not found: ${sourcePngPath}`);
+  }
   
   const sizes = [
     { name: 'favicon-16x16.png', size: 16 },
@@ -29,6 +31,7 @@ async function generateIcons() {
 
   try {
     const sharp = require('sharp');
+    const sourceBuffer = fs.readFileSync(sourcePngPath);
     
     for (const { name, size } of sizes) {
       const outputPath = path.join(iconsDir, name);
@@ -38,19 +41,19 @@ async function generateIcons() {
       
       let buffer;
       if (isMaskable) {
-        buffer = await sharp(Buffer.from(svgContent))
+        buffer = await sharp(sourceBuffer)
           .resize(innerSize, innerSize)
           .extend({
             top: padding,
             bottom: padding,
             left: padding,
             right: padding,
-            background: { r: 59, g: 130, b: 246, alpha: 1 }
+            background: { r: 14, g: 165, b: 233, alpha: 1 }
           })
           .png()
           .toBuffer();
       } else {
-        buffer = await sharp(Buffer.from(svgContent))
+        buffer = await sharp(sourceBuffer)
           .resize(size, size)
           .png()
           .toBuffer();
@@ -60,7 +63,7 @@ async function generateIcons() {
       console.log(`✓ Generated ${name} (${size}x${size})`);
     }
     
-    const faviconBuffer = await sharp(Buffer.from(svgContent))
+    const faviconBuffer = await sharp(sourceBuffer)
       .resize(32, 32)
       .png()
       .toBuffer();

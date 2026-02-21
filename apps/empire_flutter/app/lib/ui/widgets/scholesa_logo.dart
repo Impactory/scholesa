@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/scholesa_theme.dart';
 
 /// Scholesa Logo widget - consistent branding across the app
-/// Renders the branded "S" logo with gradient background
+/// Uses authoritative PNG logo assets from assets/icons.
 class ScholesaLogo extends StatelessWidget {
   const ScholesaLogo({
     super.key,
@@ -30,15 +30,6 @@ class ScholesaLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            Color(0xFF4f46e5), // Indigo
-            Color(0xFF0ea5e9), // Sky
-            Color(0xFF22d3ee), // Cyan
-          ],
-        ),
         borderRadius: BorderRadius.circular(radius),
         boxShadow: showShadow
             ? <BoxShadow>[
@@ -55,68 +46,15 @@ class ScholesaLogo extends StatelessWidget {
               ]
             : null,
       ),
-      child: Padding(
-        padding: EdgeInsets.all(size * 0.14),
-        child: CustomPaint(
-          painter: _ScholesaGlyphPainter(),
-          size: Size.square(size),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Image.asset(
+          'assets/icons/android/android-launchericon-512-512.png',
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
-}
-
-class _ScholesaGlyphPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double outerRadius = size.width * 0.38;
-    final double nodeRadius = size.width * 0.055;
-
-    final Paint ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.09
-      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.95)
-      ..strokeCap = StrokeCap.round;
-
-    final Paint linePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.07
-      ..color = const Color(0xFFFFFFFF)
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final Paint nodeBlue = Paint()..color = ScholesaColors.futureSkills;
-    final Paint nodePurple = Paint()..color = ScholesaColors.leadership;
-    final Paint nodeGreen = Paint()..color = ScholesaColors.impact;
-
-    canvas.drawCircle(center, outerRadius, ringPaint);
-
-    final Path hexPath = Path()
-      ..moveTo(center.dx, size.height * 0.18)
-      ..lineTo(size.width * 0.74, size.height * 0.33)
-      ..lineTo(size.width * 0.74, size.height * 0.67)
-      ..lineTo(center.dx, size.height * 0.82)
-      ..lineTo(size.width * 0.26, size.height * 0.67)
-      ..lineTo(size.width * 0.26, size.height * 0.33)
-      ..close();
-    canvas.drawPath(hexPath, linePaint);
-
-    final Path mesh = Path()
-      ..moveTo(center.dx, size.height * 0.33)
-      ..lineTo(center.dx, size.height * 0.67)
-      ..moveTo(size.width * 0.26, size.height * 0.5)
-      ..lineTo(center.dx, size.height * 0.67)
-      ..lineTo(size.width * 0.74, size.height * 0.5);
-    canvas.drawPath(mesh, linePaint);
-
-    canvas.drawCircle(Offset(size.width * 0.12, center.dy), nodeRadius, nodeBlue);
-    canvas.drawCircle(Offset(size.width * 0.88, center.dy), nodeRadius, nodePurple);
-    canvas.drawCircle(Offset(center.dx, size.height * 0.88), nodeRadius, nodeGreen);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Small Scholesa logo for app bars, list items, etc.

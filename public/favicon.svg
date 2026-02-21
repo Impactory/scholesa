@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 512 512" role="img" aria-label="Scholesa logo">
-  <!-- Render the published app icon directly so the favicon always matches the packaged assets. -->
-  <image href="/icons/icon-512.png" width="512" height="512" preserveAspectRatio="xMidYMid meet" />
-</svg>

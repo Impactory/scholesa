@@ -73,7 +73,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = _authErrorMessage(context, e.code);
+          _errorMessage = _authErrorMessageFromException(context, e);
         });
       }
     } catch (e) {
@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = _authErrorMessage(context, e.code);
+          _errorMessage = _authErrorMessageFromException(context, e);
         });
       }
     } catch (e) {
@@ -151,7 +151,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = _authErrorMessage(context, e.code);
+          _errorMessage = _authErrorMessageFromException(context, e);
         });
       }
     } catch (e) {
@@ -726,6 +726,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       case 'invalid-credential':
       case 'invalid-login-credentials':
         return AppStrings.of(context, 'auth.error.invalidCredential');
+      case 'invalid-password':
+        return AppStrings.of(context, 'auth.error.wrongPassword');
       case 'email-already-in-use':
         return AppStrings.of(context, 'auth.error.emailInUse');
       case 'weak-password':
@@ -744,6 +746,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         return AppStrings.of(context, 'auth.error.invalidApiKey');
       case 'app-not-authorized':
         return AppStrings.of(context, 'auth.error.appNotAuthorized');
+      case 'unknown':
+      case 'internal-error':
+      case 'channel-error':
+        return fallback ?? AppStrings.of(context, 'auth.error.generic');
       case 'popup-closed-by-user':
         return AppStrings.of(context, 'auth.error.popupClosed');
       case 'popup-blocked':
@@ -751,6 +757,31 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       default:
         return fallback ?? AppStrings.of(context, 'auth.error.generic');
     }
+  }
+
+  String _authErrorMessageFromException(BuildContext context, FirebaseAuthException e) {
+    final String message = (e.message ?? '').toLowerCase();
+
+    if (message.contains('invalid-login-credentials') ||
+        message.contains('invalid_credential') ||
+        message.contains('wrong-password')) {
+      return AppStrings.of(context, 'auth.error.invalidCredential');
+    }
+
+    if (message.contains('network') || message.contains('network-request-failed')) {
+      return AppStrings.of(context, 'auth.error.networkFailed');
+    }
+
+    if (message.contains('too-many-requests')) {
+      return AppStrings.of(context, 'auth.error.tooManyRequests');
+    }
+
+    final String? appStateError = context.read<AppState>().error;
+    final String? fallback = appStateError?.isNotEmpty == true
+        ? appStateError
+        : (e.message?.isNotEmpty == true ? e.message : null);
+
+    return _authErrorMessage(context, e.code, fallback: fallback);
   }
 
   String _normalizeAuthExceptionMessage(BuildContext context, Object error, String fallback) {

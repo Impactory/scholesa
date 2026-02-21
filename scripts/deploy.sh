@@ -51,6 +51,8 @@ preflight() {
 
 # ── Flutter analyze + test gate ────────────────────────────────
 flutter_gate() {
+  sync_platform_icons
+
   log "Running flutter analyze..."
   (cd "$FLUTTER_APP" && flutter analyze --no-pub) || fail "flutter analyze failed — fix issues before deploying"
 
@@ -58,6 +60,18 @@ flutter_gate() {
   (cd "$FLUTTER_APP" && flutter test) || fail "flutter tests failed — fix before deploying"
 
   log "Flutter gate passed ✓"
+}
+
+# ── Enforce platform icon sync before any Flutter build ─────────
+sync_platform_icons() {
+  local icon_sync_script
+  icon_sync_script="$FLUTTER_APP/scripts/sync_platform_icons.sh"
+
+  [[ -f "$icon_sync_script" ]] || fail "Icon sync script not found: $icon_sync_script"
+
+  log "Syncing platform icons..."
+  (cd "$FLUTTER_APP" && bash ./scripts/sync_platform_icons.sh) || fail "Platform icon sync failed"
+  log "Platform icons synced ✓"
 }
 
 # ── Functions lint + build ─────────────────────────────────────
