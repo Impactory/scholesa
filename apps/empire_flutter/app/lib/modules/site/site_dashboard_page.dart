@@ -12,7 +12,7 @@ class SiteDashboardPage extends StatefulWidget {
 
 class _SiteDashboardPageState extends State<SiteDashboardPage> {
   String _selectedPeriod = 'week';
-  final List<_SiteActivity> _activities = const <_SiteActivity>[
+  final List<_SiteActivity> _activities = <_SiteActivity>[
     _SiteActivity(
       icon: Icons.person_add,
       title: 'New enrollment',
@@ -395,6 +395,21 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   'period': _selectedPeriod,
                 },
               );
+              setState(() {
+                _activities.insert(
+                  0,
+                  _SiteActivity(
+                    icon: Icons.download_done,
+                    title: 'Report generated',
+                    subtitle: '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} report ready for download',
+                    time: 'just now',
+                    color: ScholesaColors.site,
+                  ),
+                );
+                if (_activities.length > 8) {
+                  _activities.removeLast();
+                }
+              });
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

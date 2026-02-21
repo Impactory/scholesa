@@ -13,9 +13,15 @@ class SiteOpsPage extends StatefulWidget {
 
 class _SiteOpsPageState extends State<SiteOpsPage> {
   bool _isDayOpen = true;
-  final int _presentCount = 24;
-  final int _pendingPickups = 5;
-  final int _openIncidents = 2;
+  int _presentCount = 24;
+  int _pendingPickups = 5;
+  int _openIncidents = 2;
+  final List<_ActivityEntry> _recentActivity = <_ActivityEntry>[
+    const _ActivityEntry('Emma S. checked in', '9:02 AM', Icons.login_rounded, Colors.green),
+    const _ActivityEntry('Oliver T. checked in', '9:05 AM', Icons.login_rounded, Colors.green),
+    const _ActivityEntry('Minor incident reported', '9:15 AM', Icons.warning_rounded, Colors.orange),
+    const _ActivityEntry('Sophia M. picked up', '3:30 PM', Icons.logout_rounded, Colors.blue),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +228,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
               'route': route,
             },
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Navigating to $label...')),
-          );
+          _handleQuickAction(label);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -267,18 +271,66 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: <Widget>[
-              _buildActivityItem('Emma S. checked in', '9:02 AM', Icons.login_rounded, Colors.green),
-              const Divider(height: 1),
-              _buildActivityItem('Oliver T. checked in', '9:05 AM', Icons.login_rounded, Colors.green),
-              const Divider(height: 1),
-              _buildActivityItem('Minor incident reported', '9:15 AM', Icons.warning_rounded, Colors.orange),
-              const Divider(height: 1),
-              _buildActivityItem('Sophia M. picked up', '3:30 PM', Icons.logout_rounded, Colors.blue),
+              ..._buildRecentActivityRows(),
             ],
           ),
         ),
       ],
     );
+  }
+
+  List<Widget> _buildRecentActivityRows() {
+    final List<Widget> rows = <Widget>[];
+    for (var index = 0; index < _recentActivity.length; index++) {
+      final _ActivityEntry entry = _recentActivity[index];
+      rows.add(_buildActivityItem(entry.title, entry.time, entry.icon, entry.color));
+      if (index < _recentActivity.length - 1) {
+        rows.add(const Divider(height: 1));
+      }
+    }
+    return rows;
+  }
+
+  void _handleQuickAction(String label) {
+    setState(() {
+      switch (label) {
+        case 'Check-in':
+          _presentCount += 1;
+          _addRecentActivity('Manual check-in recorded', Icons.login_rounded, Colors.green);
+          break;
+        case 'Check-out':
+          if (_presentCount > 0) _presentCount -= 1;
+          if (_pendingPickups > 0) _pendingPickups -= 1;
+          _addRecentActivity('Manual check-out recorded', Icons.logout_rounded, Colors.blue);
+          break;
+        case 'New Incident':
+          _openIncidents += 1;
+          _addRecentActivity('New incident created', Icons.warning_rounded, Colors.orange);
+          break;
+        case 'View Roster':
+          _addRecentActivity('Roster viewed', Icons.list_alt_rounded, ScholesaColors.primary);
+          break;
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$label completed')),
+    );
+  }
+
+  void _addRecentActivity(String title, IconData icon, Color color) {
+    _recentActivity.insert(0, _ActivityEntry(title, _nowLabel(), icon, color));
+    if (_recentActivity.length > 8) {
+      _recentActivity.removeLast();
+    }
+  }
+
+  String _nowLabel() {
+    final DateTime now = DateTime.now();
+    final int hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+    final String minute = now.minute.toString().padLeft(2, '0');
+    final String period = now.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   Widget _buildActivityItem(String title, String time, IconData icon, Color color) {
@@ -301,4 +353,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       ),
     );
   }
+}
+
+class _ActivityEntry {
+  const _ActivityEntry(this.title, this.time, this.icon, this.color);
+
+  final String title;
+  final String time;
+  final IconData icon;
+  final Color color;
 }

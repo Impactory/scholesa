@@ -65,9 +65,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                   'surface': 'appbar',
                 },
               );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refreshing integrations...')),
-              );
+              _handleRefreshIntegrations();
             },
           ),
         ],
@@ -236,9 +234,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                         'integration_id': integration.id,
                       },
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Connecting ${integration.name}...')),
-                    );
+                    _handleConnectIntegration(integration);
                   },
                   child: const Text('Connect'),
                 ),
@@ -335,9 +331,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                   },
                 );
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Syncing ${integration.name}...')),
-                );
+                _handleForceSyncIntegration(integration);
               },
             ),
             ListTile(
@@ -354,9 +348,7 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                   },
                 );
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Retrying failed syncs...')),
-                );
+                _handleRetryFailedSyncs(integration);
               },
             ),
             ListTile(
@@ -380,14 +372,106 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                   },
                 );
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${integration.name} disconnected')),
-                );
+                _handleDisconnectIntegration(integration);
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _handleRefreshIntegrations() {
+    final DateTime now = DateTime.now();
+    setState(() {
+      for (var index = 0; index < _integrations.length; index++) {
+        final _Integration integration = _integrations[index];
+        if (integration.status == _IntegrationStatus.disconnected) continue;
+
+        _integrations[index] = integration.copyWith(
+          lastSync: now,
+          errors: integration.errors > 0 ? integration.errors - 1 : 0,
+          status: integration.errors <= 1 ? _IntegrationStatus.healthy : _IntegrationStatus.warning,
+        );
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Integrations refreshed')),
+    );
+  }
+
+  void _handleConnectIntegration(_Integration integration) {
+    final DateTime now = DateTime.now();
+    setState(() {
+      for (var index = 0; index < _integrations.length; index++) {
+        if (_integrations[index].id != integration.id) continue;
+        _integrations[index] = _integrations[index].copyWith(
+          status: _IntegrationStatus.healthy,
+          lastSync: now,
+          syncedItems: _integrations[index].syncedItems > 0 ? _integrations[index].syncedItems : 1,
+          errors: 0,
+        );
+        break;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${integration.name} connected')),
+    );
+  }
+
+  void _handleForceSyncIntegration(_Integration integration) {
+    final DateTime now = DateTime.now();
+    setState(() {
+      for (var index = 0; index < _integrations.length; index++) {
+        if (_integrations[index].id != integration.id) continue;
+        final _Integration current = _integrations[index];
+        _integrations[index] = current.copyWith(
+          status: _IntegrationStatus.healthy,
+          lastSync: now,
+          syncedItems: current.syncedItems + 1,
+          errors: 0,
+        );
+        break;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${integration.name} synced successfully')),
+    );
+  }
+
+  void _handleRetryFailedSyncs(_Integration integration) {
+    setState(() {
+      for (var index = 0; index < _integrations.length; index++) {
+        if (_integrations[index].id != integration.id) continue;
+        final _Integration current = _integrations[index];
+        _integrations[index] = current.copyWith(
+          errors: 0,
+          status: _IntegrationStatus.healthy,
+          lastSync: DateTime.now(),
+        );
+        break;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed syncs retried successfully')),
+    );
+  }
+
+  void _handleDisconnectIntegration(_Integration integration) {
+    setState(() {
+      for (var index = 0; index < _integrations.length; index++) {
+        if (_integrations[index].id != integration.id) continue;
+        _integrations[index] = _integrations[index].copyWith(
+          status: _IntegrationStatus.disconnected,
+          clearLastSync: true,
+          syncedItems: 0,
+          errors: 0,
+        );
+        break;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${integration.name} disconnected')),
     );
   }
 
@@ -425,4 +509,27 @@ class _Integration {
   final DateTime? lastSync;
   final int syncedItems;
   final int errors;
+
+  _Integration copyWith({
+    String? id,
+    String? name,
+    IconData? icon,
+    Color? color,
+    _IntegrationStatus? status,
+    DateTime? lastSync,
+    int? syncedItems,
+    int? errors,
+    bool clearLastSync = false,
+  }) {
+    return _Integration(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      status: status ?? this.status,
+      lastSync: clearLastSync ? null : (lastSync ?? this.lastSync),
+      syncedItems: syncedItems ?? this.syncedItems,
+      errors: errors ?? this.errors,
+    );
+  }
 }
