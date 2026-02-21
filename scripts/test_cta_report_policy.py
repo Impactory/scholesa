@@ -15,7 +15,13 @@ from cta_report_policy import (
     NON_ACTIONABLE_WEB_PATHS,
     ROUTE_SURFACE_FILE_NAMES,
 )
-from generate_cta_report import ROOT, WEB_EXTS, is_route_surface_file, scan_pattern
+from generate_cta_report import (
+    FLUTTER_WIDGET_MARKER_PATTERN,
+    ROOT,
+    WEB_EXTS,
+    is_route_surface_file,
+    scan_pattern,
+)
 
 
 class CtaReportPolicyTests(unittest.TestCase):
@@ -56,6 +62,11 @@ class CtaReportPolicyTests(unittest.TestCase):
 
             self.assertEqual(len(findings), 1)
             self.assertTrue(findings[0][0].endswith("app/page.tsx"))
+
+    def test_flutter_widget_pattern_avoids_constructor_false_positives(self) -> None:
+        self.assertIsNotNone(FLUTTER_WIDGET_MARKER_PATTERN.search("child: ListTile("))
+        self.assertIsNone(FLUTTER_WIDGET_MARKER_PATTERN.search("const MissionListTile({"))
+        self.assertIsNone(FLUTTER_WIDGET_MARKER_PATTERN.search("const ColorfulListTile({"))
 
 
 if __name__ == "__main__":
