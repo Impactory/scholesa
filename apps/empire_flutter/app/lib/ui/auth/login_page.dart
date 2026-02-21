@@ -208,7 +208,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
               actions: <Widget>[
                 TextButton(
-                  onPressed: sending ? null : () => Navigator.pop(ctx, false),
+                  onPressed: sending
+                      ? null
+                      : () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: const <String, dynamic>{
+                              'module': 'login',
+                              'cta_id': 'cancel_password_reset',
+                              'surface': 'forgot_password_dialog',
+                            },
+                          );
+                          Navigator.pop(ctx, false);
+                        },
                   child: Text(AppStrings.of(ctx, 'auth.cancel')),
                 ),
                 ElevatedButton(
@@ -227,6 +239,15 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             dialogError = null;
                           });
                           try {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'module': 'login',
+                                'cta_id': 'submit_password_reset',
+                                'surface': 'forgot_password_dialog',
+                                'email_length': email.length,
+                              },
+                            );
                             await FirebaseAuth.instance
                                 .sendPasswordResetEmail(email: email);
                             if (ctx.mounted) Navigator.pop(ctx, true);
@@ -523,6 +544,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                         color: secondaryTextColor,
                                       ),
                                       onPressed: () {
+                                        TelemetryService.instance.logEvent(
+                                          event: 'cta.clicked',
+                                          metadata: <String, dynamic>{
+                                            'module': 'login',
+                                            'cta_id': _obscurePassword
+                                                ? 'show_password'
+                                                : 'hide_password',
+                                            'surface': 'password_field',
+                                          },
+                                        );
                                         setState(() {
                                           _obscurePassword = !_obscurePassword;
                                         });
@@ -545,7 +576,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: _showForgotPasswordDialog,
+                                    onPressed: () {
+                                      TelemetryService.instance.logEvent(
+                                        event: 'cta.clicked',
+                                        metadata: const <String, dynamic>{
+                                          'module': 'login',
+                                          'cta_id': 'open_forgot_password_dialog',
+                                          'surface': 'login_form',
+                                        },
+                                      );
+                                      _showForgotPasswordDialog();
+                                    },
                                     style: TextButton.styleFrom(
                                       foregroundColor: linkColor,
                                     ),
@@ -559,7 +600,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   width: double.infinity,
                                   height: 52,
                                   child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _handleLogin,
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () {
+                                            TelemetryService.instance.logEvent(
+                                              event: 'cta.clicked',
+                                              metadata: const <String, dynamic>{
+                                                'module': 'login',
+                                                'cta_id': 'submit_email_login',
+                                                'surface': 'login_form',
+                                              },
+                                            );
+                                            _handleLogin();
+                                          },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: colorScheme.primary,
                                       foregroundColor: colorScheme.onPrimary,
@@ -619,7 +672,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             children: <Widget>[
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: _isLoading ? null : _handleGoogleSignIn,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () {
+                                          TelemetryService.instance.logEvent(
+                                            event: 'cta.clicked',
+                                            metadata: const <String, dynamic>{
+                                              'module': 'login',
+                                              'cta_id': 'submit_google_login',
+                                              'surface': 'social_login',
+                                            },
+                                          );
+                                          _handleGoogleSignIn();
+                                        },
                                   icon: const Icon(
                                     Icons.g_mobiledata,
                                     color: Colors.red,
@@ -638,7 +703,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                               const SizedBox(width: 16),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: _isLoading ? null : _handleMicrosoftSignIn,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () {
+                                          TelemetryService.instance.logEvent(
+                                            event: 'cta.clicked',
+                                            metadata: const <String, dynamic>{
+                                              'module': 'login',
+                                              'cta_id': 'submit_microsoft_login',
+                                              'surface': 'social_login',
+                                            },
+                                          );
+                                          _handleMicrosoftSignIn();
+                                        },
                                   icon: const Icon(
                                     Icons.window,
                                     size: 20,

@@ -237,6 +237,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
       leading: RadioGroup<_AuditCategory?>(
         groupValue: _filterCategory,
         onChanged: (_AuditCategory? value) {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'hq_audit',
+              'cta_id': 'apply_filter',
+              'surface': 'filter_dialog',
+              'category': value?.name ?? 'all',
+            },
+          );
           setState(() => _filterCategory = value);
           Navigator.pop(context);
         },
@@ -245,6 +254,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
         ),
       ),
       onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'module': 'hq_audit',
+            'cta_id': 'apply_filter',
+            'surface': 'filter_dialog',
+            'category': category?.name ?? 'all',
+          },
+        );
         setState(() => _filterCategory = category);
         Navigator.pop(context);
       },
@@ -285,7 +303,21 @@ class _HqAuditPageState extends State<HqAuditPage> {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+              child: OutlinedButton(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_audit',
+                      'cta_id': 'close_audit_log_details',
+                      'surface': 'audit_log_details_sheet',
+                      'log_id': log.id,
+                    },
+                  );
+                  Navigator.pop(context);
+                },
+                child: const Text('Close'),
+              ),
             ),
           ],
         ),

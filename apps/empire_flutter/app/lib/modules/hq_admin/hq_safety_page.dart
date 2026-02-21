@@ -217,7 +217,21 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                  child: OutlinedButton(
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'hq_safety',
+                          'cta_id': 'close_incident_details',
+                          'surface': 'incident_details_sheet',
+                          'incident_id': incident.id,
+                        },
+                      );
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Close'),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

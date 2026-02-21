@@ -355,6 +355,15 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
               leading: const Icon(Icons.settings_rounded),
               title: const Text('Settings'),
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'site_integrations_health',
+                    'cta_id': 'open_integration_settings',
+                    'surface': 'integration_options_sheet',
+                    'integration_id': integration.id,
+                  },
+                );
                 Navigator.pop(context);
               },
             ),

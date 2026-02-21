@@ -137,6 +137,17 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       color: ScholesaColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
+        onExpansionChanged: (bool expanded) {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'hq_integrations_health',
+              'cta_id': expanded ? 'expand_site_integrations' : 'collapse_site_integrations',
+              'surface': 'site_integration_card',
+              'site_name': site.siteName,
+            },
+          );
+        },
         title: Text(site.siteName, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('${site.integrations.length} integrations'),
         leading: _buildSiteStatusIcon(site),

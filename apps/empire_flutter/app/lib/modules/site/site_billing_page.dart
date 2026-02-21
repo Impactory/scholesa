@@ -304,7 +304,17 @@ class SiteBillingPage extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'module': 'site_billing',
+                  'cta_id': 'close_manage_plan_dialog',
+                  'surface': 'manage_plan_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
