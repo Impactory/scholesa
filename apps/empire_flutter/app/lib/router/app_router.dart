@@ -131,7 +131,13 @@ GoRouter createAppRouter(AppState appState) {
     
     errorBuilder: (BuildContext context, GoRouterState state) => FatalErrorScreen(
       error: state.error?.toString() ?? 'Page not found',
-      onRetry: () => context.go('/'),
+      onRetry: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/');
+        }
+      },
     ),
     
     routes: <RouteBase>[

@@ -48,6 +48,15 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     super.dispose();
   }
 
+  void _navigatePostAuth() {
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/');
+    }
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -67,9 +76,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         metadata: <String, dynamic>{'method': 'email'},
       );
       
-      if (mounted) {
-        context.go('/');
-      }
+      _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
@@ -106,9 +113,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         metadata: <String, dynamic>{'method': 'google'},
       );
       
-      if (mounted) {
-        context.go('/');
-      }
+      _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
@@ -145,9 +150,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         metadata: <String, dynamic>{'method': 'microsoft'},
       );
       
-      if (mounted) {
-        context.go('/');
-      }
+      _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {
