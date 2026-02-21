@@ -1,0 +1,44 @@
+[debug] [2026-02-21T02:40:43.445Z] ----------------------------------------------------------------------
+[debug] [2026-02-21T02:40:43.446Z] Command:       /Users/simonluke/.nvm/versions/node/v22.20.0/bin/node /Users/simonluke/.nvm/versions/node/v22.20.0/bin/firebase deploy --only storage
+[debug] [2026-02-21T02:40:43.446Z] CLI Version:   15.6.0
+[debug] [2026-02-21T02:40:43.446Z] Platform:      darwin
+[debug] [2026-02-21T02:40:43.446Z] Node Version:  v22.20.0
+[debug] [2026-02-21T02:40:43.447Z] Time:          Fri Feb 20 2026 18:40:43 GMT-0800 (Pacific Standard Time)
+[debug] [2026-02-21T02:40:43.447Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-21T02:40:43.789Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-21T02:40:43.789Z] > authorizing via signed-in user (simon.luke@impactoryinstitute.com)
+[debug] [2026-02-21T02:40:43.790Z] [iam] checking project studio-3328096157-e3f79 for permissions ["firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]
+[debug] [2026-02-21T02:40:43.790Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:43.790Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:43.790Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions [none]
+[debug] [2026-02-21T02:40:43.790Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions  x-goog-user-project=studio-3328096157-e3f79
+[debug] [2026-02-21T02:40:43.790Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions {"permissions":["firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[debug] [2026-02-21T02:40:43.929Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions 200
+[debug] [2026-02-21T02:40:43.929Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions {"permissions":["firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[info] 
+[info] === Deploying to 'studio-3328096157-e3f79'...
+[info] 
+[info] i  deploying storage 
+[info] i  storage: ensuring required API firebasestorage.googleapis.com is enabled... 
+[debug] [2026-02-21T02:40:43.929Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:43.930Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:43.930Z] >>> [apiv2][query] GET https://firebasestorage.googleapis.com/v1alpha/projects/studio-3328096157-e3f79/defaultBucket [none]
+[debug] [2026-02-21T02:40:44.193Z] <<< [apiv2][status] GET https://firebasestorage.googleapis.com/v1alpha/projects/studio-3328096157-e3f79/defaultBucket 200
+[debug] [2026-02-21T02:40:44.193Z] <<< [apiv2][body] GET https://firebasestorage.googleapis.com/v1alpha/projects/studio-3328096157-e3f79/defaultBucket {"name":"projects/studio-3328096157-e3f79/defaultBucket","location":"US-CENTRAL1","bucket":{"name":"projects/studio-3328096157-e3f79/buckets/studio-3328096157-e3f79.firebasestorage.app"},"storageClass":"REGIONAL"}
+[info] i  firebase.storage: checking storage.rules for compilation errors... 
+[debug] [2026-02-21T02:40:44.195Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.195Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.196Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79:test [none]
+[debug] [2026-02-21T02:40:44.196Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79:test [omitted]
+[debug] [2026-02-21T02:40:44.573Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79:test 200
+[debug] [2026-02-21T02:40:44.573Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79:test {}
+[info] ✔  firebase.storage: rules file storage.rules compiled successfully 
+[debug] [2026-02-21T02:40:44.574Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.575Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.575Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79/releases pageSize=10&pageToken=
+[debug] [2026-02-21T02:40:44.830Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79/releases 200
+[debug] [2026-02-21T02:40:44.831Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79/releases {"releases":[{"name":"projects/studio-3328096157-e3f79/releases/cloud.firestore","rulesetName":"projects/studio-3328096157-e3f79/rulesets/7a129a2a-9301-4d76-9b2a-54ebfa5ff92a","createTime":"2025-12-04T18:27:59.659821Z","updateTime":"2026-02-21T02:40:43.148399Z"},{"name":"projects/studio-3328096157-e3f79/releases/firebase.storage/studio-3328096157-e3f79.firebasestorage.app","rulesetName":"projects/studio-3328096157-e3f79/rulesets/cd1e7613-b901-4f94-8b63-98381797f095","createTime":"2026-01-06T08:55:25.961055Z","updateTime":"2026-02-21T01:56:01.286095Z"}]}
+[debug] [2026-02-21T02:40:44.840Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.840Z] Checked if tokens are valid: true, expires at: 1771645226644
+[debug] [2026-02-21T02:40:44.840Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/studio-3328096157-e3f79/rulesets/cd1e7613-b901-4f94-8b63-98381797f095 [none]
