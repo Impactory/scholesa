@@ -401,7 +401,18 @@ class _SessionCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'educator_sessions_open_session',
+                'session_title': session.title,
+                'pillar': session.pillar,
+                'status': session.status,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -559,7 +570,17 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color chipColor = color ?? ScholesaColors.educator;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'educator_sessions_filter_chip',
+            'label': label,
+            'selected': isSelected,
+          },
+        );
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(

@@ -54,6 +54,13 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
 
   Future<void> _trackSignInCTA(String source) async {
     await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'landing_sign_in',
+        'source': source,
+      },
+    );
+    await TelemetryService.instance.logEvent(
       event: 'auth.login',
       metadata: <String, dynamic>{
         'source': source,
@@ -332,7 +339,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () => _showDemoDialog(context),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'landing_watch_demo',
+                  },
+                );
+                _showDemoDialog(context);
+              },
               icon: const Icon(Icons.play_circle_outline_rounded),
               label: const Text('Watch Demo'),
               style: OutlinedButton.styleFrom(
@@ -367,7 +382,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'landing_demo_close',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
@@ -391,7 +414,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
         content: Text(detail),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'landing_section_preview_close',
+                  'section_title': title,
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
         ],
@@ -894,7 +926,16 @@ class _NavLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'landing_nav_link',
+            'label': label,
+          },
+        );
+        onTap();
+      },
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

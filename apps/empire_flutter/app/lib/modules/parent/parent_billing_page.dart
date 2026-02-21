@@ -768,7 +768,16 @@ class _InvoiceCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: onView,
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'parent_billing_invoice_view',
+                            'invoice_id': invoice['id'],
+                          },
+                        );
+                        onView();
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: ScholesaColors.parent,
                       ),
@@ -778,7 +787,16 @@ class _InvoiceCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: onPay,
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'parent_billing_invoice_pay',
+                            'invoice_id': invoice['id'],
+                          },
+                        );
+                        onPay();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ScholesaColors.parent,
                       ),

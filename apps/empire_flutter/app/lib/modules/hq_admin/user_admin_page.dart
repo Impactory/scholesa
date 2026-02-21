@@ -609,7 +609,18 @@ class _UserCard extends StatelessWidget {
         side: BorderSide(color: _roleColor.withValues(alpha: 0.2)),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'user_admin_open_user_card',
+              'user_id': user.uid,
+              'role': user.role.name,
+              'status': user.status.name,
+            },
+          );
+          onTap();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),

@@ -501,6 +501,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    _logProvisioningCta('submit_create_learner');
     
     setState(() => _isSubmitting = true);
     
@@ -587,7 +588,12 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  _logProvisioningCta('cancel_create_learner');
+                  Navigator.pop(context);
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -630,6 +636,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    _logProvisioningCta('submit_create_parent');
     
     setState(() => _isSubmitting = true);
     
@@ -711,7 +718,12 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  _logProvisioningCta('cancel_create_parent');
+                  Navigator.pop(context);
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -748,6 +760,13 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
 
   Future<void> _submit() async {
     if (_selectedParentId == null || _selectedLearnerId == null) return;
+    _logProvisioningCta(
+      'submit_create_guardian_link',
+      metadata: <String, dynamic>{
+        'parent_id': _selectedParentId,
+        'learner_id': _selectedLearnerId,
+      },
+    );
     
     setState(() => _isSubmitting = true);
     
@@ -862,7 +881,12 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+              onPressed: _isSubmitting
+                  ? null
+                  : () {
+                      _logProvisioningCta('cancel_create_guardian_link');
+                      Navigator.pop(context);
+                    },
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -914,6 +938,10 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    _logProvisioningCta(
+      'submit_edit_learner',
+      metadata: <String, dynamic>{'learner_id': widget.learner.id},
+    );
 
     setState(() => _isSubmitting = true);
 
@@ -978,7 +1006,15 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  _logProvisioningCta(
+                    'cancel_edit_learner',
+                    metadata: <String, dynamic>{'learner_id': widget.learner.id},
+                  );
+                  Navigator.pop(context);
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -1030,6 +1066,10 @@ class _EditParentDialogState extends State<_EditParentDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    _logProvisioningCta(
+      'submit_edit_parent',
+      metadata: <String, dynamic>{'parent_id': widget.parent.id},
+    );
 
     setState(() => _isSubmitting = true);
 
@@ -1103,7 +1143,15 @@ class _EditParentDialogState extends State<_EditParentDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  _logProvisioningCta(
+                    'cancel_edit_parent',
+                    metadata: <String, dynamic>{'parent_id': widget.parent.id},
+                  );
+                  Navigator.pop(context);
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
