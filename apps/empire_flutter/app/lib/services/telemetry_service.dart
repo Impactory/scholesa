@@ -4,7 +4,7 @@ class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
 
-  static const Set<String> allowedEvents = {
+  static const Set<String> knownCoreEvents = {
     'auth.login',
     'auth.logout',
     'attendance.recorded',
@@ -55,14 +55,8 @@ class TelemetryService {
 
   FirebaseFunctions? _functions;
 
-  FirebaseFunctions? get _safeFunctions {
-    if (_functions != null) return _functions;
-    try {
-      _functions = FirebaseFunctions.instance;
-    } catch (_) {
-      return null;
-    }
-    return _functions;
+  FirebaseFunctions get _requiredFunctions {
+    return _functions ??= FirebaseFunctions.instance;
   }
 
   Future<void> logEvent({
@@ -71,18 +65,11 @@ class TelemetryService {
     String? siteId,
     Map<String, dynamic>? metadata,
   }) async {
-    if (!allowedEvents.contains(event)) return;
-    final functions = _safeFunctions;
-    if (functions == null) return;
-    try {
-      await functions.httpsCallable('logTelemetryEvent').call(<String, dynamic>{
-        'event': event,
-        if (role != null && role.isNotEmpty) 'role': role,
-        if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
-        if (metadata != null) 'metadata': metadata,
-      });
-    } catch (_) {
-      // Telemetry should never break UX.
-    }
+    await _requiredFunctions.httpsCallable('logTelemetryEvent').call(<String, dynamic>{
+      'event': event,
+      if (role != null && role.isNotEmpty) 'role': role,
+      if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+      if (metadata != null) 'metadata': metadata,
+    });
   }
 }
