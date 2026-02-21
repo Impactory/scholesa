@@ -2,17 +2,6 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
 
-void _logLearnerWidgetsCta(String ctaId, {Map<String, dynamic>? metadata}) {
-  TelemetryService.instance.logEvent(
-    event: 'cta.clicked',
-    metadata: <String, dynamic>{
-      'module': 'ui_learner_widgets',
-      'cta_id': ctaId,
-      ...?metadata,
-    },
-  );
-}
-
 /// A beautiful mission card for displaying learning missions
 class MissionCard extends StatelessWidget {
 
@@ -115,9 +104,14 @@ class MissionCard extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                _logLearnerWidgetsCta(
-                  'tap_mission_card',
-                  metadata: <String, dynamic>{'title': title, 'status': status},
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'ui_learner_widgets',
+                    'cta_id': 'tap_mission_card',
+                    'title': title,
+                    'status': status,
+                  },
                 );
                 onTap?.call();
               },
@@ -262,9 +256,11 @@ class MissionCard extends StatelessWidget {
                             onPressed: onContinue == null
                                 ? null
                                 : () {
-                                    _logLearnerWidgetsCta(
-                                      'press_continue_mission',
+                                    TelemetryService.instance.logEvent(
+                                      event: 'cta.clicked',
                                       metadata: <String, dynamic>{
+                                        'module': 'ui_learner_widgets',
+                                        'cta_id': 'press_continue_mission',
                                         'title': title,
                                         'status': status,
                                       },
@@ -367,9 +363,13 @@ class MissionListTile extends StatelessWidget {
       onTap: onTap == null
           ? null
           : () {
-              _logLearnerWidgetsCta(
-                'tap_mission_list_tile',
-                metadata: <String, dynamic>{'title': title},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'ui_learner_widgets',
+                  'cta_id': 'tap_mission_list_tile',
+                  'title': title,
+                },
               );
               onTap?.call();
             },
@@ -453,9 +453,13 @@ class HabitStreakCard extends StatelessWidget {
           onTap: onTap == null
               ? null
               : () {
-                  _logLearnerWidgetsCta(
-                    'tap_habit_streak_card',
-                    metadata: <String, dynamic>{'habit_name': habitName},
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'ui_learner_widgets',
+                      'cta_id': 'tap_habit_streak_card',
+                      'habit_name': habitName,
+                    },
                   );
                   onTap?.call();
                 },
@@ -509,9 +513,13 @@ class HabitStreakCard extends StatelessWidget {
                         onPressed: onComplete == null
                             ? null
                             : () {
-                                _logLearnerWidgetsCta(
-                                  'press_complete_habit',
-                                  metadata: <String, dynamic>{'habit_name': habitName},
+                                TelemetryService.instance.logEvent(
+                                  event: 'cta.clicked',
+                                  metadata: <String, dynamic>{
+                                    'module': 'ui_learner_widgets',
+                                    'cta_id': 'press_complete_habit',
+                                    'habit_name': habitName,
+                                  },
                                 );
                                 onComplete?.call();
                               },
@@ -673,9 +681,14 @@ class PortfolioCard extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                _logLearnerWidgetsCta(
-                  'tap_portfolio_card',
-                  metadata: <String, dynamic>{'title': title, 'type': type},
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'ui_learner_widgets',
+                    'cta_id': 'tap_portfolio_card',
+                    'title': title,
+                    'type': type,
+                  },
                 );
                 onTap?.call();
               },
@@ -810,9 +823,14 @@ class SkillProgressWidget extends StatelessWidget {
       onTap: onTap == null
           ? null
           : () {
-              _logLearnerWidgetsCta(
-                'tap_skill_progress',
-                metadata: <String, dynamic>{'skill_name': skillName, 'pillar': pillar},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'ui_learner_widgets',
+                  'cta_id': 'tap_skill_progress',
+                  'skill_name': skillName,
+                  'pillar': pillar,
+                },
               );
               onTap?.call();
             },

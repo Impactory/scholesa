@@ -108,9 +108,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _logProvisioningCta(
-            'open_create_dialog',
-            metadata: <String, dynamic>{'tab_index': _tabController.index},
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'provisioning',
+              'cta_id': 'open_create_dialog',
+              'tab_index': _tabController.index,
+            },
           );
           _showCreateDialog(context);
         },
@@ -121,9 +125,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
 
   void _showCreateDialog(BuildContext context) {
     final int currentTab = _tabController.index;
-    _logProvisioningCta(
-      'select_create_dialog_type',
-      metadata: <String, dynamic>{'tab_index': currentTab},
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'select_create_dialog_type',
+        'tab_index': currentTab,
+      },
     );
     
     switch (currentTab) {
@@ -137,7 +145,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateLearnerDialog(BuildContext context) {
-    _logProvisioningCta('open_create_learner_dialog');
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'open_create_learner_dialog',
+      },
+    );
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateLearnerDialog(),
@@ -145,7 +159,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateParentDialog(BuildContext context) {
-    _logProvisioningCta('open_create_parent_dialog');
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'open_create_parent_dialog',
+      },
+    );
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateParentDialog(),
@@ -153,7 +173,13 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   }
 
   void _showCreateLinkDialog(BuildContext context) {
-    _logProvisioningCta('open_create_guardian_link_dialog');
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'open_create_guardian_link_dialog',
+      },
+    );
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateLinkDialog(),
@@ -185,7 +211,13 @@ class _LearnersTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
-            _logProvisioningCta('refresh_learners_tab');
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'module': 'provisioning',
+                'cta_id': 'refresh_learners_tab',
+              },
+            );
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -210,9 +242,13 @@ class _LearnersTab extends StatelessWidget {
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
                     onPressed: () {
-                      _logProvisioningCta(
-                        'open_learner_options',
-                        metadata: <String, dynamic>{'learner_id': learner.id},
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'provisioning',
+                          'cta_id': 'open_learner_options',
+                          'learner_id': learner.id,
+                        },
                       );
                       _showLearnerOptions(context, learner);
                     },
@@ -236,9 +272,13 @@ class _LearnersTab extends StatelessWidget {
             leading: const Icon(Icons.edit),
             title: const Text('Edit Learner'),
             onTap: () {
-              _logProvisioningCta(
-                'open_edit_learner_dialog',
-                metadata: <String, dynamic>{'learner_id': learner.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'open_edit_learner_dialog',
+                  'learner_id': learner.id,
+                },
               );
               Navigator.pop(context);
               showDialog(
@@ -251,9 +291,13 @@ class _LearnersTab extends StatelessWidget {
             leading: const Icon(Icons.link),
             title: const Text('Manage Guardian Links'),
             onTap: () {
-              _logProvisioningCta(
-                'open_manage_guardian_links',
-                metadata: <String, dynamic>{'learner_id': learner.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'open_manage_guardian_links',
+                  'learner_id': learner.id,
+                },
               );
               Navigator.pop(context);
               // Switch to Links tab (index 2) — links are already loaded
@@ -292,7 +336,13 @@ class _ParentsTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
-            _logProvisioningCta('refresh_parents_tab');
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'module': 'provisioning',
+                'cta_id': 'refresh_parents_tab',
+              },
+            );
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -319,9 +369,13 @@ class _ParentsTab extends StatelessWidget {
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
                     onPressed: () {
-                      _logProvisioningCta(
-                        'open_parent_options',
-                        metadata: <String, dynamic>{'parent_id': parent.id},
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'provisioning',
+                          'cta_id': 'open_parent_options',
+                          'parent_id': parent.id,
+                        },
                       );
                       _showParentOptions(context, parent);
                     },
@@ -345,9 +399,13 @@ class _ParentsTab extends StatelessWidget {
             leading: const Icon(Icons.edit),
             title: const Text('Edit Parent'),
             onTap: () {
-              _logProvisioningCta(
-                'open_edit_parent_dialog',
-                metadata: <String, dynamic>{'parent_id': parent.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'open_edit_parent_dialog',
+                  'parent_id': parent.id,
+                },
               );
               Navigator.pop(context);
               showDialog(
@@ -360,9 +418,13 @@ class _ParentsTab extends StatelessWidget {
             leading: const Icon(Icons.link),
             title: const Text('Manage Learner Links'),
             onTap: () {
-              _logProvisioningCta(
-                'open_manage_learner_links',
-                metadata: <String, dynamic>{'parent_id': parent.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'open_manage_learner_links',
+                  'parent_id': parent.id,
+                },
               );
               Navigator.pop(context);
               // Switch to Links tab (index 2) — links are already loaded
@@ -401,7 +463,13 @@ class _LinksTab extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
-            _logProvisioningCta('refresh_links_tab');
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'module': 'provisioning',
+                'cta_id': 'refresh_links_tab',
+              },
+            );
             final appState = context.read<AppState>();
             final siteId = appState.activeSiteId;
             if (siteId != null) {
@@ -443,9 +511,13 @@ class _LinksTab extends StatelessWidget {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     onPressed: () {
-                      _logProvisioningCta(
-                        'open_delete_guardian_link_confirm',
-                        metadata: <String, dynamic>{'link_id': link.id},
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'provisioning',
+                          'cta_id': 'open_delete_guardian_link_confirm',
+                          'link_id': link.id,
+                        },
                       );
                       _confirmDelete(context, link, service);
                     },
@@ -470,9 +542,13 @@ class _LinksTab extends StatelessWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              _logProvisioningCta(
-                'cancel_delete_guardian_link',
-                metadata: <String, dynamic>{'link_id': link.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'cancel_delete_guardian_link',
+                  'link_id': link.id,
+                },
               );
               Navigator.pop(context);
             },
@@ -480,9 +556,13 @@ class _LinksTab extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              _logProvisioningCta(
-                'delete_guardian_link',
-                metadata: <String, dynamic>{'link_id': link.id},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'provisioning',
+                  'cta_id': 'delete_guardian_link',
+                  'link_id': link.id,
+                },
               );
               Navigator.pop(context);
               final bool success = await service.deleteGuardianLink(link.id);
@@ -527,7 +607,13 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    _logProvisioningCta('submit_create_learner');
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'submit_create_learner',
+      },
+    );
     
     setState(() => _isSubmitting = true);
     
@@ -662,7 +748,13 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    _logProvisioningCta('submit_create_parent');
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'submit_create_parent',
+      },
+    );
     
     setState(() => _isSubmitting = true);
     
@@ -786,9 +878,11 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
 
   Future<void> _submit() async {
     if (_selectedParentId == null || _selectedLearnerId == null) return;
-    _logProvisioningCta(
-      'submit_create_guardian_link',
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
       metadata: <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'submit_create_guardian_link',
         'parent_id': _selectedParentId,
         'learner_id': _selectedLearnerId,
       },
@@ -964,9 +1058,13 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    _logProvisioningCta(
-      'submit_edit_learner',
-      metadata: <String, dynamic>{'learner_id': widget.learner.id},
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'submit_edit_learner',
+        'learner_id': widget.learner.id,
+      },
     );
 
     setState(() => _isSubmitting = true);
@@ -1092,9 +1190,13 @@ class _EditParentDialogState extends State<_EditParentDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    _logProvisioningCta(
-      'submit_edit_parent',
-      metadata: <String, dynamic>{'parent_id': widget.parent.id},
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'submit_edit_parent',
+        'parent_id': widget.parent.id,
+      },
     );
 
     setState(() => _isSubmitting = true);

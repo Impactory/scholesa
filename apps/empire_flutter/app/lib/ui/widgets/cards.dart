@@ -2,17 +2,6 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
 
-void _logCardsCta(String ctaId, {Map<String, dynamic>? metadata}) {
-  TelemetryService.instance.logEvent(
-    event: 'cta.clicked',
-    metadata: <String, dynamic>{
-      'module': 'ui_cards',
-      'cta_id': ctaId,
-      ...?metadata,
-    },
-  );
-}
-
 /// A beautiful gradient card widget for dashboards
 class GradientCard extends StatelessWidget {
 
@@ -48,9 +37,13 @@ class GradientCard extends StatelessWidget {
           onTap: onTap == null
               ? null
               : () {
-                  _logCardsCta(
-                    'tap_gradient_card',
-                    metadata: <String, dynamic>{'title': title},
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'ui_cards',
+                      'cta_id': 'tap_gradient_card',
+                      'title': title,
+                    },
                   );
                   onTap?.call();
                 },
@@ -210,9 +203,13 @@ class StatCard extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                _logCardsCta(
-                  'tap_stat_card',
-                  metadata: <String, dynamic>{'label': label},
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'ui_cards',
+                    'cta_id': 'tap_stat_card',
+                    'label': label,
+                  },
                 );
                 onTap?.call();
               },
@@ -376,9 +373,13 @@ class QuickActionButton extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                _logCardsCta(
-                  'tap_quick_action',
-                  metadata: <String, dynamic>{'label': label},
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'ui_cards',
+                    'cta_id': 'tap_quick_action',
+                    'label': label,
+                  },
                 );
                 onTap?.call();
               },
@@ -647,9 +648,13 @@ class ColorfulListTile extends StatelessWidget {
       onTap: onTap == null
           ? null
           : () {
-              _logCardsCta(
-                'tap_colorful_list_tile',
-                metadata: <String, dynamic>{'title': title},
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'ui_cards',
+                  'cta_id': 'tap_colorful_list_tile',
+                  'title': title,
+                },
               );
               onTap?.call();
             },
