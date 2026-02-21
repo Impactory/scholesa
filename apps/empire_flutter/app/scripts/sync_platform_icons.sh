@@ -11,6 +11,7 @@ WIN_SRC="$ICONS_DIR/windows11"
 
 ANDROID_RES="$ROOT_DIR/android/app/src/main/res"
 IOS_APPICON="$ROOT_DIR/ios/Runner/Assets.xcassets/AppIcon.appiconset"
+IOS_LAUNCH_IMAGE="$ROOT_DIR/ios/Runner/Assets.xcassets/LaunchImage.imageset"
 MACOS_APPICON="$ROOT_DIR/macos/Runner/Assets.xcassets/AppIcon.appiconset"
 WINDOWS_ICON="$ROOT_DIR/windows/runner/resources/app_icon.ico"
 FLUTTER_WEB_DIR="$ROOT_DIR/web"
@@ -69,6 +70,12 @@ copy_png "$IOS_SRC/128.png" "$MACOS_APPICON/app_icon_128.png"
 copy_png "$IOS_SRC/256.png" "$MACOS_APPICON/app_icon_256.png"
 copy_png "$IOS_SRC/512.png" "$MACOS_APPICON/app_icon_512.png"
 copy_png "$IOS_SRC/1024.png" "$MACOS_APPICON/app_icon_1024.png"
+
+echo "[icons] Syncing iOS launch image from assets/icons/ios"
+require_file "$IOS_SRC/1024.png"
+sips -z 168 168 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage.png" >/dev/null
+sips -z 336 336 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage@2x.png" >/dev/null
+sips -z 504 504 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage@3x.png" >/dev/null
 
 echo "[icons] Generating Windows app_icon.ico from assets/icons/windows11"
 require_file "$WIN_SRC/Square44x44Logo.targetsize-256.png"

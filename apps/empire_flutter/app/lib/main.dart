@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -67,6 +68,8 @@ class ScholesaApp extends StatefulWidget {
 }
 
 class _ScholesaAppState extends State<ScholesaApp> {
+  static const Duration _minNativeSplashDuration = Duration(milliseconds: 1600);
+
   late final AppState _appState;
   late final FirestoreService _firestoreService;
   late final StorageService _storageService;
@@ -86,6 +89,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
   }
 
   Future<void> _initializeApp() async {
+    final DateTime initStart = DateTime.now();
+
     try {
       // Create core services
       _appState = AppState();
@@ -121,6 +126,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
       _sessionBootstrap.listenToAuthChanges();
 
       _router = createAppRouter(_appState);
+
+      if (!kIsWeb) {
+        final Duration elapsed = DateTime.now().difference(initStart);
+        final Duration remaining = _minNativeSplashDuration - elapsed;
+        if (remaining > Duration.zero) {
+          await Future<void>.delayed(remaining);
+        }
+      }
 
       setState(() {
         _isInitialized = true;
