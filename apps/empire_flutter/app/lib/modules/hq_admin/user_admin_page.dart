@@ -24,6 +24,18 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        final List<String> tabs = <String>['all_users', 'sites', 'audit_log'];
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'user_admin_tab_change',
+            'tab': tabs[_tabController.index],
+          },
+        );
+      }
+    });
     
     // Load users on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -196,7 +208,18 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                 ),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (String value) => service.setSearchQuery(value),
+                  onChanged: (String value) {
+                    if (value.isNotEmpty) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'user_admin_search_input',
+                          'length': value.length,
+                        },
+                      );
+                    }
+                    service.setSearchQuery(value);
+                  },
                   decoration: InputDecoration(
                     hintText: 'Search users by name or email...',
                     prefixIcon: const Icon(Icons.search, color: ScholesaColors.hq),
@@ -204,6 +227,12 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                         ? IconButton(
                             icon: const Icon(Icons.clear),
                             onPressed: () {
+                              TelemetryService.instance.logEvent(
+                                event: 'cta.clicked',
+                                metadata: const <String, dynamic>{
+                                  'cta': 'user_admin_search_clear',
+                                },
+                              );
                               _searchController.clear();
                               service.setSearchQuery('');
                             },
@@ -1171,6 +1200,14 @@ class _UserDetailsSheet extends StatelessWidget {
     final UserStatus newStatus = user.status == UserStatus.suspended
         ? UserStatus.active
         : UserStatus.suspended;
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'user_admin_toggle_status',
+        'user_id': user.uid,
+        'new_status': newStatus.name,
+      },
+    );
     service.updateUserStatus(user.uid, newStatus);
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1182,6 +1219,13 @@ class _UserDetailsSheet extends StatelessWidget {
   }
 
   void _showRoleChangeDialog(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'user_admin_open_role_change_dialog',
+        'user_id': user.uid,
+      },
+    );
     showDialog(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
@@ -1196,6 +1240,14 @@ class _UserDetailsSheet extends StatelessWidget {
             title: Text(role.label),
             selected: user.role == role,
             onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'user_admin_change_role',
+                  'user_id': user.uid,
+                  'role': role.name,
+                },
+              );
               context.read<UserAdminService>().updateUserRole(user.uid, role);
               Navigator.pop(ctx);
               Navigator.pop(context);
@@ -1213,6 +1265,13 @@ class _UserDetailsSheet extends StatelessWidget {
   }
 
   void _showEditUserDialog(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'user_admin_open_edit_user_dialog',
+        'user_id': user.uid,
+      },
+    );
     final TextEditingController nameController = TextEditingController(text: user.displayName);
     showDialog<void>(
       context: context,
@@ -1227,11 +1286,28 @@ class _UserDetailsSheet extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'user_admin_cancel_edit_user',
+                  'user_id': user.uid,
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'user_admin_save_edit_user',
+                  'user_id': user.uid,
+                  'has_name': nameController.text.trim().isNotEmpty,
+                },
+              );
               Navigator.pop(dialogContext);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1482,7 +1558,16 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   return ChoiceChip(
                     label: Text(role.label),
                     selected: isSelected,
-                    onSelected: (_) => setState(() => _selectedRole = role),
+                    onSelected: (_) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'user_admin_create_user_select_role',
+                          'role': role.name,
+                        },
+                      );
+                      setState(() => _selectedRole = role);
+                    },
                     selectedColor: color.withValues(alpha: 0.2),
                     labelStyle: TextStyle(
                       color: isSelected ? color : Colors.grey[700],
@@ -1503,6 +1588,14 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     label: Text(site.name),
                     selected: isSelected,
                     onSelected: (bool selected) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'user_admin_create_user_toggle_site',
+                          'site_id': site.id,
+                          'selected': selected,
+                        },
+                      );
                       setState(() {
                         if (selected) {
                           _selectedSites.add(site.id);
@@ -1520,7 +1613,15 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'cta': 'user_admin_create_user_cancel',
+              },
+            );
+            Navigator.pop(context);
+          },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -1559,6 +1660,14 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
 
   Future<void> _createUser() async {
     if (!_formKey.currentState!.validate()) return;
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'user_admin_create_user_submit',
+        'role': _selectedRole.name,
+        'site_count': _selectedSites.length,
+      },
+    );
 
     setState(() => _isLoading = true);
 

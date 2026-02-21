@@ -89,6 +89,18 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
+          onTap: (int index) {
+            final List<String> tabs = <String>['open', 'reviewed', 'closed'];
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'site_incidents',
+                'cta_id': 'switch_tab',
+                'surface': 'incidents_tab_bar',
+                'tab': tabs[index],
+              },
+            );
+          },
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -169,7 +181,18 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
       color: ScholesaColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => _showIncidentDetails(incident),
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'site_incidents',
+              'cta_id': 'tap_incident_card',
+              'surface': 'incident_list',
+              'incident_id': incident.id,
+            },
+          );
+          _showIncidentDetails(incident);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -313,7 +336,18 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'module': 'site_incidents',
+                            'cta_id': 'close_incident_details',
+                            'surface': 'incident_details_sheet',
+                            'incident_id': incident.id,
+                          },
+                        );
+                        Navigator.pop(context);
+                      },
                       child: const Text('Close'),
                     ),
                   ),
@@ -349,7 +383,18 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'site_incidents',
+                        'cta_id': 'close_closed_incident_details',
+                        'surface': 'incident_details_sheet',
+                        'incident_id': incident.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                  },
                   child: const Text('Close'),
                 ),
               ),
@@ -409,7 +454,17 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'site_incidents',
+                  'cta_id': 'cancel_incident_report',
+                  'surface': 'create_incident_dialog',
+                },
+              );
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(

@@ -22,6 +22,18 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        final List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'educator_sessions_tab_change',
+            'tab': tabs[_tabController.index],
+          },
+        );
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EducatorService>().loadSessions();
     });
@@ -152,6 +164,16 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         ),
         child: TabBar(
           controller: _tabController,
+          onTap: (int index) {
+            final List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'educator_sessions_tab_bar_tap',
+                'tab': tabs[index],
+              },
+            );
+          },
           indicator: BoxDecoration(
             color: ScholesaColors.educator,
             borderRadius: BorderRadius.circular(10),
@@ -178,28 +200,52 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             _FilterChip(
               label: 'All',
               isSelected: _filterStatus == 'all',
-              onTap: () => setState(() => _filterStatus = 'all'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_all'},
+                );
+                setState(() => _filterStatus = 'all');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Future Skills',
               isSelected: _filterStatus == 'future_skills',
               color: ScholesaColors.futureSkills,
-              onTap: () => setState(() => _filterStatus = 'future_skills'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_future_skills'},
+                );
+                setState(() => _filterStatus = 'future_skills');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Leadership',
               isSelected: _filterStatus == 'leadership',
               color: ScholesaColors.leadership,
-              onTap: () => setState(() => _filterStatus = 'leadership'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_leadership'},
+                );
+                setState(() => _filterStatus = 'leadership');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Impact',
               isSelected: _filterStatus == 'impact',
               color: ScholesaColors.impact,
-              onTap: () => setState(() => _filterStatus = 'impact'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_impact'},
+                );
+                setState(() => _filterStatus = 'impact');
+              },
             ),
           ],
         ),
@@ -360,6 +406,13 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
               ],
               onChanged: (String? value) {
                 if (value != null) {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'cta': 'educator_sessions_create_select_pillar',
+                      'pillar': value,
+                    },
+                  );
                   setState(() => _pillar = value);
                 }
               },
@@ -369,7 +422,17 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'cta': 'educator_sessions_create_cancel',
+                    },
+                  );
+                  Navigator.pop(context);
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(
@@ -664,7 +727,16 @@ class _SessionDetailSheet extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'educator_sessions_view_full_details',
+                            'session_id': session.id,
+                          },
+                        );
+                        Navigator.pop(context);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ScholesaColors.educator,
                         padding: const EdgeInsets.symmetric(vertical: 16),

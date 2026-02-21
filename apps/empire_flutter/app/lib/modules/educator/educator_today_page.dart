@@ -322,7 +322,16 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => context.push('/educator/attendance'),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'educator_today_manage_attendance_current_class',
+                    'class_id': currentClass.id,
+                  },
+                );
+                context.push('/educator/attendance');
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: ScholesaColors.educator,
@@ -402,7 +411,15 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'educator_today_close_week_view_summary',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
         ],
@@ -423,7 +440,15 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
         content: Text('You have $count missions pending review today.'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'educator_today_close_review_queue_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
@@ -529,7 +554,16 @@ class _QuickActionButton extends StatelessWidget {
       color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'educator_today_quick_action',
+              'label': label,
+            },
+          );
+          onTap();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -784,6 +818,13 @@ class _ClassDetailSheet extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'educator_today_take_attendance_from_class_detail',
+                          'class_id': todayClass.id,
+                        },
+                      );
                       Navigator.pop(context);
                       context.push('/educator/attendance');
                     },

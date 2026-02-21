@@ -144,7 +144,16 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             DropdownMenuItem<String>(value: 'jack', child: Text('Jack Johnson')),
           ],
           onChanged: (String? value) {
-            if (value != null) setState(() => _selectedLearner = value);
+            if (value != null) {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'parent_billing_select_learner',
+                  'learner': value,
+                },
+              );
+              setState(() => _selectedLearner = value);
+            }
           },
         ),
       ),
@@ -277,6 +286,16 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       ),
       child: TabBar(
         controller: _tabController,
+        onTap: (int index) {
+          final List<String> tabs = <String>['invoices', 'payments', 'plan'];
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'parent_billing_tab_change',
+              'tab': tabs[index],
+            },
+          );
+        },
         labelColor: Colors.white,
         unselectedLabelColor: Colors.grey[600],
         indicator: BoxDecoration(
@@ -575,11 +594,25 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_billing_cancel_update_payment_method',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_billing_continue_update_payment_method',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -609,11 +642,21 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'parent_billing_close_manage_plan_dialog'},
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'parent_billing_request_plan_change'},
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

@@ -96,17 +96,41 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   _ViewModeButton(
                     label: 'D',
                     isSelected: _viewMode == 'day',
-                    onTap: () => setState(() => _viewMode = 'day'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'parent_schedule_view_mode_day',
+                        },
+                      );
+                      setState(() => _viewMode = 'day');
+                    },
                   ),
                   _ViewModeButton(
                     label: 'W',
                     isSelected: _viewMode == 'week',
-                    onTap: () => setState(() => _viewMode = 'week'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'parent_schedule_view_mode_week',
+                        },
+                      );
+                      setState(() => _viewMode = 'week');
+                    },
                   ),
                   _ViewModeButton(
                     label: 'M',
                     isSelected: _viewMode == 'month',
-                    onTap: () => setState(() => _viewMode = 'month'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'parent_schedule_view_mode_month',
+                        },
+                      );
+                      setState(() => _viewMode = 'month');
+                    },
                   ),
                 ],
               ),
@@ -176,7 +200,16 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 date.month == today.month;
 
             return GestureDetector(
-              onTap: () => setState(() => _selectedDate = date),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'parent_schedule_select_date',
+                    'date': date.toIso8601String(),
+                  },
+                );
+                setState(() => _selectedDate = date);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
@@ -351,11 +384,25 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_schedule_close_next_session_details',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_schedule_set_session_reminder',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

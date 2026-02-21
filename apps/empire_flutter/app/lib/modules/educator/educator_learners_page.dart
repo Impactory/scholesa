@@ -142,6 +142,17 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
       child: TextField(
         controller: _searchController,
         onChanged: (String value) {
+          if (value.isNotEmpty) {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'educator_learners',
+                'cta_id': 'search_input',
+                'surface': 'search_bar',
+                'length': value.length,
+              },
+            );
+          }
           setState(() => _searchQuery = value);
         },
         decoration: InputDecoration(
@@ -635,7 +646,18 @@ class _LearnerDetailSheet extends StatelessWidget {
                     children: <Widget>[
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'module': 'educator_learners',
+                                'cta_id': 'message_learner',
+                                'surface': 'learner_detail_sheet',
+                                'learner_id': learner.id,
+                              },
+                            );
+                            Navigator.pop(context);
+                          },
                           icon: const Icon(Icons.message),
                           label: const Text('Message'),
                           style: OutlinedButton.styleFrom(
@@ -651,7 +673,18 @@ class _LearnerDetailSheet extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'module': 'educator_learners',
+                                'cta_id': 'open_full_profile',
+                                'surface': 'learner_detail_sheet',
+                                'learner_id': learner.id,
+                              },
+                            );
+                            Navigator.pop(context);
+                          },
                           icon: const Icon(Icons.assignment),
                           label: const Text('Full Profile'),
                           style: ElevatedButton.styleFrom(

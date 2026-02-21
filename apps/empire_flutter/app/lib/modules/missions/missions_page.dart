@@ -21,6 +21,25 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        return;
+      }
+      final String tab = switch (_tabController.index) {
+        0 => 'available',
+        1 => 'in_progress',
+        2 => 'completed',
+        _ => 'unknown',
+      };
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'cta': 'missions_change_tab',
+          'surface': 'missions_tab_bar',
+          'tab': tab,
+        },
+      );
+    });
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MissionService>().loadMissions();

@@ -764,21 +764,45 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         label: 'Future Skills',
                         color: ScholesaColors.futureSkills,
                         isSelected: _selectedPillar == 'Future Skills',
-                        onTap: () => setState(() => _selectedPillar = 'Future Skills'),
+                        onTap: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: const <String, dynamic>{
+                              'cta': 'site_sessions_create_select_pillar_future_skills',
+                            },
+                          );
+                          setState(() => _selectedPillar = 'Future Skills');
+                        },
                       ),
                       const SizedBox(width: 8),
                       _PillarOption(
                         label: 'Leadership',
                         color: ScholesaColors.leadership,
                         isSelected: _selectedPillar == 'Leadership',
-                        onTap: () => setState(() => _selectedPillar = 'Leadership'),
+                        onTap: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: const <String, dynamic>{
+                              'cta': 'site_sessions_create_select_pillar_leadership',
+                            },
+                          );
+                          setState(() => _selectedPillar = 'Leadership');
+                        },
                       ),
                       const SizedBox(width: 8),
                       _PillarOption(
                         label: 'Impact',
                         color: ScholesaColors.impact,
                         isSelected: _selectedPillar == 'Impact',
-                        onTap: () => setState(() => _selectedPillar = 'Impact'),
+                        onTap: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: const <String, dynamic>{
+                              'cta': 'site_sessions_create_select_pillar_impact',
+                            },
+                          );
+                          setState(() => _selectedPillar = 'Impact');
+                        },
                       ),
                     ],
                   ),
@@ -802,6 +826,13 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         .toList(),
                     onChanged: (String? value) {
                       if (value != null) {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'site_sessions_create_select_time',
+                            'time_slot': value,
+                          },
+                        );
                         setState(() => _selectedTime = value);
                       }
                     },
@@ -853,6 +884,13 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         .toList(),
                     onChanged: (String? value) {
                       if (value != null) {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'site_sessions_create_select_room',
+                            'room': value,
+                          },
+                        );
                         setState(() => _selectedRoom = value);
                       }
                     },
@@ -874,6 +912,16 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
 
                         final int learnerCount =
                             int.tryParse(_learnerCountController.text.trim()) ?? 0;
+
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'site_sessions_create_submit',
+                            'pillar': _selectedPillar,
+                            'time_slot': _selectedTime,
+                            'room': _selectedRoom,
+                          },
+                        );
 
                         Navigator.pop(
                           context,

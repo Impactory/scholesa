@@ -262,7 +262,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               icon: Icons.trending_up,
               label: 'Habits',
               color: const Color(0xFF8B5CF6),
-              onTap: () => context.push('/learner/habits'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'learner_today_open_habits'},
+                );
+                context.push('/learner/habits');
+              },
             ),
           ),
           const SizedBox(width: 12),
@@ -271,7 +277,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               icon: Icons.rocket_launch,
               label: 'Missions',
               color: const Color(0xFFF59E0B),
-              onTap: () => context.push('/learner/missions'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'learner_today_open_missions'},
+                );
+                context.push('/learner/missions');
+              },
             ),
           ),
           const SizedBox(width: 12),
@@ -280,7 +292,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               icon: Icons.message,
               label: 'Messages',
               color: const Color(0xFF6366F1),
-              onTap: () => context.push('/messages'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'learner_today_open_messages_quick_action'},
+                );
+                context.push('/messages');
+              },
             ),
           ),
         ],
@@ -499,7 +517,16 @@ class _QuickActionCard extends StatelessWidget {
       color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'learner_today_quick_action',
+              'label': label,
+            },
+          );
+          onTap();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),

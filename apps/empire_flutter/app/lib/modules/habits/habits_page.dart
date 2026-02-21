@@ -86,7 +86,13 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 Row(
                   children: <Widget>[
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{'cta': 'habits_back'},
+                        );
+                        Navigator.of(context).pop();
+                      },
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
                     const Spacer(),
@@ -393,6 +399,13 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
         ),
         selected: isSelected,
         onSelected: (_) {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'habits_select_category',
+              'category': category?.name ?? 'all',
+            },
+          );
           setState(() {
             _selectedCategory = category;
           });
@@ -614,6 +627,13 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
       onTap: isCompleted
           ? null
           : () async {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'habits_complete_habit',
+                  'habit_id': habit.id,
+                },
+              );
               final bool success = await service.completeHabit(habit.id);
               if (success && mounted) {
                 _celebrationController.forward(from: 0);
@@ -812,7 +832,16 @@ class _HabitDetailSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'habits_close_detail',
+                        'habit_id': habit.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                  },
                   icon: const Icon(Icons.close),
                 ),
               ],
@@ -1036,7 +1065,13 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 ),
                 const Spacer(),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{'cta': 'habits_create_sheet_close'},
+                    );
+                    Navigator.pop(context);
+                  },
                   icon: const Icon(Icons.close),
                 ),
               ],
@@ -1057,7 +1092,16 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
               children: _emojis.map((String emoji) {
                 final bool isSelected = emoji == _selectedEmoji;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedEmoji = emoji),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'habits_create_select_emoji',
+                        'emoji': emoji,
+                      },
+                    );
+                    setState(() => _selectedEmoji = emoji);
+                  },
                   child: Container(
                     width: 44,
                     height: 44,
@@ -1129,7 +1173,16 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 return ChoiceChip(
                   label: Text('${cat.emoji} ${cat.label}'),
                   selected: isSelected,
-                  onSelected: (_) => setState(() => _selectedCategory = cat),
+                  onSelected: (_) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'habits_create_select_category',
+                        'category': cat.name,
+                      },
+                    );
+                    setState(() => _selectedCategory = cat);
+                  },
                   selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
                 );
               }).toList(),
@@ -1152,7 +1205,16 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 return ChoiceChip(
                   label: Text(freq.name),
                   selected: isSelected,
-                  onSelected: (_) => setState(() => _selectedFrequency = freq),
+                  onSelected: (_) {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'habits_create_select_frequency',
+                        'frequency': freq.name,
+                      },
+                    );
+                    setState(() => _selectedFrequency = freq);
+                  },
                   selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
                 );
               }).toList(),

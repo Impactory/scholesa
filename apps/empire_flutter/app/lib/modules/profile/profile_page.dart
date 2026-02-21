@@ -53,7 +53,13 @@ class ProfilePage extends StatelessWidget {
         child: Row(
           children: <Widget>[
             IconButton(
-              onPressed: () => context.pop(),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'profile_back'},
+                );
+                context.pop();
+              },
               icon: const Icon(Icons.arrow_back),
             ),
             const SizedBox(width: 8),
@@ -66,7 +72,13 @@ class ProfilePage extends StatelessWidget {
             ),
             const Spacer(),
             IconButton(
-              onPressed: () => _showEditProfileDialog(context, appState),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'profile_edit_icon'},
+                );
+                _showEditProfileDialog(context, appState);
+              },
               icon: Icon(Icons.edit, color: roleColor),
             ),
           ],
@@ -183,51 +195,81 @@ class ProfilePage extends StatelessWidget {
             icon: Icons.notifications_outlined,
             title: 'Notifications',
             subtitle: 'Manage notification preferences',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Notifications',
-              message: 'Open notification preferences and delivery channels.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_notifications_settings'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Notifications',
+                message: 'Open notification preferences and delivery channels.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.lock_outline,
             title: 'Privacy & Security',
             subtitle: 'Password, two-factor auth',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Privacy & Security',
-              message: 'Review password, MFA, and device session settings.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_privacy_security_settings'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Privacy & Security',
+                message: 'Review password, MFA, and device session settings.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.language,
             title: 'Language',
             subtitle: 'English',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Language',
-              message: 'Choose your preferred language for the app.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_language_settings'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Language',
+                message: 'Choose your preferred language for the app.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.dark_mode_outlined,
             title: 'Appearance',
             subtitle: 'Light mode',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Appearance',
-              message: 'Switch between light and dark display modes.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_appearance_settings'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Appearance',
+                message: 'Switch between light and dark display modes.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.cloud_sync_outlined,
             title: 'Sync & Data',
             subtitle: 'Last synced: Just now',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Sync & Data',
-              message: 'Manage sync cadence and data usage options.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_sync_data_settings'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Sync & Data',
+                message: 'Manage sync cadence and data usage options.',
+              );
+            },
           ),
         ],
       ),
@@ -253,39 +295,63 @@ class ProfilePage extends StatelessWidget {
           _SettingsTile(
             icon: Icons.help_outline,
             title: 'Help & Support',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Help & Support',
-              message: 'Open help docs and contact support.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_help_support'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Help & Support',
+                message: 'Open help docs and contact support.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.description_outlined,
             title: 'Terms of Service',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Terms of Service',
-              message: 'Review terms and platform usage rules.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_terms'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Terms of Service',
+                message: 'Review terms and platform usage rules.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Privacy Policy',
-              message: 'Review data handling and privacy commitments.',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_privacy_policy'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Privacy Policy',
+                message: 'Review data handling and privacy commitments.',
+              );
+            },
           ),
           _SettingsTile(
             icon: Icons.info_outline,
             title: 'Version',
             subtitle: '1.0.0 (Build 1)',
-            onTap: () => _showFeatureDialog(
-              context,
-              title: 'Version',
-              message: 'App version 1.0.0 (Build 1).',
-            ),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_open_version_info'},
+              );
+              _showFeatureDialog(
+                context,
+                title: 'Version',
+                message: 'App version 1.0.0 (Build 1).',
+              );
+            },
           ),
         ],
       ),
@@ -306,11 +372,23 @@ class ProfilePage extends StatelessWidget {
                 content: const Text('Are you sure you want to sign out?'),
                 actions: <Widget>[
                   TextButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{'cta': 'profile_sign_out_cancel'},
+                      );
+                      Navigator.pop(context, false);
+                    },
                     child: const Text('Cancel'),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pop(context, true),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{'cta': 'profile_sign_out_confirm'},
+                      );
+                      Navigator.pop(context, true);
+                    },
                     style: TextButton.styleFrom(
                       foregroundColor: ScholesaColors.error,
                     ),
@@ -321,6 +399,10 @@ class ProfilePage extends StatelessWidget {
             );
 
             if (confirmed ?? false) {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_sign_out_execute'},
+              );
               appState.clear();
               if (context.mounted) {
                 context.go('/login');
@@ -371,7 +453,13 @@ class ProfilePage extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'profile_cancel_edit'},
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -413,7 +501,16 @@ class ProfilePage extends StatelessWidget {
         content: Text(message),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'profile_close_feature_dialog',
+                  'feature': title,
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(

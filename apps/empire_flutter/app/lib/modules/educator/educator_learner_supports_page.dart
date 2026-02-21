@@ -373,7 +373,18 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'educator_learner_supports',
+                          'cta_id': 'close_support_details',
+                          'surface': 'support_details_sheet',
+                          'learner_id': support.learnerId,
+                        },
+                      );
+                      Navigator.pop(context);
+                    },
                     child: const Text('Close'),
                   ),
                 ),
@@ -430,7 +441,17 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'module': 'educator_learner_supports',
+                  'cta_id': 'cancel_search',
+                  'surface': 'search_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(

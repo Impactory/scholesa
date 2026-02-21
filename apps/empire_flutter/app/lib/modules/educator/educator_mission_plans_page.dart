@@ -271,7 +271,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'educator_mission_plans_close_filter'},
+              );
+              Navigator.pop(context);
+            },
             child: const Text('Close'),
           ),
         ],
@@ -330,7 +336,16 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'educator_mission_plans_edit_plan',
+                          'plan_id': plan.id,
+                        },
+                      );
+                      Navigator.pop(context);
+                    },
                     child: const Text('Edit'),
                   ),
                 ),
@@ -338,6 +353,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'educator_mission_plans_assign_plan',
+                          'plan_id': plan.id,
+                        },
+                      );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Assigning to sessions...')),
@@ -393,6 +415,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   ],
                   onChanged: (String? value) {
                     if (value != null) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'educator_mission_plans_create_select_pillar',
+                          'pillar': value,
+                        },
+                      );
                       setLocalState(() => selectedPillar = value);
                     }
                   },
@@ -403,6 +432,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{'cta': 'educator_mission_plans_create_cancel'},
+                );
                 Navigator.pop(dialogContext);
               },
               child: const Text('Cancel'),

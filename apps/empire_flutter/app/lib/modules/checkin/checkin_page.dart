@@ -193,7 +193,18 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                 ),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (String value) => service.setSearchQuery(value),
+                  onChanged: (String value) {
+                    if (value.isNotEmpty) {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'checkin_search_input',
+                          'length': value.length,
+                        },
+                      );
+                    }
+                    service.setSearchQuery(value);
+                  },
                   decoration: InputDecoration(
                     hintText: 'Search learners...',
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
@@ -201,6 +212,12 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                         ? IconButton(
                             icon: const Icon(Icons.clear),
                             onPressed: () {
+                              TelemetryService.instance.logEvent(
+                                event: 'cta.clicked',
+                                metadata: const <String, dynamic>{
+                                  'cta': 'checkin_search_clear',
+                                },
+                              );
                               _searchController.clear();
                               service.setSearchQuery('');
                             },
@@ -220,24 +237,48 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                     _FilterChip(
                       label: 'All',
                       selected: service.statusFilter == null,
-                      onTap: () => service.setStatusFilter(null),
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{'cta': 'checkin_filter_all'},
+                        );
+                        service.setStatusFilter(null);
+                      },
                     ),
                     _FilterChip(
                       label: 'Present',
                       selected: service.statusFilter == CheckStatus.checkedIn,
-                      onTap: () => service.setStatusFilter(CheckStatus.checkedIn),
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{'cta': 'checkin_filter_present'},
+                        );
+                        service.setStatusFilter(CheckStatus.checkedIn);
+                      },
                       color: ScholesaColors.success,
                     ),
                     _FilterChip(
                       label: 'Late',
                       selected: service.statusFilter == CheckStatus.late,
-                      onTap: () => service.setStatusFilter(CheckStatus.late),
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{'cta': 'checkin_filter_late'},
+                        );
+                        service.setStatusFilter(CheckStatus.late);
+                      },
                       color: ScholesaColors.warning,
                     ),
                     _FilterChip(
                       label: 'Checked Out',
                       selected: service.statusFilter == CheckStatus.checkedOut,
-                      onTap: () => service.setStatusFilter(CheckStatus.checkedOut),
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{'cta': 'checkin_filter_checked_out'},
+                        );
+                        service.setStatusFilter(CheckStatus.checkedOut);
+                      },
                       color: Colors.grey,
                     ),
                   ],
@@ -259,6 +300,16 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
       ),
       child: TabBar(
         controller: _tabController,
+        onTap: (int index) {
+          final List<String> tabs = <String>['learners', 'today_log'];
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'checkin_tab_change',
+              'tab': tabs[index],
+            },
+          );
+        },
         indicator: BoxDecoration(
           color: const Color(0xFF3B82F6),
           borderRadius: BorderRadius.circular(12),
@@ -420,11 +471,21 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'checkin_qr_dialog_close'},
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           OutlinedButton.icon(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'checkin_qr_use_camera'},
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -442,6 +503,10 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
           ),
           ElevatedButton.icon(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'checkin_qr_enter_code'},
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -725,7 +790,16 @@ class _LearnerCheckinCard extends StatelessWidget {
                 if (summary.authorizedPickups.isNotEmpty) ...<Widget>[
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: () => _showAuthorizedPickups(context),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'checkin_open_authorized_pickups',
+                          'learner_id': summary.learnerId,
+                        },
+                      );
+                      _showAuthorizedPickups(context);
+                    },
                     icon: const Icon(Icons.people, color: Colors.grey),
                     tooltip: 'Authorized pickups',
                   ),
@@ -814,6 +888,14 @@ class _LearnerCheckinCard extends StatelessWidget {
                   ? IconButton(
                       icon: const Icon(Icons.phone),
                       onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'checkin_call_pickup_contact',
+                            'pickup_id': pickup.id,
+                            'pickup_name': pickup.name,
+                          },
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Call ${pickup.name}: ${pickup.phone}'),

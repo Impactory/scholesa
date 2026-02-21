@@ -132,25 +132,57 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _PeriodChip(
             label: 'Today',
             isSelected: _selectedPeriod == 'today',
-            onTap: () => setState(() => _selectedPeriod = 'today'),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'site_dashboard_period_today',
+                },
+              );
+              setState(() => _selectedPeriod = 'today');
+            },
           ),
           const SizedBox(width: 8),
           _PeriodChip(
             label: 'This Week',
             isSelected: _selectedPeriod == 'week',
-            onTap: () => setState(() => _selectedPeriod = 'week'),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'site_dashboard_period_week',
+                },
+              );
+              setState(() => _selectedPeriod = 'week');
+            },
           ),
           const SizedBox(width: 8),
           _PeriodChip(
             label: 'This Month',
             isSelected: _selectedPeriod == 'month',
-            onTap: () => setState(() => _selectedPeriod = 'month'),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'site_dashboard_period_month',
+                },
+              );
+              setState(() => _selectedPeriod = 'month');
+            },
           ),
           const SizedBox(width: 8),
           _PeriodChip(
             label: 'Term',
             isSelected: _selectedPeriod == 'term',
-            onTap: () => setState(() => _selectedPeriod = 'term'),
+            onTap: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'site_dashboard_period_term',
+                },
+              );
+              setState(() => _selectedPeriod = 'term');
+            },
           ),
         ],
       ),
@@ -383,7 +415,15 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'site_dashboard_export_cancel',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(

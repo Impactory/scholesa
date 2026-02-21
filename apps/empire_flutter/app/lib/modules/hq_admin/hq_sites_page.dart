@@ -53,7 +53,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
                     educatorCount: 8,
                     status: 'active',
                     healthScore: 94,
-                    onTap: () => _openSiteDetail('pilot-sg'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'hq_sites_open_detail_pilot_sg',
+                        },
+                      );
+                      _openSiteDetail('pilot-sg');
+                    },
                   ),
                   _SiteCard(
                     name: 'Innovation Hub KL',
@@ -62,7 +70,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
                     educatorCount: 10,
                     status: 'active',
                     healthScore: 88,
-                    onTap: () => _openSiteDetail('hub-kl'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'hq_sites_open_detail_hub_kl',
+                        },
+                      );
+                      _openSiteDetail('hub-kl');
+                    },
                   ),
                   _SiteCard(
                     name: 'Future Academy Jakarta',
@@ -71,7 +87,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
                     educatorCount: 6,
                     status: 'onboarding',
                     healthScore: 72,
-                    onTap: () => _openSiteDetail('academy-jkt'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'hq_sites_open_detail_academy_jkt',
+                        },
+                      );
+                      _openSiteDetail('academy-jkt');
+                    },
                   ),
                   _SiteCard(
                     name: 'Tech Lab Manila',
@@ -80,7 +104,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
                     educatorCount: 0,
                     status: 'pending',
                     healthScore: 0,
-                    onTap: () => _openSiteDetail('lab-mnl'),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'hq_sites_open_detail_lab_mnl',
+                        },
+                      );
+                      _openSiteDetail('lab-mnl');
+                    },
                   ),
                 ]),
               ),
@@ -150,7 +182,18 @@ class _HqSitesPageState extends State<HqSitesPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
         controller: _searchController,
-        onChanged: (String value) => setState(() => _searchQuery = value),
+        onChanged: (String value) {
+          if (value.isNotEmpty) {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'hq_sites_search_input',
+                'length': value.length,
+              },
+            );
+          }
+          setState(() => _searchQuery = value);
+        },
         decoration: InputDecoration(
           hintText: 'Search sites...',
           prefixIcon: const Icon(Icons.search),
@@ -363,7 +406,17 @@ class _SiteCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'hq_sites_site_card_tap',
+                'site_name': name,
+                'status': status,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -564,7 +617,16 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color chipColor = color ?? ScholesaColors.hq;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'hq_sites_filter_chip',
+            'label': label,
+          },
+        );
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -709,6 +771,14 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'hq_sites_create_site_submit',
+                            'has_name': _nameController.text.trim().isNotEmpty,
+                            'has_location': _locationController.text.trim().isNotEmpty,
+                          },
+                        );
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

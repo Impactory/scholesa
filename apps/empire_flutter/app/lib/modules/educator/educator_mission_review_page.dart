@@ -144,27 +144,59 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
               label: 'Pending',
               isSelected: _filterStatus == 'pending',
               count: 0,
-              onTap: () => setState(() => _filterStatus = 'pending'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_mission_review_filter_pending',
+                  },
+                );
+                setState(() => _filterStatus = 'pending');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Reviewed',
               isSelected: _filterStatus == 'reviewed',
-              onTap: () => setState(() => _filterStatus = 'reviewed'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_mission_review_filter_reviewed',
+                  },
+                );
+                setState(() => _filterStatus = 'reviewed');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Needs Revision',
               isSelected: _filterStatus == 'revision',
               color: ScholesaColors.warning,
-              onTap: () => setState(() => _filterStatus = 'revision'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_mission_review_filter_revision',
+                  },
+                );
+                setState(() => _filterStatus = 'revision');
+              },
             ),
             const SizedBox(width: 8),
             _FilterChip(
               label: 'Approved',
               isSelected: _filterStatus == 'approved',
               color: ScholesaColors.success,
-              onTap: () => setState(() => _filterStatus = 'approved'),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_mission_review_filter_approved',
+                  },
+                );
+                setState(() => _filterStatus = 'approved');
+              },
             ),
           ],
         ),
@@ -268,7 +300,16 @@ class _SubmissionCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'cta': 'educator_mission_review_open_submission_card',
+                'submission_id': submission.id,
+              },
+            );
+            onTap();
+          },
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -451,7 +492,17 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color chipColor = color ?? ScholesaColors.educator;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        TelemetryService.instance.logEvent(
+          event: 'cta.clicked',
+          metadata: <String, dynamic>{
+            'cta': 'educator_mission_review_filter_chip',
+            'label': label,
+            'selected': isSelected,
+          },
+        );
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -657,7 +708,17 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     children: List<Widget>.generate(
                       5,
                       (int index) => GestureDetector(
-                        onTap: () => setState(() => _rating = index + 1),
+                        onTap: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta': 'educator_mission_review_set_rating',
+                              'submission_id': widget.submission.id,
+                              'rating': index + 1,
+                            },
+                          );
+                          setState(() => _rating = index + 1);
+                        },
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Icon(

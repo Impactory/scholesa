@@ -91,6 +91,23 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
+          onTap: (int index) {
+            final String tab = switch (index) {
+              0 => 'published',
+              1 => 'in_review',
+              2 => 'drafts',
+              _ => 'unknown',
+            };
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'hq_curriculum',
+                'cta_id': 'change_tab',
+                'surface': 'appbar_tab_bar',
+                'tab': tab,
+              },
+            );
+          },
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -265,7 +282,23 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
             const SizedBox(height: 24),
             Row(
               children: <Widget>[
-                Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'hq_curriculum',
+                          'cta_id': 'close_curriculum_details',
+                          'surface': 'curriculum_details_sheet',
+                          'curriculum_id': curriculum.id,
+                        },
+                      );
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Close'),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
@@ -331,7 +364,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
           ],
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'module': 'hq_curriculum',
+                  'cta_id': 'cancel_create_curriculum',
+                  'surface': 'create_curriculum_dialog',
+                },
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               TelemetryService.instance.logEvent(

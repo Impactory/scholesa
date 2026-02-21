@@ -18,6 +18,26 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        return;
+      }
+      final String tab = switch (_tabController.index) {
+        0 => 'badges',
+        1 => 'skills',
+        2 => 'projects',
+        _ => 'unknown',
+      };
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'learner_portfolio',
+          'cta_id': 'change_tab',
+          'surface': 'tab_bar',
+          'tab': tab,
+        },
+      );
+    });
   }
 
   @override
@@ -552,7 +572,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         content: const Text('Update your portfolio bio, goals, and featured highlights.'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'learner_portfolio',
+                  'cta_id': 'cancel_edit_profile',
+                  'surface': 'edit_profile_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -588,7 +618,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         content: const Text('Create a secure share link for parents or mentors.'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'learner_portfolio',
+                  'cta_id': 'cancel_share_portfolio',
+                  'surface': 'share_portfolio_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(

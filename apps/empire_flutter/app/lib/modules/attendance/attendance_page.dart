@@ -302,7 +302,15 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.check_circle, color: Colors.green),
                     label: const Text('All Present'),
-                    onPressed: () => _markAll(roster, AttendanceStatus.present),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'attendance_mark_all_present',
+                        },
+                      );
+                      _markAll(roster, AttendanceStatus.present);
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -310,7 +318,15 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     label: const Text('All Absent'),
-                    onPressed: () => _markAll(roster, AttendanceStatus.absent),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'attendance_mark_all_absent',
+                        },
+                      );
+                      _markAll(roster, AttendanceStatus.absent);
+                    },
                   ),
                 ),
               ],
@@ -553,7 +569,16 @@ class _StatusButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'attendance_select_status',
+              'status': label.toLowerCase(),
+            },
+          );
+          onTap();
+        },
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
