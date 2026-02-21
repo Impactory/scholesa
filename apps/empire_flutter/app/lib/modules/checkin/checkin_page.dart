@@ -107,12 +107,12 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
           ),
           const Spacer(),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{'cta': 'checkin_refresh'},
               );
-              context.read<CheckinService>().loadTodayData();
+              await context.read<CheckinService>().loadTodayData();
             },
             icon: const Icon(Icons.refresh, color: Color(0xFF3B82F6)),
             tooltip: 'Refresh',

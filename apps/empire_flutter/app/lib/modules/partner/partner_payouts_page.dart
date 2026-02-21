@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
@@ -46,7 +47,17 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
               _buildSummaryCard(service.payouts),
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: () => service.loadPayouts(),
+                  onRefresh: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{
+                        'module': 'partner_payouts',
+                        'cta_id': 'refresh_payouts',
+                        'surface': 'payouts_list',
+                      },
+                    );
+                    await service.loadPayouts();
+                  },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: service.payouts.length,

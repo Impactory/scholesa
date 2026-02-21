@@ -90,7 +90,7 @@ class _OccurrenceSelector extends StatelessWidget {
   });
 
   final List<SessionOccurrence> occurrences;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +108,7 @@ class _OccurrenceSelector extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
+      onRefresh: onRefresh,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: occurrences.length,

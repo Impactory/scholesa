@@ -114,12 +114,12 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ),
             const Spacer(),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{'cta': 'parent_summary_refresh'},
                 );
-                service.loadParentData();
+                await service.loadParentData();
               },
               icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
             ),

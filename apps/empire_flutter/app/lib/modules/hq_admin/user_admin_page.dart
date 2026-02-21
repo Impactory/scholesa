@@ -110,12 +110,12 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
           ),
           const Spacer(),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{'cta': 'user_admin_refresh'},
               );
-              context.read<UserAdminService>().loadUsers();
+              await context.read<UserAdminService>().loadUsers();
             },
             icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
             tooltip: 'Refresh',
