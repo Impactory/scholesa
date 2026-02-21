@@ -5,7 +5,10 @@ import 'package:scholesa_app/services/telemetry_service.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  TelemetryService.instance.configureDispatcher((Map<String, dynamic> _) async {});
-  await testMain();
-  TelemetryService.instance.clearDispatcherOverride();
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> _) async {},
+    () async {
+      await testMain();
+    },
+  );
 }

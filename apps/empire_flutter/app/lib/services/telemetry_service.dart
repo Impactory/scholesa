@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
 typedef TelemetryDispatcher = Future<void> Function(
   Map<String, dynamic> payload,
 );
+
+const String _telemetryDispatcherZoneKey = 'scholesa.telemetry.dispatcher';
 
 class TelemetryService {
   TelemetryService._();
@@ -59,6 +64,16 @@ class TelemetryService {
 
   FirebaseFunctions? _functions;
   TelemetryDispatcher? _dispatcher;
+  static Future<T> runWithDispatcher<T>(
+    TelemetryDispatcher dispatcher,
+    Future<T> Function() body,
+  ) {
+    return runZoned(
+      body,
+      zoneValues: <Object?, Object?>{_telemetryDispatcherZoneKey: dispatcher},
+    );
+  }
+
 
   FirebaseFunctions get _requiredFunctions {
     return _functions ??= FirebaseFunctions.instance;
@@ -85,11 +100,34 @@ class TelemetryService {
       if (metadata != null) 'metadata': metadata,
     };
 
-    if (_dispatcher != null) {
-      await _dispatcher!(payload);
-      return;
-    }
+    try {
+      final TelemetryDispatcher? zonedDispatcher =
+          Zone.current[_telemetryDispatcherZoneKey] as TelemetryDispatcher?;
 
-    await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
+      if (zonedDispatcher != null) {
+        await zonedDispatcher(payload);
+        return;
+      }
+
+      if (_dispatcher != null) {
+        await _dispatcher!(payload);
+        return;
+      }
+
+      await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'TelemetryService',
+          context: ErrorDescription('while logging telemetry event "$event"'),
+          informationCollector: () sync* {
+            yield StringProperty('event', event);
+            yield DiagnosticsProperty<Map<String, dynamic>>('payload', payload);
+          },
+        ),
+      );
+    }
   }
 }
