@@ -1,5 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+typedef TelemetryDispatcher = Future<void> Function(
+  Map<String, dynamic> payload,
+);
+
 class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
@@ -54,9 +58,18 @@ class TelemetryService {
   };
 
   FirebaseFunctions? _functions;
+  TelemetryDispatcher? _dispatcher;
 
   FirebaseFunctions get _requiredFunctions {
     return _functions ??= FirebaseFunctions.instance;
+  }
+
+  void configureDispatcher(TelemetryDispatcher dispatcher) {
+    _dispatcher = dispatcher;
+  }
+
+  void clearDispatcherOverride() {
+    _dispatcher = null;
   }
 
   Future<void> logEvent({
@@ -65,11 +78,18 @@ class TelemetryService {
     String? siteId,
     Map<String, dynamic>? metadata,
   }) async {
-    await _requiredFunctions.httpsCallable('logTelemetryEvent').call(<String, dynamic>{
+    final Map<String, dynamic> payload = <String, dynamic>{
       'event': event,
       if (role != null && role.isNotEmpty) 'role': role,
       if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
       if (metadata != null) 'metadata': metadata,
-    });
+    };
+
+    if (_dispatcher != null) {
+      await _dispatcher!(payload);
+      return;
+    }
+
+    await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
   }
 }
