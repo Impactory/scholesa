@@ -16,13 +16,16 @@ class AuthService {
   })  : _auth = auth,
         _firestoreService = firestoreService,
         _appState = appState,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(
-          scopes: <String>['email', 'profile'],
-        );
+        _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
   final GoogleSignIn _googleSignIn;
+  Future<void>? _googleInitialization;
+
+  Future<void> _ensureGoogleInitialized() {
+    return _googleInitialization ??= _googleSignIn.initialize();
+  }
 
   /// Current Firebase user
   User? get currentUser => _auth.currentUser;
@@ -83,17 +86,19 @@ class AuthService {
         await _auth.signInWithPopup(googleProvider);
       } else {
         // Mobile: Use native Google Sign-In
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        
-        if (googleUser == null) {
-          // User cancelled the sign-in
-          _appState.setLoading(false);
-          return;
-        }
+        await _ensureGoogleInitialized();
+        final GoogleSignInAccount googleUser = await _googleSignIn.authenticate(
+          scopeHint: <String>['email', 'profile'],
+        );
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        if (googleAuth.idToken == null) {
+          throw FirebaseAuthException(
+            code: 'missing-id-token',
+            message: 'Google sign-in did not return an ID token',
+          );
+        }
         final OAuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
@@ -115,6 +120,14 @@ class AuthService {
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled ||
+          e.code == GoogleSignInExceptionCode.interrupted) {
+        _appState.setLoading(false);
+        return;
+      }
+      _appState.setError('Failed to sign in with Google');
       rethrow;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
