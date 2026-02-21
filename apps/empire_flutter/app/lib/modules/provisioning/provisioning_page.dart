@@ -34,6 +34,26 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        return;
+      }
+      final String tab = switch (_tabController.index) {
+        0 => 'learners',
+        1 => 'parents',
+        2 => 'links',
+        _ => 'unknown',
+      };
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'provisioning',
+          'cta_id': 'change_tab',
+          'surface': 'provisioning_tab_bar',
+          'tab': tab,
+        },
+      );
+    });
   }
 
   @override
@@ -449,7 +469,13 @@ class _LinksTab extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _logProvisioningCta(
+                'cancel_delete_guardian_link',
+                metadata: <String, dynamic>{'link_id': link.id},
+              );
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           TextButton(

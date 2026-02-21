@@ -571,12 +571,30 @@ class RoleDashboard extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.swap_horiz, color: Colors.white),
                       tooltip: 'Switch site',
-                      onPressed: () => _showSiteSwitcher(context, appState),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{
+                            'cta': 'role_dashboard_open_site_switcher',
+                            'surface': 'appbar',
+                          },
+                        );
+                        _showSiteSwitcher(context, appState);
+                      },
                     ),
                   IconButton(
                     icon: const Icon(Icons.settings_outlined, color: Colors.white),
                     tooltip: 'Settings',
-                    onPressed: () => context.push('/settings'),
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: const <String, dynamic>{
+                          'cta': 'role_dashboard_open_settings',
+                          'surface': 'appbar',
+                        },
+                      );
+                      context.push('/settings');
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.logout, color: Colors.white),
@@ -804,11 +822,27 @@ class RoleDashboard extends StatelessWidget {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'role_dashboard_close_unavailable_action_dialog',
+                  'surface': 'unavailable_action_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'role_dashboard_open_settings_from_unavailable_action',
+                  'surface': 'unavailable_action_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               context.push('/settings');
             },
@@ -861,6 +895,14 @@ class RoleDashboard extends StatelessWidget {
                   ? const Icon(Icons.check_circle, color: ScholesaColors.success)
                   : null,
               onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'role_dashboard_switch_site',
+                    'surface': 'site_switcher_sheet',
+                    'site_id': siteId,
+                  },
+                );
                 appState.switchSite(siteId);
                 Navigator.pop(context);
               },
@@ -891,7 +933,16 @@ class RoleDashboard extends StatelessWidget {
         content: const Text('Are you sure you want to sign out?'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'role_dashboard_cancel_sign_out',
+                  'surface': 'sign_out_dialog',
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
