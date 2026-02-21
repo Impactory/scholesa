@@ -334,14 +334,26 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showChangePasswordSheet() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_change_password'},
+    );
     _showComingSoon('Change Password');
   }
 
   void _showChangeEmailSheet() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_change_email'},
+    );
     _showComingSoon('Change Email');
   }
 
   void _showChangePhoneSheet() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_change_phone'},
+    );
     _showComingSoon('Change Phone');
   }
 
@@ -403,14 +415,26 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showTimeZoneSelector() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_timezone_selector'},
+    );
     _showComingSoon('Time Zone Selection');
   }
 
   void _openPrivacyPolicy() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_privacy_policy'},
+    );
     _showComingSoon('Privacy Policy');
   }
 
   void _openTermsOfService() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_terms_of_service'},
+    );
     _showComingSoon('Terms of Service');
   }
 
@@ -428,18 +452,34 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _openHelpCenter() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_help_center'},
+    );
     _showComingSoon('Help Center');
   }
 
   void _showFeedbackSheet() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_feedback'},
+    );
     _showComingSoon('Feedback');
   }
 
   void _rateApp() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_rate_app'},
+    );
     _showComingSoon('App Rating');
   }
 
   void _showAppVersionDetails() {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'settings_open_app_version'},
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -447,7 +487,13 @@ class _SettingsPageState extends State<SettingsPage> {
         content: const Text('Scholesa version 1.0.0 (Build 1).'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{'cta': 'settings_close_app_version'},
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Close'),
           ),
         ],
@@ -545,11 +591,27 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'settings_cancel_coming_soon_request',
+                  'feature': feature,
+                },
+              );
+              Navigator.pop(dialogContext);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'settings_submit_coming_soon_request',
+                  'feature': feature,
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
