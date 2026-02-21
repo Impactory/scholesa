@@ -9,6 +9,22 @@ typedef TelemetryDispatcher = Future<void> Function(
 
 const String _telemetryDispatcherZoneKey = 'scholesa.telemetry.dispatcher';
 
+class TelemetryFailure {
+  TelemetryFailure({
+    required this.event,
+    required this.payload,
+    required this.error,
+    required this.stackTrace,
+    required this.occurredAt,
+  });
+
+  final String event;
+  final Map<String, dynamic> payload;
+  final Object error;
+  final StackTrace stackTrace;
+  final DateTime occurredAt;
+}
+
 class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
@@ -64,6 +80,8 @@ class TelemetryService {
 
   FirebaseFunctions? _functions;
   TelemetryDispatcher? _dispatcher;
+  final List<TelemetryFailure> _recentFailures = <TelemetryFailure>[];
+  static const int _maxRetainedFailures = 100;
   static Future<T> runWithDispatcher<T>(
     TelemetryDispatcher dispatcher,
     Future<T> Function() body,
@@ -85,6 +103,13 @@ class TelemetryService {
 
   void clearDispatcherOverride() {
     _dispatcher = null;
+  }
+
+  List<TelemetryFailure> get recentFailures =>
+      List<TelemetryFailure>.unmodifiable(_recentFailures);
+
+  void clearFailures() {
+    _recentFailures.clear();
   }
 
   Future<void> logEvent({
@@ -116,18 +141,20 @@ class TelemetryService {
 
       await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
     } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'TelemetryService',
-          context: ErrorDescription('while logging telemetry event "$event"'),
-          informationCollector: () sync* {
-            yield StringProperty('event', event);
-            yield DiagnosticsProperty<Map<String, dynamic>>('payload', payload);
-          },
+      _recentFailures.add(
+        TelemetryFailure(
+          event: event,
+          payload: Map<String, dynamic>.from(payload),
+          error: error,
+          stackTrace: stackTrace,
+          occurredAt: DateTime.now(),
         ),
       );
+      if (_recentFailures.length > _maxRetainedFailures) {
+        _recentFailures.removeRange(0, _recentFailures.length - _maxRetainedFailures);
+      }
+      debugPrint('TelemetryService failure for "$event": $error');
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 }
