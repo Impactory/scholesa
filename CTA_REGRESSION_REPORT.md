@@ -12,9 +12,9 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 ## Summary
 
 - Web files with CTA markers: **38**
-- Flutter files with CTA markers: **50**
+- Flutter files with CTA markers: **51**
 - Web CTA marker instances: **198**
-- Flutter CTA marker instances: **264**
+- Flutter CTA marker instances: **271**
 - Web files with quick-action markers: **2**
 - Flutter files with quick-action markers: **6**
 - Web quick-action marker instances: **2**
@@ -31,7 +31,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 ## CTA Telemetry Coverage
 
 - Web CTA files with direct telemetry hooks/calls: **38/38**
-- Flutter CTA files with direct telemetry import/calls: **50/50**
+- Flutter CTA files with direct telemetry import/calls: **51/51**
 
 ## Quick Actions Coverage
 
@@ -135,6 +135,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart`: **covered**
+- `apps/empire_flutter/app/lib/modules/partner/partner_payouts_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/modules/profile/profile_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/modules/settings/settings_page.dart`: **covered**
@@ -450,7 +451,8 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L935: `TextButton(`
 - L948: `ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart` (2)
+### `apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart` (3)
+- L128: `return RefreshIndicator(`
 - L151: `child: ListTile(`
 - L571: `child: InkWell(`
 
@@ -652,13 +654,15 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L143: `return GestureDetector(`
 - L391: `TextButton(`
 
-### `apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart` (3)
+### `apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart` (4)
+- L45: `return RefreshIndicator(`
 - L114: `child: InkWell(`
 - L324: `...contract.deliverables.map((PartnerDeliverable d) => ListTile(`
 - L336: `ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart` (8)
+### `apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart` (9)
 - L35: `IconButton(`
+- L61: `return RefreshIndicator(`
 - L151: `child: InkWell(`
 - L343: `TextButton(`
 - L354: `ElevatedButton(`
@@ -666,6 +670,9 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L491: `child: ElevatedButton(`
 - L542: `TextButton(`
 - L546: `ElevatedButton(`
+
+### `apps/empire_flutter/app/lib/modules/partner/partner_payouts_page.dart` (1)
+- L49: `child: RefreshIndicator(`
 
 ### `apps/empire_flutter/app/lib/modules/profile/profile_page.dart` (9)
 - L55: `IconButton(`
@@ -678,16 +685,19 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L516: `ElevatedButton(`
 - L557: `child: ListTile(`
 
-### `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart` (23)
+### `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart` (26)
 - L109: `floatingActionButton: FloatingActionButton(`
+- L212: `return RefreshIndicator(`
 - L234: `child: ListTile(`
 - L242: `trailing: IconButton(`
 - L271: `ListTile(`
 - L290: `ListTile(`
+- L337: `return RefreshIndicator(`
 - L359: `child: ListTile(`
 - L369: `trailing: IconButton(`
 - L398: `ListTile(`
 - L417: `ListTile(`
+- L464: `return RefreshIndicator(`
 - L486: `child: ListTile(`
 - L511: `trailing: IconButton(`
 - L543: `TextButton(`
@@ -696,10 +706,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L711: `ElevatedButton(`
 - L838: `TextButton(`
 - L847: `ElevatedButton(`
-- L1003: `TextButton(`
-- L1012: `ElevatedButton(`
-- L1132: `TextButton(`
-- ... 3 more
+- ... 6 more
 
 ### `apps/empire_flutter/app/lib/modules/settings/settings_page.dart` (10)
 - L391: `return ListTile(`

@@ -16,7 +16,7 @@ DART_EXTS = {".dart"}
 OUTPUT_REPORT = "CTA_FULL_INVENTORY.md"
 
 FLUTTER_WIDGET_MARKER_PATTERN = re.compile(
-    r"(\bElevatedButton\(|\bTextButton\(|\bOutlinedButton\(|\bFilledButton\(|\bIconButton\(|\bFloatingActionButton\(|\bInkWell\(|\bGestureDetector\(|\bListTile\()"
+    r"(\bElevatedButton\(|\bTextButton\(|\bOutlinedButton\(|\bFilledButton\(|\bIconButton\(|\bFloatingActionButton\(|\bInkWell\(|\bGestureDetector\(|\bListTile\(|\bRefreshIndicator\()"
 )
 
 
