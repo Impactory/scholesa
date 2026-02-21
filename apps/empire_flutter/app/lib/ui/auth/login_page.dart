@@ -266,6 +266,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
     final TextTheme textTheme = theme.textTheme;
+    const Color headingColor = ScholesaColors.textPrimary;
+    const Color secondaryTextColor = ScholesaColors.textSecondary;
+    const Color fieldFillColor = Colors.white;
+    const Color fieldTextColor = ScholesaColors.textPrimary;
+    const Color fieldHintColor = ScholesaColors.textMuted;
+    const Color fieldBorderColor = ScholesaColors.border;
+    const Color linkColor = ScholesaColors.primaryDark;
 
     return Scaffold(
       backgroundColor: ScholesaColors.background,
@@ -373,7 +380,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             isWide ? AppStrings.of(context, 'auth.welcomeBack') : AppStrings.of(context, 'auth.welcomeToScholesa'),
                             style: textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
+                              color: headingColor,
                             ),
                             textAlign: isWide ? TextAlign.left : TextAlign.center,
                           ),
@@ -381,7 +388,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           Text(
                             AppStrings.of(context, 'auth.signInSubtitle'),
                             style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                              color: secondaryTextColor,
                             ),
                             textAlign: isWide ? TextAlign.left : TextAlign.center,
                           ),
@@ -430,15 +437,26 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
+                                  style: const TextStyle(
+                                    color: fieldTextColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   decoration: InputDecoration(
                                     labelText: AppStrings.of(context, 'auth.email'),
                                     hintText: AppStrings.of(context, 'auth.emailHint'),
-                                    prefixIcon: const Icon(Icons.email_outlined),
+                                    labelStyle: const TextStyle(color: secondaryTextColor),
+                                    floatingLabelStyle: const TextStyle(color: headingColor),
+                                    hintStyle: const TextStyle(color: fieldHintColor),
+                                    prefixIcon: const Icon(Icons.email_outlined, color: secondaryTextColor),
                                     filled: true,
-                                    fillColor: colorScheme.surfaceContainerHighest,
+                                    fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -466,15 +484,26 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
                                   onFieldSubmitted: (_) => _handleLogin(),
+                                  style: const TextStyle(
+                                    color: fieldTextColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   decoration: InputDecoration(
                                     labelText: AppStrings.of(context, 'auth.password'),
                                     hintText: AppStrings.of(context, 'auth.passwordHint'),
-                                    prefixIcon: const Icon(Icons.lock_outlined),
+                                    labelStyle: const TextStyle(color: secondaryTextColor),
+                                    floatingLabelStyle: const TextStyle(color: headingColor),
+                                    hintStyle: const TextStyle(color: fieldHintColor),
+                                    prefixIcon: const Icon(Icons.lock_outlined, color: secondaryTextColor),
                                     filled: true,
-                                    fillColor: colorScheme.surfaceContainerHighest,
+                                    fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -488,6 +517,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                         _obscurePassword
                                             ? Icons.visibility_outlined
                                             : Icons.visibility_off_outlined,
+                                        color: secondaryTextColor,
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -513,6 +543,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
                                     onPressed: _showForgotPasswordDialog,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: linkColor,
+                                    ),
                                     child: Text(AppStrings.of(context, 'auth.forgotPassword')),
                                   ),
                                 ),
@@ -561,18 +594,18 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           // Divider
                           Row(
                             children: <Widget>[
-                              Expanded(child: Divider(color: Colors.grey[300])),
+                              const Expanded(child: Divider(color: ScholesaColors.border)),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
                                   AppStrings.of(context, 'auth.orContinueWith'),
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: secondaryTextColor,
                                     fontSize: 13,
                                   ),
                                 ),
                               ),
-                              Expanded(child: Divider(color: Colors.grey[300])),
+                              const Expanded(child: Divider(color: ScholesaColors.border)),
                             ],
                           ),
                           
@@ -625,7 +658,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
                           Text(
                             AppStrings.of(context, 'auth.provisioningNote'),
-                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                            style: textTheme.bodyMedium?.copyWith(color: secondaryTextColor),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -703,6 +736,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         return AppStrings.of(context, 'auth.error.userDisabled');
       case 'too-many-requests':
         return AppStrings.of(context, 'auth.error.tooManyRequests');
+      case 'network-request-failed':
+        return AppStrings.of(context, 'auth.error.networkFailed');
+      case 'operation-not-allowed':
+        return AppStrings.of(context, 'auth.error.operationNotAllowed');
+      case 'invalid-api-key':
+        return AppStrings.of(context, 'auth.error.invalidApiKey');
+      case 'app-not-authorized':
+        return AppStrings.of(context, 'auth.error.appNotAuthorized');
       case 'popup-closed-by-user':
         return AppStrings.of(context, 'auth.error.popupClosed');
       case 'popup-blocked':

@@ -209,6 +209,14 @@ class AuthService {
         return 'This account has been disabled';
       case 'too-many-requests':
         return 'Too many attempts. Please try again later';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again';
+      case 'operation-not-allowed':
+        return 'Email/password sign-in is not enabled';
+      case 'invalid-api-key':
+        return 'Authentication is misconfigured. Contact support';
+      case 'app-not-authorized':
+        return 'This app is not authorized for Firebase Auth';
       default:
         return 'Authentication failed';
     }
