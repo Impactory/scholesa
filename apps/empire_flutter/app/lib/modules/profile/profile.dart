@@ -1,4 +1,4 @@
 /// Profile module exports
-library profile;
+library;
 
 export 'profile_page.dart';

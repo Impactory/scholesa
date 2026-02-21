@@ -1,5 +1,5 @@
 /// Module exports - central barrel file for all modules
-library modules;
+library;
 
 // Attendance
 export 'attendance/attendance_page.dart';

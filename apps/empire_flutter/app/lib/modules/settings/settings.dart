@@ -1,4 +1,4 @@
 /// Settings module exports
-library settings;
+library;
 
 export 'settings_page.dart';

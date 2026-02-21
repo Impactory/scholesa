@@ -1,5 +1,5 @@
 /// Educator module exports
-library educator;
+library;
 
 export 'educator_models.dart';
 export 'educator_service.dart';

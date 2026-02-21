@@ -1,5 +1,5 @@
 /// HQ Admin module exports
-library hq_admin;
+library;
 
 export 'user_admin_page.dart';
 export 'user_admin_service.dart';

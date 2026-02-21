@@ -1,5 +1,5 @@
 /// Habit Coach module exports
-library habits;
+library;
 
 export 'habit_models.dart';
 export 'habit_service.dart';

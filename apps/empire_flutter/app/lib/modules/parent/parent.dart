@@ -1,5 +1,5 @@
 /// Parent module exports
-library parent;
+library;
 
 export 'parent_models.dart';
 export 'parent_service.dart';

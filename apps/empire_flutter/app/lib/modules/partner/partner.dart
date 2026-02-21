@@ -1,5 +1,5 @@
 /// Partner module exports
-library partner;
+library;
 
 export 'partner_listings_page.dart';
 export 'partner_contracts_page.dart';

@@ -91,7 +91,7 @@ class AuthService {
           scopeHint: <String>['email', 'profile'],
         );
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
         if (googleAuth.idToken == null) {
           throw FirebaseAuthException(
             code: 'missing-id-token',

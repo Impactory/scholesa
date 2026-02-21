@@ -1,5 +1,5 @@
 /// Missions module exports
-library missions;
+library;
 
 export 'mission_models.dart';
 export 'mission_service.dart';

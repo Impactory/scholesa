@@ -1,5 +1,5 @@
 /// Check-in / Check-out module exports
-library checkin;
+library;
 
 export 'checkin_models.dart';
 export 'checkin_page.dart';
