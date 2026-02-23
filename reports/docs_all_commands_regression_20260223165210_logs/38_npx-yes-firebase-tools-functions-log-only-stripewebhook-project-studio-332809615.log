@@ -1,4 +1,4 @@
-$ npx --yes firebase-tools functions:secrets:set STRIPE_WEBHOOK_SECRET
+$ npx --yes firebase-tools functions:log --only stripeWebhook --project studio-3328096157-e3f79
 cwd: /Users/simonluke/dev/scholesa
 timeout_seconds: 240
 
