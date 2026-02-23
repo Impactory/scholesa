@@ -205,25 +205,6 @@ function pickPrimarySiteId(user: UserRecord): string | null {
   return sites.length > 0 ? sites[0] : null;
 }
 
-function getSiteCandidates(data: FirebaseFirestore.DocumentData): string[] {
-  const siteCandidates: string[] = [];
-  const scalarFields = ['siteId', 'studioId', 'activeSiteId'];
-  for (const field of scalarFields) {
-    const value = data[field];
-    if (typeof value === 'string' && value.trim().length > 0) {
-      siteCandidates.push(value.trim());
-    }
-  }
-
-  const arrayFields = ['siteIds'];
-  for (const field of arrayFields) {
-    const values = toStringArray(data[field]);
-    siteCandidates.push(...values);
-  }
-
-  return [...new Set(siteCandidates)];
-}
-
 function isInSiteScope(
   data: FirebaseFirestore.DocumentData,
   siteId: string,

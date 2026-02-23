@@ -1,12 +1,32 @@
-# School Consent Model
+# School Consent Model (COPPA School-as-Agent)
 
-Scholesa relies on schools to obtain verifiable parental consent under COPPA.
+Date: 2026-02-23
 
-Requirements:
-- Signed agreement with school/district
-- Confirmation data is used for educational purposes only
-- No independent marketing to students
+Scholesa relies on the school/district to obtain and document verifiable parental consent for educational use.
 
-Schools must:
-- Inform parents of Scholesa usage
-- Handle consent documentation locally
+## Preconditions
+- Signed school/district agreement.
+- Educational-use-only confirmation.
+- Parent notice provided by school/district.
+- No direct student marketing and no behavioral advertising.
+
+## Required System Record
+Each site must have `coppaSchoolConsents/{siteId}` with:
+- `agreementSigned: true`
+- `educationalUseOnly: true`
+- `parentNoticeProvided: true`
+- `noStudentMarketing: true`
+- `active: true`
+
+## Operational API
+- Upsert/maintain: `upsertSchoolConsentRecord` (role: `site` or `hq`)
+- Read/check: `getSchoolConsentRecord` (role: `educator`, `site`, `hq`)
+
+## Runtime Enforcement
+- `genAiCoach` checks active school consent before serving learner AI responses.
+- If record is missing or inactive, request fails with `failed-precondition`.
+
+## School Responsibilities
+- Notify parents of Scholesa usage and purpose.
+- Retain local consent documentation per district policy.
+- Route parent access/deletion requests through official school channel.

@@ -1,16 +1,42 @@
-# Parent Data Request Workflow
+# Parent Data Request Workflow (Access/Deletion)
 
-## Step 1: Identity Verification
-Parent contacts school.
-School verifies identity.
+Date: 2026-02-23
 
-## Step 2: Request Submission
-School submits request to Scholesa admin channel.
+All parent requests are handled through school/district verification and then executed by Scholesa with traceable evidence.
 
-## Step 3: Data Export/Delete
-System runs export/delete script scoped by siteId + learnerId.
+## Step 1: School Verification
+- Parent/guardian contacts school/district.
+- School verifies identity and authority to act for learner.
+- School records district ticket/reference ID.
 
-## Step 4: Confirmation
-School confirms completion with parent.
+## Step 2: Request Submission to Scholesa
+- School submits request with:
+  - `siteId`
+  - `learnerId`
+  - `requestType` (`export` or `delete`)
+  - optional district ticket ID
+- API: `submitParentDataRequest`
+- Output includes `requestId` and `traceId`
 
-All actions logged with traceId.
+## Step 3: Execute Request
+- Scholesa site/hq operator runs `processParentDataRequest` with `requestId`.
+- Execution is scoped to learner + site.
+- Export result: structured collection summary report.
+- Delete result: matched document deletion + user record detach/delete + storage prefix cleanup.
+
+## Step 4: Completion Evidence
+- Report location: `coppaParentRequestReports/{requestId}`
+- Request lifecycle: `coppaParentRequests/{requestId}`
+- Trace log stream: `coppaTraceLogs` (`traceId` correlated)
+
+## Step 5: School Confirmation to Parent
+- School receives completion evidence from Scholesa.
+- School closes ticket with parent.
+
+## Required Logging Fields
+- `traceId`
+- `requestId`
+- `siteId`
+- `learnerId`
+- `requestType`
+- `status`

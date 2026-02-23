@@ -1,27 +1,39 @@
-# Scholesa Parent Privacy Notice
+# Scholesa Parent Privacy Notice (School Distribution Template)
 
-Scholesa collects limited personal information necessary to provide educational services.
+Date: 2026-02-23
 
-## Information Collected
-- Student name (school provided)
-- School email (if applicable)
-- Learning progress data
-- AI interaction logs (educational context only)
+Scholesa provides educational services on behalf of schools/districts.
+This template is for school distribution to parents/guardians.
 
-## How It Is Used
-- Deliver instruction
-- Provide feedback
-- Generate learning analytics
+## Information We Collect (Educational Use Only)
+- Student identifiers provided by school (name, grade/class, school email if used).
+- Learning progress/work artifacts (missions, checkpoints, reflections, portfolios).
+- Operational/security logs (authentication, service health, audit events).
+- AI interaction logs for instructional support and safety review.
 
-## What We Do NOT Do
-- No behavioral advertising
-- No selling of data
-- No cross-site tracking
+## Why We Use It
+- Deliver instruction and feedback.
+- Support teacher oversight and learner progress reporting.
+- Maintain platform security, reliability, and abuse prevention.
 
-## Parental Rights
-Parents may request:
-- Access to student records
-- Correction of inaccuracies
-- Deletion of data
+## What We Do Not Do
+- No behavioral advertising.
+- No sale of student data.
+- No cross-service marketing tracking.
 
-Contact: privacy@scholesa.org
+## Data Sharing
+- Data is shared with vetted processors only to operate the education service.
+- AI provider usage follows the constraints in `04_AI_VENDOR_DISCLOSURE.md`.
+- Sensitive identifiers are minimized/redacted where feasible.
+
+## Parent/Guardian Rights
+Parents may request, through the school/district:
+- Access to student records.
+- Correction of inaccurate records.
+- Deletion of student data (subject to school/legal requirements).
+
+Operational workflow reference: `06_PARENT_REQUEST_WORKFLOW.md`.
+
+## Contact
+- Privacy: privacy@scholesa.org
+- School-admin request channel: district submits to Scholesa support with `siteId + learnerId + requestType`.

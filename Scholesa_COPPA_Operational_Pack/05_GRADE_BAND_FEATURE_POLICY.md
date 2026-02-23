@@ -1,16 +1,35 @@
-# Grade Band Feature Enforcement
+# Grade-Band Feature Policy (Enforcement)
 
-## K–5
-- Restricted AI free-form chat
-- Enhanced moderation
-- Limited upload types
+Date: 2026-02-23
 
-## 6–8
-- Guided AI interactions
-- Checkpoint-required submissions
+All enforcement is driven by Firebase auth context (`gradeBand` custom claim, with payload consistency checks).
 
-## 9–12
-- Expanded AI tutoring features
-- Reflection and explain-back mandatory
+## K–5 (`K_5`)
+- Allowed AI modes: `hint`, `verify`
+- Block open-ended free chat patterns
+- Enhanced input limits (shorter text, link blocking)
+- Restricted attachment types:
+  - `text/plain`
+  - `application/pdf`
+  - `image/png`
+  - `image/jpeg`
+- Attachment count and size limits tightened
 
-All enforcement tied to Firebase custom claim: gradeBand
+## 6–8 (`G6_8`)
+- Allowed AI modes: `hint`, `verify`, `explain`
+- Guided interactions with checkpoint linkage prompts
+- Moderate attachment limits
+
+## 9–12 (`G9_12`)
+- Allowed AI modes: `hint`, `verify`, `explain`, `debug`
+- Expanded tutoring support
+- Explain-back required
+
+## Runtime Controls
+- Claim/payload consistency check rejects mismatched grade band inputs.
+- Consent gate enforced before AI access.
+- Enforcement points in `functions/src/index.ts` (`genAiCoach`):
+  - `resolveGradeBandFromClaims`
+  - `validateCoppaMode`
+  - `validateCoppaAttachments`
+  - `validateCoppaInputText`

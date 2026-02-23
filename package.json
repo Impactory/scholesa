@@ -19,6 +19,7 @@
     "test:integration:analytics": "node -e \"if(process.env.RUN_EXTERNAL_ANALYTICS_TESTS==='1'){process.exit(0)};console.log('Skipping external analytics integration tests (set RUN_EXTERNAL_ANALYTICS_TESTS=1 to enable).');\" && ( [ \"$RUN_EXTERNAL_ANALYTICS_TESTS\" = \"1\" ] && jest --runInBand --config jest.analytics.config.js || true )",
     "test:integration:analytics:live": "firebase emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",
+    "audit:coppa:no-ads": "bash ./scripts/coppa_no_ad_audit.sh",
     "test:cta-report": "python3 -m unittest scripts/test_cta_report_policy.py",
     "test:cta-report:generate": "npm run test:cta-report && python3 scripts/generate_cta_report.py",
     "test:cta-report:gate": "npm run test:cta-report:generate && python3 scripts/check_cta_report_gate.py"
