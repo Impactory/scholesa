@@ -28,6 +28,23 @@
       ]
     },
     {
+      "collectionGroup": "telemetryEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "event", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "telemetryEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "event", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "telemetryAggregates",
       "queryScope": "COLLECTION",
       "fields": [

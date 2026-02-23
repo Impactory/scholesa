@@ -5,7 +5,6 @@ import 'mission_models.dart';
 
 /// Service for learner missions
 class MissionService extends ChangeNotifier {
-
   MissionService({
     required FirestoreService firestoreService,
     required this.learnerId,
@@ -18,15 +17,19 @@ class MissionService extends ChangeNotifier {
   LearnerProgress? _progress;
   bool _isLoading = false;
   String? _error;
-  
+
   // Filters
   Pillar? _pillarFilter;
   MissionStatus? _statusFilter;
 
   // Getters
   List<Mission> get missions => _filteredMissions;
-  List<Mission> get activeMissions => _missions.where((Mission m) => m.status == MissionStatus.inProgress).toList();
-  List<Mission> get completedMissions => _missions.where((Mission m) => m.status == MissionStatus.completed).toList();
+  List<Mission> get activeMissions => _missions
+      .where((Mission m) => m.status == MissionStatus.inProgress)
+      .toList();
+  List<Mission> get completedMissions => _missions
+      .where((Mission m) => m.status == MissionStatus.completed)
+      .toList();
   LearnerProgress? get progress => _progress;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -35,8 +38,12 @@ class MissionService extends ChangeNotifier {
 
   List<Mission> get _filteredMissions {
     return _missions.where((Mission mission) {
-      if (_pillarFilter != null && mission.pillar != _pillarFilter) return false;
-      if (_statusFilter != null && mission.status != _statusFilter) return false;
+      if (_pillarFilter != null && mission.pillar != _pillarFilter) {
+        return false;
+      }
+      if (_statusFilter != null && mission.status != _statusFilter) {
+        return false;
+      }
       return true;
     }).toList();
   }
@@ -66,35 +73,37 @@ class MissionService extends ChangeNotifier {
 
     try {
       // Load missions assigned to this learner
-      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot = await _firestore
-          .collection('missionAssignments')
-          .where('learnerId', isEqualTo: learnerId)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+          await _firestore
+              .collection('missionAssignments')
+              .where('learnerId', isEqualTo: learnerId)
+              .get();
 
       final List<Mission> loadedMissions = <Mission>[];
 
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc in assignmentsSnapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc
+          in assignmentsSnapshot.docs) {
         final Map<String, dynamic> assignData = assignDoc.data();
         final String missionId = assignData['missionId'] as String? ?? '';
 
         // Get mission details
-        final DocumentSnapshot<Map<String, dynamic>> missionDoc = await _firestore
-            .collection('missions')
-            .doc(missionId)
-            .get();
+        final DocumentSnapshot<Map<String, dynamic>> missionDoc =
+            await _firestore.collection('missions').doc(missionId).get();
 
         if (missionDoc.exists) {
           final Map<String, dynamic> missionData = missionDoc.data()!;
-          
-          // Get steps for this mission
-          final QuerySnapshot<Map<String, dynamic>> stepsSnapshot = await _firestore
-              .collection('missions')
-              .doc(missionId)
-              .collection('steps')
-              .orderBy('order')
-              .get();
 
-          final List<MissionStep> steps = stepsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          // Get steps for this mission
+          final QuerySnapshot<Map<String, dynamic>> stepsSnapshot =
+              await _firestore
+                  .collection('missions')
+                  .doc(missionId)
+                  .collection('steps')
+                  .orderBy('order')
+                  .get();
+
+          final List<MissionStep> steps = stepsSnapshot.docs
+              .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
             final Map<String, dynamic> stepData = doc.data();
             return MissionStep(
               id: doc.id,
@@ -188,9 +197,12 @@ class MissionService extends ChangeNotifier {
   }
 
   LearnerProgress _calculateProgress() {
-    final int totalXp = _missions.where((Mission m) => m.status == MissionStatus.completed)
+    final int totalXp = _missions
+        .where((Mission m) => m.status == MissionStatus.completed)
         .fold(0, (int sum, Mission m) => sum + m.xpReward);
-    final int completed = _missions.where((Mission m) => m.status == MissionStatus.completed).length;
+    final int completed = _missions
+        .where((Mission m) => m.status == MissionStatus.completed)
+        .length;
     final int level = (totalXp / 1000).floor() + 1;
     return LearnerProgress(
       totalXp: totalXp,
@@ -229,11 +241,13 @@ class MissionService extends ChangeNotifier {
   /// Complete a mission step
   Future<bool> completeStep(String missionId, String stepId) async {
     try {
-      final int missionIndex = _missions.indexWhere((Mission m) => m.id == missionId);
+      final int missionIndex =
+          _missions.indexWhere((Mission m) => m.id == missionId);
       if (missionIndex == -1) return false;
 
       final Mission mission = _missions[missionIndex];
-      final List<MissionStep> updatedSteps = mission.steps.map((MissionStep step) {
+      final List<MissionStep> updatedSteps =
+          mission.steps.map((MissionStep step) {
         if (step.id == stepId) {
           return step.copyWith(
             isCompleted: true,
@@ -243,7 +257,8 @@ class MissionService extends ChangeNotifier {
         return step;
       }).toList();
 
-      final int completedCount = updatedSteps.where((MissionStep s) => s.isCompleted).length;
+      final int completedCount =
+          updatedSteps.where((MissionStep s) => s.isCompleted).length;
       final double progress = completedCount / updatedSteps.length;
 
       _missions[missionIndex] = mission.copyWith(
@@ -260,23 +275,65 @@ class MissionService extends ChangeNotifier {
     }
   }
 
-  /// Submit a mission for review
-  Future<bool> submitMission(String missionId) async {
+  /// Submit a mission for review and persist an explicit submission document.
+  Future<String?> submitMission(String missionId) async {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
+        final Mission mission = _missions[index];
+        final String? siteId = await _resolveSiteIdForMission(missionId);
+        final DocumentReference<Map<String, dynamic>> submissionRef =
+            _firestore.collection('missionSubmissions').doc();
+
+        await submissionRef.set(<String, dynamic>{
+          'missionId': missionId,
+          'learnerId': learnerId,
+          if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+          'status': 'pending',
+          'submittedAt': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          // Keep submission payload privacy-minimized.
+          'submissionText':
+              'Mission "${mission.title}" submitted for educator review.',
+          'attachmentUrls': const <String>[],
+        });
+
         _missions[index] = _missions[index].copyWith(
           status: MissionStatus.submitted,
         );
         notifyListeners();
-        return true;
+        return submissionRef.id;
       }
-      return false;
+      return null;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      return false;
+      return null;
     }
+  }
+
+  Future<String?> _resolveSiteIdForMission(String missionId) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> assignments = await _firestore
+          .collection('missionAssignments')
+          .where('learnerId', isEqualTo: learnerId)
+          .limit(100)
+          .get();
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in assignments.docs) {
+        final Map<String, dynamic> data = doc.data();
+        if (data['missionId'] == missionId) {
+          final String? siteId = data['siteId'] as String?;
+          if (siteId != null && siteId.isNotEmpty) {
+            return siteId;
+          }
+        }
+      }
+    } catch (_) {
+      // Best effort only; callers handle null site IDs.
+    }
+    return null;
   }
 
   /// Mark a mission as complete (after educator approval)
@@ -290,7 +347,7 @@ class MissionService extends ChangeNotifier {
           completedAt: DateTime.now(),
           progress: 1.0,
         );
-        
+
         // Update progress
         if (_progress != null) {
           _progress = LearnerProgress(
@@ -302,7 +359,7 @@ class MissionService extends ChangeNotifier {
             pillarProgress: _progress!.pillarProgress,
           );
         }
-        
+
         notifyListeners();
         return true;
       }
@@ -334,26 +391,24 @@ class MissionService extends ChangeNotifier {
         query = query.where('siteId', isEqualTo: siteId);
       }
 
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.limit(50).get();
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await query.limit(50).get();
 
       _pendingReviews = await Future.wait(
-        snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+        snapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
           final Map<String, dynamic> data = doc.data();
           final String learnerId = data['learnerId'] as String? ?? '';
 
           // Get learner info
-          final DocumentSnapshot<Map<String, dynamic>> learnerDoc = await _firestore
-              .collection('users')
-              .doc(learnerId)
-              .get();
+          final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
+              await _firestore.collection('users').doc(learnerId).get();
           final Map<String, dynamic>? learnerData = learnerDoc.data();
 
           // Get mission info
           final String missionId = data['missionId'] as String? ?? '';
-          final DocumentSnapshot<Map<String, dynamic>> missionDoc = await _firestore
-              .collection('missions')
-              .doc(missionId)
-              .get();
+          final DocumentSnapshot<Map<String, dynamic>> missionDoc =
+              await _firestore.collection('missions').doc(missionId).get();
           final Map<String, dynamic>? missionData = missionDoc.data();
 
           return MissionSubmission(
@@ -367,7 +422,8 @@ class MissionService extends ChangeNotifier {
             submittedAt: _parseTimestamp(data['submittedAt']) ?? DateTime.now(),
             status: data['status'] as String? ?? 'pending',
             submissionText: data['submissionText'] as String?,
-            attachmentUrls: List<String>.from(data['attachmentUrls'] as List? ?? <String>[]),
+            attachmentUrls: List<String>.from(
+                data['attachmentUrls'] as List? ?? <String>[]),
             rating: data['rating'] as int?,
             feedback: data['feedback'] as String?,
           );
@@ -377,11 +433,13 @@ class MissionService extends ChangeNotifier {
       // Count reviewed today
       final DateTime today = DateTime.now();
       final DateTime startOfDay = DateTime(today.year, today.month, today.day);
-      final QuerySnapshot<Map<String, dynamic>> reviewedSnapshot = await _firestore
-          .collection('missionSubmissions')
-          .where('status', isEqualTo: 'reviewed')
-          .where('reviewedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> reviewedSnapshot =
+          await _firestore
+              .collection('missionSubmissions')
+              .where('status', isEqualTo: 'reviewed')
+              .where('reviewedAt',
+                  isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+              .get();
       _reviewedToday = reviewedSnapshot.docs.length;
 
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
@@ -400,10 +458,14 @@ class MissionService extends ChangeNotifier {
     required int rating,
     required String feedback,
     required String reviewerId,
+    String status = 'reviewed',
   }) async {
     try {
-      await _firestore.collection('missionSubmissions').doc(submissionId).update(<String, dynamic>{
-        'status': 'reviewed',
+      await _firestore
+          .collection('missionSubmissions')
+          .doc(submissionId)
+          .update(<String, dynamic>{
+        'status': status,
         'rating': rating,
         'feedback': feedback,
         'reviewedBy': reviewerId,
@@ -411,7 +473,9 @@ class MissionService extends ChangeNotifier {
       });
 
       // Update local state
-      _pendingReviews = _pendingReviews.where((MissionSubmission s) => s.id != submissionId).toList();
+      _pendingReviews = _pendingReviews
+          .where((MissionSubmission s) => s.id != submissionId)
+          .toList();
       _reviewedToday++;
       notifyListeners();
       return true;
@@ -464,18 +528,18 @@ class MissionSubmission {
     }
     return learnerName.isNotEmpty ? learnerName[0].toUpperCase() : '?';
   }
-  
+
   String get submissionPreview {
     if (submissionText == null || submissionText!.isEmpty) {
-      return attachmentUrls.isNotEmpty 
+      return attachmentUrls.isNotEmpty
           ? '${attachmentUrls.length} attachment(s)'
           : 'No content';
     }
-    return submissionText!.length > 100 
+    return submissionText!.length > 100
         ? '${submissionText!.substring(0, 100)}...'
         : submissionText!;
   }
-  
+
   String get submittedAgo {
     final Duration diff = DateTime.now().difference(submittedAt);
     if (diff.inMinutes < 60) {

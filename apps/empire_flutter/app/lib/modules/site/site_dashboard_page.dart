@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/analytics_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -12,6 +15,10 @@ class SiteDashboardPage extends StatefulWidget {
 
 class _SiteDashboardPageState extends State<SiteDashboardPage> {
   String _selectedPeriod = 'week';
+  final AnalyticsService _analyticsService = AnalyticsService.instance;
+  TelemetryDashboardMetrics? _metrics;
+  bool _isLoadingMetrics = true;
+  String? _metricsError;
   final List<_SiteActivity> _activities = <_SiteActivity>[
     _SiteActivity(
       icon: Icons.person_add,
@@ -35,6 +42,60 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       color: ScholesaColors.warning,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    TelemetryService.instance.logEvent(
+      event: 'insight.viewed',
+      metadata: const <String, dynamic>{
+        'surface': 'site_dashboard',
+        'insight_type': 'site_overview',
+      },
+    );
+    _loadMetrics();
+  }
+
+  Future<void> _loadMetrics() async {
+    setState(() {
+      _isLoadingMetrics = true;
+      _metricsError = null;
+    });
+    try {
+      final AppState appState = context.read<AppState>();
+      final String period = _selectedPeriodToTelemetryPeriod(_selectedPeriod);
+      final TelemetryDashboardMetrics metrics =
+          await _analyticsService.getTelemetryDashboardMetrics(
+        siteId: appState.activeSiteId,
+        period: period,
+      );
+      if (!mounted) return;
+      setState(() {
+        _metrics = metrics;
+        _isLoadingMetrics = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _metricsError = error.toString();
+        _isLoadingMetrics = false;
+      });
+    }
+  }
+
+  String _selectedPeriodToTelemetryPeriod(String selectedPeriod) {
+    switch (selectedPeriod) {
+      case 'today':
+      case 'week':
+        return 'week';
+      case 'month':
+        return 'month';
+      case 'term':
+        return 'quarter';
+      default:
+        return 'week';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +201,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 },
               );
               setState(() => _selectedPeriod = 'today');
+              _loadMetrics();
             },
           ),
           const SizedBox(width: 8),
@@ -154,6 +216,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 },
               );
               setState(() => _selectedPeriod = 'week');
+              _loadMetrics();
             },
           ),
           const SizedBox(width: 8),
@@ -168,6 +231,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 },
               );
               setState(() => _selectedPeriod = 'month');
+              _loadMetrics();
             },
           ),
           const SizedBox(width: 8),
@@ -182,6 +246,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 },
               );
               setState(() => _selectedPeriod = 'term');
+              _loadMetrics();
             },
           ),
         ],
@@ -190,63 +255,107 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   Widget _buildKeyMetrics() {
-    return const Padding(
-      padding: EdgeInsets.all(16),
+    if (_isLoadingMetrics) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: CircularProgressIndicator(color: ScholesaColors.site),
+        ),
+      );
+    }
+
+    if (_metricsError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: ScholesaColors.error.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Unable to load telemetry metrics: $_metricsError',
+            style: const TextStyle(color: ScholesaColors.error),
+          ),
+        ),
+      );
+    }
+
+    final TelemetryDashboardMetrics? metrics = _metrics;
+    if (metrics == null) {
+      return const SizedBox.shrink();
+    }
+
+    final String adherenceRate =
+        '${metrics.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%';
+    final String reviewSlaRate = metrics.educatorReviewWithinSlaRate == null
+        ? '--'
+        : '${metrics.educatorReviewWithinSlaRate!.toStringAsFixed(1)}%';
+    final String reviewTurnaround = metrics.educatorReviewTurnaroundHoursAvg ==
+            null
+        ? '--'
+        : '${metrics.educatorReviewTurnaroundHoursAvg!.toStringAsFixed(1)}h';
+    final String interventionHelped = metrics.interventionHelpedRate == null
+        ? '--'
+        : '${metrics.interventionHelpedRate!.toStringAsFixed(1)}%';
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'Key Metrics',
+          const Text(
+            'Telemetry KPIs',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: <Widget>[
               Expanded(
                 child: _MetricCard(
-                  icon: Icons.people,
-                  value: '47',
-                  label: 'Active Learners',
-                  trend: '+3',
+                  icon: Icons.assignment_turned_in,
+                  value: adherenceRate,
+                  label: 'Weekly Accountability',
+                  trend: '7-day',
                   trendUp: true,
-                  color: ScholesaColors.learner,
+                  color: ScholesaColors.futureSkills,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: _MetricCard(
-                  icon: Icons.school,
-                  value: '8',
-                  label: 'Educators',
-                  trend: '0',
+                  icon: Icons.timer,
+                  value: reviewSlaRate,
+                  label: 'Review SLA (${metrics.educatorReviewSlaHours}h)',
+                  trend: 'within SLA',
                   trendUp: true,
-                  color: ScholesaColors.educator,
+                  color: ScholesaColors.warning,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: <Widget>[
               Expanded(
                 child: _MetricCard(
-                  icon: Icons.event_available,
-                  value: '94%',
-                  label: 'Attendance Rate',
-                  trend: '+2%',
+                  icon: Icons.rate_review,
+                  value: reviewTurnaround,
+                  label: 'Avg Review Turnaround',
+                  trend: 'hours',
                   trendUp: true,
-                  color: ScholesaColors.success,
+                  color: ScholesaColors.site,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: _MetricCard(
-                  icon: Icons.rocket_launch,
-                  value: '23',
-                  label: 'Missions Completed',
-                  trend: '+5',
+                  icon: Icons.health_and_safety,
+                  value: interventionHelped,
+                  label: 'Interventions Helped',
+                  trend: '${metrics.interventionTotal} outcomes',
                   trendUp: true,
-                  color: ScholesaColors.futureSkills,
+                  color: ScholesaColors.success,
                 ),
               ),
             ],
@@ -257,6 +366,19 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   Widget _buildAttendanceChart() {
+    final TelemetryDashboardMetrics? metrics = _metrics;
+    final List<AttendanceTrendPoint> allTrend =
+        metrics?.attendanceTrend ?? const <AttendanceTrendPoint>[];
+    final List<AttendanceTrendPoint> trend =
+        allTrend.length > 7 ? allTrend.sublist(allTrend.length - 7) : allTrend;
+    final double latestRate =
+        trend.isNotEmpty ? (trend.last.presentRate ?? 0) : 0;
+    final double previousRate = trend.length > 1
+        ? (trend[trend.length - 2].presentRate ?? 0)
+        : latestRate;
+    final double delta = latestRate - previousRate;
+    final bool trendUp = delta >= 0;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -273,23 +395,34 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 const Text(
-                  'Weekly Attendance',
+                  'Attendance Trend',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: ScholesaColors.success.withValues(alpha: 0.1),
+                    color: (trendUp
+                            ? ScholesaColors.success
+                            : ScholesaColors.error)
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: <Widget>[
-                      Icon(Icons.trending_up, size: 16, color: ScholesaColors.success),
-                      SizedBox(width: 4),
+                      Icon(
+                        trendUp ? Icons.trending_up : Icons.trending_down,
+                        size: 16,
+                        color: trendUp
+                            ? ScholesaColors.success
+                            : ScholesaColors.error,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        '94% avg',
+                        '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%',
                         style: TextStyle(
-                          color: ScholesaColors.success,
+                          color: trendUp
+                              ? ScholesaColors.success
+                              : ScholesaColors.error,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -300,20 +433,60 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               ],
             ),
             const SizedBox(height: 24),
-            const SizedBox(
-              height: 120,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  _BarColumn(label: 'Mon', value: 0.92),
-                  _BarColumn(label: 'Tue', value: 0.88),
-                  _BarColumn(label: 'Wed', value: 0.95),
-                  _BarColumn(label: 'Thu', value: 0.97),
-                  _BarColumn(label: 'Fri', value: 0.94),
-                ],
+            if (_isLoadingMetrics)
+              const SizedBox(
+                height: 120,
+                child: Center(
+                  child: CircularProgressIndicator(color: ScholesaColors.site),
+                ),
               ),
-            ),
+            if (!_isLoadingMetrics && _metricsError != null)
+              SizedBox(
+                height: 120,
+                child: Center(
+                  child: Text(
+                    'Attendance data unavailable',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ),
+            if (!_isLoadingMetrics && _metricsError == null && trend.isEmpty)
+              SizedBox(
+                height: 120,
+                child: Center(
+                  child: Text(
+                    'No attendance telemetry for this period',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ),
+            if (!_isLoadingMetrics && _metricsError == null && trend.isNotEmpty)
+              SizedBox(
+                height: 120,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: trend.map((AttendanceTrendPoint point) {
+                    final double rate =
+                        ((point.presentRate ?? 0) / 100).clamp(0.0, 1.0);
+                    return _BarColumn(
+                      label: _shortDateLabel(point.date),
+                      value: rate,
+                    );
+                  }).toList(),
+                ),
+              ),
+            if (!_isLoadingMetrics && _metricsError == null && trend.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Latest attendance: ${latestRate.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -398,12 +571,26 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
   }
 
+  String _shortDateLabel(String rawDate) {
+    final DateTime? date = DateTime.tryParse(rawDate);
+    if (date == null) return rawDate;
+    return '${date.month}/${date.day}';
+  }
+
   void _exportReport() {
+    bool popupCompleted = false;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'site_dashboard_export_report',
         'period': _selectedPeriod,
+      },
+    );
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: <String, dynamic>{
+        'popup_id': 'site_dashboard_export_report',
+        'surface': 'site_dashboard',
       },
     );
     showDialog<void>(
@@ -422,6 +609,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   'cta': 'site_dashboard_export_cancel',
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'popup.dismissed',
+                metadata: const <String, dynamic>{
+                  'popup_id': 'site_dashboard_export_report',
+                  'surface': 'site_dashboard',
+                },
+              );
+              popupCompleted = true;
               Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
@@ -435,6 +630,16 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   'period': _selectedPeriod,
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'popup.completed',
+                metadata: <String, dynamic>{
+                  'popup_id': 'site_dashboard_export_report',
+                  'surface': 'site_dashboard',
+                  'completion_action': 'generate_report',
+                  'period': _selectedPeriod,
+                },
+              );
+              popupCompleted = true;
               setState(() {
                 _activities.insert(
                   0,
@@ -462,15 +667,34 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      if (popupCompleted) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'popup.dismissed',
+        metadata: const <String, dynamic>{
+          'popup_id': 'site_dashboard_export_report',
+          'surface': 'site_dashboard',
+          'reason': 'closed_without_action',
+        },
+      );
+    });
   }
 
-  void _showAllRecentActivity() {
+  Future<void> _showAllRecentActivity() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'site_dashboard_view_all_recent_activity'},
     );
-    showModalBottomSheet<void>(
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: const <String, dynamic>{
+        'popup_id': 'site_dashboard_recent_activity',
+        'surface': 'site_dashboard',
+      },
+    );
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -499,6 +723,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ],
         ),
       ),
+    );
+    TelemetryService.instance.logEvent(
+      event: 'popup.dismissed',
+      metadata: const <String, dynamic>{
+        'popup_id': 'site_dashboard_recent_activity',
+        'surface': 'site_dashboard',
+        'reason': 'closed_without_action',
+      },
     );
   }
 }

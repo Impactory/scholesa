@@ -1019,7 +1019,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: <String, dynamic>{
@@ -1027,17 +1027,33 @@ class _MissionDetailsSheet extends StatelessWidget {
                               'mission_id': mission.id,
                             },
                           );
+                          final MissionService missionService =
+                              context.read<MissionService>();
+                          final String? submissionId =
+                              await missionService.submitMission(mission.id);
+
+                          if (submissionId == null) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Unable to submit mission right now'),
+                                backgroundColor: ScholesaColors.error,
+                              ),
+                            );
+                            return;
+                          }
+
                           TelemetryService.instance.logEvent(
                             event: 'mission.attempt.submitted',
                             metadata: <String, dynamic>{
                               'mission_id': mission.id,
+                              'submission_id': submissionId,
                               'mission_status': mission.status.name,
                               'progress': mission.progress,
                             },
                           );
-                          context
-                              .read<MissionService>()
-                              .submitMission(mission.id);
+                          if (!context.mounted) return;
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

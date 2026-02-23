@@ -46,6 +46,7 @@ class TelemetryService {
     'insight.viewed',
     'support.applied',
     'support.outcome.logged',
+    'educator.review.completed',
     'lead.submitted',
     'contract.created',
     'contract.approved',

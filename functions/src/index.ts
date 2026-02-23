@@ -105,6 +105,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'message.sent',
   'order.intent',
   'order.paid',
+  'cta.clicked',
   'cms.page.viewed',
   'lead.submitted',
   'contract.created',
@@ -136,6 +137,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'insight.viewed',
   'support.applied',
   'support.outcome.logged',
+  'educator.review.completed',
   'educator.feedback.submitted',
   'support.intervention.logged',
   'motivation.insight.viewed',
@@ -968,6 +970,280 @@ export const logTelemetryEvent = onCall(async (request: CallableRequest) => hand
 
 // Backwards compatibility: keep the old callable name pointing to telemetry pipeline.
 export const logAnalyticsEvent = onCall(async (request: CallableRequest) => handleTelemetry(request));
+
+type TelemetryDashboardPeriod = 'week' | 'month' | 'quarter' | 'year';
+
+const DASHBOARD_PERIOD_DAYS: Record<TelemetryDashboardPeriod, number> = {
+  week: 7,
+  month: 30,
+  quarter: 90,
+  year: 365,
+};
+
+const ACCOUNTABILITY_EVENT_TYPES = [
+  'attendance.recorded',
+  'mission.attempt.submitted',
+  'message.sent',
+] as const;
+
+const EDUCATOR_REVIEW_SLA_HOURS = 48;
+
+function normalizeDashboardPeriod(value: unknown): TelemetryDashboardPeriod {
+  if (value === 'week' || value === 'month' || value === 'quarter' || value === 'year') {
+    return value;
+  }
+  return 'week';
+}
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function buildUtcDateKeys(startUtcDay: Date, days: number): string[] {
+  const keys: string[] = [];
+  for (let index = 0; index < days; index++) {
+    const date = new Date(startUtcDay);
+    date.setUTCDate(startUtcDay.getUTCDate() + index);
+    keys.push(date.toISOString().slice(0, 10));
+  }
+  return keys;
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function asTimestamp(value: unknown): admin.firestore.Timestamp | null {
+  if (value instanceof admin.firestore.Timestamp) return value;
+  return null;
+}
+
+function roundTo(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+function applySiteFilter(query: FirebaseFirestore.Query, siteId?: string): FirebaseFirestore.Query {
+  if (!siteId) return query;
+  return query.where('siteId', '==', siteId);
+}
+
+export const getTelemetryDashboardMetrics = onCall(async (request: CallableRequest<{
+  siteId?: string;
+  period?: string;
+}>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const userProfile = await getUserProfile(authUid);
+  if (!userProfile || !userProfile.role) {
+    throw new HttpsError('permission-denied', 'User profile missing role.');
+  }
+
+  const allowedRoles: Role[] = ['hq', 'site', 'educator'];
+  if (!allowedRoles.includes(userProfile.role)) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
+
+  const requestedSiteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  let effectiveSiteId: string | undefined;
+
+  if (requestedSiteId.length > 0) {
+    if (userProfile.role === 'hq') {
+      effectiveSiteId = requestedSiteId;
+    } else {
+      const hasSiteAccess = (userProfile.siteIds ?? []).includes(requestedSiteId) || userProfile.activeSiteId === requestedSiteId;
+      if (!hasSiteAccess) {
+        throw new HttpsError('permission-denied', 'Site access denied.');
+      }
+      effectiveSiteId = requestedSiteId;
+    }
+  } else if (userProfile.role !== 'hq') {
+    effectiveSiteId = userProfile.activeSiteId ?? userProfile.siteIds?.[0];
+    if (!effectiveSiteId) {
+      throw new HttpsError('permission-denied', 'No active site context available.');
+    }
+  }
+
+  const period = normalizeDashboardPeriod(request.data?.period);
+  const periodDays = DASHBOARD_PERIOD_DAYS[period];
+
+  const now = new Date();
+  const periodStart = startOfUtcDay(now);
+  periodStart.setUTCDate(periodStart.getUTCDate() - (periodDays - 1));
+  const periodStartTimestamp = admin.firestore.Timestamp.fromDate(periodStart);
+
+  const accountabilityStart = startOfUtcDay(now);
+  accountabilityStart.setUTCDate(accountabilityStart.getUTCDate() - 6);
+  const accountabilityStartTimestamp = admin.firestore.Timestamp.fromDate(accountabilityStart);
+
+  const telemetryCollection = admin.firestore().collection(TELEMETRY_COLLECTION);
+
+  let attendanceQuery: FirebaseFirestore.Query = telemetryCollection
+    .where('event', '==', 'attendance.recorded')
+    .where('createdAt', '>=', periodStartTimestamp);
+  attendanceQuery = applySiteFilter(attendanceQuery, effectiveSiteId);
+
+  let accountabilityQuery: FirebaseFirestore.Query = telemetryCollection
+    .where('event', 'in', [...ACCOUNTABILITY_EVENT_TYPES])
+    .where('createdAt', '>=', accountabilityStartTimestamp);
+  accountabilityQuery = applySiteFilter(accountabilityQuery, effectiveSiteId);
+
+  let reviewQuery: FirebaseFirestore.Query = telemetryCollection
+    .where('event', '==', 'educator.review.completed')
+    .where('createdAt', '>=', periodStartTimestamp);
+  reviewQuery = applySiteFilter(reviewQuery, effectiveSiteId);
+
+  let interventionQuery: FirebaseFirestore.Query = telemetryCollection
+    .where('event', '==', 'support.outcome.logged')
+    .where('createdAt', '>=', periodStartTimestamp);
+  interventionQuery = applySiteFilter(interventionQuery, effectiveSiteId);
+
+  const [attendanceSnapshot, accountabilitySnapshot, reviewSnapshot, interventionSnapshot] = await Promise.all([
+    attendanceQuery.get(),
+    accountabilityQuery.get(),
+    reviewQuery.get(),
+    interventionQuery.get(),
+  ]);
+
+  const attendanceByDate = new Map<string, { events: number; records: number; present: number; total: number }>();
+
+  for (const doc of attendanceSnapshot.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const createdAt = asTimestamp(data.createdAt);
+    if (!createdAt) continue;
+
+    const dateKey = createdAt.toDate().toISOString().slice(0, 10);
+    const bucket = attendanceByDate.get(dateKey) ?? { events: 0, records: 0, present: 0, total: 0 };
+
+    bucket.events += 1;
+
+    const metadata = asRecord(data.metadata);
+    const recordsCount = asNumber(metadata.records_count);
+    if (recordsCount !== null && recordsCount > 0) {
+      const roundedRecords = Math.round(recordsCount);
+      bucket.records += roundedRecords;
+      bucket.total += roundedRecords;
+    }
+
+    const statusCounts = asRecord(metadata.status_counts);
+    const presentCount = asNumber(statusCounts.present);
+    if (presentCount !== null && presentCount > 0) {
+      bucket.present += Math.round(presentCount);
+    }
+
+    attendanceByDate.set(dateKey, bucket);
+  }
+
+  const attendanceTrend = buildUtcDateKeys(periodStart, periodDays).map((dateKey) => {
+    const bucket = attendanceByDate.get(dateKey);
+    const total = bucket?.total ?? 0;
+    const presentRate = total > 0 ? roundTo(((bucket?.present ?? 0) / total) * 100, 1) : null;
+    return {
+      date: dateKey,
+      records: bucket?.records ?? 0,
+      events: bucket?.events ?? 0,
+      presentRate,
+    };
+  });
+
+  const accountabilityByDate = new Map<string, Set<string>>();
+
+  for (const doc of accountabilitySnapshot.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const createdAt = asTimestamp(data.createdAt);
+    const event = typeof data.event === 'string' ? data.event : '';
+    if (!createdAt || !event) continue;
+
+    const dateKey = createdAt.toDate().toISOString().slice(0, 10);
+    const eventSet = accountabilityByDate.get(dateKey) ?? new Set<string>();
+    eventSet.add(event);
+    accountabilityByDate.set(dateKey, eventSet);
+  }
+
+  const accountabilityDateKeys = buildUtcDateKeys(accountabilityStart, 7);
+  let adherenceAccumulator = 0;
+  for (const dateKey of accountabilityDateKeys) {
+    const observedEvents = accountabilityByDate.get(dateKey)?.size ?? 0;
+    adherenceAccumulator += observedEvents / ACCOUNTABILITY_EVENT_TYPES.length;
+  }
+  const weeklyAccountabilityAdherenceRate = roundTo(
+    (adherenceAccumulator / accountabilityDateKeys.length) * 100,
+    1,
+  );
+
+  let reviewCount = 0;
+  let reviewWithinSlaCount = 0;
+  let turnaroundMinutesTotal = 0;
+
+  for (const doc of reviewSnapshot.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const metadata = asRecord(data.metadata);
+    const turnaroundMinutes = asNumber(metadata.turnaround_minutes);
+    if (turnaroundMinutes === null || turnaroundMinutes < 0) continue;
+
+    reviewCount += 1;
+    turnaroundMinutesTotal += turnaroundMinutes;
+    if (turnaroundMinutes <= EDUCATOR_REVIEW_SLA_HOURS * 60) {
+      reviewWithinSlaCount += 1;
+    }
+  }
+
+  const educatorReviewTurnaroundHoursAvg = reviewCount > 0
+    ? roundTo((turnaroundMinutesTotal / reviewCount) / 60, 2)
+    : null;
+
+  const educatorReviewWithinSlaRate = reviewCount > 0
+    ? roundTo((reviewWithinSlaCount / reviewCount) * 100, 1)
+    : null;
+
+  let interventionTotal = 0;
+  let interventionHelpedTotal = 0;
+
+  for (const doc of interventionSnapshot.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const metadata = asRecord(data.metadata);
+    const outcome = typeof metadata.outcome === 'string' ? metadata.outcome.trim().toLowerCase() : '';
+    if (!outcome) continue;
+
+    interventionTotal += 1;
+    if (outcome === 'helped') {
+      interventionHelpedTotal += 1;
+    }
+  }
+
+  const interventionHelpedRate = interventionTotal > 0
+    ? roundTo((interventionHelpedTotal / interventionTotal) * 100, 1)
+    : null;
+
+  return {
+    metrics: {
+      weeklyAccountabilityAdherenceRate,
+      educatorReviewTurnaroundHoursAvg,
+      educatorReviewWithinSlaRate,
+      educatorReviewSlaHours: EDUCATOR_REVIEW_SLA_HOURS,
+      interventionHelpedRate,
+      interventionTotal,
+      attendanceTrend,
+    },
+    period,
+    siteId: effectiveSiteId ?? null,
+  };
+});
 
 export const listUsers = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -9,7 +10,8 @@ class EducatorMissionReviewPage extends StatefulWidget {
   const EducatorMissionReviewPage({super.key});
 
   @override
-  State<EducatorMissionReviewPage> createState() => _EducatorMissionReviewPageState();
+  State<EducatorMissionReviewPage> createState() =>
+      _EducatorMissionReviewPageState();
 }
 
 class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
@@ -106,7 +108,8 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.rate_review, color: Colors.white, size: 28),
+              child:
+                  const Icon(Icons.rate_review, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -275,7 +278,10 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
   void _openReviewSheet(MissionSubmission submission) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'educator_mission_review_open_sheet', 'submission_id': submission.id},
+      metadata: <String, dynamic>{
+        'cta': 'educator_mission_review_open_sheet',
+        'submission_id': submission.id
+      },
     );
     showModalBottomSheet(
       context: context,
@@ -287,7 +293,6 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
 }
 
 class _SubmissionCard extends StatelessWidget {
-
   const _SubmissionCard({required this.submission, required this.onTap});
   final MissionSubmission submission;
   final VoidCallback onTap;
@@ -324,7 +329,8 @@ class _SubmissionCard extends StatelessWidget {
                   children: <Widget>[
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
+                      backgroundColor:
+                          ScholesaColors.learner.withValues(alpha: 0.1),
                       child: Text(
                         submission.learnerInitials,
                         style: const TextStyle(
@@ -348,7 +354,8 @@ class _SubmissionCard extends StatelessWidget {
                           ),
                           Text(
                             submission.missionTitle,
-                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                            style: TextStyle(
+                                color: Colors.grey[600], fontSize: 12),
                           ),
                         ],
                       ),
@@ -365,14 +372,16 @@ class _SubmissionCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: <Widget>[
-                      Icon(Icons.attach_file, size: 16, color: Colors.grey[500]),
+                      Icon(Icons.attach_file,
+                          size: 16, color: Colors.grey[500]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           submission.submissionPreview,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                          style:
+                              TextStyle(color: Colors.grey[700], fontSize: 13),
                         ),
                       ),
                     ],
@@ -382,7 +391,8 @@ class _SubmissionCard extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: _getPillarColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -428,7 +438,6 @@ class _SubmissionCard extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-
   const _StatusBadge({required this.status});
   final String status;
 
@@ -474,7 +483,6 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
@@ -525,7 +533,9 @@ class _FilterChip extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withValues(alpha: 0.2) : chipColor,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : chipColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -546,7 +556,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-
   const _StatCard({
     required this.icon,
     required this.value,
@@ -602,7 +611,6 @@ class _StatCard extends StatelessWidget {
 }
 
 class _ReviewSheet extends StatefulWidget {
-
   const _ReviewSheet({required this.submission});
   final MissionSubmission submission;
 
@@ -649,7 +657,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
+                        backgroundColor:
+                            ScholesaColors.learner.withValues(alpha: 0.1),
                         child: Text(
                           widget.submission.learnerInitials,
                           style: const TextStyle(
@@ -758,12 +767,43 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     children: <Widget>[
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             TelemetryService.instance.logEvent(
                               event: 'cta.clicked',
                               metadata: <String, dynamic>{
-                                'cta': 'educator_mission_review_request_revision',
+                                'cta':
+                                    'educator_mission_review_request_revision',
                                 'submission_id': widget.submission.id,
+                              },
+                            );
+                            final MissionService missionService =
+                                context.read<MissionService>();
+                            final String reviewerId =
+                                FirebaseAuth.instance.currentUser?.uid ??
+                                    'unknown';
+                            final bool success =
+                                await missionService.submitReview(
+                              submissionId: widget.submission.id,
+                              rating: _rating == 0 ? 3 : _rating,
+                              feedback: _feedbackController.text.trim(),
+                              reviewerId: reviewerId,
+                              status: 'revision',
+                            );
+                            if (!success || !context.mounted) {
+                              return;
+                            }
+                            TelemetryService.instance.logEvent(
+                              event: 'educator.review.completed',
+                              metadata: <String, dynamic>{
+                                'submission_id': widget.submission.id,
+                                'mission_id': widget.submission.missionId,
+                                'outcome': 'revision',
+                                'rating': _rating == 0 ? 3 : _rating,
+                                'feedback_length':
+                                    _feedbackController.text.trim().length,
+                                'turnaround_minutes': DateTime.now()
+                                    .difference(widget.submission.submittedAt)
+                                    .inMinutes,
                               },
                             );
                             Navigator.pop(context);
@@ -777,7 +817,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: ScholesaColors.warning,
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: ScholesaColors.warning),
+                            side:
+                                const BorderSide(color: ScholesaColors.warning),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -788,12 +829,42 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             TelemetryService.instance.logEvent(
                               event: 'cta.clicked',
                               metadata: <String, dynamic>{
                                 'cta': 'educator_mission_review_approve',
                                 'submission_id': widget.submission.id,
+                              },
+                            );
+                            final MissionService missionService =
+                                context.read<MissionService>();
+                            final String reviewerId =
+                                FirebaseAuth.instance.currentUser?.uid ??
+                                    'unknown';
+                            final bool success =
+                                await missionService.submitReview(
+                              submissionId: widget.submission.id,
+                              rating: _rating == 0 ? 5 : _rating,
+                              feedback: _feedbackController.text.trim(),
+                              reviewerId: reviewerId,
+                              status: 'approved',
+                            );
+                            if (!success || !context.mounted) {
+                              return;
+                            }
+                            TelemetryService.instance.logEvent(
+                              event: 'educator.review.completed',
+                              metadata: <String, dynamic>{
+                                'submission_id': widget.submission.id,
+                                'mission_id': widget.submission.missionId,
+                                'outcome': 'approved',
+                                'rating': _rating == 0 ? 5 : _rating,
+                                'feedback_length':
+                                    _feedbackController.text.trim().length,
+                                'turnaround_minutes': DateTime.now()
+                                    .difference(widget.submission.submittedAt)
+                                    .inMinutes,
                               },
                             );
                             Navigator.pop(context);

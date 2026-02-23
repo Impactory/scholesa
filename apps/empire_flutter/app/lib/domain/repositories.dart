@@ -433,6 +433,19 @@ class LeadRepository {
       createdAt: Timestamp.now(),
     );
     await doc.set(model.toMap());
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'lead.submitted',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'leadId': doc.id,
+          'source': source,
+          'status': status,
+          'hasMessage': message != null && message.trim().isNotEmpty,
+          if (slug != null && slug.isNotEmpty) 'slug': slug,
+        },
+      );
+    } catch (_) {}
   }
 }
 
@@ -808,11 +821,28 @@ class PartnerContractRepository {
   }
 
   Future<void> approve({required String id, required String approvedBy}) async {
-    await _col.doc(id).set(<String, dynamic>{
+    final DocumentReference<Map<String, dynamic>> ref = _col.doc(id);
+    final DocumentSnapshot<Map<String, dynamic>> existing = await ref.get();
+    final Map<String, dynamic>? existingData = existing.data();
+    final String? siteId = existingData?['siteId'] as String?;
+    final String? partnerOrgId = existingData?['partnerOrgId'] as String?;
+
+    await ref.set(<String, dynamic>{
       'status': 'approved',
       'approvedBy': approvedBy,
       'approvedAt': Timestamp.now(),
     }, SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'contract.approved',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'contractId': id,
+          if (partnerOrgId != null && partnerOrgId.isNotEmpty)
+            'partnerOrgId': partnerOrgId,
+        },
+      );
+    } catch (_) {}
   }
 
   Future<List<PartnerContractModel>> listByOrg(String partnerOrgId, {int limit = 20}) async {
@@ -944,11 +974,28 @@ class PayoutRepository {
   }
 
   Future<void> approve({required String id, required String approvedBy}) async {
-    await _col.doc(id).set(<String, dynamic>{
+    final DocumentReference<Map<String, dynamic>> ref = _col.doc(id);
+    final DocumentSnapshot<Map<String, dynamic>> existing = await ref.get();
+    final Map<String, dynamic>? existingData = existing.data();
+    final String? siteId = existingData?['siteId'] as String?;
+    final String? contractId = existingData?['contractId'] as String?;
+
+    await ref.set(<String, dynamic>{
       'status': 'approved',
       'approvedBy': approvedBy,
       'approvedAt': Timestamp.now(),
     }, SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'payout.approved',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'payoutId': id,
+          if (contractId != null && contractId.isNotEmpty)
+            'contractId': contractId,
+        },
+      );
+    } catch (_) {}
   }
 
   Future<List<PayoutModel>> listByContract(String contractId, {int limit = 20}) async {
