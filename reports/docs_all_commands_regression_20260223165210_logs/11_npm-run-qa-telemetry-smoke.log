@@ -6,3 +6,4 @@ timeout_seconds: 240
 > scholesa@0.1.0 qa:telemetry-smoke
 > node scripts/telemetry_smoke_check.js --mode=full --strict
 
+Telemetry smoke validator failed: 14 UNAVAILABLE: Name resolution failed for target dns:firestore.googleapis.com:443

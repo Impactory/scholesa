@@ -1,0 +1,4 @@
+$ node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
