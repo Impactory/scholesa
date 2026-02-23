@@ -1,4 +1,5 @@
 import { normalizeLocale, type SupportedLocale } from '@/src/lib/i18n/config';
+import { aiSafeFetch } from '@/src/lib/ai/egressGuard';
 
 const DEFAULT_TIMEOUT_MS = 25_000;
 
@@ -94,14 +95,14 @@ async function postJson<TResponse>(path: string, idToken: string, body: Record<s
   const baseUrl = defaultVoiceApiBaseUrl();
   if (!baseUrl) throw new Error('Voice API base URL is not configured.');
   const response = await withTimeout(
-    fetch(`${baseUrl}${path}`, {
+    aiSafeFetch(`${baseUrl}${path}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${idToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    }),
+    }, 'voiceService.postJson'),
     DEFAULT_TIMEOUT_MS,
   );
   if (!response.ok) {
@@ -135,13 +136,13 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
   formData.append('partial', req.partial ? 'true' : 'false');
 
   const response = await withTimeout(
-    fetch(`${baseUrl}/voice/transcribe`, {
+    aiSafeFetch(`${baseUrl}/voice/transcribe`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${req.idToken}`,
       },
       body: formData,
-    }),
+    }, 'voiceService.transcribe'),
     DEFAULT_TIMEOUT_MS,
   );
   if (!response.ok) {
@@ -153,4 +154,3 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
 export function voiceApiConfigured(): boolean {
   return Boolean(defaultVoiceApiBaseUrl());
 }
-

@@ -4,6 +4,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import { guardedFetch } from './security/egressGuard';
 import {
   handleVoiceApi,
   handleCopilotMessage,
@@ -257,7 +258,7 @@ async function sendNotification(payload: { channel: string; threadId: string; me
     throw new Error('Notification provider not configured');
   }
 
-  const response = await fetch(endpoint, {
+  const response = await guardedFetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -269,7 +270,7 @@ async function sendNotification(payload: { channel: string; threadId: string; me
       messageId: payload.messageId,
       siteId: payload.siteId,
     }),
-  });
+  }, { source: 'functions.sendNotification', mode: 'general' });
 
   if (!response.ok) {
     const text = await response.text();
