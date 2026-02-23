@@ -107,6 +107,7 @@ class TelemetryService {
   TelemetryDispatcher? _dispatcher;
   final List<TelemetryFailure> _recentFailures = <TelemetryFailure>[];
   static const int _maxRetainedFailures = 100;
+  bool _missingFirebaseAppNoticePrinted = false;
   static Future<T> runWithDispatcher<T>(
     TelemetryDispatcher dispatcher,
     Future<T> Function() body,
@@ -119,6 +120,12 @@ class TelemetryService {
 
   FirebaseFunctions get _requiredFunctions {
     return _functions ??= FirebaseFunctions.instance;
+  }
+
+  bool _isMissingFirebaseAppError(Object error) {
+    final String message = error.toString();
+    return message.contains("No Firebase App '[DEFAULT]' has been created") ||
+        message.contains('core/no-app');
   }
 
   void configureDispatcher(TelemetryDispatcher dispatcher) {
@@ -170,6 +177,16 @@ class TelemetryService {
 
       await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
     } catch (error, stackTrace) {
+      if (_isMissingFirebaseAppError(error)) {
+        if (!_missingFirebaseAppNoticePrinted) {
+          _missingFirebaseAppNoticePrinted = true;
+          debugPrint(
+            'TelemetryService: Firebase app not initialized; telemetry events are dropped for this session.',
+          );
+        }
+        return;
+      }
+
       _recentFailures.add(
         TelemetryFailure(
           event: event,
