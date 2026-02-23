@@ -61,6 +61,49 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _logScheduleViewed(trigger: 'page_open');
+    });
+  }
+
+  void _logScheduleViewed({required String trigger}) {
+    TelemetryService.instance.logEvent(
+      event: 'schedule.viewed',
+      metadata: <String, dynamic>{
+        'module': 'site_sessions',
+        'trigger': trigger,
+        'view_mode': _viewMode,
+        'selected_date': DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+        ).toIso8601String(),
+      },
+    );
+  }
+
+  _SessionConflict? _findSessionConflict(_NewSessionResult result) {
+    final List<_SessionData> sameSlotSessions =
+        _sessionsByTime[result.time] ?? const <_SessionData>[];
+    for (final _SessionData existing in sameSlotSessions) {
+      if (existing.room == result.session.room) {
+        return const _SessionConflict(type: 'room_double_booked');
+      }
+      final String existingEducator = existing.educator.trim().toLowerCase();
+      final String incomingEducator =
+          result.session.educator.trim().toLowerCase();
+      if (existingEducator.isNotEmpty &&
+          incomingEducator.isNotEmpty &&
+          existingEducator == incomingEducator) {
+        return const _SessionConflict(type: 'educator_overlap');
+      }
+    }
+    return null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final List<MapEntry<String, List<_SessionData>>> timeSlots =
         _sessionsByTime.entries.toList(growable: false);
@@ -74,7 +117,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             colors: <Color>[
               ScholesaColors.site.withValues(alpha: 0.05),
               Colors.white,
-              ScholesaColors.scheduleGradient.colors.first.withValues(alpha: 0.03),
+              ScholesaColors.scheduleGradient.colors.first
+                  .withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -137,7 +181,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.calendar_month, color: Colors.white, size: 28),
+              child: const Icon(Icons.calendar_month,
+                  color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -190,6 +235,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     },
                   );
                   setState(() => _viewMode = 'day');
+                  _logScheduleViewed(trigger: 'view_mode_day');
                 },
               ),
             ),
@@ -208,6 +254,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     },
                   );
                   setState(() => _viewMode = 'week');
+                  _logScheduleViewed(trigger: 'view_mode_week');
                 },
               ),
             ),
@@ -226,6 +273,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     },
                   );
                   setState(() => _viewMode = 'month');
+                  _logScheduleViewed(trigger: 'view_mode_month');
                 },
               ),
             ),
@@ -259,6 +307,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               setState(() {
                 _selectedDate = _selectedDate.subtract(const Duration(days: 7));
               });
+              _logScheduleViewed(trigger: 'navigate_previous_week');
             },
             icon: const Icon(Icons.chevron_left),
           ),
@@ -282,9 +331,11 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       },
                     );
                     setState(() => _selectedDate = date);
+                    _logScheduleViewed(trigger: 'select_date');
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? ScholesaColors.site
@@ -339,6 +390,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               setState(() {
                 _selectedDate = _selectedDate.add(const Duration(days: 7));
               });
+              _logScheduleViewed(trigger: 'navigate_next_week');
             },
             icon: const Icon(Icons.chevron_right),
           ),
@@ -414,10 +466,12 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                             },
                           );
                           setState(() => _viewMode = mode);
+                          _logScheduleViewed(trigger: 'filter_view_mode');
                           Navigator.pop(sheetContext);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Showing ${mode.toUpperCase()} view'),
+                              content:
+                                  Text('Showing ${mode.toUpperCase()} view'),
                               backgroundColor: ScholesaColors.site,
                             ),
                           );
@@ -434,14 +488,32 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   String _getDayAbbrev(int weekday) {
-    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const List<String> days = <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun'
+    ];
     return days[weekday - 1];
   }
 
   String _formatSelectedDate() {
     const List<String> months = <String>[
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[_selectedDate.month - 1]} ${_selectedDate.day}, ${_selectedDate.year}';
   }
@@ -455,7 +527,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         'surface': 'floating_action_button',
       },
     );
-    final _NewSessionResult? result = await showModalBottomSheet<_NewSessionResult>(
+    final _NewSessionResult? result =
+        await showModalBottomSheet<_NewSessionResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -463,6 +536,27 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     );
 
     if (result == null || !mounted) {
+      return;
+    }
+
+    final _SessionConflict? conflict = _findSessionConflict(result);
+    if (conflict != null) {
+      TelemetryService.instance.logEvent(
+        event: 'room.conflict.detected',
+        metadata: <String, dynamic>{
+          'module': 'site_sessions',
+          'conflict_type': conflict.type,
+          'time_slot': result.time,
+          'room': result.session.room,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Conflict detected: room or educator already assigned in this time slot'),
+          backgroundColor: ScholesaColors.warning,
+        ),
+      );
       return;
     }
 
@@ -481,6 +575,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         'pillar': result.session.pillar,
       },
     );
+    _logScheduleViewed(trigger: 'session_created');
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -498,8 +593,13 @@ class _NewSessionResult {
   final _SessionData session;
 }
 
-class _ViewToggleButton extends StatelessWidget {
+class _SessionConflict {
+  const _SessionConflict({required this.type});
 
+  final String type;
+}
+
+class _ViewToggleButton extends StatelessWidget {
   const _ViewToggleButton({
     required this.label,
     required this.isSelected,
@@ -534,7 +634,6 @@ class _ViewToggleButton extends StatelessWidget {
 }
 
 class _SessionData {
-
   const _SessionData({
     required this.title,
     required this.educator,
@@ -550,7 +649,6 @@ class _SessionData {
 }
 
 class _SessionTimeSlot extends StatelessWidget {
-
   const _SessionTimeSlot({required this.time, required this.sessions});
   final String time;
   final List<_SessionData> sessions;
@@ -578,7 +676,9 @@ class _SessionTimeSlot extends StatelessWidget {
           ),
           Expanded(
             child: Column(
-              children: sessions.map((_SessionData session) => _SessionCard(session: session)).toList(),
+              children: sessions
+                  .map((_SessionData session) => _SessionCard(session: session))
+                  .toList(),
             ),
           ),
         ],
@@ -588,7 +688,6 @@ class _SessionTimeSlot extends StatelessWidget {
 }
 
 class _SessionCard extends StatelessWidget {
-
   const _SessionCard({required this.session});
   final _SessionData session;
 
@@ -631,11 +730,13 @@ class _SessionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     session.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _pillarColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -676,9 +777,73 @@ class _SessionCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _showAssignSubstituteSheet(context),
+                icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                label: const Text('Assign Substitute'),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showAssignSubstituteSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext sheetContext) {
+        const List<String> substitutePools = <String>[
+          'Substitute Pool A',
+          'Substitute Pool B',
+          'Substitute Pool C',
+        ];
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const SizedBox(height: 12),
+              const Text(
+                'Assign Substitute',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ...substitutePools.map((String pool) {
+                return ListTile(
+                  leading: const Icon(Icons.person_outline_rounded),
+                  title: Text(pool),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'substitute.assigned',
+                      metadata: <String, dynamic>{
+                        'module': 'site_sessions',
+                        'room': session.room,
+                        'pillar': session.pillar,
+                        'substitute_pool':
+                            pool.toLowerCase().replaceAll(' ', '_'),
+                      },
+                    );
+                    Navigator.pop(sheetContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$pool assigned as substitute'),
+                        backgroundColor: ScholesaColors.success,
+                      ),
+                    );
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -768,7 +933,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: const <String, dynamic>{
-                              'cta': 'site_sessions_create_select_pillar_future_skills',
+                              'cta':
+                                  'site_sessions_create_select_pillar_future_skills',
                             },
                           );
                           setState(() => _selectedPillar = 'Future Skills');
@@ -783,7 +949,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: const <String, dynamic>{
-                              'cta': 'site_sessions_create_select_pillar_leadership',
+                              'cta':
+                                  'site_sessions_create_select_pillar_leadership',
                             },
                           );
                           setState(() => _selectedPillar = 'Leadership');
@@ -798,7 +965,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: const <String, dynamic>{
-                              'cta': 'site_sessions_create_select_pillar_impact',
+                              'cta':
+                                  'site_sessions_create_select_pillar_impact',
                             },
                           );
                           setState(() => _selectedPillar = 'Impact');
@@ -818,7 +986,13 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: <String>['9:00 AM', '10:30 AM', '1:00 PM', '2:30 PM', '4:00 PM']
+                    items: <String>[
+                      '9:00 AM',
+                      '10:30 AM',
+                      '1:00 PM',
+                      '2:30 PM',
+                      '4:00 PM'
+                    ]
                         .map((String time) => DropdownMenuItem<String>(
                               value: time,
                               child: Text(time),
@@ -876,12 +1050,13 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: <String>['Lab A', 'Lab B', 'Main Hall', 'Garden Area']
-                        .map((String room) => DropdownMenuItem<String>(
-                              value: room,
-                              child: Text(room),
-                            ))
-                        .toList(),
+                    items:
+                        <String>['Lab A', 'Lab B', 'Main Hall', 'Garden Area']
+                            .map((String room) => DropdownMenuItem<String>(
+                                  value: room,
+                                  child: Text(room),
+                                ))
+                            .toList(),
                     onChanged: (String? value) {
                       if (value != null) {
                         TelemetryService.instance.logEvent(
@@ -911,7 +1086,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         }
 
                         final int learnerCount =
-                            int.tryParse(_learnerCountController.text.trim()) ?? 0;
+                            int.tryParse(_learnerCountController.text.trim()) ??
+                                0;
 
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
@@ -960,7 +1136,6 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
 }
 
 class _PillarOption extends StatelessWidget {
-
   const _PillarOption({
     required this.label,
     required this.color,

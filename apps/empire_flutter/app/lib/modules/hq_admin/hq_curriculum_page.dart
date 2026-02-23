@@ -11,7 +11,11 @@ class HqCurriculumPage extends StatefulWidget {
   State<HqCurriculumPage> createState() => _HqCurriculumPageState();
 }
 
-enum _CurriculumStatus { draft, review, published, archived } // ignore: unused_field
+enum _CurriculumStatus {
+  draft,
+  review,
+  published,
+}
 
 class _Curriculum {
   const _Curriculum({
@@ -31,7 +35,8 @@ class _Curriculum {
   final DateTime lastUpdated;
 }
 
-class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerProviderStateMixin {
+class _HqCurriculumPageState extends State<HqCurriculumPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final List<_Curriculum> _curricula = <_Curriculum>[
@@ -146,16 +151,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
   }
 
   Widget _buildCurriculumList(_CurriculumStatus status) {
-    final List<_Curriculum> filtered = _curricula.where((_Curriculum c) => c.status == status).toList();
+    final List<_Curriculum> filtered =
+        _curricula.where((_Curriculum c) => c.status == status).toList();
 
     if (filtered.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(Icons.menu_book_rounded, size: 64, color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
+            Icon(Icons.menu_book_rounded,
+                size: 64,
+                color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('No ${status.name} curricula', style: const TextStyle(color: ScholesaColors.textSecondary)),
+            Text('No ${status.name} curricula',
+                style: const TextStyle(color: ScholesaColors.textSecondary)),
           ],
         ),
       );
@@ -164,7 +173,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) => _buildCurriculumCard(filtered[index]),
+      itemBuilder: (BuildContext context, int index) =>
+          _buildCurriculumCard(filtered[index]),
     );
   }
 
@@ -189,26 +199,35 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(curriculum.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        Text(curriculum.title,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        Text(curriculum.pillar, style: TextStyle(fontSize: 12, color: _getPillarColor(curriculum.pillar))),
+                        Text(curriculum.pillar,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: _getPillarColor(curriculum.pillar))),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: ScholesaColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('v${curriculum.version}', style: const TextStyle(fontSize: 12, color: ScholesaColors.primary)),
+                    child: Text('v${curriculum.version}',
+                        style: const TextStyle(
+                            fontSize: 12, color: ScholesaColors.primary)),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 'Updated ${_formatTime(curriculum.lastUpdated)}',
-                style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
+                style: const TextStyle(
+                    fontSize: 12, color: ScholesaColors.textSecondary),
               ),
             ],
           ),
@@ -233,7 +252,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
 
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10)),
       child: Icon(icon, color: color, size: 24),
     );
   }
@@ -265,16 +286,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(curriculum.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(curriculum.title,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(curriculum.pillar, style: TextStyle(color: _getPillarColor(curriculum.pillar))),
+            Text(curriculum.pillar,
+                style: TextStyle(color: _getPillarColor(curriculum.pillar))),
             const SizedBox(height: 16),
             _buildDetailRow('Version', curriculum.version),
             _buildDetailRow('Status', curriculum.status.name.toUpperCase()),
@@ -314,13 +339,57 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening curriculum editor...')),
+                        const SnackBar(
+                            content: Text('Opening curriculum editor...')),
                       );
                     },
                     child: const Text('Edit'),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'rubric.applied',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'curriculum_id': curriculum.id,
+                      'source': 'curriculum_details_sheet',
+                    },
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Rubric applied to this curriculum')),
+                  );
+                },
+                icon: const Icon(Icons.rule_rounded),
+                label: const Text('Apply Rubric'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'rubric.shared_to_parent_summary',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'curriculum_id': curriculum.id,
+                      'source': 'curriculum_details_sheet',
+                    },
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Parent summary shared')),
+                  );
+                },
+                icon: const Icon(Icons.share_rounded),
+                label: const Text('Share Parent Summary'),
+              ),
             ),
           ],
         ),
@@ -334,7 +403,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label,
+              style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),
@@ -350,14 +420,22 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const TextField(decoration: InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
+            const TextField(
+                decoration: InputDecoration(
+                    labelText: 'Title', border: OutlineInputBorder())),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Pillar', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Pillar', border: OutlineInputBorder()),
               items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
-                DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
-                DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
+                DropdownMenuItem<String>(
+                    value: 'Future Skills', child: Text('Future Skills')),
+                DropdownMenuItem<String>(
+                    value: 'Leadership & Agency',
+                    child: Text('Leadership & Agency')),
+                DropdownMenuItem<String>(
+                    value: 'Impact & Innovation',
+                    child: Text('Impact & Innovation')),
               ],
               onChanged: (_) {},
             ),
@@ -388,8 +466,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage> with SingleTickerPr
                   'surface': 'create_curriculum_dialog',
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'mission.snapshot.created',
+                metadata: <String, dynamic>{
+                  'module': 'hq_curriculum',
+                  'source': 'create_curriculum_dialog',
+                },
+              );
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Curriculum created')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Curriculum created')));
             },
             child: const Text('Create'),
           ),

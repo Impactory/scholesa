@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, randomUUID } from 'crypto';
 import { onCall, onRequest, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret, defineString } from 'firebase-functions/params';
@@ -137,6 +137,16 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'insight.viewed',
   'support.applied',
   'support.outcome.logged',
+  'site.checkin',
+  'site.checkout',
+  'site.late_pickup.flagged',
+  'schedule.viewed',
+  'room.conflict.detected',
+  'substitute.requested',
+  'substitute.assigned',
+  'mission.snapshot.created',
+  'rubric.applied',
+  'rubric.shared_to_parent_summary',
   'educator.review.completed',
   'educator.feedback.submitted',
   'support.intervention.logged',
@@ -171,6 +181,29 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'educator_class_view',
   'educator_learner_drilldown',
 ]);
+
+const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
+const TELEMETRY_PII_KEY_BLOCKLIST = new Set<string>([
+  'name',
+  'firstname',
+  'lastname',
+  'fullname',
+  'displayname',
+  'email',
+  'phonenumber',
+  'phone',
+  'message',
+  'messagebody',
+  'body',
+  'prompt',
+  'response',
+  'content',
+  'text',
+  'address',
+]);
+const TELEMETRY_MAX_METADATA_DEPTH = 4;
+const TELEMETRY_MAX_COLLECTION_LENGTH = 50;
+const TELEMETRY_MAX_STRING_LENGTH = 512;
 
 type ProductId = 'learner-seat' | 'educator-seat' | 'parent-seat' | 'site-license';
 

@@ -724,8 +724,19 @@ class MissionSnapshotRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('missionSnapshots');
 
-  Future<void> upsert(MissionSnapshotModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+  Future<void> upsert(MissionSnapshotModel model) async {
+    await _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'mission.snapshot.created',
+        metadata: <String, dynamic>{
+          'snapshotId': model.id,
+          'missionId': model.missionId,
+          'pillarCount': model.pillarCodes.length,
+        },
+      );
+    } catch (_) {}
+  }
 
   Future<List<MissionSnapshotModel>> listByMission(String missionId,
       {int limit = 20}) async {
@@ -777,8 +788,20 @@ class RubricApplicationRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('rubricApplications');
 
-  Future<void> upsert(RubricApplicationModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+  Future<void> upsert(RubricApplicationModel model) async {
+    await _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'rubric.applied',
+        siteId: model.siteId,
+        metadata: <String, dynamic>{
+          'rubricId': model.rubricId,
+          'missionAttemptId': model.missionAttemptId,
+          'scoreCount': model.scores.length,
+        },
+      );
+    } catch (_) {}
+  }
 
   Future<List<RubricApplicationModel>> listByAttempt(String missionAttemptId,
       {int limit = 10}) async {
@@ -1421,6 +1444,18 @@ class SiteCheckInOutRepository {
       'createdAt': Timestamp.now(),
       'updatedAt': Timestamp.now(),
     }, SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'site.checkin',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'learnerId': learnerId,
+          'date': date,
+          'recordedBy': userId,
+          'source': 'site_checkin_out_repository',
+        },
+      );
+    } catch (_) {}
   }
 
   Future<void> markCheckOut(
@@ -1442,6 +1477,30 @@ class SiteCheckInOutRepository {
       'createdAt': Timestamp.now(),
       'updatedAt': Timestamp.now(),
     }, SetOptions(merge: true));
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'site.checkout',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'learnerId': learnerId,
+          'date': date,
+          'recordedBy': userId,
+          'latePickup': latePickupFlag == true,
+          'source': 'site_checkin_out_repository',
+        },
+      );
+      if (latePickupFlag == true) {
+        await TelemetryService.instance.logEvent(
+          event: 'site.late_pickup.flagged',
+          siteId: siteId,
+          metadata: <String, dynamic>{
+            'learnerId': learnerId,
+            'date': date,
+            'source': 'site_checkin_out_repository',
+          },
+        );
+      }
+    } catch (_) {}
   }
 }
 

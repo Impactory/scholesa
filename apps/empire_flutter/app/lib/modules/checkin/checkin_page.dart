@@ -14,7 +14,8 @@ class CheckinPage extends StatefulWidget {
   State<CheckinPage> createState() => _CheckinPageState();
 }
 
-class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStateMixin {
+class _CheckinPageState extends State<CheckinPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -22,7 +23,7 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CheckinService>().loadTodayData();
     });
@@ -86,7 +87,8 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                 ),
               ],
             ),
-            child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
+            child: const Icon(Icons.qr_code_scanner,
+                color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
           Column(
@@ -95,9 +97,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
               Text(
                 'Check-in / Check-out',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF3B82F6),
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF3B82F6),
+                    ),
               ),
               Text(
                 'Manage arrivals and pickups',
@@ -207,7 +209,8 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                   },
                   decoration: InputDecoration(
                     hintText: 'Search learners...',
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
+                    prefixIcon:
+                        const Icon(Icons.search, color: Color(0xFF3B82F6)),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -224,7 +227,8 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                   ),
                 ),
               ),
@@ -240,7 +244,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                       onTap: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
-                          metadata: const <String, dynamic>{'cta': 'checkin_filter_all'},
+                          metadata: const <String, dynamic>{
+                            'cta': 'checkin_filter_all'
+                          },
                         );
                         service.setStatusFilter(null);
                       },
@@ -251,7 +257,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                       onTap: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
-                          metadata: const <String, dynamic>{'cta': 'checkin_filter_present'},
+                          metadata: const <String, dynamic>{
+                            'cta': 'checkin_filter_present'
+                          },
                         );
                         service.setStatusFilter(CheckStatus.checkedIn);
                       },
@@ -263,7 +271,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                       onTap: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
-                          metadata: const <String, dynamic>{'cta': 'checkin_filter_late'},
+                          metadata: const <String, dynamic>{
+                            'cta': 'checkin_filter_late'
+                          },
                         );
                         service.setStatusFilter(CheckStatus.late);
                       },
@@ -275,7 +285,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
                       onTap: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
-                          metadata: const <String, dynamic>{'cta': 'checkin_filter_checked_out'},
+                          metadata: const <String, dynamic>{
+                            'cta': 'checkin_filter_checked_out'
+                          },
                         );
                         service.setStatusFilter(CheckStatus.checkedOut);
                       },
@@ -360,6 +372,7 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
               summary: summary,
               onCheckIn: () => _showCheckInDialog(summary),
               onCheckOut: () => _showCheckOutDialog(summary),
+              onFlagLatePickup: () => _flagLatePickup(summary),
             );
           },
         );
@@ -434,26 +447,69 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
   void _showCheckInDialog(LearnerDaySummary summary) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'checkin_open_check_in', 'learner_id': summary.learnerId},
+      metadata: <String, dynamic>{
+        'cta': 'checkin_open_check_in',
+        'learner_id': summary.learnerId
+      },
     );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _CheckInSheet(summary: summary, isCheckOut: false),
+      builder: (BuildContext context) =>
+          _CheckInSheet(summary: summary, isCheckOut: false),
     );
   }
 
   void _showCheckOutDialog(LearnerDaySummary summary) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'checkin_open_check_out', 'learner_id': summary.learnerId},
+      metadata: <String, dynamic>{
+        'cta': 'checkin_open_check_out',
+        'learner_id': summary.learnerId
+      },
     );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _CheckInSheet(summary: summary, isCheckOut: true),
+      builder: (BuildContext context) =>
+          _CheckInSheet(summary: summary, isCheckOut: true),
+    );
+  }
+
+  Future<void> _flagLatePickup(LearnerDaySummary summary) async {
+    final CheckinService service = context.read<CheckinService>();
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'checkin_flag_late_pickup',
+        'learner_id': summary.learnerId,
+      },
+    );
+    final bool success = await service.markLate(
+      learnerId: summary.learnerId,
+      learnerName: summary.learnerName,
+      notes: 'Late pickup flagged from check-in desk',
+    );
+    if (!success || !mounted) {
+      return;
+    }
+    TelemetryService.instance.logEvent(
+      event: 'site.late_pickup.flagged',
+      siteId: service.siteId,
+      metadata: <String, dynamic>{
+        'learnerId': summary.learnerId,
+        'source': 'checkin_page',
+      },
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Late pickup flagged for ${summary.learnerName}'),
+        backgroundColor: ScholesaColors.warning,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
@@ -474,7 +530,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'checkin_qr_dialog_close'},
+                metadata: const <String, dynamic>{
+                  'cta': 'checkin_qr_dialog_close'
+                },
               );
               Navigator.pop(dialogContext);
             },
@@ -484,7 +542,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'checkin_qr_use_camera'},
+                metadata: const <String, dynamic>{
+                  'cta': 'checkin_qr_use_camera'
+                },
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -505,7 +565,9 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'checkin_qr_enter_code'},
+                metadata: const <String, dynamic>{
+                  'cta': 'checkin_qr_enter_code'
+                },
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -531,7 +593,6 @@ class _CheckinPageState extends State<CheckinPage> with SingleTickerProviderStat
 // ==================== Sub Widgets ====================
 
 class _StatMiniCard extends StatelessWidget {
-
   const _StatMiniCard({
     required this.icon,
     required this.value,
@@ -576,7 +637,6 @@ class _StatMiniCard extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.selected,
@@ -626,15 +686,16 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _LearnerCheckinCard extends StatelessWidget {
-
   const _LearnerCheckinCard({
     required this.summary,
     required this.onCheckIn,
     required this.onCheckOut,
+    required this.onFlagLatePickup,
   });
   final LearnerDaySummary summary;
   final VoidCallback onCheckIn;
   final VoidCallback onCheckOut;
+  final VoidCallback onFlagLatePickup;
 
   Color get _statusColor {
     switch (summary.currentStatus) {
@@ -676,7 +737,10 @@ class _LearnerCheckinCard extends StatelessWidget {
                   height: 52,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: <Color>[ScholesaColors.learner.withValues(alpha: 0.8), ScholesaColors.learner],
+                      colors: <Color>[
+                        ScholesaColors.learner.withValues(alpha: 0.8),
+                        ScholesaColors.learner
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: <BoxShadow>[
@@ -716,7 +780,8 @@ class _LearnerCheckinCard extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: _statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
@@ -750,13 +815,15 @@ class _LearnerCheckinCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'In: ${_formatTime(summary.checkedInAt!)}${summary.checkedInBy != null ? ' by ${summary.checkedInBy}' : ''}',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
                       ],
                       if (summary.checkedOutAt != null) ...<Widget>[
                         Text(
                           'Out: ${_formatTime(summary.checkedOutAt!)}${summary.checkedOutBy != null ? ' by ${summary.checkedOutBy}' : ''}',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
                       ],
                     ],
@@ -768,7 +835,8 @@ class _LearnerCheckinCard extends StatelessWidget {
             // Action buttons
             Row(
               children: <Widget>[
-                if (summary.currentStatus == null || summary.currentStatus == CheckStatus.checkedOut)
+                if (summary.currentStatus == null ||
+                    summary.currentStatus == CheckStatus.checkedOut)
                   Expanded(
                     child: _ActionButton(
                       icon: Icons.login,
@@ -785,6 +853,15 @@ class _LearnerCheckinCard extends StatelessWidget {
                       color: const Color(0xFF3B82F6),
                       onTap: onCheckOut,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: onFlagLatePickup,
+                    icon: const Icon(
+                      Icons.warning_amber_rounded,
+                      color: ScholesaColors.warning,
+                    ),
+                    tooltip: 'Flag late pickup',
                   ),
                 ],
                 if (summary.authorizedPickups.isNotEmpty) ...<Widget>[
@@ -841,8 +918,8 @@ class _LearnerCheckinCard extends StatelessWidget {
             Text(
               'Authorized Pickups',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -850,62 +927,68 @@ class _LearnerCheckinCard extends StatelessWidget {
               style: TextStyle(color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
-            ...summary.authorizedPickups.map((AuthorizedPickup pickup) => ListTile(
-              leading: CircleAvatar(
-                backgroundColor: pickup.isPrimaryContact
-                    ? ScholesaColors.success.withValues(alpha: 0.1)
-                    : Colors.grey[100],
-                child: Icon(
-                  Icons.person,
-                  color: pickup.isPrimaryContact ? ScholesaColors.success : Colors.grey,
-                ),
-              ),
-              title: Row(
-                children: <Widget>[
-                  Text(pickup.name),
-                  if (pickup.isPrimaryContact) ...<Widget>[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: ScholesaColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Primary',
-                        style: TextStyle(
-                          color: ScholesaColors.success,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
+            ...summary.authorizedPickups
+                .map((AuthorizedPickup pickup) => ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: pickup.isPrimaryContact
+                            ? ScholesaColors.success.withValues(alpha: 0.1)
+                            : Colors.grey[100],
+                        child: Icon(
+                          Icons.person,
+                          color: pickup.isPrimaryContact
+                              ? ScholesaColors.success
+                              : Colors.grey,
                         ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-              subtitle: Text(pickup.relationship),
-              trailing: pickup.phone != null
-                  ? IconButton(
-                      icon: const Icon(Icons.phone),
-                      onPressed: () {
-                        TelemetryService.instance.logEvent(
-                          event: 'cta.clicked',
-                          metadata: <String, dynamic>{
-                            'cta': 'checkin_call_pickup_contact',
-                            'pickup_id': pickup.id,
-                            'pickup_name': pickup.name,
-                          },
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Call ${pickup.name}: ${pickup.phone}'),
-                            backgroundColor: ScholesaColors.site,
-                          ),
-                        );
-                      },
-                    )
-                  : null,
-            )),
+                      title: Row(
+                        children: <Widget>[
+                          Text(pickup.name),
+                          if (pickup.isPrimaryContact) ...<Widget>[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: ScholesaColors.success
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Primary',
+                                style: TextStyle(
+                                  color: ScholesaColors.success,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      subtitle: Text(pickup.relationship),
+                      trailing: pickup.phone != null
+                          ? IconButton(
+                              icon: const Icon(Icons.phone),
+                              onPressed: () {
+                                TelemetryService.instance.logEvent(
+                                  event: 'cta.clicked',
+                                  metadata: <String, dynamic>{
+                                    'cta': 'checkin_call_pickup_contact',
+                                    'pickup_id': pickup.id,
+                                    'pickup_name': pickup.name,
+                                  },
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'Call ${pickup.name}: ${pickup.phone}'),
+                                    backgroundColor: ScholesaColors.site,
+                                  ),
+                                );
+                              },
+                            )
+                          : null,
+                    )),
             const SizedBox(height: 8),
           ],
         ),
@@ -915,7 +998,6 @@ class _LearnerCheckinCard extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-
   const _ActionButton({
     required this.icon,
     required this.label,
@@ -967,7 +1049,6 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _CheckRecordCard extends StatelessWidget {
-
   const _CheckRecordCard({required this.record});
   final CheckRecord record;
 
@@ -1032,7 +1113,8 @@ class _CheckRecordCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: _statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
@@ -1055,7 +1137,10 @@ class _CheckRecordCard extends StatelessWidget {
                   if (record.notes != null)
                     Text(
                       record.notes!,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 11, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic),
                     ),
                 ],
               ),
@@ -1071,14 +1156,14 @@ class _CheckRecordCard extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
 
 class _CheckInSheet extends StatefulWidget {
-
   const _CheckInSheet({required this.summary, required this.isCheckOut});
   final LearnerDaySummary summary;
   final bool isCheckOut;
@@ -1109,7 +1194,8 @@ class _CheckInSheetState extends State<_CheckInSheet> {
   @override
   Widget build(BuildContext context) {
     final String action = widget.isCheckOut ? 'Check Out' : 'Check In';
-    final Color color = widget.isCheckOut ? const Color(0xFF3B82F6) : ScholesaColors.success;
+    final Color color =
+        widget.isCheckOut ? const Color(0xFF3B82F6) : ScholesaColors.success;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
@@ -1154,9 +1240,12 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                         children: <Widget>[
                           Text(
                             action,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           Text(
                             widget.summary.learnerName,
@@ -1167,7 +1256,6 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
                   Text(
                     widget.isCheckOut ? 'Picking up by:' : 'Dropping off by:',
                     style: TextStyle(
@@ -1176,7 +1264,6 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
                   if (widget.summary.authorizedPickups.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -1195,12 +1282,13 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                       ),
                     )
                   else
-                    ...widget.summary.authorizedPickups.map((AuthorizedPickup pickup) => _PickupOption(
-                      pickup: pickup,
-                      selected: _selectedPickup == pickup,
-                      onTap: () => setState(() => _selectedPickup = pickup),
-                    )),
-                  
+                    ...widget.summary.authorizedPickups
+                        .map((AuthorizedPickup pickup) => _PickupOption(
+                              pickup: pickup,
+                              selected: _selectedPickup == pickup,
+                              onTap: () =>
+                                  setState(() => _selectedPickup = pickup),
+                            )),
                   const SizedBox(height: 24),
                   Text(
                     'Notes (optional)',
@@ -1221,7 +1309,6 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -1269,17 +1356,19 @@ class _CheckInSheetState extends State<_CheckInSheet> {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
-        'cta': widget.isCheckOut ? 'checkin_confirm_check_out' : 'checkin_confirm_check_in',
+        'cta': widget.isCheckOut
+            ? 'checkin_confirm_check_out'
+            : 'checkin_confirm_check_in',
         'learner_id': widget.summary.learnerId,
         'pickup_id': _selectedPickup!.id,
       },
     );
-    
+
     setState(() => _isLoading = true);
-    
+
     final CheckinService service = context.read<CheckinService>();
     bool success;
-    
+
     if (widget.isCheckOut) {
       success = await service.checkOut(
         learnerId: widget.summary.learnerId,
@@ -1297,19 +1386,31 @@ class _CheckInSheetState extends State<_CheckInSheet> {
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
     }
-    
+
     setState(() => _isLoading = false);
-    
+
     if (success && mounted) {
+      TelemetryService.instance.logEvent(
+        event: widget.isCheckOut ? 'site.checkout' : 'site.checkin',
+        siteId: service.siteId,
+        metadata: <String, dynamic>{
+          'learnerId': widget.summary.learnerId,
+          'pickupId': _selectedPickup!.id,
+          'source': 'checkin_sheet_confirm',
+        },
+      );
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             '${widget.summary.learnerName} ${widget.isCheckOut ? 'checked out' : 'checked in'} successfully',
           ),
-          backgroundColor: widget.isCheckOut ? const Color(0xFF3B82F6) : ScholesaColors.success,
+          backgroundColor: widget.isCheckOut
+              ? const Color(0xFF3B82F6)
+              : ScholesaColors.success,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -1317,7 +1418,6 @@ class _CheckInSheetState extends State<_CheckInSheet> {
 }
 
 class _PickupOption extends StatelessWidget {
-
   const _PickupOption({
     required this.pickup,
     required this.selected,
@@ -1345,10 +1445,14 @@ class _PickupOption extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? ScholesaColors.success.withValues(alpha: 0.1) : Colors.grey[50],
+          color: selected
+              ? ScholesaColors.success.withValues(alpha: 0.1)
+              : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? ScholesaColors.success : Colors.grey.withValues(alpha: 0.2),
+            color: selected
+                ? ScholesaColors.success
+                : Colors.grey.withValues(alpha: 0.2),
             width: selected ? 2 : 1,
           ),
         ),
@@ -1360,7 +1464,9 @@ class _PickupOption extends StatelessWidget {
                   : Colors.grey[200],
               child: Icon(
                 Icons.person,
-                color: pickup.isPrimaryContact ? ScholesaColors.success : Colors.grey,
+                color: pickup.isPrimaryContact
+                    ? ScholesaColors.success
+                    : Colors.grey,
               ),
             ),
             const SizedBox(width: 12),
@@ -1377,9 +1483,11 @@ class _PickupOption extends StatelessWidget {
                       if (pickup.isPrimaryContact) ...<Widget>[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: ScholesaColors.success.withValues(alpha: 0.1),
+                            color:
+                                ScholesaColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(

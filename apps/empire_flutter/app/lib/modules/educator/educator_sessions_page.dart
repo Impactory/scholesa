@@ -18,6 +18,28 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   late TabController _tabController;
   String _filterStatus = 'all';
 
+  String _tabNameForIndex(int index) {
+    const List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
+    if (index < 0 || index >= tabs.length) {
+      return 'unknown';
+    }
+    return tabs[index];
+  }
+
+  void _logScheduleViewed({required String trigger}) {
+    final EducatorService service = context.read<EducatorService>();
+    TelemetryService.instance.logEvent(
+      event: 'schedule.viewed',
+      metadata: <String, dynamic>{
+        'module': 'educator_sessions',
+        'trigger': trigger,
+        'tab': _tabNameForIndex(_tabController.index),
+        'filter_status': _filterStatus,
+        'session_count': service.sessions.length,
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -32,10 +54,12 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             'tab': tabs[_tabController.index],
           },
         );
+        _logScheduleViewed(trigger: 'tab_change');
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EducatorService>().loadSessions();
+      _logScheduleViewed(trigger: 'page_open');
     });
   }
 
@@ -81,7 +105,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
-                          final List<EducatorSession> sessions = _getFilteredSessions(service);
+                          final List<EducatorSession> sessions =
+                              _getFilteredSessions(service);
                           if (index >= sessions.length) return null;
                           return _SessionCard(
                             session: sessions[index],
@@ -127,7 +152,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                   ),
                 ],
               ),
-              child: const Icon(Icons.event_note, color: Colors.white, size: 28),
+              child:
+                  const Icon(Icons.event_note, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -173,6 +199,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 'tab': tabs[index],
               },
             );
+            _logScheduleViewed(trigger: 'tab_tap');
           },
           indicator: BoxDecoration(
             color: ScholesaColors.educator,
@@ -203,9 +230,12 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_all'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_sessions_filter_all'
+                  },
                 );
                 setState(() => _filterStatus = 'all');
+                _logScheduleViewed(trigger: 'filter_all');
               },
             ),
             const SizedBox(width: 8),
@@ -216,9 +246,12 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_future_skills'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_sessions_filter_future_skills'
+                  },
                 );
                 setState(() => _filterStatus = 'future_skills');
+                _logScheduleViewed(trigger: 'filter_future_skills');
               },
             ),
             const SizedBox(width: 8),
@@ -229,9 +262,12 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_leadership'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_sessions_filter_leadership'
+                  },
                 );
                 setState(() => _filterStatus = 'leadership');
+                _logScheduleViewed(trigger: 'filter_leadership');
               },
             ),
             const SizedBox(width: 8),
@@ -242,9 +278,12 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_sessions_filter_impact'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_sessions_filter_impact'
+                  },
                 );
                 setState(() => _filterStatus = 'impact');
+                _logScheduleViewed(trigger: 'filter_impact');
               },
             ),
           ],
@@ -258,14 +297,18 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
       return service.sessions;
     }
     return service.sessions
-        .where((EducatorSession s) => s.pillar.toLowerCase().replaceAll(' ', '_') == _filterStatus)
+        .where((EducatorSession s) =>
+            s.pillar.toLowerCase().replaceAll(' ', '_') == _filterStatus)
         .toList();
   }
 
   void _openSessionDetail(EducatorSession session) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'educator_sessions_open_detail', 'session_id': session.id},
+      metadata: <String, dynamic>{
+        'cta': 'educator_sessions_open_detail',
+        'session_id': session.id
+      },
     );
     showModalBottomSheet(
       context: context,
@@ -278,7 +321,9 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   void _createNewSession() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'educator_sessions_open_create_dialog'},
+      metadata: const <String, dynamic>{
+        'cta': 'educator_sessions_open_create_dialog'
+      },
     );
     showDialog<void>(
       context: context,
@@ -374,17 +419,21 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Session title'),
               validator: (String? value) =>
-                  value == null || value.trim().isEmpty ? 'Title is required' : null,
+                  value == null || value.trim().isEmpty
+                      ? 'Title is required'
+                      : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description (optional)'),
+              decoration:
+                  const InputDecoration(labelText: 'Description (optional)'),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _locationController,
-              decoration: const InputDecoration(labelText: 'Location (optional)'),
+              decoration:
+                  const InputDecoration(labelText: 'Location (optional)'),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -451,7 +500,6 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
 }
 
 class _SessionCard extends StatelessWidget {
-
   const _SessionCard({required this.session, required this.onTap});
   final EducatorSession session;
   final VoidCallback onTap;
@@ -515,13 +563,15 @@ class _SessionCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${session.learnerCount} learners enrolled',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            style: TextStyle(
+                                color: Colors.grey[600], fontSize: 13),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: _getStatusColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -540,7 +590,8 @@ class _SessionCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: <Widget>[
-                    Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
+                    Icon(Icons.calendar_today,
+                        size: 14, color: Colors.grey[500]),
                     const SizedBox(width: 4),
                     Text(
                       _formatSchedule(),
@@ -548,7 +599,8 @@ class _SessionCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: _getPillarColor().withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -617,7 +669,6 @@ class _SessionCard extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
@@ -664,7 +715,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _SessionDetailSheet extends StatelessWidget {
-
   const _SessionDetailSheet({required this.session});
   final EducatorSession session;
 
@@ -715,7 +765,8 @@ class _SessionDetailSheet extends StatelessWidget {
                   _DetailRow(
                     icon: Icons.schedule,
                     label: 'Schedule',
-                    value: '${session.dayOfWeek} ${session.startTime} - ${session.endTime}',
+                    value:
+                        '${session.dayOfWeek} ${session.startTime} - ${session.endTime}',
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
@@ -724,6 +775,32 @@ class _SessionDetailSheet extends StatelessWidget {
                     value: session.pillar,
                   ),
                   const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'substitute.requested',
+                          metadata: <String, dynamic>{
+                            'module': 'educator_sessions',
+                            'session_id': session.id,
+                            'pillar': session.pillar,
+                            'day_of_week': session.dayOfWeek,
+                          },
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Substitute request submitted for approval'),
+                            backgroundColor: ScholesaColors.info,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.swap_horiz_rounded),
+                      label: const Text('Request Substitute'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -758,7 +835,6 @@ class _SessionDetailSheet extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-
   const _DetailRow({
     required this.icon,
     required this.label,
