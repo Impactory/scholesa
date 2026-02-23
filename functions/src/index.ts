@@ -66,6 +66,7 @@ function getStripe(): Stripe | null {
 }
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
+type TelemetryRole = Role | 'system';
 
 interface UserRecord {
   email?: string;
@@ -1058,7 +1059,7 @@ function sanitizeTelemetryMetadata(
 async function persistTelemetryEvent(params: {
   event: string;
   userId: string;
-  role?: Role;
+  role?: TelemetryRole;
   siteId?: string;
   metadata?: Record<string, unknown>;
   requestId?: string;
@@ -1066,13 +1067,15 @@ async function persistTelemetryEvent(params: {
 }) {
   const { event, userId, role, siteId, metadata, requestId, traceId } = params;
   const { metadata: sanitizedMetadata, redactedPaths } = sanitizeTelemetryMetadata(metadata);
+  const effectiveUserId = userId && userId.trim().length > 0 ? userId : 'system';
   const effectiveSiteId = siteId && siteId.trim().length > 0 ? siteId.trim() : TELEMETRY_UNSCOPED_SITE_ID;
+  const effectiveRole = role && role.trim().length > 0 ? role : 'system';
   const effectiveRequestId = requestId ?? `telemetry-${randomUUID()}`;
   const effectiveTraceId = traceId ?? effectiveRequestId;
   return admin.firestore().collection(TELEMETRY_COLLECTION).add({
     event,
-    userId,
-    role,
+    userId: effectiveUserId,
+    role: effectiveRole,
     siteId: effectiveSiteId,
     metadata: {
       ...sanitizedMetadata,
@@ -4366,16 +4369,19 @@ export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
     nudgeType?: string;
   };
 }>) => {
-  const auth = request.auth;
-  if (!auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required');
-  }
-
-  const { eventType, siteId, metadata } = request.data;
+  const eventType = typeof request.data?.eventType === 'string' ? request.data.eventType.trim() : '';
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  const metadata = request.data?.metadata;
 
   if (!eventType || !siteId) {
     throw new HttpsError('invalid-argument', 'eventType and siteId are required');
   }
+
+  const { uid, role } = await requireRoleAndSite(
+    request.auth?.uid,
+    ['learner', 'educator', 'parent', 'site', 'partner', 'hq'],
+    siteId,
+  );
 
   // Validate event type
   const validEvents = [
@@ -4392,7 +4398,7 @@ export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
 
   // Store interaction
   await admin.firestore().collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS).add({
-    learnerId: auth.uid,
+    learnerId: uid,
     siteId,
     eventType,
     metadata: metadata || {},
@@ -4402,7 +4408,8 @@ export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
   // Also log to general telemetry
   await persistTelemetryEvent({
     event: eventType,
-    userId: auth.uid,
+    userId: uid,
+    role,
     siteId,
     metadata,
   });
