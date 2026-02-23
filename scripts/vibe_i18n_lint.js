@@ -52,7 +52,7 @@ function looksTranslatable(text) {
   const value = text.trim();
   if (!value) return false;
   if (ALLOW_TEXT.has(value)) return false;
-  if (/^[0-9%.,:+\-_/()\[\]{}!?#$^&*\\|<>=~`'"]+$/.test(value)) return false;
+  if (/^[0-9%.,:+\-_/(){}!?#$^&*\\|<>=~`'"]+$/.test(value)) return false;
   return /[A-Za-z\u4e00-\u9fff\u0E00-\u0E7F]/.test(value);
 }
 
