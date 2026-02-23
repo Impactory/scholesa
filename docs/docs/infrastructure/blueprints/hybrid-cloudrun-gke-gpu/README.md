@@ -19,7 +19,3 @@ This docs pack is designed to be copied into your repo under:
 - No external AI vendors (Gemini/OpenAI/Anthropic/etc.)
 - COPPA-safe defaults (no training on student data, no raw audio retention, no raw logs)
 - Tenant isolation absolute (siteId from verified claims only)
-
-## Added in v3
-- Cloud Run ↔ GKE auth pattern docs + gateway manifests
-- COPPA evidence pack JSON schemas + example reports
