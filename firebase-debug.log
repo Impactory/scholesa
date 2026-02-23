@@ -1,0 +1,62 @@
+[debug] [2026-02-23T17:58:57.897Z] ----------------------------------------------------------------------
+[debug] [2026-02-23T17:58:57.899Z] Command:       /Users/simonluke/.nvm/versions/node/v24.13.1/bin/node /Users/simonluke/.nvm/versions/node/v24.13.1/bin/firebase projects:list --non-interactive
+[debug] [2026-02-23T17:58:57.899Z] CLI Version:   15.7.0
+[debug] [2026-02-23T17:58:57.899Z] Platform:      darwin
+[debug] [2026-02-23T17:58:57.899Z] Node Version:  v24.13.1
+[debug] [2026-02-23T17:58:57.899Z] Time:          Mon Feb 23 2026 09:58:57 GMT-0800 (Pacific Standard Time)
+[debug] [2026-02-23T17:58:57.899Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-23T17:58:57.970Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-23T17:58:57.971Z] > authorizing via FIREBASE_TOKEN environment variable
+[warn] ⚠  Authenticating with `FIREBASE_TOKEN` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[debug] [2026-02-23T17:58:57.972Z] No OAuth tokens found
+[debug] [2026-02-23T17:58:57.972Z] No OAuth tokens found
+[debug] [2026-02-23T17:58:57.972Z] > refreshing access token with scopes: []
+[debug] [2026-02-23T17:58:57.973Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-23T17:58:57.973Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T17:58:58.138Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 401
+[debug] [2026-02-23T17:58:58.138Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T17:58:58.138Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-02-23T17:58:58.362Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 403
+[debug] [2026-02-23T17:58:58.363Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-02-23T17:58:58.363Z] Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+[debug] [2026-02-23T17:58:58.364Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+    at responseToError (/Users/simonluke/.nvm/versions/node/v24.13.1/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/Users/simonluke/.nvm/versions/node/v24.13.1/lib/node_modules/firebase-tools/lib/apiv2.js:330:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+[debug] [2026-02-23T18:04:21.336Z] ----------------------------------------------------------------------
+[debug] [2026-02-23T18:04:21.338Z] Command:       /Users/simonluke/.nvm/versions/node/v24.13.1/bin/node /Users/simonluke/.nvm/versions/node/v24.13.1/bin/firebase deploy --only functions
+[debug] [2026-02-23T18:04:21.338Z] CLI Version:   15.7.0
+[debug] [2026-02-23T18:04:21.338Z] Platform:      darwin
+[debug] [2026-02-23T18:04:21.338Z] Node Version:  v24.13.1
+[debug] [2026-02-23T18:04:21.338Z] Time:          Mon Feb 23 2026 10:04:21 GMT-0800 (Pacific Standard Time)
+[debug] [2026-02-23T18:04:21.338Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-23T18:04:21.899Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-23T18:04:21.900Z] > authorizing via FIREBASE_TOKEN environment variable
+[warn] ⚠  Authenticating with `FIREBASE_TOKEN` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[debug] [2026-02-23T18:04:21.900Z] [iam] checking project studio-3328096157-e3f79 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-02-23T18:04:21.900Z] No OAuth tokens found
+[debug] [2026-02-23T18:04:21.900Z] No OAuth tokens found
+[debug] [2026-02-23T18:04:21.900Z] > refreshing access token with scopes: []
+[debug] [2026-02-23T18:04:21.901Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-23T18:04:21.901Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T18:04:23.565Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-02-23T18:04:23.565Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T18:04:23.566Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions [none]
+[debug] [2026-02-23T18:04:23.566Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions  x-goog-user-project=studio-3328096157-e3f79
+[debug] [2026-02-23T18:04:23.566Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-02-23T18:04:26.628Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions 403
+[debug] [2026-02-23T18:04:26.628Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions {"error":{"code":403,"message":"Caller does not have required permission to use project studio-3328096157-e3f79. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=studio-3328096157-e3f79 and then retry. Propagation of the new permission may take a few minutes.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"USER_PROJECT_DENIED","domain":"googleapis.com","metadata":{"service":"cloudresourcemanager.googleapis.com","consumer":"projects/studio-3328096157-e3f79","consoleUrl":"https://console.developers.google.com/iam-admin/iam/project?project=studio-3328096157-e3f79","containerInfo":"studio-3328096157-e3f79"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Caller does not have required permission to use project studio-3328096157-e3f79. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=studio-3328096157-e3f79 and then retry. Propagation of the new permission may take a few minutes."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developer console IAM admin","url":"https://console.developers.google.com/iam-admin/iam/project?project=studio-3328096157-e3f79"}]}]}}
+[debug] [2026-02-23T18:04:26.629Z] [iam] error while checking permissions, command may fail: Request to https://cloudresourcemanager.googleapis.com/v1/projects/studio-3328096157-e3f79:testIamPermissions had HTTP Error: 403, Caller does not have required permission to use project studio-3328096157-e3f79. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=studio-3328096157-e3f79 and then retry. Propagation of the new permission may take a few minutes.
+[debug] [2026-02-23T18:04:26.629Z] No OAuth tokens found
+[debug] [2026-02-23T18:04:26.629Z] No OAuth tokens found
+[debug] [2026-02-23T18:04:26.630Z] > refreshing access token with scopes: []
+[debug] [2026-02-23T18:04:26.630Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-23T18:04:26.630Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T18:04:28.400Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-02-23T18:04:28.401Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-23T18:04:28.401Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/studio-3328096157-e3f79/serviceAccounts/studio-3328096157-e3f79@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-02-23T18:04:28.401Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/studio-3328096157-e3f79/serviceAccounts/studio-3328096157-e3f79@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
