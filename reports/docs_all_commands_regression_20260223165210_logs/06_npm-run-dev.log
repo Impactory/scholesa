@@ -1,0 +1,46 @@
+$ npm run dev
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 90
+
+
+> scholesa@0.1.0 predev
+> npm run icons:sync
+
+
+> scholesa@0.1.0 icons:sync
+> bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh
+
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+
+> scholesa@0.1.0 dev
+> next dev
+
+ ⨯ Failed to start server
+Error: listen EPERM: operation not permitted 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1918:21)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at /Users/simonluke/dev/scholesa/node_modules/next/dist/server/lib/start-server.js:280:16
+    at new Promise (<anonymous>)
+    at startServer (/Users/simonluke/dev/scholesa/node_modules/next/dist/server/lib/start-server.js:191:11)
+    at /Users/simonluke/dev/scholesa/node_modules/next/dist/server/lib/start-server.js:310:52
+    at Span.traceAsyncFn (/Users/simonluke/dev/scholesa/node_modules/next/dist/trace/trace.js:154:26)
+    at process.<anonymous> (/Users/simonluke/dev/scholesa/node_modules/next/dist/server/lib/start-server.js:310:35)
+    at process.emit (node:events:508:28) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+[?25h

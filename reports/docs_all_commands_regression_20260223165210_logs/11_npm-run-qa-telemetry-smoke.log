@@ -1,0 +1,8 @@
+$ npm run qa:telemetry-smoke
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+
+> scholesa@0.1.0 qa:telemetry-smoke
+> node scripts/telemetry_smoke_check.js --mode=full --strict
+
