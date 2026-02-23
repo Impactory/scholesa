@@ -1,0 +1,37 @@
+policyVersion: "coppa-2026.1"
+controls:
+  - id: COPPA-04
+    name: No External GenAI Vendors
+    severity: blocker
+    checks:
+      - vendor_dependency_ban
+      - vendor_domain_ban
+      - vendor_secret_ban
+      - runtime_egress_proof
+    evidence:
+      - audit-pack/reports/vendor-dependency-ban.json
+      - audit-pack/reports/vendor-domain-ban.json
+      - audit-pack/reports/vendor-secret-ban.json
+      - audit-pack/reports/vendor-egress-proof.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_VENDOR_BAN.md
+  - id: COPPA-05
+    name: Tenant Isolation Invariants
+    severity: blocker
+    checks:
+      - tenant_isolation_invariants
+    evidence:
+      - audit-pack/reports/tenant-isolation-invariants.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_TENANT_ISOLATION.md
+  - id: COPPA-06
+    name: Voice Data Retention and Safety Defaults
+    severity: blocker
+    checks:
+      - voice_retention_controls
+      - log_privacy_safety
+    evidence:
+      - audit-pack/reports/voice-retention-controls.json
+      - audit-pack/reports/log-privacy-safety.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_VOICE_RETENTION.md

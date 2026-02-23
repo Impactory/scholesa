@@ -1,0 +1,16 @@
+{
+  "name": "scholesa-compliance",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Scholesa COPPA Compliance Operator",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "run": "node src/cli.js",
+    "scan": "node src/cli.js --scan-only"
+  }
+}
