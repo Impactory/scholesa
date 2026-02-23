@@ -26,6 +26,18 @@ export {
   bosContestability,
 } from './bosRuntime';
 
+// Export COPPA operational controls
+export {
+  upsertSchoolConsentRecord,
+  getSchoolConsentRecord,
+  upsertCoppaRetentionOverride,
+  submitParentDataRequest,
+  processParentDataRequest,
+  runCoppaRetentionSweep,
+  scheduledCoppaRetentionSweep,
+  getCoppaComplianceSnapshot,
+} from './coppaOps';
+
 // Define secrets for Firebase Functions v2
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
@@ -216,7 +228,160 @@ function toStringArray(value: unknown): string[] {
 // §4.2 Grade-band integrity thresholds
 const AI_M_DAGGER: Record<string, number> = {
   G1_3: 0.55, G4_6: 0.60, G7_9: 0.65, G10_12: 0.70,
+  K_5: 0.58, G6_8: 0.62, G9_12: 0.70,
 };
+
+type CoppaBand = 'K_5' | 'G6_8' | 'G9_12';
+
+const COPPA_ALLOWED_MODES: Record<CoppaBand, string[]> = {
+  K_5: ['hint', 'verify'],
+  G6_8: ['hint', 'verify', 'explain'],
+  G9_12: ['hint', 'verify', 'explain', 'debug'],
+};
+
+const COPPA_K5_ALLOWED_MIME_TYPES = new Set([
+  'text/plain',
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+]);
+
+const COPPA_BLOCKED_ATTACHMENT_PREFIXES = [
+  'application/x-msdownload',
+  'application/x-dosexec',
+  'application/x-sh',
+  'application/x-binary',
+];
+
+interface CoppaAttachment {
+  mimeType?: string;
+  sizeBytes?: number;
+}
+
+function normalizeGradeBandValue(value: unknown): string | null {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const normalized = value.trim().toUpperCase();
+  if (['G1_3', 'G4_6', 'G7_9', 'G10_12', 'K_5', 'G6_8', 'G9_12'].includes(normalized)) {
+    return normalized;
+  }
+  return null;
+}
+
+function toCoppaBand(gradeBand: string): CoppaBand {
+  switch (gradeBand) {
+    case 'G1_3':
+    case 'G4_6':
+    case 'K_5':
+      return 'K_5';
+    case 'G7_9':
+    case 'G6_8':
+      return 'G6_8';
+    case 'G10_12':
+    case 'G9_12':
+      return 'G9_12';
+    default:
+      return 'K_5';
+  }
+}
+
+function resolveGradeBandFromClaims(
+  request: CallableRequest,
+  payloadGradeBand: unknown,
+): { gradeBand: string; coppaBand: CoppaBand; source: 'custom_claim' | 'payload' | 'default' } {
+  const token = (request.auth?.token ?? {}) as Record<string, unknown>;
+  const claimGradeBand = normalizeGradeBandValue(token.gradeBand);
+  const reqGradeBand = normalizeGradeBandValue(payloadGradeBand);
+
+  if (claimGradeBand && reqGradeBand && claimGradeBand !== reqGradeBand) {
+    throw new HttpsError('permission-denied', 'gradeBand claim does not match request payload.');
+  }
+
+  if (claimGradeBand) {
+    return { gradeBand: claimGradeBand, coppaBand: toCoppaBand(claimGradeBand), source: 'custom_claim' };
+  }
+  if (reqGradeBand) {
+    return { gradeBand: reqGradeBand, coppaBand: toCoppaBand(reqGradeBand), source: 'payload' };
+  }
+  return { gradeBand: 'K_5', coppaBand: 'K_5', source: 'default' };
+}
+
+function validateCoppaMode(mode: string, coppaBand: CoppaBand) {
+  if (!COPPA_ALLOWED_MODES[coppaBand].includes(mode)) {
+    throw new HttpsError(
+      'failed-precondition',
+      `Mode "${mode}" is not allowed for grade band ${coppaBand}. Allowed modes: ${COPPA_ALLOWED_MODES[coppaBand].join(', ')}`,
+    );
+  }
+}
+
+function normalizeAttachments(raw: unknown): CoppaAttachment[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((entry) => typeof entry === 'object' && entry !== null)
+    .map((entry) => {
+      const value = entry as Record<string, unknown>;
+      const mimeType = typeof value.mimeType === 'string' ? value.mimeType.trim().toLowerCase() : undefined;
+      const sizeBytes = typeof value.sizeBytes === 'number' && Number.isFinite(value.sizeBytes)
+        ? value.sizeBytes
+        : undefined;
+      return { mimeType, sizeBytes };
+    });
+}
+
+function validateCoppaAttachments(attachments: CoppaAttachment[], coppaBand: CoppaBand) {
+  const maxCount = coppaBand === 'K_5' ? 3 : coppaBand === 'G6_8' ? 5 : 8;
+  const maxSize = coppaBand === 'K_5' ? 2 * 1024 * 1024 : coppaBand === 'G6_8' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
+
+  if (attachments.length > maxCount) {
+    throw new HttpsError('invalid-argument', `Too many attachments for ${coppaBand}. Max allowed: ${maxCount}.`);
+  }
+
+  for (const attachment of attachments) {
+    const mimeType = attachment.mimeType || '';
+    const sizeBytes = attachment.sizeBytes ?? 0;
+    if (sizeBytes > maxSize) {
+      throw new HttpsError('invalid-argument', `Attachment exceeds max size for ${coppaBand}.`);
+    }
+
+    if (COPPA_BLOCKED_ATTACHMENT_PREFIXES.some((prefix) => mimeType.startsWith(prefix))) {
+      throw new HttpsError('invalid-argument', `Attachment type "${mimeType}" is blocked.`);
+    }
+
+    if (coppaBand === 'K_5' && mimeType && !COPPA_K5_ALLOWED_MIME_TYPES.has(mimeType)) {
+      throw new HttpsError(
+        'invalid-argument',
+        `Attachment type "${mimeType}" is not allowed for K-5. Allowed types: ${[...COPPA_K5_ALLOWED_MIME_TYPES].join(', ')}`,
+      );
+    }
+  }
+}
+
+function validateCoppaInputText(input: unknown, coppaBand: CoppaBand) {
+  if (typeof input !== 'string' || input.trim().length === 0) return;
+  const maxChars = coppaBand === 'K_5' ? 600 : coppaBand === 'G6_8' ? 1200 : 2000;
+  if (input.length > maxChars) {
+    throw new HttpsError('invalid-argument', `Input exceeds max length for ${coppaBand}.`);
+  }
+  if (coppaBand === 'K_5' && /https?:\/\//i.test(input)) {
+    throw new HttpsError('invalid-argument', 'External links are blocked for K-5 AI requests.');
+  }
+}
+
+async function assertActiveSchoolConsent(siteId: string) {
+  const consentDoc = await admin.firestore().collection('coppaSchoolConsents').doc(siteId).get();
+  if (!consentDoc.exists) {
+    throw new HttpsError('failed-precondition', 'School consent record is required before AI access.');
+  }
+  const consent = consentDoc.data() as Record<string, unknown>;
+  const active = consent.active === true
+    && consent.agreementSigned === true
+    && consent.educationalUseOnly === true
+    && consent.parentNoticeProvided === true
+    && consent.noStudentMarketing === true;
+  if (!active) {
+    throw new HttpsError('failed-precondition', 'School consent record is incomplete or inactive.');
+  }
+}
 
 interface ReliabilityRiskResult {
   riskType: 'reliability';
@@ -549,7 +714,13 @@ export const genAiCoach = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'siteId is required.');
   }
 
-  const gb = gradeBand || 'G4_6';
+  await assertActiveSchoolConsent(siteId);
+  const { gradeBand: gb, coppaBand, source: gradeBandSource } = resolveGradeBandFromClaims(request, gradeBand);
+  validateCoppaMode(coachMode, coppaBand);
+  const normalizedAttachments = normalizeAttachments(attachments);
+  validateCoppaAttachments(normalizedAttachments, coppaBand);
+  validateCoppaInputText(studentInput, coppaBand);
+
   const tags: string[] = Array.isArray(conceptTags) ? conceptTags : [];
   const tagsStr = tags.join(', ');
   const displayName = profile.displayName ?? 'learner';
@@ -577,7 +748,7 @@ export const genAiCoach = onCall(async (request) => {
     sessionOccurrenceId: sessionOccurrenceId || null,
     missionId: missionId || null,
     checkpointId: checkpointId || null,
-    payload: { mode: coachMode, conceptTags: tags },
+    payload: { mode: coachMode, conceptTags: tags, coppaBand, gradeBandSource },
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -619,6 +790,14 @@ export const genAiCoach = onCall(async (request) => {
     suggestedNextSteps = generated.suggestedNextSteps;
   }
 
+  if (coppaBand === 'G6_8') {
+    suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Connect this response to your checkpoint submission.'])];
+  }
+  if (coppaBand === 'G9_12') {
+    requiresExplainBack = true;
+    suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Provide an explain-back and cite your evidence.'])];
+  }
+
   // ── A1) Forbidden check: never give final answers for graded checkpoints ──
   // V1: template mode is safe. V2+ LLM will need output filtering.
 
@@ -639,6 +818,7 @@ export const genAiCoach = onCall(async (request) => {
       autonomyRiskScore: autonomyRisk.riskScore,
       mvlGateActive: mvlResult.gateActive,
       requiresExplainBack,
+      coppaBand,
     },
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -660,6 +840,8 @@ export const genAiCoach = onCall(async (request) => {
       autonomyRisk: autonomyRisk,
       mvlGateActive: mvlResult.gateActive,
       mvlEpisodeId: mvlResult.episodeId || null,
+      coppaBand,
+      gradeBandSource,
     },
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -671,6 +853,7 @@ export const genAiCoach = onCall(async (request) => {
     requiresExplainBack,
     suggestedNextSteps,
     learnerState: xHat,
+    coppaBand,
     risk: {
       reliability: reliabilityRisk,
       autonomy: autonomyRisk,
@@ -683,8 +866,10 @@ export const genAiCoach = onCall(async (request) => {
     meta: {
       version: '1.0.0',
       gradeBand: gb,
+      gradeBandSource,
+      coppaBand,
       conceptTags: tags,
-      attachments: Array.isArray(attachments) ? attachments : [],
+      attachments: normalizedAttachments,
       aiHelpOpenedEventId: aiHelpOpenedRef.id,
     },
   };
