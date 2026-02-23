@@ -4,7 +4,7 @@
  * Integrates:
  * - Telemetry (user interactions, SDT motivation)
  * - Analytics (learning metrics, insight rules)
- * - AI Intelligence (Gemini-powered insights and recommendations)
+ * - AI Intelligence (Scholesa internal inference)
  * 
  * This is the central service for all data collection and intelligence generation.
  */
@@ -145,10 +145,9 @@ export class IntelligenceService {
   }
   
   /**
-   * Generate personalized learning recommendations using Gemini
-   * 
-   * PRIVACY: Only sends aggregated metrics and sanitized context.
-   * NO student names, IDs, or PII are sent to Gemini.
+   * Generate personalized learning recommendations using internal inference.
+   *
+   * PRIVACY: Uses aggregate metrics and sanitized context in-process only.
    */
   static async generatePersonalizedRecommendations(
     userId: string,
@@ -163,107 +162,72 @@ export class IntelligenceService {
     nextSteps: string[];
     encouragement: string;
   }> {
-    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!geminiKey) {
-      return {
-        recommendations: ['Continue working on your current mission'],
-        nextSteps: ['Complete the next checkpoint'],
-        encouragement: 'Keep up the great work!'
-      };
+    const profile = await this.getLearnerProfile(userId, siteId);
+
+    const sanitizedMission = context.currentMission
+      ? this.sanitizeText(context.currentMission)
+      : undefined;
+    const sanitizedActivities = context.recentActivities.map((activity) => this.sanitizeText(activity));
+    const struggling = (context.strugglingConcepts ?? []).map((concept) => this.sanitizeText(concept));
+
+    const recommendations: string[] = [];
+
+    if (profile.sdtScores.autonomy < 55) {
+      recommendations.push('Offer two mission pathways and let the learner choose their starting route.');
     }
-    
-    const [profile] = await Promise.all([
-      this.getLearnerProfile(userId, siteId)
-    ]);
-    
-    // PRIVACY: Sanitize activities to remove any potential PII
-    const sanitizedActivities = context.recentActivities.map(activity => 
-      this.sanitizeText(activity)
-    );
-    const sanitizedMission = context.currentMission ? 
-      this.sanitizeText(context.currentMission) : undefined;
-    
-    // PRIVACY: Only send aggregate scores and sanitized text - NO user IDs or names
-    const prompt = `
-You are an encouraging educational AI coach. Generate personalized learning recommendations for a student.
-
-Student Profile (AGGREGATED DATA ONLY):
-- Autonomy: ${profile.sdtScores.autonomy}% (choice & agency)
-- Competence: ${profile.sdtScores.competence}% (skill mastery)
-- Belonging: ${profile.sdtScores.belonging}% (social connection)
-- Engagement Score: ${profile.engagementScore}/100
-
-Recent Context:
-${sanitizedActivities.map((activity, i) => `${i + 1}. ${activity}`).join('\n')}
-
-${sanitizedMission ? `Current Mission: ${sanitizedMission}` : ''}
-${context.strugglingConcepts?.length ? `Struggling with: ${context.strugglingConcepts.join(', ')}` : ''}
-
-Provide a JSON response with:
-{
-  "recommendations": ["3-5 specific learning recommendations"],
-  "nextSteps": ["2-3 concrete next steps"],
-  "encouragement": "A warm, personalized encouragement message"
-}
-
-Be specific, actionable, and encouraging. Focus on growth mindset.
-Return only valid JSON.
-`;
-    
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: 0.8,
-              maxOutputTokens: 1024
-            }
-          })
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      
-      // Parse JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      
-      // Fallback
-      return {
-        recommendations: ['Continue working on your current mission'],
-        nextSteps: ['Complete the next checkpoint'],
-        encouragement: 'Keep up the great work!'
-      };
-    } catch (error) {
-      if (!this.isExpectedExternalAIError(error)) {
-        console.error('Failed to generate personalized recommendations:', error);
-      }
-      return {
-        recommendations: ['Continue working on your current mission'],
-        nextSteps: ['Complete the next checkpoint'],
-        encouragement: 'Keep up the great work!'
-      };
+    if (profile.sdtScores.competence < 55) {
+      recommendations.push('Use one worked example, then require an independent attempt before additional hints.');
     }
+    if (profile.sdtScores.belonging < 55) {
+      recommendations.push('Add a short peer check-in or partner review before final submission.');
+    }
+    if (profile.engagementScore < 50) {
+      recommendations.push('Break work into a 10-minute sprint with a single visible success target.');
+    }
+    if (struggling.length > 0) {
+      recommendations.push(`Target focused practice on: ${struggling.slice(0, 3).join(', ')}.`);
+    }
+    if (sanitizedMission) {
+      recommendations.push(`Anchor examples to the current mission context: ${sanitizedMission}.`);
+    }
+    if (sanitizedActivities.length > 0 && recommendations.length < 3) {
+      recommendations.push('Reference one recent activity and ask the learner to transfer that strategy to the next checkpoint.');
+    }
+
+    const dedupedRecommendations = [...new Set(recommendations)];
+    const finalRecommendations = (
+      dedupedRecommendations.length > 0
+        ? dedupedRecommendations
+        : ['Continue the current mission with one clear micro-goal for the next checkpoint.']
+    ).slice(0, 5);
+
+    const nextSteps = [
+      'Pick one recommendation and commit to it for the next attempt.',
+      'Complete one checkpoint attempt without skipping the explain-it-back step.',
+      'Log what worked and what you will change next.',
+    ].slice(0, 3);
+
+    const strengths: string[] = [];
+    if (profile.sdtScores.autonomy >= 70) strengths.push('independent decision-making');
+    if (profile.sdtScores.competence >= 70) strengths.push('skill mastery');
+    if (profile.sdtScores.belonging >= 70) strengths.push('collaboration');
+    if (profile.engagementScore >= 70) strengths.push('consistent engagement');
+
+    const encouragement = strengths.length > 0
+      ? `You are showing strong ${strengths.slice(0, 2).join(' and ')}. Keep building on that momentum.`
+      : 'You are making progress. Keep going one step at a time and your consistency will pay off.';
+
+    return {
+      recommendations: finalRecommendations,
+      nextSteps,
+      encouragement,
+    };
   }
   
   /**
-   * Detect learning patterns using Gemini
-   * 
-   * PRIVACY: Only sends aggregated SDT scores and engagement metrics.
-   * NO student names, IDs, or PII are sent to Gemini.
+   * Detect learning patterns using internal inference.
+   *
+   * PRIVACY: Uses aggregate SDT and engagement metrics in-process only.
    */
   static async detectLearningPatterns(
     userId: string,
@@ -278,105 +242,74 @@ Return only valid JSON.
     strengths: string[];
     growthAreas: string[];
   }> {
-    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!geminiKey) {
-      return {
-        patterns: [],
-        strengths: [],
-        growthAreas: []
-      };
-    }
-    
     const days = timeframe === 'week' ? 7 : 30;
-    const [profile] = await Promise.all([
-      this.getLearnerProfile(userId, siteId)
-    ]);
-    
-    // PRIVACY: Only send aggregate scores - NO user IDs or names
-    const prompt = `
-Analyze this student's learning patterns and provide insights.
+    const profile = await this.getLearnerProfile(userId, siteId);
 
-Student Metrics (AGGREGATED DATA ONLY):
-- Autonomy (choice-making): ${profile.sdtScores.autonomy}%
-- Competence (skill mastery): ${profile.sdtScores.competence}%
-- Belonging (collaboration): ${profile.sdtScores.belonging}%
-- Overall Engagement: ${profile.engagementScore}/100
+    const patterns: Array<{ pattern: string; confidence: number; description: string }> = [];
 
-Timeframe: Past ${days} days
-
-Identify:
-1. Learning patterns (how they approach challenges)
-2. Strengths (what they excel at)
-3. Growth areas (opportunities for improvement)
-
-Return JSON:
-{
-  "patterns": [
-    {
-      "pattern": "Brief pattern name",
-      "confidence": 0.85,
-      "description": "Detailed explanation"
+    if (profile.sdtScores.autonomy >= 70 && profile.sdtScores.competence < 60) {
+      patterns.push({
+        pattern: 'Challenge-seeking with uneven mastery',
+        confidence: 0.82,
+        description: `High agency over the past ${days} days with lower mastery indicators suggests the learner takes on challenge and may need tighter scaffolding.`,
+      });
     }
-  ],
-  "strengths": ["strength 1", "strength 2", "strength 3"],
-  "growthAreas": ["area 1", "area 2"]
-}
 
-Be specific and evidence-based. Return only valid JSON.
-`;
-    
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024
-            }
-          })
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      
-      // Parse JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      
-      return {
-        patterns: [],
-        strengths: [],
-        growthAreas: []
-      };
-    } catch (error) {
-      if (!this.isExpectedExternalAIError(error)) {
-        console.error('Failed to detect learning patterns:', error);
-      }
-      return {
-        patterns: [],
-        strengths: [],
-        growthAreas: []
-      };
+    if (profile.sdtScores.competence >= 70 && profile.engagementScore >= 70) {
+      patterns.push({
+        pattern: 'Consistent independent progress',
+        confidence: 0.88,
+        description: `Strong mastery and engagement across the past ${days} days indicate stable self-directed execution.`,
+      });
     }
+
+    if (profile.sdtScores.belonging >= 75) {
+      patterns.push({
+        pattern: 'Collaborative momentum',
+        confidence: 0.76,
+        description: `Belonging signals are high, indicating peer interaction likely reinforces progress and persistence.`,
+      });
+    }
+
+    if (profile.engagementScore < 45) {
+      patterns.push({
+        pattern: 'Engagement drop risk',
+        confidence: 0.79,
+        description: `Recent engagement is low, so shorter cycles and clearer wins are likely needed to sustain attention.`,
+      });
+    }
+
+    if (patterns.length === 0) {
+      patterns.push({
+        pattern: 'Developing steady habits',
+        confidence: 0.65,
+        description: `Signals over the past ${days} days are balanced without strong extremes; continue structured routines and checkpoint pacing.`,
+      });
+    }
+
+    const strengths: string[] = [];
+    if (profile.sdtScores.autonomy >= 65) strengths.push('Makes independent learning choices');
+    if (profile.sdtScores.competence >= 65) strengths.push('Builds mastery with persistence');
+    if (profile.sdtScores.belonging >= 65) strengths.push('Collaborates effectively with peers');
+    if (profile.engagementScore >= 65) strengths.push('Sustains attention during learning tasks');
+
+    const growthAreas: string[] = [];
+    if (profile.sdtScores.autonomy < 55) growthAreas.push('Increase learner ownership through explicit choice points');
+    if (profile.sdtScores.competence < 55) growthAreas.push('Strengthen core skills with micro-scaffolded checkpoints');
+    if (profile.sdtScores.belonging < 55) growthAreas.push('Improve social connection via peer feedback loops');
+    if (profile.engagementScore < 55) growthAreas.push('Raise engagement with shorter cycles and visible progress markers');
+
+    return {
+      patterns: patterns.slice(0, 4),
+      strengths: strengths.slice(0, 4),
+      growthAreas: growthAreas.slice(0, 4),
+    };
   }
   
   // ===== HELPER FUNCTIONS =====
   
   /**
-   * Sanitize text to remove potential PII before sending to external APIs
+   * Sanitize text to remove potential PII before processing intelligence context
    * Removes: student names, email patterns, phone numbers, specific IDs
    */
   private static sanitizeText(text: string): string {
@@ -448,10 +381,6 @@ Be specific and evidence-based. Return only valid JSON.
     return 'navigation';
   }
 
-  private static isExpectedExternalAIError(error: unknown): boolean {
-    const message = (error as { message?: string } | null)?.message ?? '';
-    return message.includes('Gemini API error: Bad Request');
-  }
 }
 
 // ===== CONVENIENCE EXPORTS =====

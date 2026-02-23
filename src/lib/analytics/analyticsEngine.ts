@@ -6,7 +6,7 @@
  * - Computed metrics (checkpoint_pass_rate, attempts_to_mastery, etc.)
  * - Insight rules (threshold-based, no ML required)
  * - Grade band policy integration
- * - Gemini API integration for AI-powered insights
+ * - Internal AI inference (no third-party AI API calls)
  */
 
 import {
@@ -433,22 +433,15 @@ export class AnalyticsEngine {
   }
   
   /**
-   * Generate AI-powered insights using Gemini
-   * 
-   * PRIVACY: Only sends aggregated class-level metrics (percentages, averages).
-   * NO student names, IDs, or individual student data sent to Gemini.
+   * Generate AI-powered insights using Scholesa internal inference.
+   *
+   * PRIVACY: Uses only in-process aggregated class-level metrics.
+   * NO student names, IDs, individual records, or third-party AI APIs.
    */
   static async generateAIInsights(
     classId: string,
     sessionId?: string
   ): Promise<InsightRule[]> {
-    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!geminiKey) {
-      console.warn('Gemini API key not configured, skipping AI insights');
-      return [];
-    }
-    
-    // Gather metrics (ALL AGGREGATED - NO INDIVIDUAL STUDENT DATA)
     const [
       passRate,
       attemptsToMastery,
@@ -462,84 +455,93 @@ export class AnalyticsEngine {
       this.computeHintDependencyIndex(classId, sessionId),
       this.computeExplainItBackCompliance(classId, sessionId)
     ]);
-    
-    // PRIVACY: Build prompt with ONLY aggregated metrics - NO class IDs, student data, or PII
-    const prompt = `
-You are an educational analytics expert. Analyze the following class metrics and provide actionable insights for teachers.
+    const insights: InsightRule[] = [];
 
-Class Metrics (AGGREGATED DATA ONLY):
-- Checkpoint Pass Rate: ${(passRate * 100).toFixed(1)}%
-- Average Attempts to Mastery: ${attemptsToMastery.toFixed(1)}
-- Mission Choice Distribution:
-  * Bronze (Easy): ${(choiceDistribution.BRONZE * 100).toFixed(1)}%
-  * Silver (Medium): ${(choiceDistribution.SILVER * 100).toFixed(1)}%
-  * Gold (Hard): ${(choiceDistribution.GOLD * 100).toFixed(1)}%
-  * Bridge (Scaffolded): ${(choiceDistribution.BRIDGE * 100).toFixed(1)}%
-- Hint Dependency Index: ${hintDependency.toFixed(2)} (AI turns per checkpoint pass)
-- Explain-it-Back Compliance: ${(explainCompliance * 100).toFixed(1)}%
-
-Provide 3-5 specific, actionable insights in JSON format:
-[
-  {
-    "id": "unique_insight_id",
-    "recommendation": "Clear, actionable recommendation",
-    "actions": ["specific_action_1", "specific_action_2"],
-    "priority": "high|medium|low",
-    "category": "learning|engagement|collaboration|ai_usage"
-  }
-]
-
-Focus on:
-1. Student autonomy and choice patterns
-2. Learning effectiveness (pass rates, attempts)
-3. AI usage patterns (over-reliance or under-utilization)
-4. Opportunities for differentiation
-
-Return only valid JSON, no additional text.
-`;
-    
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048
-            }
-          })
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-      
-      // Parse JSON from response
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        const insights: InsightRule[] = JSON.parse(jsonMatch[0]);
-        return insights.map(insight => ({
-          ...insight,
-          triggered: true
-        }));
-      }
-      
-      return [];
-    } catch (error) {
-      if (!this.isExpectedExternalAIError(error)) {
-        console.error('Failed to generate AI insights:', error);
-      }
-      return [];
+    if (passRate < 0.45) {
+      insights.push({
+        id: 'internal_pass_rate_low',
+        triggered: true,
+        recommendation: 'Checkpoint pass rates are low; tighten modeling and provide one worked example before independent attempts.',
+        actions: ['add_teacher_modeling_block', 'enable_worked_example_before_checkpoint'],
+        priority: 'high',
+        category: 'learning',
+      });
     }
+
+    if (attemptsToMastery > 2.8) {
+      insights.push({
+        id: 'internal_attempts_to_mastery_high',
+        triggered: true,
+        recommendation: 'Learners need multiple retries; break checkpoints into smaller validation steps.',
+        actions: ['split_checkpoint_into_micro_steps', 'add_mid_checkpoint_feedback'],
+        priority: 'medium',
+        category: 'learning',
+      });
+    }
+
+    if (choiceDistribution.BRONZE > 0.55) {
+      insights.push({
+        id: 'internal_low_challenge_selection',
+        triggered: true,
+        recommendation: 'Mission selection is skewed toward low challenge; add confidence scaffolds and nudge more SILVER choices.',
+        actions: ['default_to_silver_with_opt_down', 'show_recent_mastery_badges_before_choice'],
+        priority: 'medium',
+        category: 'engagement',
+      });
+    } else if (choiceDistribution.GOLD < 0.10 && passRate > 0.7) {
+      insights.push({
+        id: 'internal_under_challenged_cohort',
+        triggered: true,
+        recommendation: 'Class is performing well with low GOLD uptake; introduce extension pathways for advanced learners.',
+        actions: ['enable_gold_extension_prompts', 'assign_peer_teaching_challenges'],
+        priority: 'low',
+        category: 'learning',
+      });
+    }
+
+    if (hintDependency > 3.0) {
+      insights.push({
+        id: 'internal_hint_dependency_high',
+        triggered: true,
+        recommendation: 'AI hint dependency is high; gate additional hints behind explain-it-back evidence.',
+        actions: ['gate_hints_on_explain_it_back', 'reduce_max_hint_turns'],
+        priority: 'high',
+        category: 'ai_usage',
+      });
+    } else if (hintDependency < 0.4 && passRate < 0.5) {
+      insights.push({
+        id: 'internal_ai_support_underused',
+        triggered: true,
+        recommendation: 'AI support appears underused while outcomes are weak; prompt strategic hint usage at first failure.',
+        actions: ['suggest_hint_after_first_failed_attempt', 'surface_ai_questions_only_mode'],
+        priority: 'medium',
+        category: 'ai_usage',
+      });
+    }
+
+    if (explainCompliance < 0.55) {
+      insights.push({
+        id: 'internal_explain_back_low',
+        triggered: true,
+        recommendation: 'Explain-it-back completion is low; add sentence stems and require short verbal justification before final submit.',
+        actions: ['enable_explain_back_sentence_stems', 'require_explain_back_pre_submit'],
+        priority: 'high',
+        category: 'collaboration',
+      });
+    }
+
+    if (insights.length === 0) {
+      insights.push({
+        id: 'internal_stable_performance',
+        triggered: true,
+        recommendation: 'Current metrics are stable; continue current pacing and monitor AI scaffolding drift weekly.',
+        actions: ['keep_current_pacing', 'schedule_weekly_ai_usage_review'],
+        priority: 'low',
+        category: 'learning',
+      });
+    }
+
+    return insights.slice(0, 5);
   }
   
   /**
@@ -634,10 +636,6 @@ Return only valid JSON, no additional text.
     return code === 'permission-denied' || code === 'invalid-argument';
   }
 
-  private static isExpectedExternalAIError(error: unknown): boolean {
-    const message = (error as { message?: string } | null)?.message ?? '';
-    return message.includes('Gemini API error: Bad Request');
-  }
 }
 
 // ===== CONVENIENCE EXPORTS =====

@@ -50,7 +50,7 @@ export interface AIServiceRequest {
   question: string;
   
   // Optional
-  preferredModel?: 'gemini' | 'openai';
+  preferredModel?: 'scholesa_internal_ai';
   targetLocale?: SupportedLocale | string;
   role?: Role;
   missionAttemptId?: string;

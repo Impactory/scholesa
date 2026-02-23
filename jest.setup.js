@@ -4,4 +4,4 @@ process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||= 'scholesa-test';
 process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||= '1:1234567890:web:1234567890abcdef123456';
 process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||= 'scholesa-test.appspot.com';
 process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||= '1234567890';
-process.env.NEXT_PUBLIC_GEMINI_API_KEY ||= 'test_key';
+process.env.SCHOLESA_AI_PROVIDER ||= 'INTERNAL_AI';

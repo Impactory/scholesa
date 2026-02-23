@@ -4,7 +4,7 @@
  * Implements the complete analytics.json specification:
  * - Event tracking (mission selection, checkpoints, AI usage, etc.)
  * - Computed metrics (pass rates, attempts to mastery, hint dependency)
- * - Insight rules (threshold-based + AI-powered via Gemini)
+ * - Insight rules (threshold-based + internal AI-powered inference)
  * - Grade band policy integration
  * - SDT motivation profiling
  * - Personalized recommendations

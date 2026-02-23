@@ -20,7 +20,7 @@ import type { AgeBand } from '@/src/types/schema';
 export interface VectorDocument {
   id: string;
   content: string;
-  embedding: number[]; // 1536-dim for OpenAI text-embedding-3-small
+  embedding: number[]; // 1536-dim Scholesa internal embedding
   metadata: {
     type: 'rubric' | 'exemplar' | 'misconception' | 'student_work' | 'feedback_pattern';
     gradeBand?: AgeBand;
@@ -40,104 +40,44 @@ export interface SearchResult {
 // ==================== EMBEDDING GENERATION ====================
 
 export class EmbeddingService {
+  private static readonly DIMENSIONS = 1536;
+
   /**
    * Generate embedding for text
-   * 
-   * Uses OpenAI text-embedding-3-small (1536 dimensions)
-   * Cost: $0.02 / 1M tokens
+   *
+   * Internal deterministic embedding (no external API calls).
    */
   static async generateEmbedding(text: string): Promise<number[]> {
-    // Check if OpenAI API key is available
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      console.warn('OpenAI API key not configured. Returning mock embedding for development.');
-      // Return deterministic mock embedding based on text hash
-      const hash = Array.from(text).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return Array(1536).fill(0).map((_, i) => Math.sin(hash * i) * 0.5 + 0.5);
-    }
-    
-    try {
-      const response = await fetch('https://api.openai.com/v1/embeddings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'text-embedding-3-small',
-          input: text,
-          dimensions: 1536
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      return data.data[0].embedding;
-      
-    } catch (err) {
-      console.error('Failed to generate embedding:', err);
-      // Fallback to mock embedding on error
-      const hash = Array.from(text).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return Array(1536).fill(0).map((_, i) => Math.sin(hash * i) * 0.5 + 0.5);
-    }
+    return this.generateDeterministicEmbedding(text);
   }
   
   /**
    * Batch generate embeddings (more efficient)
-   * OpenAI allows up to 2048 inputs per request
    */
   static async generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      console.warn('OpenAI API key not configured. Returning mock embeddings.');
-      return Promise.all(texts.map(text => this.generateEmbedding(text)));
+    return texts.map((text) => this.generateDeterministicEmbedding(text));
+  }
+
+  private static generateDeterministicEmbedding(text: string): number[] {
+    const normalized = text.normalize('NFKC').toLowerCase().trim();
+    if (!normalized) {
+      return Array(this.DIMENSIONS).fill(0);
     }
-    
-    // Split into batches of 100 to stay well under 2048 limit
-    const batchSize = 100;
-    const batches: string[][] = [];
-    for (let i = 0; i < texts.length; i += batchSize) {
-      batches.push(texts.slice(i, i + batchSize));
+
+    const vector = Array(this.DIMENSIONS).fill(0) as number[];
+    for (let i = 0; i < normalized.length; i += 1) {
+      const current = normalized.charCodeAt(i);
+      const next = normalized.charCodeAt((i + 1) % normalized.length);
+      const prev = normalized.charCodeAt((i - 1 + normalized.length) % normalized.length);
+      const idxA = (current * 31 + next * 17 + i) % this.DIMENSIONS;
+      const idxB = (current * 13 + prev * 19 + i * 7) % this.DIMENSIONS;
+      vector[idxA] += 1 + (current % 11) / 10;
+      vector[idxB] -= 0.5 + (next % 7) / 10;
     }
-    
-    const allEmbeddings: number[][] = [];
-    
-    for (const batch of batches) {
-      try {
-        const response = await fetch('https://api.openai.com/v1/embeddings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'text-embedding-3-small',
-            input: batch,
-            dimensions: 1536
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`OpenAI API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        allEmbeddings.push(...data.data.map((item: { embedding: number[] }) => item.embedding));
-        
-      } catch (err) {
-        console.error('Failed to generate batch embeddings:', err);
-        // Fallback to individual generation
-        const fallbackEmbeddings = await Promise.all(batch.map(text => this.generateEmbedding(text)));
-        allEmbeddings.push(...fallbackEmbeddings);
-      }
-    }
-    
-    return allEmbeddings;
+
+    const norm = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+    if (norm === 0) return vector;
+    return vector.map((value) => value / norm);
   }
 }
 

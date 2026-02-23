@@ -2,7 +2,7 @@
  * Analytics & Intelligence Integration Test
  * 
  * Verifies that all analytics.json specifications are implemented correctly
- * and that Gemini API integration is working
+ * and that internal AI inference paths are working
  */
 
 import { describe, it, expect, jest, afterAll } from '@jest/globals';
@@ -18,7 +18,7 @@ import { deleteApp } from 'firebase/app';
 import { app, firestore } from '@/src/firebase/client-init';
 
 // Mock environment
-process.env.NEXT_PUBLIC_GEMINI_API_KEY = 'test_key';
+process.env.SCHOLESA_AI_PROVIDER = 'INTERNAL_AI';
 jest.setTimeout(60000);
 setLogLevel('error');
 
@@ -127,15 +127,15 @@ describe('Analytics Implementation', () => {
     });
   });
   
-  describe('Gemini AI Integration', () => {
-    it('should have Gemini API key configured', () => {
-      const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      expect(key).toBeDefined();
-      expect(key).not.toBe('');
+  describe('Internal AI Integration', () => {
+    it('should be configured to internal AI provider', () => {
+      const provider = process.env.SCHOLESA_AI_PROVIDER;
+      expect(provider).toBeDefined();
+      expect(provider).toBe('INTERNAL_AI');
     });
     
     it('should generate AI insights with proper structure', async () => {
-      // This will call Gemini API if key is valid
+      // This uses internal deterministic AI inference logic
       const insights = await AnalyticsEngine.generateAIInsights('class_123');
       
       expect(Array.isArray(insights)).toBe(true);
