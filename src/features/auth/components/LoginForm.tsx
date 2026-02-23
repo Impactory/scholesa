@@ -28,7 +28,8 @@ export function LoginForm() {
     try {
       trackInteraction('feature_discovered', { cta: 'legacy_login_google' });
       await signInWithGoogle();
-      router.push(`/${locale}/dashboard`);
+      router.replace(`/${locale}/dashboard`);
+      router.refresh();
     } catch (error) {
       console.error('Login failed', error);
     }

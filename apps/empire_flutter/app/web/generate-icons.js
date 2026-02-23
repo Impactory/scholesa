@@ -11,9 +11,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const cp = require('child_process');
 
 async function generateIcons() {
-  const sourcePngPath = path.join(__dirname, '..', 'assets', 'icons', 'android', 'android-launchericon-512-512.png');
+  const sourcePngPath = path.join(__dirname, '..', 'assets', 'icons', 'scholesa_launcher.png');
   const iconsDir = path.join(__dirname, 'icons');
 
   if (!fs.existsSync(sourcePngPath)) {
@@ -48,7 +49,7 @@ async function generateIcons() {
             bottom: padding,
             left: padding,
             right: padding,
-            background: { r: 14, g: 165, b: 233, alpha: 1 }
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
           })
           .png()
           .toBuffer();
@@ -63,11 +64,10 @@ async function generateIcons() {
       console.log(`✓ Generated ${name} (${size}x${size})`);
     }
     
-    const faviconBuffer = await sharp(sourceBuffer)
-      .resize(32, 32)
-      .png()
-      .toBuffer();
-    fs.writeFileSync(path.join(iconsDir, 'favicon.ico'), faviconBuffer);
+    const faviconPngPath = path.join(iconsDir, 'favicon-32x32.png');
+    cp.execFileSync('sips', ['-s', 'format', 'ico', faviconPngPath, '--out', path.join(iconsDir, 'favicon.ico')], {
+      stdio: 'pipe',
+    });
     console.log('✓ Generated favicon.ico');
     
     console.log('\n✅ All icons generated successfully!');

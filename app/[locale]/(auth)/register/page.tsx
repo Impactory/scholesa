@@ -8,6 +8,7 @@ import { createUserDocument } from '@/src/lib/auth/createUser';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { Role } from '@/schema';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { syncSessionCookie } from '@/src/firebase/auth/sessionClient';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,8 +46,11 @@ export default function RegisterPage() {
         photoURL: user.photoURL || undefined,
       });
 
+      await syncSessionCookie(user, locale);
+
       // 4. Redirect to Dashboard (Redirector will handle role routing)
-      router.push(`/${locale}/dashboard`);
+      router.replace(`/${locale}/dashboard`);
+      router.refresh();
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || t('auth.register.fallbackError'));

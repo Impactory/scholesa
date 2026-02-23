@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { auth, firestore } from '@/src/firebase/client-init';
+import { auth, firestore, googleProvider } from '@/src/firebase/client-init';
 import { UserProfile } from '@/src/types/user';
+import { clearSessionCookie, syncSessionCookie } from './sessionClient';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -60,11 +61,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    // Implement Google Sign-In logic here
+    const credential = await signInWithPopup(auth, googleProvider);
+    await syncSessionCookie(credential.user);
   };
 
   const signOut = async () => {
-    // Implement Sign-Out logic here
+    const errors: string[] = [];
+
+    try {
+      await clearSessionCookie();
+    } catch (error) {
+      console.error('Failed to clear session cookie before sign-out.', error);
+      errors.push('session');
+    }
+
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error('Failed to sign out from Firebase auth.', error);
+      errors.push('firebase');
+    } finally {
+      setUser(null);
+      setProfile(null);
+    }
+
+    if (errors.length > 0) {
+      throw new Error(`Sign-out completed with partial failures: ${errors.join(', ')}`);
+    }
   };
 
   return (

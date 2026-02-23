@@ -19,7 +19,7 @@ export default function ProtectedLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(`/${locale}/login`);
+      router.replace(`/${locale}/login`);
     }
   }, [user, loading, router, locale]);
 

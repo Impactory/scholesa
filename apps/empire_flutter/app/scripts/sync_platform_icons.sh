@@ -17,6 +17,9 @@ WINDOWS_ICON="$ROOT_DIR/windows/runner/resources/app_icon.ico"
 FLUTTER_WEB_DIR="$ROOT_DIR/web"
 NEXT_PUBLIC_DIR="$REPO_ROOT/public"
 
+echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
+python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
+
 require_file() {
   local path="$1"
   if [[ ! -f "$path" ]]; then

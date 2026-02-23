@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { syncSessionCookie } from '@/src/firebase/auth/sessionClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,9 +24,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      await syncSessionCookie(credential.user, locale);
       // Redirect to Dashboard (Redirector will handle role routing)
-      router.push(`/${locale}/dashboard`);
+      router.replace(`/${locale}/dashboard`);
+      router.refresh();
     } catch (err: any) {
       console.error('Login error:', err);
       setError(t('auth.login.invalidCredentials'));

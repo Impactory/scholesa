@@ -14,7 +14,8 @@ export function Navigation() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push(`/${locale}/login`);
+    router.replace(`/${locale}/login`);
+    router.refresh();
   };
 
   if (!user) {
@@ -35,9 +36,9 @@ export function Navigation() {
               {t('navigation.signedInAs', { identity: user.displayName || user.email || '' })}
             </span>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 trackInteraction('help_accessed', { cta: 'navigation_sign_out' });
-                handleSignOut();
+                await handleSignOut();
               }}
               variant="ghost"
               size="sm"
