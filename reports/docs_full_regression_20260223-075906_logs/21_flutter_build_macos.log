@@ -23,3 +23,4 @@ Got dependencies!
 Try `flutter pub outdated` for more information.
 Running pod install...                                             78.4s
 Building macOS application...                                   
+[TIMEOUT after 180s]

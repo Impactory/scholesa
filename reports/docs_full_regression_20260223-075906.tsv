@@ -19,3 +19,5 @@ FAIL(1)	dart-format-check	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	
 FAIL(69)	dart-pub-outdated	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	dart pub outdated	reports/docs_full_regression_20260223-075906_logs/18_dart_pub_outdated.log
 PASS	flutter-build-web-release-no-wasm-dry-run	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build web --release --no-tree-shake-icons --no-wasm-dry-run	reports/docs_full_regression_20260223-075906_logs/19_flutter_build_web_nowasm.log
 PASS	flutter-build-web-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build web --release	reports/docs_full_regression_20260223-075906_logs/20_flutter_build_web.log
+FAIL(124)	flutter-build-macos-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build macos --release --no-tree-shake-icons	reports/docs_full_regression_20260223-075906_logs/21_flutter_build_macos.log
+FAIL(124)	flutter-build-ios-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build ios --release --no-codesign --no-tree-shake-icons	reports/docs_full_regression_20260223-075906_logs/22_flutter_build_ios.log
