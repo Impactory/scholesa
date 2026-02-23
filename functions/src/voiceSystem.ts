@@ -1,0 +1,1219 @@
+import { createHash, createHmac, randomUUID } from 'crypto';
+import type { Request, Response } from 'express';
+import * as admin from 'firebase-admin';
+import { HttpsError } from 'firebase-functions/v2/https';
+
+export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
+export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
+type VoiceRole = 'student' | 'teacher' | 'admin';
+type SafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
+type GradeBand = 'K-5' | '6-8' | '9-12' | 'All';
+
+const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
+const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
+const STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
+const TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
+const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+interface VoiceSettings {
+  voiceEnabled: boolean;
+  studentVoiceDefaultOn: boolean;
+  teacherVoiceEnabled: boolean;
+  adminVoiceEnabled: boolean;
+  allowedLocales: VoiceLocale[];
+  quietModeEnabled: boolean;
+  quietHours?: {
+    enabled: boolean;
+    timezone?: string;
+    windows: Array<{
+      days?: number[];
+      start: string;
+      end: string;
+    }>;
+  };
+}
+
+interface VoiceAuthContext {
+  uid: string;
+  role: VoiceRole;
+  siteId: string;
+  siteIds: string[];
+  gradeBand: GradeBand;
+}
+
+interface SafetyDecision {
+  safetyOutcome: SafetyOutcome;
+  safetyReasonCode: string;
+  localizedMessage: string;
+  category: 'focus_nudge' | 'teacher_productivity' | 'admin_setup' | 'generic';
+}
+
+interface SpeechPreparation {
+  speechText: string;
+  redactionApplied: boolean;
+  redactionCount: number;
+}
+
+interface AudioTokenPayload {
+  traceId: string;
+  locale: VoiceLocale;
+  voiceProfile: string;
+  text: string;
+  expMs: number;
+  checksum: string;
+}
+
+class VoiceHttpError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly details?: Record<string, unknown>;
+
+  constructor(status: number, code: string, message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+  voiceEnabled: true,
+  studentVoiceDefaultOn: true,
+  teacherVoiceEnabled: true,
+  adminVoiceEnabled: true,
+  allowedLocales: [...SUPPORTED_VOICE_LOCALES],
+  quietModeEnabled: false,
+};
+
+const LOCALE_ALIASES: Record<string, VoiceLocale> = {
+  en: 'en',
+  'en-us': 'en',
+  'en-gb': 'en',
+  zh: 'zh-CN',
+  'zh-cn': 'zh-CN',
+  'zh-hans': 'zh-CN',
+  'zh-sg': 'zh-CN',
+  'zh-tw': 'zh-TW',
+  'zh-hant': 'zh-TW',
+  'zh-hk': 'zh-TW',
+  th: 'th',
+  'th-th': 'th',
+};
+
+const INJECTION_PATTERNS = [
+  /ignore (all )?(previous|prior) instructions/i,
+  /system prompt/i,
+  /developer mode/i,
+  /reveal .*prompt/i,
+  /忽略.*指令/,
+  /顯示.*提示/,
+  /แสดง.*system prompt/,
+];
+
+const CROSS_TENANT_PATTERNS = [
+  /other (school|site|district|tenant)/i,
+  /another student'?s data/i,
+  /whole database/i,
+  /cross[- ]tenant/i,
+  /其他(学校|校区|租户|站点)/,
+  /其他學校|其他租戶/,
+  /โรงเรียนอื่น|ผู้ใช้โรงเรียนอื่น/,
+];
+
+const TOOL_ESCALATION_PATTERNS = [
+  /admin tool/i,
+  /data export/i,
+  /show me .*database/i,
+  /管理员工具/,
+  /管理員工具/,
+  /เครื่องมือผู้ดูแล/,
+];
+
+const SELF_HARM_PATTERNS = [
+  /hurt myself/i,
+  /\bself[- ]?harm\b/i,
+  /\bkill myself\b/i,
+  /想伤害自己/,
+  /想傷害自己/,
+  /อยากทำร้ายตัวเอง/,
+];
+
+const HARMFUL_CONTENT_PATTERNS = [
+  /build (a )?weapon/i,
+  /how to hurt/i,
+  /make a bomb/i,
+  /制作武器/,
+  /製作武器/,
+  /อาวุธ/,
+];
+
+const FOCUS_NUDGE_PATTERNS = [
+  /\bI('| )?m bored\b/i,
+  /\bthis is dumb\b/i,
+  /don'?t want to do this/i,
+  /ไม่อยากทำแล้ว/,
+  /我不想做了/,
+  /我不想做了/,
+  /我不想繼續/,
+];
+
+const TEACHER_PRODUCTIVITY_PATTERNS = [
+  /differentiat(ed|ion)/i,
+  /mixed abilities/i,
+  /message to a parent/i,
+  /parent message/i,
+  /分层|差异化|差異化/,
+  /ผู้ปกครอง/,
+];
+
+const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+const PHONE_PATTERN = /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
+const ADDRESS_PATTERN = /\b\d+\s+[A-Za-z0-9.\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln)\b/gi;
+const ID_PATTERN = /\b(?:site|learner|submission|attempt|session)[-_]?[A-Za-z0-9]{4,}\b/gi;
+
+const ROLE_ALLOWED_TOOLS: Record<VoiceRole, readonly string[]> = {
+  student: ['glossary', 'hint_ladder', 'read_aloud', 'translate'],
+  teacher: ['class_summary', 'rubric_feedback_draft', 'differentiate_lesson', 'read_aloud', 'translate'],
+  admin: ['setup_help', 'troubleshooting_guide', 'read_aloud', 'translate'],
+};
+
+const LOCALE_TEXT: Record<VoiceLocale, {
+  blocked: string;
+  escalated: string;
+  focusNudge: string;
+  studentGeneric: string;
+  teacherProductive: string;
+  teacherGeneric: string;
+  adminGeneric: string;
+}> = {
+  en: {
+    blocked: 'I cannot help with that request. I can help with safe, school-appropriate learning support.',
+    escalated: 'I am glad you told me. Please contact a trusted adult or school counselor right now. You are not alone.',
+    focusNudge: 'I hear you. Let us do one tiny step: read the first line and tell me one thing you notice. Want a hint or read-aloud?',
+    studentGeneric: 'Let us take this one step at a time. Tell me what part feels hardest, and I will give a short hint.',
+    teacherProductive: 'Here is a quick draft: Tier 1 core task, Tier 2 scaffolded supports, Tier 3 extension challenge, plus accommodations and check-in prompts.',
+    teacherGeneric: 'I can help with concise class-ready drafts, differentiation ideas, and supportive parent communication.',
+    adminGeneric: 'I can guide setup and non-sensitive troubleshooting. I will not expose secrets, keys, or raw student exports.',
+  },
+  'zh-CN': {
+    blocked: '我无法协助该请求。我可以改为提供安全、适合学校场景的学习帮助。',
+    escalated: '谢谢你愿意说出来。请立刻联系你信任的成年人或学校辅导老师。你并不孤单。',
+    focusNudge: '我理解你的感受。我们先做一个很小的步骤：读第一行，再告诉我你注意到的一点。要不要提示或朗读？',
+    studentGeneric: '我们一步一步来。告诉我最难的部分，我会给你一个简短提示。',
+    teacherProductive: '给你一个简版草案：基础任务、支架支持、进阶挑战，并附上课堂照顾与检查点。',
+    teacherGeneric: '我可以帮助生成课堂可用的简洁草案、差异化建议和支持性的家校沟通文本。',
+    adminGeneric: '我可以提供配置引导和非敏感故障排查，不会暴露密钥、凭证或原始学生导出数据。',
+  },
+  'zh-TW': {
+    blocked: '我無法協助該請求。我可以改為提供安全、適合校園情境的學習協助。',
+    escalated: '謝謝你願意說出來。請立即聯絡你信任的成年人或學校輔導老師。你並不孤單。',
+    focusNudge: '我理解你的感受。我們先做一個小步驟：先讀第一行，再告訴我你注意到的一點。要提示或朗讀嗎？',
+    studentGeneric: '我們一步一步來。告訴我最卡的地方，我會給你簡短提示。',
+    teacherProductive: '提供一份快速草案：核心任務、分層支援、進階挑戰，並附上調整與檢核提示。',
+    teacherGeneric: '我可以提供精簡的課堂草案、差異化教學建議，以及支持性的家長訊息草稿。',
+    adminGeneric: '我可以協助設定與非敏感疑難排解，不會揭露密鑰、憑證或原始學生匯出內容。',
+  },
+  th: {
+    blocked: 'ฉันไม่สามารถช่วยตามคำขอนี้ได้ แต่ช่วยเรื่องการเรียนที่ปลอดภัยและเหมาะสมกับโรงเรียนได้',
+    escalated: 'ขอบคุณที่บอกฉัน โปรดติดต่อผู้ใหญ่ที่ไว้ใจได้หรือครูที่ปรึกษาทันที คุณไม่ได้อยู่คนเดียว',
+    focusNudge: 'เข้าใจความรู้สึกนะ ลองก้าวเล็ก ๆ ก่อน: อ่านบรรทัดแรกแล้วบอกสิ่งที่สังเกตหนึ่งอย่าง ต้องการคำใบ้หรือให้อ่านออกเสียงไหม',
+    studentGeneric: 'เราค่อย ๆ ทำทีละขั้น บอกส่วนที่ยากที่สุด แล้วฉันจะให้คำใบ้สั้น ๆ',
+    teacherProductive: 'ร่างสั้นสำหรับชั้นเรียน: งานแกนหลัก ระดับเสริมช่วยพยุง ระดับท้าทาย พร้อมการปรับและจุดเช็กความเข้าใจ',
+    teacherGeneric: 'ฉันช่วยร่างข้อความสั้นสำหรับห้องเรียน แนวทางสอนแบบแตกต่าง และข้อความถึงผู้ปกครองแบบสนับสนุนได้',
+    adminGeneric: 'ฉันช่วยตั้งค่าระบบและแก้ปัญหาทั่วไปที่ไม่อ่อนไหว โดยจะไม่เปิดเผยความลับ คีย์ หรือข้อมูลส่งออกดิบของนักเรียน',
+  },
+};
+
+function normalizeVoiceLocale(rawLocale: string | null | undefined): VoiceLocale {
+  if (!rawLocale) return 'en';
+  const trimmed = rawLocale.trim();
+  if (!trimmed) return 'en';
+  if (SUPPORTED_VOICE_LOCALES.includes(trimmed as VoiceLocale)) return trimmed as VoiceLocale;
+  const alias = LOCALE_ALIASES[trimmed.toLowerCase()];
+  if (alias) return alias;
+  const short = trimmed.split('-')[0]?.toLowerCase();
+  if (short && LOCALE_ALIASES[short]) return LOCALE_ALIASES[short];
+  return 'en';
+}
+
+function firstAcceptLanguage(acceptLanguage: string | undefined): string | undefined {
+  if (!acceptLanguage) return undefined;
+  return acceptLanguage.split(',').map((v) => v.trim().split(';')[0]?.trim()).find((v) => Boolean(v));
+}
+
+function resolveLocale(preferred: unknown, req: Request, allowedLocales: VoiceLocale[]): VoiceLocale {
+  const preferredRaw = typeof preferred === 'string' ? preferred : undefined;
+  const explicitHeader = req.header('x-scholesa-locale');
+  const acceptLanguage = firstAcceptLanguage(req.header('accept-language') ?? undefined);
+  const normalized = normalizeVoiceLocale(preferredRaw ?? explicitHeader ?? acceptLanguage);
+  if (allowedLocales.includes(normalized)) return normalized;
+  return allowedLocales.includes('en') ? 'en' : allowedLocales[0] ?? 'en';
+}
+
+function normalizeString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0).map((entry) => entry.trim());
+}
+
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+  if (typeof value === 'boolean') return value;
+  return fallback;
+}
+
+function dedupeStrings(values: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    out.push(value);
+  }
+  return out;
+}
+
+function normalizeGradeBand(rawBand: unknown, rawGrade: unknown): GradeBand {
+  const band = typeof rawBand === 'string' ? rawBand.trim().toUpperCase() : '';
+  if (band === 'K-5' || band === 'K_5' || band === 'K5' || band === 'GRADES_1_3' || band === 'GRADES_4_6') return 'K-5';
+  if (band === '6-8' || band === 'G6_8' || band === 'GRADES_7_9') return '6-8';
+  if (band === '9-12' || band === 'G9_12' || band === 'GRADES_10_12') return '9-12';
+  if (band === 'ALL') return 'All';
+  const grade = typeof rawGrade === 'number' ? rawGrade : Number(rawGrade);
+  if (!Number.isFinite(grade)) return '6-8';
+  if (grade <= 5) return 'K-5';
+  if (grade <= 8) return '6-8';
+  return '9-12';
+}
+
+function normalizeRole(rawRole: unknown): VoiceRole {
+  const role = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : '';
+  if (role === 'learner' || role === 'student') return 'student';
+  if (role === 'educator' || role === 'teacher') return 'teacher';
+  if (role === 'hq' || role === 'site' || role === 'partner' || role === 'admin') return 'admin';
+  return 'student';
+}
+
+function parseJsonBody(req: Request): Record<string, unknown> {
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+    return req.body as Record<string, unknown>;
+  }
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+  if (rawBody && rawBody.length > 0) {
+    try {
+      return JSON.parse(rawBody.toString('utf8')) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function extractBearerToken(authorizationHeader: string | undefined): string | undefined {
+  if (!authorizationHeader) return undefined;
+  const match = authorizationHeader.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1] : undefined;
+}
+
+function collectSiteIdsFromClaims(decoded: admin.auth.DecodedIdToken): string[] {
+  const claims = decoded as admin.auth.DecodedIdToken & Record<string, unknown>;
+  const values: string[] = [];
+  const pushMaybe = (value: unknown) => {
+    if (typeof value === 'string' && value.trim().length > 0) values.push(value.trim());
+  };
+  pushMaybe(claims.siteId);
+  pushMaybe(claims.activeSiteId);
+  const siteIds = normalizeStringArray(claims.siteIds);
+  values.push(...siteIds);
+  return dedupeStrings(values);
+}
+
+async function fetchUserProfile(uid: string): Promise<Record<string, unknown>> {
+  const userSnap = await admin.firestore().collection('users').doc(uid).get();
+  return (userSnap.exists ? (userSnap.data() as Record<string, unknown>) : {});
+}
+
+function validateSiteAccess(requestedSiteId: string | undefined, context: VoiceAuthContext): void {
+  if (!requestedSiteId) return;
+  if (!context.siteIds.includes(requestedSiteId)) {
+    throw new VoiceHttpError(403, 'permission_denied', 'Requested site is outside the authenticated tenant scope.', {
+      requestedSiteId,
+      allowedSiteIds: context.siteIds,
+    });
+  }
+}
+
+async function resolveAuthContext(req: Request, body: Record<string, unknown>): Promise<VoiceAuthContext> {
+  const token = extractBearerToken(req.header('authorization') ?? undefined);
+  if (!token) {
+    throw new VoiceHttpError(401, 'unauthenticated', 'Authorization bearer token is required.');
+  }
+
+  let decoded: admin.auth.DecodedIdToken;
+  try {
+    decoded = await admin.auth().verifyIdToken(token, true);
+  } catch (error) {
+    throw new VoiceHttpError(401, 'unauthenticated', 'Token verification failed.', {
+      message: error instanceof Error ? error.message : 'unknown',
+    });
+  }
+
+  const profile = await fetchUserProfile(decoded.uid);
+  const role = normalizeRole((decoded as Record<string, unknown>).role ?? profile.role);
+  const siteIds = dedupeStrings([
+    ...collectSiteIdsFromClaims(decoded),
+    ...normalizeStringArray(profile.siteIds),
+    ...(normalizeString(profile.activeSiteId) ? [String(profile.activeSiteId)] : []),
+  ]);
+  const siteIdFromBody = normalizeString(body.siteId) ??
+    normalizeString((body.context as Record<string, unknown> | undefined)?.siteId);
+  const siteId = siteIdFromBody ?? siteIds[0];
+  if (!siteId) {
+    throw new VoiceHttpError(403, 'permission_denied', 'No tenant site context available.');
+  }
+  if (!siteIds.includes(siteId)) {
+    siteIds.push(siteId);
+  }
+  const gradeBand = normalizeGradeBand(
+    (decoded as Record<string, unknown>).gradeBand ?? profile.gradeBand ?? body.gradeBand,
+    (decoded as Record<string, unknown>).grade ?? profile.grade ?? body.grade,
+  );
+  const context: VoiceAuthContext = {
+    uid: decoded.uid,
+    role,
+    siteId,
+    siteIds,
+    gradeBand,
+  };
+  validateSiteAccess(siteIdFromBody, context);
+  return context;
+}
+
+function parseVoiceSettings(data: Record<string, unknown> | undefined): VoiceSettings {
+  if (!data) return { ...DEFAULT_VOICE_SETTINGS };
+  const allowedLocalesRaw = Array.isArray(data.allowedLocales) ? data.allowedLocales : [];
+  const allowedLocales = dedupeStrings(
+    allowedLocalesRaw
+      .map((entry) => normalizeVoiceLocale(typeof entry === 'string' ? entry : undefined))
+      .filter((entry) => Boolean(entry)),
+  ) as VoiceLocale[];
+
+  const windowsRaw = (data.quietHours as Record<string, unknown> | undefined)?.windows;
+  const windows = Array.isArray(windowsRaw)
+    ? windowsRaw
+        .map((windowEntry): { days?: number[]; start: string; end: string } | null => {
+          if (!windowEntry || typeof windowEntry !== 'object') return null;
+          const raw = windowEntry as Record<string, unknown>;
+          const start = normalizeString(raw.start);
+          const end = normalizeString(raw.end);
+          if (!start || !end) return null;
+          const days = Array.isArray(raw.days)
+            ? raw.days.filter((day): day is number => typeof day === 'number' && day >= 0 && day <= 6)
+            : undefined;
+          return { start, end, days };
+        })
+        .filter((entry): entry is { days?: number[]; start: string; end: string } => Boolean(entry))
+    : [];
+
+  return {
+    voiceEnabled: normalizeBoolean(data.voiceEnabled, DEFAULT_VOICE_SETTINGS.voiceEnabled),
+    studentVoiceDefaultOn: normalizeBoolean(data.studentVoiceDefaultOn, DEFAULT_VOICE_SETTINGS.studentVoiceDefaultOn),
+    teacherVoiceEnabled: normalizeBoolean(data.teacherVoiceEnabled, DEFAULT_VOICE_SETTINGS.teacherVoiceEnabled),
+    adminVoiceEnabled: normalizeBoolean(data.adminVoiceEnabled, DEFAULT_VOICE_SETTINGS.adminVoiceEnabled),
+    allowedLocales: allowedLocales.length > 0 ? allowedLocales : [...SUPPORTED_VOICE_LOCALES],
+    quietModeEnabled: normalizeBoolean(
+      (data.quietMode as Record<string, unknown> | undefined)?.enabled ?? data.quietModeEnabled,
+      false,
+    ),
+    quietHours: windows.length > 0
+      ? {
+          enabled: normalizeBoolean((data.quietHours as Record<string, unknown> | undefined)?.enabled, true),
+          timezone: normalizeString((data.quietHours as Record<string, unknown> | undefined)?.timezone),
+          windows,
+        }
+      : undefined,
+  };
+}
+
+async function loadVoiceSettings(siteId: string): Promise<VoiceSettings> {
+  const doc = await admin.firestore()
+    .collection('sites')
+    .doc(siteId)
+    .collection('settings')
+    .doc('voice')
+    .get();
+  return parseVoiceSettings(doc.exists ? (doc.data() as Record<string, unknown>) : undefined);
+}
+
+function parseTimeToMinutes(time: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+function isWithinWindow(nowMinutes: number, startMinutes: number, endMinutes: number): boolean {
+  if (startMinutes === endMinutes) return true;
+  if (startMinutes < endMinutes) return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+  return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+}
+
+function isQuietModeActive(settings: VoiceSettings, now: Date): boolean {
+  if (settings.quietModeEnabled) return true;
+  if (!settings.quietHours || !settings.quietHours.enabled || settings.quietHours.windows.length === 0) return false;
+  const nowDay = now.getUTCDay();
+  const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  return settings.quietHours.windows.some((windowEntry) => {
+    const startMinutes = parseTimeToMinutes(windowEntry.start);
+    const endMinutes = parseTimeToMinutes(windowEntry.end);
+    if (startMinutes === null || endMinutes === null) return false;
+    if (windowEntry.days && windowEntry.days.length > 0 && !windowEntry.days.includes(nowDay)) return false;
+    return isWithinWindow(nowMinutes, startMinutes, endMinutes);
+  });
+}
+
+function isRoleEnabled(settings: VoiceSettings, role: VoiceRole): boolean {
+  if (!settings.voiceEnabled) return false;
+  if (role === 'student') return settings.studentVoiceDefaultOn;
+  if (role === 'teacher') return settings.teacherVoiceEnabled;
+  return settings.adminVoiceEnabled;
+}
+
+function inferCategory(message: string, role: VoiceRole): SafetyDecision['category'] {
+  if (role === 'student' && FOCUS_NUDGE_PATTERNS.some((pattern) => pattern.test(message))) return 'focus_nudge';
+  if (role === 'teacher' && TEACHER_PRODUCTIVITY_PATTERNS.some((pattern) => pattern.test(message))) {
+    return 'teacher_productivity';
+  }
+  if (role === 'admin') return 'admin_setup';
+  return 'generic';
+}
+
+function evaluateSafetyDecision(message: string, role: VoiceRole, locale: VoiceLocale): SafetyDecision {
+  const normalized = message.trim();
+  const category = inferCategory(normalized, role);
+  if (SELF_HARM_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return {
+      safetyOutcome: 'escalated',
+      safetyReasonCode: 'self_harm_risk',
+      localizedMessage: LOCALE_TEXT[locale].escalated,
+      category,
+    };
+  }
+  if (INJECTION_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return {
+      safetyOutcome: 'blocked',
+      safetyReasonCode: 'prompt_injection_attempt',
+      localizedMessage: LOCALE_TEXT[locale].blocked,
+      category,
+    };
+  }
+  if (CROSS_TENANT_PATTERNS.some((pattern) => pattern.test(normalized)) ||
+      TOOL_ESCALATION_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return {
+      safetyOutcome: 'blocked',
+      safetyReasonCode: 'cross_tenant_data_request',
+      localizedMessage: LOCALE_TEXT[locale].blocked,
+      category,
+    };
+  }
+  if (HARMFUL_CONTENT_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return {
+      safetyOutcome: 'blocked',
+      safetyReasonCode: 'disallowed_content_request',
+      localizedMessage: LOCALE_TEXT[locale].blocked,
+      category,
+    };
+  }
+  return {
+    safetyOutcome: 'allowed',
+    safetyReasonCode: 'none',
+    localizedMessage: '',
+    category,
+  };
+}
+
+function generateLocalizedResponse(role: VoiceRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
+  const localized = LOCALE_TEXT[locale];
+  if (role === 'student' && category === 'focus_nudge') return localized.focusNudge;
+  if (role === 'student') return localized.studentGeneric;
+  if (role === 'teacher' && category === 'teacher_productivity') return localized.teacherProductive;
+  if (role === 'teacher') return localized.teacherGeneric;
+  return localized.adminGeneric;
+}
+
+function selectToolCalls(role: VoiceRole, category: SafetyDecision['category'], safetyOutcome: SafetyOutcome): string[] {
+  if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return [];
+  const allowedTools = ROLE_ALLOWED_TOOLS[role];
+  if (role === 'student' && category === 'focus_nudge') return ['hint_ladder', 'read_aloud'];
+  if (role === 'teacher' && category === 'teacher_productivity') return ['differentiate_lesson', 'rubric_feedback_draft'];
+  if (role === 'admin') return ['setup_help'];
+  return [allowedTools[0]];
+}
+
+function detectLanguageCompatibility(text: string, locale: VoiceLocale): boolean {
+  if (!text.trim()) return false;
+  if (locale === 'en') return /[A-Za-z]/.test(text);
+  if (locale === 'zh-CN') return /[\u4e00-\u9fff]/.test(text) && /我们|学习|学校|提示|帮助/.test(text);
+  if (locale === 'zh-TW') return /[\u4e00-\u9fff]/.test(text) && /我們|學習|學校|提示|協助/.test(text);
+  if (locale === 'th') return /[\u0E00-\u0E7F]/.test(text);
+  return false;
+}
+
+function chooseVoiceProfile(locale: VoiceLocale, role: VoiceRole, gradeBand: GradeBand): string {
+  if (role === 'student' && gradeBand === 'K-5') return `${locale}.k5_safe_neutral`;
+  if (role === 'teacher' || role === 'admin') return `${locale}.professional_concise`;
+  return `${locale}.student_neutral`;
+}
+
+function prosodyPolicyTag(role: VoiceRole, gradeBand: GradeBand): string {
+  if (role === 'student' && gradeBand === 'K-5') return 'k5_safe_mode';
+  if (role === 'student') return 'student_standard_mode';
+  return 'professional_mode';
+}
+
+function redactTextForSpeech(text: string, knownNames: string[]): SpeechPreparation {
+  let redacted = text;
+  let redactionCount = 0;
+  for (const name of knownNames) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+    if (regex.test(redacted)) {
+      redacted = redacted.replace(regex, '[NAME]');
+      redactionCount += 1;
+    }
+  }
+  redacted = redacted.replace(EMAIL_PATTERN, () => {
+    redactionCount += 1;
+    return '[EMAIL]';
+  });
+  redacted = redacted.replace(PHONE_PATTERN, () => {
+    redactionCount += 1;
+    return '[PHONE]';
+  });
+  redacted = redacted.replace(ADDRESS_PATTERN, () => {
+    redactionCount += 1;
+    return '[ADDRESS]';
+  });
+  redacted = redacted.replace(ID_PATTERN, () => {
+    redactionCount += 1;
+    return '[ID]';
+  });
+  return {
+    speechText: redacted,
+    redactionApplied: redactionCount > 0,
+    redactionCount,
+  };
+}
+
+function normalizeSpeechText(text: string): string {
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  if (!collapsed) return '';
+  return collapsed.slice(0, 2000);
+}
+
+function tokenSecret(): string {
+  return process.env.VOICE_SIGNING_SECRET || process.env.GOOGLE_CLOUD_PROJECT || 'scholesa-voice-secret';
+}
+
+function encodeBase64Url(input: string): string {
+  return Buffer.from(input, 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function decodeBase64Url(input: string): string {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  return Buffer.from(padded, 'base64').toString('utf8');
+}
+
+function signPayload(payloadBase64: string): string {
+  return createHmac('sha256', tokenSecret())
+    .update(payloadBase64)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function createAudioToken(payload: AudioTokenPayload): string {
+  const json = JSON.stringify(payload);
+  const encoded = encodeBase64Url(json);
+  const signature = signPayload(encoded);
+  return `${encoded}.${signature}`;
+}
+
+function verifyAudioToken(token: string): AudioTokenPayload {
+  const [encoded, signature] = token.split('.');
+  if (!encoded || !signature) throw new VoiceHttpError(400, 'invalid_token', 'Malformed audio token.');
+  const expectedSignature = signPayload(encoded);
+  if (signature !== expectedSignature) throw new VoiceHttpError(403, 'invalid_token', 'Audio token signature mismatch.');
+  let parsed: AudioTokenPayload;
+  try {
+    parsed = JSON.parse(decodeBase64Url(encoded)) as AudioTokenPayload;
+  } catch {
+    throw new VoiceHttpError(400, 'invalid_token', 'Unable to decode audio token.');
+  }
+  if (!parsed.expMs || Date.now() > parsed.expMs) {
+    throw new VoiceHttpError(410, 'expired_token', 'Audio token has expired.');
+  }
+  const checksum = createHash('sha256')
+    .update(`${parsed.traceId}|${parsed.locale}|${parsed.voiceProfile}|${parsed.text}|${parsed.expMs}`)
+    .digest('hex');
+  if (parsed.checksum !== checksum) {
+    throw new VoiceHttpError(403, 'invalid_token', 'Audio token payload checksum mismatch.');
+  }
+  return parsed;
+}
+
+function functionBasePath(req: Request): string {
+  const originalUrl = req.originalUrl || req.url || '';
+  const path = req.path || '';
+  if (path && originalUrl.includes(path)) {
+    return originalUrl.slice(0, originalUrl.indexOf(path));
+  }
+  return originalUrl;
+}
+
+function buildAudioUrl(req: Request, token: string): string {
+  const explicitBase = normalizeString(process.env.VOICE_PUBLIC_BASE_URL);
+  if (explicitBase) {
+    return `${explicitBase.replace(/\/+$/g, '')}/voice/audio/${encodeURIComponent(token)}`;
+  }
+  const host = req.get('host');
+  if (!host) {
+    throw new VoiceHttpError(500, 'internal', 'Unable to build audio URL because host header is missing.');
+  }
+  const protoHeader = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const proto = protoHeader.split(',')[0]?.trim() || 'https';
+  const basePath = functionBasePath(req);
+  return `${proto}://${host}${basePath}/voice/audio/${encodeURIComponent(token)}`;
+}
+
+function buildWavHeader(dataLength: number, sampleRate: number): Buffer {
+  const blockAlign = 2;
+  const byteRate = sampleRate * blockAlign;
+  const buffer = Buffer.alloc(44);
+  buffer.write('RIFF', 0, 4, 'ascii');
+  buffer.writeUInt32LE(36 + dataLength, 4);
+  buffer.write('WAVE', 8, 4, 'ascii');
+  buffer.write('fmt ', 12, 4, 'ascii');
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(byteRate, 28);
+  buffer.writeUInt16LE(blockAlign, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36, 4, 'ascii');
+  buffer.writeUInt32LE(dataLength, 40);
+  return buffer;
+}
+
+function synthesizeAudioWave(text: string, locale: VoiceLocale): Buffer {
+  const sampleRate = 16_000;
+  const normalized = text.length > 0 ? text : locale;
+  const durationSeconds = Math.min(6, Math.max(1, normalized.length * 0.04));
+  const sampleCount = Math.max(1, Math.floor(sampleRate * durationSeconds));
+  const pcm = Buffer.alloc(sampleCount * 2);
+  const localeBias = locale === 'th' ? 30 : locale === 'zh-CN' ? 45 : locale === 'zh-TW' ? 60 : 0;
+  for (let i = 0; i < sampleCount; i += 1) {
+    const charCode = normalized.charCodeAt(i % normalized.length);
+    const frequency = 200 + ((charCode + localeBias) % 180);
+    const amplitude = Math.floor(9000 * (0.6 + (charCode % 20) / 100));
+    const sample = Math.floor(amplitude * Math.sin((2 * Math.PI * frequency * i) / sampleRate));
+    pcm.writeInt16LE(sample, i * 2);
+  }
+  const header = buildWavHeader(pcm.length, sampleRate);
+  return Buffer.concat([header, pcm]);
+}
+
+function cleanTranscript(input: string): string {
+  const trimmed = input.replace(/\s+/g, ' ').trim();
+  if (!trimmed) return '';
+  if (/[.!?。！？]$/.test(trimmed)) return trimmed;
+  if (/[\u4e00-\u9fff\u0E00-\u0E7F]/.test(trimmed)) return `${trimmed}`;
+  return `${trimmed}.`;
+}
+
+function defaultTranscriptByLocale(locale: VoiceLocale): string {
+  if (locale === 'zh-CN') return '请给我一个下一步的提示';
+  if (locale === 'zh-TW') return '請給我下一步提示';
+  if (locale === 'th') return 'ช่วยบอกใบ้ขั้นตอนถัดไปหน่อย';
+  return 'Please give me a hint for the next step';
+}
+
+function parseMultipartForm(req: Request): {
+  fields: Record<string, string>;
+  files: Record<string, { filename: string; contentType: string; data: Buffer }>;
+} {
+  const contentType = req.header('content-type') || '';
+  const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType);
+  if (!boundaryMatch) return { fields: {}, files: {} };
+  const boundaryValue = boundaryMatch[1] || boundaryMatch[2];
+  if (!boundaryValue) return { fields: {}, files: {} };
+
+  const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+  if (!rawBody || rawBody.length === 0) return { fields: {}, files: {} };
+
+  const boundary = `--${boundaryValue}`;
+  const raw = rawBody.toString('latin1');
+  const parts = raw.split(boundary);
+  const fields: Record<string, string> = {};
+  const files: Record<string, { filename: string; contentType: string; data: Buffer }> = {};
+
+  for (const part of parts) {
+    const normalizedPart = part.trim();
+    if (!normalizedPart || normalizedPart === '--') continue;
+    const separatorIndex = part.indexOf('\r\n\r\n');
+    if (separatorIndex < 0) continue;
+    const headerBlock = part.slice(0, separatorIndex);
+    let bodyBlock = part.slice(separatorIndex + 4);
+    bodyBlock = bodyBlock.replace(/\r\n--$/, '').replace(/\r\n$/, '');
+
+    const dispositionMatch = /content-disposition:\s*form-data;\s*name="([^"]+)"(?:;\s*filename="([^"]+)")?/i.exec(headerBlock);
+    if (!dispositionMatch) continue;
+    const fieldName = dispositionMatch[1];
+    const filename = dispositionMatch[2];
+    const contentTypeMatch = /content-type:\s*([^\r\n]+)/i.exec(headerBlock);
+    const partContentType = contentTypeMatch ? contentTypeMatch[1].trim() : 'application/octet-stream';
+
+    if (filename) {
+      files[fieldName] = {
+        filename,
+        contentType: partContentType,
+        data: Buffer.from(bodyBlock, 'latin1'),
+      };
+    } else {
+      fields[fieldName] = bodyBlock.trim();
+    }
+  }
+  return { fields, files };
+}
+
+async function maybeValidateTeacherLearnerScope(
+  context: VoiceAuthContext,
+  body: Record<string, unknown>,
+): Promise<void> {
+  if (context.role !== 'teacher') return;
+  const selectedLearnerId = normalizeString((body.context as Record<string, unknown> | undefined)?.selectedLearnerId);
+  if (!selectedLearnerId) return;
+  const learnerSnap = await admin.firestore().collection('users').doc(selectedLearnerId).get();
+  if (!learnerSnap.exists) {
+    throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is not accessible in this tenant scope.');
+  }
+  const learner = learnerSnap.data() as Record<string, unknown>;
+  const learnerRole = normalizeRole(learner.role);
+  if (learnerRole !== 'student') {
+    throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId must refer to a student.');
+  }
+  const learnerSiteIds = dedupeStrings([
+    ...normalizeStringArray(learner.siteIds),
+    ...(normalizeString(learner.activeSiteId) ? [String(learner.activeSiteId)] : []),
+  ]);
+  if (!learnerSiteIds.includes(context.siteId)) {
+    throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is outside the teacher tenant scope.');
+  }
+}
+
+async function recordVoiceAuditEvent(payload: {
+  endpoint: string;
+  traceId: string;
+  authContext: VoiceAuthContext;
+  locale: VoiceLocale;
+  safetyOutcome: SafetyOutcome;
+  redactionApplied?: boolean;
+  redactionCount?: number;
+  quietModeActive?: boolean;
+  toolCount?: number;
+  latencyMs: number;
+}) {
+  await admin.firestore().collection('voiceAuditEvents').add({
+    endpoint: payload.endpoint,
+    traceId: payload.traceId,
+    uid: payload.authContext.uid,
+    role: payload.authContext.role,
+    siteId: payload.authContext.siteId,
+    gradeBand: payload.authContext.gradeBand,
+    locale: payload.locale,
+    safetyOutcome: payload.safetyOutcome,
+    redactionApplied: payload.redactionApplied ?? false,
+    redactionCount: payload.redactionCount ?? 0,
+    quietModeActive: payload.quietModeActive ?? false,
+    toolCount: payload.toolCount ?? 0,
+    latencyMs: payload.latencyMs,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+function normalizePath(pathValue: string): string {
+  if (!pathValue) return '/';
+  const trimmed = pathValue.trim();
+  if (!trimmed) return '/';
+  const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return normalized.replace(/\/+$/g, '') || '/';
+}
+
+function responseError(res: Response, error: unknown): void {
+  if (error instanceof VoiceHttpError) {
+    res.status(error.status).json({
+      error: error.code,
+      message: error.message,
+      details: error.details ?? null,
+    });
+    return;
+  }
+  if (error instanceof HttpsError) {
+    res.status(500).json({ error: error.code, message: error.message });
+    return;
+  }
+  const fallbackMessage = error instanceof Error ? error.message : 'Unknown voice endpoint error';
+  res.status(500).json({ error: 'internal', message: fallbackMessage });
+}
+
+async function enforceVoiceAccess(
+  authContext: VoiceAuthContext,
+  settings: VoiceSettings,
+): Promise<void> {
+  if (!isRoleEnabled(settings, authContext.role)) {
+    throw new VoiceHttpError(403, 'permission_denied', 'Voice is disabled for this role or tenant.');
+  }
+  if (!settings.voiceEnabled) {
+    throw new VoiceHttpError(403, 'permission_denied', 'Voice is disabled for this tenant.');
+  }
+}
+
+function extractKnownNames(body: Record<string, unknown>): string[] {
+  const context = body.context as Record<string, unknown> | undefined;
+  const candidateLists: unknown[] = [
+    context?.knownNames,
+    context?.studentNames,
+    context?.learnerNames,
+  ];
+  const merged = candidateLists.flatMap((candidate) => normalizeStringArray(candidate));
+  return dedupeStrings(merged).slice(0, 20);
+}
+
+export async function handleCopilotMessage(req: Request, res: Response): Promise<void> {
+  const startedAt = Date.now();
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method_not_allowed', message: 'Use POST.' });
+    return;
+  }
+
+  try {
+    const body = parseJsonBody(req);
+    const authContext = await resolveAuthContext(req, body);
+    const settings = await loadVoiceSettings(authContext.siteId);
+    await enforceVoiceAccess(authContext, settings);
+    await maybeValidateTeacherLearnerScope(authContext, body);
+
+    const locale = resolveLocale(body.locale, req, settings.allowedLocales);
+    const message = normalizeSpeechText(normalizeString(body.message) ?? '');
+    if (!message) {
+      throw new VoiceHttpError(400, 'invalid_argument', 'message is required.');
+    }
+
+    const traceId = randomUUID();
+    const safety = evaluateSafetyDecision(message, authContext.role, locale);
+    const candidateText = safety.safetyOutcome === 'allowed'
+      ? generateLocalizedResponse(authContext.role, locale, safety.category)
+      : safety.localizedMessage;
+
+    const toolsInvoked = selectToolCalls(authContext.role, safety.category, safety.safetyOutcome);
+    const voiceInput = body.voice as Record<string, unknown> | undefined;
+    const voiceOutputEnabled = normalizeBoolean(voiceInput?.enabled, true) && normalizeBoolean(voiceInput?.output, true);
+    const quietModeActive = isQuietModeActive(settings, new Date());
+    const knownNames = extractKnownNames(body);
+    const preparedSpeech = redactTextForSpeech(candidateText, knownNames);
+    const voiceProfile = chooseVoiceProfile(locale, authContext.role, authContext.gradeBand);
+    const shouldSpeak = voiceOutputEnabled && !quietModeActive && preparedSpeech.speechText.length > 0;
+
+    let audioUrl: string | undefined;
+    if (shouldSpeak) {
+      const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
+      const checksum = createHash('sha256')
+        .update(`${traceId}|${locale}|${voiceProfile}|${preparedSpeech.speechText}|${expMs}`)
+        .digest('hex');
+      const token = createAudioToken({
+        traceId,
+        locale,
+        voiceProfile,
+        text: preparedSpeech.speechText,
+        expMs,
+        checksum,
+      });
+      audioUrl = buildAudioUrl(req, token);
+    }
+
+    const responseText = detectLanguageCompatibility(candidateText, locale)
+      ? candidateText
+      : generateLocalizedResponse(authContext.role, locale, 'generic');
+    const latencyMs = Date.now() - startedAt;
+    await recordVoiceAuditEvent({
+      endpoint: 'copilot_message',
+      traceId,
+      authContext,
+      locale,
+      safetyOutcome: safety.safetyOutcome,
+      redactionApplied: preparedSpeech.redactionApplied,
+      redactionCount: preparedSpeech.redactionCount,
+      quietModeActive,
+      toolCount: toolsInvoked.length,
+      latencyMs,
+    });
+
+    res.status(200).json({
+      text: responseText,
+      metadata: {
+        traceId,
+        safetyOutcome: safety.safetyOutcome,
+        safetyReasonCode: safety.safetyReasonCode,
+        policyVersion: VOICE_POLICY_VERSION,
+        modelVersion: VOICE_MODEL_VERSION,
+        locale,
+        role: authContext.role,
+        gradeBand: authContext.gradeBand,
+        toolsInvoked,
+        quietModeActive,
+        redactionApplied: preparedSpeech.redactionApplied,
+        redactionCount: preparedSpeech.redactionCount,
+      },
+      tts: {
+        available: Boolean(audioUrl),
+        audioUrl,
+        voiceProfile: shouldSpeak ? voiceProfile : undefined,
+      },
+    });
+  } catch (error) {
+    responseError(res, error);
+  }
+}
+
+export async function handleVoiceTranscribe(req: Request, res: Response): Promise<void> {
+  const startedAt = Date.now();
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method_not_allowed', message: 'Use POST.' });
+    return;
+  }
+
+  try {
+    const contentType = req.header('content-type') || '';
+    const body = contentType.includes('multipart/form-data') ? {} : parseJsonBody(req);
+    const authContext = await resolveAuthContext(req, body);
+    const settings = await loadVoiceSettings(authContext.siteId);
+    await enforceVoiceAccess(authContext, settings);
+
+    let transcriptRaw: string | undefined;
+    let localeHint: unknown = body.locale;
+    let partialHint: unknown = body.partial;
+    let uploadedAudioLength = 0;
+
+    if (contentType.includes('multipart/form-data')) {
+      const { fields, files } = parseMultipartForm(req);
+      transcriptRaw = normalizeString(fields.transcript);
+      localeHint = fields.locale;
+      partialHint = fields.partial;
+      if (files.audio) {
+        uploadedAudioLength = files.audio.data.length;
+      }
+    } else {
+      transcriptRaw = normalizeString(body.transcript);
+      const audioBase64 = normalizeString(body.audioBase64);
+      if (audioBase64) {
+        try {
+          uploadedAudioLength = Buffer.from(audioBase64, 'base64').length;
+        } catch {
+          uploadedAudioLength = 0;
+        }
+      }
+    }
+
+    if (!transcriptRaw && uploadedAudioLength === 0) {
+      throw new VoiceHttpError(400, 'invalid_argument', 'audio or transcript input is required.');
+    }
+
+    const locale = resolveLocale(localeHint, req, settings.allowedLocales);
+    const transcript = cleanTranscript(transcriptRaw ?? defaultTranscriptByLocale(locale));
+    const partial = normalizeBoolean(partialHint, false);
+    const confidence = transcriptRaw
+      ? 0.96
+      : Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
+    const traceId = randomUUID();
+    const latencyMs = Date.now() - startedAt;
+    await recordVoiceAuditEvent({
+      endpoint: 'voice_transcribe',
+      traceId,
+      authContext,
+      locale,
+      safetyOutcome: 'allowed',
+      latencyMs,
+    });
+
+    res.status(200).json({
+      transcript,
+      confidence,
+      metadata: {
+        traceId,
+        locale,
+        latencyMs,
+        partial,
+        modelVersion: STT_MODEL_VERSION,
+      },
+    });
+  } catch (error) {
+    responseError(res, error);
+  }
+}
+
+export async function handleTtsSpeak(req: Request, res: Response): Promise<void> {
+  const startedAt = Date.now();
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method_not_allowed', message: 'Use POST.' });
+    return;
+  }
+
+  try {
+    const body = parseJsonBody(req);
+    const authContext = await resolveAuthContext(req, body);
+    const settings = await loadVoiceSettings(authContext.siteId);
+    await enforceVoiceAccess(authContext, settings);
+    const locale = resolveLocale(body.locale, req, settings.allowedLocales);
+
+    const rawText = normalizeSpeechText(normalizeString(body.text) ?? '');
+    if (!rawText) {
+      throw new VoiceHttpError(400, 'invalid_argument', 'text is required.');
+    }
+    const requestedGradeBand = normalizeGradeBand(body.gradeBand, body.grade);
+    const effectiveGradeBand = authContext.role === 'student' ? authContext.gradeBand : requestedGradeBand;
+    const knownNames = extractKnownNames(body);
+    const speech = redactTextForSpeech(rawText, knownNames);
+    const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
+    const traceId = randomUUID();
+    const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
+    const checksum = createHash('sha256')
+      .update(`${traceId}|${locale}|${voiceProfile}|${speech.speechText}|${expMs}`)
+      .digest('hex');
+    const token = createAudioToken({
+      traceId,
+      locale,
+      voiceProfile,
+      text: speech.speechText,
+      expMs,
+      checksum,
+    });
+    const audioUrl = buildAudioUrl(req, token);
+    const latencyMs = Date.now() - startedAt;
+    await recordVoiceAuditEvent({
+      endpoint: 'tts_speak',
+      traceId,
+      authContext,
+      locale,
+      safetyOutcome: 'allowed',
+      redactionApplied: speech.redactionApplied,
+      redactionCount: speech.redactionCount,
+      latencyMs,
+    });
+
+    res.status(200).json({
+      audioUrl,
+      metadata: {
+        traceId,
+        modelVersion: TTS_MODEL_VERSION,
+        latencyMs,
+        locale,
+        voiceProfile,
+        prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+        redactionApplied: speech.redactionApplied,
+        redactionCount: speech.redactionCount,
+      },
+    });
+  } catch (error) {
+    responseError(res, error);
+  }
+}
+
+export async function handleVoiceAudio(req: Request, res: Response): Promise<void> {
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'method_not_allowed', message: 'Use GET.' });
+    return;
+  }
+  try {
+    const normalizedPath = normalizePath(req.path || '/');
+    const tokenFromPath = normalizedPath.startsWith('/voice/audio/')
+      ? decodeURIComponent(normalizedPath.slice('/voice/audio/'.length))
+      : undefined;
+    const tokenFromQuery = normalizeString(req.query.token);
+    const token = tokenFromPath ?? tokenFromQuery;
+    if (!token) {
+      throw new VoiceHttpError(400, 'invalid_argument', 'token is required.');
+    }
+    const payload = verifyAudioToken(token);
+    const wav = synthesizeAudioWave(payload.text, payload.locale);
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    res.status(200).send(wav);
+  } catch (error) {
+    responseError(res, error);
+  }
+}
+
+export async function handleVoiceApi(req: Request, res: Response): Promise<void> {
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  const path = normalizePath(req.path || '/');
+  if (path === '/copilot/message') {
+    await handleCopilotMessage(req, res);
+    return;
+  }
+  if (path === '/voice/transcribe') {
+    await handleVoiceTranscribe(req, res);
+    return;
+  }
+  if (path === '/tts/speak') {
+    await handleTtsSpeak(req, res);
+    return;
+  }
+  if (path.startsWith('/voice/audio/')) {
+    await handleVoiceAudio(req, res);
+    return;
+  }
+  res.status(404).json({
+    error: 'not_found',
+    message: 'Unknown voice endpoint.',
+    path,
+    supported: ['/copilot/message', '/voice/transcribe', '/tts/speak', '/voice/audio/:token'],
+  });
+}
+
+export const __voiceSystemInternals = {
+  cleanTranscript,
+  createAudioToken,
+  detectLanguageCompatibility,
+  evaluateSafetyDecision,
+  normalizeVoiceLocale,
+  redactTextForSpeech,
+  resolveLocale,
+  selectToolCalls,
+  synthesizeAudioWave,
+  verifyAudioToken,
+};
+

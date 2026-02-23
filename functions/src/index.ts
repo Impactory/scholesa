@@ -4,6 +4,13 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import {
+  handleVoiceApi,
+  handleCopilotMessage,
+  handleVoiceAudio,
+  handleVoiceTranscribe,
+  handleTtsSpeak,
+} from './voiceSystem';
 
 admin.initializeApp();
 
@@ -37,6 +44,13 @@ export {
   scheduledCoppaRetentionSweep,
   getCoppaComplianceSnapshot,
 } from './coppaOps';
+
+// Voice-first API surface (scholesa-api + scholesa-stt + scholesa-tts)
+export const voiceApi = onRequest({ cors: true }, async (req, res) => handleVoiceApi(req, res));
+export const copilotMessage = onRequest({ cors: true }, async (req, res) => handleCopilotMessage(req, res));
+export const voiceTranscribe = onRequest({ cors: true }, async (req, res) => handleVoiceTranscribe(req, res));
+export const ttsSpeak = onRequest({ cors: true }, async (req, res) => handleTtsSpeak(req, res));
+export const voiceAudio = onRequest({ cors: true }, async (req, res) => handleVoiceAudio(req, res));
 
 // Define secrets for Firebase Functions v2
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
