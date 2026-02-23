@@ -1,0 +1,32 @@
+
+> scholesa@0.1.0 predev
+> npm run icons:sync
+
+
+> scholesa@0.1.0 icons:sync
+> bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh
+
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+
+> scholesa@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 39.7s
+
+[TIMEOUT after 60s]

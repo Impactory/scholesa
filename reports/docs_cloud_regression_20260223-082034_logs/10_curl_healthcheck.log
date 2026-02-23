@@ -1,0 +1,1 @@
+{"status":"healthy","timestamp":"2026-02-23T16:21:18.034Z","version":"healthcheck-00043-vib","services":{"firestore":"ok","auth":"ok","stripe":"connected"}}

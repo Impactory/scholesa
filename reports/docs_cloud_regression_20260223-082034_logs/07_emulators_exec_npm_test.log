@@ -1,0 +1,61 @@
+i  emulators: Starting emulators: auth, functions, firestore, storage, extensions
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⬢  extensions: Unable to look up project number for studio-3328096157-e3f79.
+ If this is a real project, ensure that you are logged in and have access to it.
+ If this is a fake project, please use a project ID starting with 'demo-' to skip production calls.
+ Continuing with a fake project number - secrets and other features that require production access may behave unexpectedly.
+⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, database, hosting, pubsub, dataconnect
+⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect.
+i  firestore: downloading cloud-firestore-emulator-v1.20.2.jar...
+
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  storage: downloading cloud-storage-rules-runtime-v1.1.3.jar...
+
+i  functions: Watching "/Users/simonluke/dev/scholesa/functions" for Cloud Functions...
+⚠  functions: Couldn't find firebase-functions package in your source code. Have you run 'npm install'?
+✔  functions: Using node@24 from host.
+i  functions: Loaded environment variables from .env.studio-3328096157-e3f79.
+⬢  functions: Failed to load function definition from source: Error: Cannot find module 'firebase-functions'
+Require stack:
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/runtimes/node/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/runtimes/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/prepare.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/functionsEmulatorShared.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/functionsEmulator.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/controller.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/commandUtils.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/commands/emulators-exec.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/commands/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/bin/cli.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/bin/firebase.js
+i  Running script: npm test
+
+> scholesa@0.1.0 test
+> jest --runInBand --passWithNoTests
+
+No tests found, exiting with code 0
+✔  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  extensions: Stopping Extensions Emulator
+i  functions: Stopping Functions Emulator
+i  firestore: Stopping Firestore Emulator
+i  auth: Stopping Authentication Emulator
+i  storage: Stopping Storage Emulator
+i  eventarc: Stopping Eventarc Emulator
+i  tasks: Stopping Cloud Tasks Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

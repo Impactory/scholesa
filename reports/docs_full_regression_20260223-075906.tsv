@@ -21,3 +21,4 @@ PASS	flutter-build-web-release-no-wasm-dry-run	/Users/simonluke/dev/scholesa/app
 PASS	flutter-build-web-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build web --release	reports/docs_full_regression_20260223-075906_logs/20_flutter_build_web.log
 FAIL(124)	flutter-build-macos-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build macos --release --no-tree-shake-icons	reports/docs_full_regression_20260223-075906_logs/21_flutter_build_macos.log
 FAIL(124)	flutter-build-ios-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build ios --release --no-codesign --no-tree-shake-icons	reports/docs_full_regression_20260223-075906_logs/22_flutter_build_ios.log
+FAIL(1)	flutter-build-apk-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build apk --release	reports/docs_full_regression_20260223-075906_logs/23_flutter_build_apk.log

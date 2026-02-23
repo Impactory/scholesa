@@ -1,0 +1,69 @@
+i  emulators: Starting emulators: auth, functions, firestore, storage, extensions
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⬢  extensions: Unable to look up project number for studio-3328096157-e3f79.
+ If this is a real project, ensure that you are logged in and have access to it.
+ If this is a fake project, please use a project ID starting with 'demo-' to skip production calls.
+ Continuing with a fake project number - secrets and other features that require production access may behave unexpectedly.
+⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, database, hosting, pubsub, dataconnect
+⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect.
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  ui: downloading ui-v1.15.0.zip...
+
+i  functions: Watching "/Users/simonluke/dev/scholesa/functions" for Cloud Functions...
+⚠  functions: Couldn't find firebase-functions package in your source code. Have you run 'npm install'?
+⚠  functions: Your requested "node" version "24" doesn't match your global version "22". Using node@22 from host.
+i  functions: Loaded environment variables from .env.studio-3328096157-e3f79.
+⬢  functions: Failed to load function definition from source: Error: Cannot find module 'firebase-functions'
+Require stack:
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/runtimes/node/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/runtimes/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/deploy/functions/prepare.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/functionsEmulatorShared.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/functionsEmulator.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/emulator/controller.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/commands/emulators-start.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/commands/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/index.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/bin/cli.js
+- /Users/simonluke/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/bin/firebase.js
+
+[90m┌─────────────────────────────────────────────────────────────┐[39m
+[90m│[39m ✔  All emulators ready! It is now safe to connect your app. [90m│[39m
+[90m│[39m i  View Emulator UI at http://127.0.0.1:4000/               [90m│[39m
+[90m└─────────────────────────────────────────────────────────────┘[39m
+
+[90m┌────────────────[39m[90m┬────────────────[39m[90m┬──────────────────────────────────┐[39m
+[90m│[39m[33m Emulator       [39m[90m│[39m[33m Host:Port      [39m[90m│[39m[33m View in Emulator UI              [39m[90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼──────────────────────────────────┤[39m
+[90m│[39m Authentication [90m│[39m 127.0.0.1:9099 [90m│[39m http://127.0.0.1:4000/auth       [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼──────────────────────────────────┤[39m
+[90m│[39m Functions      [90m│[39m 127.0.0.1:5001 [90m│[39m http://127.0.0.1:4000/functions  [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼──────────────────────────────────┤[39m
+[90m│[39m Firestore      [90m│[39m 127.0.0.1:8080 [90m│[39m http://127.0.0.1:4000/firestore  [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼──────────────────────────────────┤[39m
+[90m│[39m Storage        [90m│[39m 127.0.0.1:9199 [90m│[39m http://127.0.0.1:4000/storage    [90m│[39m
+[90m├────────────────[39m[90m┼────────────────[39m[90m┼──────────────────────────────────┤[39m
+[90m│[39m Extensions     [90m│[39m 127.0.0.1:5001 [90m│[39m http://127.0.0.1:4000/extensions [90m│[39m
+[90m└────────────────[39m[90m┴────────────────[39m[90m┴──────────────────────────────────┘[39m
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+[90m┌─────────────────────────[39m[90m┬───────────────[39m[90m┬─────────────────────┐[39m
+[90m│[39m[33m Extension Instance Name [39m[90m│[39m[33m Extension Ref [39m[90m│[39m[33m View in Emulator UI [39m[90m│[39m
+[90m└─────────────────────────[39m[90m┴───────────────[39m[90m┴─────────────────────┘[39m
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+
+[TIMEOUT after 90s]

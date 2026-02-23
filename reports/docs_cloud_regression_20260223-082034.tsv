@@ -1,0 +1,13 @@
+status	step	command	log
+FAIL(1)	firebase-functions-list	npx --yes firebase-tools functions:list --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/01_functions_list.log
+FAIL(2)	firebase-hosting-channel-list	npx --yes firebase-tools hosting:channel:list --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/02_hosting_channel_list.log
+FAIL(2)	firebase-hosting-channel-deploy	npx --yes firebase-tools hosting:channel:deploy regression-smoke --project studio-3328096157-e3f79 --expires 7d	reports/docs_cloud_regression_20260223-082034_logs/03_hosting_channel_deploy.log
+FAIL(1)	firebase-deploy-firestore-rules	npx --yes firebase-tools deploy --only firestore:rules --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/04_deploy_firestore_rules.log
+FAIL(1)	firebase-deploy-firestore-indexes	npx --yes firebase-tools deploy --only firestore:indexes --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/05_deploy_firestore_indexes.log
+FAIL(1)	firebase-deploy-functions	npx --yes firebase-tools deploy --only functions --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/06_deploy_functions.log
+PASS	firebase-emulators-exec-npm-test	npx --yes firebase-tools emulators:exec --project studio-3328096157-e3f79 "npm test"	reports/docs_cloud_regression_20260223-082034_logs/07_emulators_exec_npm_test.log
+FAIL(1)	firebase-functions-secret-get-stripe	npx --yes firebase-tools functions:secrets:get STRIPE_SECRET_KEY --project studio-3328096157-e3f79	reports/docs_cloud_regression_20260223-082034_logs/08_functions_secret_get.log
+FAIL(1)	firebase-functions-log-stripe	npx --yes firebase-tools functions:log --only stripeWebhook --project studio-3328096157-e3f79 --lines 20	reports/docs_cloud_regression_20260223-082034_logs/09_functions_log_stripe.log
+PASS	curl-healthcheck-function	curl -sS https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck	reports/docs_cloud_regression_20260223-082034_logs/10_curl_healthcheck.log
+PASS	curl-trigger-telemetry-aggregation	curl -sS https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/triggerTelemetryAggregation	reports/docs_cloud_regression_20260223-082034_logs/11_curl_trigger_telemetry.log
+PASS	gcloud-firestore-describe	gcloud firestore databases describe --project=studio-3328096157-e3f79 --database='(default)' --format=json	reports/docs_cloud_regression_20260223-082034_logs/12_gcloud_firestore_describe.log

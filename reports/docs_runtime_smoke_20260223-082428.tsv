@@ -1,0 +1,5 @@
+status	step	command	log
+TIMEOUT(60s)	npm-dev-smoke	npm run dev	reports/docs_runtime_smoke_20260223-082428_logs/01_npm-dev-smoke.log
+FAIL(1)	npm-start-smoke	npm run start	reports/docs_runtime_smoke_20260223-082428_logs/02_npm-start-smoke.log
+FAIL(1)	docker-build-smoke	npm run build && docker build .	reports/docs_runtime_smoke_20260223-082428_logs/03_docker-build-smoke.log
+TIMEOUT(90s)	firebase-emulators-start-smoke	npx --yes firebase-tools emulators:start --project studio-3328096157-e3f79	reports/docs_runtime_smoke_20260223-082428_logs/04_firebase-emulators-start-smoke.log
