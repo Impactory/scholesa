@@ -8,7 +8,11 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const ts = new Date().toISOString();
 let gitSha = "unknown";
-try { gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(); } catch {}
+try {
+  gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+} catch {
+  gitSha = "unknown";
+}
 
 const EXCLUDE_DIRS = new Set([
   "node_modules",".git","dist","build",".next",".firebase","coverage",

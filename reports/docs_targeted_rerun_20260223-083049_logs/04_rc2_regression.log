@@ -1,0 +1,18 @@
+
+> scholesa@0.1.0 rc2:regression
+> bash ./scripts/rc2_regression.sh
+
+
+============================================================
+RC2 STEP: Web lint
+============================================================
+
+> scholesa@0.1.0 lint
+> eslint .
+
+
+/Users/simonluke/dev/scholesa/scripts/compliance/ai_policy_gates.mjs
+  13:10  error  '_err' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (1 error, 0 warnings)
+

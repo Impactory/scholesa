@@ -35,6 +35,9 @@ const POLICY_FILE_ALLOWLIST = new Set([
 
 function includeByName(fullPath, relativePath) {
   if (POLICY_FILE_ALLOWLIST.has(relativePath)) return false;
+  // Compliance scanners intentionally contain banned markers for detection logic.
+  if (relativePath.startsWith('scripts/compliance/')) return false;
+  if (relativePath === 'scripts/scan.sh') return false;
   const base = path.basename(fullPath);
   if (base.startsWith('.env')) return true;
   if (base === 'Dockerfile' || base === 'dockerfile') return true;

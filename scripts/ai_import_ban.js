@@ -26,6 +26,9 @@ const POLICY_FILE_ALLOWLIST = new Set([
 function shouldInclude(_fullPath, relativePath) {
   if (relativePath.startsWith('docs/')) return false;
   if (relativePath.startsWith('audit-pack/')) return false;
+  // Compliance scanners intentionally include banned markers as policy fixtures.
+  if (relativePath.startsWith('scripts/compliance/')) return false;
+  if (relativePath === 'scripts/scan.sh') return false;
   if (relativePath.startsWith('scripts/ai_')) return false;
   if (relativePath === 'src/lib/ai/egressGuard.ts') return false;
   if (relativePath === 'functions/src/security/egressGuard.ts') return false;

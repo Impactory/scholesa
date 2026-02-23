@@ -1,0 +1,7 @@
+status	step	command	log
+FAIL(1)	npm-lint	npm run lint	reports/docs_targeted_rerun_20260223-083049_logs/01_npm_lint.log
+PASS	ai-internal-all	npm run ai:internal-only:all	reports/docs_targeted_rerun_20260223-083049_logs/02_ai_internal.log
+PASS	vibe-all	npm run vibe:all	reports/docs_targeted_rerun_20260223-083049_logs/03_vibe_all.log
+FAIL(1)	rc2-regression	npm run rc2:regression	reports/docs_targeted_rerun_20260223-083049_logs/04_rc2_regression.log
+PASS	qa-telemetry-smoke-with-service-account	GOOGLE_APPLICATION_CREDENTIALS=firebase-service-account.json FIREBASE_PROJECT_ID=studio-3328096157-e3f79 npm run qa:telemetry-smoke	reports/docs_targeted_rerun_20260223-083049_logs/05_qa_telemetry_smoke_sa.log
+FAIL(1)	flutter-test	cd apps/empire_flutter/app && flutter test	reports/docs_targeted_rerun_20260223-083049_logs/06_flutter_test.log
