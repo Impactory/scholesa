@@ -14,7 +14,7 @@ const {
 const BANNED_MARKERS = [
   { label: 'exportForTraining symbol', regex: /\bexportForTraining\b/i },
   { label: 'training dataset phrase', regex: /\btraining dataset\b/i },
-  { label: 'model training phrase', regex: /\bmodel training\b/i },
+  { label: 'for training pipeline phrase', regex: /\bfor (model )?training\b/i },
   { label: 'fine-tune phrase', regex: /\bfine[- ]?tune\b/i },
 ];
 

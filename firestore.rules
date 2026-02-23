@@ -33,8 +33,11 @@ service cloud.firestore {
       return hasRole('admin') || isHQ();
     }
 
-    function getUserSiteId() {
-      return isAuthenticated() ? getUserData().siteId : null;
+    function userHasSite(siteId) {
+      return isAuthenticated() && (
+        (getUserData().keys().hasAny(['siteId']) && getUserData().siteId == siteId) ||
+        (getUserData().keys().hasAny(['siteIds']) && getUserData().siteIds.hasAny([siteId]))
+      );
     }
 
     function hasSiteField(data) {
@@ -42,11 +45,11 @@ service cloud.firestore {
     }
 
     function isSiteScopedRead(data) {
-      return !hasSiteField(data) || isHQ() || data.siteId == getUserSiteId();
+      return hasSiteField(data) ? (isHQ() || userHasSite(data.siteId)) : true;
     }
 
     function isSiteScopedWrite(data) {
-      return !hasSiteField(data) || isHQ() || data.siteId == getUserSiteId();
+      return hasSiteField(data) ? (isHQ() || userHasSite(data.siteId)) : true;
     }
 
     // --- Collection Rules ---

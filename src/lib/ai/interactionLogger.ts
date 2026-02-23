@@ -8,7 +8,7 @@
  * - Outcomes (student revised? checkpoint progression? time to mastery?)
  * - Teacher feedback ("was this helpful?")
  * 
- * COPPA policy: analytics-only. Student data must not be exported for model training.
+ * COPPA policy: analytics-only. Student data must not be exported to any training pipeline.
  */
 
 import {
