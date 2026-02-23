@@ -1,0 +1,9 @@
+$ npm test
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+
+> scholesa@0.1.0 test
+> jest --runInBand --passWithNoTests
+
+No tests found, exiting with code 0

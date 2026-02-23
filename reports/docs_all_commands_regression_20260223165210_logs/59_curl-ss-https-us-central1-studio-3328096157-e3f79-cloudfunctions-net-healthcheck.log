@@ -1,0 +1,5 @@
+$ curl -sS "https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck"
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+curl: (6) Could not resolve host: us-central1-studio-3328096157-e3f79.cloudfunctions.net

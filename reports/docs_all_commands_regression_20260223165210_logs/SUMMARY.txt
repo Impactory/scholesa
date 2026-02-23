@@ -1,0 +1,7 @@
+PASS=10
+FAIL=45
+TIMEOUT=0
+INVALID=8
+TOTAL=63
+REPORT=/Users/simonluke/dev/scholesa/reports/docs_all_commands_regression_20260223165210.tsv
+LOG_DIR=/Users/simonluke/dev/scholesa/reports/docs_all_commands_regression_20260223165210_logs
