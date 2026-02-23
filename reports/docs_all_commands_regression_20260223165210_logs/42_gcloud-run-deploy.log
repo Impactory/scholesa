@@ -1,0 +1,7 @@
+$ gcloud run deploy
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+WARNING: Could not setup log file in /Users/simonluke/.config/gcloud/logs, (PermissionError: [Errno 1] Operation not permitted: '/Users/simonluke/.config/gcloud/logs/2026.02.23/09.12.33.336537.log'.
+The configuration directory may not be writable. To learn more, see https://cloud.google.com/sdk/docs/configurations#creating_a_configuration
+ERROR: (gcloud.run.deploy) Missing required argument [--image]: Requires a container image to deploy (e.g. `gcr.io/cloudrun/hello:latest`) if no build source is provided.

@@ -1,0 +1,5 @@
+$ dart format . --set-exit-if-changed
+cwd: /Users/simonluke/dev/scholesa/apps/empire_flutter/app
+timeout_seconds: 240
+
+Formatted 135 files (0 changed) in 1.23 seconds.

@@ -1,0 +1,9 @@
+$ npm run vibe:all
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+
+> scholesa@0.1.0 vibe:all
+> node scripts/vibe_all.js
+
+PASS vibe-all-report -> /Users/simonluke/dev/scholesa/audit-pack/reports/vibe-all-report.json

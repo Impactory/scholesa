@@ -1,0 +1,114 @@
+$ npm run rc2:regression
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 1800
+
+
+> scholesa@0.1.0 rc2:regression
+> bash ./scripts/rc2_regression.sh
+
+
+============================================================
+RC2 STEP: Web lint
+============================================================
+
+> scholesa@0.1.0 lint
+> eslint .
+
+
+============================================================
+RC2 STEP: Web build
+============================================================
+
+> scholesa@0.1.0 prebuild
+> npm run icons:sync
+
+
+> scholesa@0.1.0 icons:sync
+> bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh
+
+[icons] Normalizing brand assets to transparent backgrounds and required formats
+Brand icon/logo assets converted with transparent background and regenerated.
+[icons] Syncing Android launcher icons from assets/icons/android
+[icons] Syncing Android native splash logo from transparent source
+[icons] Syncing iOS app icons from assets/icons/ios
+[icons] Syncing macOS app icons from assets/icons/ios
+[icons] Syncing iOS launch image from assets/icons/ios
+[icons] Generating Windows app_icon.ico from assets/icons/windows11
+[icons] Syncing Flutter web PNG icons from assets/icons/android
+[icons] Syncing Next.js public PNG icons from assets/icons/android
+[icons] Platform icon sync complete.
+
+> scholesa@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+> [PWA] Compile server
+> [PWA] Compile server
+> [PWA] Compile client (static)
+> [PWA] Auto register service worker is disabled, please call following code in componentDidMount callback or useEffect hook
+> [PWA]   window.workbox.register()
+> [PWA] Service worker: /Users/simonluke/dev/scholesa/public/sw.js
+> [PWA]   url: /sw.js
+> [PWA]   scope: /
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+Firebase Admin: Missing credentials, some features may not work
+   Generating static pages (0/5) ...
+   Generating static pages (1/5) 
+   Generating static pages (2/5) 
+Firebase client env vars are missing; using safe server-side placeholder config for build/runtime.
+   Generating static pages (3/5) 
+ ✓ Generating static pages (5/5)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /_not-found                          161 B          87.5 kB
+├ ƒ /[locale]                            763 B           253 kB
+├ ƒ /[locale]/dashboard                  631 B           242 kB
+├ ƒ /[locale]/educator                   1.91 kB         254 kB
+├ ƒ /[locale]/educator/analytics         5.61 kB         253 kB
+├ ƒ /[locale]/hq                         2.05 kB         254 kB
+├ ƒ /[locale]/learner                    1.78 kB         243 kB
+├ ƒ /[locale]/learner/profile            6.33 kB         254 kB
+├ ƒ /[locale]/login                      1.39 kB         245 kB
+├ ƒ /[locale]/parent                     1.95 kB         254 kB
+├ ƒ /[locale]/partner                    1.98 kB         254 kB
+├ ƒ /[locale]/register                   1.88 kB         245 kB
+├ ƒ /[locale]/site                       1.75 kB         254 kB
+├ ƒ /api/auth/session-login              0 B                0 B
+└ ƒ /api/auth/session-logout             0 B                0 B
++ First Load JS shared by all            87.3 kB
+  ├ chunks/117-deb4c173d4ecfeec.js       31.7 kB
+  ├ chunks/fd9d1056-6922f449a204c2cc.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             25.9 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+============================================================
+RC2 STEP: Jest rules integration
+============================================================
+
+> scholesa@0.1.0 test:integration:rules
+> npx --yes firebase-tools emulators:exec --only firestore "npx jest --runInBand --config jest.rules.config.js"
+
+npm error code ENOTFOUND
+npm error syscall getaddrinfo
+npm error errno ENOTFOUND
+npm error network request to https://registry.npmjs.org/firebase-tools failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+npm error network This is a problem related to network connectivity.
+npm error network In most cases you are behind a proxy or have bad network settings.
+npm error network
+npm error network If you are behind a proxy, please make sure that the
+npm error network 'proxy' config is set properly.  See: 'npm help config'
+npm error Log files were not written due to an error writing to the directory: /Users/simonluke/.npm/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal

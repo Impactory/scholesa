@@ -1,0 +1,5 @@
+$ node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+Voice live runner failed: fetch failed
