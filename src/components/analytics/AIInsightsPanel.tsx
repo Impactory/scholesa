@@ -67,13 +67,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'at-risk-alert',
         type: 'alert',
         priority: 'high',
-        title: `${atRiskLearners.length} Learner${atRiskLearners.length > 1 ? 's' : ''} At Risk`,
-        description: 'These learners show low engagement (< 30%) and may need immediate attention.',
+        title: t('aiInsights.atRisk.title', { count: atRiskLearners.length }),
+        description: t('aiInsights.atRisk.description'),
         affectedLearners: atRiskLearners.map(s => s.learnerName),
         actionItems: [
-          'Schedule one-on-one check-ins',
-          'Review their mission history for blockers',
-          'Adjust learning path to match interests'
+          t('aiInsights.atRisk.actions.checkIn'),
+          t('aiInsights.atRisk.actions.reviewHistory'),
+          t('aiInsights.atRisk.actions.adjustPath'),
         ]
       });
     }
@@ -85,13 +85,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'low-autonomy',
         type: 'recommendation',
         priority: 'medium',
-        title: 'Learners Need More Choice',
-        description: `${lowAutonomyLearners.length} learners show low autonomy scores. They may benefit from more self-directed learning.`,
+        title: t('aiInsights.lowAutonomy.title'),
+        description: t('aiInsights.lowAutonomy.description', { count: lowAutonomyLearners.length }),
         affectedLearners: lowAutonomyLearners.map(s => s.learnerName),
         actionItems: [
-          'Offer mission choice boards',
-          'Encourage goal-setting activities',
-          'Provide interest-based project options'
+          t('aiInsights.lowAutonomy.actions.choiceBoards'),
+          t('aiInsights.lowAutonomy.actions.goalSetting'),
+          t('aiInsights.lowAutonomy.actions.projectOptions'),
         ]
       });
     }
@@ -103,13 +103,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'low-competence',
         type: 'recommendation',
         priority: 'medium',
-        title: 'Skill Mastery Support Needed',
-        description: `${lowCompetenceLearners.length} learners need more skill-building opportunities.`,
+        title: t('aiInsights.lowCompetence.title'),
+        description: t('aiInsights.lowCompetence.description', { count: lowCompetenceLearners.length }),
         affectedLearners: lowCompetenceLearners.map(s => s.learnerName),
         actionItems: [
-          'Provide scaffolded practice activities',
-          'Celebrate small wins with badges',
-          'Offer peer mentoring opportunities'
+          t('aiInsights.lowCompetence.actions.scaffoldedPractice'),
+          t('aiInsights.lowCompetence.actions.smallWins'),
+          t('aiInsights.lowCompetence.actions.peerMentoring'),
         ]
       });
     }
@@ -121,13 +121,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'low-belonging',
         type: 'recommendation',
         priority: 'medium',
-        title: 'Community Connection Needed',
-        description: `${lowBelongingLearners.length} learners show low belonging scores. They may feel isolated.`,
+        title: t('aiInsights.lowBelonging.title'),
+        description: t('aiInsights.lowBelonging.description', { count: lowBelongingLearners.length }),
         affectedLearners: lowBelongingLearners.map(s => s.learnerName),
         actionItems: [
-          'Facilitate peer collaboration activities',
-          'Encourage showcase submissions',
-          'Create recognition opportunities'
+          t('aiInsights.lowBelonging.actions.peerCollaboration'),
+          t('aiInsights.lowBelonging.actions.showcase'),
+          t('aiInsights.lowBelonging.actions.recognition'),
         ]
       });
     }
@@ -139,13 +139,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'thriving-learners',
         type: 'trend',
         priority: 'low',
-        title: `${thrivingLearners.length} Learner${thrivingLearners.length > 1 ? 's' : ''} Thriving`,
-        description: 'These learners show exceptional engagement across all SDT dimensions.',
+        title: t('aiInsights.thriving.title', { count: thrivingLearners.length }),
+        description: t('aiInsights.thriving.description'),
         affectedLearners: thrivingLearners.map(s => s.learnerName),
         actionItems: [
-          'Offer advanced challenges',
-          'Invite them to mentor struggling peers',
-          'Showcase their work as examples'
+          t('aiInsights.thriving.actions.advancedChallenges'),
+          t('aiInsights.thriving.actions.mentorPeers'),
+          t('aiInsights.thriving.actions.showcaseWork'),
         ]
       });
     }
@@ -157,12 +157,12 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'class-engagement-low',
         type: 'alert',
         priority: 'high',
-        title: 'Class Engagement Below Target',
-        description: `Average class engagement is ${Math.round(avgEngagement)}%. Consider adjusting curriculum or pacing.`,
+        title: t('aiInsights.classLow.title'),
+        description: t('aiInsights.classLow.description', { score: Math.round(avgEngagement) }),
         actionItems: [
-          'Survey learners about interests and challenges',
-          'Introduce more variety in mission types',
-          'Increase opportunities for student choice'
+          t('aiInsights.classLow.actions.survey'),
+          t('aiInsights.classLow.actions.variety'),
+          t('aiInsights.classLow.actions.choice'),
         ]
       });
     } else if (avgEngagement > 70) {
@@ -170,12 +170,12 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'class-engagement-high',
         type: 'trend',
         priority: 'low',
-        title: 'Strong Class Engagement',
-        description: `Class is highly engaged (${Math.round(avgEngagement)}%). Keep up the great work!`,
+        title: t('aiInsights.classHigh.title'),
+        description: t('aiInsights.classHigh.description', { score: Math.round(avgEngagement) }),
         actionItems: [
-          'Document successful strategies',
-          'Share best practices with other educators',
-          'Continue current approach'
+          t('aiInsights.classHigh.actions.document'),
+          t('aiInsights.classHigh.actions.share'),
+          t('aiInsights.classHigh.actions.continue'),
         ]
       });
     }
@@ -189,13 +189,13 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         id: 'inactive-students',
         type: 'alert',
         priority: 'high',
-        title: `${inactiveStudents.length} Inactive Student${inactiveStudents.length > 1 ? 's' : ''}`,
-        description: 'These students have not logged in for over a week.',
+        title: t('aiInsights.inactive.title', { count: inactiveStudents.length }),
+        description: t('aiInsights.inactive.description'),
         affectedLearners: inactiveStudents.map(s => s.learnerName),
         actionItems: [
-          'Send re-engagement email or message',
-          'Contact parents/guardians',
-          'Investigate potential barriers to access'
+          t('aiInsights.inactive.actions.reengage'),
+          t('aiInsights.inactive.actions.contactParents'),
+          t('aiInsights.inactive.actions.investigateBarriers'),
         ]
       });
     }
