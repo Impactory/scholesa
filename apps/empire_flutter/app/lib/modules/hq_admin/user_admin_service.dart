@@ -45,8 +45,9 @@ class UserAdminService extends ChangeNotifier {
       if (_statusFilter != null && user.status != _statusFilter) return false;
 
       // Site filter
-      if (_siteFilter != null && !user.siteIds.contains(_siteFilter))
+      if (_siteFilter != null && !user.siteIds.contains(_siteFilter)) {
         return false;
+      }
 
       // Search query
       if (_searchQuery.isNotEmpty) {
