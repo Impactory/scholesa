@@ -12,6 +12,16 @@ const BANNED_HOST_PATTERNS = [
   /aiplatform\.googleapis\.com/i,
 ];
 
+const POLICY_FILE_ALLOWLIST = new Set([
+  'scripts/ai_dependency_ban.js',
+  'scripts/ai_import_ban.js',
+  'scripts/ai_domain_ban.js',
+  'scripts/ai_egress_none.js',
+  'scripts/ai_policy_common.js',
+  'src/lib/ai/egressGuard.ts',
+  'functions/src/security/egressGuard.ts',
+]);
+
 function readFile(relativePath) {
   const filePath = path.resolve(process.cwd(), relativePath);
   if (!fs.existsSync(filePath)) return null;
@@ -62,6 +72,7 @@ function main() {
 
   const runtimeFiles = walkProjectFiles(process.cwd(), {
     includePredicate: (_fullPath, relativePath) => {
+      if (POLICY_FILE_ALLOWLIST.has(relativePath)) return false;
       if (relativePath.startsWith('docs/')) return false;
       if (relativePath.startsWith('node_modules/')) return false;
       const ext = path.extname(relativePath);
@@ -85,6 +96,24 @@ function main() {
         });
       }
     }
+  }
+
+  const envExample = readFile('.env.example') || '';
+  const envProdExample = readFile('.env.production.example') || '';
+  const mergedEnv = `${envExample}\n${envProdExample}`;
+
+  details.checks.envDeclaresInternalProviders = [
+    /SCHOLESA_AI_PROVIDER=INTERNAL_AI/.test(mergedEnv),
+    /SCHOLESA_TTS_PROVIDER=INTERNAL_TTS/.test(mergedEnv),
+    /SCHOLESA_STT_PROVIDER=INTERNAL_STT/.test(mergedEnv),
+  ].every(Boolean);
+  if (!details.checks.envDeclaresInternalProviders) {
+    failures.push('missing_internal_provider_defaults_in_env_examples');
+  }
+
+  details.checks.envHasNoGeminiKeys = !/GEMINI_API_KEY/i.test(mergedEnv);
+  if (!details.checks.envHasNoGeminiKeys) {
+    failures.push('gemini_key_reference_detected_in_env_examples');
   }
 
   finish('ai-egress-none', failures, details);

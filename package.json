@@ -49,7 +49,7 @@
     "ai:import-ban": "node scripts/ai_import_ban.js",
     "ai:domain-ban": "node scripts/ai_domain_ban.js",
     "ai:egress-none": "node scripts/ai_egress_none.js",
-    "ai:no-gemini:all": "npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none",
+    "ai:internal-only:all": "npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none",
     "vibe:all": "node scripts/vibe_all.js",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",
     "audit:coppa:no-ads": "bash ./scripts/coppa_no_ad_audit.sh",

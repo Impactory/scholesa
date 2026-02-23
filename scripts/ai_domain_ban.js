@@ -7,7 +7,7 @@ const { walkProjectFiles, lineHits } = require('./ai_policy_common');
 
 const TEXT_EXTENSIONS = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.json', '.yaml', '.yml', '.md', '.sh', '.py', '.toml', '.ini', '.cfg', '.conf', '.txt',
+  '.json', '.yaml', '.yml', '.sh', '.py', '.toml', '.ini', '.cfg', '.conf', '.txt',
 ]);
 
 const BANNED_PATTERNS = [

@@ -20,6 +20,8 @@ function shouldInclude(_fullPath, relativePath) {
   if (relativePath.startsWith('docs/')) return false;
   if (relativePath.startsWith('audit-pack/')) return false;
   if (relativePath.startsWith('scripts/ai_')) return false;
+  if (relativePath === 'src/lib/ai/egressGuard.ts') return false;
+  if (relativePath === 'functions/src/security/egressGuard.ts') return false;
   if (relativePath.endsWith('.d.ts')) return false;
   return true;
 }

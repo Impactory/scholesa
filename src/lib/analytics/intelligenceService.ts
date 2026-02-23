@@ -194,7 +194,7 @@ export class IntelligenceService {
       recommendations.push('Reference one recent activity and ask the learner to transfer that strategy to the next checkpoint.');
     }
 
-    const dedupedRecommendations = [...new Set(recommendations)];
+    const dedupedRecommendations = Array.from(new Set(recommendations));
     const finalRecommendations = (
       dedupedRecommendations.length > 0
         ? dedupedRecommendations
