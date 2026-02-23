@@ -1,6 +1,6 @@
-$ npx --yes firebase-tools firestore:indexes --project studio-3328096157-e3f79
+$ npx --yes firebase-tools emulators:start --project studio-3328096157-e3f79
 cwd: /Users/simonluke/dev/scholesa
-timeout_seconds: 240
+timeout_seconds: 180
 
 npm error code ENOTFOUND
 npm error syscall getaddrinfo
