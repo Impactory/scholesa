@@ -1,545 +1,656 @@
-# SDT + Motivational Engine Implementation Summary
+# Scholesa Motivation Engine - SDT Implementation
 
-## 🎯 Overview
+## Overview
 
-Successfully implemented a comprehensive Self-Determination Theory (SDT) framework with AI-powered motivational engine and full telemetry tracking throughout the Scholesa platform.
+A comprehensive Self-Determination Theory (SDT) based motivation system for K-9 learners with age-appropriate feature gating and telemetry.
 
-**Implementation Date**: December 26, 2024  
-**Status**: ✅ Complete - Ready for Deployment  
-**Lines of Code**: ~4,500 new TypeScript code
+**Core Equation**: Motivation = Autonomy + Competence + Belonging
 
----
+**Latest Updates** (Dec 2025):
+- ✅ AI Coach Popup (speech + text input, age-aware)
+- ✅ GradeBandPolicy system (K-3, 4-6, 7-9, 10-12 feature gating)
+- ✅ Telemetry system with real-time insights
+- ✅ Phase A UI components complete
 
-## 📦 What Was Built
+## What's Been Built
 
-### Phase 1: Infrastructure (✅ Complete)
+### 1. Schema & Types ✅
 
-#### 1.1 Telemetry Service
-**File**: [`src/lib/telemetry/telemetryService.ts`](../src/lib/telemetry/telemetryService.ts) (350 lines)
+**File**: [src/types/schema.ts](src/types/schema.ts)
 
-**Features**:
-- 8 telemetry categories: autonomy, competence, belonging, reflection, ai_interaction, navigation, performance, engagement
-- 50+ event types
-- Real-time event tracking to Firestore
-- SDT profile calculation (autonomy %, competence %, belonging %)
-- Batch operations for performance
+Added 400+ lines of SDT-specific types:
 
-**Firestore Collection**: `telemetryEvents`
-- Fields: `userId`, `siteId`, `category`, `eventName`, `metadata`, `timestamp`
-- Security: Users can write their own events; educators/HQ can read all
+**Autonomy Types**:
+- `DifficultyLevel` - Bronze/Silver/Gold challenge levels
+- `MissionVariant` - Different paths for same learning goal
+- `WeeklyGoal` - Student-set goals
+- `LearnerInterestProfile` - Hobbies/themes for mission skinning
 
-#### 1.2 Motivation Engine
-**Files**:
-- [`src/lib/motivation/motivationEngine.ts`](../src/lib/motivation/motivationEngine.ts) (400 lines)
-- [`src/lib/motivation/autonomyEngine.ts`](../src/lib/motivation/autonomyEngine.ts) (200 lines)
-- [`src/lib/motivation/competenceEngine.ts`](../src/lib/motivation/competenceEngine.ts) (250 lines)
-- [`src/lib/motivation/belongingEngine.ts`](../src/lib/motivation/belongingEngine.ts) (220 lines)
+**Competence Types**:
+- `MicroSkill` - Granular skills with evidence requirements
+- `SkillEvidence` - Proof of mastery submissions
+- `Badge` + `BadgeAward` - Evidence-based recognition
+- `SprintSession` - 15-30min focused work blocks
+- `Checkpoint` - Fast feedback points
+- `MotivationAnalytics` - Growth metrics (not vanity metrics)
 
-**SDT Pillars**:
-1. **Autonomy**: Goal setting, interest profiles, mission selection
-2. **Competence**: Skill mastery tracking, checkpoints, badges
-3. **Belonging**: Peer recognition, showcase submissions, feedback
-4. **Reflection**: Metacognition prompts, effort/enjoyment ratings
+**Belonging Types**:
+- `Crew` - Stable teams (4-8 sessions)
+- `CrewRole` - Builder/Tester/Reporter rotation
+- `ShowcaseSubmission` - Share artifacts with crew/site
+- `RecognitionType` - Helper/Debugger/Communicator/Courage
+- `PeerFeedback` - Structured "I like/I wonder/Next step"
 
-**Firestore Collections** (10 new):
-- `learnerGoals` - Student learning goals
-- `interestProfiles` - Student interests and motivations
-- `skillMastery` - Skill progress tracking
-- `checkpointHistory` - Checkpoint attempts and results
-- `badgeAchievements` - Earned badges
-- `recognitionBadges` - Peer recognition
-- `showcaseSubmissions` - Student work submissions
-- `reflectionEntries` - Metacognitive reflections
-- `motivationProfiles` - Aggregated SDT profiles
-- `motivationNudges` - AI-generated nudges
+**Reflection Types**:
+- `ReflectionEntry` - "I'm proud of... Next I will..."
+- `AICoachInteraction` - Safe AI help with guardrails
+- `ParentSnapshot` - Weekly summary for families
 
-#### 1.3 Vector Store
-**File**: [`src/lib/telemetry/vectorStore.ts`](../src/lib/telemetry/vectorStore.ts) (180 lines)
+### 2. Data Layer ✅
 
-**Features**:
-- 384-dimensional vector embeddings
-- Cosine similarity search
-- Content types: skill, mission, artifact, reflection, coaching
-- Future: Integration with OpenAI Embeddings API for semantic search
+**File**: [src/lib/firestore/collections.ts](src/lib/firestore/collections.ts)
 
-**Firestore Collection**: `vectorDocuments`
-
-#### 1.4 React Hooks
-**File**: [`src/hooks/useTelemetry.ts`](../src/hooks/useTelemetry.ts) (450 lines)
-
-**Hooks Created**:
-- `usePageViewTracking()` - Track page navigation
-- `useAutonomyTracking()` - Track autonomy events (goals, interests)
-- `useCompetenceTracking()` - Track competence events (checkpoints, skills)
-- `useBelongingTracking()` - Track belonging events (recognition, showcase)
-- `useReflectionTracking()` - Track reflection events
-- `useAIInteractionTracking()` - Track AI coach interactions
-- `usePerformanceTracking()` - Track performance metrics
-
----
-
-### Phase 2: Component Integration (✅ Complete)
-
-#### 2.1 Enhanced Components
-
-**AI Coach Popup** ([src/components/ai/AICoachPopup.tsx](../src/components/ai/AICoachPopup.tsx))
-- Tracks coach interactions (open, message sent, close)
-- Logs AI response quality feedback
-
-**Student Dashboard** ([src/components/dashboard/StudentDashboard.tsx](../src/components/dashboard/StudentDashboard.tsx))
-- Page view tracking
-- Engagement metrics
-
-**Mission List** ([src/components/missions/MissionList.tsx](../src/components/missions/MissionList.tsx))
-- Tracks mission selections
-- Logs mission starts/completions
-
-**Reflection Form** ([src/components/reflection/ReflectionForm.tsx](../src/components/reflection/ReflectionForm.tsx))
-- Tracks reflection submissions
-- Logs effort/enjoyment ratings
-- Captures metacognitive insights
-
-#### 2.2 New Components
-
-**Educator Analytics Dashboard** ([src/components/analytics/AnalyticsDashboard.tsx](../src/components/analytics/AnalyticsDashboard.tsx)) - 450 lines
-- Real-time student engagement metrics
-- SDT score calculation (autonomy %, competence %, belonging %)
-- At-risk student alerts (engagement < 30%)
-- Weekly trends chart (SVG-based)
-- CSV export functionality
-- Time range filtering (week/month)
-
-**Student Motivation Profile** ([src/components/motivation/StudentMotivationProfile.tsx](../src/components/motivation/StudentMotivationProfile.tsx)) - 395 lines
-- Personal SDT scores
-- Skills mastered
-- Badges earned
-- Learning goals
-- Recognition received
-
-**Goal Setting Form** ([src/components/goals/GoalSettingForm.tsx](../src/components/goals/GoalSettingForm.tsx)) - 170 lines
-- Create learning goals
-- Set target dates
-- Track autonomy events
-- Writes to `learnerGoals` collection
-
-**Showcase Submission Form** ([src/components/showcase/ShowcaseSubmissionForm.tsx](../src/components/showcase/ShowcaseSubmissionForm.tsx)) - 230 lines
-- Submit work to public showcase
-- Visibility controls (site/program/public)
-- Artifact attachment support
-- Tracks belonging events
-
-**Peer Recognition Form** ([src/components/recognition/PeerRecognitionForm.tsx](../src/components/recognition/PeerRecognitionForm.tsx)) - 180 lines
-- Give recognition to peers
-- 6 recognition types (helpful, creative, perseverance, leadership, collaboration, curiosity)
-- Optional personal messages
-- Tracks belonging events
-
-**Checkpoint Submission** ([src/components/checkpoints/CheckpointSubmission.tsx](../src/components/checkpoints/CheckpointSubmission.tsx)) - 150 lines
-- Submit checkpoint attempts
-- Dynamic question generation
-- Simulated grading (70% pass rate for demo)
-- Tracks competence events
-
-**Showcase Gallery** ([src/components/showcase/ShowcaseGallery.tsx](../src/components/showcase/ShowcaseGallery.tsx)) - 280 lines
-- View student work submissions
-- Give peer recognition
-- Filter by visibility
-- Integrates submission + recognition forms
-
----
-
-### Phase 3: Cloud Functions (✅ Complete)
-
-**Telemetry Aggregator** ([functions/src/telemetryAggregator.ts](../functions/src/telemetryAggregator.ts)) - 280 lines
-
-**Functions**:
-1. `aggregateDailyTelemetry` - Runs at 2:00 AM UTC daily
-   - Aggregates yesterday's telemetry events
-   - Groups by userId + siteId
-   - Calculates engagement scores
-   - Writes to `telemetryAggregates` collection
-
-2. `aggregateWeeklyTelemetry` - Runs at 3:00 AM UTC every Monday
-   - Aggregates last 7 days of events
-   - Calculates weekly engagement trends
-
-3. `triggerTelemetryAggregation` - HTTP endpoint for manual triggers
-
-**Performance Impact**:
-- **Without aggregation**: ~100 Firestore reads per dashboard load
-- **With aggregation**: ~10 Firestore reads per dashboard load
-- **Savings**: 90% reduction in read costs
-
----
-
-### Phase 4: Database Configuration (✅ Complete)
-
-#### 4.1 Firestore Security Rules
-**File**: [firestore.rules](../firestore.rules)
-
-**New Rules** (10 collections):
-- Users can write their own telemetry events
-- Users can create their own goals, reflections, checkpoints
-- Educators can read all telemetry/analytics for their site
-- HQ can read all data
-- Showcase submissions require approval (status='pending' → 'approved')
-
-#### 4.2 Composite Indexes
-**File**: [firestore.indexes.json](../firestore.indexes.json)
-
-**New Indexes** (12 total):
-1. `telemetryEvents`: `userId` + `siteId` + `timestamp` (desc)
-2. `telemetryEvents`: `siteId` + `category` + `timestamp` (desc)
-3. `telemetryEvents`: `siteId` + `timestamp` (desc)
-4. `telemetryAggregates`: `siteId` + `date` (desc)
-5. `telemetryAggregates`: `userId` + `siteId` + `date` (desc)
-6. `learnerGoals`: `userId` + `siteId` + `status` + `createdAt` (desc)
-7. `checkpointHistory`: `userId` + `siteId` + `checkpointId` + `attemptedAt` (desc)
-8. `showcaseSubmissions`: `siteId` + `visibility` + `status` + `createdAt` (desc)
-9. `recognitionBadges`: `recipientId` + `siteId` + `createdAt` (desc)
-10. `reflectionEntries`: `userId` + `siteId` + `createdAt` (desc)
-11. `skillMastery`: `userId` + `siteId` + `level` + `updatedAt` (desc)
-12. `vectorDocuments`: `siteId` + `contentType` + `createdAt` (desc)
-
----
-
-## 📊 Data Flow Architecture
-
-### User Interaction → Telemetry → Analytics Pipeline
-
-```
-┌─────────────────┐
-│  User Action    │ (e.g., Set Goal, Complete Checkpoint)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ React Hook      │ (useAutonomyTracking, useCompetenceTracking)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ SDT Engine      │ (AutonomyEngine.setGoal(), CompetenceEngine.recordCheckpointPassed())
-└────────┬────────┘
-         │
-         ├──────────────────┐
-         ▼                  ▼
-┌─────────────────┐  ┌──────────────────┐
-│ Firestore Write │  │ Telemetry Event  │
-│ (learnerGoals)  │  │ (telemetryEvents)│
-└─────────────────┘  └──────────┬───────┘
-                                │
-                                ▼
-                     ┌──────────────────┐
-                     │ Cloud Function   │ (Daily aggregation @ 2:00 AM UTC)
-                     └──────────┬───────┘
-                                │
-                                ▼
-                     ┌──────────────────┐
-                     │ Aggregates       │ (telemetryAggregates)
-                     └──────────┬───────┘
-                                │
-                                ▼
-                     ┌──────────────────┐
-                     │ Analytics        │ (EducatorAnalyticsDashboard.tsx)
-                     │ Dashboard        │
-                     └──────────────────┘
+Added 16 new Firestore collections:
+```typescript
+microSkillsCollection
+missionVariantsCollection
+crewsCollection
+badgesCollection
+badgeAwardsCollection
+skillEvidenceCollection
+sprintSessionsCollection
+checkpointsCollection
+showcaseSubmissionsCollection
+reflectionEntriesCollection
+aiCoachInteractionsCollection
+weeklyGoalsCollection
+learnerInterestProfilesCollection
+parentSnapshotsCollection
+peerFeedbackCollection
+motivationAnalyticsCollection
 ```
 
+### 3. SDT Motivation Service ✅
+
+**File**: [src/lib/motivation/sdtMotivation.ts](src/lib/motivation/sdtMotivation.ts)
+
+Comprehensive TypeScript service (~400 lines) with three modules:
+
+#### A) Autonomy Module
+```typescript
+getMissionOptions()      // Bronze/Silver/Gold choices
+selectMission()          // Student picks their challenge
+updateInterests()        // Hobbies for mission skinning
+setWeeklyGoal()         // "Try stretch", "Give feedback", etc.
+```
+
+#### B) Competence Module
+```typescript
+submitSkillEvidence()    // Proof of micro-skill mastery
+getProgressInsights()    // Skills proven vs. in-progress
+submitCheckpoint()       // Fast feedback with explain-it-back
+```
+
+#### C) Belonging Module
+```typescript
+submitShowcase()         // Share work with crew/site
+giveRecognition()        // Celebrate peer strategies
+submitPeerFeedback()     // "I like / I wonder / Next step"
+```
+
+#### Reflection & AI Coach
+```typescript
+submitReflection()       // "Proud of... Next I will..."
+requestAICoach()         // Hint / Rubric Check / Debug
+submitExplainBack()      // Guardrail: student must explain
+```
+
+#### Dashboard Data
+```typescript
+getDashboardData()       // Today's mission, streak, notifications
+getLearningPath()        // Units → Missions → Skills progression
+```
+
+### 4. Phase A UI Components ✅
+
+All components in [src/components/sdt/](src/components/sdt/)
+
+#### Student Dashboard
+**File**: `StudentDashboard.tsx`
+
+- **Hero Card**: Today's mission with progress bar
+- **Quick Resume**: Continue where they left off  
+- **Streak Tracker**: Current/best streaks (attendance + effort)
+- **Next Checkpoint**: Due time and number
+- **Notifications**: Unread feedback + pending reflections
+- **Compact Version**: For mobile/sidebar
+
+#### Learning Path Map
+**File**: `LearningPathMap.tsx`
+
+- **Visual Journey**: Units → Missions → Micro-skills
+- **Locked/Unlocked States**: Evidence gates progress
+- **Next Mission Highlight**: What to do next
+- **Skills Proven**: Green badges for completed micro-skills
+- **Skills In Progress**: Blue indicators
+- **Expandable Units**: Click to see details
+- **Compact Version**: Current unit progress only
+
+#### AI Coach Screen
+**File**: `AICoachScreen.tsx`
+
+- **3 Safe Modes**:
+  1. **Give me a hint** - Nudge without answers
+  2. **Check my work vs rubric** - Gap analysis
+  3. **Help me debug** - Ask questions to guide thinking
+  
+- **Guardrails**:
+  - Explain-it-back required
+  - Version history checks
+  - No direct answers
+  
+- **Rubric Alignment**: Shows current vs. target level
+- **Next Steps**: Suggested actions
+- **Safety Reminders**: "AI helps you think, not do the work"
+
+#### Reflection Journal
+**File**: `ReflectionJournal.tsx`
+
+- **Core Prompts**:
+  - "I'm proud of..." (accomplishment)
+  - "Next I will..." (growth mindset)
+  
+- **Emoji Scales**:
+  - Effort: 😴 🙂 💪 🔥 🚀
+  - Enjoyment: 😐 🙂 😊 😄 🤩
+  
+- **Effective Strategy**: Optional meta-cognition
+- **Quick Version**: Post-sprint compact form
+- **Encouragement**: "Reflection helps your brain remember!"
+
+#### AI Coach Popup ✨ NEW
+**File**: `AICoachPopup.tsx`
+
+- **Floating Assistant**: Lower-right corner, minimizable
+- **Speech Input**: Microphone button for younger learners (Web Speech API)
+- **Text Input**: Typed questions for older students
+- **Age-Aware Modes**: Adapts based on GradeBandPolicy
+  - K-3: Hint only, teacher guidance required
+  - 4-6: Hint + Debug
+  - 7-9: Hint + Rubric Check + Debug
+  - 10-12: All modes including Critique
+- **Explain-Back Requirement**: Must demonstrate understanding
+- **Telemetry Integration**: Tracks usage patterns by age band
+- **Safety First**: "AI helps you think, not do the work"
+
+### 5. Age-Band Policy System ✨ NEW
+
+**File**: [src/lib/policies/gradeBandPolicy.ts](src/lib/policies/gradeBandPolicy.ts)
+
+Complete developmental appropriateness framework with 4 age bands:
+
+#### Grades K-3 (ages 5-9)
+```typescript
+{
+  sprint: { minMinutes: 5, maxMinutes: 10, suggestedCheckpoints: 1 },
+  aiCoach: { 
+    modes: ['hint'],
+    explainBackRequired: true,
+    requireTeacherGuidance: true 
+  },
+  social: {
+    peerFeedbackEnabled: false,
+    crewsEnabled: false,
+    publicLeaderboards: false
+  },
+  reflection: {
+    promptDepth: 'one_emoji_one_sentence',
+    requiredFrequency: 'every_session'
+  },
+  rubric: { maxLevels: 2, childFriendlyLanguage: true },
+  portfolio: { visibility: 'parent_educator_only' },
+  gamification: { badgeStyle: 'sticker' }
+}
+```
+
+#### Grades 4-6 (ages 10-12)
+- 15-30min sprints with 2 checkpoints
+- Hint + Debug AI modes
+- Structured peer feedback enabled
+- Crew system introduced
+- 3-level rubrics
+- Badge style: evidence-based
+
+#### Grades 7-9 (ages 13-15)
+- 20-45min sprints with 2-3 checkpoints
+- Hint + Rubric Check + Debug AI modes
+- Identity-focused reflection ("I am becoming...")
+- Student-owned portfolio
+- 3-level rubrics with criteria co-creation
+- Badge style: mastery-based
+
+#### Grades 10-12 (ages 16-18)
+- 30-90min sprints with 3-4 checkpoints
+- All AI modes including Critique
+- Professional badging (LinkedIn-style)
+- Exportable portfolio
+- 4-level rubrics
+- Real-world showcase events
+
+**Policy Enforcement**:
+```typescript
+getPolicyForGrade(grade: number)
+getAgeBandFromGrade(grade: number)
+isFeatureAvailable(grade: number, feature: string)
+getAICoachModesForGrade(grade: number)
+```
+
+### 6. Telemetry & Intelligence System ✨ NEW
+
+**File**: [src/lib/telemetry/sdtTelemetry.ts](src/lib/telemetry/sdtTelemetry.ts)
+
+Real-time behavioral tracking to understand motivation patterns:
+
+#### Event Tracking
+```typescript
+// Autonomy signals
+trackMissionSelected(learnerId, siteId, grade, missionId, chosenFromOptions)
+
+// Competence signals
+trackCheckpointAttempt(learnerId, siteId, grade, sessionId, missionId, passed, attemptNumber)
+
+// Belonging signals
+trackPeerFeedback(learnerId, siteId, grade, targetLearnerId, showcaseId)
+
+// Reflection signals
+trackReflection(learnerId, siteId, grade, sessionId, effortRating, enjoymentRating)
+
+// AI Coach signals
+trackAICoachUse(learnerId, siteId, grade, sessionId, mode, explainedBack)
+```
+
+#### Motivation Metrics
+```typescript
+{
+  // Autonomy
+  choiceDiversity: 0-1,           // How varied are choices
+  missionSwitchRate: number,      // Switches per session
+  goalAlignmentScore: 0-100,      // % aligned with goals
+  
+  // Competence
+  proofSubmissionRate: number,    // Submissions per week
+  firstTimeSuccessRate: 0-100,    // % passed without revision
+  revisionPersistence: number,    // Avg attempts before passing
+  skillMasteryRate: number,       // Skills proven per week
+  
+  // Belonging
+  feedbackGivingRate: number,     // Feedback given per week
+  recognitionReceived: number,    // Shout-outs received
+  crewParticipation: 0-100,       // % crew sessions attended
+  
+  // Reflection
+  reflectionConsistency: 0-100,   // % sessions with reflection
+  effortTrend: number,            // Change in effort rating
+  enjoymentTrend: number,         // Change in enjoyment rating
+  
+  // Time patterns
+  avgSessionDuration: number,     // Minutes
+  sessionCompletionRate: 0-100,   // % started sessions completed
+  optimalTimeOfDay: string        // When most engaged
+}
+```
+
+#### Motivation Insights
+```typescript
+{
+  type: 'strength' | 'opportunity' | 'nudge',
+  category: 'autonomy' | 'competence' | 'belonging',
+  message: string,
+  suggestedAction?: string,
+  confidence: 0-1
+}
+```
+
+**Example Insights**:
+- "High first-time success rate → Suggest harder missions"
+- "Struggles with checkpoints but persists → Offer AI Coach nudge"
+- "Not giving peer feedback → Prompt to review teammate's work"
+
+#### Collections
+- `telemetryEvents` - Raw event stream with timestamps
+- `motivationAnalytics` - Real-time aggregates (efficient reads)
+- Auto-increments on key events (mission selected, checkpoint passed, etc.)
+
+## The Core Loop (What Happens Every Session)
+
+```
+1. Hook (curiosity) → Mystery/demo/real problem (30-90s)
+2. Pick a Path (autonomy) → Choose Bronze/Silver/Gold
+3. Build Sprint (competence) → 15-30min with clear "done looks like..."
+4. Checkpoint (fast feedback) → Upload + explain-it-back
+5. Showcase (belonging) → Share artifact (photo/video/code)
+6. Reflection (identity) → "Proud of... Next I will..."
+```
+
+## Integration Examples
+
+### Learner Dashboard with AI Coach
+```tsx
+import { 
+  StudentDashboard, 
+  LearningPathMap, 
+  ReflectionJournal,
+  AICoachScreen,
+  AICoachPopup  // ✨ NEW
+} from '@/src/components/sdt';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+
+function LearnerHome({ siteId }) {
+  const { profile } = useAuthContext();
+  
+  return (
+    <div>
+      <StudentDashboard 
+        learnerId={profile.uid} 
+        siteId={siteId}
+        onStartMission={() => navigate('/missions')}
+        onResumeWork={() => navigate('/sprint')}
+      />
+      
+      <LearningPathMap
+        learnerId={profile.uid}
+        siteId={siteId}
+        onSelectMission={(id) => startMission(id)}
+      />
+      
+      {/* AI Coach Popup - always available */}
+      <AICoachPopup
+        learnerId={profile.uid}
+        siteId={siteId}
+        grade={profile.grade || 1}
+        sprintSessionId={currentSprint?.id}
+        missionId={currentMission?.id}
+      />
+    </div>
+  );
+}
+```
+
+### Telemetry Integration
+```tsx
+import { 
+  trackMissionSelected,
+  trackCheckpointAttempt,
+  trackReflection,
+  trackAICoachUse
+} from '@/src/lib/telemetry/sdtTelemetry';
+
+// When learner selects a mission
+await trackMissionSelected(
+  learnerId, 
+  siteId, 
+  grade, 
+  selectedMissionId,
+  optionsCount  // How many they chose from
+);
+
+// When checkpoint is attempted
+await trackCheckpointAttempt(
+  learnerId,
+  siteId,
+  grade,
+  sprintId,
+  missionId,
+  passed,
+  attemptNumber
+);
+
+// When reflection submitted
+await trackReflection(
+  learnerId,
+  siteId,
+  grade,
+  sprintId,
+  effortRating,     // 1-5
+  enjoymentRating   // 1-5
+);
+```
+
+### Age-Aware Feature Gating
+```tsx
+import { getPolicyForGrade, isFeatureAvailable } from '@/src/lib/policies/gradeBandPolicy';
+
+function MissionScreen({ grade }) {
+  const policy = getPolicyForGrade(grade);
+  
+  return (
+    <div>
+      {/* Sprint duration adapts by age */}
+      <SprintTimer 
+        minMinutes={policy.sprint.minMinutes}
+        maxMinutes={policy.sprint.maxMinutes}
+      />
+      
+      {/* Peer feedback only for grades 4+ */}
+      {policy.social.peerFeedbackEnabled && (
+        <PeerFeedbackButton />
+      )}
+      
+      {/* AI Coach modes filtered by age */}
+      <AICoachPopup
+        availableModes={policy.aiCoach.modes}
+        requireExplainBack={policy.aiCoach.explainBackRequired}
+        requireTeacherGuidance={policy.aiCoach.requireTeacherGuidance}
+      />
+    </div>
+  );
+}
+```
+
+## Key Design Principles
+
+### 1. Visible Mastery, Not Points
+- Progress bars show "skills proven" not "time spent"
+- Badges require evidence (upload/quiz/demo/version history)
+- Rubrics use student-friendly language
+
+### 2. Choice Within Structure
+- 3 difficulty levels per mission (Bronze/Silver/Gold)
+- Interest-based mission themes
+- Student voice: "What do you want to build for?"
+
+### 3. Celebrate Strategies, Not Speed
+- Recognition tokens for behaviors (Helper, Debugger, etc.)
+- Reflection on "what strategy worked"
+- "Mistakes are data" messaging
+
+### 4. Psychological Safety Built-In
+- "Show your v1" prompts
+- Crew system for stable peer support
+- Peer feedback templates with kindness guardrails
+
+## What to Track (Motivation Analytics)
+
+**Evidence-Based Metrics:**
+- ✅ Proof of Learning rate (artifact + reflection submitted)
+- ✅ Checkpoint pass rate (attempts to mastery)
+- ✅ Revisions per project (iteration = learning)
+- ✅ Peer feedback given (belonging signals)
+- ✅ Role rotation completions (crew engagement)
+- ✅ Choice distribution (difficulty levels picked)
+- ✅ AI Coach usage patterns (by mode and age band)
+- ✅ Effort/enjoyment trends over time
+- ✅ Session completion rate
+- ✅ Optimal time of day for engagement
+
+**Skip (Harmful Vanity Metrics):**
+- ❌ Total points
+- ❌ Leaderboards (comparison kills motivation)
+- ❌ Speed-based rewards
+- ❌ Streak shaming ("you broke your streak!")
+- ❌ Public failure indicators
+
+**Age-Band Specific Tracking:**
+- K-3: Focus on effort emoji trends, teacher guidance needs
+- 4-6: Track choice diversity, crew participation
+- 7-9: Monitor reflection depth, identity language
+- 10-12: Analyze portfolio quality, real-world connections
+
+## Age-Band Tuning (Developmental Appropriateness)
+
+### Grades K-3 (Ages 5-9) - Safety + Wonder
+**Sprint**: 5-10 minutes, 1 checkpoint
+**AI Coach**: Hint only, teacher guidance required, explain-back enforced
+**Social**: No peer feedback, no crews (1:1 teacher connection)
+**Reflection**: One emoji + one sentence ("I'm proud I...")
+**Rubric**: 2 levels (Not Yet / Got It) with pictures
+**Portfolio**: Parent + educator view only
+**Gamification**: Sticker-style badges
+**UI**: Large buttons, lots of visual cues, minimal text
+
+**Key Constraints**:
+- No public leaderboards
+- No timed challenges
+- No peer messaging
+- Teacher must approve AI Coach use
+
+### Grades 4-6 (Ages 10-12) - Agency + Teamwork
+**Sprint**: 15-30 minutes, 2 checkpoints
+**AI Coach**: Hint + Debug modes, explain-back required
+**Social**: Structured peer feedback ("I like / I wonder / Next step"), crews enabled with roles
+**Reflection**: Two prompts ("Proud of... Next I will..."), effort + enjoyment emojis
+**Rubric**: 3 levels (Emerging / Proficient / Advanced) with examples
+**Portfolio**: Student-curated, parent + educator view
+**Gamification**: Evidence-based badges (upload proof)
+**UI**: Clear navigation, progress bars, achievement unlocks
+
+**Key Features**:
+- Bronze/Silver/Gold difficulty choice
+- Crew roles (Builder/Tester/Reporter) with rotation
+- Recognition tokens for behaviors
+- "Mistakes are data" messaging
+
+### Grades 7-9 (Ages 13-15) - Identity + Relevance
+**Sprint**: 20-45 minutes, 2-3 checkpoints
+**AI Coach**: Hint + Rubric Check + Debug, explain-back required
+**Social**: Open peer feedback with moderation, crew competitions, showcase events
+**Reflection**: Identity-focused ("I am becoming... I care about...")
+**Rubric**: 3 levels with criteria co-creation
+**Portfolio**: Student-owned, selective public sharing
+**Gamification**: Mastery-based badges with pathways
+**UI**: Personalization options, dark mode, minimal friction
+
+**Key Features**:
+- Community issue-based missions
+- Plan/Predict/Monitor/Reflect metacognition cycle
+- Portfolio as identity artifact
+- Real-world mentor connections
+
+### Grades 10-12 (Ages 16-18) - Purpose + Credibility
+**Sprint**: 30-90 minutes, 3-4 checkpoints
+**AI Coach**: All modes including Critique, explain-back for new concepts
+**Social**: Full peer review, professional networking, public showcases
+**Reflection**: Career + impact focus ("This connects to...")
+**Rubric**: 4 levels (professional standard)
+**Portfolio**: Exportable (LinkedIn, resume), public by default
+**Gamification**: Professional badging (stackable credentials)
+**UI**: Clean, portfolio-first, export options
+
+**Key Features**:
+- Real clients/problems
+- Industry mentors
+- "Evidence over opinions" culture
+- College/career integration
+- Capstone showcase events
+
+## Next Steps
+
+### Phase B (Belonging + Community) - IN PROGRESS
+- [ ] **Crew Hub** - Team dashboard with goals, roles, shout-outs
+- [ ] **Peer Feedback Screen** - "I like/I wonder/Next step" templates
+- [ ] **Progress Insights** - Skills timeline, suggested next missions
+- [ ] **Showcase Gallery** - Presentation mode for crew/site showcases
+
+### Phase C (Mastery + Assessment)
+- [ ] **Portfolio Builder** - Auto-collect showcase projects with curation
+- [ ] **Parent Snapshot** - Weekly 1-page summary generator
+- [ ] **Rubrics Editor** - Age-appropriate success criteria
+- [ ] **Educator Feedback Inbox** - Comments + resubmission flow
+
+### Phase D (Autonomy + Personalization)
+- [ ] **Goal Setter** - Weekly personal targets with progress tracking
+- [ ] **Interest Picker** - Mission theme customization engine
+- [ ] **Choice History** - Self-awareness tool showing patterns
+- [ ] **Motivation Dashboard** - Learner-facing insights
+
+### Backend Implementation (HIGH PRIORITY)
+- [ ] Implement Firebase Functions for all `sdtMotivation.ts` operations
+- [ ] Add Firestore security rules for 17 new collections
+- [ ] Set up composite indexes for compound queries
+- [ ] Implement server-side telemetry aggregation (Cloud Functions)
+- [ ] Add ML-based motivation insight generation
+- [ ] Create parent snapshot auto-generator function
+- [ ] Build crew rotation scheduler
+- [ ] Implement badge award verification logic
+
+### Infrastructure
+- [ ] Add Web Speech API polyfill for older browsers
+- [ ] Set up telemetry event batching (reduce Firestore writes)
+- [ ] Create admin dashboard for monitoring telemetry patterns
+- [ ] Build educator insight reports (per-site analytics)
+- [ ] Implement offline support for telemetry (queue events)
+
+## Files Created/Modified
+
+### New Files ✨
+```
+src/lib/policies/gradeBandPolicy.ts (450 lines)
+src/lib/telemetry/sdtTelemetry.ts (350 lines)
+src/components/sdt/AICoachPopup.tsx (400 lines)
+```
+
+### Enhanced Files
+```
+src/types/schema.ts (enhanced with 400+ lines)
+src/lib/firestore/collections.ts (17 collections total)
+src/lib/motivation/sdtMotivation.ts (400 lines)
+src/components/sdt/
+  ├── StudentDashboard.tsx (290 lines)
+  ├── LearningPathMap.tsx (360 lines)
+  ├── AICoachScreen.tsx (320 lines) - full-page version
+  ├── AICoachPopup.tsx (400 lines) - ✨ floating popup version
+  ├── ReflectionJournal.tsx (350 lines)
+  └── index.ts (exports)
+SDT_IMPLEMENTATION_SUMMARY.md (this file, updated)
+```
+
+## Tech Stack
+
+- **TypeScript**: Full type safety
+- **React 18**: Client components with hooks
+- **Firebase Functions v2**: Backend callable functions
+- **Firestore**: NoSQL database
+- **TailwindCSS**: Utility-first styling
+- **Lucide Icons**: Consistent iconography
+
+## Philosophy
+
+> "Motivation = Autonomy (choice) + Competence (visible progress) + Belonging (team + recognition)"
+
+This implementation productizes Self-Determination Theory into an app-ready system that helps K-9 learners develop intrinsic motivation through:
+
+1. **Autonomy**: Choice of difficulty, themes, goals
+2. **Competence**: Micro-skills, evidence, fast feedback
+3. **Belonging**: Crews, showcases, peer recognition
+4. **Identity**: Reflection, growth mindset, strategy awareness
+
+The system learns what motivates each child through:
+- Educator feedback patterns
+- Mission choice history
+- Engagement analytics
+- Reflection content analysis
+- Peer interaction quality
+
 ---
 
-## 🎨 UI/UX Highlights
-
-### Analytics Dashboard
-- **Real-time updates**: No mock data, all Firestore queries
-- **Visual trends**: SVG line chart with 4 SDT dimensions
-- **Export**: CSV download with site-specific filename
-- **Filtering**: Week/Month time ranges
-- **Alerts**: Red highlighting for at-risk students (engagement < 30%)
-
-### Student Motivation Profile
-- **SDT Scores**: Circular progress indicators for each pillar
-- **Goal Management**: Modal form for creating new goals
-- **Skills Display**: Grid layout showing mastery levels
-- **Badges**: Icon-based badge gallery
-- **Recognition Stats**: Heart icon with peer recognition count
-
-### Showcase Gallery
-- **Card Grid**: 3-column layout with image placeholders
-- **Recognition Buttons**: One-click peer recognition
-- **Visibility Filters**: Site/Program/Public toggle
-- **Modal Forms**: Integrated submission + recognition forms
-
----
-
-## 📈 Key Metrics Tracked
-
-### Autonomy Events (9 total)
-1. `mission_selected` - Student chooses a mission
-2. `interest_updated` - Student updates interest profile
-3. `goal_set` - Student sets a learning goal
-4. `goal_achieved` - Student completes a goal
-5. `goal_modified` - Student modifies an existing goal
-6. `preference_changed` - Student changes a preference
-7. `challenge_accepted` - Student accepts a challenge
-8. `path_customized` - Student customizes learning path
-9. `choice_made` - Generic choice-making event
-
-### Competence Events (10 total)
-1. `checkpoint_attempted` - Student starts a checkpoint
-2. `checkpoint_passed` - Student passes a checkpoint
-3. `checkpoint_failed` - Student fails a checkpoint
-4. `skill_practiced` - Student practices a skill
-5. `skill_mastered` - Student achieves skill mastery
-6. `badge_earned` - Student earns a badge
-7. `level_up` - Student levels up
-8. `mastery_demonstrated` - Student demonstrates mastery
-9. `challenge_completed` - Student completes a challenge
-10. `progress_made` - Generic progress event
-
-### Belonging Events (9 total)
-1. `recognition_given` - Student gives peer recognition
-2. `recognition_received` - Student receives recognition
-3. `showcase_submitted` - Student submits to showcase
-4. `showcase_viewed` - Student views others' work
-5. `feedback_received` - Student receives feedback
-6. `feedback_given` - Student gives feedback
-7. `collaboration_joined` - Student joins a group
-8. `peer_helped` - Student helps a peer
-9. `community_contributed` - Student contributes to community
-
-### Reflection Events (6 total)
-1. `reflection_submitted` - Student submits reflection
-2. `metacognition_prompted` - System prompts metacognition
-3. `self_assessment` - Student self-assesses
-4. `effort_rated` - Student rates effort level
-5. `enjoyment_rated` - Student rates enjoyment
-6. `growth_recognized` - Student recognizes own growth
-
-### AI Interaction Events (5 total)
-1. `coach_opened` - Student opens AI coach
-2. `coach_message_sent` - Student sends message to coach
-3. `coach_suggestion_accepted` - Student accepts AI suggestion
-4. `coach_suggestion_rejected` - Student rejects AI suggestion
-5. `coaching_session_completed` - Student completes session
-
----
-
-## 🔒 Security & Access Control
-
-### Role-Based Access Control (RBAC)
-
-**Learners**:
-- ✅ Write: Own telemetry events, goals, reflections, checkpoints, showcase submissions
-- ✅ Read: Own data, approved showcase submissions, public badges
-- ❌ Cannot read: Other students' private data, analytics aggregates
-
-**Educators**:
-- ✅ Write: Approvals (showcase submissions), feedback, assignments
-- ✅ Read: All telemetry for students in their site, analytics dashboards
-- ❌ Cannot modify: Student telemetry events, student goals
-
-**HQ/Admin**:
-- ✅ Write: All collections, security rules, indexes
-- ✅ Read: All data across all sites
-- ✅ Can: Export all data, manage users, configure system
-
-### Data Privacy
-- **PII Protection**: No student names in telemetry events (only userId)
-- **Site Isolation**: All queries scoped by siteId
-- **Consent**: Telemetry collection disclosed in terms of service
-- **Retention**: Optional TTL policies for old events (not yet implemented)
-
----
-
-## 📦 Dependencies
-
-### New NPM Packages (Added to package.json)
-- None! All features built with existing dependencies:
-  - `firebase` (Firestore, Auth, Storage)
-  - `react` + `next`
-  - `lucide-react` (icons)
-  - `date-fns` (date formatting)
-
-### Existing Packages Used
-- TypeScript 5.x
-- Next.js 14
-- React 18
-- Firestore SDK 10.x
-- Firebase Admin SDK (Cloud Functions)
-
----
-
-## 🚀 Deployment Readiness
-
-### ✅ Complete
-- [x] All TypeScript files compile without errors
-- [x] ESLint passes (0 warnings)
-- [x] Firestore security rules configured
-- [x] Composite indexes defined
-- [x] Cloud Functions implemented
-- [x] Component integration complete
-- [x] Documentation created ([SDT_DEPLOYMENT_GUIDE.md](./SDT_DEPLOYMENT_GUIDE.md))
-
-### ⏳ Pending (Pre-Deployment)
-- [ ] Deploy Firestore rules: `firebase deploy --only firestore:rules`
-- [ ] Deploy Firestore indexes: `firebase deploy --only firestore:indexes` (wait 5-20 min)
-- [ ] Deploy Cloud Functions: `firebase deploy --only functions`
-- [ ] Build Next.js app: `npm run build`
-- [ ] Deploy to Vercel/Cloud Run: `vercel --prod` or `gcloud run deploy`
-
-### 📋 Testing Checklist
-- [ ] Create test telemetry event → verify in Firestore
-- [ ] Set goal → verify `learnerGoals` document + telemetry event
-- [ ] Submit checkpoint → verify `checkpointHistory` document + telemetry event
-- [ ] Submit to showcase → verify `showcaseSubmissions` document + telemetry event
-- [ ] Give recognition → verify `recognitionBadges` document + telemetry event
-- [ ] View analytics dashboard → verify real data (not mock)
-- [ ] Export CSV → verify download works
-- [ ] Trigger Cloud Function manually → verify aggregates created
-
----
-
-## 📊 Expected Impact
-
-### User Experience
-- **Learners**: More personalized learning paths, visible progress, peer recognition
-- **Educators**: Data-driven insights, early intervention for at-risk students, time savings
-- **Admins**: Platform-wide analytics, engagement trends, ROI metrics
-
-### Business Metrics
-- **Engagement**: 25-40% increase (based on SDT research)
-- **Retention**: 15-30% improvement (intrinsic motivation boost)
-- **Completion Rates**: 20-35% increase (competence tracking)
-- **Peer Interaction**: 50%+ increase (belonging features)
-
-### Technical Performance
-- **Firestore Reads**: 90% reduction (with aggregation)
-- **Page Load**: No measurable impact (telemetry is async)
-- **Cloud Function Costs**: ~$5-10/month for 1,000 users (daily aggregation)
-
----
-
-## 🔮 Future Enhancements (Phase 3+)
-
-### Phase 3: Vector DB Integration
-- Implement OpenAI Embeddings API integration
-- Enable semantic search for skill recommendations
-- Personalize AI coach responses based on student history
-- Content similarity recommendations
-
-### Phase 4: Advanced AI Features
-- Predictive analytics (identify at-risk students before they disengage)
-- Automated intervention nudges (personalized motivational messages)
-- Learning path optimization (recommend optimal mission sequences)
-- Peer matching (connect students with complementary skills)
-
-### Phase 5: Gamification
-- Leaderboards (opt-in, site-scoped)
-- Skill trees (visual progression)
-- Quest chains (multi-mission challenges)
-- Seasonal events (time-limited challenges)
-
----
-
-## 📚 Documentation Created
-
-1. **[SDT_DEPLOYMENT_GUIDE.md](./SDT_DEPLOYMENT_GUIDE.md)** - 500 lines
-   - Step-by-step deployment instructions
-   - Comprehensive testing checklist
-   - Rollback procedures
-   - Performance monitoring
-
-2. **[SDT_IMPLEMENTATION_SUMMARY.md](./SDT_IMPLEMENTATION_SUMMARY.md)** (this file)
-   - Overview of all components
-   - Data flow architecture
-   - Key metrics tracked
-   - Expected impact
-
-3. **Inline Code Documentation**
-   - All files have JSDoc comments
-   - Function signatures documented
-   - Complex logic explained
-   - Example usage provided
-
----
-
-## 🎉 Success Criteria
-
-### ✅ Phase 1 (Infrastructure) - COMPLETE
-- [x] TelemetryService tracks all 8 categories
-- [x] MotivationEngine handles all 4 SDT pillars
-- [x] VectorStore ready for semantic search
-- [x] React hooks provide easy telemetry integration
-
-### ✅ Phase 2 (Integration) - COMPLETE
-- [x] 4 existing components enhanced with telemetry
-- [x] 7 new components created (forms, dashboards, galleries)
-- [x] Educator analytics dashboard with real data
-- [x] Student motivation profile with SDT scores
-
-### ✅ Phase 3 (Cloud Functions) - COMPLETE
-- [x] Daily aggregation function deployed
-- [x] Weekly aggregation function deployed
-- [x] Manual trigger endpoint created
-- [x] 90% reduction in Firestore reads achieved
-
-### ✅ Phase 4 (Database) - COMPLETE
-- [x] 10 new Firestore collections configured
-- [x] Security rules enforcing RBAC
-- [x] 12 composite indexes for optimized queries
-
----
-
-## 📞 Support & Maintenance
-
-### Monitoring
-- **Firestore**: Monitor daily read/write counts in Firebase Console
-- **Cloud Functions**: Check execution logs for errors in Cloud Logs
-- **Next.js**: Monitor Vercel/Cloud Run logs for frontend errors
-
-### Known Limitations
-- **Vector search**: Requires OpenAI API key for embeddings (not yet integrated)
-- **CSV export**: Client-side only (no server-side batch export yet)
-- **Showcase approval**: Manual approval workflow (no auto-moderation yet)
-- **Real-time updates**: Dashboard requires manual refresh (no websockets yet)
-
-### Recommended Monitoring Alerts
-- Firestore daily reads exceed 1M
-- Cloud Function execution errors > 1%
-- Telemetry events not being created (0 events in last hour)
-- Analytics dashboard loading time > 5 seconds
-
----
-
-## 🏁 Conclusion
-
-**Status**: ✅ Ready for Production Deployment
-
-**Total Implementation**:
-- **Duration**: ~8 hours of development
-- **Files Created**: 20 new files
-- **Files Modified**: 10 existing files
-- **Lines of Code**: ~4,500 new TypeScript code
-- **Firestore Collections**: 10 new collections
-- **Cloud Functions**: 3 new functions
-- **React Components**: 7 new components
-
-**Next Steps**:
-1. Review deployment guide: [SDT_DEPLOYMENT_GUIDE.md](./SDT_DEPLOYMENT_GUIDE.md)
-2. Deploy Firestore rules + indexes
-3. Deploy Cloud Functions
-4. Deploy Next.js app
-5. Run testing checklist
-6. Monitor for 48 hours
-7. Train educators + learners
-8. Collect feedback
-9. Plan Phase 3 (Vector DB)
-
-**Questions?** Refer to deployment guide or contact engineering team.
-
----
-
-**Document Version**: 1.0  
-**Last Updated**: December 26, 2024  
-**Author**: GitHub Copilot + Development Team
+*Built with ❤️ for Scholesa Education 2.0 OS*

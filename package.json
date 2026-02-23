@@ -43,6 +43,7 @@
     "vibe:voice:quiet-mode": "node scripts/vibe_voice_quiet_mode.js",
     "vibe:voice:abuse-safety": "node scripts/vibe_voice_abuse_safety.js",
     "vibe:voice:all": "node scripts/vibe_voice_all.js",
+    "vibe:voice:all:live": "node scripts/vibe_voice_live_runner.js --strict",
     "vibe:compliance:notice:i18n": "node scripts/vibe_compliance_notice_i18n.js",
     "vibe:all": "node scripts/vibe_all.js",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",
