@@ -17,7 +17,8 @@ else
 fi
 
 echo "[COPPA no-ads audit] Checking code patterns..."
-PATTERN_REGEX='googletagmanager\.com|doubleclick\.net|adsbygoogle|adservice\.google\.com|fbq\(|gtag\(|mixpanel|amplitude|getAds|showAds|behavioral\s*profil'
+# Match concrete ad/tracker SDK usage patterns and endpoints, not generic variable names.
+PATTERN_REGEX='googletagmanager\.com|doubleclick\.net|adsbygoogle|adservice\.google\.com|fbq\(|gtag\(|mixpanel(\.|\()|amplitude(\.getInstance|\.init|\.track|analytics)|getAds|showAds|behavioral\s*profil'
 if rg -n -i \
   --glob '!node_modules/**' \
   --glob '!.next/**' \
