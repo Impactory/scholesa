@@ -260,7 +260,7 @@ async function run() {
       });
     }
 
-    if (role !== 'hq' && siteId === UNMAPPED_SITE_ID) {
+    if (role !== 'hq' && role !== 'system' && siteId === UNMAPPED_SITE_ID) {
       tenantTagErrors.push({
         id: row.id,
         event,

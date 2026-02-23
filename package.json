@@ -23,6 +23,8 @@
     "qa:telemetry-live-audit:coverage": "node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage",
     "qa:telemetry-live-repair": "node scripts/telemetry_live_repair.js --strict",
     "qa:telemetry-live-repair:apply": "node scripts/telemetry_live_repair.js --apply --strict",
+    "qa:telemetry-live-seed": "node scripts/telemetry_live_seed_coverage.js --strict",
+    "qa:telemetry-live-seed:apply": "node scripts/telemetry_live_seed_coverage.js --apply --strict",
     "vibe:i18n:lint": "node scripts/vibe_i18n_lint.js",
     "vibe:i18n:keys": "node scripts/vibe_i18n_keys.js",
     "vibe:ui:screens:i18n": "node scripts/vibe_ui_screens_i18n.js",
