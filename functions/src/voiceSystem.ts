@@ -105,6 +105,7 @@ const INJECTION_PATTERNS = [
   /system prompt/i,
   /developer mode/i,
   /reveal .*prompt/i,
+  /忽略所有(规则|規則)/,
   /忽略.*指令/,
   /顯示.*提示/,
   /แสดง.*system prompt/,
@@ -115,8 +116,10 @@ const CROSS_TENANT_PATTERNS = [
   /another student'?s data/i,
   /whole database/i,
   /cross[- ]tenant/i,
+  /隔壁(学校|學校)/,
   /其他(学校|校区|租户|站点)/,
   /其他學校|其他租戶/,
+  /โรงเรียนข้าง/,
   /โรงเรียนอื่น|ผู้ใช้โรงเรียนอื่น/,
 ];
 
@@ -124,15 +127,22 @@ const TOOL_ESCALATION_PATTERNS = [
   /admin tool/i,
   /data export/i,
   /show me .*database/i,
+  /系统提示词/,
+  /系統提示詞/,
   /管理员工具/,
   /管理員工具/,
+  /เครื่องมือแอดมิน/,
   /เครื่องมือผู้ดูแล/,
 ];
 
 const SELF_HARM_PATTERNS = [
   /hurt myself/i,
+  /hurt someone/i,
   /\bself[- ]?harm\b/i,
   /\bkill myself\b/i,
+  /伤害别人/,
+  /傷害別人/,
+  /ทำร้ายคน/,
   /想伤害自己/,
   /想傷害自己/,
   /อยากทำร้ายตัวเอง/,
@@ -567,8 +577,8 @@ function selectToolCalls(role: VoiceRole, category: SafetyDecision['category'], 
 function detectLanguageCompatibility(text: string, locale: VoiceLocale): boolean {
   if (!text.trim()) return false;
   if (locale === 'en') return /[A-Za-z]/.test(text);
-  if (locale === 'zh-CN') return /[\u4e00-\u9fff]/.test(text) && /我们|学习|学校|提示|帮助/.test(text);
-  if (locale === 'zh-TW') return /[\u4e00-\u9fff]/.test(text) && /我們|學習|學校|提示|協助/.test(text);
+  if (locale === 'zh-CN') return /[\u4e00-\u9fff]/.test(text);
+  if (locale === 'zh-TW') return /[\u4e00-\u9fff]/.test(text);
   if (locale === 'th') return /[\u0E00-\u0E7F]/.test(text);
   return false;
 }
@@ -1216,4 +1226,3 @@ export const __voiceSystemInternals = {
   synthesizeAudioWave,
   verifyAudioToken,
 };
-

@@ -13,6 +13,7 @@ const suites = [
   { name: 'vibe:ai:guardrails:i18n', script: 'scripts/vibe_ai_guardrails_i18n.js', report: 'vibe-ai-guardrails-i18n-report.json' },
   { name: 'vibe:ai:language', script: 'scripts/vibe_ai_language.js', report: 'vibe-ai-language-report.json' },
   { name: 'vibe:data:utf8', script: 'scripts/vibe_data_utf8.js', report: 'vibe-data-utf8-report.json' },
+  { name: 'vibe:voice:all', script: 'scripts/vibe_voice_all.js', report: 'vibe-voice-all-report.json' },
   { name: 'vibe:compliance:notice:i18n', script: 'scripts/vibe_compliance_notice_i18n.js', report: 'vibe-compliance-notice-i18n-report.json' },
 ];
 
@@ -50,4 +51,3 @@ for (const suite of suites) {
 }
 
 finish('vibe-all-report', failures, details);
-

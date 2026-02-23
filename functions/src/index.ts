@@ -199,6 +199,11 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'focus_restored',
   'educator_class_view',
   'educator_learner_drilldown',
+  'voice.transcribe',
+  'voice.message',
+  'voice.tts',
+  'voice.blocked',
+  'voice.escalated',
 ]);
 
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
