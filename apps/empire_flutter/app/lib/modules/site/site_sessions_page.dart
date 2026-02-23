@@ -863,7 +863,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
       TextEditingController(text: '12');
   String _selectedPillar = 'Future Skills';
   String _selectedRoom = 'Lab A';
-  String _selectedTime = '9:00 AM';
+  String _selectedTime = '4:00 PM';
 
   @override
   void dispose() {

@@ -6,7 +6,7 @@
     "deploy": "firebase deploy --only functions"
   },
   "engines": {
-    "node": "22"
+    "node": "24"
   },
   "main": "lib/index.js",
   "dependencies": {

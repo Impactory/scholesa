@@ -12,11 +12,11 @@ Scope: Install/Upgrade, Config, CI/CD, Rollback, Monitoring/Alert
 
 ### Post-Remediation Update (2026-02-20)
 
-- ✅ Added root engine pin (`package.json` -> `"engines": { "node": "22.x" }`).
-- ✅ Added deploy-time Node 22 preflight enforcement in `scripts/deploy.sh`.
+- ✅ Added root engine pin (`package.json` -> `"engines": { "node": "24.x" }`).
+- ✅ Added deploy-time Node 24 preflight enforcement in `scripts/deploy.sh`.
 - ✅ Added env hygiene guard (`scripts/check-env-hygiene.sh`) and wired into `pre-commit` + `pre-commit.sh`.
 - ✅ Removed tracked `/.env.production` and replaced with `/.env.production.example` template.
-- ✅ Verified live `firebase deploy --only functions` on Node 22 runtime (`studio-3328096157-e3f79`) completed successfully.
+- ✅ Verified live `firebase deploy --only functions` on Node 24 runtime (`studio-3328096157-e3f79`) completed successfully.
 - ℹ️ Observed one transient `503` during `processCheckout` update, followed by successful completion in the same deploy run.
 
 ---
@@ -49,7 +49,7 @@ cd /Users/simonluke/dev/scholesa/functions && npm ci && npm run build
 Result:
 - `npm ci` succeeded.
 - `npm run build` (`tsc`) succeeded.
-- No engine mismatch warning under Node 22 baseline.
+- No engine mismatch warning under Node 24 baseline.
 
 ### Assessment
 - Regression objective met: install and build paths are reproducible and do not fail.
@@ -68,7 +68,7 @@ Observed:
 - Hosting public dir: `apps/empire_flutter/app/build/web`
 - SPA rewrite present:
   - `{"source": "**", "destination": "/index.html"}`
-- Functions runtime: `nodejs22`
+- Functions runtime: `nodejs24`
 
 ### Assessment
 - Hosting and runtime config are aligned with Flutter web deployment model.

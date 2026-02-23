@@ -36,8 +36,8 @@ preflight() {
 
   local node_major
   node_major="$(node -p "process.versions.node.split('.')[0]")"
-  if [[ "$node_major" != "22" ]]; then
-    fail "Node 22.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 22"
+  if [[ "$node_major" != "24" ]]; then
+    fail "Node 24.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 24"
   fi
 
   if [[ "$TARGET" == flutter-* || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
