@@ -437,7 +437,7 @@ Guidance: ${
   const handleSubmitExplainBack = async () => {
     if (!explainBack.trim()) return;
 
-    // Record helpful feedback to training dataset
+    // Record helpful feedback to analytics-only interaction log
     // TODO: Re-implement feedback recording when AI service is updated
     // if (currentLogId && currentLogId !== 'error') {
     //   await recordAIFeedback(currentLogId, true, 'Student completed explain-back');

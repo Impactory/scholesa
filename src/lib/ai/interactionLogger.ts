@@ -1,14 +1,14 @@
 /**
  * AI Interaction Logger
  * 
- * Log everything you need to build your own training dataset:
+ * Log privacy-safe operational telemetry:
  * - Request + response (with IDs)
  * - Context retrieved
  * - UI trigger
- * - Outcomes (student revised? passed? time to mastery?)
+ * - Outcomes (student revised? checkpoint progression? time to mastery?)
  * - Teacher feedback ("was this helpful?")
  * 
- * This is YOUR data vault for future model training
+ * COPPA policy: analytics-only. Student data must not be exported for model training.
  */
 
 import {
@@ -70,6 +70,7 @@ export interface AIInteractionLog {
   tokensUsed: number;
   latencyMs: number;
   safetyFlags?: string[];
+  dataUsagePolicy: 'analytics_only_no_training';
   
   // Where it was triggered
   uiContext: {
@@ -161,6 +162,7 @@ export class AIInteractionLogger {
       tokensUsed: response.tokensUsed,
       latencyMs: response.latencyMs,
       safetyFlags: response.safetyFlags,
+      dataUsagePolicy: 'analytics_only_no_training',
       
       uiContext: {
         screen: context.uiScreen,
@@ -199,48 +201,6 @@ export class AIInteractionLogger {
     });
   }
   
-  /**
-   * Export training dataset (de-identified)
-   * Returns JSONL format for model training
-   */
-  static exportForTraining(logs: AIInteractionLog[]): string {
-    const trainingData = logs
-      .filter(log => log.outcome?.wasHelpful !== undefined) // Only labeled data
-      .map(log => ({
-        // Input
-        task_type: log.taskType,
-        grade_band: log.gradeBand,
-        policy_mode: log.policyMode,
-        target_locale: log.targetLocale,
-        role: log.role,
-        prompt_template_id: log.promptTemplateId,
-        policy_version: log.policyVersion,
-        student_level: log.studentLevel,
-        question: log.redactedQuestion, // Already redacted
-        context_blocks: log.contextBlocksUsed,
-        
-        // Output
-        response: log.response,
-        safety_outcome: log.safetyOutcome,
-        safety_reason_code: log.safetyReasonCode,
-        
-        // Labels
-        helpful: log.outcome?.wasHelpful,
-        revised: log.outcome?.studentRevised,
-        passed: log.outcome?.checkpointPassed,
-        time_to_mastery_minutes: log.outcome?.timeToMastery,
-        
-        // Metadata
-        trace_id: log.traceId,
-        model_used: log.modelUsed,
-        model_version: log.modelVersion,
-        tokens: log.tokensUsed,
-        latency_ms: log.latencyMs
-      }));
-    
-    // JSONL format (one JSON object per line)
-    return trainingData.map(item => JSON.stringify(item)).join('\n');
-  }
 }
 
 // ==================== CONVENIENCE FUNCTIONS ====================

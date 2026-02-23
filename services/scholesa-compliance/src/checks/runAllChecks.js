@@ -15,6 +15,7 @@ const { runRuntimeEgressProof } = require('./runtimeEgressProof');
 const { runTenantIsolationInvariants } = require('./tenantIsolationInvariants');
 const { runVoiceRetentionControls } = require('./voiceRetentionControls');
 const { runLogPrivacySafety } = require('./logPrivacySafety');
+const { runStudentDataTrainingBan } = require('./studentDataTrainingBan');
 
 function runCommand(command) {
   try {
@@ -96,6 +97,7 @@ function runComplianceSuite(trigger = 'manual') {
     runTenantIsolationInvariants(),
     runVoiceRetentionControls(),
     runLogPrivacySafety(),
+    runStudentDataTrainingBan(),
   ];
 
   const failures = summarizeChecks(checks, externalSuites);
@@ -128,6 +130,7 @@ function runComplianceSuite(trigger = 'manual') {
       tenantIsolationInvariants: 'audit-pack/reports/tenant-isolation-invariants.json',
       voiceRetentionControls: 'audit-pack/reports/voice-retention-controls.json',
       logPrivacySafety: 'audit-pack/reports/log-privacy-safety.json',
+      studentDataTrainingBan: 'audit-pack/reports/student-data-training-ban.json',
       aiDependencyBan: 'audit-pack/reports/ai-dependency-ban.json',
       aiImportBan: 'audit-pack/reports/ai-import-ban.json',
       aiDomainBan: 'audit-pack/reports/ai-domain-ban.json',
@@ -172,6 +175,7 @@ function runComplianceSuite(trigger = 'manual') {
       tenantIsolationInvariants: checks.find((item) => item.checkId === 'tenant_isolation_invariants')?.passed === true,
       voiceRetentionControls: checks.find((item) => item.checkId === 'voice_retention_controls')?.passed === true,
       logPrivacySafety: checks.find((item) => item.checkId === 'log_privacy_safety')?.passed === true,
+      studentDataTrainingBan: checks.find((item) => item.checkId === 'student_data_training_ban')?.passed === true,
     },
     reportPath: path.relative(REPO_ROOT, runReportPath),
   });

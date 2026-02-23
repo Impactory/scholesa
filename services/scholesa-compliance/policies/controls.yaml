@@ -35,3 +35,12 @@ controls:
       - audit-pack/reports/log-privacy-safety.json
     remediation:
       runbook: audit-pack/runbooks/RUNBOOK_VOICE_RETENTION.md
+  - id: COPPA-07
+    name: No Student Data Training
+    severity: blocker
+    checks:
+      - student_data_training_ban
+    evidence:
+      - audit-pack/reports/student-data-training-ban.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_NO_TRAINING.md

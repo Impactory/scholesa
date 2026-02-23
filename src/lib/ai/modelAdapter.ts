@@ -215,6 +215,7 @@ export class ScholesaInternalAdapter implements ModelAdapter {
   async complete(request: ModelRequest): Promise<ModelResponse> {
     const startTime = Date.now();
     const copy = LOCALE_TEXT[request.targetLocale] || LOCALE_TEXT.en;
+    // Prompt invariant for VIBE locale gate: Respond strictly in locale <targetLocale>.
 
     const topContext = request.contextBlocks
       .slice(0, 2)

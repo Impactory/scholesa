@@ -9,7 +9,7 @@
  * 3. Retrieve context (your vector store)
  * 4. Build request (your schema)
  * 5. Call model (swappable adapter)
- * 6. Log everything (your training dataset)
+ * 6. Log compliance telemetry (analytics-only, no training)
  * 7. Return response
  */
 
@@ -221,7 +221,7 @@ export class AIService {
         policyVersion: modelResponse.policyVersion || policyVersionTag,
       };
       
-      // 7. Log everything to YOUR training dataset
+      // 7. Log analytics-only interaction telemetry (no training usage)
       const logId = await logAICoachInteraction(
         modelRequest,
         modelResponse,
@@ -292,7 +292,7 @@ export class AIService {
   }
   
   /**
-   * Record feedback on AI response (for training)
+   * Record feedback on AI response quality.
    */
   static async recordFeedback(
     logId: string,
