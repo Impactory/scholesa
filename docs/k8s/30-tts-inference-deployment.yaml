@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tts-inference
+  namespace: scholesa-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tts-inference
+  template:
+    metadata:
+      labels:
+        app: tts-inference
+    spec:
+      containers:
+      - name: tts
+        image: REGION-docker.pkg.dev/PROJECT/REPO/tts-inference:TAG # TODO
+        ports:
+        - containerPort: 8002
+        resources:
+          limits:
+            nvidia.com/gpu: 1 # optional; depends on TTS model
+        env:
+        - name: VOICE_SET
+          value: "approved-voices-v1" # TODO
+        - name: TTS_TTL_MINUTES
+          value: "60"

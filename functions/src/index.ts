@@ -208,6 +208,19 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
 ]);
 
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
+const PUBLIC_TELEMETRY_EVENTS: Set<string> = new Set([
+  'cms.page.viewed',
+  'cta.clicked',
+]);
+const TELEMETRY_CALLABLE_CORS: Array<string | RegExp> = [
+  /^https:\/\/(?:[a-z0-9-]+\.)?scholesa\.com$/,
+  /^http:\/\/localhost(?::\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
+];
+const TELEMETRY_CALLABLE_OPTIONS = {
+  region: 'us-central1' as const,
+  cors: TELEMETRY_CALLABLE_CORS,
+};
 const TELEMETRY_PII_KEY_BLOCKLIST = new Set<string>([
   'name',
   'firstname',
@@ -984,6 +997,16 @@ function extractTraceIdFromHeader(headerValue: string | undefined): string | und
   return traceId && traceId.length > 0 ? traceId : undefined;
 }
 
+function isTelemetryOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return false;
+  return TELEMETRY_CALLABLE_CORS.some((allowedOrigin) => {
+    if (typeof allowedOrigin === 'string') {
+      return allowedOrigin === origin;
+    }
+    return allowedOrigin.test(origin);
+  });
+}
+
 function shouldRedactTelemetryKey(keyPath: string): boolean {
   const leaf = keyPath.split('.').pop() ?? keyPath;
   const normalized = normalizeTelemetryKey(leaf.replace(/\[\d+\]/g, ''));
@@ -1113,11 +1136,6 @@ async function persistTelemetryEvent(params: {
 }
 
 async function handleTelemetry(request: CallableRequest) {
-  const auth = request.auth;
-  if (!auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-
   const event = typeof request.data?.event === 'string' ? request.data.event : undefined;
   if (!event || !ALLOWED_TELEMETRY_EVENTS.has(event)) {
     throw new HttpsError('invalid-argument', 'Invalid event name.');
@@ -1126,6 +1144,36 @@ async function handleTelemetry(request: CallableRequest) {
   const metadata = request.data?.metadata;
   if (metadata !== undefined && (typeof metadata !== 'object' || Array.isArray(metadata))) {
     throw new HttpsError('invalid-argument', 'metadata must be an object if provided');
+  }
+
+  const metadataRecord = metadata as Record<string, unknown> | undefined;
+  const requestId = toHeaderString(request.rawRequest?.headers?.['x-request-id']);
+  const traceId = extractTraceIdFromHeader(toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context']));
+  const origin = toHeaderString(request.rawRequest?.headers?.origin);
+  const auth = request.auth;
+  if (!auth) {
+    if (!PUBLIC_TELEMETRY_EVENTS.has(event)) {
+      throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+    if (!isTelemetryOriginAllowed(origin)) {
+      throw new HttpsError('permission-denied', 'Telemetry origin not allowed.');
+    }
+
+    await persistTelemetryEvent({
+      event,
+      userId: 'anonymous',
+      role: 'system',
+      siteId: TELEMETRY_UNSCOPED_SITE_ID,
+      metadata: {
+        ...(metadataRecord ?? {}),
+        authState: 'anonymous',
+        ...(origin ? { origin } : {}),
+      },
+      requestId,
+      traceId,
+    });
+
+    return { status: 'ok' };
   }
 
   const userProfile = await getUserProfile(auth.uid);
@@ -1143,8 +1191,6 @@ async function handleTelemetry(request: CallableRequest) {
     }
   }
 
-  const requestId = toHeaderString(request.rawRequest?.headers?.['x-request-id']);
-  const traceId = extractTraceIdFromHeader(toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context']));
   const role = userProfile.role;
   const siteId = siteFromRequest ?? userProfile.activeSiteId ?? (userProfile.siteIds?.[0] ?? TELEMETRY_UNSCOPED_SITE_ID);
   if (siteId === TELEMETRY_UNSCOPED_SITE_ID && role !== 'hq') {
@@ -1156,7 +1202,7 @@ async function handleTelemetry(request: CallableRequest) {
     userId: auth.uid,
     role,
     siteId,
-    metadata: metadata as Record<string, unknown> | undefined,
+    metadata: metadataRecord,
     requestId,
     traceId,
   });
@@ -1164,10 +1210,10 @@ async function handleTelemetry(request: CallableRequest) {
   return { status: 'ok' };
 }
 
-export const logTelemetryEvent = onCall(async (request: CallableRequest) => handleTelemetry(request));
+export const logTelemetryEvent = onCall(TELEMETRY_CALLABLE_OPTIONS, async (request: CallableRequest) => handleTelemetry(request));
 
 // Backwards compatibility: keep the old callable name pointing to telemetry pipeline.
-export const logAnalyticsEvent = onCall(async (request: CallableRequest) => handleTelemetry(request));
+export const logAnalyticsEvent = onCall(TELEMETRY_CALLABLE_OPTIONS, async (request: CallableRequest) => handleTelemetry(request));
 
 type TelemetryDashboardPeriod = 'week' | 'month' | 'quarter' | 'year';
 

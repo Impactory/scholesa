@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-inference
+  namespace: scholesa-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-inference
+  template:
+    metadata:
+      labels:
+        app: llm-inference
+    spec:
+      containers:
+      - name: llm
+        image: REGION-docker.pkg.dev/PROJECT/REPO/llm-inference:TAG # TODO
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        env:
+        - name: MODEL_ID
+          value: "internal-llm-model" # TODO
+        - name: MAX_TOKENS
+          value: "1024"
+        # TODO: mount model weights or pull from internal artifact store

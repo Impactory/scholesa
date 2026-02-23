@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars and fill in
+project_id  = "scholesa-dev-PROJECTID"
+region      = "us-central1"
+environment = "dev"
+name_prefix = "scholesa"

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stt-inference
+  namespace: scholesa-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stt-inference
+  template:
+    metadata:
+      labels:
+        app: stt-inference
+    spec:
+      containers:
+      - name: stt
+        image: REGION-docker.pkg.dev/PROJECT/REPO/stt-inference:TAG # TODO
+        ports:
+        - containerPort: 8001
+        resources:
+          limits:
+            nvidia.com/gpu: 1 # optional; reduce/remove if CPU STT
+        env:
+        - name: MODEL_ID
+          value: "internal-stt-model" # TODO
+        - name: AUDIO_TTL_MINUTES
+          value: "30"

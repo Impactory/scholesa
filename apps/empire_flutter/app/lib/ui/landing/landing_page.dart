@@ -71,13 +71,6 @@ class _LandingPageState extends State<LandingPage>
         'source': source,
       },
     );
-    await TelemetryService.instance.logEvent(
-      event: 'auth.login',
-      metadata: <String, dynamic>{
-        'source': source,
-        'action': 'cta_click',
-      },
-    );
   }
 
   @override

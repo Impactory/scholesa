@@ -1,0 +1,16 @@
+# Restrict ingress to known source ranges (replace with your Serverless VPC connector/NAT ranges)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-serverless
+  namespace: scholesa-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: inference-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.8.0.0/28 # TODO: serverless connector range
