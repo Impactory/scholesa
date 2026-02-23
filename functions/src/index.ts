@@ -107,7 +107,10 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'order.intent',
   'order.paid',
   'cta.clicked',
+  'site.switched',
   'cms.page.viewed',
+  'export.requested',
+  'export.downloaded',
   'lead.submitted',
   'contract.created',
   'contract.approved',
@@ -152,6 +155,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'educator.feedback.submitted',
   'support.intervention.logged',
   'motivation.insight.viewed',
+  'fdm.state.changed',
   // ── BOS+MIA Runtime Events ──
   'mission_viewed',
   'mission_selected',

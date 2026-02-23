@@ -67,7 +67,11 @@ class TelemetryService {
     'aiDraft.reviewed',
     'order.intent',
     'cta.clicked',
+    'site.switched',
+    'export.requested',
+    'export.downloaded',
     'notification.requested',
+    'fdm.state.changed',
     // BOS+MIA Runtime Events
     'mission_viewed',
     'mission_selected',

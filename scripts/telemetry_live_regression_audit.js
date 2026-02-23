@@ -568,7 +568,7 @@ async function run() {
   }
 
   if (live.unknownEventCounts.size > 0) {
-    warnings.push(`liveUnknownEvents=${live.unknownEventCounts.size}`);
+    failures.push(`liveUnknownEvents=${live.unknownEventCounts.size}`);
   }
 
   if (live.missingRequiredLiveCoverage.length > 0) {
