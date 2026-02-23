@@ -1,152 +1,106 @@
 # 51_IMPLEMENTATION_AUDIT_GO_LIVE.md
 Implementation Audit & Go-Live Checklist
 
-Last Updated: 2025-01-09
+Last Updated: 2026-02-23
+Audit Mode: Full-scope (Core + Extended + Non-core)
 
-## Purpose
-This document tracks implementation progress against the "Run-to-Done" criteria from 74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md.
+## Final Status
 
----
+**GO (functional + regression gates passed)**
 
-## Step 1: Flutter App Compile & Boot ✅
+- ✅ Full RC2 regression chain passed end-to-end.
+- ✅ Full i18n/AI/voice/data VIBE suite passed.
+- ✅ Live telemetry coverage audit passed with required canonical core+non-core events.
+- ✅ Live voice VIBE release blocker suites passed.
+- ✅ Live deployment runtime verified on Node 24 across voice/telemetry functions and web service.
 
-| Criteria | Status | Evidence |
-|----------|--------|----------|
-| AppConfig implemented | ✅ | `lib/app_config.dart` - environment variables |
-| Firebase initialization | ✅ | `lib/main.dart` with safe bootstrap |
-| API client setup | ✅ | `lib/services/api_client.dart` |
-| Session bootstrap | ✅ | `lib/services/session_bootstrap.dart` |
-| Error screen with retry | ✅ | `lib/ui/error/fatal_error_screen.dart` |
-| `flutter analyze` clean | ⏳ | Pending verification |
-| Test account login | ✅ | Mock auth works |
+## Run-to-Done Criteria (74) — Completion
 
----
+| Step | Status | Evidence |
+|---|---|---|
+| 1) Compile/boot clean | ✅ | `npm run rc2:regression` (includes `flutter analyze`, `flutter test`, `flutter build web --release`) |
+| 2) Router + role gate + cards | ✅ | `apps/empire_flutter/app/lib/router/app_router.dart` + `docs/49_ROUTE_FLIP_TRACKER.md` (46/46 enabled) |
+| 3) Firestore rules + tests | ✅ | RC2 step `test:integration:rules` (17/17 passing) |
+| 4) API services + auth scope | ✅ | Live runtime + API/voice/telemetry gates green; role/site scope tests in telemetry/voice suites |
+| 5) Offline ops engine | ✅ | RC2 + Flutter regression suites include offline queue/sync checks |
+| 6) Staging/live seeded coverage | ✅ | Live telemetry coverage audit passes full canonical set |
+| 7) Deploy + go-live evidence | ✅ | Node 24 runtime verification + health endpoint 200 + evidence bundle in `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE` |
 
-## Step 2: Router + Role Gate + Dashboard Cards ✅
+## Core + Non-core Telemetry Gate
 
-| Criteria | Status | Evidence |
-|----------|--------|----------|
-| Central router file | ✅ | `lib/router/app_router.dart` |
-| RoleGate component | ✅ | `lib/router/role_gate.dart` |
-| kKnownRoutes registry | ✅ | Implemented in router |
-| Dashboard per role | ✅ | `lib/dashboards/role_dashboard.dart` |
-| Cards open enabled routes | ✅ | Verified via routing |
-| Cards block disabled routes | ✅ | Shows coming soon sheet |
+Command:
+`node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
 
-### Enabled Routes Summary (13 total):
-- `/login`, `/register` (Auth)
-- `/` (Dashboard)
-- `/educator/attendance`, `/educator/today` (Educator)
-- `/site/provisioning`, `/site/checkin` (Site)
-- `/hq/user-admin` (HQ)
-- `/learner/today`, `/learner/missions`, `/learner/habits` (Learner)
-- `/parent/summary` (Parent)
-- `/messages` (Cross-role)
+Result:
+- ✅ `Result: PASS`
+- ✅ Canonical required events covered: **36/36**
+- ✅ Unknown event counts: none
+- ✅ Schema/correlation/tenant/PII key errors: none
 
----
+Evidence:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/telemetry-live-audit.txt`
 
-## Step 3: Firestore Rules + Emulator Tests ⏳
+## Voice Full Deployment Gate
 
-| Criteria | Status | Notes |
-|----------|--------|-------|
-| Rules per matrix | ⏳ | Need to implement |
-| Composite indexes | ⏳ | Need to implement |
-| Cross-site deny test | ⏳ | Pending |
-| Admin-only provisioning test | ⏳ | Pending |
-| Parent boundary test | ⏳ | Pending |
-| Client-write deny test | ⏳ | Pending |
+Command:
+`node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app`
 
----
+Result:
+- ✅ `PASS vibe-voice-all-report`
+- ✅ Required blocker suites passed:
+  - tenant isolation
+  - role policy
+  - egress none
+  - STT locale smoke
+  - TTS pronunciation
+  - TTS prosody policy (K-5)
+  - UTF-8 integrity
+  - quiet mode
+  - abuse/safety refusals
 
-## Step 4: API Services ⏳
+Evidence:
+- `audit-pack/reports/vibe-voice-all-report.json`
+- `audit-pack/reports/voice-tenant-isolation.json`
+- `audit-pack/reports/voice-egress.json`
+- `audit-pack/reports/stt-smoke.json`
+- `audit-pack/reports/tts-pronunciation.json`
+- `audit-pack/reports/tts-prosody-policy.json`
+- `audit-pack/reports/voice-utf8.json`
 
-| Endpoint | Status | Notes |
-|----------|--------|-------|
-| `/v1/me` | ⏳ | Session bootstrap |
-| `/v1/provisioning/*` | ⏳ | Provisioning flow |
-| `/v1/attendance/*` | ⏳ | Attendance flow |
-| `/v1/sync/batch` | ⏳ | Offline sync |
-| `/healthz` | ⏳ | Health check |
+## Runtime / Deployment Verification (Node 24)
 
----
+Verified live runtimes:
+- `voiceApi` -> `nodejs24`
+- `copilotMessage` -> `nodejs24`
+- `voiceTranscribe` -> `nodejs24`
+- `ttsSpeak` -> `nodejs24`
+- `logTelemetryEvent` -> `nodejs24`
+- `triggerTelemetryAggregation` -> `nodejs24`
+- `empire-web` Cloud Run service at 100% latest revision traffic
 
-## Step 5: Offline Ops Engine ⏳
+Health probe:
+- `https://healthcheck-gu5vyrn2tq-uc.a.run.app` -> HTTP 200 + healthy services
 
-| Criteria | Status | Notes |
-|----------|--------|-------|
-| Offline queue storage | ✅ | `lib/offline/offline_queue.dart` (Hive) |
-| Sync coordinator | ✅ | `lib/offline/sync_coordinator.dart` |
-| `/v1/sync/batch` endpoint | ⏳ | API implementation pending |
-| Attendance op type | ⏳ | End-to-end pending |
-| Sync status indicator | ⏳ | UI pending |
+Evidence:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/cloudrun-services.json`
 
----
+## Enterprise Regression Master Outputs
 
-## Step 6: Seed Staging Data ⏳
+Generated artifacts:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/run.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/junit.xml`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/coverage-summary.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/e2e-artifacts.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/security-scans.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/ai-guardrails-report.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/tenant-isolation-test.json`
 
-| Criteria | Status | Notes |
-|----------|--------|-------|
-| 6 role accounts | ⏳ | Pending |
-| Pilot site + session | ⏳ | Pending |
-| Parent safe view verified | ⏳ | Pending |
+## Security Scan Snapshot
 
----
+`npm audit` artifacts generated for web and functions:
+- Web dependencies: 42 high advisories (`docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/vulnerability-scan.json`)
+- Functions dependencies: 4 high, 1 moderate (`docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/vulnerability-scan-functions.json`)
 
-## Step 7: Deploy to Cloud Run ⏳
-
-| Criteria | Status | Notes |
-|----------|--------|-------|
-| Web container | ⏳ | Pending |
-| API container | ⏳ | Pending |
-| `/healthz` verified | ⏳ | Pending |
-| CI build success | ⏳ | Pending |
-
----
-
-## Modules Implemented
-
-### Fully Functional Modules ✅
-1. **Attendance Module** - Mark attendance with offline support
-2. **Provisioning Module** - Invite/add learners, guardian linking
-3. **HQ User Admin** - Full CRUD for user management
-4. **Site Check-in/out** - Physical presence tracking
-5. **Learner Missions** - Three-pillar mission tracking
-6. **Habit Coach** - Daily habits with streaks
-7. **Messages** - Notifications and conversations
-8. **Parent Summary** - Safe learner progress view
-9. **Educator Today** - Daily schedule and quick actions
-10. **Learner Today** - Daily summary dashboard
-
-### Design Language Compliance ✅
-- [x] Consistent gradient cards
-- [x] Role-specific color theming
-- [x] Soft shadows (0.05-0.1 opacity)
-- [x] Rounded corners (16-24px)
-- [x] Empty states with guidance
-- [x] Loading states with branded colors
-- [x] Error handling with retry options
-
----
-
-## Definition of Done Checklist
-
-| Criteria | Status |
-|----------|--------|
-| Flutter web runs locally | ✅ |
-| Login and dashboards per role | ✅ |
-| Staging web on Cloud Run | ⏳ |
-| API on Cloud Run with /healthz | ⏳ |
-| Firestore rules tests passing | ⏳ |
-| Two real workflows end-to-end | ⏳ |
-| Route flips recorded | ✅ |
-
----
-
-## Next Steps (Priority)
-1. Implement Firestore security rules
-2. Deploy API to Cloud Run
-3. Implement `/v1/sync/batch` for offline
-4. Run emulator tests
-5. Seed staging data
-6. Deploy Flutter web to Cloud Run/Hosting
+Status:
+- ⚠️ Functional go-live gates pass, but dependency hardening remains an explicit security remediation track.
 
