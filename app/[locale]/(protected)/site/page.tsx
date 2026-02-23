@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
 import type { Site } from '@/schema';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function SiteDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
-  const params = useParams<{ locale?: string }>();
-  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const { locale, t } = useI18n();
   const trackInteraction = useInteractionTracking();
   const [site, setSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +48,7 @@ export default function SiteDashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">Loading dashboard...</div>
+        <div className="text-lg text-gray-600">{t('role.site.loading')}</div>
       </div>
     );
   }
@@ -58,9 +57,9 @@ export default function SiteDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">No Site Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('role.site.noSiteTitle')}</h1>
           <p className="mt-2 text-gray-600">
-            You are logged in as a Site Lead, but no site is linked to your account.
+            {t('role.site.noSiteMessage')}
           </p>
         </div>
       </div>
@@ -75,7 +74,7 @@ export default function SiteDashboard() {
             {site.name}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Site Lead Dashboard • {site.location || 'No location set'}
+            {t('role.site.subtitle', { location: site.location || t('role.site.noLocation') })}
           </p>
         </header>
 
@@ -91,7 +90,7 @@ export default function SiteDashboard() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">Total Learners</dt>
+                    <dt className="truncate text-sm font-medium text-gray-500">{t('role.site.totalLearners')}</dt>
                     <dd>
                       <div className="text-lg font-medium text-gray-900">-</div>
                     </dd>
@@ -106,7 +105,7 @@ export default function SiteDashboard() {
                   className="font-medium text-indigo-700 hover:text-indigo-900"
                   onClick={() => trackInteraction('feature_discovered', { cta: 'site_view_all' })}
                 >
-                  View all
+                  {t('common.viewAll')}
                 </Link>
               </div>
             </div>
@@ -123,7 +122,7 @@ export default function SiteDashboard() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">Active Sessions</dt>
+                    <dt className="truncate text-sm font-medium text-gray-500">{t('role.site.activeSessions')}</dt>
                     <dd>
                       <div className="text-lg font-medium text-gray-900">-</div>
                     </dd>
@@ -138,7 +137,7 @@ export default function SiteDashboard() {
                   className="font-medium text-indigo-700 hover:text-indigo-900"
                   onClick={() => trackInteraction('feature_discovered', { cta: 'site_manage_schedule' })}
                 >
-                  Manage schedule
+                  {t('role.site.manageSchedule')}
                 </Link>
               </div>
             </div>
@@ -146,9 +145,9 @@ export default function SiteDashboard() {
         </div>
 
         <div className="mt-8">
-          <h2 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h2>
+          <h2 className="text-lg font-medium leading-6 text-gray-900">{t('role.site.recentActivity')}</h2>
           <div className="mt-4 overflow-hidden rounded-lg bg-white shadow">
-            <div className="p-6 text-center text-gray-500">No recent activity to show.</div>
+            <div className="p-6 text-center text-gray-500">{t('role.site.noRecentActivity')}</div>
           </div>
         </div>
       </div>

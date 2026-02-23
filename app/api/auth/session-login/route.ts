@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/src/firebase/admin-init';
+import { resolveRequestLocale } from '@/src/lib/i18n/localeHeaders';
 
 export async function POST(request: Request) {
+  const resolvedLocale = resolveRequestLocale(request.headers);
   const { idToken } = await request.json();
 
   if (!idToken) {
@@ -21,8 +23,17 @@ export async function POST(request: Request) {
     if (!userDoc.exists) {
       await userRef.set({
         email: decodedToken.email,
+        preferredLocale: resolvedLocale,
         createdAt: new Date(),
       });
+    } else {
+      await userRef.set(
+        {
+          preferredLocale: resolvedLocale,
+          updatedAt: new Date(),
+        },
+        { merge: true },
+      );
     }
 
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
@@ -39,6 +50,23 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ status: 'success' }, { status: 200 });
     response.cookies.set(options);
+    response.cookies.set({
+      name: 'scholesa_locale',
+      value: resolvedLocale,
+      maxAge: expiresIn,
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    console.info(
+      JSON.stringify({
+        event: 'auth.session.created',
+        uid,
+        targetLocale: resolvedLocale,
+      }),
+    );
 
     return response;
   } catch (error) {

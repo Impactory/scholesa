@@ -1,0 +1,23 @@
+:root {
+  --scholesa-font-stack: "Noto Sans", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "PingFang SC", "PingFang TC", "Microsoft YaHei", "Nirmala UI", "Leelawadee UI", "Inter", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--scholesa-font-stack);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-scholesa {
+  font-family: var(--scholesa-font-stack);
+}

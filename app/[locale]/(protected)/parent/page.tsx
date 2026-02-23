@@ -6,13 +6,12 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { usersCollection } from '@/src/lib/firestore/collections';
 import type { User } from '@/schema';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function ParentDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const params = useParams<{ locale?: string }>();
-  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const { locale, t } = useI18n();
   const trackInteraction = useInteractionTracking();
   const [learners, setLearners] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +45,7 @@ export default function ParentDashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">Loading parent dashboard...</div>
+        <div className="text-lg text-gray-600">{t('role.parent.loading')}</div>
       </div>
     );
   }
@@ -56,10 +55,10 @@ export default function ParentDashboard() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Welcome, {profile?.displayName || 'Parent'}
+            {t('role.parent.welcome', { name: profile?.displayName || t('role.parent.defaultName') })}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Track your children's progress and upcoming activities.
+            {t('role.parent.subtitle')}
           </p>
         </header>
 
@@ -67,17 +66,17 @@ export default function ParentDashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">My Children</h2>
+              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.parent.children')}</h2>
               {learners.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-                  <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">Welcome Parent</h1>
-                  <p className="mt-4 text-lg text-gray-600">You don&apos;t have any learners associated with your account yet.</p>
+                  <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">{t('role.parent.emptyWelcome')}</h1>
+                  <p className="mt-4 text-lg text-gray-600">{t('role.parent.emptyMessage')}</p>
                   <Link
                     href={`/${locale}/learner`}
                     className="mt-8 px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'parent_register_learner' })}
                   >
-                    Register a Learner
+                    {t('role.parent.registerLearner')}
                   </Link>
                 </div>
               ) : (
@@ -87,7 +86,7 @@ export default function ParentDashboard() {
                       <div className="p-5">
                         <div className="flex items-center space-x-4">
                           <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                            {learner.displayName?.charAt(0) || 'L'}
+                            {learner.displayName?.charAt(0) || t('role.parent.defaultLearnerInitial')}
                           </div>
                           <div>
                             <h3 className="text-lg font-medium text-gray-900">{learner.displayName}</h3>
@@ -102,7 +101,7 @@ export default function ParentDashboard() {
                             className="font-medium text-indigo-700 hover:text-indigo-900"
                             onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_progress', learnerId: learner.uid })}
                           >
-                            View Progress
+                            {t('role.parent.viewProgress')}
                           </Link>
                         </div>
                       </div>
@@ -117,21 +116,21 @@ export default function ParentDashboard() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-lg bg-white shadow">
               <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>
+                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.parent.quickActions')}</h3>
                 <div className="mt-4 space-y-4">
                   <Link
                     href={`/${locale}/parent`}
                     className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'parent_message_educator' })}
                   >
-                    Message Educator
+                    {t('role.parent.messageEducator')}
                   </Link>
                   <Link
                     href={`/${locale}/parent`}
                     className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_schedule' })}
                   >
-                    View Schedule
+                    {t('role.parent.viewSchedule')}
                   </Link>
                 </div>
               </div>

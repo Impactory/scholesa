@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function DashboardRedirect() {
   const { user, profile, loading } = useAuthContext();
   const router = useRouter();
-  const params = useParams<{ locale?: string }>();
-  const locale = params?.locale || 'en';
+  const { locale, t } = useI18n();
 
   useEffect(() => {
     if (loading) return;
@@ -33,7 +33,7 @@ export default function DashboardRedirect() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-pulse text-lg font-medium text-gray-600">
-        Redirecting to your dashboard...
+        {t('dashboard.redirecting')}
       </div>
     </div>
   );

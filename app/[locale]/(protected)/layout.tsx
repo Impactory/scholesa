@@ -2,10 +2,11 @@
 import React from 'react';
 
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { Navigation } from '@/src/features/navigation/components/Navigation';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function ProtectedLayout({
   children,
@@ -14,8 +15,7 @@ export default function ProtectedLayout({
 }) {
   const { user, loading } = useAuthContext();
   const router = useRouter();
-  const params = useParams();
-  const locale = params ? params.locale as string : 'en';
+  const { locale, t } = useI18n();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -26,7 +26,10 @@ export default function ProtectedLayout({
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Spinner />
+        <div className="flex items-center gap-3 text-gray-600">
+          <Spinner />
+          <span>{t('common.loading')}</span>
+        </div>
       </div>
     );
   }

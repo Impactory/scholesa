@@ -1,0 +1,216 @@
+If your repo is different, map the equivalent directories and keep the same responsibilities.
+
+---
+
+## 2) Locale Strategy (Engineering Decision)
+
+### 2.1 Locale codes (canonical)
+- English: `en`
+- Simplified Chinese: `zh-CN`
+- Traditional Chinese: `zh-TW`
+- Thai: `th`
+
+### 2.2 Fallback chain
+- `zh-CN` → `en`
+- `zh-TW` → `en`
+- `th` → `en`
+
+No “silent missing keys” in production. Missing keys must:
+- fail in CI for required key sets OR
+- fall back but emit **structured warning telemetry** during tests
+
+---
+
+## 3) UI I18N Implementation (Web App)
+
+### 3.1 Use an i18n library consistently
+Pick one and enforce:
+- **React:** `react-intl` OR `i18next` (with ICU support preferred)
+- Store keys in `/packages/i18n/locales/{locale}.json`
+
+### 3.2 Key naming standard
+- `screen.section.component.label`
+Examples:
+- `nav.dashboard`
+- `mission.checkpoint.submit`
+- `errors.permissionDenied`
+- `ai.safety.blocked.title`
+
+### 3.3 Prohibited patterns (CI must catch)
+- Hardcoded strings in components
+- String concatenation that breaks translation
+- Inline locale-specific logic in UI components
+
+Allowed:
+- Debug/test labels in dev-only code paths, flagged and excluded in prod builds.
+
+### 3.4 Build-time checks (must implement)
+- Script to scan for hardcoded strings (best-effort) and enforce:
+  - No literal text in JSX except approved whitelist
+  - No `dangerouslySetInnerHTML` for translatable content
+- Enforce locale files exist and parse.
+
+**VIBE gate:** `i18n:lint` must pass.
+
+---
+
+## 4) Fonts, Layout, and Rendering (CJK + Thai)
+
+### 4.1 Font support (required)
+- Ensure chosen UI fonts contain:
+  - CJK glyphs (Simplified + Traditional)
+  - Thai glyphs
+- Prefer Noto family (or system fallback chain).
+
+### 4.2 Layout expansion tests (required)
+- Create automated screenshot tests for:
+  - key screens: login, dashboard, mission, checkpoint, reflection, teacher review, admin
+  - in each locale (`en`, `zh-CN`, `zh-TW`, `th`)
+- Validate:
+  - no clipped buttons
+  - no overlapping text
+  - line breaks acceptable
+
+**VIBE gate:** screenshot diff must be within threshold.
+
+---
+
+## 5) API & Data Layer Locale Awareness
+
+### 5.1 Locale propagation
+Every request to `scholesa-api` must include:
+- `Accept-Language` header OR
+- `X-Scholesa-Locale`
+
+Server must:
+- resolve locale (prefer user profile setting)
+- log locale on request context
+- propagate locale to `scholesa-ai` calls
+
+### 5.2 Firestore data fields
+For any localized content stored:
+- store as either:
+  - single source key + runtime translation (preferred), OR
+  - `localizedText: { en: "...", "zh-CN": "...", "zh-TW": "...", th: "..." }`
+
+Avoid mixing strategies within the same feature.
+
+---
+
+## 6) AI Orchestration — Multilingual Safety is Mandatory
+
+### 6.1 Language steering (required)
+For every AI call, the orchestrator must pass:
+- `targetLocale`
+- `gradeBand`
+- `role`
+- `siteId`
+- `learnerId` (internal logs)
+- `missionAttemptId` if in-mission
+
+AI must produce outputs in `targetLocale` unless:
+- safety refusal response is triggered
+- teacher/admin overrides for translation mode
+
+### 6.2 Multilingual guardrails (required)
+Guardrails must be applied BEFORE and AFTER model response:
+- input moderation (user prompt)
+- tool gating (scoped by siteId/role/gradeBand)
+- output moderation (model output)
+
+**Critical:** test the guardrails in each locale, because bypass attempts in Chinese/Thai are common.
+
+### 6.3 Safety outcomes schema (required)
+Every AI response (student-facing) must include:
+- `modelVersion`
+- `policyVersion`
+- `promptTemplateId`
+- `safetyOutcome` (`allowed|blocked|modified|escalated`)
+- `safetyReasonCode`
+- `toolCallIds[]`
+- `targetLocale`
+- `gradeBand`
+- `traceId`
+- `missionAttemptId` (if applicable)
+
+---
+
+## 7) Multilingual Prompt Injection / Exfiltration Tests (Required)
+
+Create a test suite with:
+- Same attack intent in each locale:
+  - `en`, `zh-CN`, `zh-TW`, `th`
+
+### 7.1 Injection categories
+- system prompt extraction attempt
+- tool invocation coercion
+- cross-tenant data request (“show me other school’s data”)
+- disallowed content generation
+- impersonation attempts
+
+### 7.2 Expected behavior
+- Block or safe-refuse with localized refusal text
+- Log `safetyOutcome=blocked` with reason code
+- No tool calls executed when blocked
+
+**VIBE gate:** `ai:guardrails:i18n` must pass.
+
+---
+
+## 8) UTF-8 Integrity (Exports/Imports + Logs)
+
+### 8.1 Required tests
+- Create records with:
+  - Thai names with combining characters
+  - Simplified and Traditional Chinese mission titles
+  - Mixed scripts in reflections
+- Export to CSV/JSON
+- Re-import or re-parse
+- Verify byte-for-byte equality or canonical normalization rules
+
+### 8.2 CSV requirements
+- Always UTF-8
+- If Excel compatibility required: UTF-8 BOM optional (document policy)
+- Ensure no mojibake in downloaded files
+
+**VIBE gate:** `data:utf8` must pass.
+
+---
+
+## 9) COPPA + Parent Notice Translations (Operational)
+
+Maintain translated parent notices:
+- `parent_notice_en.md`
+- `parent_notice_zh-CN.md`
+- `parent_notice_zh-TW.md`
+- `parent_notice_th.md`
+
+**Rules:**
+- Content parity required (same sections)
+- Versioned and tracked
+- Distributed through school consent workflow
+
+**VIBE gate:** `compliance:notice:i18n` ensures all required files exist and contain required headings.
+
+---
+
+## 10) VIBE Regression Matrix (Add to Release Gate)
+
+Add these suites to your CI required checks:
+
+1) `i18n:lint`  
+2) `i18n:keys:complete`  
+3) `ui:screenshots:i18n`  
+4) `api:locale:propagation`  
+5) `ai:guardrails:i18n`  
+6) `ai:language:responds-in-locale`  
+7) `data:utf8`  
+8) `compliance:notice:i18n`
+
+Release blocked if any fail.
+
+---
+
+## 11) Required Artifacts (Audit Evidence Output)
+
+Each VIBE run must produce:

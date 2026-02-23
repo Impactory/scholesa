@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react';
 import { query, where, getDocs, documentId } from 'firebase/firestore';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
 import type { Site } from '@/schema';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function PartnerDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
-  const params = useParams<{ locale?: string }>();
-  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const { locale, t } = useI18n();
   const trackInteraction = useInteractionTracking();
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +50,7 @@ export default function PartnerDashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">Loading partner dashboard...</div>
+        <div className="text-lg text-gray-600">{t('role.partner.loading')}</div>
       </div>
     );
   }
@@ -61,11 +60,13 @@ export default function PartnerDashboard() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Partner Portal
+            {t('role.partner.title')}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Welcome, {profile?.displayName || 'Partner'}. 
-            {profile?.organizationId && <span className="ml-1">Organization: {profile.organizationId}</span>}
+            {t('role.partner.subtitle', { name: profile?.displayName || t('role.partner.defaultName') })}
+            {profile?.organizationId && (
+              <span className="ml-1">{t('role.partner.organization', { organizationId: profile.organizationId })}</span>
+            )}
           </p>
         </header>
 
@@ -73,10 +74,10 @@ export default function PartnerDashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">Associated Sites</h2>
+              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.partner.associatedSites')}</h2>
               {sites.length === 0 ? (
                 <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  <p>No sites linked to your account.</p>
+                  <p>{t('role.partner.noSites')}</p>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -84,10 +85,10 @@ export default function PartnerDashboard() {
                     <div key={site.id} className="overflow-hidden rounded-lg bg-white shadow hover:shadow-md transition-shadow">
                       <div className="p-5">
                         <h3 className="text-lg font-medium text-gray-900">{site.name}</h3>
-                        <p className="text-sm text-gray-500">{site.location || 'No location'}</p>
+                        <p className="text-sm text-gray-500">{site.location || t('role.partner.noLocation')}</p>
                         <div className="mt-4">
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                            Active
+                            {t('common.active')}
                           </span>
                         </div>
                       </div>
@@ -98,7 +99,7 @@ export default function PartnerDashboard() {
                             className="font-medium text-indigo-700 hover:text-indigo-900"
                             onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_reports', siteId: site.id })}
                           >
-                            View Reports
+                            {t('role.partner.viewReports')}
                           </Link>
                         </div>
                       </div>
@@ -113,15 +114,15 @@ export default function PartnerDashboard() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-lg bg-white shadow">
               <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">Impact Overview</h3>
+                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.partner.impactOverview')}</h3>
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <dl className="divide-y divide-gray-100">
                     <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">Total Learners Supported</dt>
+                      <dt className="text-gray-500">{t('role.partner.totalLearnersSupported')}</dt>
                       <dd className="font-medium text-gray-900">-</dd>
                     </div>
                     <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">Active Programs</dt>
+                      <dt className="text-gray-500">{t('role.partner.activePrograms')}</dt>
                       <dd className="font-medium text-gray-900">-</dd>
                     </div>
                   </dl>
@@ -131,21 +132,21 @@ export default function PartnerDashboard() {
             
             <div className="overflow-hidden rounded-lg bg-white shadow">
               <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">Resources</h3>
+                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.partner.resources')}</h3>
                 <div className="mt-4 space-y-2">
                   <Link
                     href={`/${locale}/partner`}
                     className="block text-sm text-indigo-600 hover:text-indigo-500"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'partner_download_impact_report' })}
                   >
-                    Download Impact Report
+                    {t('role.partner.downloadImpactReport')}
                   </Link>
                   <Link
                     href={`/${locale}/partner`}
                     className="block text-sm text-indigo-600 hover:text-indigo-500"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_guidelines' })}
                   >
-                    Partner Guidelines
+                    {t('role.partner.partnerGuidelines')}
                   </Link>
                 </div>
               </div>

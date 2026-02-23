@@ -1,0 +1,115 @@
+Every report includes:
+- `gitSha`
+- `runId`
+- `timestamp`
+- `environment`
+- pass/fail + failures list
+
+---
+
+## 12) Implementation Steps (Order of Operations)
+
+### Step A — Foundations
+- Create `/packages/i18n`
+- Add locale JSON bundles: `en`, `zh-CN`, `zh-TW`, `th`
+- Add i18n provider to web app
+- Replace hardcoded strings on core flows
+
+### Step B — Locale propagation
+- Add locale headers end-to-end:
+  - web → api → ai
+- Log locale on each request context
+
+### Step C — Multilingual guardrails
+- Create `/packages/safety`
+- Add multilingual attack fixtures
+- Implement `ai:guardrails:i18n` runner
+
+### Step D — UI screenshot regression
+- Automate locale switching
+- Capture screens
+- Diff against baselines
+
+### Step E — UTF-8 export/import validation
+- Seed Thai + CJK content
+- Export, parse, verify integrity
+
+### Step F — Compliance notice translations
+- Add translated parent notices
+- Enforce parity checks
+
+---
+
+## 13) Definition of Done (DOD)
+
+A PR is “done” only if:
+
+- All required locales render key screens (screenshots evidence)
+- All AI guardrail tests pass in all locales
+- AI responds in target locale for normal tutoring flows
+- UTF-8 export/import integrity passes
+- Parent notices exist in all required locales
+- Audit-pack artifacts are generated in CI and attached to the run
+
+---
+
+## 14) Notes for Firebase + Cloud Run
+
+- Firebase Hosting locale routing:
+  - store locale in user profile or cookie
+  - optionally support `/{locale}/...` URL prefixes
+- Cloud Run: ensure locale headers are forwarded through Hosting rewrites
+- Firestore rules: do not rely on locale for security decisions; locale is not a security boundary.
+
+---
+
+## 15) VIBE Command Interface (Standard)
+
+Add these commands (package.json scripts or Makefile equivalents):
+
+- `vibe:i18n:lint`
+- `vibe:i18n:keys`
+- `vibe:ui:screens:i18n`
+- `vibe:api:locale`
+- `vibe:ai:guardrails:i18n`
+- `vibe:ai:language`
+- `vibe:data:utf8`
+- `vibe:compliance:notice:i18n`
+- `vibe:all`
+
+Each command must output a JSON report into `/audit-pack/reports/`.
+
+---
+
+## 16) Starter Test Fixtures (Required)
+
+Create fixtures for each locale:
+
+- Injection attempts
+- Exfiltration requests
+- Harassment/unsafe content triggers
+- Neutral tutoring prompts
+- Translation prompts (teacher-only)
+
+Ensure fixtures include:
+- Short prompts
+- Realistic student phrasing
+- Common bypass patterns (including mixed scripts)
+
+---
+
+## 17) Security Reminder
+
+Localization does **not** change:
+- tenant isolation rules
+- RBAC
+- logging requirements
+
+But it **does** expand:
+- safety and moderation surface area
+- compliance notice obligations
+- QA complexity
+
+Treat multilingual safety as a first-class security feature.
+
+---

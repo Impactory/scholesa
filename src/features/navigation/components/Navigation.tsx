@@ -4,15 +4,17 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Button } from '@/src/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export function Navigation() {
   const { user, signOut } = useAuthContext();
   const router = useRouter();
   const trackInteraction = useInteractionTracking();
+  const { locale, t } = useI18n();
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/');
+    router.push(`/${locale}/login`);
   };
 
   if (!user) {
@@ -30,7 +32,7 @@ export function Navigation() {
           </div>
           <div className="flex items-center">
             <span className="mr-4 text-sm text-gray-700">
-              {user.displayName || user.email}
+              {t('navigation.signedInAs', { identity: user.displayName || user.email || '' })}
             </span>
             <Button
               onClick={() => {
@@ -40,7 +42,7 @@ export function Navigation() {
               variant="ghost"
               size="sm"
             >
-              Sign out
+              {t('navigation.signOut')}
             </Button>
           </div>
         </div>

@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react';
 import { query, where, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sessionsCollection } from '@/src/lib/firestore/collections';
 import type { Session } from '@/schema';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function EducatorDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const params = useParams<{ locale?: string }>();
-  const locale = typeof params?.locale === 'string' ? params.locale : 'en';
+  const { locale, t } = useI18n();
   const trackInteraction = useInteractionTracking();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +43,7 @@ export default function EducatorDashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">Loading educator dashboard...</div>
+        <div className="text-lg text-gray-600">{t('role.educator.loading')}</div>
       </div>
     );
   }
@@ -54,10 +53,10 @@ export default function EducatorDashboard() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Hello, {profile?.displayName || 'Educator'}
+            {t('role.educator.hello', { name: profile?.displayName || t('role.educator.defaultName') })}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Manage your sessions and track learner progress.
+            {t('role.educator.subtitle')}
           </p>
         </header>
 
@@ -65,10 +64,10 @@ export default function EducatorDashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">My Assigned Sessions</h2>
+              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.educator.assignedSessions')}</h2>
               {sessions.length === 0 ? (
                 <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  You are not assigned to any sessions yet.
+                  {t('role.educator.noSessions')}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -79,7 +78,7 @@ export default function EducatorDashboard() {
                         <p className="mt-1 text-sm text-gray-500 line-clamp-2">{session.description}</p>
                         <div className="mt-4 flex items-center justify-between">
                           <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-                            {session.pillarCodes?.[0] || 'General'}
+                            {session.pillarCodes?.[0] || t('common.general')}
                           </span>
                           <span className="text-xs text-gray-500">
                             {new Date(session.startDate).toLocaleDateString()}
@@ -93,7 +92,7 @@ export default function EducatorDashboard() {
                             className="font-medium text-indigo-700 hover:text-indigo-900"
                             onClick={() => trackInteraction('feature_discovered', { cta: 'educator_view_details', sessionId: session.id })}
                           >
-                            View details
+                            {t('role.educator.viewDetails')}
                           </Link>
                         </div>
                       </div>
@@ -108,21 +107,21 @@ export default function EducatorDashboard() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-lg bg-white shadow">
               <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>
+                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.educator.quickActions')}</h3>
                 <div className="mt-4 space-y-4">
                   <Link
                     href={`/${locale}/educator`}
                     className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'educator_take_attendance' })}
                   >
-                    Take Attendance
+                    {t('role.educator.takeAttendance')}
                   </Link>
                   <Link
                     href={`/${locale}/educator`}
                     className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     onClick={() => trackInteraction('feature_discovered', { cta: 'educator_create_mission' })}
                   >
-                    Create Mission
+                    {t('role.educator.createMission')}
                   </Link>
                 </div>
               </div>

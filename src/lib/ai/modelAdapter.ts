@@ -12,6 +12,8 @@
  */
 
 import type { AgeBand } from '@/src/types/schema';
+import type { SupportedLocale } from '@/src/lib/i18n/config';
+import type { Role } from '@/schema';
 
 // ==================== YOUR SCHEMA (vendor-agnostic) ====================
 
@@ -48,7 +50,15 @@ export interface SafetyConstraints {
 export interface ModelRequest {
   taskType: TaskType;
   gradeBand: AgeBand;
+  targetLocale: SupportedLocale;
+  role: Role;
+  siteId: string;
+  learnerId: string;
+  traceId: string;
+  promptTemplateId: string;
+  policyVersion: string;
   policyMode: PolicyMode;
+  missionAttemptId?: string;
   
   // Student context (redacted, minimal)
   studentLevel: 'emerging' | 'proficient' | 'advanced';
@@ -84,6 +94,16 @@ export interface ModelResponse {
   }[];
   
   // Model metadata
+  modelVersion: string;
+  promptTemplateId: string;
+  policyVersion: string;
+  safetyOutcome: 'allowed' | 'blocked' | 'modified' | 'escalated';
+  safetyReasonCode: string;
+  toolCallIds: string[];
+  targetLocale: SupportedLocale;
+  gradeBand: AgeBand;
+  traceId: string;
+  missionAttemptId?: string;
   confidence?: number; // 0-1
   safetyFlags?: string[];
   
@@ -183,7 +203,7 @@ export class GeminiAdapter implements ModelAdapter {
   // ===== PRIVATE HELPERS =====
   
   private buildSystemPrompt(request: ModelRequest): string {
-    const { taskType, policyMode, safetyConstraints } = request;
+    const { taskType, policyMode, safetyConstraints, targetLocale } = request;
     
     let prompt = `You are an AI learning coach for K-12 students.\n\n`;
     
@@ -198,6 +218,7 @@ export class GeminiAdapter implements ModelAdapter {
     };
     
     prompt += `Task: ${taskInstructions[taskType]}\n\n`;
+    prompt += `Language: Respond strictly in locale "${targetLocale}".\n\n`;
     
     // Age-appropriate policies
     const policyInstructions = {
@@ -310,6 +331,16 @@ export class GeminiAdapter implements ModelAdapter {
       citations: citations.length > 0 ? citations : undefined,
       safetyFlags: safetyFlags.length > 0 ? safetyFlags : undefined,
       modelUsed: 'gemini-1.5-flash',
+      modelVersion: 'gemini-1.5-flash',
+      promptTemplateId: request.promptTemplateId,
+      policyVersion: request.policyVersion,
+      safetyOutcome: 'allowed',
+      safetyReasonCode: 'none',
+      toolCallIds: [],
+      targetLocale: request.targetLocale,
+      gradeBand: request.gradeBand,
+      traceId: request.traceId,
+      missionAttemptId: request.missionAttemptId,
       tokensUsed: data.usageMetadata?.totalTokenCount || 0,
       latencyMs
     };
@@ -371,6 +402,16 @@ export class OpenAIAdapter implements ModelAdapter {
       return {
         answer: data.choices[0].message.content.trim(),
         modelUsed: 'gpt-4o-mini',
+        modelVersion: 'gpt-4o-mini',
+        promptTemplateId: request.promptTemplateId,
+        policyVersion: request.policyVersion,
+        safetyOutcome: 'allowed',
+        safetyReasonCode: 'none',
+        toolCallIds: [],
+        targetLocale: request.targetLocale,
+        gradeBand: request.gradeBand,
+        traceId: request.traceId,
+        missionAttemptId: request.missionAttemptId,
         tokensUsed: data.usage.total_tokens,
         latencyMs
       };

@@ -6,6 +6,7 @@ import { Input } from '@/src/components/ui/Input';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useRouter, useParams } from 'next/navigation';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -13,13 +14,14 @@ export function LoginForm() {
   const { signInWithGoogle } = useAuthContext();
   const router = useRouter();
   const params = useParams();
+  const { t } = useI18n();
   const locale = params ? ((params as any).locale as string) || 'en' : 'en';
   const trackInteraction = useInteractionTracking();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     trackInteraction('help_accessed', { cta: 'legacy_login_email_submit' });
-    console.log('Email/password login not fully implemented yet, use Google Sign-In');
+    console.log(t('auth.legacyLogin.emailPasswordNotReady'));
   };
 
   const handleGoogleSignIn = async () => {
@@ -35,7 +37,7 @@ export function LoginForm() {
   return (
     <div className='flex min-h-screen flex-col justify-center bg-gray-50 py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900'>Sign in to your account</h2>
+        <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900'>{t('auth.legacyLogin.title')}</h2>
       </div>
 
       <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
@@ -43,7 +45,7 @@ export function LoginForm() {
           <form className='space-y-6' onSubmit={handleSubmit}>
             <Input
               id='email'
-              label='Email address'
+              label={t('auth.login.emailLabel')}
               type='email'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -51,7 +53,7 @@ export function LoginForm() {
             />
             <Input
               id='password'
-              label='Password'
+              label={t('auth.login.passwordLabel')}
               type='password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -60,7 +62,7 @@ export function LoginForm() {
 
             <div>
               <Button type='submit' className='w-full'>
-                Sign in
+                {t('auth.legacyLogin.submit')}
               </Button>
             </div>
           </form>
@@ -71,13 +73,13 @@ export function LoginForm() {
                 <div className='w-full border-t border-gray-300' />
               </div>
               <div className='relative flex justify-center text-sm'>
-                <span className='bg-white px-2 text-gray-500'>Or continue with</span>
+                <span className='bg-white px-2 text-gray-500'>{t('auth.legacyLogin.orContinueWith')}</span>
               </div>
             </div>
 
             <div className='mt-6'>
                <Button onClick={handleGoogleSignIn} className='w-full' variant='outline'>
-                Google
+                {t('auth.legacyLogin.google')}
               </Button>
             </div>
           </div>
