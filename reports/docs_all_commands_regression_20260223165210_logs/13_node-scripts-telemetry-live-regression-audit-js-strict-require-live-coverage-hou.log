@@ -2,3 +2,4 @@ $ node scripts/telemetry_live_regression_audit.js --strict --require-live-covera
 cwd: /Users/simonluke/dev/scholesa
 timeout_seconds: 240
 
+Telemetry live regression audit failed: 14 UNAVAILABLE: Name resolution failed for target dns:firestore.googleapis.com:443
