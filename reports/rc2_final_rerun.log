@@ -263,4 +263,7 @@ TelemetryService: Firebase app not initialized; telemetry events are dropped for
 ============================================================
 RC2 STEP: Flutter web release build
 ============================================================
-Compiling lib/main.dart for the Web...                          
+Compiling lib/main.dart for the Web...                             16.0s
+✓ Built build/web
+
+✅ RC2 regression chain completed successfully.
