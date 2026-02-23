@@ -6,7 +6,7 @@ void main() {
   group('AppState', () {
     test('initial state is correct', () {
       final AppState appState = AppState();
-      
+
       expect(appState.userId, isNull);
       expect(appState.role, isNull);
       expect(appState.isAuthenticated, isFalse);
@@ -17,7 +17,7 @@ void main() {
 
     test('updateFromMeResponse sets state correctly', () {
       final AppState appState = AppState();
-      
+
       appState.updateFromMeResponse(<String, dynamic>{
         'userId': 'user123',
         'email': 'test@example.com',
@@ -44,7 +44,7 @@ void main() {
 
     test('clear resets state', () {
       final AppState appState = AppState();
-      
+
       appState.updateFromMeResponse(<String, dynamic>{
         'userId': 'user123',
         'email': 'test@example.com',
@@ -64,7 +64,7 @@ void main() {
 
     test('switchSite only allows valid sites', () {
       final AppState appState = AppState();
-      
+
       appState.updateFromMeResponse(<String, dynamic>{
         'userId': 'user123',
         'email': 'test@example.com',
@@ -86,7 +86,8 @@ void main() {
   group('UserRole', () {
     test('fromString parses all roles', () {
       expect(UserRoleExtension.fromString('learner'), equals(UserRole.learner));
-      expect(UserRoleExtension.fromString('educator'), equals(UserRole.educator));
+      expect(
+          UserRoleExtension.fromString('educator'), equals(UserRole.educator));
       expect(UserRoleExtension.fromString('parent'), equals(UserRole.parent));
       expect(UserRoleExtension.fromString('site'), equals(UserRole.site));
       expect(UserRoleExtension.fromString('partner'), equals(UserRole.partner));

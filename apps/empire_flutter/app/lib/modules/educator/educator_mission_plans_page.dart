@@ -33,7 +33,8 @@ class EducatorMissionPlansPage extends StatefulWidget {
   const EducatorMissionPlansPage({super.key});
 
   @override
-  State<EducatorMissionPlansPage> createState() => _EducatorMissionPlansPageState();
+  State<EducatorMissionPlansPage> createState() =>
+      _EducatorMissionPlansPageState();
 }
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
@@ -151,9 +152,12 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   _buildInfoItem(Icons.timer_outlined, plan.duration),
-                  _buildInfoItem(Icons.school_outlined, 'Grade ${plan.targetGrade}'),
-                  _buildInfoItem(Icons.calendar_today_outlined, '${plan.assignedSessions} sessions'),
-                  _buildInfoItem(Icons.check_circle_outline, '${plan.completedBy} done'),
+                  _buildInfoItem(
+                      Icons.school_outlined, 'Grade ${plan.targetGrade}'),
+                  _buildInfoItem(Icons.calendar_today_outlined,
+                      '${plan.assignedSessions} sessions'),
+                  _buildInfoItem(
+                      Icons.check_circle_outline, '${plan.completedBy} done'),
                 ],
               ),
             ],
@@ -166,7 +170,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   Widget _buildPillarIcon(String pillar) {
     IconData icon;
     Color color = _getPillarColor(pillar);
-    
+
     switch (pillar) {
       case 'Future Skills':
         icon = Icons.psychology_rounded;
@@ -253,7 +257,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   void _showFilterDialog() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'educator_mission_plans_open_filter'},
+      metadata: const <String, dynamic>{
+        'cta': 'educator_mission_plans_open_filter'
+      },
     );
     showDialog<void>(
       context: context,
@@ -274,7 +280,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'educator_mission_plans_close_filter'},
+                metadata: const <String, dynamic>{
+                  'cta': 'educator_mission_plans_close_filter'
+                },
               );
               Navigator.pop(context);
             },
@@ -301,7 +309,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   void _showMissionDetails(_MissionPlan plan) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'educator_mission_plans_open_details', 'plan_id': plan.id},
+      metadata: <String, dynamic>{
+        'cta': 'educator_mission_plans_open_details',
+        'plan_id': plan.id
+      },
     );
     showModalBottomSheet<void>(
       context: context,
@@ -362,7 +373,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Assigning to sessions...')),
+                        const SnackBar(
+                            content: Text('Assigning to sessions...')),
                       );
                     },
                     child: const Text('Assign'),
@@ -379,7 +391,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   void _showCreateMissionDialog() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'educator_mission_plans_open_create_dialog'},
+      metadata: const <String, dynamic>{
+        'cta': 'educator_mission_plans_open_create_dialog'
+      },
     );
     final TextEditingController titleController = TextEditingController();
     String selectedPillar = 'Future Skills';
@@ -387,7 +401,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder: (BuildContext context, void Function(void Function()) setLocalState) => AlertDialog(
+        builder: (BuildContext context,
+                void Function(void Function()) setLocalState) =>
+            AlertDialog(
           backgroundColor: ScholesaColors.surface,
           title: const Text('Create New Mission'),
           content: SingleChildScrollView(
@@ -409,9 +425,14 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     border: OutlineInputBorder(),
                   ),
                   items: const <DropdownMenuItem<String>>[
-                    DropdownMenuItem<String>(value: 'Future Skills', child: Text('Future Skills')),
-                    DropdownMenuItem<String>(value: 'Leadership & Agency', child: Text('Leadership & Agency')),
-                    DropdownMenuItem<String>(value: 'Impact & Innovation', child: Text('Impact & Innovation')),
+                    DropdownMenuItem<String>(
+                        value: 'Future Skills', child: Text('Future Skills')),
+                    DropdownMenuItem<String>(
+                        value: 'Leadership & Agency',
+                        child: Text('Leadership & Agency')),
+                    DropdownMenuItem<String>(
+                        value: 'Impact & Innovation',
+                        child: Text('Impact & Innovation')),
                   ],
                   onChanged: (String? value) {
                     if (value != null) {
@@ -434,7 +455,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_mission_plans_create_cancel'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_mission_plans_create_cancel'
+                  },
                 );
                 Navigator.pop(dialogContext);
               },
@@ -476,7 +499,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Mission created and added to list')),
+                  const SnackBar(
+                      content: Text('Mission created and added to list')),
                 );
               },
               child: const Text('Create'),

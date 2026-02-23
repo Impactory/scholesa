@@ -5,7 +5,6 @@ import 'firestore_service.dart';
 
 /// Bootstraps the app session after Firebase init using Firestore directly
 class SessionBootstrap {
-
   SessionBootstrap({
     required FirebaseAuth auth,
     required FirestoreService firestoreService,
@@ -20,7 +19,7 @@ class SessionBootstrap {
   /// Initialize session - call after Firebase.initializeApp()
   Future<void> initialize() async {
     _appState.setLoading(true);
-    
+
     // Check if user is already signed in
     final User? user = _auth.currentUser;
     if (user == null) {
@@ -30,7 +29,8 @@ class SessionBootstrap {
 
     try {
       // Fetch user profile directly from Firestore
-      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+      final Map<String, dynamic>? profile =
+          await _firestoreService.getUserProfile();
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       } else {

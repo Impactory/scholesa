@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 /// User profile types
 class UserProfile extends Equatable {
-
   const UserProfile({
     required this.id,
     required this.email,
@@ -18,8 +17,10 @@ class UserProfile extends Equatable {
         email: json['email'] as String,
         displayName: json['displayName'] as String,
         role: json['role'] as String,
-        siteIds: List<String>.from(json['siteIds'] as List<dynamic>? ?? <dynamic>[]),
-        createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+        siteIds:
+            List<String>.from(json['siteIds'] as List<dynamic>? ?? <dynamic>[]),
+        createdAt:
+            DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
         lastLoginAt: json['lastLoginAt'] != null
             ? DateTime.fromMillisecondsSinceEpoch(json['lastLoginAt'] as int)
             : null,
@@ -38,7 +39,6 @@ class UserProfile extends Equatable {
 
 /// Learner profile
 class LearnerProfile extends Equatable {
-
   const LearnerProfile({
     required this.id,
     required this.siteId,
@@ -79,12 +79,12 @@ class LearnerProfile extends Equatable {
       };
 
   @override
-  List<Object?> get props => <Object?>[id, siteId, userId, displayName, gradeLevel];
+  List<Object?> get props =>
+      <Object?>[id, siteId, userId, displayName, gradeLevel];
 }
 
 /// Parent profile
 class ParentProfile extends Equatable {
-
   const ParentProfile({
     required this.id,
     required this.siteId,
@@ -123,7 +123,6 @@ class ParentProfile extends Equatable {
 
 /// Guardian link between parent and learner
 class GuardianLink extends Equatable {
-
   const GuardianLink({
     required this.id,
     required this.siteId,
@@ -144,7 +143,8 @@ class GuardianLink extends Equatable {
         learnerId: json['learnerId'] as String,
         relationship: json['relationship'] as String,
         isPrimary: json['isPrimary'] as bool? ?? false,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+        createdAt:
+            DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
         createdBy: json['createdBy'] as String,
         parentName: json['parentName'] as String?,
         learnerName: json['learnerName'] as String?,
@@ -170,5 +170,6 @@ class GuardianLink extends Equatable {
       };
 
   @override
-  List<Object?> get props => <Object?>[id, siteId, parentId, learnerId, relationship];
+  List<Object?> get props =>
+      <Object?>[id, siteId, parentId, learnerId, relationship];
 }

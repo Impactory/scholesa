@@ -94,7 +94,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
       );
 
       // 2. Store as evidence event and add to MVL episode
-      final String evidenceEventId = 'eib_${DateTime.now().millisecondsSinceEpoch}';
+      final String evidenceEventId =
+          'eib_${DateTime.now().millisecondsSinceEpoch}';
       _submittedEvidenceIds.add(evidenceEventId);
 
       // 3. Submit evidence to the MVL episode
@@ -136,7 +137,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
           });
         } else {
           setState(() {
-            _feedback = 'Good start! Share one more insight to complete the verification.';
+            _feedback =
+                'Good start! Share one more insight to complete the verification.';
           });
         }
       }
@@ -170,7 +172,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Your feedback has been sent to your educator for review.'),
+          content:
+              Text('Your feedback has been sent to your educator for review.'),
         ),
       );
     } catch (_) {
@@ -190,7 +193,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
         padding: const EdgeInsets.all(24),
         child: Card(
           elevation: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -206,7 +210,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                         color: Colors.amber.shade100,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.verified_user, color: Colors.amber.shade800, size: 24),
+                      child: Icon(Icons.verified_user,
+                          color: Colors.amber.shade800, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -215,12 +220,14 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                         children: <Widget>[
                           Text(
                             'Show Your Understanding',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Take a moment to demonstrate what you\'ve learned.',
-                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -239,8 +246,10 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                 TextField(
                   controller: _explainController,
                   decoration: InputDecoration(
-                    hintText: 'What have you learned? How would you explain this concept to a friend?',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintText:
+                        'What have you learned? How would you explain this concept to a friend?',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: theme.colorScheme.surfaceContainerLow,
                   ),
@@ -256,12 +265,14 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       children: <Widget>[
-                        Icon(Icons.check_circle, size: 16, color: Colors.green.shade600),
+                        Icon(Icons.check_circle,
+                            size: 16, color: Colors.green.shade600),
                         const SizedBox(width: 6),
                         Text(
                           '${_submittedEvidenceIds.length} evidence item${_submittedEvidenceIds.length != 1 ? "s" : ""} submitted'
                           '${_submittedEvidenceIds.length >= 2 ? " — scoring..." : " — 1 more needed"}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.green.shade700),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: Colors.green.shade700),
                         ),
                       ],
                     ),
@@ -278,10 +289,13 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                     ),
                     child: Row(
                       children: <Widget>[
-                        Icon(Icons.info_outline, size: 18, color: Colors.blue.shade700),
+                        Icon(Icons.info_outline,
+                            size: 18, color: Colors.blue.shade700),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(_feedback!, style: theme.textTheme.bodySmall?.copyWith(color: Colors.blue.shade800)),
+                          child: Text(_feedback!,
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: Colors.blue.shade800)),
                         ),
                       ],
                     ),
@@ -296,10 +310,12 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.send),
-                    label: Text(_submitting ? 'Submitting...' : 'Submit Evidence'),
+                    label:
+                        Text(_submitting ? 'Submitting...' : 'Submit Evidence'),
                   ),
                 ),
 

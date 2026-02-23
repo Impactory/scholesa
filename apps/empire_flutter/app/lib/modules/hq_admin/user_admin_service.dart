@@ -6,10 +6,9 @@ import 'user_models.dart';
 
 /// Service for HQ user administration - wired to Firebase
 class UserAdminService extends ChangeNotifier {
-
-  UserAdminService({required FirestoreService firestoreService}) 
+  UserAdminService({required FirestoreService firestoreService})
       : _firestoreService = firestoreService;
-  
+
   // ignore: unused_field
   final FirestoreService _firestoreService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -19,7 +18,7 @@ class UserAdminService extends ChangeNotifier {
   List<AuditLogEntry> _auditLogs = <AuditLogEntry>[];
   bool _isLoading = false;
   String? _error;
-  
+
   // Filters
   UserRole? _roleFilter;
   UserStatus? _statusFilter;
@@ -41,31 +40,37 @@ class UserAdminService extends ChangeNotifier {
     return _users.where((UserModel user) {
       // Role filter
       if (_roleFilter != null && user.role != _roleFilter) return false;
-      
+
       // Status filter
       if (_statusFilter != null && user.status != _statusFilter) return false;
-      
+
       // Site filter
-      if (_siteFilter != null && !user.siteIds.contains(_siteFilter)) return false;
-      
+      if (_siteFilter != null && !user.siteIds.contains(_siteFilter))
+        return false;
+
       // Search query
       if (_searchQuery.isNotEmpty) {
         final String query = _searchQuery.toLowerCase();
         final bool matchesEmail = user.email.toLowerCase().contains(query);
-        final bool matchesName = user.displayName?.toLowerCase().contains(query) ?? false;
+        final bool matchesName =
+            user.displayName?.toLowerCase().contains(query) ?? false;
         if (!matchesEmail && !matchesName) return false;
       }
-      
+
       return true;
     }).toList();
   }
 
   // Stats
   int get totalUsers => _users.length;
-  int get activeUsers => _users.where((UserModel u) => u.status == UserStatus.active).length;
-  int get suspendedUsers => _users.where((UserModel u) => u.status == UserStatus.suspended).length;
-  int get learnerCount => _users.where((UserModel u) => u.role == UserRole.learner).length;
-  int get educatorCount => _users.where((UserModel u) => u.role == UserRole.educator).length;
+  int get activeUsers =>
+      _users.where((UserModel u) => u.status == UserStatus.active).length;
+  int get suspendedUsers =>
+      _users.where((UserModel u) => u.status == UserStatus.suspended).length;
+  int get learnerCount =>
+      _users.where((UserModel u) => u.role == UserRole.learner).length;
+  int get educatorCount =>
+      _users.where((UserModel u) => u.role == UserRole.educator).length;
 
   // Filter setters
   void setRoleFilter(UserRole? role) {
@@ -106,8 +111,9 @@ class UserAdminService extends ChangeNotifier {
       // Load users from Firebase
       final QuerySnapshot<Map<String, dynamic>> usersSnapshot =
           await _firestore.collection('users').get();
-      
-      _users = usersSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+
+      _users = usersSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return UserModel(
           uid: doc.id,
@@ -115,8 +121,10 @@ class UserAdminService extends ChangeNotifier {
           displayName: data['displayName'] as String?,
           role: _parseRole(data['role'] as String?),
           status: _parseStatus(data['status'] as String?),
-          siteIds: List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]),
-          parentIds: List<String>.from(data['parentIds'] as List<dynamic>? ?? <dynamic>[]),
+          siteIds: List<String>.from(
+              data['siteIds'] as List<dynamic>? ?? <dynamic>[]),
+          parentIds: List<String>.from(
+              data['parentIds'] as List<dynamic>? ?? <dynamic>[]),
           organizationId: data['organizationId'] as String?,
           createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
           updatedAt: _parseTimestamp(data['updatedAt']),
@@ -127,23 +135,28 @@ class UserAdminService extends ChangeNotifier {
       // Load sites from Firebase
       final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
           await _firestore.collection('sites').get();
-      
-      _sites = sitesSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+
+      _sites = sitesSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return SiteModel(
           id: doc.id,
           name: data['name'] as String? ?? 'Unknown Site',
           location: data['location'] as String?,
-          siteLeadIds: List<String>.from(data['siteLeadIds'] as List<dynamic>? ?? <dynamic>[]),
+          siteLeadIds: List<String>.from(
+              data['siteLeadIds'] as List<dynamic>? ?? <dynamic>[]),
           createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
-          userCount: _users.where((UserModel u) => u.siteIds.contains(doc.id)).length,
-          learnerCount: _users.where((UserModel u) => 
-            u.siteIds.contains(doc.id) && u.role == UserRole.learner
-          ).length,
+          userCount:
+              _users.where((UserModel u) => u.siteIds.contains(doc.id)).length,
+          learnerCount: _users
+              .where((UserModel u) =>
+                  u.siteIds.contains(doc.id) && u.role == UserRole.learner)
+              .length,
         );
       }).toList();
 
-      debugPrint('Loaded ${_users.length} users and ${_sites.length} sites from Firebase');
+      debugPrint(
+          'Loaded ${_users.length} users and ${_sites.length} sites from Firebase');
     } catch (e) {
       debugPrint('Error loading users from Firebase: $e');
       _error = 'Failed to load users: $e';
@@ -198,17 +211,19 @@ class UserAdminService extends ChangeNotifier {
   /// Load audit logs from Firebase
   Future<void> loadAuditLogs({String? userId}) async {
     try {
-      Query<Map<String, dynamic>> query = _firestore.collection('auditLogs')
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('auditLogs')
           .orderBy('timestamp', descending: true)
           .limit(100);
-      
+
       if (userId != null) {
         query = query.where('entityId', isEqualTo: userId);
       }
 
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-      
-      _auditLogs = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+
+      _auditLogs =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return AuditLogEntry(
           id: doc.id,
@@ -222,7 +237,7 @@ class UserAdminService extends ChangeNotifier {
           timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
         );
       }).toList();
-      
+
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load audit logs: $e');
@@ -241,7 +256,7 @@ class UserAdminService extends ChangeNotifier {
 
     try {
       // Create user document in Firebase
-      final DocumentReference<Map<String, dynamic>> docRef = 
+      final DocumentReference<Map<String, dynamic>> docRef =
           await _firestore.collection('users').add(<String, dynamic>{
         'email': email,
         'displayName': displayName,
@@ -274,7 +289,7 @@ class UserAdminService extends ChangeNotifier {
         siteIds: siteIds,
         createdAt: DateTime.now(),
       );
-      
+
       _users = <UserModel>[..._users, newUser];
       notifyListeners();
       return newUser;
@@ -340,7 +355,9 @@ class UserAdminService extends ChangeNotifier {
 
       // Log the action
       await _logAuditAction(
-        action: newStatus == UserStatus.suspended ? 'user.suspended' : 'user.status_updated',
+        action: newStatus == UserStatus.suspended
+            ? 'user.suspended'
+            : 'user.status_updated',
         entityType: 'User',
         entityId: userId,
         details: <String, dynamic>{
@@ -406,7 +423,8 @@ class UserAdminService extends ChangeNotifier {
       if (index == -1) return false;
 
       final UserModel user = _users[index];
-      final List<String> newSiteIds = user.siteIds.where((String s) => s != siteId).toList();
+      final List<String> newSiteIds =
+          user.siteIds.where((String s) => s != siteId).toList();
 
       await _firestore.collection('users').doc(userId).update(<String, dynamic>{
         'siteIds': newSiteIds,

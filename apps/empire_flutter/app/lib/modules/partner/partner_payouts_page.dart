@@ -79,7 +79,9 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
         .where((Payout p) => p.status == PayoutStatus.paid)
         .fold(0, (double sum, Payout p) => sum + p.amount);
     final double totalPending = payouts
-        .where((Payout p) => p.status == PayoutStatus.pending || p.status == PayoutStatus.approved)
+        .where((Payout p) =>
+            p.status == PayoutStatus.pending ||
+            p.status == PayoutStatus.approved)
         .fold(0, (double sum, Payout p) => sum + p.amount);
 
     return Container(
@@ -90,7 +92,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: ScholesaColors.billingGradient.colors.first.withValues(alpha: 0.3),
+            color: ScholesaColors.billingGradient.colors.first
+                .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -165,7 +168,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.billingGradient.colors.first.withValues(alpha: 0.1),
+              color: ScholesaColors.billingGradient.colors.first
+                  .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

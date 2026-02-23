@@ -47,7 +47,8 @@ void main() {
       expect(map['studentInput'], equals('I don\'t understand'));
 
       // Context object
-      final Map<String, dynamic> context = map['context'] as Map<String, dynamic>;
+      final Map<String, dynamic> context =
+          map['context'] as Map<String, dynamic>;
       expect(context['missionId'], equals('mission1'));
       expect(context['checkpointId'], equals('cp1'));
       expect(context['conceptTags'], equals(<String>['fractions', 'decimals']));
@@ -63,7 +64,8 @@ void main() {
         learnerState: XHat(cognition: 0.6, engagement: 0.4, integrity: 0.7),
       );
 
-      final Map<String, dynamic> ctx = req.toMap()['context'] as Map<String, dynamic>;
+      final Map<String, dynamic> ctx =
+          req.toMap()['context'] as Map<String, dynamic>;
       expect(ctx['learnerState'], isNotNull);
       expect(ctx['learnerState']['cognition'], equals(0.6));
       expect(ctx['learnerState']['engagement'], equals(0.4));
@@ -134,7 +136,11 @@ void main() {
         'suggestedNextSteps': <String>['Explain your reasoning'],
         'risk': <String, dynamic>{
           'reliability': <String, dynamic>{'riskScore': 0.7, 'threshold': 0.6},
-          'autonomy': <String, dynamic>{'riskScore': 0.6, 'signals': <String>['rapid_submit'], 'threshold': 0.5},
+          'autonomy': <String, dynamic>{
+            'riskScore': 0.6,
+            'signals': <String>['rapid_submit'],
+            'threshold': 0.5
+          },
         },
         'mvl': <String, dynamic>{
           'gateActive': true,
@@ -152,8 +158,10 @@ void main() {
       expect(response.requiresExplainBack, isTrue);
     });
 
-    test('AiCoachResponse.fromMap gracefully handles missing optional fields', () {
-      final AiCoachResponse response = AiCoachResponse.fromMap(const <String, dynamic>{
+    test('AiCoachResponse.fromMap gracefully handles missing optional fields',
+        () {
+      final AiCoachResponse response =
+          AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Hello!',
         'mode': 'hint',
       });
@@ -181,20 +189,23 @@ void main() {
     test('All 4 modes produce non-empty messages', () {
       for (final AiCoachMode mode in AiCoachMode.values) {
         // Simulate what the server returns for each mode
-        final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
+        final AiCoachResponse response =
+            AiCoachResponse.fromMap(<String, dynamic>{
           'message': 'Test message for ${mode.name}',
           'mode': mode.name,
           'suggestedNextSteps': const <String>['Step 1'],
         });
 
-        expect(response.message, isNotEmpty, reason: '${mode.name} should produce a message');
+        expect(response.message, isNotEmpty,
+            reason: '${mode.name} should produce a message');
         expect(response.mode, equals(mode));
       }
     });
 
     test('Verify mode always requires explain-back', () {
       // Per spec A1: verify mode checks evidence + self-verification
-      final AiCoachResponse response = AiCoachResponse.fromMap(const <String, dynamic>{
+      final AiCoachResponse response =
+          AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Let\'s check your work.',
         'mode': 'verify',
         'requiresExplainBack': true,
@@ -206,7 +217,8 @@ void main() {
     });
 
     test('Hint mode is low assist (no requiresExplainBack by default)', () {
-      final AiCoachResponse hintResponse = AiCoachResponse.fromMap(const <String, dynamic>{
+      final AiCoachResponse hintResponse =
+          AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'Think about what you already know.',
         'mode': 'hint',
         'requiresExplainBack': false,
@@ -249,7 +261,8 @@ void main() {
           expect(
             response.toLowerCase().contains(word.toLowerCase()),
             isFalse,
-            reason: 'Response "$response" should not contain forbidden word "$word"',
+            reason:
+                'Response "$response" should not contain forbidden word "$word"',
           );
         }
       }
@@ -278,7 +291,8 @@ void main() {
           expect(
             response.toLowerCase().contains(pattern.toLowerCase()),
             isFalse,
-            reason: 'Response should not contain answer-revealing pattern "$pattern"',
+            reason:
+                'Response should not contain answer-revealing pattern "$pattern"',
           );
         }
       }
@@ -353,7 +367,7 @@ void main() {
 
       for (final String signal in risk.signals) {
         expect(knownSignals.contains(signal), isTrue,
-          reason: 'Signal "$signal" should be a known autonomy risk signal');
+            reason: 'Signal "$signal" should be a known autonomy risk signal');
       }
     });
 
@@ -367,7 +381,8 @@ void main() {
         threshold: 0.6,
       );
 
-      final ReliabilityRisk restored = ReliabilityRisk.fromMap(original.toMap());
+      final ReliabilityRisk restored =
+          ReliabilityRisk.fromMap(original.toMap());
       expect(restored.method, equals(original.method));
       expect(restored.k, equals(original.k));
       expect(restored.m, equals(original.m));
@@ -432,11 +447,13 @@ void main() {
 
       // Only integrity below threshold — single source — should NOT gate
       const int singleRiskSource = 1;
-      expect(singleRiskSource >= 2, isFalse, reason: 'Single risk source should not trigger MVL');
+      expect(singleRiskSource >= 2, isFalse,
+          reason: 'Single risk source should not trigger MVL');
 
       // Two risk sources — sensor fusion met — SHOULD gate
       const int twoRiskSources = 2;
-      expect(twoRiskSources >= 2, isTrue, reason: 'Two risk sources should trigger MVL');
+      expect(twoRiskSources >= 2, isTrue,
+          reason: 'Two risk sources should trigger MVL');
     });
 
     test('MVL episode with 2+ evidence items resolves as passed', () {
@@ -487,8 +504,10 @@ void main() {
       final Map<String, dynamic> map = episode.toMap();
       expect(map.containsKey('reliability'), isTrue);
       expect(map.containsKey('autonomy'), isTrue);
-      expect((map['reliability'] as Map<String, dynamic>)['riskScore'], equals(0.7));
-      expect((map['autonomy'] as Map<String, dynamic>)['riskScore'], equals(0.55));
+      expect((map['reliability'] as Map<String, dynamic>)['riskScore'],
+          equals(0.7));
+      expect(
+          (map['autonomy'] as Map<String, dynamic>)['riskScore'], equals(0.55));
     });
   });
 
@@ -498,7 +517,8 @@ void main() {
 
   group('Model & Version Regression', () {
     test('AiCoachResponse version field tracks contract version', () {
-      final AiCoachResponse v1 = AiCoachResponse.fromMap(const <String, dynamic>{
+      final AiCoachResponse v1 =
+          AiCoachResponse.fromMap(const <String, dynamic>{
         'message': 'test',
         'mode': 'hint',
         'meta': <String, dynamic>{'version': '1.0.0'},
@@ -614,7 +634,9 @@ void main() {
   // ════════════════════════════════════════════════════
 
   group('Closed-Loop Runtime', () {
-    test('AI Coach is a control surface: Sense-Detect-Estimate-Control-Gate-Govern', () {
+    test(
+        'AI Coach is a control surface: Sense-Detect-Estimate-Control-Gate-Govern',
+        () {
       // Verify the full loop is representable in the data model:
 
       // Sense: x_hat exists (learner state from orchestration)
@@ -641,13 +663,17 @@ void main() {
 
       // Gate: MVL episode (constructed directly)
       const MvlEpisode gate = MvlEpisode(
-        id: 'gate1', siteId: 's1', learnerId: 'l1',
-        sessionOccurrenceId: 'so1', triggerReason: 'test',
+        id: 'gate1',
+        siteId: 's1',
+        learnerId: 'l1',
+        sessionOccurrenceId: 'so1',
+        triggerReason: 'test',
       );
       expect(gate.id, isNotEmpty);
 
       // Govern: Policy terms are auditable
-      const PolicyTerms policy = PolicyTerms(lambda: 0.5, mDagger: 0.6, omega: 0.2);
+      const PolicyTerms policy =
+          PolicyTerms(lambda: 0.5, mDagger: 0.6, omega: 0.2);
       expect(policy.omega, equals(0.2));
     });
 
@@ -665,12 +691,14 @@ void main() {
         expect(
           _knownAllowedEvents.contains(event),
           isTrue,
-          reason: 'MVL feedback event "$event" must be in event bus for FDM consumption',
+          reason:
+              'MVL feedback event "$event" must be in event bus for FDM consumption',
         );
       }
     });
 
-    test('Supervisory control g_t stores both BOS and teacher recommendations', () {
+    test('Supervisory control g_t stores both BOS and teacher recommendations',
+        () {
       const SupervisoryControl override = SupervisoryControl(
         g: 1,
         uBos: <String, dynamic>{'type': 'scaffold', 'salience': 'high'},
@@ -700,17 +728,40 @@ void main() {
 /// Mirror of BosEventBus.allowedBosEvents for test verification
 /// (so tests don't depend on Firebase imports).
 const Set<String> _knownAllowedEvents = <String>{
-  'mission_viewed', 'mission_selected', 'mission_started', 'mission_completed',
-  'checkpoint_started', 'checkpoint_submitted', 'checkpoint_graded',
-  'artifact_created', 'artifact_submitted', 'artifact_reviewed',
-  'artifact_version_saved', 'debug_attempted',
-  'ai_help_opened', 'ai_help_used', 'ai_coach_response', 'ai_coach_feedback',
-  'explain_it_back_submitted', 'source_check_performed',
-  'retrieval_attempted', 'reflection_submitted',
-  'mvl_gate_triggered', 'mvl_evidence_attached',
-  'mvl_passed', 'mvl_failed', 'mvl_needs_more_evidence',
-  'teacher_override_mvl', 'teacher_override_intervention', 'teacher_override_applied',
-  'contestability_requested', 'contestability_resolved',
-  'session_joined', 'session_left', 'idle_detected', 'focus_restored',
-  'educator_class_view', 'educator_learner_drilldown',
+  'mission_viewed',
+  'mission_selected',
+  'mission_started',
+  'mission_completed',
+  'checkpoint_started',
+  'checkpoint_submitted',
+  'checkpoint_graded',
+  'artifact_created',
+  'artifact_submitted',
+  'artifact_reviewed',
+  'artifact_version_saved',
+  'debug_attempted',
+  'ai_help_opened',
+  'ai_help_used',
+  'ai_coach_response',
+  'ai_coach_feedback',
+  'explain_it_back_submitted',
+  'source_check_performed',
+  'retrieval_attempted',
+  'reflection_submitted',
+  'mvl_gate_triggered',
+  'mvl_evidence_attached',
+  'mvl_passed',
+  'mvl_failed',
+  'mvl_needs_more_evidence',
+  'teacher_override_mvl',
+  'teacher_override_intervention',
+  'teacher_override_applied',
+  'contestability_requested',
+  'contestability_resolved',
+  'session_joined',
+  'session_left',
+  'idle_detected',
+  'focus_restored',
+  'educator_class_view',
+  'educator_learner_drilldown',
 };

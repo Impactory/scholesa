@@ -8,7 +8,6 @@ import 'app_state.dart';
 
 /// Service for handling Firebase authentication
 class AuthService {
-
   AuthService({
     required FirebaseAuth auth,
     required FirestoreService firestoreService,
@@ -90,7 +89,7 @@ class AuthService {
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
-        
+
         await _auth.signInWithPopup(googleProvider);
       } else {
         // Mobile: Use native Google Sign-In
@@ -112,19 +111,21 @@ class AuthService {
 
         await _auth.signInWithCredential(credential);
       }
-      
+
       // Ensure user profile exists in Firestore
       final User? user = _auth.currentUser;
       if (user != null) {
-        final Map<String, dynamic>? existingProfile = await _firestoreService.getUserProfile();
+        final Map<String, dynamic>? existingProfile =
+            await _firestoreService.getUserProfile();
         if (existingProfile == null) {
           // Create profile for new SSO user
           await _firestoreService.createUserProfile(
-            displayName: user.displayName ?? user.email?.split('@').first ?? 'User',
+            displayName:
+                user.displayName ?? user.email?.split('@').first ?? 'User',
           );
         }
       }
-      
+
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -154,12 +155,13 @@ class AuthService {
       microsoftProvider.addScope('email');
       microsoftProvider.addScope('profile');
       microsoftProvider.addScope('openid');
-      
+
       // Set custom parameters for Microsoft login
       // Using Firebase auth handler: https://studio-3328096157-e3f79.firebaseapp.com/__/auth/handler
       microsoftProvider.setCustomParameters(<String, String>{
         'prompt': 'select_account',
-        'tenant': 'common', // Allow any Microsoft account (personal or work/school)
+        'tenant':
+            'common', // Allow any Microsoft account (personal or work/school)
       });
 
       if (kIsWeb) {
@@ -167,18 +169,20 @@ class AuthService {
       } else {
         await _auth.signInWithProvider(microsoftProvider);
       }
-      
+
       // Ensure user profile exists in Firestore
       final User? user = _auth.currentUser;
       if (user != null) {
-        final Map<String, dynamic>? existingProfile = await _firestoreService.getUserProfile();
+        final Map<String, dynamic>? existingProfile =
+            await _firestoreService.getUserProfile();
         if (existingProfile == null) {
           await _firestoreService.createUserProfile(
-            displayName: user.displayName ?? user.email?.split('@').first ?? 'User',
+            displayName:
+                user.displayName ?? user.email?.split('@').first ?? 'User',
           );
         }
       }
-      
+
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -193,7 +197,8 @@ class AuthService {
   /// Bootstrap session by fetching user profile from Firestore
   Future<void> _bootstrapSession() async {
     try {
-      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+      final Map<String, dynamic>? profile =
+          await _firestoreService.getUserProfile();
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       }

@@ -91,9 +91,23 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _buildMetric('Open', _incidents.length.toString(), Icons.warning_rounded),
-          _buildMetric('Escalated', _incidents.where((_SafetyIncident i) => i.isEscalated).length.toString(), Icons.priority_high_rounded),
-          _buildMetric('Critical', _incidents.where((_SafetyIncident i) => i.severity == _Severity.critical).length.toString(), Icons.error_rounded),
+          _buildMetric(
+              'Open', _incidents.length.toString(), Icons.warning_rounded),
+          _buildMetric(
+              'Escalated',
+              _incidents
+                  .where((_SafetyIncident i) => i.isEscalated)
+                  .length
+                  .toString(),
+              Icons.priority_high_rounded),
+          _buildMetric(
+              'Critical',
+              _incidents
+                  .where(
+                      (_SafetyIncident i) => i.severity == _Severity.critical)
+                  .length
+                  .toString(),
+              Icons.error_rounded),
         ],
       ),
     );
@@ -104,14 +118,21 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       children: <Widget>[
         Icon(icon, color: Colors.white, size: 28),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
       ],
     );
   }
 
   Widget _buildEscalatedSection() {
-    final List<_SafetyIncident> escalated = _incidents.where((_SafetyIncident i) => i.isEscalated).toList();
+    final List<_SafetyIncident> escalated =
+        _incidents.where((_SafetyIncident i) => i.isEscalated).toList();
     if (escalated.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -119,16 +140,21 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(Icons.priority_high_rounded, color: Colors.red.shade700, size: 20),
+            Icon(Icons.priority_high_rounded,
+                color: Colors.red.shade700, size: 20),
             const SizedBox(width: 8),
             Text(
               'Escalated to HQ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade700),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        ...escalated.map((incident) => _buildIncidentCard(incident, isEscalated: true)),
+        ...escalated
+            .map((incident) => _buildIncidentCard(incident, isEscalated: true)),
       ],
     );
   }
@@ -139,7 +165,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       children: <Widget>[
         const Text(
           'All Recent Incidents',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ScholesaColors.textPrimary),
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: ScholesaColors.textPrimary),
         ),
         const SizedBox(height: 12),
         ..._incidents.map((incident) => _buildIncidentCard(incident)),
@@ -147,18 +176,23 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     );
   }
 
-  Widget _buildIncidentCard(_SafetyIncident incident, {bool isEscalated = false}) {
+  Widget _buildIncidentCard(_SafetyIncident incident,
+      {bool isEscalated = false}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: isEscalated ? Colors.red.shade50 : ScholesaColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isEscalated ? BorderSide(color: Colors.red.shade200) : BorderSide.none,
+        side: isEscalated
+            ? BorderSide(color: Colors.red.shade200)
+            : BorderSide.none,
       ),
       child: ListTile(
         leading: _buildSeverityIcon(incident.severity),
-        title: Text(incident.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('${incident.site} • ${_formatTime(incident.reportedAt)}'),
+        title: Text(incident.title,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle:
+            Text('${incident.site} • ${_formatTime(incident.reportedAt)}'),
         trailing: IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
           onPressed: () {
@@ -192,7 +226,9 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8)),
       child: Icon(Icons.warning_rounded, color: color, size: 20),
     );
   }
@@ -211,14 +247,17 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(incident.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(incident.title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _buildDetailRow('Site', incident.site),
             _buildDetailRow('Severity', incident.severity.name.toUpperCase()),
@@ -259,7 +298,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening full incident report...')),
+                        const SnackBar(
+                            content: Text('Opening full incident report...')),
                       );
                     },
                     child: const Text('View Full Report'),
@@ -279,7 +319,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label,
+              style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),

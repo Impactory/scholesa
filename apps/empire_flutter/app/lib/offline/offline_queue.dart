@@ -21,7 +21,6 @@ enum OpType {
 
 /// Single queued operation
 class QueuedOp {
-
   QueuedOp({
     String? id,
     required this.type,
@@ -39,7 +38,8 @@ class QueuedOp {
         id: json['id'] as String,
         type: OpType.values.firstWhere((t) => t.name == json['type']),
         payload: json['payload'] as Map<String, dynamic>,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+        createdAt:
+            DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
         idempotencyKey: json['idempotencyKey'] as String?,
         status: OpStatus.values.firstWhere((s) => s.name == json['status']),
         retryCount: json['retryCount'] as int? ?? 0,
@@ -89,8 +89,10 @@ class OfflineQueue {
   /// Get all pending operations
   List<QueuedOp> getPending() {
     return _box.values
-        .map((Map<dynamic, dynamic> v) => QueuedOp.fromJson(Map<String, dynamic>.from(v)))
-        .where((QueuedOp op) => op.status == OpStatus.pending || op.status == OpStatus.failed)
+        .map((Map<dynamic, dynamic> v) =>
+            QueuedOp.fromJson(Map<String, dynamic>.from(v)))
+        .where((QueuedOp op) =>
+            op.status == OpStatus.pending || op.status == OpStatus.failed)
         .toList()
       ..sort((QueuedOp a, QueuedOp b) => a.createdAt.compareTo(b.createdAt));
   }
@@ -98,7 +100,8 @@ class OfflineQueue {
   /// Get all operations
   List<QueuedOp> getAll() {
     return _box.values
-        .map((Map<dynamic, dynamic> v) => QueuedOp.fromJson(Map<String, dynamic>.from(v)))
+        .map((Map<dynamic, dynamic> v) =>
+            QueuedOp.fromJson(Map<String, dynamic>.from(v)))
         .toList()
       ..sort((QueuedOp a, QueuedOp b) => a.createdAt.compareTo(b.createdAt));
   }
@@ -107,7 +110,7 @@ class OfflineQueue {
   Future<void> updateStatus(String id, OpStatus status, {String? error}) async {
     final Map<dynamic, dynamic>? data = _box.get(id);
     if (data == null) return;
-    
+
     final QueuedOp op = QueuedOp.fromJson(Map<String, dynamic>.from(data));
     op.status = status;
     if (error != null) {
@@ -121,18 +124,19 @@ class OfflineQueue {
   Future<int> purge({Duration olderThan = const Duration(days: 7)}) async {
     final DateTime cutoff = DateTime.now().subtract(olderThan);
     final List<String> toRemove = <String>[];
-    
+
     for (final MapEntry<dynamic, dynamic> entry in _box.toMap().entries) {
-      final QueuedOp op = QueuedOp.fromJson(Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
+      final QueuedOp op = QueuedOp.fromJson(
+          Map<String, dynamic>.from(entry.value as Map<dynamic, dynamic>));
       if (op.status == OpStatus.synced && op.createdAt.isBefore(cutoff)) {
         toRemove.add(entry.key as String);
       }
     }
-    
+
     for (final String key in toRemove) {
       await _box.delete(key);
     }
-    
+
     return toRemove.length;
   }
 

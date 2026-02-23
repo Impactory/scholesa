@@ -8,7 +8,8 @@ class HqIntegrationsHealthPage extends StatefulWidget {
   const HqIntegrationsHealthPage({super.key});
 
   @override
-  State<HqIntegrationsHealthPage> createState() => _HqIntegrationsHealthPageState();
+  State<HqIntegrationsHealthPage> createState() =>
+      _HqIntegrationsHealthPageState();
 }
 
 class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
@@ -16,21 +17,34 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     const _SiteIntegration(
       siteName: 'Downtown Studio',
       integrations: <_Integration>[
-        _Integration(name: 'Google Classroom', status: _Status.healthy, lastSync: '5 min ago'),
-        _Integration(name: 'GitHub', status: _Status.healthy, lastSync: '15 min ago'),
+        _Integration(
+            name: 'Google Classroom',
+            status: _Status.healthy,
+            lastSync: '5 min ago'),
+        _Integration(
+            name: 'GitHub', status: _Status.healthy, lastSync: '15 min ago'),
       ],
     ),
     const _SiteIntegration(
       siteName: 'Westside Campus',
       integrations: <_Integration>[
-        _Integration(name: 'Google Classroom', status: _Status.warning, lastSync: '2 hrs ago'),
-        _Integration(name: 'Canvas LMS', status: _Status.healthy, lastSync: '30 min ago'),
+        _Integration(
+            name: 'Google Classroom',
+            status: _Status.warning,
+            lastSync: '2 hrs ago'),
+        _Integration(
+            name: 'Canvas LMS',
+            status: _Status.healthy,
+            lastSync: '30 min ago'),
       ],
     ),
     const _SiteIntegration(
       siteName: 'North Branch',
       integrations: <_Integration>[
-        _Integration(name: 'Google Classroom', status: _Status.error, lastSync: 'Failed'),
+        _Integration(
+            name: 'Google Classroom',
+            status: _Status.error,
+            lastSync: 'Failed'),
       ],
     ),
   ];
@@ -74,15 +88,18 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   Widget _buildOverallHealth(BuildContext context) {
     final int healthyCount = _sites
         .expand((_SiteIntegration site) => site.integrations)
-        .where((_Integration integration) => integration.status == _Status.healthy)
+        .where(
+            (_Integration integration) => integration.status == _Status.healthy)
         .length;
     final int warningCount = _sites
         .expand((_SiteIntegration site) => site.integrations)
-        .where((_Integration integration) => integration.status == _Status.warning)
+        .where(
+            (_Integration integration) => integration.status == _Status.warning)
         .length;
     final int errorCount = _sites
         .expand((_SiteIntegration site) => site.integrations)
-        .where((_Integration integration) => integration.status == _Status.error)
+        .where(
+            (_Integration integration) => integration.status == _Status.error)
         .length;
     final int totalCount = healthyCount + warningCount + errorCount;
     final bool hasIssues = errorCount > 0 || warningCount > 0;
@@ -91,8 +108,10 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: hasIssues
-            ? const LinearGradient(colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)])
-            : const LinearGradient(colors: <Color>[Color(0xFF22C55E), Color(0xFF4ADE80)]),
+            ? const LinearGradient(
+                colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)])
+            : const LinearGradient(
+                colors: <Color>[Color(0xFF22C55E), Color(0xFF4ADE80)]),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -105,25 +124,31 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
           const SizedBox(height: 12),
           Text(
             hasIssues ? 'Attention Needed' : 'All Systems Operational',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(
             '$healthyCount healthy · $warningCount warning · $errorCount errors ($totalCount total)',
-            style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
+            style: TextStyle(
+                fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSiteIntegrations(BuildContext context, List<_SiteIntegration> sites) {
+  Widget _buildSiteIntegrations(
+      BuildContext context, List<_SiteIntegration> sites) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         const Text(
           'Sites',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ScholesaColors.textPrimary),
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: ScholesaColors.textPrimary),
         ),
         const SizedBox(height: 12),
         ...sites.map((site) => _buildSiteCard(context, site)),
@@ -142,24 +167,31 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
             event: 'cta.clicked',
             metadata: <String, dynamic>{
               'module': 'hq_integrations_health',
-              'cta_id': expanded ? 'expand_site_integrations' : 'collapse_site_integrations',
+              'cta_id': expanded
+                  ? 'expand_site_integrations'
+                  : 'collapse_site_integrations',
               'surface': 'site_integration_card',
               'site_name': site.siteName,
             },
           );
         },
-        title: Text(site.siteName, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(site.siteName,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('${site.integrations.length} integrations'),
         leading: _buildSiteStatusIcon(site),
-        children: site.integrations.map((integration) => _buildIntegrationTile(context, integration)).toList(),
+        children: site.integrations
+            .map((integration) => _buildIntegrationTile(context, integration))
+            .toList(),
       ),
     );
   }
 
   Widget _buildSiteStatusIcon(_SiteIntegration site) {
-    final bool hasError = site.integrations.any((_Integration i) => i.status == _Status.error);
-    final bool hasWarning = site.integrations.any((_Integration i) => i.status == _Status.warning);
-    
+    final bool hasError =
+        site.integrations.any((_Integration i) => i.status == _Status.error);
+    final bool hasWarning =
+        site.integrations.any((_Integration i) => i.status == _Status.warning);
+
     Color color;
     IconData icon;
     if (hasError) {
@@ -175,7 +207,9 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
 
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8)),
       child: Icon(icon, color: color, size: 20),
     );
   }
@@ -211,7 +245,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
                     'integration_name': integration.name,
                   },
                 );
-                  _retryIntegration(integration.name);
+                _retryIntegration(integration.name);
               },
               child: const Text('Retry'),
             )
@@ -219,51 +253,56 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     );
   }
 
-    void _refreshAllIntegrations() {
-      setState(() {
-        for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
-          final _SiteIntegration site = _sites[siteIndex];
-          final List<_Integration> refreshedIntegrations = site.integrations
-              .map((_Integration integration) {
-            if (integration.status == _Status.error) {
-              return integration.copyWith(status: _Status.warning, lastSync: 'just now');
-            }
-            if (integration.status == _Status.warning) {
-              return integration.copyWith(status: _Status.healthy, lastSync: 'just now');
-            }
-            return integration.copyWith(lastSync: 'just now');
-          }).toList();
-          _sites[siteIndex] = site.copyWith(integrations: refreshedIntegrations);
-        }
-      });
+  void _refreshAllIntegrations() {
+    setState(() {
+      for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
+        final _SiteIntegration site = _sites[siteIndex];
+        final List<_Integration> refreshedIntegrations =
+            site.integrations.map((_Integration integration) {
+          if (integration.status == _Status.error) {
+            return integration.copyWith(
+                status: _Status.warning, lastSync: 'just now');
+          }
+          if (integration.status == _Status.warning) {
+            return integration.copyWith(
+                status: _Status.healthy, lastSync: 'just now');
+          }
+          return integration.copyWith(lastSync: 'just now');
+        }).toList();
+        _sites[siteIndex] = site.copyWith(integrations: refreshedIntegrations);
+      }
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Integrations health refreshed')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Integrations health refreshed')),
+    );
+  }
 
-    void _retryIntegration(String integrationName) {
-      setState(() {
-        for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
-          final _SiteIntegration site = _sites[siteIndex];
-          final List<_Integration> updated = site.integrations.map((_Integration integration) {
-            if (integration.name != integrationName) return integration;
-            return integration.copyWith(status: _Status.healthy, lastSync: 'just now');
-          }).toList();
-          _sites[siteIndex] = site.copyWith(integrations: updated);
-        }
-      });
+  void _retryIntegration(String integrationName) {
+    setState(() {
+      for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
+        final _SiteIntegration site = _sites[siteIndex];
+        final List<_Integration> updated =
+            site.integrations.map((_Integration integration) {
+          if (integration.name != integrationName) return integration;
+          return integration.copyWith(
+              status: _Status.healthy, lastSync: 'just now');
+        }).toList();
+        _sites[siteIndex] = site.copyWith(integrations: updated);
+      }
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$integrationName recovered successfully')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$integrationName recovered successfully')),
+    );
+  }
 }
 
 enum _Status { healthy, warning, error }
 
 class _Integration {
-  const _Integration({required this.name, required this.status, required this.lastSync});
+  const _Integration(
+      {required this.name, required this.status, required this.lastSync});
   final String name;
   final _Status status;
   final String lastSync;

@@ -84,8 +84,8 @@ void main() {
     });
 
     test('detects offline connectivity on init', () async {
-      when(() => mockConnectivity.checkConnectivity())
-          .thenAnswer((_) async => <ConnectivityResult>[ConnectivityResult.none]);
+      when(() => mockConnectivity.checkConnectivity()).thenAnswer(
+          (_) async => <ConnectivityResult>[ConnectivityResult.none]);
 
       final TestableSyncCoordinator coordinator = TestableSyncCoordinator(
         queue: mockQueue,
@@ -115,7 +115,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(coordinator.isOnline, isFalse);
 
-      connectivityController.add(<ConnectivityResult>[ConnectivityResult.mobile]);
+      connectivityController
+          .add(<ConnectivityResult>[ConnectivityResult.mobile]);
       await Future<void>.delayed(Duration.zero);
       expect(coordinator.isOnline, isTrue);
 
@@ -124,8 +125,8 @@ void main() {
 
     // ── syncPending ──────────────────────────────────────
     test('syncPending returns early when offline', () async {
-      when(() => mockConnectivity.checkConnectivity())
-          .thenAnswer((_) async => <ConnectivityResult>[ConnectivityResult.none]);
+      when(() => mockConnectivity.checkConnectivity()).thenAnswer(
+          (_) async => <ConnectivityResult>[ConnectivityResult.none]);
 
       final TestableSyncCoordinator coordinator = TestableSyncCoordinator(
         queue: mockQueue,
@@ -177,7 +178,8 @@ void main() {
       );
 
       when(() => mockQueue.getPending()).thenReturn(<QueuedOp>[op1, op2]);
-      when(() => mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
+      when(() =>
+              mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
           .thenAnswer((_) async {});
 
       await coordinator.init();
@@ -231,7 +233,8 @@ void main() {
       );
 
       when(() => mockQueue.getPending()).thenReturn(<QueuedOp>[op]);
-      when(() => mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
+      when(() =>
+              mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
           .thenAnswer((_) async {});
 
       await coordinator.init();
@@ -260,8 +263,7 @@ void main() {
         connectivity: mockConnectivity,
       );
 
-      when(() => mockQueue.enqueue(any(), any()))
-          .thenAnswer((_) async => op);
+      when(() => mockQueue.enqueue(any(), any())).thenAnswer((_) async => op);
       // After enqueue, syncPending will be called; return an empty list so
       // there's nothing to process (the op was already "synced" conceptually)
       when(() => mockQueue.getPending()).thenReturn(<QueuedOp>[]);
@@ -279,8 +281,8 @@ void main() {
 
     // ── Connectivity triggers sync ───────────────────────
     test('auto-syncs when coming back online', () async {
-      when(() => mockConnectivity.checkConnectivity())
-          .thenAnswer((_) async => <ConnectivityResult>[ConnectivityResult.none]);
+      when(() => mockConnectivity.checkConnectivity()).thenAnswer(
+          (_) async => <ConnectivityResult>[ConnectivityResult.none]);
 
       final TestableSyncCoordinator coordinator = TestableSyncCoordinator(
         queue: mockQueue,
@@ -317,7 +319,8 @@ void main() {
 
       when(() => mockQueue.getAll()).thenReturn(<QueuedOp>[failedOp]);
       when(() => mockQueue.getPending()).thenReturn(<QueuedOp>[]);
-      when(() => mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
+      when(() =>
+              mockQueue.updateStatus(any(), any(), error: any(named: 'error')))
           .thenAnswer((_) async {});
 
       await coordinator.init();

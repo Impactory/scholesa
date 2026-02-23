@@ -46,7 +46,6 @@ extension UserRoleExtension on UserRole {
 
 /// Entitlement grants for feature gating
 class Entitlement extends Equatable {
-
   const Entitlement({
     required this.id,
     required this.feature,
@@ -56,8 +55,7 @@ class Entitlement extends Equatable {
   final String feature;
   final DateTime? expiresAt;
 
-  bool get isActive =>
-      expiresAt == null || expiresAt!.isAfter(DateTime.now());
+  bool get isActive => expiresAt == null || expiresAt!.isAfter(DateTime.now());
 
   @override
   List<Object?> get props => <Object?>[id, feature, expiresAt];
@@ -74,7 +72,7 @@ class AppState extends ChangeNotifier {
   List<Entitlement> _entitlements = <Entitlement>[];
   bool _isLoading = true;
   String? _error;
-  
+
   /// Role impersonation for HQ users
   UserRole? _impersonatingRole;
 
@@ -82,32 +80,34 @@ class AppState extends ChangeNotifier {
   String? get userId => _userId;
   String? get email => _email;
   String? get displayName => _displayName;
-  
+
   /// Returns the effective role (impersonating role if set, otherwise actual role)
   UserRole? get role => _impersonatingRole ?? _role;
-  
+
   /// Returns the actual role (ignoring impersonation)
   UserRole? get actualRole => _role;
-  
+
   /// Returns the role being impersonated, if any
   UserRole? get impersonatingRole => _impersonatingRole;
-  
+
   /// Returns true if currently impersonating another role
   bool get isImpersonating => _impersonatingRole != null;
-  
+
   String? get activeSiteId => _activeSiteId;
   List<String> get siteIds => List<String>.unmodifiable(_siteIds);
-  List<Entitlement> get entitlements => List<Entitlement>.unmodifiable(_entitlements);
+  List<Entitlement> get entitlements =>
+      List<Entitlement>.unmodifiable(_entitlements);
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _userId != null;
-  
+
   /// Check if user is HQ (can impersonate)
   bool get canImpersonate => _role == UserRole.hq;
 
   /// Check if user has a specific entitlement
   bool hasEntitlement(String feature) {
-    return _entitlements.any((Entitlement e) => e.feature == feature && e.isActive);
+    return _entitlements
+        .any((Entitlement e) => e.feature == feature && e.isActive);
   }
 
   /// Update state from /v1/me response
@@ -119,9 +119,11 @@ class AppState extends ChangeNotifier {
         ? UserRoleExtension.fromString(data['role'] as String)
         : null;
     _activeSiteId = data['activeSiteId'] as String?;
-    _siteIds = List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]);
-    
-    final List<dynamic> entitlementsData = data['entitlements'] as List<dynamic>? ?? <dynamic>[];
+    _siteIds =
+        List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]);
+
+    final List<dynamic> entitlementsData =
+        data['entitlements'] as List<dynamic>? ?? <dynamic>[];
     _entitlements = entitlementsData.map<Entitlement>((dynamic e) {
       final Map<String, dynamic> item = e as Map<String, dynamic>;
       return Entitlement(
@@ -132,7 +134,7 @@ class AppState extends ChangeNotifier {
             : null,
       );
     }).toList();
-    
+
     _isLoading = false;
     _error = null;
     notifyListeners();
@@ -158,7 +160,7 @@ class AppState extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-  
+
   /// Clear error state
   void clearError() {
     _error = null;
@@ -179,7 +181,7 @@ class AppState extends ChangeNotifier {
     _impersonatingRole = null;
     notifyListeners();
   }
-  
+
   /// Set impersonation role (HQ only)
   void setImpersonation(UserRole targetRole) {
     if (_role == UserRole.hq && targetRole != UserRole.hq) {
@@ -187,7 +189,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Clear impersonation and return to HQ view
   void clearImpersonation() {
     _impersonatingRole = null;

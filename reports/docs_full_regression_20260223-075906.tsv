@@ -14,3 +14,8 @@ FAIL(1)	npm-audit-omit-dev	/Users/simonluke/dev/scholesa	npm audit --omit=dev	re
 FAIL(1)	npm-audit	/Users/simonluke/dev/scholesa	npm audit	reports/docs_full_regression_20260223-075906_logs/13_npm_audit.log
 PASS	flutter-pub-get	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter pub get	reports/docs_full_regression_20260223-075906_logs/14_flutter_pub_get.log
 PASS	flutter-analyze	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter analyze	reports/docs_full_regression_20260223-075906_logs/15_flutter_analyze.log
+FAIL(1)	flutter-test	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter test	reports/docs_full_regression_20260223-075906_logs/16_flutter_test.log
+FAIL(1)	dart-format-check	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	dart format . --set-exit-if-changed	reports/docs_full_regression_20260223-075906_logs/17_dart_format_check.log
+FAIL(69)	dart-pub-outdated	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	dart pub outdated	reports/docs_full_regression_20260223-075906_logs/18_dart_pub_outdated.log
+PASS	flutter-build-web-release-no-wasm-dry-run	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build web --release --no-tree-shake-icons --no-wasm-dry-run	reports/docs_full_regression_20260223-075906_logs/19_flutter_build_web_nowasm.log
+PASS	flutter-build-web-release	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter build web --release	reports/docs_full_regression_20260223-075906_logs/20_flutter_build_web.log

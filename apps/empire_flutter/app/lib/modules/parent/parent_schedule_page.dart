@@ -65,7 +65,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.calendar_month, color: Colors.white, size: 28),
+              child: const Icon(Icons.calendar_month,
+                  color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -158,14 +159,19 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           icon: const Icon(Icons.keyboard_arrow_down),
           items: const <DropdownMenuItem<String>>[
             DropdownMenuItem<String>(value: 'all', child: Text('All Learners')),
-            DropdownMenuItem<String>(value: 'emma', child: Text('Emma Johnson')),
-            DropdownMenuItem<String>(value: 'jack', child: Text('Jack Johnson')),
+            DropdownMenuItem<String>(
+                value: 'emma', child: Text('Emma Johnson')),
+            DropdownMenuItem<String>(
+                value: 'jack', child: Text('Jack Johnson')),
           ],
           onChanged: (String? value) {
             if (value != null) {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: <String, dynamic>{'cta': 'parent_schedule_select_learner', 'learner': value},
+                metadata: <String, dynamic>{
+                  'cta': 'parent_schedule_select_learner',
+                  'learner': value
+                },
               );
               setState(() => _selectedLearner = value);
             }
@@ -196,8 +202,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           children: days.map((DateTime date) {
             final bool isSelected = date.day == _selectedDate.day &&
                 date.month == _selectedDate.month;
-            final bool isToday = date.day == today.day &&
-                date.month == today.month;
+            final bool isToday =
+                date.day == today.day && date.month == today.month;
 
             return GestureDetector(
               onTap: () {
@@ -211,7 +217,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 setState(() => _selectedDate = date);
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? ScholesaColors.parent
@@ -245,7 +252,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : ScholesaColors.parent,
+                          color:
+                              isSelected ? Colors.white : ScholesaColors.parent,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -283,7 +291,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.event_available, color: ScholesaColors.parent),
+              child: const Icon(Icons.event_available,
+                  color: ScholesaColors.parent),
             ),
             const SizedBox(width: 12),
             const Expanded(

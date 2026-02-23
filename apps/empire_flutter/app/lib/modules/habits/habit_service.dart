@@ -5,7 +5,6 @@ import 'habit_models.dart';
 
 /// Service for habit tracking and coaching
 class HabitService extends ChangeNotifier {
-
   HabitService({
     required FirestoreService firestoreService,
     required this.learnerId,
@@ -22,16 +21,19 @@ class HabitService extends ChangeNotifier {
 
   // Getters
   List<Habit> get habits => _habits;
-  List<Habit> get activeHabits => _habits.where((Habit h) => h.isActive).toList();
+  List<Habit> get activeHabits =>
+      _habits.where((Habit h) => h.isActive).toList();
   List<Habit> get todayHabits => activeHabits; // Could filter by frequency/day
   List<HabitLog> get recentLogs => _recentLogs;
   WeeklyHabitSummary? get weeklySummary => _weeklySummary;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  int get completedTodayCount => _habits.where((Habit h) => h.isCompletedToday).length;
+  int get completedTodayCount =>
+      _habits.where((Habit h) => h.isCompletedToday).length;
   int get totalTodayCount => todayHabits.length;
-  double get todayProgress => totalTodayCount > 0 ? completedTodayCount / totalTodayCount : 0;
+  double get todayProgress =>
+      totalTodayCount > 0 ? completedTodayCount / totalTodayCount : 0;
 
   int get totalStreak {
     if (_habits.isEmpty) return 0;
@@ -46,13 +48,15 @@ class HabitService extends ChangeNotifier {
 
     try {
       // Load habits for this learner
-      final QuerySnapshot<Map<String, dynamic>> habitsSnapshot = await _firestore
-          .collection('habits')
-          .where('learnerId', isEqualTo: learnerId)
-          .where('isActive', isEqualTo: true)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> habitsSnapshot =
+          await _firestore
+              .collection('habits')
+              .where('learnerId', isEqualTo: learnerId)
+              .where('isActive', isEqualTo: true)
+              .get();
 
-      _habits = habitsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _habits = habitsSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return Habit(
           id: doc.id,
@@ -82,7 +86,8 @@ class HabitService extends ChangeNotifier {
           .limit(50)
           .get();
 
-      _recentLogs = logsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _recentLogs = logsSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return HabitLog(
           id: doc.id,
@@ -97,7 +102,8 @@ class HabitService extends ChangeNotifier {
       // Calculate weekly summary
       _weeklySummary = _calculateWeeklySummary();
 
-      debugPrint('Loaded ${_habits.length} habits and ${_recentLogs.length} logs');
+      debugPrint(
+          'Loaded ${_habits.length} habits and ${_recentLogs.length} logs');
     } catch (e) {
       debugPrint('Error loading habits: $e');
       _error = 'Failed to load habits: $e';
@@ -147,16 +153,17 @@ class HabitService extends ChangeNotifier {
   WeeklyHabitSummary _calculateWeeklySummary() {
     final DateTime now = DateTime.now();
     final DateTime weekStart = now.subtract(Duration(days: now.weekday - 1));
-    
+
     // Count completions by habit
     final Map<String, int> completionsByHabit = <String, int>{};
     int totalMinutes = 0;
     final List<bool> dailyCompletions = List<bool>.filled(7, false);
 
     for (final HabitLog log in _recentLogs) {
-      completionsByHabit[log.habitId] = (completionsByHabit[log.habitId] ?? 0) + 1;
+      completionsByHabit[log.habitId] =
+          (completionsByHabit[log.habitId] ?? 0) + 1;
       totalMinutes += log.durationMinutes;
-      
+
       final int dayIndex = log.completedAt.weekday - 1;
       if (dayIndex >= 0 && dayIndex < 7) {
         dailyCompletions[dayIndex] = true;
@@ -223,14 +230,15 @@ class HabitService extends ChangeNotifier {
   }
 
   /// Complete a habit for today
-  Future<bool> completeHabit(String habitId, {int? durationMinutes, String? note, String? moodEmoji}) async {
+  Future<bool> completeHabit(String habitId,
+      {int? durationMinutes, String? note, String? moodEmoji}) async {
     try {
       final int index = _habits.indexWhere((Habit h) => h.id == habitId);
       if (index == -1) return false;
 
       final Habit habit = _habits[index];
       final DateTime now = DateTime.now();
-      
+
       // Create log entry
       final HabitLog log = HabitLog(
         id: 'log_${now.millisecondsSinceEpoch}',
@@ -246,7 +254,8 @@ class HabitService extends ChangeNotifier {
       final int newStreak = _calculateNewStreak(habit);
       _habits[index] = habit.copyWith(
         currentStreak: newStreak,
-        longestStreak: newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
+        longestStreak:
+            newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
         totalCompletions: habit.totalCompletions + 1,
         lastCompletedAt: now,
       );
@@ -262,7 +271,7 @@ class HabitService extends ChangeNotifier {
 
   int _calculateNewStreak(Habit habit) {
     if (habit.lastCompletedAt == null) return 1;
-    
+
     final DateTime now = DateTime.now();
     final DateTime lastDate = habit.lastCompletedAt!;
     final int dayDiff = DateTime(now.year, now.month, now.day)
@@ -294,7 +303,10 @@ class HabitService extends ChangeNotifier {
   /// Delete/archive a habit in Firebase
   Future<bool> deleteHabit(String habitId) async {
     try {
-      await _firestore.collection('habits').doc(habitId).update(<String, dynamic>{
+      await _firestore
+          .collection('habits')
+          .doc(habitId)
+          .update(<String, dynamic>{
         'isActive': false,
         'archivedAt': FieldValue.serverTimestamp(),
       });
@@ -325,7 +337,8 @@ class HabitService extends ChangeNotifier {
     int targetMinutes = 10,
   }) async {
     try {
-      final DocumentReference<Map<String, dynamic>> docRef = await _firestore.collection('habits').add(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> docRef =
+          await _firestore.collection('habits').add(<String, dynamic>{
         'learnerId': learnerId,
         'title': title,
         'description': description,
@@ -365,16 +378,18 @@ class HabitService extends ChangeNotifier {
   }
 
   /// Complete a habit and save to Firebase
-  Future<bool> completeHabitInFirestore(String habitId, {int? durationMinutes, String? note, String? moodEmoji}) async {
+  Future<bool> completeHabitInFirestore(String habitId,
+      {int? durationMinutes, String? note, String? moodEmoji}) async {
     try {
       final int index = _habits.indexWhere((Habit h) => h.id == habitId);
       if (index == -1) return false;
 
       final Habit habit = _habits[index];
       final DateTime now = DateTime.now();
-      
+
       // Create log entry in Firebase
-      final DocumentReference<Map<String, dynamic>> logRef = await _firestore.collection('habitLogs').add(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> logRef =
+          await _firestore.collection('habitLogs').add(<String, dynamic>{
         'habitId': habitId,
         'learnerId': learnerId,
         'completedAt': FieldValue.serverTimestamp(),
@@ -395,16 +410,21 @@ class HabitService extends ChangeNotifier {
 
       // Update habit streak in Firebase
       final int newStreak = _calculateNewStreak(habit);
-      await _firestore.collection('habits').doc(habitId).update(<String, dynamic>{
+      await _firestore
+          .collection('habits')
+          .doc(habitId)
+          .update(<String, dynamic>{
         'currentStreak': newStreak,
-        'longestStreak': newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
+        'longestStreak':
+            newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
         'totalCompletions': FieldValue.increment(1),
         'lastCompletedAt': FieldValue.serverTimestamp(),
       });
 
       _habits[index] = habit.copyWith(
         currentStreak: newStreak,
-        longestStreak: newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
+        longestStreak:
+            newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
         totalCompletions: habit.totalCompletions + 1,
         lastCompletedAt: now,
       );

@@ -158,7 +158,8 @@ class HqRoleSwitcherPage extends StatelessWidget {
                 const Icon(Icons.arrow_forward, color: Colors.grey),
                 const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: viewingAs.name.roleColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -289,11 +290,13 @@ class HqRoleSwitcherPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: ScholesaColors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ScholesaColors.warning.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: ScholesaColors.warning.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.info_outline, color: ScholesaColors.warning, size: 20),
+          const Icon(Icons.info_outline,
+              color: ScholesaColors.warning, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

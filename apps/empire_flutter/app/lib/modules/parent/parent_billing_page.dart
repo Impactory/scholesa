@@ -140,8 +140,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
           icon: const Icon(Icons.keyboard_arrow_down),
           items: const <DropdownMenuItem<String>>[
             DropdownMenuItem<String>(value: 'all', child: Text('All Learners')),
-            DropdownMenuItem<String>(value: 'emma', child: Text('Emma Johnson')),
-            DropdownMenuItem<String>(value: 'jack', child: Text('Jack Johnson')),
+            DropdownMenuItem<String>(
+                value: 'emma', child: Text('Emma Johnson')),
+            DropdownMenuItem<String>(
+                value: 'jack', child: Text('Jack Johnson')),
           ],
           onChanged: (String? value) {
             if (value != null) {
@@ -218,7 +220,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.check_circle, size: 14, color: Colors.white),
+                          Icon(Icons.check_circle,
+                              size: 14, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
                             'All paid',
@@ -399,7 +402,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: ScholesaColors.parent.withValues(alpha: 0.3)),
+              border: Border.all(
+                  color: ScholesaColors.parent.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,7 +429,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       ),
                     ),
                     const Spacer(),
-                    const Icon(Icons.check_circle, color: ScholesaColors.success),
+                    const Icon(Icons.check_circle,
+                        color: ScholesaColors.success),
                     const SizedBox(width: 4),
                     const Text(
                       'Active',
@@ -495,7 +500,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     color: ScholesaColors.parent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.credit_card, color: ScholesaColors.parent),
+                  child: const Icon(Icons.credit_card,
+                      color: ScholesaColors.parent),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -544,7 +550,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   void _downloadStatements() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'parent_billing_download_statements'},
+      metadata: const <String, dynamic>{
+        'cta': 'parent_billing_download_statements'
+      },
     );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -557,7 +565,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   void _payInvoice(Map<String, dynamic> invoice) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'parent_billing_pay_invoice', 'invoice_id': invoice['id']},
+      metadata: <String, dynamic>{
+        'cta': 'parent_billing_pay_invoice',
+        'invoice_id': invoice['id']
+      },
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -570,7 +581,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   void _viewInvoice(Map<String, dynamic> invoice) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'parent_billing_view_invoice', 'invoice_id': invoice['id']},
+      metadata: <String, dynamic>{
+        'cta': 'parent_billing_view_invoice',
+        'invoice_id': invoice['id']
+      },
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -583,7 +597,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   void _updatePaymentMethod() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'parent_billing_update_payment_method'},
+      metadata: const <String, dynamic>{
+        'cta': 'parent_billing_update_payment_method'
+      },
     );
     showDialog<void>(
       context: context,
@@ -645,7 +661,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'parent_billing_close_manage_plan_dialog'},
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_billing_close_manage_plan_dialog'
+                },
               );
               Navigator.pop(dialogContext);
             },
@@ -655,7 +673,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'parent_billing_request_plan_change'},
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_billing_request_plan_change'
+                },
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -737,7 +757,9 @@ class _InvoiceCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _isPaid ? Colors.grey.shade200 : ScholesaColors.warning.withValues(alpha: 0.3),
+            color: _isPaid
+                ? Colors.grey.shade200
+                : ScholesaColors.warning.withValues(alpha: 0.3),
           ),
         ),
         child: Column(
@@ -747,13 +769,17 @@ class _InvoiceCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (_isPaid ? ScholesaColors.success : ScholesaColors.warning)
+                    color: (_isPaid
+                            ? ScholesaColors.success
+                            : ScholesaColors.warning)
                         .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     _isPaid ? Icons.check_circle : Icons.pending,
-                    color: _isPaid ? ScholesaColors.success : ScholesaColors.warning,
+                    color: _isPaid
+                        ? ScholesaColors.success
+                        : ScholesaColors.warning,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -788,14 +814,18 @@ class _InvoiceCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: (_isPaid ? ScholesaColors.success : ScholesaColors.warning)
+                        color: (_isPaid
+                                ? ScholesaColors.success
+                                : ScholesaColors.warning)
                             .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         _isPaid ? 'PAID' : 'DUE',
                         style: TextStyle(
-                          color: _isPaid ? ScholesaColors.success : ScholesaColors.warning,
+                          color: _isPaid
+                              ? ScholesaColors.success
+                              : ScholesaColors.warning,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -883,7 +913,8 @@ class _PaymentCard extends StatelessWidget {
                 color: ScholesaColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.check_circle, color: ScholesaColors.success),
+              child:
+                  const Icon(Icons.check_circle, color: ScholesaColors.success),
             ),
             const SizedBox(width: 12),
             Expanded(

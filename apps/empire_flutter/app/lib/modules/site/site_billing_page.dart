@@ -40,7 +40,8 @@ class SiteBillingPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: ScholesaColors.billingGradient.colors.first.withValues(alpha: 0.3),
+            color: ScholesaColors.billingGradient.colors.first
+                .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -61,7 +62,8 @@ class SiteBillingPage extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -151,7 +153,8 @@ class SiteBillingPage extends StatelessWidget {
         const SizedBox(height: 12),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -169,7 +172,8 @@ class SiteBillingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildUsageRow(String label, double used, double total, {String unit = ''}) {
+  Widget _buildUsageRow(String label, double used, double total,
+      {String unit = ''}) {
     final double percentage = used / total;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +204,11 @@ class SiteBillingPage extends StatelessWidget {
             value: percentage,
             backgroundColor: Colors.grey.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(
-              percentage > 0.9 ? Colors.red : percentage > 0.7 ? Colors.orange : Colors.green,
+              percentage > 0.9
+                  ? Colors.red
+                  : percentage > 0.7
+                      ? Colors.orange
+                      : Colors.green,
             ),
             minHeight: 6,
           ),
@@ -243,7 +251,8 @@ class SiteBillingPage extends StatelessWidget {
         const SizedBox(height: 8),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: <Widget>[
               _buildInvoiceRow('INV-2026-001', 'Jan 1, 2026', '\$299.00', true),

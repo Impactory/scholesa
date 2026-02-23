@@ -21,7 +21,8 @@ void main() {
       expect(profile, contains('Simon'));
     });
 
-    test('fetchUserProfile throws UserProfileException on failed call', () async {
+    test('fetchUserProfile throws UserProfileException on failed call',
+        () async {
       final MockClient mockClient = MockClient((http.Request request) async {
         return http.Response('Not Found', 404);
       });

@@ -16,7 +16,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -75,7 +76,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         event: 'auth.login',
         metadata: <String, dynamic>{'method': 'email'},
       );
-      
+
       _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -85,9 +86,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
     } catch (e) {
       if (mounted) {
-        final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.unexpected');
+        final String fallbackMessage = context.read<AppState>().error ??
+            AppStrings.of(context, 'auth.error.unexpected');
         setState(() {
-          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
+          _errorMessage =
+              _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -112,7 +115,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         event: 'auth.login',
         metadata: <String, dynamic>{'method': 'google'},
       );
-      
+
       _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -122,9 +125,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
     } catch (e) {
       if (mounted) {
-        final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.googleFailed');
+        final String fallbackMessage = context.read<AppState>().error ??
+            AppStrings.of(context, 'auth.error.googleFailed');
         setState(() {
-          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
+          _errorMessage =
+              _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -149,7 +154,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         event: 'auth.login',
         metadata: <String, dynamic>{'method': 'microsoft'},
       );
-      
+
       _navigatePostAuth();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -159,9 +164,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
     } catch (e) {
       if (mounted) {
-        final String fallbackMessage = context.read<AppState>().error ?? AppStrings.of(context, 'auth.error.microsoftFailed');
+        final String fallbackMessage = context.read<AppState>().error ??
+            AppStrings.of(context, 'auth.error.microsoftFailed');
         setState(() {
-          _errorMessage = _normalizeAuthExceptionMessage(context, e, fallbackMessage);
+          _errorMessage =
+              _normalizeAuthExceptionMessage(context, e, fallbackMessage);
         });
       }
     } finally {
@@ -230,7 +237,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           final String email = resetEmailController.text.trim();
                           if (email.isEmpty || !email.contains('@')) {
                             setDialogState(() {
-                              dialogError = AppStrings.of(ctx, 'auth.validation.validEmail');
+                              dialogError = AppStrings.of(
+                                  ctx, 'auth.validation.validEmail');
                             });
                             return;
                           }
@@ -254,7 +262,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           } on FirebaseAuthException catch (e) {
                             setDialogState(() {
                               sending = false;
-                              dialogError = _authErrorMessage(ctx, e.code, fallback: AppStrings.of(ctx, 'auth.error.resetFailed'));
+                              dialogError = _authErrorMessage(ctx, e.code,
+                                  fallback: AppStrings.of(
+                                      ctx, 'auth.error.resetFailed'));
                             });
                           }
                         },
@@ -353,18 +363,23 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         ),
                         const SizedBox(height: 48),
                         // Feature highlights
-                        _buildFeatureRow(Icons.rocket_launch_rounded, 'Mission-based learning'),
+                        _buildFeatureRow(Icons.rocket_launch_rounded,
+                            'Mission-based learning'),
                         const SizedBox(height: 16),
-                        _buildFeatureRow(Icons.psychology_rounded, 'Habit coaching'),
+                        _buildFeatureRow(
+                            Icons.psychology_rounded, 'Habit coaching'),
                         const SizedBox(height: 16),
-                        _buildFeatureRow(Icons.folder_special_rounded, 'Portfolio showcase'),
+                        _buildFeatureRow(
+                            Icons.folder_special_rounded, 'Portfolio showcase'),
                         const Spacer(),
                         // Bottom pillars
                         Row(
                           children: <Widget>[
-                            _buildPillarChip('Future Skills', ScholesaColors.futureSkills),
+                            _buildPillarChip(
+                                'Future Skills', ScholesaColors.futureSkills),
                             const SizedBox(width: 8),
-                            _buildPillarChip('Leadership', ScholesaColors.leadership),
+                            _buildPillarChip(
+                                'Leadership', ScholesaColors.leadership),
                             const SizedBox(width: 8),
                             _buildPillarChip('Impact', ScholesaColors.impact),
                           ],
@@ -398,15 +413,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             ),
                             const SizedBox(height: 24),
                           ],
-                          
+
                           // Welcome text
                           Text(
-                            isWide ? AppStrings.of(context, 'auth.welcomeBack') : AppStrings.of(context, 'auth.welcomeToScholesa'),
+                            isWide
+                                ? AppStrings.of(context, 'auth.welcomeBack')
+                                : AppStrings.of(
+                                    context, 'auth.welcomeToScholesa'),
                             style: textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: headingColor,
                             ),
-                            textAlign: isWide ? TextAlign.left : TextAlign.center,
+                            textAlign:
+                                isWide ? TextAlign.left : TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -414,7 +433,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             style: textTheme.bodyMedium?.copyWith(
                               color: secondaryTextColor,
                             ),
-                            textAlign: isWide ? TextAlign.left : TextAlign.center,
+                            textAlign:
+                                isWide ? TextAlign.left : TextAlign.center,
                           ),
                           const SizedBox(height: 40),
 
@@ -423,10 +443,12 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: ScholesaColors.error.withValues(alpha: 0.1),
+                                color:
+                                    ScholesaColors.error.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: ScholesaColors.error.withValues(alpha: 0.3),
+                                  color: ScholesaColors.error
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -466,21 +488,29 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     fontWeight: FontWeight.w500,
                                   ),
                                   decoration: InputDecoration(
-                                    labelText: AppStrings.of(context, 'auth.email'),
-                                    hintText: AppStrings.of(context, 'auth.emailHint'),
-                                    labelStyle: const TextStyle(color: secondaryTextColor),
-                                    floatingLabelStyle: const TextStyle(color: headingColor),
-                                    hintStyle: const TextStyle(color: fieldHintColor),
-                                    prefixIcon: const Icon(Icons.email_outlined, color: secondaryTextColor),
+                                    labelText:
+                                        AppStrings.of(context, 'auth.email'),
+                                    hintText: AppStrings.of(
+                                        context, 'auth.emailHint'),
+                                    labelStyle: const TextStyle(
+                                        color: secondaryTextColor),
+                                    floatingLabelStyle:
+                                        const TextStyle(color: headingColor),
+                                    hintStyle:
+                                        const TextStyle(color: fieldHintColor),
+                                    prefixIcon: const Icon(Icons.email_outlined,
+                                        color: secondaryTextColor),
                                     filled: true,
                                     fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                      borderSide: const BorderSide(
+                                          color: fieldBorderColor),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                      borderSide: const BorderSide(
+                                          color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -492,16 +522,18 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   ),
                                   validator: (String? value) {
                                     if (value == null || value.isEmpty) {
-                                      return AppStrings.of(context, 'auth.validation.enterEmail');
+                                      return AppStrings.of(context,
+                                          'auth.validation.enterEmail');
                                     }
                                     if (!value.contains('@')) {
-                                      return AppStrings.of(context, 'auth.validation.validEmail');
+                                      return AppStrings.of(context,
+                                          'auth.validation.validEmail');
                                     }
                                     return null;
                                   },
                                 ),
                                 const SizedBox(height: 20),
-                                
+
                                 // Password field
                                 TextFormField(
                                   controller: _passwordController,
@@ -513,21 +545,29 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     fontWeight: FontWeight.w500,
                                   ),
                                   decoration: InputDecoration(
-                                    labelText: AppStrings.of(context, 'auth.password'),
-                                    hintText: AppStrings.of(context, 'auth.passwordHint'),
-                                    labelStyle: const TextStyle(color: secondaryTextColor),
-                                    floatingLabelStyle: const TextStyle(color: headingColor),
-                                    hintStyle: const TextStyle(color: fieldHintColor),
-                                    prefixIcon: const Icon(Icons.lock_outlined, color: secondaryTextColor),
+                                    labelText:
+                                        AppStrings.of(context, 'auth.password'),
+                                    hintText: AppStrings.of(
+                                        context, 'auth.passwordHint'),
+                                    labelStyle: const TextStyle(
+                                        color: secondaryTextColor),
+                                    floatingLabelStyle:
+                                        const TextStyle(color: headingColor),
+                                    hintStyle:
+                                        const TextStyle(color: fieldHintColor),
+                                    prefixIcon: const Icon(Icons.lock_outlined,
+                                        color: secondaryTextColor),
                                     filled: true,
                                     fillColor: fieldFillColor,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                      borderSide: const BorderSide(
+                                          color: fieldBorderColor),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(color: fieldBorderColor),
+                                      borderSide: const BorderSide(
+                                          color: fieldBorderColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -562,16 +602,18 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   ),
                                   validator: (String? value) {
                                     if (value == null || value.isEmpty) {
-                                      return AppStrings.of(context, 'auth.validation.enterPassword');
+                                      return AppStrings.of(context,
+                                          'auth.validation.enterPassword');
                                     }
                                     if (value.length < 6) {
-                                      return AppStrings.of(context, 'auth.validation.passwordLength');
+                                      return AppStrings.of(context,
+                                          'auth.validation.passwordLength');
                                     }
                                     return null;
                                   },
                                 ),
                                 const SizedBox(height: 12),
-                                
+
                                 // Forgot password
                                 Align(
                                   alignment: Alignment.centerRight,
@@ -581,7 +623,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                         event: 'cta.clicked',
                                         metadata: const <String, dynamic>{
                                           'module': 'login',
-                                          'cta_id': 'open_forgot_password_dialog',
+                                          'cta_id':
+                                              'open_forgot_password_dialog',
                                           'surface': 'login_form',
                                         },
                                       );
@@ -590,11 +633,12 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     style: TextButton.styleFrom(
                                       foregroundColor: linkColor,
                                     ),
-                                    child: Text(AppStrings.of(context, 'auth.forgotPassword')),
+                                    child: Text(AppStrings.of(
+                                        context, 'auth.forgotPassword')),
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                
+
                                 // Sign in button
                                 SizedBox(
                                   width: double.infinity,
@@ -627,13 +671,15 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                             height: 24,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2.5,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
                                                 Colors.white,
                                               ),
                                             ),
                                           )
                                         : Text(
-                                          AppStrings.of(context, 'auth.signIn'),
+                                            AppStrings.of(
+                                                context, 'auth.signIn'),
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
@@ -644,15 +690,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // Divider
                           Row(
                             children: <Widget>[
-                              const Expanded(child: Divider(color: ScholesaColors.border)),
+                              const Expanded(
+                                  child: Divider(color: ScholesaColors.border)),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
                                   AppStrings.of(context, 'auth.orContinueWith'),
                                   style: textTheme.bodySmall?.copyWith(
@@ -661,12 +709,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   ),
                                 ),
                               ),
-                              const Expanded(child: Divider(color: ScholesaColors.border)),
+                              const Expanded(
+                                  child: Divider(color: ScholesaColors.border)),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Social sign in buttons
                           Row(
                             children: <Widget>[
@@ -690,10 +739,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     color: Colors.red,
                                     size: 24,
                                   ),
-                                  label: Text(AppStrings.of(context, 'auth.google')),
+                                  label: Text(
+                                      AppStrings.of(context, 'auth.google')),
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    side: BorderSide(color: colorScheme.outlineVariant),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    side: BorderSide(
+                                        color: colorScheme.outlineVariant),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -710,7 +762,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                             event: 'cta.clicked',
                                             metadata: const <String, dynamic>{
                                               'module': 'login',
-                                              'cta_id': 'submit_microsoft_login',
+                                              'cta_id':
+                                                  'submit_microsoft_login',
                                               'surface': 'social_login',
                                             },
                                           );
@@ -721,10 +774,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     size: 20,
                                     color: Color(0xFF00A4EF),
                                   ),
-                                  label: Text(AppStrings.of(context, 'auth.microsoft')),
+                                  label: Text(
+                                      AppStrings.of(context, 'auth.microsoft')),
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    side: BorderSide(color: colorScheme.outlineVariant),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    side: BorderSide(
+                                        color: colorScheme.outlineVariant),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -733,12 +789,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 32),
 
                           Text(
                             AppStrings.of(context, 'auth.provisioningNote'),
-                            style: textTheme.bodyMedium?.copyWith(color: secondaryTextColor),
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: secondaryTextColor),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -797,7 +854,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
-  String _authErrorMessage(BuildContext context, String code, {String? fallback}) {
+  String _authErrorMessage(BuildContext context, String code,
+      {String? fallback}) {
     switch (code) {
       case 'user-not-found':
         return AppStrings.of(context, 'auth.error.userNotFound');
@@ -839,7 +897,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  String _authErrorMessageFromException(BuildContext context, FirebaseAuthException e) {
+  String _authErrorMessageFromException(
+      BuildContext context, FirebaseAuthException e) {
     final String message = (e.message ?? '').toLowerCase();
 
     if (message.contains('invalid-login-credentials') ||
@@ -848,7 +907,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       return AppStrings.of(context, 'auth.error.invalidCredential');
     }
 
-    if (message.contains('network') || message.contains('network-request-failed')) {
+    if (message.contains('network') ||
+        message.contains('network-request-failed')) {
       return AppStrings.of(context, 'auth.error.networkFailed');
     }
 
@@ -864,7 +924,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return _authErrorMessage(context, e.code, fallback: fallback);
   }
 
-  String _normalizeAuthExceptionMessage(BuildContext context, Object error, String fallback) {
+  String _normalizeAuthExceptionMessage(
+      BuildContext context, Object error, String fallback) {
     final RegExp codePattern = RegExp(r'firebase_auth\/([a-z\-]+)');
     final Match? match = codePattern.firstMatch(error.toString().toLowerCase());
     if (match != null && match.groupCount >= 1) {

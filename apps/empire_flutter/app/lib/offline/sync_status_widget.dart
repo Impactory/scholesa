@@ -38,9 +38,7 @@ class SyncStatusIndicator extends StatelessWidget {
                 ),
               const SizedBox(width: 6),
               Text(
-                sync.isOnline
-                    ? '${sync.pendingCount} pending'
-                    : 'Offline',
+                sync.isOnline ? '${sync.pendingCount} pending' : 'Offline',
                 style: TextStyle(
                   fontSize: 12,
                   color: sync.isOnline ? Colors.orange[800] : Colors.grey[700],

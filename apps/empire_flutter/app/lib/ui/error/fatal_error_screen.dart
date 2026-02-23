@@ -3,7 +3,6 @@ import '../../services/telemetry_service.dart';
 
 /// Fatal error screen with retry option
 class FatalErrorScreen extends StatelessWidget {
-
   const FatalErrorScreen({
     super.key,
     required this.error,
@@ -31,16 +30,16 @@ class FatalErrorScreen extends StatelessWidget {
                 Text(
                   'Something went wrong',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   error,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                        color: Colors.grey[600],
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),

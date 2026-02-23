@@ -6,7 +6,6 @@ import 'offline_queue.dart';
 
 /// Coordinates sync between offline queue and Firestore
 class SyncCoordinator extends ChangeNotifier {
-
   SyncCoordinator({
     required OfflineQueue queue,
     required FirestoreService firestoreService,
@@ -32,38 +31,41 @@ class SyncCoordinator extends ChangeNotifier {
   /// Initialize and start listening for connectivity changes
   Future<void> init() async {
     await _queue.init();
-    
+
     // Check initial connectivity
-    final List<ConnectivityResult> results = await _connectivity.checkConnectivity();
+    final List<ConnectivityResult> results =
+        await _connectivity.checkConnectivity();
     _updateConnectivity(results);
-    
+
     // Listen for changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_updateConnectivity);
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen(_updateConnectivity);
   }
 
   void _updateConnectivity(List<ConnectivityResult> results) {
     final bool wasOnline = _isOnline;
-    _isOnline = results.isNotEmpty && 
-                !results.contains(ConnectivityResult.none);
-    
+    _isOnline =
+        results.isNotEmpty && !results.contains(ConnectivityResult.none);
+
     if (_isOnline && !wasOnline) {
       // Just came online, trigger sync
       syncPending();
     }
-    
+
     notifyListeners();
   }
 
   /// Queue an operation (called from modules)
-  Future<QueuedOp> queueOperation(OpType type, Map<String, dynamic> payload) async {
+  Future<QueuedOp> queueOperation(
+      OpType type, Map<String, dynamic> payload) async {
     final QueuedOp op = await _queue.enqueue(type, payload);
     notifyListeners();
-    
+
     // Try to sync immediately if online
     if (_isOnline && !_isSyncing) {
       syncPending();
     }
-    
+
     return op;
   }
 
@@ -81,7 +83,7 @@ class SyncCoordinator extends ChangeNotifier {
 
     try {
       final List<QueuedOp> pending = _queue.getPending();
-      
+
       if (pending.isEmpty) {
         return SyncResult(synced: 0, failed: 0, pending: 0);
       }
@@ -104,7 +106,8 @@ class SyncCoordinator extends ChangeNotifier {
           } else {
             debugPrint('Sync operation failed: $e');
           }
-          await _queue.updateStatus(op.id, OpStatus.failed, error: e.toString());
+          await _queue.updateStatus(op.id, OpStatus.failed,
+              error: e.toString());
           failed++;
         }
       }
@@ -135,12 +138,14 @@ class SyncCoordinator extends ChangeNotifier {
 
     switch (op.type) {
       case OpType.attendanceRecord:
-        await firestore.collection('attendanceRecords')
+        await firestore
+            .collection('attendanceRecords')
             .doc(op.idempotencyKey)
             .set(payload);
         break;
       case OpType.presenceCheckin:
-        await firestore.collection('checkins')
+        await firestore
+            .collection('checkins')
             .doc(op.idempotencyKey)
             .set(payload);
         break;
@@ -153,17 +158,20 @@ class SyncCoordinator extends ChangeNotifier {
         }
         break;
       case OpType.incidentSubmit:
-        await firestore.collection('incidents')
+        await firestore
+            .collection('incidents')
             .doc(op.idempotencyKey)
             .set(payload);
         break;
       case OpType.messageSend:
-        await firestore.collection('messages')
+        await firestore
+            .collection('messages')
             .doc(op.idempotencyKey)
             .set(payload);
         break;
       case OpType.attemptSaveDraft:
-        await firestore.collection('drafts')
+        await firestore
+            .collection('drafts')
             .doc(op.idempotencyKey)
             .set(payload);
         break;
@@ -172,7 +180,8 @@ class SyncCoordinator extends ChangeNotifier {
 
   /// Force retry all failed ops
   Future<void> retryFailed() async {
-    final Iterable<QueuedOp> failed = _queue.getAll().where((QueuedOp op) => op.status == OpStatus.failed);
+    final Iterable<QueuedOp> failed =
+        _queue.getAll().where((QueuedOp op) => op.status == OpStatus.failed);
     for (final QueuedOp op in failed) {
       await _queue.updateStatus(op.id, OpStatus.pending);
     }
@@ -192,7 +201,6 @@ class SyncCoordinator extends ChangeNotifier {
 
 /// Result of a sync operation
 class SyncResult {
-
   SyncResult({
     required this.synced,
     required this.failed,

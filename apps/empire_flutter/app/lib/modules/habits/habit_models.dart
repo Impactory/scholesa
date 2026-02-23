@@ -103,7 +103,8 @@ enum HabitTimePreference {
 }
 
 /// Model for a habit
-class Habit extends Equatable { // 1-7 for Mon-Sun
+class Habit extends Equatable {
+  // 1-7 for Mon-Sun
 
   const Habit({
     required this.id,
@@ -255,7 +256,6 @@ class Habit extends Equatable { // 1-7 for Mon-Sun
 
 /// Habit completion log entry
 class HabitLog extends Equatable {
-
   const HabitLog({
     required this.id,
     required this.habitId,
@@ -294,11 +294,13 @@ class HabitLog extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[id, habitId, completedAt, durationMinutes, note, moodEmoji];
+  List<Object?> get props =>
+      <Object?>[id, habitId, completedAt, durationMinutes, note, moodEmoji];
 }
 
 /// Weekly summary for habit tracking
-class WeeklyHabitSummary extends Equatable { // 7 bools for Mon-Sun
+class WeeklyHabitSummary extends Equatable {
+  // 7 bools for Mon-Sun
 
   const WeeklyHabitSummary({
     required this.weekStart,

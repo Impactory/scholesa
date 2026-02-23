@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 /// Model for today's class/session
 class TodayClass extends Equatable {
-
   const TodayClass({
     required this.id,
     required this.sessionId,
@@ -36,13 +35,23 @@ class TodayClass extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id, sessionId, title, description, startTime, endTime,
-        location, enrolledCount, presentCount, status, learners,
+        id,
+        sessionId,
+        title,
+        description,
+        startTime,
+        endTime,
+        location,
+        enrolledCount,
+        presentCount,
+        status,
+        learners,
       ];
 }
 
 /// Enrolled learner in a class
-class EnrolledLearner extends Equatable { // present, absent, late, null (not recorded)
+class EnrolledLearner extends Equatable {
+  // present, absent, late, null (not recorded)
 
   const EnrolledLearner({
     required this.id,
@@ -61,7 +70,6 @@ class EnrolledLearner extends Equatable { // present, absent, late, null (not re
 
 /// Quick stats for educator dashboard
 class EducatorDayStats extends Equatable {
-
   const EducatorDayStats({
     required this.totalClasses,
     required this.completedClasses,
@@ -82,13 +90,18 @@ class EducatorDayStats extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        totalClasses, completedClasses, totalLearners,
-        presentLearners, missionsToReview, unreadMessages,
+        totalClasses,
+        completedClasses,
+        totalLearners,
+        presentLearners,
+        missionsToReview,
+        unreadMessages,
       ];
 }
 
 /// Session model for session management
-class EducatorSession extends Equatable { // upcoming, ongoing, completed, cancelled
+class EducatorSession extends Equatable {
+  // upcoming, ongoing, completed, cancelled
 
   const EducatorSession({
     required this.id,
@@ -116,20 +129,35 @@ class EducatorSession extends Equatable { // upcoming, ongoing, completed, cance
   /// Convenience getters for UI
   int get learnerCount => enrolledCount;
   String get dayOfWeek {
-    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const List<String> days = <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun'
+    ];
     return days[startTime.weekday - 1];
   }
 
   @override
   List<Object?> get props => <Object?>[
-        id, title, description, pillar, startTime, endTime,
-        location, enrolledCount, maxCapacity, status,
+        id,
+        title,
+        description,
+        pillar,
+        startTime,
+        endTime,
+        location,
+        enrolledCount,
+        maxCapacity,
+        status,
       ];
 }
 
 /// Learner model for learner roster
 class EducatorLearner extends Equatable {
-
   const EducatorLearner({
     required this.id,
     required this.name,
@@ -160,13 +188,21 @@ class EducatorLearner extends Equatable {
     }
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
+
   double get futureSkillsProgress => pillarProgress['future_skills'] ?? 0;
   double get leadershipProgress => pillarProgress['leadership'] ?? 0;
   double get impactProgress => pillarProgress['impact'] ?? 0;
 
   @override
   List<Object?> get props => <Object?>[
-        id, name, email, photoUrl, attendanceRate,
-        missionsCompleted, pillarProgress, enrolledSessionIds, isActiveToday,
+        id,
+        name,
+        email,
+        photoUrl,
+        attendanceRate,
+        missionsCompleted,
+        pillarProgress,
+        enrolledSessionIds,
+        isActiveToday,
       ];
 }

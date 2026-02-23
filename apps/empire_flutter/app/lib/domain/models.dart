@@ -82,7 +82,8 @@ class GuardianLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory GuardianLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory GuardianLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return GuardianLinkModel(
       id: doc.id,
@@ -141,7 +142,8 @@ class LearnerProfileModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory LearnerProfileModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory LearnerProfileModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return LearnerProfileModel(
       id: doc.id,
@@ -151,9 +153,12 @@ class LearnerProfileModel {
       preferredName: data['preferredName'] as String?,
       dateOfBirth: data['dateOfBirth'] as String?,
       gradeLevel: data['gradeLevel'] as String?,
-      strengths: List<String>.from(data['strengths'] as List? ?? const <String>[]),
-      learningNeeds: List<String>.from(data['learningNeeds'] as List? ?? const <String>[]),
-      interests: List<String>.from(data['interests'] as List? ?? const <String>[]),
+      strengths:
+          List<String>.from(data['strengths'] as List? ?? const <String>[]),
+      learningNeeds:
+          List<String>.from(data['learningNeeds'] as List? ?? const <String>[]),
+      interests:
+          List<String>.from(data['interests'] as List? ?? const <String>[]),
       goals: List<String>.from(data['goals'] as List? ?? const <String>[]),
       emergencyContact: data['emergencyContact'] as Map<String, dynamic>?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -204,7 +209,8 @@ class ParentProfileModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ParentProfileModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ParentProfileModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ParentProfileModel(
       id: doc.id,
@@ -214,7 +220,8 @@ class ParentProfileModel {
       preferredName: data['preferredName'] as String?,
       phone: data['phone'] as String?,
       preferredLanguage: data['preferredLanguage'] as String?,
-      communicationPreferences: List<String>.from(data['communicationPreferences'] as List? ?? const <String>[]),
+      communicationPreferences: List<String>.from(
+          data['communicationPreferences'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -319,7 +326,8 @@ class SiteModel {
       name: data['name'] as String? ?? '',
       timezone: data['timezone'] as String?,
       address: data['address'] as String?,
-      adminUserIds: List<String>.from(data['adminUserIds'] as List? ?? const <String>[]),
+      adminUserIds:
+          List<String>.from(data['adminUserIds'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -364,7 +372,8 @@ class SessionModel {
       siteId: data['siteId'] as String? ?? '',
       name: data['name'] as String? ?? '',
       educatorId: data['educatorId'] as String?,
-      pillarEmphasis: List<String>.from(data['pillarEmphasis'] as List? ?? const <String>[]),
+      pillarEmphasis: List<String>.from(
+          data['pillarEmphasis'] as List? ?? const <String>[]),
       schedule: data['schedule'] as Map<String, dynamic>?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -406,7 +415,8 @@ class SessionOccurrenceModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory SessionOccurrenceModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory SessionOccurrenceModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return SessionOccurrenceModel(
       id: doc.id,
@@ -500,7 +510,8 @@ class AttendanceRecordModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AttendanceRecordModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AttendanceRecordModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AttendanceRecordModel(
       id: doc.id,
@@ -529,7 +540,8 @@ class AttendanceRecordModel {
 
 @immutable
 class PillarModel {
-  const PillarModel({required this.code, required this.title, this.description, this.order});
+  const PillarModel(
+      {required this.code, required this.title, this.description, this.order});
 
   final String code;
   final String title;
@@ -612,14 +624,16 @@ class SkillMasteryModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory SkillMasteryModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory SkillMasteryModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return SkillMasteryModel(
       id: doc.id,
       learnerId: data['learnerId'] as String? ?? '',
       skillId: data['skillId'] as String? ?? '',
       level: (data['level'] as num?)?.toInt() ?? 0,
-      evidenceIds: List<String>.from(data['evidenceIds'] as List? ?? const <String>[]),
+      evidenceIds:
+          List<String>.from(data['evidenceIds'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -665,9 +679,11 @@ class MissionModel {
       id: doc.id,
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
-      pillarCodes: List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
+      pillarCodes:
+          List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
       siteId: data['siteId'] as String?,
-      skillIds: List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      skillIds:
+          List<String>.from(data['skillIds'] as List? ?? const <String>[]),
       difficulty: data['difficulty'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -715,7 +731,8 @@ class MissionPlanModel {
       siteId: data['siteId'] as String? ?? '',
       sessionOccurrenceId: data['sessionOccurrenceId'] as String? ?? '',
       educatorId: data['educatorId'] as String? ?? '',
-      missionIds: List<String>.from(data['missionIds'] as List? ?? const <String>[]),
+      missionIds:
+          List<String>.from(data['missionIds'] as List? ?? const <String>[]),
       notes: data['notes'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -765,7 +782,8 @@ class MissionAttemptModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory MissionAttemptModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory MissionAttemptModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return MissionAttemptModel(
       id: doc.id,
@@ -775,8 +793,10 @@ class MissionAttemptModel {
       status: data['status'] as String? ?? 'draft',
       sessionOccurrenceId: data['sessionOccurrenceId'] as String?,
       reflection: data['reflection'] as String?,
-      artifactUrls: List<String>.from(data['artifactUrls'] as List? ?? const <String>[]),
-      pillarCodes: List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
+      artifactUrls:
+          List<String>.from(data['artifactUrls'] as List? ?? const <String>[]),
+      pillarCodes:
+          List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
       reviewedBy: data['reviewedBy'] as String?,
       reviewNotes: data['reviewNotes'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -865,7 +885,8 @@ class PortfolioItemModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory PortfolioItemModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory PortfolioItemModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return PortfolioItemModel(
       id: doc.id,
@@ -873,9 +894,12 @@ class PortfolioItemModel {
       learnerId: data['learnerId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String?,
-      artifactUrls: List<String>.from(data['artifactUrls'] as List? ?? const <String>[]),
-      pillarCodes: List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
-      skillIds: List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      artifactUrls:
+          List<String>.from(data['artifactUrls'] as List? ?? const <String>[]),
+      pillarCodes:
+          List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
+      skillIds:
+          List<String>.from(data['skillIds'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -926,8 +950,10 @@ class CredentialModel {
       learnerId: data['learnerId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       issuedAt: data['issuedAt'] as Timestamp? ?? Timestamp.now(),
-      pillarCodes: List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
-      skillIds: List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      pillarCodes:
+          List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
+      skillIds:
+          List<String>.from(data['skillIds'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -967,7 +993,8 @@ class AccountabilityCycleModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AccountabilityCycleModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AccountabilityCycleModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityCycleModel(
       id: doc.id,
@@ -1014,7 +1041,8 @@ class AccountabilityKPIModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AccountabilityKPIModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AccountabilityKPIModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityKPIModel(
       id: doc.id,
@@ -1061,7 +1089,8 @@ class AccountabilityCommitmentModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AccountabilityCommitmentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AccountabilityCommitmentModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityCommitmentModel(
       id: doc.id,
@@ -1069,7 +1098,8 @@ class AccountabilityCommitmentModel {
       userId: data['userId'] as String? ?? '',
       role: data['role'] as String? ?? 'learner',
       statement: data['statement'] as String? ?? '',
-      pillarCodes: List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
+      pillarCodes:
+          List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -1108,7 +1138,8 @@ class AccountabilityReviewModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AccountabilityReviewModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AccountabilityReviewModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AccountabilityReviewModel(
       id: doc.id,
@@ -1153,7 +1184,8 @@ class AnnouncementModel {
   final Timestamp? createdAt;
   final Timestamp? publishedAt;
 
-  factory AnnouncementModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AnnouncementModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return AnnouncementModel(
       id: doc.id,
@@ -1192,12 +1224,14 @@ class MessageThreadModel {
   final String? subject;
   final Timestamp? createdAt;
 
-  factory MessageThreadModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory MessageThreadModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return MessageThreadModel(
       id: doc.id,
       siteId: data['siteId'] as String? ?? '',
-      participantIds: List<String>.from(data['participantIds'] as List? ?? const <String>[]),
+      participantIds: List<String>.from(
+          data['participantIds'] as List? ?? const <String>[]),
       subject: data['subject'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
@@ -1275,7 +1309,8 @@ class CmsBlockModel {
       type: data['type'] as String? ?? 'section',
       title: data['title'] as String?,
       body: data['body'] as String?,
-      bullets: (data['bullets'] as List?)?.whereType<String>().toList() ?? const <String>[],
+      bullets: (data['bullets'] as List?)?.whereType<String>().toList() ??
+          const <String>[],
       imageUrl: data['imageUrl'] as String?,
     );
   }
@@ -1305,7 +1340,8 @@ class CmsPageModel {
 
   factory CmsPageModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
-    final List<dynamic> rawBlocks = data['bodyJson'] as List<dynamic>? ?? const <dynamic>[];
+    final List<dynamic> rawBlocks =
+        data['bodyJson'] as List<dynamic>? ?? const <dynamic>[];
     return CmsPageModel(
       slug: data['slug'] as String? ?? doc.id,
       title: data['title'] as String? ?? (doc.id.isNotEmpty ? doc.id : 'Page'),
@@ -1450,7 +1486,8 @@ class MarketplaceListingModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory MarketplaceListingModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory MarketplaceListingModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return MarketplaceListingModel(
       id: doc.id,
@@ -1460,7 +1497,8 @@ class MarketplaceListingModel {
       currency: data['currency'] as String? ?? 'USD',
       description: data['description'] as String?,
       status: data['status'] as String? ?? 'draft',
-      entitlementRoles: List<String>.from(data['entitlementRoles'] as List? ?? const <String>[]),
+      entitlementRoles: List<String>.from(
+          data['entitlementRoles'] as List? ?? const <String>[]),
       createdBy: data['createdBy'] as String?,
       submittedBy: data['submittedBy'] as String?,
       submittedAt: data['submittedAt'] as Timestamp?,
@@ -1519,7 +1557,8 @@ class PartnerContractModel {
   final Timestamp? approvedAt;
   final Timestamp? createdAt;
 
-  factory PartnerContractModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory PartnerContractModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return PartnerContractModel(
       id: doc.id,
@@ -1576,7 +1615,8 @@ class PartnerDeliverableModel {
   final String? acceptedBy;
   final Timestamp? acceptedAt;
 
-  factory PartnerDeliverableModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory PartnerDeliverableModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return PartnerDeliverableModel(
       id: doc.id,
@@ -1690,7 +1730,8 @@ class SiteCheckInOutModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory SiteCheckInOutModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory SiteCheckInOutModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return SiteCheckInOutModel(
       id: doc.id,
@@ -1759,7 +1800,8 @@ class IncidentReportModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory IncidentReportModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory IncidentReportModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return IncidentReportModel(
       id: doc.id,
@@ -1826,7 +1868,8 @@ class ExternalIdentityLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalIdentityLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalIdentityLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalIdentityLinkModel(
       id: doc.id,
@@ -1835,7 +1878,9 @@ class ExternalIdentityLinkModel {
       providerUserId: data['providerUserId'] as String? ?? '',
       status: data['status'] as String? ?? 'unmatched',
       scholesaUserId: data['scholesaUserId'] as String?,
-      suggestedMatches: (data['suggestedMatches'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+      suggestedMatches: (data['suggestedMatches'] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
       approvedBy: data['approvedBy'] as String?,
       approvedAt: data['approvedAt'] as Timestamp?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -1857,264 +1902,274 @@ class ExternalIdentityLinkModel {
       };
 }
 
-  @immutable
-  class MediaConsentModel {
-    const MediaConsentModel({
-      required this.id,
-      required this.siteId,
-      required this.learnerId,
-      required this.photoCaptureAllowed,
-      required this.shareWithLinkedParents,
-      required this.marketingUseAllowed,
-      required this.consentStatus,
-      this.consentStartDate,
-      this.consentEndDate,
-      this.consentDocumentUrl,
-      this.createdAt,
-      this.updatedAt,
-    });
+@immutable
+class MediaConsentModel {
+  const MediaConsentModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.photoCaptureAllowed,
+    required this.shareWithLinkedParents,
+    required this.marketingUseAllowed,
+    required this.consentStatus,
+    this.consentStartDate,
+    this.consentEndDate,
+    this.consentDocumentUrl,
+    this.createdAt,
+    this.updatedAt,
+  });
 
-    final String id;
-    final String siteId;
-    final String learnerId;
-    final bool photoCaptureAllowed;
-    final bool shareWithLinkedParents;
-    final bool marketingUseAllowed;
-    final String consentStatus;
-    final String? consentStartDate;
-    final String? consentEndDate;
-    final String? consentDocumentUrl;
-    final Timestamp? createdAt;
-    final Timestamp? updatedAt;
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final bool photoCaptureAllowed;
+  final bool shareWithLinkedParents;
+  final bool marketingUseAllowed;
+  final String consentStatus;
+  final String? consentStartDate;
+  final String? consentEndDate;
+  final String? consentDocumentUrl;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
 
-    factory MediaConsentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-      final data = doc.data() ?? <String, dynamic>{};
-      return MediaConsentModel(
-        id: doc.id,
-        siteId: data['siteId'] as String? ?? '',
-        learnerId: data['learnerId'] as String? ?? '',
-        photoCaptureAllowed: data['photoCaptureAllowed'] as bool? ?? false,
-        shareWithLinkedParents: data['shareWithLinkedParents'] as bool? ?? false,
-        marketingUseAllowed: data['marketingUseAllowed'] as bool? ?? false,
-        consentStatus: data['consentStatus'] as String? ?? 'active',
-        consentStartDate: data['consentStartDate'] as String?,
-        consentEndDate: data['consentEndDate'] as String?,
-        consentDocumentUrl: data['consentDocumentUrl'] as String?,
-        createdAt: data['createdAt'] as Timestamp?,
-        updatedAt: data['updatedAt'] as Timestamp?,
-      );
-    }
-
-    Map<String, dynamic> toMap() => <String, dynamic>{
-          'siteId': siteId,
-          'learnerId': learnerId,
-          'photoCaptureAllowed': photoCaptureAllowed,
-          'shareWithLinkedParents': shareWithLinkedParents,
-          'marketingUseAllowed': marketingUseAllowed,
-          'consentStatus': consentStatus,
-          'consentStartDate': consentStartDate,
-          'consentEndDate': consentEndDate,
-          'consentDocumentUrl': consentDocumentUrl,
-          'createdAt': createdAt ?? Timestamp.now(),
-          'updatedAt': updatedAt ?? Timestamp.now(),
-        };
+  factory MediaConsentModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return MediaConsentModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      photoCaptureAllowed: data['photoCaptureAllowed'] as bool? ?? false,
+      shareWithLinkedParents: data['shareWithLinkedParents'] as bool? ?? false,
+      marketingUseAllowed: data['marketingUseAllowed'] as bool? ?? false,
+      consentStatus: data['consentStatus'] as String? ?? 'active',
+      consentStartDate: data['consentStartDate'] as String?,
+      consentEndDate: data['consentEndDate'] as String?,
+      consentDocumentUrl: data['consentDocumentUrl'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
   }
 
-  @immutable
-  class RoomModel {
-    const RoomModel({
-      required this.id,
-      required this.siteId,
-      required this.name,
-      this.capacity,
-      this.createdAt,
-      this.updatedAt,
-    });
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'photoCaptureAllowed': photoCaptureAllowed,
+        'shareWithLinkedParents': shareWithLinkedParents,
+        'marketingUseAllowed': marketingUseAllowed,
+        'consentStatus': consentStatus,
+        'consentStartDate': consentStartDate,
+        'consentEndDate': consentEndDate,
+        'consentDocumentUrl': consentDocumentUrl,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
 
-    final String id;
-    final String siteId;
-    final String name;
-    final int? capacity;
-    final Timestamp? createdAt;
-    final Timestamp? updatedAt;
+@immutable
+class RoomModel {
+  const RoomModel({
+    required this.id,
+    required this.siteId,
+    required this.name,
+    this.capacity,
+    this.createdAt,
+    this.updatedAt,
+  });
 
-    factory RoomModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-      final data = doc.data() ?? <String, dynamic>{};
-      return RoomModel(
-        id: doc.id,
-        siteId: data['siteId'] as String? ?? '',
-        name: data['name'] as String? ?? '',
-        capacity: data['capacity'] as int?,
-        createdAt: data['createdAt'] as Timestamp?,
-        updatedAt: data['updatedAt'] as Timestamp?,
-      );
-    }
+  final String id;
+  final String siteId;
+  final String name;
+  final int? capacity;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
 
-    Map<String, dynamic> toMap() => <String, dynamic>{
-          'siteId': siteId,
-          'name': name,
-          'capacity': capacity,
-          'createdAt': createdAt ?? Timestamp.now(),
-          'updatedAt': updatedAt ?? Timestamp.now(),
-        };
+  factory RoomModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return RoomModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      name: data['name'] as String? ?? '',
+      capacity: data['capacity'] as int?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
   }
 
-  @immutable
-  class MissionSnapshotModel {
-    const MissionSnapshotModel({
-      required this.id,
-      required this.missionId,
-      required this.contentHash,
-      required this.title,
-      required this.description,
-      required this.pillarCodes,
-      this.skillIds,
-      this.bodyJson,
-      this.publisherType,
-      this.publisherId,
-      this.publishedAt,
-      this.createdAt,
-      this.updatedAt,
-    });
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'name': name,
+        'capacity': capacity,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
 
-    final String id;
-    final String missionId;
-    final String contentHash;
-    final String title;
-    final String description;
-    final List<dynamic> pillarCodes;
-    final List<String>? skillIds;
-    final dynamic bodyJson;
-    final String? publisherType;
-    final String? publisherId;
-    final Timestamp? publishedAt;
-    final Timestamp? createdAt;
-    final Timestamp? updatedAt;
+@immutable
+class MissionSnapshotModel {
+  const MissionSnapshotModel({
+    required this.id,
+    required this.missionId,
+    required this.contentHash,
+    required this.title,
+    required this.description,
+    required this.pillarCodes,
+    this.skillIds,
+    this.bodyJson,
+    this.publisherType,
+    this.publisherId,
+    this.publishedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
 
-    factory MissionSnapshotModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-      final data = doc.data() ?? <String, dynamic>{};
-      return MissionSnapshotModel(
-        id: doc.id,
-        missionId: data['missionId'] as String? ?? '',
-        contentHash: data['contentHash'] as String? ?? '',
-        title: data['title'] as String? ?? '',
-        description: data['description'] as String? ?? '',
-        pillarCodes: List<dynamic>.from(data['pillarCodes'] as List? ?? const <dynamic>[]),
-        skillIds: (data['skillIds'] as List?)?.map((e) => e.toString()).toList(),
-        bodyJson: data['bodyJson'],
-        publisherType: data['publisherType'] as String?,
-        publisherId: data['publisherId'] as String?,
-        publishedAt: data['publishedAt'] as Timestamp?,
-        createdAt: data['createdAt'] as Timestamp?,
-        updatedAt: data['updatedAt'] as Timestamp?,
-      );
-    }
+  final String id;
+  final String missionId;
+  final String contentHash;
+  final String title;
+  final String description;
+  final List<dynamic> pillarCodes;
+  final List<String>? skillIds;
+  final dynamic bodyJson;
+  final String? publisherType;
+  final String? publisherId;
+  final Timestamp? publishedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
 
-    Map<String, dynamic> toMap() => <String, dynamic>{
-          'missionId': missionId,
-          'contentHash': contentHash,
-          'title': title,
-          'description': description,
-          'pillarCodes': pillarCodes,
-          'skillIds': skillIds,
-          'bodyJson': bodyJson,
-          'publisherType': publisherType,
-          'publisherId': publisherId,
-          'publishedAt': publishedAt,
-          'createdAt': createdAt ?? Timestamp.now(),
-          'updatedAt': updatedAt ?? Timestamp.now(),
-        };
+  factory MissionSnapshotModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return MissionSnapshotModel(
+      id: doc.id,
+      missionId: data['missionId'] as String? ?? '',
+      contentHash: data['contentHash'] as String? ?? '',
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      pillarCodes:
+          List<dynamic>.from(data['pillarCodes'] as List? ?? const <dynamic>[]),
+      skillIds: (data['skillIds'] as List?)?.map((e) => e.toString()).toList(),
+      bodyJson: data['bodyJson'],
+      publisherType: data['publisherType'] as String?,
+      publisherId: data['publisherId'] as String?,
+      publishedAt: data['publishedAt'] as Timestamp?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
   }
 
-  @immutable
-  class RubricModel {
-    const RubricModel({
-      required this.id,
-      required this.title,
-      this.siteId,
-      this.criteria = const <Map<String, dynamic>>[],
-      this.createdAt,
-      this.updatedAt,
-    });
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'missionId': missionId,
+        'contentHash': contentHash,
+        'title': title,
+        'description': description,
+        'pillarCodes': pillarCodes,
+        'skillIds': skillIds,
+        'bodyJson': bodyJson,
+        'publisherType': publisherType,
+        'publisherId': publisherId,
+        'publishedAt': publishedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
 
-    final String id;
-    final String title;
-    final String? siteId;
-    final List<Map<String, dynamic>> criteria;
-    final Timestamp? createdAt;
-    final Timestamp? updatedAt;
+@immutable
+class RubricModel {
+  const RubricModel({
+    required this.id,
+    required this.title,
+    this.siteId,
+    this.criteria = const <Map<String, dynamic>>[],
+    this.createdAt,
+    this.updatedAt,
+  });
 
-    factory RubricModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-      final data = doc.data() ?? <String, dynamic>{};
-      return RubricModel(
-        id: doc.id,
-        title: data['title'] as String? ?? '',
-        siteId: data['siteId'] as String?,
-        criteria: (data['criteria'] as List?)?.map((c) => Map<String, dynamic>.from(c as Map)).toList() ?? const <Map<String, dynamic>>[],
-        createdAt: data['createdAt'] as Timestamp?,
-        updatedAt: data['updatedAt'] as Timestamp?,
-      );
-    }
+  final String id;
+  final String title;
+  final String? siteId;
+  final List<Map<String, dynamic>> criteria;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
 
-    Map<String, dynamic> toMap() => <String, dynamic>{
-          'title': title,
-          'siteId': siteId,
-          'criteria': criteria,
-          'createdAt': createdAt ?? Timestamp.now(),
-          'updatedAt': updatedAt ?? Timestamp.now(),
-        };
+  factory RubricModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return RubricModel(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      siteId: data['siteId'] as String?,
+      criteria: (data['criteria'] as List?)
+              ?.map((c) => Map<String, dynamic>.from(c as Map))
+              .toList() ??
+          const <Map<String, dynamic>>[],
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
   }
 
-  @immutable
-  class RubricApplicationModel {
-    const RubricApplicationModel({
-      required this.id,
-      required this.siteId,
-      required this.missionAttemptId,
-      required this.educatorId,
-      required this.rubricId,
-      required this.scores,
-      this.overallNote,
-      this.createdAt,
-      this.updatedAt,
-    });
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'title': title,
+        'siteId': siteId,
+        'criteria': criteria,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
 
-    final String id;
-    final String siteId;
-    final String missionAttemptId;
-    final String educatorId;
-    final String rubricId;
-    final List<Map<String, dynamic>> scores;
-    final String? overallNote;
-    final Timestamp? createdAt;
-    final Timestamp? updatedAt;
+@immutable
+class RubricApplicationModel {
+  const RubricApplicationModel({
+    required this.id,
+    required this.siteId,
+    required this.missionAttemptId,
+    required this.educatorId,
+    required this.rubricId,
+    required this.scores,
+    this.overallNote,
+    this.createdAt,
+    this.updatedAt,
+  });
 
-    factory RubricApplicationModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-      final data = doc.data() ?? <String, dynamic>{};
-      return RubricApplicationModel(
-        id: doc.id,
-        siteId: data['siteId'] as String? ?? '',
-        missionAttemptId: data['missionAttemptId'] as String? ?? '',
-        educatorId: data['educatorId'] as String? ?? '',
-        rubricId: data['rubricId'] as String? ?? '',
-        scores: (data['scores'] as List?)?.map((s) => Map<String, dynamic>.from(s as Map)).toList() ?? const <Map<String, dynamic>>[],
-        overallNote: data['overallNote'] as String?,
-        createdAt: data['createdAt'] as Timestamp?,
-        updatedAt: data['updatedAt'] as Timestamp?,
-      );
-    }
+  final String id;
+  final String siteId;
+  final String missionAttemptId;
+  final String educatorId;
+  final String rubricId;
+  final List<Map<String, dynamic>> scores;
+  final String? overallNote;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
 
-    Map<String, dynamic> toMap() => <String, dynamic>{
-          'siteId': siteId,
-          'missionAttemptId': missionAttemptId,
-          'educatorId': educatorId,
-          'rubricId': rubricId,
-          'scores': scores,
-          'overallNote': overallNote,
-          'createdAt': createdAt ?? Timestamp.now(),
-          'updatedAt': updatedAt ?? Timestamp.now(),
-        };
+  factory RubricApplicationModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return RubricApplicationModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      missionAttemptId: data['missionAttemptId'] as String? ?? '',
+      educatorId: data['educatorId'] as String? ?? '',
+      rubricId: data['rubricId'] as String? ?? '',
+      scores: (data['scores'] as List?)
+              ?.map((s) => Map<String, dynamic>.from(s as Map))
+              .toList() ??
+          const <Map<String, dynamic>>[],
+      overallNote: data['overallNote'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
   }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'missionAttemptId': missionAttemptId,
+        'educatorId': educatorId,
+        'rubricId': rubricId,
+        'scores': scores,
+        'overallNote': overallNote,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
 
 @immutable
 class PickupAuthorizationModel {
@@ -2136,13 +2191,17 @@ class PickupAuthorizationModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory PickupAuthorizationModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory PickupAuthorizationModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return PickupAuthorizationModel(
       id: doc.id,
       siteId: data['siteId'] as String? ?? '',
       learnerId: data['learnerId'] as String? ?? '',
-      authorizedPickup: (data['authorizedPickup'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? const <Map<String, dynamic>>[],
+      authorizedPickup: (data['authorizedPickup'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          const <Map<String, dynamic>>[],
       updatedBy: data['updatedBy'] as String? ?? '',
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -2183,14 +2242,16 @@ class IntegrationConnectionModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory IntegrationConnectionModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory IntegrationConnectionModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return IntegrationConnectionModel(
       id: doc.id,
       ownerUserId: data['ownerUserId'] as String? ?? '',
       provider: data['provider'] as String? ?? 'google_classroom',
       status: data['status'] as String? ?? 'active',
-      scopesGranted: (data['scopesGranted'] as List?)?.map((e) => e.toString()).toList(),
+      scopesGranted:
+          (data['scopesGranted'] as List?)?.map((e) => e.toString()).toList(),
       tokenRef: data['tokenRef'] as String?,
       lastError: data['lastError'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -2238,7 +2299,8 @@ class ExternalCourseLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalCourseLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalCourseLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalCourseLinkModel(
       id: doc.id,
@@ -2293,7 +2355,8 @@ class ExternalUserLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalUserLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalUserLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalUserLinkModel(
       id: doc.id,
@@ -2350,7 +2413,8 @@ class ExternalCourseworkLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalCourseworkLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalCourseworkLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalCourseworkLinkModel(
       id: doc.id,
@@ -2513,14 +2577,17 @@ class GitHubConnectionModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory GitHubConnectionModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory GitHubConnectionModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return GitHubConnectionModel(
       id: doc.id,
       ownerUserId: data['ownerUserId'] as String? ?? '',
       authType: data['authType'] as String? ?? 'oauth_app',
       status: data['status'] as String? ?? 'active',
-      oauthScopesGranted: (data['oauthScopesGranted'] as List?)?.map((e) => e.toString()).toList(),
+      oauthScopesGranted: (data['oauthScopesGranted'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
       tokenRef: data['tokenRef'] as String?,
       installationId: data['installationId'] as String?,
       orgLogin: data['orgLogin'] as String?,
@@ -2574,7 +2641,8 @@ class ExternalRepoLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalRepoLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalRepoLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalRepoLinkModel(
       id: doc.id,
@@ -2631,7 +2699,8 @@ class ExternalPullRequestLinkModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ExternalPullRequestLinkModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ExternalPullRequestLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return ExternalPullRequestLinkModel(
       id: doc.id,
@@ -2684,7 +2753,8 @@ class GitHubWebhookDeliveryModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory GitHubWebhookDeliveryModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory GitHubWebhookDeliveryModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return GitHubWebhookDeliveryModel(
       id: doc.id,
@@ -2804,7 +2874,8 @@ class OrderModel {
       amount: data['amount'] as String? ?? '0',
       currency: data['currency'] as String? ?? 'USD',
       status: data['status'] as String? ?? 'paid',
-      entitlementRoles: List<String>.from(data['entitlementRoles'] as List? ?? const <String>[]),
+      entitlementRoles: List<String>.from(
+          data['entitlementRoles'] as List? ?? const <String>[]),
       createdAt: data['createdAt'] as Timestamp?,
       paidAt: data['paidAt'] as Timestamp?,
     );
@@ -2955,7 +3026,8 @@ class AuditLogModel {
       entityType: data['entityType'] as String? ?? '',
       entityId: data['entityId'] as String? ?? '',
       siteId: data['siteId'] as String?,
-      details: Map<String, dynamic>.from(data['details'] as Map? ?? <String, dynamic>{}),
+      details: Map<String, dynamic>.from(
+          data['details'] as Map? ?? <String, dynamic>{}),
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -3015,7 +3087,8 @@ class ResearchConsentModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory ResearchConsentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ResearchConsentModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
     return ResearchConsentModel(
       id: doc.id,
@@ -3038,7 +3111,8 @@ class ResearchConsentModel {
         'parentId': parentId,
         'consentGiven': consentGiven,
         'dataShareScope': dataShareScope,
-        if (consentDocumentUrl != null) 'consentDocumentUrl': consentDocumentUrl,
+        if (consentDocumentUrl != null)
+          'consentDocumentUrl': consentDocumentUrl,
         if (consentVersion != null) 'consentVersion': consentVersion,
         if (revokedAt != null) 'revokedAt': revokedAt,
         'createdAt': createdAt ?? Timestamp.now(),
@@ -3066,7 +3140,8 @@ class StudentAssentModel {
   final Timestamp? revokedAt;
   final Timestamp? createdAt;
 
-  factory StudentAssentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory StudentAssentModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
     return StudentAssentModel(
       id: doc.id,
@@ -3125,7 +3200,8 @@ class AssessmentInstrumentModel {
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory AssessmentInstrumentModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory AssessmentInstrumentModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
     final List<dynamic> rawItems = m['items'] as List<dynamic>? ?? <dynamic>[];
     return AssessmentInstrumentModel(
@@ -3137,7 +3213,8 @@ class AssessmentInstrumentModel {
       items: rawItems
           .map((dynamic e) => AssessmentItem.fromMap(e as Map<String, dynamic>))
           .toList(),
-      pillarCodes: ((m['pillarCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      pillarCodes:
+          ((m['pillarCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
       version: m['version'] as String?,
       createdAt: m['createdAt'] as Timestamp?,
       updatedAt: m['updatedAt'] as Timestamp?,
@@ -3184,10 +3261,12 @@ class AssessmentItem {
         itemId: m['itemId'] as String? ?? '',
         prompt: m['prompt'] as String? ?? '',
         itemType: m['itemType'] as String? ?? 'multiple_choice',
-        options: ((m['options'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        options:
+            ((m['options'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
         correctAnswer: m['correctAnswer'] as String?,
         maxScore: m['maxScore'] as int? ?? 1,
-        skillCodes: ((m['skillCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        skillCodes:
+            ((m['skillCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
       );
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -3234,7 +3313,8 @@ class ItemResponseModel {
 
   final Timestamp? createdAt;
 
-  factory ItemResponseModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ItemResponseModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
     return ItemResponseModel(
       id: doc.id,

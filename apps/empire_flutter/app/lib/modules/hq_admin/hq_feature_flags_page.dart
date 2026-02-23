@@ -163,7 +163,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       const SizedBox(height: 4),
                       Text(
                         flag.description,
-                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),
@@ -185,7 +186,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     setState(() => flag.isEnabled = value);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${flag.name} ${value ? "enabled" : "disabled"}'),
+                        content: Text(
+                            '${flag.name} ${value ? "enabled" : "disabled"}'),
                         backgroundColor: value ? Colors.green : Colors.orange,
                       ),
                     );
@@ -199,12 +201,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: flag.enabledSites!.map((String site) => Chip(
-                  label: Text(site, style: const TextStyle(fontSize: 11)),
-                  backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                  side: BorderSide.none,
-                  visualDensity: VisualDensity.compact,
-                )).toList(),
+                children: flag.enabledSites!
+                    .map((String site) => Chip(
+                          label:
+                              Text(site, style: const TextStyle(fontSize: 11)),
+                          backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                          side: BorderSide.none,
+                          visualDensity: VisualDensity.compact,
+                        ))
+                    .toList(),
               ),
             ],
           ],
@@ -242,7 +247,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         children: <Widget>[
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(scope, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500)),
+          Text(scope,
+              style: TextStyle(
+                  fontSize: 10, color: color, fontWeight: FontWeight.w500)),
         ],
       ),
     );

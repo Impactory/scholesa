@@ -62,7 +62,6 @@ enum MessagePriority {
 
 /// Model for a message/notification
 class Message extends Equatable {
-
   const Message({
     required this.id,
     required this.title,
@@ -182,15 +181,26 @@ class Message extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id, title, body, type, priority, senderId, senderName,
-        senderAvatar, recipientId, siteId, createdAt, readAt,
-        isRead, actionUrl, metadata,
+        id,
+        title,
+        body,
+        type,
+        priority,
+        senderId,
+        senderName,
+        senderAvatar,
+        recipientId,
+        siteId,
+        createdAt,
+        readAt,
+        isRead,
+        actionUrl,
+        metadata,
       ];
 }
 
 /// Conversation thread for direct messages
 class Conversation extends Equatable {
-
   const Conversation({
     required this.id,
     required this.participantIds,
@@ -208,7 +218,11 @@ class Conversation extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id, participantIds, participantNames, lastMessage,
-        unreadCount, updatedAt,
+        id,
+        participantIds,
+        participantNames,
+        lastMessage,
+        unreadCount,
+        updatedAt,
       ];
 }

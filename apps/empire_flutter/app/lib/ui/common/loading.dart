@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Loading indicator widget
 class LoadingWidget extends StatelessWidget {
-
   const LoadingWidget({super.key, this.message});
   final String? message;
 
@@ -18,8 +17,8 @@ class LoadingWidget extends StatelessWidget {
             Text(
               message!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+                    color: Colors.grey[600],
+                  ),
             ),
           ],
         ],

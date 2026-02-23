@@ -16,7 +16,8 @@ class UserAdminPage extends StatefulWidget {
   State<UserAdminPage> createState() => _UserAdminPageState();
 }
 
-class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProviderStateMixin {
+class _UserAdminPageState extends State<UserAdminPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -36,7 +37,7 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
         );
       }
     });
-    
+
     // Load users on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<UserAdminService>().loadUsers();
@@ -101,7 +102,8 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                 ),
               ],
             ),
-            child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 28),
+            child: const Icon(Icons.admin_panel_settings,
+                color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
           Column(
@@ -110,9 +112,9 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
               Text(
                 'User Administration',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: ScholesaColors.hq,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: ScholesaColors.hq,
+                    ),
               ),
               Text(
                 'Manage all platform users',
@@ -222,7 +224,8 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                   },
                   decoration: InputDecoration(
                     hintText: 'Search users by name or email...',
-                    prefixIcon: const Icon(Icons.search, color: ScholesaColors.hq),
+                    prefixIcon:
+                        const Icon(Icons.search, color: ScholesaColors.hq),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -239,7 +242,8 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                   ),
                 ),
               ),
@@ -255,11 +259,11 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                       onTap: () => service.setRoleFilter(null),
                     ),
                     ...UserRole.values.map((UserRole role) => _FilterChip(
-                      label: role.label,
-                      selected: service.roleFilter == role,
-                      onTap: () => service.setRoleFilter(role),
-                      color: _getRoleColor(role),
-                    )),
+                          label: role.label,
+                          selected: service.roleFilter == role,
+                          onTap: () => service.setRoleFilter(role),
+                          color: _getRoleColor(role),
+                        )),
                     const SizedBox(width: 16),
                     Container(width: 1, height: 24, color: Colors.grey[300]),
                     const SizedBox(width: 16),
@@ -268,12 +272,14 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
                       selected: service.statusFilter == null,
                       onTap: () => service.setStatusFilter(null),
                     ),
-                    ...UserStatus.values.where((UserStatus s) => s != UserStatus.deactivated).map((UserStatus status) => _FilterChip(
-                      label: status.label,
-                      selected: service.statusFilter == status,
-                      onTap: () => service.setStatusFilter(status),
-                      color: _getStatusColor(status),
-                    )),
+                    ...UserStatus.values
+                        .where((UserStatus s) => s != UserStatus.deactivated)
+                        .map((UserStatus status) => _FilterChip(
+                              label: status.label,
+                              selected: service.statusFilter == status,
+                              onTap: () => service.setStatusFilter(status),
+                              color: _getStatusColor(status),
+                            )),
                   ],
                 ),
               ),
@@ -438,7 +444,10 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
   void _showUserDetails(UserModel user) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'user_admin_open_user_details', 'user_id': user.uid},
+      metadata: <String, dynamic>{
+        'cta': 'user_admin_open_user_details',
+        'user_id': user.uid
+      },
     );
     showModalBottomSheet(
       context: context,
@@ -451,7 +460,9 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
   void _showCreateUserDialog() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'user_admin_open_create_user_dialog'},
+      metadata: const <String, dynamic>{
+        'cta': 'user_admin_open_create_user_dialog'
+      },
     );
     showDialog(
       context: context,
@@ -493,7 +504,6 @@ class _UserAdminPageState extends State<UserAdminPage> with SingleTickerProvider
 // ==================== Sub Widgets ====================
 
 class _StatMiniCard extends StatelessWidget {
-
   const _StatMiniCard({
     required this.icon,
     required this.value,
@@ -538,7 +548,6 @@ class _StatMiniCard extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.selected,
@@ -588,7 +597,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _UserCard extends StatelessWidget {
-
   const _UserCard({
     required this.user,
     required this.sites,
@@ -663,7 +671,10 @@ class _UserCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: <Color>[_roleColor.withValues(alpha: 0.8), _roleColor],
+                    colors: <Color>[
+                      _roleColor.withValues(alpha: 0.8),
+                      _roleColor
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: <BoxShadow>[
@@ -703,7 +714,8 @@ class _UserCard extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: _statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -742,7 +754,8 @@ class _UserCard extends StatelessWidget {
                     Row(
                       children: <Widget>[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: _roleColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -758,11 +771,13 @@ class _UserCard extends StatelessWidget {
                         ),
                         if (user.siteIds.isNotEmpty) ...<Widget>[
                           const SizedBox(width: 8),
-                          Icon(Icons.location_on, size: 14, color: Colors.grey[400]),
+                          Icon(Icons.location_on,
+                              size: 14, color: Colors.grey[400]),
                           const SizedBox(width: 2),
                           Text(
                             '${user.siteIds.length} site${user.siteIds.length > 1 ? 's' : ''}',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            style: TextStyle(
+                                color: Colors.grey[500], fontSize: 12),
                           ),
                         ],
                       ],
@@ -788,7 +803,6 @@ class _UserCard extends StatelessWidget {
 }
 
 class _SiteCard extends StatelessWidget {
-
   const _SiteCard({required this.site});
   final SiteModel site;
 
@@ -810,11 +824,15 @@ class _SiteCard extends StatelessWidget {
               height: 52,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: <Color>[ScholesaColors.site.withValues(alpha: 0.8), ScholesaColors.site],
+                  colors: <Color>[
+                    ScholesaColors.site.withValues(alpha: 0.8),
+                    ScholesaColors.site
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.location_city, color: Colors.white, size: 24),
+              child: const Icon(Icons.location_city,
+                  color: Colors.white, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -823,7 +841,8 @@ class _SiteCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     site.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   if (site.location != null)
                     Text(
@@ -857,7 +876,6 @@ class _SiteCard extends StatelessWidget {
 }
 
 class _SiteStatChip extends StatelessWidget {
-
   const _SiteStatChip({
     required this.icon,
     required this.value,
@@ -891,7 +909,6 @@ class _SiteStatChip extends StatelessWidget {
 }
 
 class _AuditLogCard extends StatelessWidget {
-
   const _AuditLogCard({required this.log});
   final AuditLogEntry log;
 
@@ -959,7 +976,12 @@ class _AuditLogCard extends StatelessWidget {
   }
 
   String _formatAction(String action) {
-    return action.replaceAll('user.', '').replaceAll('_', ' ').split(' ').map((String w) => w[0].toUpperCase() + w.substring(1)).join(' ');
+    return action
+        .replaceAll('user.', '')
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((String w) => w[0].toUpperCase() + w.substring(1))
+        .join(' ');
   }
 
   String _formatTime(DateTime time) {
@@ -973,7 +995,6 @@ class _AuditLogCard extends StatelessWidget {
 // ==================== Dialogs & Sheets ====================
 
 class _UserDetailsSheet extends StatelessWidget {
-
   const _UserDetailsSheet({required this.user});
   final UserModel user;
 
@@ -1028,7 +1049,10 @@ class _UserDetailsSheet extends StatelessWidget {
                         height: 72,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: <Color>[_roleColor.withValues(alpha: 0.8), _roleColor],
+                            colors: <Color>[
+                              _roleColor.withValues(alpha: 0.8),
+                              _roleColor
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: <BoxShadow>[
@@ -1070,7 +1094,8 @@ class _UserDetailsSheet extends StatelessWidget {
                             Row(
                               children: <Widget>[
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _roleColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
@@ -1096,7 +1121,7 @@ class _UserDetailsSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Quick Actions
                   Text(
                     'Quick Actions',
@@ -1116,9 +1141,15 @@ class _UserDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       _ActionButton(
-                        icon: user.status == UserStatus.suspended ? Icons.check_circle : Icons.block,
-                        label: user.status == UserStatus.suspended ? 'Activate' : 'Suspend',
-                        color: user.status == UserStatus.suspended ? ScholesaColors.success : ScholesaColors.error,
+                        icon: user.status == UserStatus.suspended
+                            ? Icons.check_circle
+                            : Icons.block,
+                        label: user.status == UserStatus.suspended
+                            ? 'Activate'
+                            : 'Suspend',
+                        color: user.status == UserStatus.suspended
+                            ? ScholesaColors.success
+                            : ScholesaColors.error,
                         onTap: () => _toggleStatus(context),
                       ),
                       const SizedBox(width: 12),
@@ -1136,7 +1167,10 @@ class _UserDetailsSheet extends StatelessWidget {
                   _InfoSection(
                     title: 'Account Details',
                     items: <_InfoItem>[
-                      _InfoItem(icon: Icons.fingerprint, label: 'User ID', value: user.uid),
+                      _InfoItem(
+                          icon: Icons.fingerprint,
+                          label: 'User ID',
+                          value: user.uid),
                       _InfoItem(
                         icon: Icons.calendar_today,
                         label: 'Created',
@@ -1154,12 +1188,19 @@ class _UserDetailsSheet extends StatelessWidget {
                   _InfoSection(
                     title: 'Site Access',
                     items: user.siteIds.isEmpty
-                        ? <_InfoItem>[const _InfoItem(icon: Icons.location_off, label: 'No sites assigned', value: '')]
-                        : user.siteIds.map((String s) => _InfoItem(
-                            icon: Icons.location_on,
-                            label: s,
-                            value: '',
-                          )).toList(),
+                        ? <_InfoItem>[
+                            const _InfoItem(
+                                icon: Icons.location_off,
+                                label: 'No sites assigned',
+                                value: '')
+                          ]
+                        : user.siteIds
+                            .map((String s) => _InfoItem(
+                                  icon: Icons.location_on,
+                                  label: s,
+                                  value: '',
+                                ))
+                            .toList(),
                   ),
                 ],
               ),
@@ -1212,8 +1253,11 @@ class _UserDetailsSheet extends StatelessWidget {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('User ${newStatus == UserStatus.active ? 'activated' : 'suspended'}'),
-        backgroundColor: newStatus == UserStatus.active ? ScholesaColors.success : ScholesaColors.error,
+        content: Text(
+            'User ${newStatus == UserStatus.active ? 'activated' : 'suspended'}'),
+        backgroundColor: newStatus == UserStatus.active
+            ? ScholesaColors.success
+            : ScholesaColors.error,
       ),
     );
   }
@@ -1232,33 +1276,37 @@ class _UserDetailsSheet extends StatelessWidget {
         title: const Text('Change Role'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: UserRole.values.map((UserRole role) => ListTile(
-            leading: Icon(
-              _getRoleIcon(role),
-              color: _getRoleColorFor(role),
-            ),
-            title: Text(role.label),
-            selected: user.role == role,
-            onTap: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'user_admin_change_role',
-                  'user_id': user.uid,
-                  'role': role.name,
-                },
-              );
-              context.read<UserAdminService>().updateUserRole(user.uid, role);
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Role changed to ${role.label}'),
-                  backgroundColor: ScholesaColors.success,
-                ),
-              );
-            },
-          )).toList(),
+          children: UserRole.values
+              .map((UserRole role) => ListTile(
+                    leading: Icon(
+                      _getRoleIcon(role),
+                      color: _getRoleColorFor(role),
+                    ),
+                    title: Text(role.label),
+                    selected: user.role == role,
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'user_admin_change_role',
+                          'user_id': user.uid,
+                          'role': role.name,
+                        },
+                      );
+                      context
+                          .read<UserAdminService>()
+                          .updateUserRole(user.uid, role);
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Role changed to ${role.label}'),
+                          backgroundColor: ScholesaColors.success,
+                        ),
+                      );
+                    },
+                  ))
+              .toList(),
         ),
       ),
     );
@@ -1272,7 +1320,8 @@ class _UserDetailsSheet extends StatelessWidget {
         'user_id': user.uid,
       },
     );
-    final TextEditingController nameController = TextEditingController(text: user.displayName);
+    final TextEditingController nameController =
+        TextEditingController(text: user.displayName);
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -1311,7 +1360,9 @@ class _UserDetailsSheet extends StatelessWidget {
               Navigator.pop(dialogContext);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Profile update requested for ${nameController.text.trim()}')),
+                SnackBar(
+                    content: Text(
+                        'Profile update requested for ${nameController.text.trim()}')),
               );
             },
             child: const Text('Save'),
@@ -1357,7 +1408,6 @@ class _UserDetailsSheet extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-
   const _ActionButton({
     required this.icon,
     required this.label,
@@ -1411,7 +1461,6 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _InfoSection extends StatelessWidget {
-
   const _InfoSection({required this.title, required this.items});
   final String title;
   final List<_InfoItem> items;
@@ -1443,7 +1492,6 @@ class _InfoSection extends StatelessWidget {
 }
 
 class _InfoItem extends StatelessWidget {
-
   const _InfoItem({
     required this.icon,
     required this.label,
@@ -1498,7 +1546,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
   @override
   Widget build(BuildContext context) {
     final UserAdminService service = context.read<UserAdminService>();
-    
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
@@ -1532,7 +1580,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                validator: (String? v) => v?.contains('@') ?? false ? null : 'Invalid email',
+                validator: (String? v) =>
+                    v?.contains('@') ?? false ? null : 'Invalid email',
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -1544,10 +1593,13 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                validator: (String? v) => v?.isNotEmpty ?? false ? null : 'Required',
+                validator: (String? v) =>
+                    v?.isNotEmpty ?? false ? null : 'Required',
               ),
               const SizedBox(height: 16),
-              Text('Role', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+              Text('Role',
+                  style: TextStyle(
+                      color: Colors.grey[700], fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1571,13 +1623,16 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     selectedColor: color.withValues(alpha: 0.2),
                     labelStyle: TextStyle(
                       color: isSelected ? color : Colors.grey[700],
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              Text('Sites', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+              Text('Sites',
+                  style: TextStyle(
+                      color: Colors.grey[700], fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1634,7 +1689,11 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
             ),
           ),
           child: _isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
               : const Text('Create'),
         ),
       ],

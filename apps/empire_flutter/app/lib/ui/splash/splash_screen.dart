@@ -6,7 +6,7 @@ import '../widgets/scholesa_logo.dart';
 /// Beautiful animated splash screen for Scholesa
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, this.message = 'Loading Scholesa...'});
-  
+
   final String message;
 
   @override
@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen>
           children: <Widget>[
             // Animated background orbs
             ..._buildFloatingOrbs(),
-            
+
             // Main content
             Center(
               child: Column(
@@ -112,9 +112,9 @@ class _SplashScreenState extends State<SplashScreen>
                     },
                     child: _buildLogo(),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // App name with gradient
                   ShaderMask(
                     shaderCallback: (Rect bounds) {
@@ -136,9 +136,9 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Tagline
                   Text(
                     'Education 2.0 Platform',
@@ -148,14 +148,14 @@ class _SplashScreenState extends State<SplashScreen>
                       letterSpacing: 1,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 60),
-                  
+
                   // Loading indicator with pillar colors
                   _buildPillarLoadingIndicator(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Loading message
                   Text(
                     widget.message,
@@ -167,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ],
               ),
             ),
-            
+
             // Three pillars at bottom
             Positioned(
               bottom: 40,
@@ -325,9 +325,11 @@ class _SplashScreenState extends State<SplashScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        _buildPillarChip('Future Skills', ScholesaColors.futureSkills, Icons.rocket_launch_rounded),
+        _buildPillarChip('Future Skills', ScholesaColors.futureSkills,
+            Icons.rocket_launch_rounded),
         const SizedBox(width: 12),
-        _buildPillarChip('Leadership', ScholesaColors.leadership, Icons.psychology_rounded),
+        _buildPillarChip(
+            'Leadership', ScholesaColors.leadership, Icons.psychology_rounded),
         const SizedBox(width: 12),
         _buildPillarChip('Impact', ScholesaColors.impact, Icons.public_rounded),
       ],
@@ -364,11 +366,12 @@ class _SplashScreenState extends State<SplashScreen>
 /// Minimal loading indicator for inline use
 class ScholesaLoadingIndicator extends StatefulWidget {
   const ScholesaLoadingIndicator({super.key, this.size = 40});
-  
+
   final double size;
 
   @override
-  State<ScholesaLoadingIndicator> createState() => _ScholesaLoadingIndicatorState();
+  State<ScholesaLoadingIndicator> createState() =>
+      _ScholesaLoadingIndicatorState();
 }
 
 class _ScholesaLoadingIndicatorState extends State<ScholesaLoadingIndicator>
@@ -411,7 +414,7 @@ class _ScholesaLoadingIndicatorState extends State<ScholesaLoadingIndicator>
 
 class _PillarSpinnerPainter extends CustomPainter {
   _PillarSpinnerPainter({required this.progress});
-  
+
   final double progress;
 
   @override
@@ -430,15 +433,15 @@ class _PillarSpinnerPainter extends CustomPainter {
       final double angle = (progress * 2 * math.pi) + (i * 2 * math.pi / 3);
       final double x = centerX + radius * math.cos(angle);
       final double y = centerY + radius * math.sin(angle);
-      
+
       final double dotSize = 6 + (math.sin(progress * 2 * math.pi + i) * 2);
-      
+
       final Paint paint = Paint()
         ..color = colors[i]
         ..style = PaintingStyle.fill;
-      
+
       canvas.drawCircle(Offset(x, y), dotSize, paint);
-      
+
       // Glow effect
       final Paint glowPaint = Paint()
         ..color = colors[i].withValues(alpha: 0.3)

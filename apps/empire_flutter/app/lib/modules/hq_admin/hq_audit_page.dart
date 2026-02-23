@@ -128,10 +128,35 @@ class _HqAuditPageState extends State<HqAuditPage> {
       color: ScholesaColors.surface,
       child: Row(
         children: <Widget>[
-          Expanded(child: _buildSummaryStat('Total', _auditLogs.length.toString(), Colors.blue)),
-          Expanded(child: _buildSummaryStat('Auth', _auditLogs.where((_AuditLog l) => l.category == _AuditCategory.auth).length.toString(), Colors.green)),
-          Expanded(child: _buildSummaryStat('Admin', _auditLogs.where((_AuditLog l) => l.category == _AuditCategory.admin).length.toString(), Colors.orange)),
-          Expanded(child: _buildSummaryStat('System', _auditLogs.where((_AuditLog l) => l.category == _AuditCategory.system).length.toString(), Colors.purple)),
+          Expanded(
+              child: _buildSummaryStat(
+                  'Total', _auditLogs.length.toString(), Colors.blue)),
+          Expanded(
+              child: _buildSummaryStat(
+                  'Auth',
+                  _auditLogs
+                      .where((_AuditLog l) => l.category == _AuditCategory.auth)
+                      .length
+                      .toString(),
+                  Colors.green)),
+          Expanded(
+              child: _buildSummaryStat(
+                  'Admin',
+                  _auditLogs
+                      .where(
+                          (_AuditLog l) => l.category == _AuditCategory.admin)
+                      .length
+                      .toString(),
+                  Colors.orange)),
+          Expanded(
+              child: _buildSummaryStat(
+                  'System',
+                  _auditLogs
+                      .where(
+                          (_AuditLog l) => l.category == _AuditCategory.system)
+                      .length
+                      .toString(),
+                  Colors.purple)),
         ],
       ),
     );
@@ -140,8 +165,12 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildSummaryStat(String label, String value, Color color) {
     return Column(
       children: <Widget>[
-        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 11, color: ScholesaColors.textSecondary)),
       ],
     );
   }
@@ -149,12 +178,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildAuditList() {
     final List<_AuditLog> filtered = _filterCategory == null
         ? _auditLogs
-        : _auditLogs.where((_AuditLog l) => l.category == _filterCategory).toList();
+        : _auditLogs
+            .where((_AuditLog l) => l.category == _filterCategory)
+            .toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) => _buildAuditCard(filtered[index]),
+      itemBuilder: (BuildContext context, int index) =>
+          _buildAuditCard(filtered[index]),
     );
   }
 
@@ -165,15 +197,19 @@ class _HqAuditPageState extends State<HqAuditPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: _buildCategoryIcon(log.category),
-        title: Text(log.action, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(log.action,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(log.details, style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary)),
+            Text(log.details,
+                style: const TextStyle(
+                    fontSize: 12, color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
             Text(
               '${log.actor} • ${_formatTime(log.timestamp)}',
-              style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+              style: const TextStyle(
+                  fontSize: 11, color: ScholesaColors.textSecondary),
             ),
           ],
         ),
@@ -283,21 +319,28 @@ class _HqAuditPageState extends State<HqAuditPage> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(log.action, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(log.action,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _buildDetailRow('Category', log.category.name.toUpperCase()),
             _buildDetailRow('Actor', log.actor),
             _buildDetailRow('Time', _formatTime(log.timestamp)),
-            if (log.ipAddress != null) _buildDetailRow('IP Address', log.ipAddress!),
+            if (log.ipAddress != null)
+              _buildDetailRow('IP Address', log.ipAddress!),
             const SizedBox(height: 8),
-            const Text('Details', style: TextStyle(fontWeight: FontWeight.w600, color: ScholesaColors.textSecondary)),
+            const Text('Details',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
             Text(log.details),
             const SizedBox(height: 24),
@@ -331,7 +374,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: const TextStyle(color: ScholesaColors.textSecondary)),
+          Text(label,
+              style: const TextStyle(color: ScholesaColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),

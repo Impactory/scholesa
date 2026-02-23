@@ -51,7 +51,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               return _buildEmptyState();
             }
 
-            final LearnerSummary selectedLearner = service.learnerSummaries[_selectedLearnerIndex];
+            final LearnerSummary selectedLearner =
+                service.learnerSummaries[_selectedLearnerIndex];
 
             return CustomScrollView(
               slivers: <Widget>[
@@ -59,9 +60,12 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 if (service.learnerSummaries.length > 1)
                   SliverToBoxAdapter(child: _buildLearnerSelector(service)),
                 SliverToBoxAdapter(child: _buildProgressCard(selectedLearner)),
-                SliverToBoxAdapter(child: _buildPillarProgress(selectedLearner)),
-                SliverToBoxAdapter(child: _buildRecentActivity(selectedLearner)),
-                SliverToBoxAdapter(child: _buildUpcomingEvents(selectedLearner)),
+                SliverToBoxAdapter(
+                    child: _buildPillarProgress(selectedLearner)),
+                SliverToBoxAdapter(
+                    child: _buildRecentActivity(selectedLearner)),
+                SliverToBoxAdapter(
+                    child: _buildUpcomingEvents(selectedLearner)),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
               ],
             );
@@ -93,7 +97,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.family_restroom, color: Colors.white, size: 28),
+              child: const Icon(Icons.family_restroom,
+                  color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             Column(
@@ -102,9 +107,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 Text(
                   'Family Dashboard',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: ScholesaColors.parent,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: ScholesaColors.parent,
+                      ),
                 ),
                 Text(
                   '${service.learnerSummaries.length} learner${service.learnerSummaries.length > 1 ? 's' : ''}',
@@ -117,7 +122,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               onPressed: () async {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'parent_summary_refresh'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'parent_summary_refresh'
+                  },
                 );
                 await service.loadParentData();
               },
@@ -139,7 +146,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         itemBuilder: (BuildContext context, int index) {
           final LearnerSummary learner = service.learnerSummaries[index];
           final bool isSelected = index == _selectedLearnerIndex;
-          
+
           return GestureDetector(
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -159,7 +166,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 color: isSelected ? ScholesaColors.parent : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? ScholesaColors.parent : Colors.grey.withValues(alpha: 0.2),
+                  color: isSelected
+                      ? ScholesaColors.parent
+                      : Colors.grey.withValues(alpha: 0.2),
                   width: 2,
                 ),
                 boxShadow: isSelected
@@ -180,8 +189,14 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isSelected
-                            ? <Color>[Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0.2)]
-                            : <Color>[ScholesaColors.learner.withValues(alpha: 0.8), ScholesaColors.learner],
+                            ? <Color>[
+                                Colors.white.withValues(alpha: 0.3),
+                                Colors.white.withValues(alpha: 0.2)
+                              ]
+                            : <Color>[
+                                ScholesaColors.learner.withValues(alpha: 0.8),
+                                ScholesaColors.learner
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -234,7 +249,10 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withValues(alpha: 0.8)],
+          colors: <Color>[
+            ScholesaColors.learner,
+            ScholesaColors.learner.withValues(alpha: 0.8)
+          ],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
@@ -398,7 +416,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ],
           ),
           const SizedBox(height: 8),
-          ...learner.recentActivities.take(4).map((RecentActivity activity) => _ActivityItem(activity: activity)),
+          ...learner.recentActivities.take(4).map(
+              (RecentActivity activity) => _ActivityItem(activity: activity)),
         ],
       ),
     );
@@ -420,7 +439,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ),
           ),
           const SizedBox(height: 12),
-          ...learner.upcomingEvents.map((UpcomingEvent event) => _EventCard(event: event)),
+          ...learner.upcomingEvents
+              .map((UpcomingEvent event) => _EventCard(event: event)),
         ],
       ),
     );
@@ -429,7 +449,10 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   void _showAllActivities(LearnerSummary learner) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'parent_summary_view_all_activities', 'learner': learner.learnerName},
+      metadata: <String, dynamic>{
+        'cta': 'parent_summary_view_all_activities',
+        'learner': learner.learnerName
+      },
     );
     showModalBottomSheet<void>(
       context: context,
@@ -454,7 +477,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 shrinkWrap: true,
                 children: learner.recentActivities
-                    .map((RecentActivity activity) => _ActivityItem(activity: activity))
+                    .map((RecentActivity activity) =>
+                        _ActivityItem(activity: activity))
                     .toList(),
               ),
             ),
@@ -475,7 +499,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               color: ScholesaColors.parent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.family_restroom, size: 48, color: ScholesaColors.parent),
+            child: const Icon(Icons.family_restroom,
+                size: 48, color: ScholesaColors.parent),
           ),
           const SizedBox(height: 16),
           Text(
@@ -502,7 +527,6 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 }
 
 class _ProgressStat extends StatelessWidget {
-
   const _ProgressStat({
     required this.icon,
     required this.value,
@@ -545,7 +569,6 @@ class _ProgressStat extends StatelessWidget {
 }
 
 class _PillarProgressBar extends StatelessWidget {
-
   const _PillarProgressBar({
     required this.emoji,
     required this.label,
@@ -630,7 +653,6 @@ class _PillarProgressBar extends StatelessWidget {
 }
 
 class _ActivityItem extends StatelessWidget {
-
   const _ActivityItem({required this.activity});
   final RecentActivity activity;
 
@@ -687,7 +709,6 @@ class _ActivityItem extends StatelessWidget {
 }
 
 class _EventCard extends StatelessWidget {
-
   const _EventCard({required this.event});
   final UpcomingEvent event;
 
@@ -784,11 +805,13 @@ class _EventCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: <Widget>[
-                        Icon(Icons.location_on, size: 12, color: Colors.grey[400]),
+                        Icon(Icons.location_on,
+                            size: 12, color: Colors.grey[400]),
                         const SizedBox(width: 4),
                         Text(
                           event.location!,
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style:
+                              TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                       ],
                     ),
@@ -803,12 +826,26 @@ class _EventCard extends StatelessWidget {
   }
 
   String _getMonth(DateTime date) {
-    const List<String> months = <String>['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const List<String> months = <String>[
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ];
     return months[date.month - 1];
   }
 
   String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }

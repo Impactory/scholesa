@@ -7,7 +7,8 @@ class AppTheme {
   static ThemeData light() {
     final base = ThemeData(useMaterial3: true);
     const seed = Color(0xFF38BDF8);
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+    final scheme =
+        ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
     final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
       bodyColor: Colors.white,
       displayColor: Colors.white,
@@ -18,7 +19,8 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF0B1224),
       textTheme: textTheme.copyWith(
-        displayLarge: textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        displayLarge: textTheme.displayLarge
+            ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5),
         titleLarge: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         bodyLarge: textTheme.bodyLarge?.copyWith(height: 1.4),
       ),
@@ -39,7 +41,8 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           backgroundColor: const Color(0xFF38BDF8),
           foregroundColor: const Color(0xFF0B1224),
           shadowColor: const Color(0x6638BDF8),

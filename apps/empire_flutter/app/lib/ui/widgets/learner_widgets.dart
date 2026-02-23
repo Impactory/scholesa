@@ -4,7 +4,6 @@ import '../theme/scholesa_theme.dart';
 
 /// A beautiful mission card for displaying learning missions
 class MissionCard extends StatelessWidget {
-
   const MissionCard({
     super.key,
     required this.title,
@@ -128,7 +127,10 @@ class MissionCard extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: <Color>[pillarColor, pillarColor.withValues(alpha: 0.8)],
+                    colors: <Color>[
+                      pillarColor,
+                      pillarColor.withValues(alpha: 0.8)
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -176,7 +178,8 @@ class MissionCard extends StatelessWidget {
                     ),
                     // Status badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -218,7 +221,8 @@ class MissionCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
                                   const Text(
                                     'Progress',
@@ -242,15 +246,18 @@ class MissionCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: progress,
-                                  backgroundColor: pillarColor.withValues(alpha: 0.15),
-                                  valueColor: AlwaysStoppedAnimation<Color>(pillarColor),
+                                  backgroundColor:
+                                      pillarColor.withValues(alpha: 0.15),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      pillarColor),
                                   minHeight: 6,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (onContinue != null && status != 'reviewed') ...<Widget>[
+                        if (onContinue != null &&
+                            status != 'reviewed') ...<Widget>[
                           const SizedBox(width: 16),
                           ElevatedButton(
                             onPressed: onContinue == null
@@ -270,14 +277,16 @@ class MissionCard extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: pillarColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             child: Text(
                               status == 'not_started' ? 'Start' : 'Continue',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -316,7 +325,6 @@ class MissionCard extends StatelessWidget {
 
 /// A compact mission card for lists
 class MissionListTile extends StatelessWidget {
-
   const MissionListTile({
     super.key,
     required this.title,
@@ -420,7 +428,6 @@ class MissionListTile extends StatelessWidget {
 
 /// Habit streak card for the habit coach
 class HabitStreakCard extends StatelessWidget {
-
   const HabitStreakCard({
     super.key,
     required this.habitName,
@@ -527,7 +534,10 @@ class HabitStreakCard extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: <Color>[color, color.withValues(alpha: 0.8)],
+                              colors: <Color>[
+                                color,
+                                color.withValues(alpha: 0.8)
+                              ],
                             ),
                             shape: BoxShape.circle,
                           ),
@@ -545,10 +555,19 @@ class HabitStreakCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(7, (int index) {
-                    final List<String> dayNames = <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                    final bool isCompleted = index < weekProgress.length && weekProgress[6 - index];
+                    final List<String> dayNames = <String>[
+                      'M',
+                      'T',
+                      'W',
+                      'T',
+                      'F',
+                      'S',
+                      'S'
+                    ];
+                    final bool isCompleted =
+                        index < weekProgress.length && weekProgress[6 - index];
                     final bool isToday = index == 6;
-                    
+
                     return Column(
                       children: <Widget>[
                         Text(
@@ -592,7 +611,8 @@ class HabitStreakCard extends StatelessWidget {
                   children: <Widget>[
                     _buildStat('Current', currentStreak.toString(), color),
                     const SizedBox(width: 24),
-                    _buildStat('Longest', longestStreak.toString(), ScholesaColors.textMuted),
+                    _buildStat('Longest', longestStreak.toString(),
+                        ScholesaColors.textMuted),
                   ],
                 ),
               ],
@@ -639,7 +659,6 @@ class HabitStreakCard extends StatelessWidget {
 
 /// Portfolio item card
 class PortfolioCard extends StatelessWidget {
-
   const PortfolioCard({
     super.key,
     required this.title,
@@ -710,7 +729,8 @@ class PortfolioCard extends StatelessWidget {
                 ),
                 child: thumbnailUrl != null
                     ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(15)),
                         child: Image.network(
                           thumbnailUrl!,
                           fit: BoxFit.cover,
@@ -747,21 +767,26 @@ class PortfolioCard extends StatelessWidget {
                       Wrap(
                         spacing: 4,
                         runSpacing: 4,
-                        children: skills.take(3).map((String skill) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: ScholesaColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            skill,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: ScholesaColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )).toList(),
+                        children: skills
+                            .take(3)
+                            .map((String skill) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: ScholesaColors.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    skill,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: ScholesaColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
                       ),
                     ],
                   ],
@@ -787,7 +812,6 @@ class PortfolioCard extends StatelessWidget {
 
 /// Skill progress widget for learner profiles
 class SkillProgressWidget extends StatelessWidget {
-
   const SkillProgressWidget({
     super.key,
     required this.skillName,
@@ -873,7 +897,9 @@ class SkillProgressWidget extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
-                  index < level ? Icons.star_rounded : Icons.star_outline_rounded,
+                  index < level
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
                   size: 16,
                   color: index < level ? pillarColor : ScholesaColors.textMuted,
                 ),

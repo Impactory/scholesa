@@ -32,9 +32,11 @@ class FirestoreService {
       'email': data['email'] ?? user.email,
       'displayName': data['displayName'] ?? user.displayName,
       'role': data['role'] ?? 'learner',
-      'activeSiteId': data['activeSiteId'] ?? (data['siteIds'] as List<dynamic>?)?.firstOrNull,
+      'activeSiteId': data['activeSiteId'] ??
+          (data['siteIds'] as List<dynamic>?)?.firstOrNull,
       'siteIds': List<String>.from(data['siteIds'] ?? <dynamic>[]),
-      'entitlements': List<Map<String, dynamic>>.from(data['entitlements'] ?? <dynamic>[]),
+      'entitlements':
+          List<Map<String, dynamic>>.from(data['entitlements'] ?? <dynamic>[]),
     };
   }
 
@@ -100,10 +102,11 @@ class FirestoreService {
 
     final DocumentSnapshot<Map<String, dynamic>> userDoc =
         await _firestore.collection('users').doc(user.uid).get();
-    
+
     if (!userDoc.exists) return <Map<String, dynamic>>[];
-    
-    final List<String> siteIds = List<String>.from(userDoc.data()?['siteIds'] ?? <dynamic>[]);
+
+    final List<String> siteIds =
+        List<String>.from(userDoc.data()?['siteIds'] ?? <dynamic>[]);
     if (siteIds.isEmpty) return <Map<String, dynamic>>[];
 
     final List<Map<String, dynamic>> sites = <Map<String, dynamic>>[];
@@ -156,16 +159,20 @@ class FirestoreService {
   }
 
   /// Get attendance records for a session
-  Future<List<Map<String, dynamic>>> getSessionAttendance(String sessionOccurrenceId) async {
+  Future<List<Map<String, dynamic>>> getSessionAttendance(
+      String sessionOccurrenceId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
         .collection('attendanceRecords')
         .where('sessionOccurrenceId', isEqualTo: sessionOccurrenceId)
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   // ==================== CHECKIN OPERATIONS ====================
@@ -205,17 +212,21 @@ class FirestoreService {
   // ==================== MISSION OPERATIONS ====================
 
   /// Get missions for a learner
-  Future<List<Map<String, dynamic>>> getLearnerMissions(String learnerId) async {
+  Future<List<Map<String, dynamic>>> getLearnerMissions(
+      String learnerId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
         .collection('missionAssignments')
         .where('learnerId', isEqualTo: learnerId)
         .orderBy('createdAt', descending: true)
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   /// Submit mission attempt
@@ -282,9 +293,13 @@ class FirestoreService {
     });
 
     // Update conversation last message
-    await _firestore.collection('conversations').doc(conversationId).update(<String, dynamic>{
+    await _firestore
+        .collection('conversations')
+        .doc(conversationId)
+        .update(<String, dynamic>{
       'lastMessageAt': FieldValue.serverTimestamp(),
-      'lastMessagePreview': content.length > 50 ? '${content.substring(0, 50)}...' : content,
+      'lastMessagePreview':
+          content.length > 50 ? '${content.substring(0, 50)}...' : content,
     });
 
     return docRef.id;
@@ -298,7 +313,8 @@ class FirestoreService {
         .orderBy('sentAt', descending: false)
         .snapshots()
         .map((QuerySnapshot<Map<String, dynamic>> snapshot) => snapshot.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                <String, dynamic>{
                   'id': doc.id,
                   ...doc.data(),
                 })
@@ -314,15 +330,19 @@ class FirestoreService {
         .where('siteId', isEqualTo: siteId)
         .orderBy('createdAt', descending: true)
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   /// Get session occurrences for today
-  Future<List<Map<String, dynamic>>> getTodaySessionOccurrences(String siteId) async {
+  Future<List<Map<String, dynamic>>> getTodaySessionOccurrences(
+      String siteId) async {
     final DateTime now = DateTime.now();
     final DateTime startOfDay = DateTime(now.year, now.month, now.day);
     final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
@@ -333,47 +353,59 @@ class FirestoreService {
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('date', isLessThan: Timestamp.fromDate(endOfDay))
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   // ==================== SKILL OPERATIONS ====================
 
   /// Get skills by pillar
-  Future<List<Map<String, dynamic>>> getSkillsByPillar(String pillarCode) async {
+  Future<List<Map<String, dynamic>>> getSkillsByPillar(
+      String pillarCode) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
         .collection('skills')
         .where('pillarCode', isEqualTo: pillarCode)
         .orderBy('name')
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   /// Get learner skill assessments
-  Future<List<Map<String, dynamic>>> getLearnerSkillAssessments(String learnerId) async {
+  Future<List<Map<String, dynamic>>> getLearnerSkillAssessments(
+      String learnerId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
         .collection('skillAssessments')
         .where('learnerId', isEqualTo: learnerId)
         .orderBy('assessedAt', descending: true)
         .get();
-    
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   // ==================== GENERIC OPERATIONS ====================
 
   /// Generic document get
-  Future<Map<String, dynamic>?> getDocument(String collection, String docId) async {
+  Future<Map<String, dynamic>?> getDocument(
+      String collection, String docId) async {
     final DocumentSnapshot<Map<String, dynamic>> doc =
         await _firestore.collection(collection).doc(docId).get();
     if (!doc.exists) return null;
@@ -392,30 +424,34 @@ class FirestoreService {
     int? limit,
   }) async {
     Query<Map<String, dynamic>> query = _firestore.collection(collection);
-    
+
     if (where != null) {
       for (final List<dynamic> condition in where) {
         query = query.where(condition[0] as String, isEqualTo: condition[1]);
       }
     }
-    
+
     if (orderBy != null) {
       query = query.orderBy(orderBy, descending: descending);
     }
-    
+
     if (limit != null) {
       query = query.limit(limit);
     }
-    
+
     final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => <String, dynamic>{
-      'id': doc.id,
-      ...doc.data(),
-    }).toList();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{
+              'id': doc.id,
+              ...doc.data(),
+            })
+        .toList();
   }
 
   /// Generic document create
-  Future<String> createDocument(String collection, Map<String, dynamic> data) async {
+  Future<String> createDocument(
+      String collection, Map<String, dynamic> data) async {
     final DocumentReference<Map<String, dynamic>> docRef =
         await _firestore.collection(collection).add(<String, dynamic>{
       ...data,
@@ -426,7 +462,8 @@ class FirestoreService {
   }
 
   /// Generic document update
-  Future<void> updateDocument(String collection, String docId, Map<String, dynamic> data) async {
+  Future<void> updateDocument(
+      String collection, String docId, Map<String, dynamic> data) async {
     await _firestore.collection(collection).doc(docId).update(<String, dynamic>{
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),

@@ -82,17 +82,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'learner_portfolio',
-                  'cta_id': 'open_share_portfolio_dialog',
-                  'surface': 'floating_action_button',
-                },
-              );
-              _sharePortfolio();
+        onPressed: () {
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'module': 'learner_portfolio',
+              'cta_id': 'open_share_portfolio_dialog',
+              'surface': 'floating_action_button',
             },
+          );
+          _sharePortfolio();
+        },
         backgroundColor: ScholesaColors.learner,
         icon: const Icon(Icons.share),
         label: const Text('Share'),
@@ -143,17 +143,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               ),
             ),
             IconButton(
-                  onPressed: () {
-                    TelemetryService.instance.logEvent(
-                      event: 'cta.clicked',
-                      metadata: <String, dynamic>{
-                        'module': 'learner_portfolio',
-                        'cta_id': 'open_edit_profile_dialog',
-                        'surface': 'header',
-                      },
-                    );
-                    _editProfile();
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'learner_portfolio',
+                    'cta_id': 'open_edit_profile_dialog',
+                    'surface': 'header',
                   },
+                );
+                _editProfile();
+              },
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -200,7 +200,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3), width: 2),
               ),
               child: const Icon(Icons.person, color: Colors.white, size: 48),
             ),
@@ -274,7 +275,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
+                        color:
+                            ScholesaColors.futureSkills.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.rocket_launch,
@@ -300,7 +302,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -321,7 +324,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: 0.75,
-                backgroundColor: ScholesaColors.futureSkills.withValues(alpha: 0.2),
+                backgroundColor:
+                    ScholesaColors.futureSkills.withValues(alpha: 0.2),
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   ScholesaColors.futureSkills,
                 ),
@@ -569,7 +573,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('Edit Portfolio Profile'),
-        content: const Text('Update your portfolio bio, goals, and featured highlights.'),
+        content: const Text(
+            'Update your portfolio bio, goals, and featured highlights.'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -587,14 +592,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           ),
           ElevatedButton(
             onPressed: () {
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'module': 'learner_portfolio',
-                      'cta_id': 'save_profile_changes',
-                      'surface': 'edit_profile_dialog',
-                    },
-                  );
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'learner_portfolio',
+                  'cta_id': 'save_profile_changes',
+                  'surface': 'edit_profile_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -615,7 +620,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('Share Portfolio'),
-        content: const Text('Create a secure share link for parents or mentors.'),
+        content:
+            const Text('Create a secure share link for parents or mentors.'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -633,14 +639,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           ),
           ElevatedButton(
             onPressed: () {
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'module': 'learner_portfolio',
-                      'cta_id': 'generate_share_link',
-                      'surface': 'share_portfolio_dialog',
-                    },
-                  );
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'learner_portfolio',
+                  'cta_id': 'generate_share_link',
+                  'surface': 'share_portfolio_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -658,7 +664,6 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 }
 
 class _PillarStatCard extends StatelessWidget {
-
   const _PillarStatCard({
     required this.icon,
     required this.label,
@@ -711,7 +716,6 @@ class _PillarStatCard extends StatelessWidget {
 }
 
 class _BadgeCard extends StatelessWidget {
-
   const _BadgeCard({required this.badge});
   final Map<String, dynamic> badge;
 
@@ -791,7 +795,6 @@ class _BadgeCard extends StatelessWidget {
 }
 
 class _SkillCard extends StatelessWidget {
-
   const _SkillCard({required this.skill});
   final Map<String, dynamic> skill;
 
@@ -857,7 +860,8 @@ class _SkillCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: skill['progress'] as double,
-                backgroundColor: (skill['color'] as Color).withValues(alpha: 0.2),
+                backgroundColor:
+                    (skill['color'] as Color).withValues(alpha: 0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   skill['color'] as Color,
                 ),
@@ -897,7 +901,6 @@ class _SkillCard extends StatelessWidget {
 }
 
 class _ProjectCard extends StatelessWidget {
-
   const _ProjectCard({required this.project});
   final Map<String, dynamic> project;
 
@@ -944,7 +947,8 @@ class _ProjectCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: (project['color'] as Color).withValues(alpha: 0.1),
+                          color: (project['color'] as Color)
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

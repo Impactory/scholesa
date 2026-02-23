@@ -11,7 +11,8 @@ class ParentPortfolioPage extends StatefulWidget {
   State<ParentPortfolioPage> createState() => _ParentPortfolioPageState();
 }
 
-class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTickerProviderStateMixin {
+class _ParentPortfolioPageState extends State<ParentPortfolioPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final List<_PortfolioItem> _portfolioItems = <_PortfolioItem>[
@@ -90,18 +91,23 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
   Widget _buildPortfolioGrid(_ItemType? typeFilter) {
     final List<_PortfolioItem> filtered = typeFilter == null
         ? _portfolioItems
-        : _portfolioItems.where((_PortfolioItem i) => i.type == typeFilter).toList();
+        : _portfolioItems
+            .where((_PortfolioItem i) => i.type == typeFilter)
+            .toList();
 
     if (filtered.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(Icons.folder_open_rounded, size: 64, color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
+            Icon(Icons.folder_open_rounded,
+                size: 64,
+                color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             const Text(
               'No items yet',
-              style: TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
+              style:
+                  TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
           ],
         ),
@@ -117,7 +123,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
         childAspectRatio: 0.85,
       ),
       itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) => _buildPortfolioCard(filtered[index]),
+      itemBuilder: (BuildContext context, int index) =>
+          _buildPortfolioCard(filtered[index]),
     );
   }
 
@@ -136,12 +143,17 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: <Color>[_getPillarColor(item.pillar), _getPillarColor(item.pillar).withValues(alpha: 0.7)],
+                  colors: <Color>[
+                    _getPillarColor(item.pillar),
+                    _getPillarColor(item.pillar).withValues(alpha: 0.7)
+                  ],
                 ),
               ),
               child: Center(
                 child: Icon(
-                  item.type == _ItemType.badge ? Icons.military_tech_rounded : Icons.work_rounded,
+                  item.type == _ItemType.badge
+                      ? Icons.military_tech_rounded
+                      : Icons.work_rounded,
                   color: Colors.white,
                   size: 40,
                 ),
@@ -154,7 +166,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                 children: <Widget>[
                   Text(
                     item.title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -166,7 +179,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                       Expanded(
                         child: Text(
                           item.pillar,
-                          style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: ScholesaColors.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -208,19 +223,24 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
   void _showItemDetails(_PortfolioItem item) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'parent_portfolio_open_item', 'item_id': item.id},
+      metadata: <String, dynamic>{
+        'cta': 'parent_portfolio_open_item',
+        'item_id': item.id
+      },
     );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.4,
         maxChildSize: 0.9,
         expand: false,
-        builder: (BuildContext context, ScrollController scrollController) => ListView(
+        builder: (BuildContext context, ScrollController scrollController) =>
+            ListView(
           controller: scrollController,
           padding: const EdgeInsets.all(24),
           children: <Widget>[
@@ -228,13 +248,18 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
               height: 160,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: <Color>[_getPillarColor(item.pillar), _getPillarColor(item.pillar).withValues(alpha: 0.7)],
+                  colors: <Color>[
+                    _getPillarColor(item.pillar),
+                    _getPillarColor(item.pillar).withValues(alpha: 0.7)
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Icon(
-                  item.type == _ItemType.badge ? Icons.military_tech_rounded : Icons.work_rounded,
+                  item.type == _ItemType.badge
+                      ? Icons.military_tech_rounded
+                      : Icons.work_rounded,
                   color: Colors.white,
                   size: 64,
                 ),
@@ -244,32 +269,40 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
             Row(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getPillarColor(item.pillar).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     item.pillar,
-                    style: TextStyle(fontSize: 12, color: _getPillarColor(item.pillar), fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _getPillarColor(item.pillar),
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.grey.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     item.type == _ItemType.badge ? 'Badge' : 'Project',
-                    style: const TextStyle(fontSize: 12, color: ScholesaColors.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 12, color: ScholesaColors.textSecondary),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Text(item.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(item.title,
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               'Completed ${_formatDate(item.completedAt)}',
@@ -285,7 +318,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: <String, dynamic>{'cta': 'parent_portfolio_share_item', 'item_id': item.id},
+                        metadata: <String, dynamic>{
+                          'cta': 'parent_portfolio_share_item',
+                          'item_id': item.id
+                        },
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -302,7 +338,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage> with SingleTi
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: <String, dynamic>{'cta': 'parent_portfolio_download_item', 'item_id': item.id},
+                        metadata: <String, dynamic>{
+                          'cta': 'parent_portfolio_download_item',
+                          'item_id': item.id
+                        },
                       );
                       Navigator.pop(context);
                     },

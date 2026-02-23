@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Empty state widget for lists and screens
 class EmptyState extends StatelessWidget {
-
   const EmptyState({
     super.key,
     required this.icon,
@@ -32,8 +31,8 @@ class EmptyState extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.grey[700],
-              ),
+                    color: Colors.grey[700],
+                  ),
               textAlign: TextAlign.center,
             ),
             if (message != null) ...<Widget>[
@@ -41,8 +40,8 @@ class EmptyState extends StatelessWidget {
               Text(
                 message!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[500],
-                ),
+                      color: Colors.grey[500],
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],

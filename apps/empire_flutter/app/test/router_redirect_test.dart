@@ -30,7 +30,8 @@ void main() {
       expect(_redirectResult(state, isPublicRoute: false), '/welcome');
     });
 
-    test('after updateFromMeResponse: isAuthenticated=true, isLoading=false', () {
+    test('after updateFromMeResponse: isAuthenticated=true, isLoading=false',
+        () {
       final AppState state = AppState();
       state.updateFromMeResponse(<String, dynamic>{
         'userId': 'uid-1',

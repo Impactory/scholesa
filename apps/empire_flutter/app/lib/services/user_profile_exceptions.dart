@@ -8,6 +8,7 @@ class UserProfileException implements Exception {
   final int? statusCode;
 
   @override
-  String toString() =>
-      statusCode == null ? 'UserProfileException: $message' : 'UserProfileException($statusCode): $message';
+  String toString() => statusCode == null
+      ? 'UserProfileException: $message'
+      : 'UserProfileException($statusCode): $message';
 }

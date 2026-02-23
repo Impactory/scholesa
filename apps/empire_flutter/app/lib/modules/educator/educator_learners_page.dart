@@ -69,7 +69,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
-                          final List<EducatorLearner> learners = _getFilteredLearners(service);
+                          final List<EducatorLearner> learners =
+                              _getFilteredLearners(service);
                           if (index >= learners.length) return null;
                           return _LearnerCard(
                             learner: learners[index],
@@ -244,7 +245,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   Widget _buildStats(EducatorService service) {
     final List<EducatorLearner> learners = _getFilteredLearners(service);
     final int totalLearners = learners.length;
-    final int activeToday = learners.where((EducatorLearner l) => l.isActiveToday).length;
+    final int activeToday =
+        learners.where((EducatorLearner l) => l.isActiveToday).length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -313,7 +315,6 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
 }
 
 class _LearnerCard extends StatelessWidget {
-
   const _LearnerCard({required this.learner, required this.onTap});
   final EducatorLearner learner;
   final VoidCallback onTap;
@@ -338,7 +339,8 @@ class _LearnerCard extends StatelessWidget {
               children: <Widget>[
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
+                  backgroundColor:
+                      ScholesaColors.learner.withValues(alpha: 0.1),
                   child: Text(
                     learner.initials,
                     style: const TextStyle(
@@ -369,7 +371,8 @@ class _LearnerCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: ScholesaColors.success.withValues(alpha: 0.1),
+                                color: ScholesaColors.success
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
@@ -423,7 +426,6 @@ class _LearnerCard extends StatelessWidget {
 }
 
 class _PillarProgress extends StatelessWidget {
-
   const _PillarProgress({
     required this.label,
     required this.progress,
@@ -461,7 +463,6 @@ class _PillarProgress extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
@@ -497,7 +498,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-
   const _StatCard({
     required this.icon,
     required this.value,
@@ -554,7 +554,6 @@ class _StatCard extends StatelessWidget {
 }
 
 class _LearnerDetailSheet extends StatelessWidget {
-
   const _LearnerDetailSheet({required this.learner});
   final EducatorLearner learner;
 
@@ -587,7 +586,8 @@ class _LearnerDetailSheet extends StatelessWidget {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
+                        backgroundColor:
+                            ScholesaColors.learner.withValues(alpha: 0.1),
                         child: Text(
                           learner.initials,
                           style: const TextStyle(
@@ -663,7 +663,8 @@ class _LearnerDetailSheet extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: ScholesaColors.educator,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(color: ScholesaColors.educator),
+                            side: const BorderSide(
+                                color: ScholesaColors.educator),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -709,7 +710,6 @@ class _LearnerDetailSheet extends StatelessWidget {
 }
 
 class _ProgressBar extends StatelessWidget {
-
   const _ProgressBar({
     required this.label,
     required this.progress,

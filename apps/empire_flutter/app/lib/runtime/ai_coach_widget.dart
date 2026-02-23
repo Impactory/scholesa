@@ -96,7 +96,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         studentInput: input.isNotEmpty ? input : null,
       );
 
-      final AiCoachResponse response = await BosService.instance.callAiCoach(request);
+      final AiCoachResponse response =
+          await BosService.instance.callAiCoach(request);
 
       setState(() {
         _lastResponse = response;
@@ -154,7 +155,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(helpful ? 'Thanks for the feedback!' : 'Noted — we\'ll improve.'),
+        content: Text(
+            helpful ? 'Thanks for the feedback!' : 'Noted — we\'ll improve.'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -195,12 +197,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             ),
             child: Row(
               children: <Widget>[
-                Icon(Icons.verified_user, color: Colors.amber.shade700, size: 20),
+                Icon(Icons.verified_user,
+                    color: Colors.amber.shade700, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Verification active — show your understanding first.',
-                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.amber.shade900),
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: Colors.amber.shade900),
                   ),
                 ),
               ],
@@ -216,29 +220,35 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(Icons.smart_toy_outlined, size: 48, color: theme.colorScheme.primary.withAlpha(128)),
+                        Icon(Icons.smart_toy_outlined,
+                            size: 48,
+                            color: theme.colorScheme.primary.withAlpha(128)),
                         const SizedBox(height: 12),
                         Text(
                           'AI Coach',
-                          style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(color: theme.colorScheme.primary),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Select a mode and ask for help.\nI\'ll guide your thinking — not give answers.',
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: _messages.length,
                   itemBuilder: (BuildContext context, int index) {
                     return _ChatBubble(
                       message: _messages[index],
-                      onFeedback: index == _messages.length - 1 && !_messages[index].isUser
+                      onFeedback: index == _messages.length - 1 &&
+                              !_messages[index].isUser
                           ? _sendFeedback
                           : null,
                     );
@@ -262,8 +272,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                     controller: _inputController,
                     decoration: InputDecoration(
                       hintText: _modeHint(_selectedMode),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                       isDense: true,
                     ),
                     textInputAction: TextInputAction.send,
@@ -276,7 +288,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                 IconButton.filled(
                   onPressed: _loading ? null : _sendMessage,
                   icon: _loading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.send),
                 ),
               ],
@@ -390,7 +405,8 @@ class _ChatBubble extends StatelessWidget {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -407,7 +423,9 @@ class _ChatBubble extends StatelessWidget {
             Text(
               message.text,
               style: TextStyle(
-                color: isUser ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                color: isUser
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurface,
               ),
             ),
 
@@ -418,33 +436,41 @@ class _ChatBubble extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(Icons.verified_user, size: 14, color: Colors.amber.shade700),
+                    Icon(Icons.verified_user,
+                        size: 14, color: Colors.amber.shade700),
                     const SizedBox(width: 4),
                     Text(
                       'Verification required',
-                      style: theme.textTheme.labelSmall?.copyWith(color: Colors.amber.shade700),
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: Colors.amber.shade700),
                     ),
                   ],
                 ),
               ),
 
             // Suggested next steps
-            if (message.response != null && message.response!.suggestedNextSteps.isNotEmpty)
+            if (message.response != null &&
+                message.response!.suggestedNextSteps.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: message.response!.suggestedNextSteps.map((String step) {
+                  children:
+                      message.response!.suggestedNextSteps.map((String step) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text('→ ', style: TextStyle(color: theme.colorScheme.primary, fontSize: 12)),
+                          Text('→ ',
+                              style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 12)),
                           Expanded(
                             child: Text(
                               step,
-                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ],

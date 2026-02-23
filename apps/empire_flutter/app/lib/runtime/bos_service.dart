@@ -24,14 +24,15 @@ class BosService {
     required String learnerId,
     required String sessionOccurrenceId,
   }) async {
-    final HttpsCallableResult<dynamic> result =
-        await _fn.httpsCallable('bosGetOrchestrationState').call(<String, dynamic>{
+    final HttpsCallableResult<dynamic> result = await _fn
+        .httpsCallable('bosGetOrchestrationState')
+        .call(<String, dynamic>{
       'learnerId': learnerId,
       'sessionOccurrenceId': sessionOccurrenceId,
     });
 
-    final Map<String, dynamic>? stateData =
-        (result.data as Map<String, dynamic>?)?['state'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? stateData = (result.data
+        as Map<String, dynamic>?)?['state'] as Map<String, dynamic>?;
     if (stateData == null) return null;
     return OrchestrationState.fromMap(stateData);
   }
@@ -52,8 +53,8 @@ class BosService {
       'gradeBand': gradeBand.code,
     });
 
-    final Map<String, dynamic>? interventionData =
-        (result.data as Map<String, dynamic>?)?['intervention'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? interventionData = (result.data
+        as Map<String, dynamic>?)?['intervention'] as Map<String, dynamic>?;
     if (interventionData == null) return null;
     return BosIntervention.fromMap(interventionData);
   }

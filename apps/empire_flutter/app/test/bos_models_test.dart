@@ -11,7 +11,8 @@ void main() {
     });
 
     test('toMap / fromMap round-trip', () {
-      const XHat original = XHat(cognition: 0.8, engagement: 0.3, integrity: 0.9);
+      const XHat original =
+          XHat(cognition: 0.8, engagement: 0.3, integrity: 0.9);
       final XHat restored = XHat.fromMap(original.toMap());
       expect(restored.cognition, 0.8);
       expect(restored.engagement, 0.3);
@@ -38,7 +39,8 @@ void main() {
         trace: 0.6,
         confidence: 0.8,
       );
-      final CovarianceSummary restored = CovarianceSummary.fromMap(original.toMap());
+      final CovarianceSummary restored =
+          CovarianceSummary.fromMap(original.toMap());
       expect(restored.trace, 0.6);
       expect(restored.confidence, 0.8);
     });
@@ -119,7 +121,8 @@ void main() {
         reasonCodes: <String>['low_cognition'],
         policy: PolicyTerms(lambda: 0.5, mDagger: 0.6),
       );
-      final BosIntervention restored = BosIntervention.fromMap(intervention.toMap());
+      final BosIntervention restored =
+          BosIntervention.fromMap(intervention.toMap());
       expect(restored.type, InterventionType.scaffold);
       expect(restored.salience, Salience.medium);
       expect(restored.mode, AiCoachMode.hint);
@@ -150,7 +153,8 @@ void main() {
       final Map<String, dynamic> map = req.toMap();
       expect(map['mode'], 'explain');
       expect(map['gradeBand'], 'G4_6');
-      expect((map['context'] as Map<String, dynamic>)['conceptTags'], <String>['algebra', 'equations']);
+      expect((map['context'] as Map<String, dynamic>)['conceptTags'],
+          <String>['algebra', 'equations']);
     });
   });
 

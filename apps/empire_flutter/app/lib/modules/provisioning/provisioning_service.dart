@@ -4,7 +4,6 @@ import 'provisioning_models.dart';
 
 /// Service for user provisioning operations
 class ProvisioningService extends ChangeNotifier {
-
   ProvisioningService({required ApiClient apiClient}) : _apiClient = apiClient;
   final ApiClient _apiClient;
 
@@ -27,7 +26,8 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final Map<String, dynamic> response = await _apiClient.get('/v1/sites/$siteId/learners');
+      final Map<String, dynamic> response =
+          await _apiClient.get('/v1/sites/$siteId/learners');
       final List<dynamic> items = response['items'] as List? ?? <dynamic>[];
       _learners = items
           .map((e) => LearnerProfile.fromJson(e as Map<String, dynamic>))
@@ -48,7 +48,8 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final Map<String, dynamic> response = await _apiClient.get('/v1/sites/$siteId/parents');
+      final Map<String, dynamic> response =
+          await _apiClient.get('/v1/sites/$siteId/parents');
       final List<dynamic> items = response['items'] as List? ?? <dynamic>[];
       _parents = items
           .map((e) => ParentProfile.fromJson(e as Map<String, dynamic>))
@@ -65,7 +66,8 @@ class ProvisioningService extends ChangeNotifier {
   /// Load guardian links for site
   Future<void> loadGuardianLinks(String siteId) async {
     try {
-      final Map<String, dynamic> response = await _apiClient.get('/v1/guardian-links', queryParams: <String, String>{
+      final Map<String, dynamic> response = await _apiClient
+          .get('/v1/guardian-links', queryParams: <String, String>{
         'siteId': siteId,
       });
       final List<dynamic> items = response['items'] as List? ?? <dynamic>[];
@@ -103,7 +105,7 @@ class ProvisioningService extends ChangeNotifier {
           if (notes != null) 'notes': notes,
         },
       );
-      
+
       final LearnerProfile learner = LearnerProfile.fromJson(response);
       _learners.add(learner);
       notifyListeners();
@@ -138,7 +140,7 @@ class ProvisioningService extends ChangeNotifier {
           if (phone != null) 'phone': phone,
         },
       );
-      
+
       final ParentProfile parent = ParentProfile.fromJson(response);
       _parents.add(parent);
       notifyListeners();
@@ -176,7 +178,7 @@ class ProvisioningService extends ChangeNotifier {
           'isPrimary': isPrimary,
         },
       );
-      
+
       final GuardianLink link = GuardianLink.fromJson(response);
       _guardianLinks.add(link);
       notifyListeners();
@@ -231,7 +233,8 @@ class ProvisioningService extends ChangeNotifier {
       );
 
       final LearnerProfile updated = LearnerProfile.fromJson(response);
-      final int idx = _learners.indexWhere((LearnerProfile l) => l.id == learnerId);
+      final int idx =
+          _learners.indexWhere((LearnerProfile l) => l.id == learnerId);
       if (idx >= 0) {
         _learners[idx] = updated;
       }
@@ -270,7 +273,8 @@ class ProvisioningService extends ChangeNotifier {
       );
 
       final ParentProfile updated = ParentProfile.fromJson(response);
-      final int idx = _parents.indexWhere((ParentProfile p) => p.id == parentId);
+      final int idx =
+          _parents.indexWhere((ParentProfile p) => p.id == parentId);
       if (idx >= 0) {
         _parents[idx] = updated;
       }

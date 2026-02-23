@@ -27,7 +27,6 @@ enum UserStatus {
 
 /// User model for the platform
 class UserModel extends Equatable {
-
   const UserModel({
     required this.uid,
     required this.email,
@@ -149,7 +148,6 @@ class UserModel extends Equatable {
 
 /// Site model
 class SiteModel extends Equatable {
-
   const SiteModel({
     required this.id,
     required this.name,
@@ -165,7 +163,8 @@ class SiteModel extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       location: json['location'] as String?,
-      siteLeadIds: (json['siteLeadIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      siteLeadIds:
+          (json['siteLeadIds'] as List<dynamic>?)?.cast<String>() ?? [],
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
       userCount: json['userCount'] as int? ?? 0,
       learnerCount: json['learnerCount'] as int? ?? 0,
@@ -185,7 +184,6 @@ class SiteModel extends Equatable {
 
 /// Audit log entry
 class AuditLogEntry extends Equatable {
-
   const AuditLogEntry({
     required this.id,
     required this.actorId,
@@ -222,5 +220,6 @@ class AuditLogEntry extends Equatable {
   final DateTime timestamp;
 
   @override
-  List<Object?> get props => <Object?>[id, actorId, action, entityType, entityId, timestamp];
+  List<Object?> get props =>
+      <Object?>[id, actorId, action, entityType, entityId, timestamp];
 }

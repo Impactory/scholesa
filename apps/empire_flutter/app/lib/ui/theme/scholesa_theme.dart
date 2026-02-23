@@ -146,7 +146,8 @@ class ScholesaColors {
       case 'partner':
         return partnerGradient;
       default:
-        return const LinearGradient(colors: <Color>[Colors.grey, Colors.blueGrey]);
+        return const LinearGradient(
+            colors: <Color>[Colors.grey, Colors.blueGrey]);
     }
   }
 }
@@ -198,7 +199,8 @@ class ScholesaTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(

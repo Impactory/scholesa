@@ -9,7 +9,6 @@ import '../ui/widgets/cards.dart';
 
 /// Dashboard card definition from docs/47_ROLE_DASHBOARD_CARD_REGISTRY.md
 class DashboardCard {
-
   const DashboardCard({
     required this.id,
     required this.title,
@@ -29,7 +28,8 @@ class DashboardCard {
 }
 
 /// Card registry per role - based on docs/47
-final Map<UserRole, List<DashboardCard>> _cardRegistry = <UserRole, List<DashboardCard>>{
+final Map<UserRole, List<DashboardCard>> _cardRegistry =
+    <UserRole, List<DashboardCard>>{
   // ═══════════════════════════════════════════════════════════════════════════
   // LEARNER DASHBOARD - Cyan/Blue theme
   // ═══════════════════════════════════════════════════════════════════════════
@@ -470,14 +470,17 @@ class RoleDashboard extends StatelessWidget {
     return Consumer<AppState>(
       builder: (BuildContext context, AppState appState, _) {
         final UserRole? role = appState.role;
-        
+
         if (role == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final List<DashboardCard> cards = <DashboardCard>[...(_cardRegistry[role] ?? <DashboardCard>[]), ..._sharedCards];
+        final List<DashboardCard> cards = <DashboardCard>[
+          ...(_cardRegistry[role] ?? <DashboardCard>[]),
+          ..._sharedCards
+        ];
         final LinearGradient roleGradient = role.name.roleGradient;
         final Color roleColor = role.name.roleColor;
 
@@ -505,18 +508,21 @@ class RoleDashboard extends StatelessWidget {
                                 UserAvatar(
                                   name: appState.displayName ?? 'User',
                                   size: 50,
-                                  backgroundColor: Colors.white.withValues(alpha: 0.25),
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.25),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Text(
                                         'Welcome back,',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.white.withValues(alpha: 0.85),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.85),
                                         ),
                                       ),
                                       Text(
@@ -535,7 +541,8 @@ class RoleDashboard extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
@@ -583,7 +590,8 @@ class RoleDashboard extends StatelessWidget {
                       },
                     ),
                   IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                    icon: const Icon(Icons.settings_outlined,
+                        color: Colors.white),
                     tooltip: 'Settings',
                     onPressed: () {
                       TelemetryService.instance.logEvent(
@@ -606,7 +614,9 @@ class RoleDashboard extends StatelessWidget {
               ),
 
               // Quick stats section (optional based on role)
-              if (role == UserRole.educator || role == UserRole.site || role == UserRole.hq)
+              if (role == UserRole.educator ||
+                  role == UserRole.site ||
+                  role == UserRole.hq)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -646,7 +656,7 @@ class RoleDashboard extends StatelessWidget {
                     (BuildContext context, int index) {
                       final DashboardCard card = cards[index];
                       final bool isEnabled = isRouteEnabled(card.route);
-                      
+
                       return GradientCard(
                         title: card.title,
                         subtitle: card.subtitle,
@@ -704,21 +714,70 @@ class RoleDashboard extends StatelessWidget {
     switch (role) {
       case UserRole.educator:
         return <Map<String, dynamic>>[
-          <String, dynamic>{'label': 'Students Today', 'value': '24', 'icon': Icons.people, 'color': ScholesaColors.info, 'trend': '+3'},
-          <String, dynamic>{'label': 'Attendance', 'value': '96%', 'icon': Icons.check_circle, 'color': ScholesaColors.success, 'trend': '+2%'},
-          <String, dynamic>{'label': 'To Review', 'value': '12', 'icon': Icons.rate_review, 'color': ScholesaColors.warning},
+          <String, dynamic>{
+            'label': 'Students Today',
+            'value': '24',
+            'icon': Icons.people,
+            'color': ScholesaColors.info,
+            'trend': '+3'
+          },
+          <String, dynamic>{
+            'label': 'Attendance',
+            'value': '96%',
+            'icon': Icons.check_circle,
+            'color': ScholesaColors.success,
+            'trend': '+2%'
+          },
+          <String, dynamic>{
+            'label': 'To Review',
+            'value': '12',
+            'icon': Icons.rate_review,
+            'color': ScholesaColors.warning
+          },
         ];
       case UserRole.site:
         return <Map<String, dynamic>>[
-          <String, dynamic>{'label': 'On Site', 'value': '45', 'icon': Icons.location_on, 'color': ScholesaColors.info},
-          <String, dynamic>{'label': 'Checked In', 'value': '42', 'icon': Icons.login, 'color': ScholesaColors.success, 'trend': '+5'},
-          <String, dynamic>{'label': 'Open Incidents', 'value': '2', 'icon': Icons.warning, 'color': ScholesaColors.error},
+          <String, dynamic>{
+            'label': 'On Site',
+            'value': '45',
+            'icon': Icons.location_on,
+            'color': ScholesaColors.info
+          },
+          <String, dynamic>{
+            'label': 'Checked In',
+            'value': '42',
+            'icon': Icons.login,
+            'color': ScholesaColors.success,
+            'trend': '+5'
+          },
+          <String, dynamic>{
+            'label': 'Open Incidents',
+            'value': '2',
+            'icon': Icons.warning,
+            'color': ScholesaColors.error
+          },
         ];
       case UserRole.hq:
         return <Map<String, dynamic>>[
-          <String, dynamic>{'label': 'Active Sites', 'value': '12', 'icon': Icons.business, 'color': ScholesaColors.primary},
-          <String, dynamic>{'label': 'Total Users', 'value': '1.2K', 'icon': Icons.people, 'color': ScholesaColors.info, 'trend': '+8%'},
-          <String, dynamic>{'label': 'Pending', 'value': '5', 'icon': Icons.pending_actions, 'color': ScholesaColors.warning},
+          <String, dynamic>{
+            'label': 'Active Sites',
+            'value': '12',
+            'icon': Icons.business,
+            'color': ScholesaColors.primary
+          },
+          <String, dynamic>{
+            'label': 'Total Users',
+            'value': '1.2K',
+            'icon': Icons.people,
+            'color': ScholesaColors.info,
+            'trend': '+8%'
+          },
+          <String, dynamic>{
+            'label': 'Pending',
+            'value': '5',
+            'icon': Icons.pending_actions,
+            'color': ScholesaColors.warning
+          },
         ];
       default:
         return <Map<String, dynamic>>[];
@@ -742,7 +801,8 @@ class RoleDashboard extends StatelessWidget {
     }
   }
 
-  void _handleCardTap(BuildContext context, DashboardCard card, bool isEnabled) {
+  void _handleCardTap(
+      BuildContext context, DashboardCard card, bool isEnabled) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -762,7 +822,9 @@ class RoleDashboard extends StatelessWidget {
   void _showAllActionsSheet(BuildContext context, List<DashboardCard> cards) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'role_dashboard_view_all_actions'},
+      metadata: const <String, dynamic>{
+        'cta': 'role_dashboard_view_all_actions'
+      },
     );
     showModalBottomSheet<void>(
       context: context,
@@ -794,7 +856,8 @@ class RoleDashboard extends StatelessWidget {
             final DashboardCard card = cards[index - 1];
             final bool enabled = isRouteEnabled(card.route);
             return ListTile(
-              leading: Icon(card.icon, color: enabled ? null : ScholesaColors.textMuted),
+              leading: Icon(card.icon,
+                  color: enabled ? null : ScholesaColors.textMuted),
               title: Text(card.title),
               subtitle: Text(card.subtitle ?? ''),
               trailing: Icon(
@@ -877,36 +940,37 @@ class RoleDashboard extends StatelessWidget {
             ),
             const Divider(height: 1),
             ...appState.siteIds.map((String siteId) => ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ScholesaColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.business,
-                  color: siteId == appState.activeSiteId 
-                      ? ScholesaColors.primary 
-                      : ScholesaColors.textMuted,
-                ),
-              ),
-              title: Text(siteId),
-              trailing: siteId == appState.activeSiteId
-                  ? const Icon(Icons.check_circle, color: ScholesaColors.success)
-                  : null,
-              onTap: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: <String, dynamic>{
-                    'cta': 'role_dashboard_switch_site',
-                    'surface': 'site_switcher_sheet',
-                    'site_id': siteId,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ScholesaColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.business,
+                      color: siteId == appState.activeSiteId
+                          ? ScholesaColors.primary
+                          : ScholesaColors.textMuted,
+                    ),
+                  ),
+                  title: Text(siteId),
+                  trailing: siteId == appState.activeSiteId
+                      ? const Icon(Icons.check_circle,
+                          color: ScholesaColors.success)
+                      : null,
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'role_dashboard_switch_site',
+                        'surface': 'site_switcher_sheet',
+                        'site_id': siteId,
+                      },
+                    );
+                    appState.switchSite(siteId);
+                    Navigator.pop(context);
                   },
-                );
-                appState.switchSite(siteId);
-                Navigator.pop(context);
-              },
-            )),
+                )),
             const SizedBox(height: 16),
           ],
         ),
@@ -917,7 +981,9 @@ class RoleDashboard extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'role_dashboard_open_sign_out_dialog'},
+      metadata: const <String, dynamic>{
+        'cta': 'role_dashboard_open_sign_out_dialog'
+      },
     );
     showDialog(
       context: context,
@@ -949,7 +1015,9 @@ class RoleDashboard extends StatelessWidget {
             onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'role_dashboard_confirm_sign_out'},
+                metadata: const <String, dynamic>{
+                  'cta': 'role_dashboard_confirm_sign_out'
+                },
               );
               Navigator.pop(dialogContext);
               // Clear app state and go to login

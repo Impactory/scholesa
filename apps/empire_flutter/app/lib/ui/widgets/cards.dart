@@ -4,7 +4,6 @@ import '../theme/scholesa_theme.dart';
 
 /// A beautiful gradient card widget for dashboards
 class GradientCard extends StatelessWidget {
-
   const GradientCard({
     super.key,
     required this.title,
@@ -73,7 +72,8 @@ class GradientCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 80,
-                    color: Colors.white.withValues(alpha: isEnabled ? 0.2 : 0.1),
+                    color:
+                        Colors.white.withValues(alpha: isEnabled ? 0.2 : 0.1),
                   ),
                 ),
                 // Content
@@ -85,13 +85,16 @@ class GradientCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: isEnabled ? 0.25 : 0.5),
+                            color: Colors.white
+                                .withValues(alpha: isEnabled ? 0.25 : 0.5),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             icon,
                             size: 28,
-                            color: isEnabled ? Colors.white : ScholesaColors.textMuted,
+                            color: isEnabled
+                                ? Colors.white
+                                : ScholesaColors.textMuted,
                           ),
                         ),
                         const Spacer(),
@@ -100,7 +103,8 @@ class GradientCard extends StatelessWidget {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.25),
                                   borderRadius: BorderRadius.circular(12),
@@ -108,7 +112,9 @@ class GradientCard extends StatelessWidget {
                                 child: Text(
                                   badgeText!,
                                   style: TextStyle(
-                                    color: isEnabled ? Colors.white : ScholesaColors.textMuted,
+                                    color: isEnabled
+                                        ? Colors.white
+                                        : ScholesaColors.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -127,7 +133,9 @@ class GradientCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isEnabled ? Colors.white : ScholesaColors.textSecondary,
+                        color: isEnabled
+                            ? Colors.white
+                            : ScholesaColors.textSecondary,
                       ),
                     ),
                     if (subtitle != null) ...<Widget>[
@@ -136,7 +144,7 @@ class GradientCard extends StatelessWidget {
                         subtitle!,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isEnabled 
+                          color: isEnabled
                               ? Colors.white.withValues(alpha: 0.85)
                               : ScholesaColors.textMuted,
                         ),
@@ -147,9 +155,11 @@ class GradientCard extends StatelessWidget {
                     if (!isEnabled) ...<Widget>[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: ScholesaColors.textMuted.withValues(alpha: 0.2),
+                          color:
+                              ScholesaColors.textMuted.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -175,7 +185,6 @@ class GradientCard extends StatelessWidget {
 
 /// A colorful stat card for quick metrics
 class StatCard extends StatelessWidget {
-
   const StatCard({
     super.key,
     required this.label,
@@ -222,7 +231,8 @@ class StatCard extends StatelessWidget {
           ),
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              final bool compact = constraints.maxHeight < 90 || constraints.maxWidth < 130;
+              final bool compact =
+                  constraints.maxHeight < 90 || constraints.maxWidth < 130;
               final bool ultraCompact = constraints.maxHeight < 75;
 
               if (ultraCompact) {
@@ -280,14 +290,18 @@ class StatCard extends StatelessWidget {
                           color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(icon, color: color, size: compact ? 16 : 20),
+                        child:
+                            Icon(icon, color: color, size: compact ? 16 : 20),
                       ),
                       if (trend != null)
                         Flexible(
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 4 : 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: (isPositive ? ScholesaColors.success : ScholesaColors.error)
+                              color: (isPositive
+                                      ? ScholesaColors.success
+                                      : ScholesaColors.error)
                                   .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -295,9 +309,13 @@ class StatCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
                                 Icon(
-                                  isPositive ? Icons.trending_up : Icons.trending_down,
+                                  isPositive
+                                      ? Icons.trending_up
+                                      : Icons.trending_down,
                                   size: compact ? 10 : 12,
-                                  color: isPositive ? ScholesaColors.success : ScholesaColors.error,
+                                  color: isPositive
+                                      ? ScholesaColors.success
+                                      : ScholesaColors.error,
                                 ),
                                 const SizedBox(width: 2),
                                 Flexible(
@@ -306,7 +324,9 @@ class StatCard extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: compact ? 10 : 11,
                                       fontWeight: FontWeight.bold,
-                                      color: isPositive ? ScholesaColors.success : ScholesaColors.error,
+                                      color: isPositive
+                                          ? ScholesaColors.success
+                                          : ScholesaColors.error,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -351,7 +371,6 @@ class StatCard extends StatelessWidget {
 
 /// A quick action button with icon and label
 class QuickActionButton extends StatelessWidget {
-
   const QuickActionButton({
     super.key,
     required this.label,
@@ -434,7 +453,6 @@ class QuickActionButton extends StatelessWidget {
 
 /// A pill-shaped status badge
 class StatusBadge extends StatelessWidget {
-
   const StatusBadge({
     super.key,
     required this.label,
@@ -479,7 +497,6 @@ class StatusBadge extends StatelessWidget {
 
 /// A progress indicator with label
 class ProgressCard extends StatelessWidget {
-
   const ProgressCard({
     super.key,
     required this.title,
@@ -558,7 +575,6 @@ class ProgressCard extends StatelessWidget {
 
 /// An avatar with online status indicator
 class UserAvatar extends StatelessWidget {
-
   const UserAvatar({
     super.key,
     this.imageUrl,
@@ -589,7 +605,8 @@ class UserAvatar extends StatelessWidget {
       children: <Widget>[
         CircleAvatar(
           radius: size / 2,
-          backgroundColor: backgroundColor ?? ScholesaColors.primary.withValues(alpha: 0.1),
+          backgroundColor:
+              backgroundColor ?? ScholesaColors.primary.withValues(alpha: 0.1),
           backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
           child: imageUrl == null
               ? Text(
@@ -597,8 +614,8 @@ class UserAvatar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: size * 0.4,
                     fontWeight: FontWeight.bold,
-                    color: backgroundColor != null 
-                        ? Colors.white 
+                    color: backgroundColor != null
+                        ? Colors.white
                         : ScholesaColors.primary,
                   ),
                 )
@@ -612,7 +629,9 @@ class UserAvatar extends StatelessWidget {
               width: size * 0.3,
               height: size * 0.3,
               decoration: BoxDecoration(
-                color: isOnline ? ScholesaColors.success : ScholesaColors.textMuted,
+                color: isOnline
+                    ? ScholesaColors.success
+                    : ScholesaColors.textMuted,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
@@ -625,7 +644,6 @@ class UserAvatar extends StatelessWidget {
 
 /// A list tile with colorful icon
 class ColorfulListTile extends StatelessWidget {
-
   const ColorfulListTile({
     super.key,
     required this.title,
@@ -682,7 +700,8 @@ class ColorfulListTile extends StatelessWidget {
               ),
             )
           : null,
-      trailing: trailing ?? const Icon(Icons.chevron_right, color: ScholesaColors.textMuted),
+      trailing: trailing ??
+          const Icon(Icons.chevron_right, color: ScholesaColors.textMuted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

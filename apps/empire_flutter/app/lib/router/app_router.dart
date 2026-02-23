@@ -27,19 +27,19 @@ import '../modules/partner/partner.dart';
 final Map<String, bool> kKnownRoutes = <String, bool>{
   // Public
   '/welcome': true,
-  
+
   // Auth
   '/login': true,
-  
+
   // Dashboard
   '/': true,
-  
+
   // Learner
   '/learner/today': true,
   '/learner/missions': true,
   '/learner/habits': true,
   '/learner/portfolio': true,
-  
+
   // Educator
   '/educator/today': true,
   '/educator/attendance': true,
@@ -49,13 +49,13 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/educator/mission-plans': true,
   '/educator/learner-supports': true,
   '/educator/integrations': true,
-  
+
   // Parent
   '/parent/summary': true,
   '/parent/billing': true,
   '/parent/schedule': true,
   '/parent/portfolio': true,
-  
+
   // Site
   '/site/checkin': true,
   '/site/provisioning': true,
@@ -66,12 +66,12 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/site/identity': true,
   '/site/integrations-health': true,
   '/site/billing': true,
-  
+
   // Partner
   '/partner/listings': true,
   '/partner/contracts': true,
   '/partner/payouts': true,
-  
+
   // HQ
   '/hq/user-admin': true,
   '/hq/role-switcher': true,
@@ -84,7 +84,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/hq/integrations-health': true,
   '/hq/curriculum': true,
   '/hq/feature-flags': true,
-  
+
   // Cross-role
   '/messages': true,
   '/notifications': true,
@@ -103,7 +103,6 @@ GoRouter createAppRouter(AppState appState) {
     refreshListenable: appState,
     initialLocation: unauthenticatedEntry,
     debugLogDiagnostics: true,
-    
     redirect: (BuildContext context, GoRouterState state) {
       final bool isLoading = appState.isLoading;
       final bool isLoggedIn = appState.isAuthenticated;
@@ -113,23 +112,23 @@ GoRouter createAppRouter(AppState appState) {
       final bool isPublicRoute = isWelcomeRoute || isLoginRoute;
 
       if (isRegisterRoute) return '/login';
-      
+
       // Still loading and on public route, stay there (show landing page while loading)
       if (isLoading && isPublicRoute) return null;
-      
+
       // Still loading and NOT on public route, go to the platform entry route
       if (isLoading && !isPublicRoute) return unauthenticatedEntry;
-      
+
       // Not logged in and not on public route -> go to platform entry route
       if (!isLoggedIn && !isPublicRoute) return unauthenticatedEntry;
-      
+
       // Logged in and on public route -> go to dashboard
       if (isLoggedIn && isPublicRoute) return '/';
-      
+
       return null;
     },
-    
-    errorBuilder: (BuildContext context, GoRouterState state) => FatalErrorScreen(
+    errorBuilder: (BuildContext context, GoRouterState state) =>
+        FatalErrorScreen(
       error: state.error?.toString() ?? 'Page not found',
       onRetry: () {
         if (context.canPop()) {
@@ -139,39 +138,45 @@ GoRouter createAppRouter(AppState appState) {
         }
       },
     ),
-    
     routes: <RouteBase>[
       // Public landing page
       GoRoute(
         path: '/welcome',
-        builder: (BuildContext context, GoRouterState state) => const LandingPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const LandingPage(),
       ),
-      
+
       // Auth routes
       GoRoute(
         path: '/login',
-        builder: (BuildContext context, GoRouterState state) => const LoginPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const LoginPage(),
       ),
       GoRoute(
         path: '/register',
         redirect: (BuildContext context, GoRouterState state) => '/login',
       ),
-      
+
       // Dashboard - redirects to role-specific dashboard
       GoRoute(
         path: '/',
-        builder: (BuildContext context, GoRouterState state) => const RoleDashboard(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const RoleDashboard(),
       ),
-      
+
       // Educator routes
       GoRoute(
         path: '/educator/attendance',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: AttendancePage(),
         ),
       ),
-      
+
       // Site routes
       GoRoute(
         path: '/site/provisioning',
@@ -187,7 +192,7 @@ GoRouter createAppRouter(AppState appState) {
           child: CheckinPage(),
         ),
       ),
-      
+
       // HQ routes
       GoRoute(
         path: '/hq/user-admin',
@@ -203,42 +208,56 @@ GoRouter createAppRouter(AppState appState) {
           child: HqRoleSwitcherPage(),
         ),
       ),
-      
+
       // Learner routes
       GoRoute(
         path: '/learner/today',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.learner, UserRole.educator, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
           child: LearnerTodayPage(),
         ),
       ),
       GoRoute(
         path: '/learner/missions',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.learner, UserRole.educator, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
           child: MissionsPage(),
         ),
       ),
       GoRoute(
         path: '/learner/habits',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.learner, UserRole.educator, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
           child: HabitsPage(),
         ),
       ),
-      
+
       // Messages route (all authenticated users)
       GoRoute(
         path: '/messages',
-        builder: (BuildContext context, GoRouterState state) => const MessagesPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const MessagesPage(),
       ),
-      
+
       // Profile route (all authenticated users)
       GoRoute(
         path: '/profile',
-        builder: (BuildContext context, GoRouterState state) => const ProfilePage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const ProfilePage(),
       ),
-      
+
       // Parent routes
       GoRoute(
         path: '/parent/summary',
@@ -247,37 +266,53 @@ GoRouter createAppRouter(AppState appState) {
           child: ParentSummaryPage(),
         ),
       ),
-      
+
       // Educator routes
       GoRoute(
         path: '/educator/today',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorTodayPage(),
         ),
       ),
       GoRoute(
         path: '/educator/sessions',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorSessionsPage(),
         ),
       ),
       GoRoute(
         path: '/educator/learners',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorLearnersPage(),
         ),
       ),
       GoRoute(
         path: '/educator/missions/review',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorMissionReviewPage(),
         ),
       ),
-      
+
       // Site routes
       GoRoute(
         path: '/site/dashboard',
@@ -293,7 +328,7 @@ GoRouter createAppRouter(AppState appState) {
           child: SiteSessionsPage(),
         ),
       ),
-      
+
       // HQ routes
       GoRoute(
         path: '/hq/sites',
@@ -316,7 +351,7 @@ GoRouter createAppRouter(AppState appState) {
           child: HqBillingPage(),
         ),
       ),
-      
+
       // Parent routes
       GoRoute(
         path: '/parent/billing',
@@ -332,20 +367,25 @@ GoRouter createAppRouter(AppState appState) {
           child: ParentSchedulePage(),
         ),
       ),
-      
+
       // Learner routes
       GoRoute(
         path: '/learner/portfolio',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.learner, UserRole.educator, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
           child: LearnerPortfolioPage(),
         ),
       ),
-      
+
       // Settings route (all authenticated users)
       GoRoute(
         path: '/settings',
-        builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const SettingsPage(),
       ),
 
       // ─────────────────────────────────────────────────────────────
@@ -418,21 +458,33 @@ GoRouter createAppRouter(AppState appState) {
       GoRoute(
         path: '/educator/mission-plans',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorMissionPlansPage(),
         ),
       ),
       GoRoute(
         path: '/educator/learner-supports',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorLearnerSupportsPage(),
         ),
       ),
       GoRoute(
         path: '/educator/integrations',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.educator, UserRole.site, UserRole.hq],
+          allowedRoles: <UserRole>[
+            UserRole.educator,
+            UserRole.site,
+            UserRole.hq
+          ],
           child: EducatorIntegrationsPage(),
         ),
       ),
@@ -499,7 +551,8 @@ GoRouter createAppRouter(AppState appState) {
       // ─────────────────────────────────────────────────────────────
       GoRoute(
         path: '/notifications',
-        builder: (BuildContext context, GoRouterState state) => const NotificationsPage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const NotificationsPage(),
       ),
 
       // Placeholder routes for disabled features

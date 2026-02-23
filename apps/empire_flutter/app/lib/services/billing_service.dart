@@ -25,7 +25,9 @@ class BillingService {
     final functions = _safeFunctions;
     if (functions == null) return null;
     try {
-      final result = await functions.httpsCallable('createCheckoutIntent').call(<String, dynamic>{
+      final result = await functions
+          .httpsCallable('createCheckoutIntent')
+          .call(<String, dynamic>{
         'siteId': siteId,
         'userId': userId,
         'productId': productId,
@@ -45,7 +47,9 @@ class BillingService {
     final functions = _safeFunctions;
     if (functions == null) return null;
     try {
-      final result = await functions.httpsCallable('completeCheckout').call(<String, dynamic>{
+      final result = await functions
+          .httpsCallable('completeCheckout')
+          .call(<String, dynamic>{
         'intentId': intentId,
         if (amount != null) 'amount': amount,
         if (currency != null) 'currency': currency,

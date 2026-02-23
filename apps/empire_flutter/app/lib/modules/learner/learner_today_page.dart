@@ -89,9 +89,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 Text(
                   'Today',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: ScholesaColors.learner,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: ScholesaColors.learner,
+                      ),
                 ),
               ],
             ),
@@ -100,13 +100,16 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'learner_today_open_messages'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'learner_today_open_messages'
+                  },
                 );
                 context.push('/messages');
               },
               icon: Stack(
                 children: <Widget>[
-                  Icon(Icons.notifications_outlined, color: Colors.grey[600], size: 28),
+                  Icon(Icons.notifications_outlined,
+                      color: Colors.grey[600], size: 28),
                   Positioned(
                     right: 0,
                     top: 0,
@@ -265,7 +268,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'learner_today_open_habits'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'learner_today_open_habits'
+                  },
                 );
                 context.push('/learner/habits');
               },
@@ -280,7 +285,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'learner_today_open_missions'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'learner_today_open_missions'
+                  },
                 );
                 context.push('/learner/missions');
               },
@@ -295,7 +302,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'learner_today_open_messages_quick_action'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'learner_today_open_messages_quick_action'
+                  },
                 );
                 context.push('/messages');
               },
@@ -331,7 +340,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: const <String, dynamic>{'cta': 'learner_today_see_all_habits'},
+                        metadata: const <String, dynamic>{
+                          'cta': 'learner_today_see_all_habits'
+                        },
                       );
                       context.push('/learner/habits');
                     },
@@ -376,7 +387,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: const <String, dynamic>{'cta': 'learner_today_see_all_missions'},
+                        metadata: const <String, dynamic>{
+                          'cta': 'learner_today_see_all_missions'
+                        },
                       );
                       context.push('/learner/missions');
                     },
@@ -388,7 +401,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              ...missions.map((Mission mission) => _MissionTile(mission: mission)),
+              ...missions
+                  .map((Mission mission) => _MissionTile(mission: mission)),
             ],
           ),
         );
@@ -405,7 +419,6 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 }
 
 class _ProgressCard extends StatelessWidget {
-
   const _ProgressCard({
     required this.title,
     required this.completed,
@@ -424,7 +437,7 @@ class _ProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double progress = total > 0 ? completed / total : 0.0;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -499,7 +512,6 @@ class _ProgressCard extends StatelessWidget {
 }
 
 class _QuickActionCard extends StatelessWidget {
-
   const _QuickActionCard({
     required this.icon,
     required this.label,
@@ -551,7 +563,6 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 class _HabitTile extends StatelessWidget {
-
   const _HabitTile({required this.habit});
   final Habit habit;
 
@@ -619,7 +630,6 @@ class _HabitTile extends StatelessWidget {
 }
 
 class _MissionTile extends StatelessWidget {
-
   const _MissionTile({required this.mission});
   final Mission mission;
 
@@ -649,7 +659,8 @@ class _MissionTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: Text(mission.pillar.emoji, style: const TextStyle(fontSize: 24)),
+              child: Text(mission.pillar.emoji,
+                  style: const TextStyle(fontSize: 24)),
             ),
           ),
           const SizedBox(width: 12),
@@ -669,8 +680,10 @@ class _MissionTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: mission.progress,
-                          backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+                          backgroundColor:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF59E0B)),
                           minHeight: 6,
                         ),
                       ),

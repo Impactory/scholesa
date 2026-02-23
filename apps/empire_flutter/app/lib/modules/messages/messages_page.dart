@@ -13,7 +13,8 @@ class MessagesPage extends StatefulWidget {
   State<MessagesPage> createState() => _MessagesPageState();
 }
 
-class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderStateMixin {
+class _MessagesPageState extends State<MessagesPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -90,9 +91,9 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
                   Text(
                     'Messages',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF6366F1),
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF6366F1),
+                        ),
                   ),
                   Text(
                     '${service.unreadCount} unread',
@@ -106,7 +107,9 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
                   onPressed: () {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
-                      metadata: const <String, dynamic>{'cta': 'messages_mark_all_read'},
+                      metadata: const <String, dynamic>{
+                        'cta': 'messages_mark_all_read'
+                      },
                     );
                     service.markAllAsRead();
                   },
@@ -340,7 +343,6 @@ class _MessagesPageState extends State<MessagesPage> with SingleTickerProviderSt
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     this.emoji,
@@ -392,7 +394,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _NotificationCard extends StatelessWidget {
-
   const _NotificationCard({
     required this.message,
     required this.onTap,
@@ -509,29 +510,38 @@ class _NotificationCard extends StatelessWidget {
                       Row(
                         children: <Widget>[
                           if (message.senderName != null) ...<Widget>[
-                            Icon(Icons.person_outline, size: 14, color: Colors.grey[400]),
+                            Icon(Icons.person_outline,
+                                size: 14, color: Colors.grey[400]),
                             const SizedBox(width: 4),
                             Text(
                               message.senderName!,
-                              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.grey[500], fontSize: 12),
                             ),
                             const SizedBox(width: 12),
                           ],
-                          Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+                          Icon(Icons.access_time,
+                              size: 14, color: Colors.grey[400]),
                           const SizedBox(width: 4),
                           Text(
                             _formatTime(message.createdAt),
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            style: TextStyle(
+                                color: Colors.grey[500], fontSize: 12),
                           ),
                           if (message.priority == MessagePriority.urgent ||
-                              message.priority == MessagePriority.high) ...<Widget>[
+                              message.priority ==
+                                  MessagePriority.high) ...<Widget>[
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: message.priority == MessagePriority.urgent
-                                    ? ScholesaColors.error.withValues(alpha: 0.1)
-                                    : ScholesaColors.warning.withValues(alpha: 0.1),
+                                color:
+                                    message.priority == MessagePriority.urgent
+                                        ? ScholesaColors.error
+                                            .withValues(alpha: 0.1)
+                                        : ScholesaColors.warning
+                                            .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -539,9 +549,10 @@ class _NotificationCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: message.priority == MessagePriority.urgent
-                                      ? ScholesaColors.error
-                                      : ScholesaColors.warning,
+                                  color:
+                                      message.priority == MessagePriority.urgent
+                                          ? ScholesaColors.error
+                                          : ScholesaColors.warning,
                                 ),
                               ),
                             ),
@@ -576,7 +587,6 @@ class _NotificationCard extends StatelessWidget {
 }
 
 class _ConversationCard extends StatelessWidget {
-
   const _ConversationCard({required this.conversation});
   final Conversation conversation;
 
@@ -674,7 +684,15 @@ class _ConversationCard extends StatelessWidget {
       final String period = time.hour >= 12 ? 'PM' : 'AM';
       return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
     } else if (diff.inDays < 7) {
-      const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const List<String> days = <String>[
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun'
+      ];
       return days[time.weekday - 1];
     } else {
       return '${time.month}/${time.day}';
@@ -683,7 +701,6 @@ class _ConversationCard extends StatelessWidget {
 }
 
 class _MessageDetailSheet extends StatelessWidget {
-
   const _MessageDetailSheet({required this.message});
   final Message message;
 
@@ -711,7 +728,8 @@ class _MessageDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child: Text(message.type.emoji, style: const TextStyle(fontSize: 24)),
+                    child: Text(message.type.emoji,
+                        style: const TextStyle(fontSize: 24)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -756,7 +774,8 @@ class _MessageDetailSheet extends StatelessWidget {
             if (message.senderName != null) ...<Widget>[
               Row(
                 children: <Widget>[
-                  const Icon(Icons.person_outline, size: 16, color: Colors.grey),
+                  const Icon(Icons.person_outline,
+                      size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
                     'From: ${message.senderName}',
@@ -835,10 +854,21 @@ class _MessageDetailSheet extends StatelessWidget {
 
   String _formatFullDate(DateTime time) {
     const List<String> months = <String>[
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '${months[time.month - 1]} ${time.day}, ${time.year} at $hour:${time.minute.toString().padLeft(2, '0')} $period';
   }

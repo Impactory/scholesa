@@ -91,7 +91,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ScholesaColors.partnerGradient.colors.first.withValues(alpha: 0.1),
+              color: ScholesaColors.partnerGradient.colors.first
+                  .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -162,7 +163,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   gradient: ScholesaColors.partnerGradient,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 28),
+                child: const Icon(Icons.inventory_2_rounded,
+                    color: Colors.white, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -204,7 +206,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: ScholesaColors.textSecondary),
+              const Icon(Icons.chevron_right_rounded,
+                  color: ScholesaColors.textSecondary),
             ],
           ),
         ),
@@ -271,7 +274,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder: (BuildContext context, void Function(void Function()) setLocalState) =>
+        builder: (BuildContext context,
+                void Function(void Function()) setLocalState) =>
             AlertDialog(
           backgroundColor: ScholesaColors.surface,
           title: const Text('Create Listing'),
@@ -356,7 +360,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   ? null
                   : () async {
                       final String title = titleController.text.trim();
-                      final String description = descriptionController.text.trim();
+                      final String description =
+                          descriptionController.text.trim();
                       if (title.isEmpty || description.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -513,7 +518,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     );
   }
 
-  void _showEditListingDialog(BuildContext context, MarketplaceListing listing) {
+  void _showEditListingDialog(
+      BuildContext context, MarketplaceListing listing) {
     final TextEditingController titleController =
         TextEditingController(text: listing.title);
     final TextEditingController descriptionController =
@@ -557,7 +563,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Listing updated: ${titleController.text.trim()}'),
+                  content:
+                      Text('Listing updated: ${titleController.text.trim()}'),
                 ),
               );
             },

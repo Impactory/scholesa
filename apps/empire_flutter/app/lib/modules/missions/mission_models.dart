@@ -73,7 +73,6 @@ enum DifficultyLevel {
 
 /// Model for a skill that can be learned
 class Skill extends Equatable {
-
   const Skill({
     required this.id,
     required this.name,
@@ -116,7 +115,6 @@ class Skill extends Equatable {
 
 /// Model for a mission step/task
 class MissionStep extends Equatable {
-
   const MissionStep({
     required this.id,
     required this.title,
@@ -173,12 +171,12 @@ class MissionStep extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[id, title, description, order, isCompleted, completedAt];
+  List<Object?> get props =>
+      <Object?>[id, title, description, order, isCompleted, completedAt];
 }
 
 /// Model for a mission
 class Mission extends Equatable {
-
   const Mission({
     required this.id,
     required this.title,
@@ -315,7 +313,8 @@ class Mission extends Equatable {
     );
   }
 
-  int get completedStepsCount => steps.where((MissionStep s) => s.isCompleted).length;
+  int get completedStepsCount =>
+      steps.where((MissionStep s) => s.isCompleted).length;
   int get totalStepsCount => steps.length;
 
   @override
@@ -341,7 +340,6 @@ class Mission extends Equatable {
 
 /// Learner's progress summary
 class LearnerProgress extends Equatable {
-
   const LearnerProgress({
     required this.totalXp,
     required this.currentLevel,

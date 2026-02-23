@@ -342,7 +342,10 @@ class _HqSitesPageState extends State<HqSitesPage> {
   void _openSiteDetail(String siteId) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'hq_sites_open_detail', 'site_id': siteId},
+      metadata: <String, dynamic>{
+        'cta': 'hq_sites_open_detail',
+        'site_id': siteId
+      },
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -367,7 +370,6 @@ class _HqSitesPageState extends State<HqSitesPage> {
 }
 
 class _SiteCard extends StatelessWidget {
-
   const _SiteCard({
     required this.name,
     required this.location,
@@ -517,7 +519,6 @@ class _SiteCard extends StatelessWidget {
 }
 
 class _SiteMetric extends StatelessWidget {
-
   const _SiteMetric({
     required this.icon,
     required this.value,
@@ -552,7 +553,6 @@ class _SiteMetric extends StatelessWidget {
 }
 
 class _HealthScore extends StatelessWidget {
-
   const _HealthScore({required this.score});
   final int score;
 
@@ -601,7 +601,6 @@ class _HealthScore extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
@@ -647,7 +646,6 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-
   const _StatCard({
     required this.icon,
     required this.value,
@@ -776,7 +774,8 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                           metadata: <String, dynamic>{
                             'cta': 'hq_sites_create_site_submit',
                             'has_name': _nameController.text.trim().isNotEmpty,
-                            'has_location': _locationController.text.trim().isNotEmpty,
+                            'has_location':
+                                _locationController.text.trim().isNotEmpty,
                           },
                         );
                         Navigator.pop(context);

@@ -185,10 +185,14 @@ class EducatorIntegrationsPage extends StatelessWidget {
                         SnackBar(content: Text('$value $name')),
                       );
                     },
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(value: 'Sync', child: Text('Sync Now')),
-                      const PopupMenuItem<String>(value: 'Settings', child: Text('Settings')),
-                      const PopupMenuItem<String>(value: 'Disconnect', child: Text('Disconnect')),
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                          value: 'Sync', child: Text('Sync Now')),
+                      const PopupMenuItem<String>(
+                          value: 'Settings', child: Text('Settings')),
+                      const PopupMenuItem<String>(
+                          value: 'Disconnect', child: Text('Disconnect')),
                     ],
                   )
                 : ElevatedButton(

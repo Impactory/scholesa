@@ -17,10 +17,14 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   int _pendingPickups = 5;
   int _openIncidents = 2;
   final List<_ActivityEntry> _recentActivity = <_ActivityEntry>[
-    const _ActivityEntry('Emma S. checked in', '9:02 AM', Icons.login_rounded, Colors.green),
-    const _ActivityEntry('Oliver T. checked in', '9:05 AM', Icons.login_rounded, Colors.green),
-    const _ActivityEntry('Minor incident reported', '9:15 AM', Icons.warning_rounded, Colors.orange),
-    const _ActivityEntry('Sophia M. picked up', '3:30 PM', Icons.logout_rounded, Colors.blue),
+    const _ActivityEntry(
+        'Emma S. checked in', '9:02 AM', Icons.login_rounded, Colors.green),
+    const _ActivityEntry(
+        'Oliver T. checked in', '9:05 AM', Icons.login_rounded, Colors.green),
+    const _ActivityEntry('Minor incident reported', '9:15 AM',
+        Icons.warning_rounded, Colors.orange),
+    const _ActivityEntry(
+        'Sophia M. picked up', '3:30 PM', Icons.logout_rounded, Colors.blue),
   ];
 
   @override
@@ -81,12 +85,15 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: _isDayOpen
-            ? const LinearGradient(colors: <Color>[Color(0xFF22C55E), Color(0xFF4ADE80)])
-            : const LinearGradient(colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)]),
+            ? const LinearGradient(
+                colors: <Color>[Color(0xFF22C55E), Color(0xFF4ADE80)])
+            : const LinearGradient(
+                colors: <Color>[Color(0xFFF59E0B), Color(0xFFFBBF24)]),
         borderRadius: BorderRadius.circular(16),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: (_isDayOpen ? Colors.green : Colors.orange).withValues(alpha: 0.3),
+            color: (_isDayOpen ? Colors.green : Colors.orange)
+                .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -101,7 +108,9 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              _isDayOpen ? Icons.door_front_door_rounded : Icons.door_sliding_rounded,
+              _isDayOpen
+                  ? Icons.door_front_door_rounded
+                  : Icons.door_sliding_rounded,
               color: Colors.white,
               size: 32,
             ),
@@ -140,16 +149,23 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   Widget _buildQuickStats() {
     return Row(
       children: <Widget>[
-        Expanded(child: _buildStatCard('Present', _presentCount.toString(), Icons.people_rounded, Colors.green)),
+        Expanded(
+            child: _buildStatCard('Present', _presentCount.toString(),
+                Icons.people_rounded, Colors.green)),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('Pickups', _pendingPickups.toString(), Icons.directions_walk_rounded, Colors.blue)),
+        Expanded(
+            child: _buildStatCard('Pickups', _pendingPickups.toString(),
+                Icons.directions_walk_rounded, Colors.blue)),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('Incidents', _openIncidents.toString(), Icons.warning_rounded, Colors.orange)),
+        Expanded(
+            child: _buildStatCard('Incidents', _openIncidents.toString(),
+                Icons.warning_rounded, Colors.orange)),
       ],
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -202,10 +218,14 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           crossAxisSpacing: 12,
           childAspectRatio: 2.5,
           children: <Widget>[
-            _buildActionButton('Check-in', Icons.login_rounded, '/site/checkin'),
-            _buildActionButton('Check-out', Icons.logout_rounded, '/site/checkin'),
-            _buildActionButton('New Incident', Icons.add_alert_rounded, '/site/incidents'),
-            _buildActionButton('View Roster', Icons.list_alt_rounded, '/site/sessions'),
+            _buildActionButton(
+                'Check-in', Icons.login_rounded, '/site/checkin'),
+            _buildActionButton(
+                'Check-out', Icons.logout_rounded, '/site/checkin'),
+            _buildActionButton(
+                'New Incident', Icons.add_alert_rounded, '/site/incidents'),
+            _buildActionButton(
+                'View Roster', Icons.list_alt_rounded, '/site/sessions'),
           ],
         ),
       ],
@@ -268,7 +288,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         const SizedBox(height: 12),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: <Widget>[
               ..._buildRecentActivityRows(),
@@ -283,7 +304,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     final List<Widget> rows = <Widget>[];
     for (var index = 0; index < _recentActivity.length; index++) {
       final _ActivityEntry entry = _recentActivity[index];
-      rows.add(_buildActivityItem(entry.title, entry.time, entry.icon, entry.color));
+      rows.add(
+          _buildActivityItem(entry.title, entry.time, entry.icon, entry.color));
       if (index < _recentActivity.length - 1) {
         rows.add(const Divider(height: 1));
       }
@@ -296,19 +318,23 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       switch (label) {
         case 'Check-in':
           _presentCount += 1;
-          _addRecentActivity('Manual check-in recorded', Icons.login_rounded, Colors.green);
+          _addRecentActivity(
+              'Manual check-in recorded', Icons.login_rounded, Colors.green);
           break;
         case 'Check-out':
           if (_presentCount > 0) _presentCount -= 1;
           if (_pendingPickups > 0) _pendingPickups -= 1;
-          _addRecentActivity('Manual check-out recorded', Icons.logout_rounded, Colors.blue);
+          _addRecentActivity(
+              'Manual check-out recorded', Icons.logout_rounded, Colors.blue);
           break;
         case 'New Incident':
           _openIncidents += 1;
-          _addRecentActivity('New incident created', Icons.warning_rounded, Colors.orange);
+          _addRecentActivity(
+              'New incident created', Icons.warning_rounded, Colors.orange);
           break;
         case 'View Roster':
-          _addRecentActivity('Roster viewed', Icons.list_alt_rounded, ScholesaColors.primary);
+          _addRecentActivity(
+              'Roster viewed', Icons.list_alt_rounded, ScholesaColors.primary);
           break;
       }
     });
@@ -333,7 +359,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     return '$hour:$minute $period';
   }
 
-  Widget _buildActivityItem(String title, String time, IconData icon, Color color) {
+  Widget _buildActivityItem(
+      String title, String time, IconData icon, Color color) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),

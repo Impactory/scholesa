@@ -12,6 +12,7 @@ class SiteIncidentsPage extends StatefulWidget {
 }
 
 enum _Severity { minor, major, critical }
+
 enum _Status { submitted, reviewed, closed }
 
 class _Incident {
@@ -34,9 +35,10 @@ class _Incident {
   final String learnerName;
 }
 
-class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTickerProviderStateMixin {
+class _SiteIncidentsPageState extends State<SiteIncidentsPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   final List<_Incident> _incidents = <_Incident>[
     _Incident(
       id: '1',
@@ -139,9 +141,8 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
   }
 
   Widget _buildIncidentList(_Status statusFilter) {
-    final List<_Incident> filtered = _incidents
-        .where((_Incident i) => i.status == statusFilter)
-        .toList();
+    final List<_Incident> filtered =
+        _incidents.where((_Incident i) => i.status == statusFilter).toList();
 
     if (filtered.isEmpty) {
       return Center(
@@ -218,7 +219,8 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
               const SizedBox(height: 12),
               Row(
                 children: <Widget>[
-                  const Icon(Icons.person_rounded, size: 16, color: ScholesaColors.textSecondary),
+                  const Icon(Icons.person_rounded,
+                      size: 16, color: ScholesaColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     incident.learnerName,
@@ -228,7 +230,8 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.schedule_rounded, size: 16, color: ScholesaColors.textSecondary),
+                  const Icon(Icons.schedule_rounded,
+                      size: 16, color: ScholesaColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     _formatDateTime(incident.reportedAt),
@@ -372,9 +375,12 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ScholesaColors.safetyGradient.colors.first,
+                        backgroundColor:
+                            ScholesaColors.safetyGradient.colors.first,
                       ),
-                      child: Text(incident.status == _Status.submitted ? 'Review' : 'Close Incident'),
+                      child: Text(incident.status == _Status.submitted
+                          ? 'Review'
+                          : 'Close Incident'),
                     ),
                   ),
                 ],
@@ -444,10 +450,12 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage> with SingleTicker
                 labelText: 'Severity',
                 border: OutlineInputBorder(),
               ),
-              items: _Severity.values.map((_Severity s) => DropdownMenuItem<_Severity>(
-                value: s,
-                child: Text(s.name.toUpperCase()),
-              )).toList(),
+              items: _Severity.values
+                  .map((_Severity s) => DropdownMenuItem<_Severity>(
+                        value: s,
+                        child: Text(s.name.toUpperCase()),
+                      ))
+                  .toList(),
               onChanged: (_) {},
             ),
           ],

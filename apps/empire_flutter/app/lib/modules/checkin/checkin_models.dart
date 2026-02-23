@@ -41,7 +41,6 @@ enum PickupAuthStatus {
 
 /// Model for check-in/out records
 class CheckRecord extends Equatable {
-
   const CheckRecord({
     required this.id,
     required this.visitorId,
@@ -162,7 +161,6 @@ class CheckRecord extends Equatable {
 
 /// Model for authorized pickup person
 class AuthorizedPickup extends Equatable {
-
   const AuthorizedPickup({
     required this.id,
     required this.learnerId,
@@ -230,7 +228,6 @@ class AuthorizedPickup extends Equatable {
 
 /// Learner check-in summary for the day
 class LearnerDaySummary extends Equatable {
-
   const LearnerDaySummary({
     required this.learnerId,
     required this.learnerName,

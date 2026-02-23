@@ -5,7 +5,6 @@ import '../app_config.dart';
 
 /// HTTP client that adds Firebase auth token to requests
 class ApiClient {
-
   ApiClient({
     http.Client? httpClient,
     FirebaseAuth? auth,
@@ -41,9 +40,10 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParams,
   }) async {
-    final Uri uri = Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
+    final Uri uri =
+        Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
     final Map<String, String> headers = await _buildHeaders();
-    
+
     final http.Response response = await _httpClient.get(uri, headers: headers);
     return _handleResponse(response);
   }
@@ -55,8 +55,9 @@ class ApiClient {
     String? idempotencyKey,
   }) async {
     final Uri uri = Uri.parse('$_baseUrl$path');
-    final Map<String, String> headers = await _buildHeaders(idempotencyKey: idempotencyKey);
-    
+    final Map<String, String> headers =
+        await _buildHeaders(idempotencyKey: idempotencyKey);
+
     final http.Response response = await _httpClient.post(
       uri,
       headers: headers,
@@ -72,8 +73,9 @@ class ApiClient {
     String? idempotencyKey,
   }) async {
     final Uri uri = Uri.parse('$_baseUrl$path');
-    final Map<String, String> headers = await _buildHeaders(idempotencyKey: idempotencyKey);
-    
+    final Map<String, String> headers =
+        await _buildHeaders(idempotencyKey: idempotencyKey);
+
     final http.Response response = await _httpClient.patch(
       uri,
       headers: headers,
@@ -86,8 +88,9 @@ class ApiClient {
   Future<Map<String, dynamic>> delete(String path) async {
     final Uri uri = Uri.parse('$_baseUrl$path');
     final Map<String, String> headers = await _buildHeaders();
-    
-    final http.Response response = await _httpClient.delete(uri, headers: headers);
+
+    final http.Response response =
+        await _httpClient.delete(uri, headers: headers);
     return _handleResponse(response);
   }
 
@@ -109,7 +112,9 @@ class ApiClient {
         errorBody = jsonDecode(response.body) as Map<String, dynamic>;
       } catch (e) {
         // Response is not JSON (e.g., HTML error page)
-        errorBody = <String, dynamic>{'message': 'Server error: ${response.statusCode}'};
+        errorBody = <String, dynamic>{
+          'message': 'Server error: ${response.statusCode}'
+        };
       }
     }
 
@@ -127,7 +132,6 @@ class ApiClient {
 
 /// API exception with structured error info
 class ApiException implements Exception {
-
   ApiException({
     required this.statusCode,
     required this.code,

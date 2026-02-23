@@ -31,11 +31,14 @@ class ProfilePage extends StatelessWidget {
             ),
             child: CustomScrollView(
               slivers: <Widget>[
-                SliverToBoxAdapter(child: _buildHeader(context, appState, roleColor)),
-                SliverToBoxAdapter(child: _buildProfileCard(appState, roleColor)),
+                SliverToBoxAdapter(
+                    child: _buildHeader(context, appState, roleColor)),
+                SliverToBoxAdapter(
+                    child: _buildProfileCard(appState, roleColor)),
                 SliverToBoxAdapter(child: _buildSettingsSection(context)),
                 SliverToBoxAdapter(child: _buildAboutSection(context)),
-                SliverToBoxAdapter(child: _buildLogoutButton(context, appState)),
+                SliverToBoxAdapter(
+                    child: _buildLogoutButton(context, appState)),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
               ],
             ),
@@ -45,7 +48,8 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppState appState, Color roleColor) {
+  Widget _buildHeader(
+      BuildContext context, AppState appState, Color roleColor) {
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -66,9 +70,9 @@ class ProfilePage extends StatelessWidget {
             Text(
               'Profile',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: roleColor,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: roleColor,
+                  ),
             ),
             const Spacer(),
             IconButton(
@@ -153,7 +157,8 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -198,7 +203,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_notifications_settings'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_notifications_settings'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -214,7 +221,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_privacy_security_settings'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_privacy_security_settings'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -230,7 +239,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_language_settings'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_language_settings'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -246,7 +257,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_appearance_settings'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_appearance_settings'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -262,7 +275,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_sync_data_settings'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_sync_data_settings'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -298,7 +313,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_help_support'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_help_support'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -328,7 +345,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_privacy_policy'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_privacy_policy'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -344,7 +363,9 @@ class ProfilePage extends StatelessWidget {
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_version_info'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_open_version_info'
+                },
               );
               _showFeatureDialog(
                 context,
@@ -375,7 +396,9 @@ class ProfilePage extends StatelessWidget {
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: const <String, dynamic>{'cta': 'profile_sign_out_cancel'},
+                        metadata: const <String, dynamic>{
+                          'cta': 'profile_sign_out_cancel'
+                        },
                       );
                       Navigator.pop(context, false);
                     },
@@ -385,7 +408,9 @@ class ProfilePage extends StatelessWidget {
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
-                        metadata: const <String, dynamic>{'cta': 'profile_sign_out_confirm'},
+                        metadata: const <String, dynamic>{
+                          'cta': 'profile_sign_out_confirm'
+                        },
                       );
                       Navigator.pop(context, true);
                     },
@@ -401,7 +426,9 @@ class ProfilePage extends StatelessWidget {
             if (confirmed ?? false) {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_sign_out_execute'},
+                metadata: const <String, dynamic>{
+                  'cta': 'profile_sign_out_execute'
+                },
               );
               appState.clear();
               if (context.mounted) {
@@ -413,7 +440,8 @@ class ProfilePage extends StatelessWidget {
           label: const Text('Sign Out'),
           style: OutlinedButton.styleFrom(
             foregroundColor: ScholesaColors.error,
-            side: BorderSide(color: ScholesaColors.error.withValues(alpha: 0.5)),
+            side:
+                BorderSide(color: ScholesaColors.error.withValues(alpha: 0.5)),
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -517,7 +545,10 @@ class ProfilePage extends StatelessWidget {
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: <String, dynamic>{'cta': 'profile_open_feature', 'feature': title},
+                metadata: <String, dynamic>{
+                  'cta': 'profile_open_feature',
+                  'feature': title
+                },
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -533,7 +564,6 @@ class ProfilePage extends StatelessWidget {
 }
 
 class _SettingsTile extends StatelessWidget {
-
   const _SettingsTile({
     required this.icon,
     required this.title,
@@ -574,7 +604,9 @@ class _SettingsTile extends StatelessWidget {
           child: Icon(icon, size: 20, color: Colors.grey[700]),
         ),
         title: Text(title),
-        subtitle: subtitle != null ? Text(subtitle!, style: TextStyle(color: Colors.grey[600])) : null,
+        subtitle: subtitle != null
+            ? Text(subtitle!, style: TextStyle(color: Colors.grey[600]))
+            : null,
         trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
       ),
     );

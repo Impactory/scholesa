@@ -76,7 +76,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              child: Icon(Icons.settings, color: colorScheme.onPrimaryContainer, size: 28),
+              child: Icon(Icons.settings,
+                  color: colorScheme.onPrimaryContainer, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -91,7 +92,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   Text(
                     'Customize your experience',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                    style: TextStyle(
+                        color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ),
@@ -201,7 +203,8 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: 'Match your device appearance',
           value: themeService.followSystem,
           onChanged: (bool value) {
-            themeService.setThemeMode(value ? ThemeMode.system : ThemeMode.light);
+            themeService
+                .setThemeMode(value ? ThemeMode.system : ThemeMode.light);
           },
         ),
         _SettingsTile(
@@ -307,7 +310,8 @@ class _SettingsPageState extends State<SettingsPage> {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: <Widget>[
@@ -379,7 +383,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showNotificationPreferences() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_notification_preferences'},
+      metadata: const <String, dynamic>{
+        'cta': 'settings_notification_preferences'
+      },
     );
     _showComingSoon('Notification Preferences');
   }
@@ -446,7 +452,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showLanguageSelector() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_open_language_selector'},
+      metadata: const <String, dynamic>{
+        'cta': 'settings_open_language_selector'
+      },
     );
     showModalBottomSheet<void>(
       context: context,
@@ -495,7 +503,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showTimeZoneSelector() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_open_timezone_selector'},
+      metadata: const <String, dynamic>{
+        'cta': 'settings_open_timezone_selector'
+      },
     );
     _showComingSoon('Time Zone Selection');
   }
@@ -511,7 +521,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _openTermsOfService() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_open_terms_of_service'},
+      metadata: const <String, dynamic>{
+        'cta': 'settings_open_terms_of_service'
+      },
     );
     _showComingSoon('Terms of Service');
   }
@@ -568,7 +580,9 @@ class _SettingsPageState extends State<SettingsPage> {
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'settings_close_app_version'},
+                metadata: const <String, dynamic>{
+                  'cta': 'settings_close_app_version'
+                },
               );
               Navigator.pop(dialogContext);
             },
@@ -599,10 +613,13 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: () async {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'settings_confirm_sign_out'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'settings_confirm_sign_out'
+                  },
                 );
                 Navigator.pop(context);
-                final AuthService authService = this.context.read<AuthService>();
+                final AuthService authService =
+                    this.context.read<AuthService>();
                 await authService.signOut();
                 if (!mounted) return;
                 this.context.go('/login');
@@ -624,7 +641,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _confirmDeleteAccount() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_open_delete_account_dialog'},
+      metadata: const <String, dynamic>{
+        'cta': 'settings_open_delete_account_dialog'
+      },
     );
     showDialog<void>(
       context: context,
@@ -643,7 +662,9 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'settings_confirm_delete_account'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'settings_confirm_delete_account'
+                  },
                 );
                 Navigator.pop(context);
                 // Delete account logic
@@ -746,7 +767,8 @@ class _SettingsSection extends StatelessWidget {
                 children.length * 2 - 1,
                 (int index) {
                   if (index.isOdd) {
-                    return Divider(height: 1, color: colorScheme.outlineVariant);
+                    return Divider(
+                        height: 1, color: colorScheme.outlineVariant);
                   }
                   return children[index ~/ 2];
                 },

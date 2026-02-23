@@ -52,9 +52,12 @@ void main() {
 
       final String content = pubspec.readAsStringSync();
       // Match `version: X.Y.Z[-prerelease]+B`
-      final RegExp semverBuild = RegExp(r'version:\s+(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)\+(\d+)');
+      final RegExp semverBuild =
+          RegExp(r'version:\s+(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)\+(\d+)');
       final RegExpMatch? match = semverBuild.firstMatch(content);
-      expect(match, isNotNull, reason: 'pubspec version must be semver[+prerelease]+build (e.g., 1.0.0+1 or 1.0.0-rc.2+2)');
+      expect(match, isNotNull,
+          reason:
+              'pubspec version must be semver[+prerelease]+build (e.g., 1.0.0+1 or 1.0.0-rc.2+2)');
 
       final String semver = match!.group(1)!;
       final int buildNumber = int.parse(match.group(2)!);
@@ -85,7 +88,8 @@ void main() {
       final File nvmrc = File('$root/.nvmrc');
       final File funcPkg = File('$root/functions/package.json');
       expect(nvmrc.existsSync(), isTrue, reason: '.nvmrc must exist');
-      expect(funcPkg.existsSync(), isTrue, reason: 'functions/package.json must exist');
+      expect(funcPkg.existsSync(), isTrue,
+          reason: 'functions/package.json must exist');
 
       final String nvmrcVersion = nvmrc.readAsStringSync().trim();
       final Map<String, dynamic> pkg =
@@ -94,7 +98,8 @@ void main() {
           (pkg['engines'] as Map<String, dynamic>)['node'] as String;
 
       expect(engineNode, equals(nvmrcVersion),
-          reason: 'functions package.json engines.node ($engineNode) must match .nvmrc ($nvmrcVersion)');
+          reason:
+              'functions package.json engines.node ($engineNode) must match .nvmrc ($nvmrcVersion)');
     });
 
     // ── 1.5 Functions package-lock.json exists ──
@@ -106,8 +111,7 @@ void main() {
 
     // ── 1.6 Android applicationId matches bundle convention ──
     test('Android applicationId is com.scholesa.app', () {
-      final File buildGradle =
-          File('android/app/build.gradle.kts');
+      final File buildGradle = File('android/app/build.gradle.kts');
       expect(buildGradle.existsSync(), isTrue);
 
       final String content = buildGradle.readAsStringSync();
@@ -122,8 +126,10 @@ void main() {
       final String pubspecContent = File('pubspec.yaml').readAsStringSync();
 
       // All Firebase Flutter SDKs should be on a consistent major
-      final RegExp firebaseDep = RegExp(r'(firebase_\w+|cloud_\w+):\s+\^?(\d+)');
-      final Iterable<RegExpMatch> matches = firebaseDep.allMatches(pubspecContent);
+      final RegExp firebaseDep =
+          RegExp(r'(firebase_\w+|cloud_\w+):\s+\^?(\d+)');
+      final Iterable<RegExpMatch> matches =
+          firebaseDep.allMatches(pubspecContent);
       expect(matches.length, greaterThanOrEqualTo(3),
           reason: 'Should have at least 3 Firebase/cloud dependencies');
 
@@ -132,7 +138,8 @@ void main() {
       for (final RegExpMatch m in matches) {
         final int major = int.parse(m.group(2)!);
         expect(major, greaterThanOrEqualTo(3),
-            reason: '${m.group(1)} major version ($major) should be ≥3 (FlutterFire v2+)');
+            reason:
+                '${m.group(1)} major version ($major) should be ≥3 (FlutterFire v2+)');
       }
     });
   });
@@ -146,7 +153,8 @@ void main() {
     // ── 2.1 .env.example declares all required client vars ──
     test('.env.example contains all required client-side Firebase vars', () {
       final File envExample = File('$root/.env.example');
-      expect(envExample.existsSync(), isTrue, reason: '.env.example must exist');
+      expect(envExample.existsSync(), isTrue,
+          reason: '.env.example must exist');
 
       final String content = envExample.readAsStringSync();
 
@@ -160,7 +168,8 @@ void main() {
       ];
 
       for (final String v in requiredClientVars) {
-        expect(content.contains(v), isTrue, reason: '.env.example must declare $v');
+        expect(content.contains(v), isTrue,
+            reason: '.env.example must declare $v');
       }
     });
 
@@ -169,9 +178,12 @@ void main() {
       final String content = File('$root/.env.example').readAsStringSync();
 
       // At least one server-side auth mechanism should be documented
-      final bool hasServiceAccount = content.contains('FIREBASE_SERVICE_ACCOUNT');
-      final bool hasAdcCreds = content.contains('GOOGLE_APPLICATION_CREDENTIALS');
-      final bool hasAdminEmail = content.contains('FIREBASE_ADMIN_CLIENT_EMAIL');
+      final bool hasServiceAccount =
+          content.contains('FIREBASE_SERVICE_ACCOUNT');
+      final bool hasAdcCreds =
+          content.contains('GOOGLE_APPLICATION_CREDENTIALS');
+      final bool hasAdminEmail =
+          content.contains('FIREBASE_ADMIN_CLIENT_EMAIL');
 
       expect(hasServiceAccount || hasAdcCreds || hasAdminEmail, isTrue,
           reason: '.env.example must document at least one server auth method');
@@ -186,7 +198,8 @@ void main() {
       expect(
         RegExp(r'^STRIPE_SECRET_KEY=\S', multiLine: true).hasMatch(content),
         isFalse,
-        reason: 'STRIPE_SECRET_KEY must not have a value in .env.example (use Firebase Secrets)',
+        reason:
+            'STRIPE_SECRET_KEY must not have a value in .env.example (use Firebase Secrets)',
       );
       expect(
         RegExp(r'^STRIPE_WEBHOOK_SECRET=\S', multiLine: true).hasMatch(content),
@@ -212,14 +225,16 @@ void main() {
         expect(
           RegExp(r'STRIPE_PRICE_\w+=rk_').hasMatch(content),
           isFalse,
-          reason: '${envFile.path} has a Stripe restricted key in a PRICE field — use price_xxx IDs',
+          reason:
+              '${envFile.path} has a Stripe restricted key in a PRICE field — use price_xxx IDs',
         );
 
         // No secret keys (sk_live_, sk_test_) anywhere in env files
         expect(
           content.contains('sk_live_') || content.contains('sk_test_'),
           isFalse,
-          reason: '${envFile.path} leaks a Stripe secret key — use Firebase Secrets instead',
+          reason:
+              '${envFile.path} leaks a Stripe secret key — use Firebase Secrets instead',
         );
 
         // No restricted keys in non-Stripe fields either
@@ -233,7 +248,8 @@ void main() {
 
     // ── 2.3c defineSecret vs defineString separation is correct ──
     test('Stripe secrets use defineSecret, price IDs use defineString', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       // STRIPE_SECRET_KEY must be defineSecret
       expect(funcSrc.contains("defineSecret('STRIPE_SECRET_KEY')"), isTrue,
@@ -271,9 +287,10 @@ void main() {
     // ── 2.5 firebase.json runtime matches .nvmrc ──
     test('firebase.json functions runtime matches Node version', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
-      final String runtime =
-          (firebaseJson['functions'] as Map<String, dynamic>)['runtime'] as String;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final String runtime = (firebaseJson['functions']
+          as Map<String, dynamic>)['runtime'] as String;
 
       final String nvmrc = File('$root/.nvmrc').readAsStringSync().trim();
       expect(runtime, equals('nodejs$nvmrc'),
@@ -282,7 +299,8 @@ void main() {
 
     // ── 2.6 Functions defineSecret/defineString have safe defaults ──
     test('Cloud Functions define safe defaults for non-secret params', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       // defineString params should have defaults
       final RegExp defineStringWithDefault =
@@ -310,7 +328,8 @@ void main() {
     // ── 2.8 Emulator ports are non-conflicting ──
     test('Firebase emulator ports are unique and non-conflicting', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
       final Map<String, dynamic> emulators =
           firebaseJson['emulators'] as Map<String, dynamic>;
 
@@ -375,7 +394,8 @@ void main() {
     // ── 3.3 Deploy uses git SHA for image tagging (versioned artifact) ──
     test('Cloud Run deploy tags images with git SHA', () {
       final String content =
-          File('$root/.github/workflows/deploy-cloud-run.yml').readAsStringSync();
+          File('$root/.github/workflows/deploy-cloud-run.yml')
+              .readAsStringSync();
 
       expect(content.contains(r'${{ github.sha }}'), isTrue,
           reason: 'Docker image must be tagged with git SHA for traceability');
@@ -423,9 +443,11 @@ void main() {
 
     // ── 3.7 Functions build script compiles TypeScript ──
     test('Functions package.json has build and deploy scripts', () {
-      final Map<String, dynamic> pkg = jsonDecode(
-          File('$root/functions/package.json').readAsStringSync()) as Map<String, dynamic>;
-      final Map<String, dynamic> scripts = pkg['scripts'] as Map<String, dynamic>;
+      final Map<String, dynamic> pkg =
+          jsonDecode(File('$root/functions/package.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final Map<String, dynamic> scripts =
+          pkg['scripts'] as Map<String, dynamic>;
 
       expect(scripts.containsKey('build'), isTrue);
       expect(scripts['build'], equals('tsc'),
@@ -444,7 +466,8 @@ void main() {
       final List<dynamic> compositeIndexes =
           content['indexes'] as List<dynamic>? ?? <dynamic>[];
       expect(compositeIndexes.length, greaterThanOrEqualTo(5),
-          reason: 'Should have at least 5 composite indexes for production queries');
+          reason:
+              'Should have at least 5 composite indexes for production queries');
     });
   });
 
@@ -476,7 +499,8 @@ void main() {
     // ── 4.3 Multiple config layers are independently deployable ──
     test('Firebase deployment layers are separable', () {
       final Map<String, dynamic> firebase =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
 
       // Each of these should be independently deployable:
       // `firebase deploy --only firestore:rules`
@@ -487,15 +511,17 @@ void main() {
       expect(firebase.containsKey('functions'), isTrue,
           reason: 'Functions config must be present for independent deploy');
       expect(firebase.containsKey('hosting'), isFalse,
-        reason: 'Hosting config should be absent when Cloud Run is the web deploy target');
+          reason:
+              'Hosting config should be absent when Cloud Run is the web deploy target');
       expect(firebase.containsKey('storage'), isTrue,
           reason: 'Storage config must be present for independent deploy');
     });
 
     // ── 4.4 Functions entry point exists ──
     test('Functions compiled entry point is specified', () {
-      final Map<String, dynamic> pkg = jsonDecode(
-          File('$root/functions/package.json').readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> pkg =
+          jsonDecode(File('$root/functions/package.json').readAsStringSync())
+              as Map<String, dynamic>;
       final String main = pkg['main'] as String;
       expect(main, equals('lib/index.js'),
           reason: 'Functions main must point to compiled output');
@@ -540,7 +566,8 @@ void main() {
   group('Monitoring & Alert Regression', () {
     // ── 5.1 Health check endpoint exists ──
     test('healthCheck function exists in Cloud Functions', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       expect(funcSrc.contains('export const healthCheck'), isTrue,
           reason: 'healthCheck HTTP endpoint must be exported');
@@ -550,8 +577,10 @@ void main() {
     });
 
     // ── 5.2 Health check returns structured response ──
-    test('healthCheck returns healthy/unhealthy status with service details', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+    test('healthCheck returns healthy/unhealthy status with service details',
+        () {
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       expect(funcSrc.contains("'healthy'"), isTrue,
           reason: 'healthCheck must return healthy status string');
@@ -564,7 +593,8 @@ void main() {
 
     // ── 5.3 Scheduled monitoring jobs exist ──
     test('Scheduled monitoring functions are defined', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       const List<String> requiredScheduledJobs = <String>[
         'monitorWebhookHealth',
@@ -581,7 +611,8 @@ void main() {
 
     // ── 5.4 Webhook health monitor has alert threshold ──
     test('monitorWebhookHealth creates alerts on threshold breach', () {
-      final String funcSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String funcSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
 
       // Should create alert documents when failure rate exceeds threshold
       expect(funcSrc.contains('alerts'), isTrue,
@@ -605,7 +636,8 @@ void main() {
 
     // ── 5.5b All exported functions use v2 imports (no v1→v2 upgrade errors) ──
     test('All Cloud Functions use v2 imports exclusively', () {
-      final String indexSrc = File('$root/functions/src/index.ts').readAsStringSync();
+      final String indexSrc =
+          File('$root/functions/src/index.ts').readAsStringSync();
       final String aggSrc =
           File('$root/functions/src/telemetryAggregator.ts').readAsStringSync();
       final String bosSrc =
@@ -614,7 +646,8 @@ void main() {
       // Index must import from v2
       expect(indexSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
           reason: 'index.ts must use firebase-functions/v2/https');
-      expect(indexSrc.contains("from 'firebase-functions/v2/scheduler'"), isTrue,
+      expect(
+          indexSrc.contains("from 'firebase-functions/v2/scheduler'"), isTrue,
           reason: 'index.ts must use firebase-functions/v2/scheduler');
 
       // Telemetry aggregator must import from v2
@@ -636,7 +669,8 @@ void main() {
         expect(
           RegExp(r"from\s+'firebase-functions'(?!/v2)").hasMatch(entry.value),
           isFalse,
-          reason: '${entry.key} must not import from firebase-functions v1 (use /v2/)',
+          reason:
+              '${entry.key} must not import from firebase-functions v1 (use /v2/)',
         );
       }
     });
@@ -666,7 +700,8 @@ void main() {
     // ── 5.7 Firebase emulators are configured for local debugging ──
     test('Firebase emulators cover all critical services', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
       final Map<String, dynamic> emulators =
           firebaseJson['emulators'] as Map<String, dynamic>;
 
@@ -680,7 +715,8 @@ void main() {
       for (final String emu in requiredEmulators) {
         expect(emulators.containsKey(emu), isTrue,
             reason: '$emu emulator must be configured');
-        final Map<String, dynamic> config = emulators[emu] as Map<String, dynamic>;
+        final Map<String, dynamic> config =
+            emulators[emu] as Map<String, dynamic>;
         expect(config.containsKey('port'), isTrue,
             reason: '$emu emulator must have a port');
       }
@@ -701,8 +737,7 @@ void main() {
 
       expect(manifest.existsSync(), isTrue,
           reason: 'manifest.webmanifest must exist to avoid 404');
-      expect(sw.existsSync(), isTrue,
-          reason: 'sw.js must exist to avoid 404');
+      expect(sw.existsSync(), isTrue, reason: 'sw.js must exist to avoid 404');
 
       // Manifest must have required fields
       final Map<String, dynamic> manifestJson =
@@ -772,12 +807,12 @@ void main() {
       // Android
       final String androidGradle =
           File('android/app/build.gradle.kts').readAsStringSync();
-      expect(androidGradle.contains('applicationId = "$expectedBundleId"'), isTrue,
+      expect(
+          androidGradle.contains('applicationId = "$expectedBundleId"'), isTrue,
           reason: 'Android applicationId must be $expectedBundleId');
 
       // iOS
-      final File iosProject =
-          File('ios/Runner.xcodeproj/project.pbxproj');
+      final File iosProject = File('ios/Runner.xcodeproj/project.pbxproj');
       if (iosProject.existsSync()) {
         final String iosContent = iosProject.readAsStringSync();
         expect(iosContent.contains(expectedBundleId), isTrue,
@@ -785,8 +820,7 @@ void main() {
       }
 
       // macOS
-      final File macosConfig =
-          File('macos/Runner/Configs/AppInfo.xcconfig');
+      final File macosConfig = File('macos/Runner/Configs/AppInfo.xcconfig');
       if (macosConfig.existsSync()) {
         final String macosContent = macosConfig.readAsStringSync();
         expect(macosContent.contains(expectedBundleId), isTrue,
@@ -796,9 +830,10 @@ void main() {
 
     test('Firebase functions source directory exists and has entry point', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
-      final String funcSource =
-          (firebaseJson['functions'] as Map<String, dynamic>)['source'] as String;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final String funcSource = (firebaseJson['functions']
+          as Map<String, dynamic>)['source'] as String;
 
       final Directory funcDir = Directory('$root/$funcSource');
       expect(funcDir.existsSync(), isTrue,
@@ -811,9 +846,10 @@ void main() {
 
     test('Firestore rules file referenced in firebase.json exists', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
-      final String rulesPath =
-          (firebaseJson['firestore'] as Map<String, dynamic>)['rules'] as String;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final String rulesPath = (firebaseJson['firestore']
+          as Map<String, dynamic>)['rules'] as String;
 
       expect(File('$root/$rulesPath').existsSync(), isTrue,
           reason: 'Firestore rules file ($rulesPath) must exist');
@@ -821,7 +857,8 @@ void main() {
 
     test('Storage rules file referenced in firebase.json exists', () {
       final Map<String, dynamic> firebaseJson =
-          jsonDecode(File('$root/firebase.json').readAsStringSync()) as Map<String, dynamic>;
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
       final String rulesPath =
           (firebaseJson['storage'] as Map<String, dynamic>)['rules'] as String;
 

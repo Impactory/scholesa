@@ -129,7 +129,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.description_rounded, color: Colors.white, size: 24),
+                    child: const Icon(Icons.description_rounded,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -280,7 +281,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
         minChildSize: 0.4,
         maxChildSize: 0.9,
         expand: false,
-        builder: (BuildContext context, ScrollController scrollController) => Padding(
+        builder: (BuildContext context, ScrollController scrollController) =>
+            Padding(
           padding: const EdgeInsets.all(24),
           child: ListView(
             controller: scrollController,
@@ -300,7 +302,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildInfoRow('Total Value', '\$${contract.totalValue.toStringAsFixed(2)}'),
+              _buildInfoRow(
+                  'Total Value', '\$${contract.totalValue.toStringAsFixed(2)}'),
               _buildInfoRow('Site ID', contract.siteId),
               if (contract.startDate != null)
                 _buildInfoRow('Start Date', _formatDate(contract.startDate!)),
@@ -322,16 +325,18 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                 )
               else
                 ...contract.deliverables.map((PartnerDeliverable d) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    d.status == DeliverableStatus.accepted
-                        ? Icons.check_circle_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: d.status == DeliverableStatus.accepted ? Colors.green : Colors.grey,
-                  ),
-                  title: Text(d.title),
-                  subtitle: Text(d.status.name),
-                )),
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        d.status == DeliverableStatus.accepted
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: d.status == DeliverableStatus.accepted
+                            ? Colors.green
+                            : Colors.grey,
+                      ),
+                      title: Text(d.title),
+                      subtitle: Text(d.status.name),
+                    )),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {

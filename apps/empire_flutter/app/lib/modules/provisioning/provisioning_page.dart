@@ -133,7 +133,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
         'tab_index': currentTab,
       },
     );
-    
+
     switch (currentTab) {
       case 0:
         _showCreateLearnerDialog(context);
@@ -194,7 +194,8 @@ class _LearnersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ProvisioningService>(
-      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+      builder:
+          (BuildContext context, ProvisioningService service, Widget? child) {
         if (service.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -233,7 +234,9 @@ class _LearnersTab extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: CircleAvatar(
-                    child: Text(learner.displayName.isNotEmpty ? learner.displayName[0] : '?'),
+                    child: Text(learner.displayName.isNotEmpty
+                        ? learner.displayName[0]
+                        : '?'),
                   ),
                   title: Text(learner.displayName),
                   subtitle: learner.gradeLevel != null
@@ -283,7 +286,8 @@ class _LearnersTab extends StatelessWidget {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (BuildContext ctx) => _EditLearnerDialog(learner: learner),
+                builder: (BuildContext ctx) =>
+                    _EditLearnerDialog(learner: learner),
               );
             },
           ),
@@ -319,7 +323,8 @@ class _ParentsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ProvisioningService>(
-      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+      builder:
+          (BuildContext context, ProvisioningService service, Widget? child) {
         if (service.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -360,7 +365,9 @@ class _ParentsTab extends StatelessWidget {
                   leading: CircleAvatar(
                     backgroundColor: Colors.blue,
                     child: Text(
-                      parent.displayName.isNotEmpty ? parent.displayName[0] : '?',
+                      parent.displayName.isNotEmpty
+                          ? parent.displayName[0]
+                          : '?',
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -410,7 +417,8 @@ class _ParentsTab extends StatelessWidget {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (BuildContext ctx) => _EditParentDialog(parent: parent),
+                builder: (BuildContext ctx) =>
+                    _EditParentDialog(parent: parent),
               );
             },
           ),
@@ -446,7 +454,8 @@ class _LinksTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ProvisioningService>(
-      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+      builder:
+          (BuildContext context, ProvisioningService service, Widget? child) {
         if (service.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -485,14 +494,16 @@ class _LinksTab extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: const Icon(Icons.link, size: 32),
-                  title: Text('${link.parentName ?? link.parentId} → ${link.learnerName ?? link.learnerId}'),
+                  title: Text(
+                      '${link.parentName ?? link.parentId} → ${link.learnerName ?? link.learnerId}'),
                   subtitle: Row(
                     children: <Widget>[
                       Text(link.relationship),
                       if (link.isPrimary) ...<Widget>[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.green[100],
                             borderRadius: BorderRadius.circular(4),
@@ -531,7 +542,8 @@ class _LinksTab extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, GuardianLink link, ProvisioningService service) {
+  void _confirmDelete(
+      BuildContext context, GuardianLink link, ProvisioningService service) {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -569,7 +581,8 @@ class _LinksTab extends StatelessWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(success ? 'Link removed' : 'Failed to remove link'),
+                    content: Text(
+                        success ? 'Link removed' : 'Failed to remove link'),
                   ),
                 );
               }
@@ -614,9 +627,9 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
         'cta_id': 'submit_create_learner',
       },
     );
-    
+
     setState(() => _isSubmitting = true);
-    
+
     final appState = context.read<AppState>();
     final siteId = appState.activeSiteId;
     if (siteId == null) {
@@ -755,9 +768,9 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
         'cta_id': 'submit_create_parent',
       },
     );
-    
+
     setState(() => _isSubmitting = true);
-    
+
     final appState = context.read<AppState>();
     final siteId = appState.activeSiteId;
     if (siteId == null) {
@@ -874,7 +887,14 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
   bool _isPrimary = false;
   bool _isSubmitting = false;
 
-  final List<String> _relationships = <String>['Parent', 'Father', 'Mother', 'Guardian', 'Grandparent', 'Other'];
+  final List<String> _relationships = <String>[
+    'Parent',
+    'Father',
+    'Mother',
+    'Guardian',
+    'Grandparent',
+    'Other'
+  ];
 
   Future<void> _submit() async {
     if (_selectedParentId == null || _selectedLearnerId == null) return;
@@ -887,9 +907,9 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
         'learner_id': _selectedLearnerId,
       },
     );
-    
+
     setState(() => _isSubmitting = true);
-    
+
     final appState = context.read<AppState>();
     final siteId = appState.activeSiteId;
     if (siteId == null) {
@@ -926,7 +946,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ProvisioningService>(
-      builder: (BuildContext context, ProvisioningService service, Widget? child) {
+      builder:
+          (BuildContext context, ProvisioningService service, Widget? child) {
         final List<ParentProfile> parents = service.parents;
         final List<LearnerProfile> learners = service.learners;
 
@@ -976,7 +997,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                               child: Text(l.displayName),
                             ))
                         .toList(),
-                onChanged: (String? v) => setState(() => _selectedLearnerId = v),
+                onChanged: (String? v) =>
+                    setState(() => _selectedLearnerId = v),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -986,9 +1008,11 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                   prefixIcon: Icon(Icons.people),
                 ),
                 items: _relationships
-                    .map((String r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .map((String r) =>
+                        DropdownMenuItem(value: r, child: Text(r)))
                     .toList(),
-                onChanged: (String? v) => setState(() => _relationship = v ?? 'Parent'),
+                onChanged: (String? v) =>
+                    setState(() => _relationship = v ?? 'Parent'),
               ),
               const SizedBox(height: 16),
               SwitchListTile(
@@ -1010,7 +1034,9 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: _isSubmitting || _selectedParentId == null || _selectedLearnerId == null
+              onPressed: _isSubmitting ||
+                      _selectedParentId == null ||
+                      _selectedLearnerId == null
                   ? null
                   : _submit,
               child: _isSubmitting
@@ -1121,7 +1147,8 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
                 prefixIcon: Icon(Icons.school),
               ),
               items: List.generate(9, (int i) => i + 1)
-                  .map((int g) => DropdownMenuItem(value: g, child: Text('Grade $g')))
+                  .map((int g) =>
+                      DropdownMenuItem(value: g, child: Text('Grade $g')))
                   .toList(),
               onChanged: (int? v) => setState(() => _selectedGrade = v),
             ),
@@ -1135,7 +1162,9 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
               : () {
                   _logProvisioningCta(
                     'cancel_edit_learner',
-                    metadata: <String, dynamic>{'learner_id': widget.learner.id},
+                    metadata: <String, dynamic>{
+                      'learner_id': widget.learner.id
+                    },
                   );
                   Navigator.pop(context);
                 },

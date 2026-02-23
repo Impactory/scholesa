@@ -5,7 +5,6 @@ import 'educator_models.dart';
 
 /// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
-
   EducatorService({
     required FirestoreService firestoreService,
     required this.educatorId,
@@ -21,7 +20,8 @@ class EducatorService extends ChangeNotifier {
 
   // Getters
   List<TodayClass> get todayClasses => _todayClasses;
-  TodayClass? get currentClass => _todayClasses.where((TodayClass c) => c.isNow).firstOrNull;
+  TodayClass? get currentClass =>
+      _todayClasses.where((TodayClass c) => c.isNow).firstOrNull;
   List<TodayClass> get upcomingClasses =>
       _todayClasses.where((TodayClass c) => c.status == 'upcoming').toList();
   EducatorDayStats? get dayStats => _dayStats;
@@ -49,7 +49,8 @@ class EducatorService extends ChangeNotifier {
           .orderBy('startTime')
           .get();
 
-      _todayClasses = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _todayClasses =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return TodayClass(
           id: doc.id,
@@ -57,7 +58,8 @@ class EducatorService extends ChangeNotifier {
           title: data['title'] as String? ?? 'Session',
           description: data['description'] as String? ?? '',
           startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
-          endTime: _parseTimestamp(data['endTime']) ?? DateTime.now().add(const Duration(hours: 1)),
+          endTime: _parseTimestamp(data['endTime']) ??
+              DateTime.now().add(const Duration(hours: 1)),
           location: data['location'] as String? ?? '',
           enrolledCount: data['enrolledCount'] as int? ?? 0,
           presentCount: data['presentCount'] as int? ?? 0,
@@ -67,7 +69,8 @@ class EducatorService extends ChangeNotifier {
       }).toList();
 
       _dayStats = _calculateStats();
-      debugPrint('Loaded ${_todayClasses.length} classes for educator $educatorId');
+      debugPrint(
+          'Loaded ${_todayClasses.length} classes for educator $educatorId');
     } catch (e) {
       debugPrint('Error loading educator schedule: $e');
       _error = 'Failed to load schedule: $e';
@@ -94,9 +97,12 @@ class EducatorService extends ChangeNotifier {
   }
 
   EducatorDayStats _calculateStats() {
-    final int completed = _todayClasses.where((TodayClass c) => c.status == 'completed').length;
-    final int totalLearners = _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.enrolledCount);
-    final int presentLearners = _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.presentCount);
+    final int completed =
+        _todayClasses.where((TodayClass c) => c.status == 'completed').length;
+    final int totalLearners =
+        _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.enrolledCount);
+    final int presentLearners =
+        _todayClasses.fold(0, (int sum, TodayClass c) => sum + c.presentCount);
     return EducatorDayStats(
       totalClasses: _todayClasses.length,
       completedClasses: completed,
@@ -110,9 +116,10 @@ class EducatorService extends ChangeNotifier {
   /// Start a class (transition to in_progress)
   Future<bool> startClass(String classId) async {
     try {
-      final int index = _todayClasses.indexWhere((TodayClass c) => c.id == classId);
+      final int index =
+          _todayClasses.indexWhere((TodayClass c) => c.id == classId);
       if (index == -1) return false;
-      
+
       // In real implementation, would update server
       notifyListeners();
       return true;
@@ -124,7 +131,8 @@ class EducatorService extends ChangeNotifier {
   }
 
   /// Quick attendance mark - saves to Firebase
-  Future<bool> markAttendance(String classId, String learnerId, String status) async {
+  Future<bool> markAttendance(
+      String classId, String learnerId, String status) async {
     try {
       await _firestore.collection('attendanceRecords').add(<String, dynamic>{
         'sessionOccurrenceId': classId,
@@ -158,7 +166,8 @@ class EducatorService extends ChangeNotifier {
           .orderBy('startTime', descending: true)
           .get();
 
-      _sessions = snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _sessions =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return EducatorSession(
           id: doc.id,
@@ -166,7 +175,8 @@ class EducatorService extends ChangeNotifier {
           description: data['description'] as String? ?? '',
           pillar: data['pillar'] as String? ?? 'future_skills',
           startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
-          endTime: _parseTimestamp(data['endTime']) ?? DateTime.now().add(const Duration(hours: 1)),
+          endTime: _parseTimestamp(data['endTime']) ??
+              DateTime.now().add(const Duration(hours: 1)),
           location: data['location'] as String? ?? '',
           enrolledCount: data['enrolledCount'] as int? ?? 0,
           maxCapacity: data['maxCapacity'] as int? ?? 20,
@@ -248,13 +258,15 @@ class EducatorService extends ChangeNotifier {
     notifyListeners();
     try {
       // Get enrollments for this educator's sessions
-      final QuerySnapshot<Map<String, dynamic>> enrollmentSnapshot = await _firestore
-          .collection('enrollments')
-          .where('educatorId', isEqualTo: educatorId)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> enrollmentSnapshot =
+          await _firestore
+              .collection('enrollments')
+              .where('educatorId', isEqualTo: educatorId)
+              .get();
 
       final Set<String> learnerIds = enrollmentSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data()['learnerId'] as String?)
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              doc.data()['learnerId'] as String?)
           .whereType<String>()
           .toSet();
 
@@ -266,7 +278,7 @@ class EducatorService extends ChangeNotifier {
       // Fetch learner profiles
       final List<EducatorLearner> loadedLearners = <EducatorLearner>[];
       for (final String learnerId in learnerIds) {
-        final DocumentSnapshot<Map<String, dynamic>> doc = 
+        final DocumentSnapshot<Map<String, dynamic>> doc =
             await _firestore.collection('users').doc(learnerId).get();
         if (doc.exists) {
           final Map<String, dynamic> data = doc.data()!;
@@ -277,11 +289,14 @@ class EducatorService extends ChangeNotifier {
             attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
             missionsCompleted: data['missionsCompleted'] as int? ?? 0,
             pillarProgress: <String, double>{
-              'future_skills': (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
-              'leadership': (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
+              'future_skills':
+                  (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
+              'leadership':
+                  (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
               'impact': (data['impactProgress'] as num?)?.toDouble() ?? 0,
             },
-            enrolledSessionIds: List<String>.from(data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
+            enrolledSessionIds: List<String>.from(
+                data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
           ));
         }
       }

@@ -96,8 +96,12 @@ class CovarianceSummary {
         'confidence': confidence,
       };
 
-  factory CovarianceSummary.fromMap(Map<String, dynamic> m) => CovarianceSummary(
-        diag: ((m['diag'] as List<dynamic>?)?.map((dynamic e) => (e as num).toDouble()).toList()) ?? <double>[0.25, 0.25, 0.25],
+  factory CovarianceSummary.fromMap(Map<String, dynamic> m) =>
+      CovarianceSummary(
+        diag: ((m['diag'] as List<dynamic>?)
+                ?.map((dynamic e) => (e as num).toDouble())
+                .toList()) ??
+            <double>[0.25, 0.25, 0.25],
         trace: (m['trace'] as num?)?.toDouble() ?? 0.75,
         confidence: (m['confidence'] as num?)?.toDouble() ?? 0.25,
       );
@@ -139,14 +143,19 @@ class OrchestrationState {
         'lastUpdatedAt': lastUpdatedAt ?? FieldValue.serverTimestamp(),
       };
 
-  factory OrchestrationState.fromMap(Map<String, dynamic> m) => OrchestrationState(
+  factory OrchestrationState.fromMap(Map<String, dynamic> m) =>
+      OrchestrationState(
         siteId: m['siteId'] as String? ?? '',
         learnerId: m['learnerId'] as String? ?? '',
         sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
-        xHat: XHat.fromMap(m['x_hat'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        p: CovarianceSummary.fromMap(m['P'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        model: EstimatorModel.fromMap(m['model'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        fusion: FusionInfo.fromMap(m['fusion'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        xHat: XHat.fromMap(
+            m['x_hat'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        p: CovarianceSummary.fromMap(
+            m['P'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        model: EstimatorModel.fromMap(
+            m['model'] as Map<String, dynamic>? ?? <String, dynamic>{}),
+        fusion: FusionInfo.fromMap(
+            m['fusion'] as Map<String, dynamic>? ?? <String, dynamic>{}),
         lastUpdatedAt: m['lastUpdatedAt'] as Timestamp?,
       );
 }
@@ -196,7 +205,9 @@ class FusionInfo {
       };
 
   factory FusionInfo.fromMap(Map<String, dynamic> m) => FusionInfo(
-        familiesPresent: ((m['familiesPresent'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        familiesPresent:
+            ((m['familiesPresent'] as List<dynamic>?)?.cast<String>()) ??
+                <String>[],
         sensorFusionMet: m['sensorFusionMet'] as bool? ?? false,
       );
 }
@@ -249,15 +260,23 @@ class BosIntervention {
                 orElse: () => AiCoachMode.hint,
               )
             : null,
-        reasonCodes: ((m['reasonCodes'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
-        policy: m['policy'] != null ? PolicyTerms.fromMap(m['policy'] as Map<String, dynamic>) : null,
+        reasonCodes: ((m['reasonCodes'] as List<dynamic>?)?.cast<String>()) ??
+            <String>[],
+        policy: m['policy'] != null
+            ? PolicyTerms.fromMap(m['policy'] as Map<String, dynamic>)
+            : null,
         outcome: m['outcome'] as String?,
-        supervision: m['supervision'] != null ? SupervisoryControl.fromMap(m['supervision'] as Map<String, dynamic>) : null,
+        supervision: m['supervision'] != null
+            ? SupervisoryControl.fromMap(
+                m['supervision'] as Map<String, dynamic>)
+            : null,
       );
 }
 
 enum InterventionType { nudge, scaffold, handoff, revisit, pace }
+
 enum Salience { low, medium, high }
+
 enum AiCoachMode { hint, verify, explain, debug }
 
 // ──── §4.3  Policy terms ────
@@ -317,7 +336,8 @@ class SupervisoryControl {
         if (reason != null) 'reason': reason,
       };
 
-  factory SupervisoryControl.fromMap(Map<String, dynamic> m) => SupervisoryControl(
+  factory SupervisoryControl.fromMap(Map<String, dynamic> m) =>
+      SupervisoryControl(
         g: m['g'] as int? ?? 0,
         uBos: m['u_bos'] as Map<String, dynamic>?,
         uTeacher: m['u_teacher'] as Map<String, dynamic>?,
@@ -352,8 +372,12 @@ class FeatureWindow {
   factory FeatureWindow.fromMap(Map<String, dynamic> m) => FeatureWindow(
         window: m['window'] as String? ?? 'session',
         features: m['features'] as Map<String, dynamic>? ?? <String, dynamic>{},
-        yVec: (m['y_vec'] as List<dynamic>?)?.map((dynamic e) => (e as num).toDouble()).toList(),
-        quality: m['quality'] != null ? FeatureQuality.fromMap(m['quality'] as Map<String, dynamic>) : null,
+        yVec: (m['y_vec'] as List<dynamic>?)
+            ?.map((dynamic e) => (e as num).toDouble())
+            .toList(),
+        quality: m['quality'] != null
+            ? FeatureQuality.fromMap(m['quality'] as Map<String, dynamic>)
+            : null,
       );
 }
 
@@ -378,7 +402,9 @@ class FeatureQuality {
   factory FeatureQuality.fromMap(Map<String, dynamic> m) => FeatureQuality(
         missingness: (m['missingness'] as num?)?.toDouble() ?? 0.0,
         driftFlag: m['driftFlag'] as bool? ?? false,
-        fusionFamiliesPresent: ((m['fusionFamiliesPresent'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        fusionFamiliesPresent:
+            ((m['fusionFamiliesPresent'] as List<dynamic>?)?.cast<String>()) ??
+                <String>[],
       );
 }
 
@@ -442,7 +468,8 @@ class AutonomyRisk {
       };
 
   factory AutonomyRisk.fromMap(Map<String, dynamic> m) => AutonomyRisk(
-        signals: ((m['signals'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+        signals:
+            ((m['signals'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
         riskScore: (m['riskScore'] as num?)?.toDouble() ?? 0.0,
         threshold: (m['threshold'] as num?)?.toDouble() ?? 0.5,
       );
@@ -500,9 +527,15 @@ class MvlEpisode {
       learnerId: m['learnerId'] as String? ?? '',
       sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
       triggerReason: m['triggerReason'] as String? ?? '',
-      reliabilityRisk: m['reliability'] != null ? ReliabilityRisk.fromMap(m['reliability'] as Map<String, dynamic>) : null,
-      autonomyRisk: m['autonomy'] != null ? AutonomyRisk.fromMap(m['autonomy'] as Map<String, dynamic>) : null,
-      evidenceEventIds: ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      reliabilityRisk: m['reliability'] != null
+          ? ReliabilityRisk.fromMap(m['reliability'] as Map<String, dynamic>)
+          : null,
+      autonomyRisk: m['autonomy'] != null
+          ? AutonomyRisk.fromMap(m['autonomy'] as Map<String, dynamic>)
+          : null,
+      evidenceEventIds:
+          ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ??
+              <String>[],
       resolution: m['resolution'] as String?,
       resolvedAt: m['resolvedAt'] as Timestamp?,
       createdAt: m['createdAt'] as Timestamp?,
@@ -624,7 +657,8 @@ class BosEvent {
         'gradeBand': gradeBand.code,
         'contextMode': contextMode.code,
         if (actorIdPseudo != null) 'actorIdPseudo': actorIdPseudo,
-        if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
+        if (sessionOccurrenceId != null)
+          'sessionOccurrenceId': sessionOccurrenceId,
         if (missionId != null) 'missionId': missionId,
         if (checkpointId != null) 'checkpointId': checkpointId,
         if (assignmentId != null) 'assignmentId': assignmentId,
@@ -651,7 +685,8 @@ class GradeBandPolicy {
   /// Returns true if the intervention is "high assist"
   static bool isHighAssist(BosIntervention intervention) {
     if (intervention.salience == Salience.high) return true;
-    if (intervention.type == InterventionType.scaffold && intervention.mode == AiCoachMode.hint) {
+    if (intervention.type == InterventionType.scaffold &&
+        intervention.mode == AiCoachMode.hint) {
       return true;
     }
     return false;
@@ -706,7 +741,8 @@ class AiCoachRequest {
         'learnerId': learnerId,
         'gradeBand': gradeBand.code,
         'mode': mode.name,
-        if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
+        if (sessionOccurrenceId != null)
+          'sessionOccurrenceId': sessionOccurrenceId,
         'context': <String, dynamic>{
           if (missionId != null) 'missionId': missionId,
           if (checkpointId != null) 'checkpointId': checkpointId,
@@ -763,7 +799,9 @@ class AiCoachResponse {
         orElse: () => AiCoachMode.hint,
       ),
       requiresExplainBack: m['requiresExplainBack'] as bool? ?? false,
-      suggestedNextSteps: ((m['suggestedNextSteps'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      suggestedNextSteps:
+          ((m['suggestedNextSteps'] as List<dynamic>?)?.cast<String>()) ??
+              <String>[],
       learnerState: m['learnerState'] != null
           ? XHat.fromMap(m['learnerState'] as Map<String, dynamic>)
           : null,

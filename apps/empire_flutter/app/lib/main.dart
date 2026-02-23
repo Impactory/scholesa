@@ -103,10 +103,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
       _firestoreService = FirestoreService();
       _storageService = StorageService.instance;
       _offlineQueue = OfflineQueue();
-      
+
       // Initialize offline queue
       await _offlineQueue.init();
-      
+
       _syncCoordinator = SyncCoordinator(
         queue: _offlineQueue,
         firestoreService: _firestoreService,
@@ -204,48 +204,49 @@ class _ScholesaAppState extends State<ScholesaApp> {
         // Site Check-in services
         ChangeNotifierProvider(
           create: (_) => CheckinService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             siteId: _appState.activeSiteId ?? 'default_site',
           ),
         ),
         // Learner Missions services
         ChangeNotifierProvider(
           create: (_) => MissionService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             learnerId: _appState.userId ?? '',
           ),
         ),
         // Learner Habits services
         ChangeNotifierProvider(
           create: (_) => HabitService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             learnerId: _appState.userId ?? '',
           ),
         ),
         // Messages services
         ChangeNotifierProvider(
           create: (_) => MessageService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             userId: _appState.userId ?? '',
           ),
         ),
         // Parent services
         ChangeNotifierProvider(
           create: (_) => ParentService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             parentId: _appState.userId ?? '',
           ),
         ),
         // Educator services
         ChangeNotifierProvider(
           create: (_) => EducatorService(
-            firestoreService: _firestoreService, 
+            firestoreService: _firestoreService,
             educatorId: _appState.userId ?? '',
           ),
         ),
       ],
       child: Consumer<ThemeService>(
-        builder: (BuildContext context, ThemeService themeService, Widget? child) {
+        builder:
+            (BuildContext context, ThemeService themeService, Widget? child) {
           return MaterialApp.router(
             title: 'Scholesa',
             debugShowCheckedModeBanner: false,
@@ -261,7 +262,6 @@ class _ScholesaAppState extends State<ScholesaApp> {
 }
 
 class _ErrorBootstrapScreen extends StatelessWidget {
-
   const _ErrorBootstrapScreen({
     required this.error,
     required this.onRetry,

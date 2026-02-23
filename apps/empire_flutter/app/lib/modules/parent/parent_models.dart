@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 /// Model for a learner's summary visible to parents
-class LearnerSummary extends Equatable { // Progress per pillar (0-1)
+class LearnerSummary extends Equatable {
+  // Progress per pillar (0-1)
 
   const LearnerSummary({
     required this.learnerId,
@@ -30,15 +31,22 @@ class LearnerSummary extends Equatable { // Progress per pillar (0-1)
 
   @override
   List<Object?> get props => <Object?>[
-        learnerId, learnerName, photoUrl, currentLevel, totalXp,
-        missionsCompleted, currentStreak, attendanceRate,
-        recentActivities, upcomingEvents, pillarProgress,
+        learnerId,
+        learnerName,
+        photoUrl,
+        currentLevel,
+        totalXp,
+        missionsCompleted,
+        currentStreak,
+        attendanceRate,
+        recentActivities,
+        upcomingEvents,
+        pillarProgress,
       ];
 }
 
 /// Recent activity item
 class RecentActivity extends Equatable {
-
   const RecentActivity({
     required this.id,
     required this.title,
@@ -55,12 +63,12 @@ class RecentActivity extends Equatable {
   final DateTime timestamp;
 
   @override
-  List<Object?> get props => <Object?>[id, title, description, type, emoji, timestamp];
+  List<Object?> get props =>
+      <Object?>[id, title, description, type, emoji, timestamp];
 }
 
 /// Upcoming event for calendar
 class UpcomingEvent extends Equatable {
-
   const UpcomingEvent({
     required this.id,
     required this.title,
@@ -77,12 +85,12 @@ class UpcomingEvent extends Equatable {
   final String? location;
 
   @override
-  List<Object?> get props => <Object?>[id, title, description, dateTime, type, location];
+  List<Object?> get props =>
+      <Object?>[id, title, description, dateTime, type, location];
 }
 
 /// Billing summary for parents
 class BillingSummary extends Equatable {
-
   const BillingSummary({
     required this.currentBalance,
     required this.nextPaymentAmount,
@@ -98,14 +106,16 @@ class BillingSummary extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        currentBalance, nextPaymentAmount, nextPaymentDate,
-        subscriptionPlan, recentPayments,
+        currentBalance,
+        nextPaymentAmount,
+        nextPaymentDate,
+        subscriptionPlan,
+        recentPayments,
       ];
 }
 
 /// Payment history item
 class PaymentHistory extends Equatable {
-
   const PaymentHistory({
     required this.id,
     required this.amount,

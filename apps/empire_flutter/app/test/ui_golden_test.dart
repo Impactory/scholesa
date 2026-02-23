@@ -87,7 +87,8 @@ void main() {
       );
     });
 
-    testWidgets('Login page - validation error state', (WidgetTester tester) async {
+    testWidgets('Login page - validation error state',
+        (WidgetTester tester) async {
       await _pumpSized(
         tester,
         size: const Size(390, 844),
@@ -118,8 +119,10 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'test@scholesa.com');
-      await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'password123');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Email'), 'test@scholesa.com');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Password'), 'password123');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
       await tester.pump();
 

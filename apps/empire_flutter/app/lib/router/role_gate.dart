@@ -5,7 +5,6 @@ import '../services/telemetry_service.dart';
 
 /// Gate that restricts access to routes based on user role
 class RoleGate extends StatelessWidget {
-
   const RoleGate({
     super.key,
     required this.allowedRoles,
@@ -21,17 +20,17 @@ class RoleGate extends StatelessWidget {
     return Consumer<AppState>(
       builder: (BuildContext context, AppState appState, _) {
         final UserRole? role = appState.role;
-        
+
         if (role == null) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
-        
+
         if (!allowedRoles.contains(role)) {
           return accessDeniedWidget ?? _AccessDeniedScreen(role: role);
         }
-        
+
         return child;
       },
     );
@@ -39,7 +38,6 @@ class RoleGate extends StatelessWidget {
 }
 
 class _AccessDeniedScreen extends StatelessWidget {
-
   const _AccessDeniedScreen({required this.role});
   final UserRole role;
 
@@ -70,15 +68,18 @@ class _AccessDeniedScreen extends StatelessWidget {
               Text(
                 'Your current role: ${role.name}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                      color: Colors.grey[600],
+                    ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
-                    metadata: <String, dynamic>{'cta': 'role_gate_go_back', 'role': role.name},
+                    metadata: <String, dynamic>{
+                      'cta': 'role_gate_go_back',
+                      'role': role.name
+                    },
                   );
                   Navigator.of(context).pop();
                 },
@@ -94,7 +95,6 @@ class _AccessDeniedScreen extends StatelessWidget {
 
 /// Entitlement gate for feature-gated content
 class EntitlementGate extends StatelessWidget {
-
   const EntitlementGate({
     super.key,
     required this.feature,
@@ -112,7 +112,7 @@ class EntitlementGate extends StatelessWidget {
         if (appState.hasEntitlement(feature)) {
           return child;
         }
-        
+
         return lockedWidget ?? _LockedFeatureCard(feature: feature);
       },
     );
@@ -120,7 +120,6 @@ class EntitlementGate extends StatelessWidget {
 }
 
 class _LockedFeatureCard extends StatelessWidget {
-
   const _LockedFeatureCard({required this.feature});
   final String feature;
 
@@ -146,8 +145,8 @@ class _LockedFeatureCard extends StatelessWidget {
             Text(
               'Contact your administrator for access.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
-              ),
+                    color: Colors.grey[600],
+                  ),
             ),
           ],
         ),

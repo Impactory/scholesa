@@ -148,10 +148,14 @@ class _HqBillingPageState extends State<HqBillingPage>
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(value: 'all', child: Text('All Sites')),
-                  DropdownMenuItem<String>(value: 'sg', child: Text('Singapore')),
-                  DropdownMenuItem<String>(value: 'kl', child: Text('Kuala Lumpur')),
-                  DropdownMenuItem<String>(value: 'jkt', child: Text('Jakarta')),
+                  DropdownMenuItem<String>(
+                      value: 'all', child: Text('All Sites')),
+                  DropdownMenuItem<String>(
+                      value: 'sg', child: Text('Singapore')),
+                  DropdownMenuItem<String>(
+                      value: 'kl', child: Text('Kuala Lumpur')),
+                  DropdownMenuItem<String>(
+                      value: 'jkt', child: Text('Jakarta')),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -184,9 +188,12 @@ class _HqBillingPageState extends State<HqBillingPage>
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(value: 'month', child: Text('This Month')),
-                  DropdownMenuItem<String>(value: 'quarter', child: Text('This Quarter')),
-                  DropdownMenuItem<String>(value: 'year', child: Text('This Year')),
+                  DropdownMenuItem<String>(
+                      value: 'month', child: Text('This Month')),
+                  DropdownMenuItem<String>(
+                      value: 'quarter', child: Text('This Quarter')),
+                  DropdownMenuItem<String>(
+                      value: 'year', child: Text('This Year')),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -268,7 +275,8 @@ class _HqBillingPageState extends State<HqBillingPage>
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.trending_up, size: 14, color: Colors.white),
+                          Icon(Icons.trending_up,
+                              size: 14, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
                             '+18.2% vs last period',
@@ -526,7 +534,6 @@ class _HqBillingPageState extends State<HqBillingPage>
 }
 
 class _RevenueStatCard extends StatelessWidget {
-
   const _RevenueStatCard({
     required this.label,
     required this.value,
@@ -573,7 +580,6 @@ class _RevenueStatCard extends StatelessWidget {
 }
 
 class _InvoiceCard extends StatelessWidget {
-
   const _InvoiceCard({required this.invoice});
   final Map<String, dynamic> invoice;
 
@@ -661,7 +667,8 @@ class _InvoiceCard extends StatelessWidget {
                     color: ScholesaColors.hq.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.receipt_long, color: ScholesaColors.hq),
+                  child:
+                      const Icon(Icons.receipt_long, color: ScholesaColors.hq),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -743,7 +750,6 @@ class _InvoiceCard extends StatelessWidget {
 }
 
 class _PaymentCard extends StatelessWidget {
-
   const _PaymentCard({required this.payment});
   final Map<String, dynamic> payment;
 
@@ -766,7 +772,8 @@ class _PaymentCard extends StatelessWidget {
                 color: ScholesaColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.check_circle, color: ScholesaColors.success),
+              child:
+                  const Icon(Icons.check_circle, color: ScholesaColors.success),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -809,7 +816,6 @@ class _PaymentCard extends StatelessWidget {
 }
 
 class _SubscriptionCard extends StatelessWidget {
-
   const _SubscriptionCard({required this.subscription});
   final Map<String, dynamic> subscription;
 

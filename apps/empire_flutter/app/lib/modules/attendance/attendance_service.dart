@@ -7,7 +7,6 @@ import 'attendance_models.dart';
 
 /// Service for attendance operations
 class AttendanceService extends ChangeNotifier {
-
   AttendanceService({
     required ApiClient apiClient,
     required SyncCoordinator syncCoordinator,
@@ -46,7 +45,8 @@ class AttendanceService extends ChangeNotifier {
       // Build query based on available identifiers
       Query<Map<String, dynamic>> query = _firestore
           .collection('sessionOccurrences')
-          .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('startTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
           .orderBy('startTime');
 
@@ -59,15 +59,17 @@ class AttendanceService extends ChangeNotifier {
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
 
       _todayOccurrences = await Future.wait(
-        snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+        snapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
           final Map<String, dynamic> data = doc.data();
-          
+
           // Count enrolled learners
-          final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot = await _firestore
-              .collection('enrollments')
-              .where('sessionId', isEqualTo: data['sessionId'])
-              .where('status', isEqualTo: 'active')
-              .get();
+          final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
+              await _firestore
+                  .collection('enrollments')
+                  .where('sessionId', isEqualTo: data['sessionId'])
+                  .where('status', isEqualTo: 'active')
+                  .get();
 
           return SessionOccurrence(
             id: doc.id,
@@ -118,20 +120,24 @@ class AttendanceService extends ChangeNotifier {
       final String sessionId = occData['sessionId'] as String? ?? '';
 
       // Get enrollments for this session
-      final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot = await _firestore
-          .collection('enrollments')
-          .where('sessionId', isEqualTo: sessionId)
-          .where('status', isEqualTo: 'active')
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
+          await _firestore
+              .collection('enrollments')
+              .where('sessionId', isEqualTo: sessionId)
+              .where('status', isEqualTo: 'active')
+              .get();
 
       // Get existing attendance records for this occurrence
-      final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot = await _firestore
-          .collection('attendanceRecords')
-          .where('occurrenceId', isEqualTo: occurrenceId)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot =
+          await _firestore
+              .collection('attendanceRecords')
+              .where('occurrenceId', isEqualTo: occurrenceId)
+              .get();
 
-      final Map<String, Map<String, dynamic>> attendanceByLearner = <String, Map<String, dynamic>>{};
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attendanceSnapshot.docs) {
+      final Map<String, Map<String, dynamic>> attendanceByLearner =
+          <String, Map<String, dynamic>>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in attendanceSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         attendanceByLearner[data['learnerId'] as String] = <String, dynamic>{
           ...data,
@@ -141,17 +147,18 @@ class AttendanceService extends ChangeNotifier {
 
       // Build roster with learner details
       final List<RosterLearner> roster = await Future.wait(
-        enrollmentsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> enrollDoc) async {
-          final String learnerId = enrollDoc.data()['learnerId'] as String? ?? '';
-          
+        enrollmentsSnapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> enrollDoc) async {
+          final String learnerId =
+              enrollDoc.data()['learnerId'] as String? ?? '';
+
           // Get learner details
-          final DocumentSnapshot<Map<String, dynamic>> learnerDoc = await _firestore
-              .collection('users')
-              .doc(learnerId)
-              .get();
-          
+          final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
+              await _firestore.collection('users').doc(learnerId).get();
+
           final Map<String, dynamic>? learnerData = learnerDoc.data();
-          final Map<String, dynamic>? existingAttendance = attendanceByLearner[learnerId];
+          final Map<String, dynamic>? existingAttendance =
+              attendanceByLearner[learnerId];
 
           AttendanceRecord? currentAttendance;
           if (existingAttendance != null) {
@@ -159,8 +166,10 @@ class AttendanceService extends ChangeNotifier {
               id: existingAttendance['id'] as String,
               occurrenceId: occurrenceId,
               learnerId: learnerId,
-              status: _parseAttendanceStatus(existingAttendance['status'] as String?),
-              recordedAt: _parseTimestamp(existingAttendance['recordedAt']) ?? DateTime.now(),
+              status: _parseAttendanceStatus(
+                  existingAttendance['status'] as String?),
+              recordedAt: _parseTimestamp(existingAttendance['recordedAt']) ??
+                  DateTime.now(),
               recordedBy: existingAttendance['recordedBy'] as String?,
               notes: existingAttendance['notes'] as String?,
             );
@@ -219,13 +228,15 @@ class AttendanceService extends ChangeNotifier {
 
       // Optimistically update local state
       if (_currentOccurrence != null) {
-        final List<RosterLearner> updatedRoster = _currentOccurrence!.roster.map((RosterLearner learner) {
+        final List<RosterLearner> updatedRoster =
+            _currentOccurrence!.roster.map((RosterLearner learner) {
           if (learner.id == record.learnerId) {
             return RosterLearner(
               id: learner.id,
               displayName: learner.displayName,
               photoUrl: learner.photoUrl,
-              currentAttendance: record.copyWith(isOffline: !_syncCoordinator.isOnline),
+              currentAttendance:
+                  record.copyWith(isOffline: !_syncCoordinator.isOnline),
             );
           }
           return learner;
@@ -254,9 +265,10 @@ class AttendanceService extends ChangeNotifier {
   Future<void> batchRecordAttendance(List<AttendanceRecord> records) async {
     try {
       final WriteBatch batch = _firestore.batch();
-      
+
       for (final AttendanceRecord record in records) {
-        final DocumentReference<Map<String, dynamic>> docRef = _firestore.collection('attendanceRecords').doc();
+        final DocumentReference<Map<String, dynamic>> docRef =
+            _firestore.collection('attendanceRecords').doc();
         batch.set(docRef, <String, dynamic>{
           'occurrenceId': record.occurrenceId,
           'learnerId': record.learnerId,
@@ -271,11 +283,13 @@ class AttendanceService extends ChangeNotifier {
 
       // Update local state
       if (_currentOccurrence != null) {
-        final Map<String, AttendanceRecord> recordsByLearner = <String, AttendanceRecord>{
+        final Map<String, AttendanceRecord> recordsByLearner =
+            <String, AttendanceRecord>{
           for (final AttendanceRecord r in records) r.learnerId: r,
         };
 
-        final List<RosterLearner> updatedRoster = _currentOccurrence!.roster.map((RosterLearner learner) {
+        final List<RosterLearner> updatedRoster =
+            _currentOccurrence!.roster.map((RosterLearner learner) {
           final AttendanceRecord? record = recordsByLearner[learner.id];
           if (record != null) {
             return RosterLearner(
@@ -288,7 +302,8 @@ class AttendanceService extends ChangeNotifier {
           return learner;
         }).toList();
 
-        _currentOccurrence = _currentOccurrence!.copyWith(roster: updatedRoster);
+        _currentOccurrence =
+            _currentOccurrence!.copyWith(roster: updatedRoster);
         notifyListeners();
       }
     } catch (e) {
@@ -326,4 +341,3 @@ class AttendanceService extends ChangeNotifier {
     }
   }
 }
-

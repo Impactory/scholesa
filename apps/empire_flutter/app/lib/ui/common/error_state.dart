@@ -3,7 +3,6 @@ import '../../services/telemetry_service.dart';
 
 /// Error state widget with retry
 class ErrorState extends StatelessWidget {
-
   const ErrorState({
     super.key,
     required this.message,
@@ -29,15 +28,15 @@ class ErrorState extends StatelessWidget {
             Text(
               'Error',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.grey[700],
-              ),
+                    color: Colors.grey[700],
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+                    color: Colors.grey[600],
+                  ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...<Widget>[

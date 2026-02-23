@@ -5,7 +5,6 @@ import 'checkin_models.dart';
 
 /// Service for site check-in/check-out operations - wired to Firebase
 class CheckinService extends ChangeNotifier {
-
   CheckinService({
     required FirestoreService firestoreService,
     required this.siteId,
@@ -50,12 +49,15 @@ class CheckinService extends ChangeNotifier {
 
   // Stats
   int get totalLearners => _learnerSummaries.length;
-  int get presentCount =>
-      _learnerSummaries.where((LearnerDaySummary s) => s.isCurrentlyPresent).length;
-  int get absentCount =>
-      _learnerSummaries.where((LearnerDaySummary s) => s.currentStatus == null).length;
-  int get checkedOutCount =>
-      _learnerSummaries.where((LearnerDaySummary s) => s.currentStatus == CheckStatus.checkedOut).length;
+  int get presentCount => _learnerSummaries
+      .where((LearnerDaySummary s) => s.isCurrentlyPresent)
+      .length;
+  int get absentCount => _learnerSummaries
+      .where((LearnerDaySummary s) => s.currentStatus == null)
+      .length;
+  int get checkedOutCount => _learnerSummaries
+      .where((LearnerDaySummary s) => s.currentStatus == CheckStatus.checkedOut)
+      .length;
 
   // Filters
   void setSearchQuery(String query) {
@@ -86,23 +88,28 @@ class CheckinService extends ChangeNotifier {
       final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
 
       // Query presence records for today
-      final QuerySnapshot<Map<String, dynamic>> recordsSnapshot = await _firestore
-          .collection('presenceRecords')
-          .where('siteId', isEqualTo: siteId)
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-          .orderBy('timestamp', descending: true)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> recordsSnapshot =
+          await _firestore
+              .collection('presenceRecords')
+              .where('siteId', isEqualTo: siteId)
+              .where('timestamp',
+                  isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+              .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+              .orderBy('timestamp', descending: true)
+              .get();
 
       // Build today's records
-      _todayRecords = recordsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _todayRecords = recordsSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return CheckRecord(
           id: doc.id,
           learnerId: data['learnerId'] as String? ?? '',
           learnerName: data['learnerName'] as String? ?? 'Unknown',
           siteId: siteId,
-          status: data['type'] == 'checkin' ? CheckStatus.checkedIn : CheckStatus.checkedOut,
+          status: data['type'] == 'checkin'
+              ? CheckStatus.checkedIn
+              : CheckStatus.checkedOut,
           timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
           visitorId: data['recordedBy'] as String? ?? '',
           visitorName: data['recorderName'] as String? ?? '',
@@ -111,30 +118,39 @@ class CheckinService extends ChangeNotifier {
       }).toList();
 
       // Group records by learner to build summaries
-      final Map<String, List<CheckRecord>> byLearner = <String, List<CheckRecord>>{};
+      final Map<String, List<CheckRecord>> byLearner =
+          <String, List<CheckRecord>>{};
       for (final CheckRecord record in _todayRecords) {
-        byLearner.putIfAbsent(record.learnerId, () => <CheckRecord>[]).add(record);
+        byLearner
+            .putIfAbsent(record.learnerId, () => <CheckRecord>[])
+            .add(record);
       }
 
       // Get all learners enrolled at this site
-      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
-          .collection('users')
-          .where('siteIds', arrayContains: siteId)
-          .where('role', isEqualTo: 'learner')
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot =
+          await _firestore
+              .collection('users')
+              .where('siteIds', arrayContains: siteId)
+              .where('role', isEqualTo: 'learner')
+              .get();
 
-      _learnerSummaries = learnersSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _learnerSummaries = learnersSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         final List<CheckRecord> records = byLearner[doc.id] ?? <CheckRecord>[];
-        
+
         // Find latest checkin and checkout
         CheckRecord? latestCheckin;
         CheckRecord? latestCheckout;
         for (final CheckRecord r in records) {
-          if (r.status == CheckStatus.checkedIn && (latestCheckin == null || r.timestamp.isAfter(latestCheckin.timestamp))) {
+          if (r.status == CheckStatus.checkedIn &&
+              (latestCheckin == null ||
+                  r.timestamp.isAfter(latestCheckin.timestamp))) {
             latestCheckin = r;
           }
-          if (r.status == CheckStatus.checkedOut && (latestCheckout == null || r.timestamp.isAfter(latestCheckout.timestamp))) {
+          if (r.status == CheckStatus.checkedOut &&
+              (latestCheckout == null ||
+                  r.timestamp.isAfter(latestCheckout.timestamp))) {
             latestCheckout = r;
           }
         }
@@ -142,9 +158,10 @@ class CheckinService extends ChangeNotifier {
         // Determine current status
         CheckStatus? currentStatus;
         if (latestCheckout != null && latestCheckin != null) {
-          currentStatus = latestCheckout.timestamp.isAfter(latestCheckin.timestamp)
-              ? CheckStatus.checkedOut
-              : CheckStatus.checkedIn;
+          currentStatus =
+              latestCheckout.timestamp.isAfter(latestCheckin.timestamp)
+                  ? CheckStatus.checkedOut
+                  : CheckStatus.checkedIn;
         } else if (latestCheckin != null) {
           currentStatus = CheckStatus.checkedIn;
         }
@@ -161,7 +178,8 @@ class CheckinService extends ChangeNotifier {
         );
       }).toList();
 
-      debugPrint('Loaded ${_learnerSummaries.length} learners and ${_todayRecords.length} records');
+      debugPrint(
+          'Loaded ${_learnerSummaries.length} learners and ${_todayRecords.length} records');
     } catch (e) {
       debugPrint('Error loading checkin data: $e');
       _error = 'Failed to load check-in data: $e';
@@ -204,7 +222,8 @@ class CheckinService extends ChangeNotifier {
       _todayRecords = <CheckRecord>[record, ..._todayRecords];
 
       // Update learner summary
-      final int index = _learnerSummaries.indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
+      final int index = _learnerSummaries
+          .indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
       if (index != -1) {
         final LearnerDaySummary summary = _learnerSummaries[index];
         _learnerSummaries[index] = LearnerDaySummary(
@@ -251,7 +270,8 @@ class CheckinService extends ChangeNotifier {
       _todayRecords = <CheckRecord>[record, ..._todayRecords];
 
       // Update learner summary
-      final int index = _learnerSummaries.indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
+      final int index = _learnerSummaries
+          .indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
       if (index != -1) {
         final LearnerDaySummary summary = _learnerSummaries[index];
         _learnerSummaries[index] = LearnerDaySummary(
@@ -283,7 +303,8 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      final int index = _learnerSummaries.indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
+      final int index = _learnerSummaries
+          .indexWhere((LearnerDaySummary s) => s.learnerId == learnerId);
       if (index != -1) {
         final LearnerDaySummary summary = _learnerSummaries[index];
         _learnerSummaries[index] = LearnerDaySummary(

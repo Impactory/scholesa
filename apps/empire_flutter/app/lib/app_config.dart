@@ -10,7 +10,8 @@ class AppConfig {
   /// API base URL for Cloud Functions backend
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/apiV1',
+    defaultValue:
+        'https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/apiV1',
   );
 
   /// Current environment: dev, staging, prod

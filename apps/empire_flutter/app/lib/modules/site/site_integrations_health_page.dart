@@ -8,10 +8,12 @@ class SiteIntegrationsHealthPage extends StatefulWidget {
   const SiteIntegrationsHealthPage({super.key});
 
   @override
-  State<SiteIntegrationsHealthPage> createState() => _SiteIntegrationsHealthPageState();
+  State<SiteIntegrationsHealthPage> createState() =>
+      _SiteIntegrationsHealthPageState();
 }
 
-class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage> {
+class _SiteIntegrationsHealthPageState
+    extends State<SiteIntegrationsHealthPage> {
   final List<_Integration> _integrations = <_Integration>[
     _Integration(
       id: '1',
@@ -84,16 +86,25 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
             ),
           ),
           const SizedBox(height: 12),
-          ..._integrations.map((integration) => _buildIntegrationCard(integration)),
+          ..._integrations
+              .map((integration) => _buildIntegrationCard(integration)),
         ],
       ),
     );
   }
 
   Widget _buildOverallStatus() {
-    final int healthyCount = _integrations.where((_Integration i) => i.status == _IntegrationStatus.healthy).length;
-    final int warningCount = _integrations.where((_Integration i) => i.status == _IntegrationStatus.warning).length;
-    final int errorCount = _integrations.where((_Integration i) => i.status == _IntegrationStatus.error || i.status == _IntegrationStatus.disconnected).length;
+    final int healthyCount = _integrations
+        .where((_Integration i) => i.status == _IntegrationStatus.healthy)
+        .length;
+    final int warningCount = _integrations
+        .where((_Integration i) => i.status == _IntegrationStatus.warning)
+        .length;
+    final int errorCount = _integrations
+        .where((_Integration i) =>
+            i.status == _IntegrationStatus.error ||
+            i.status == _IntegrationStatus.disconnected)
+        .length;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -105,11 +116,17 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
       ),
       child: Row(
         children: <Widget>[
-          Expanded(child: _buildStatusStat('Healthy', healthyCount, Icons.check_circle_rounded)),
+          Expanded(
+              child: _buildStatusStat(
+                  'Healthy', healthyCount, Icons.check_circle_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
-          Expanded(child: _buildStatusStat('Warning', warningCount, Icons.warning_rounded)),
+          Expanded(
+              child: _buildStatusStat(
+                  'Warning', warningCount, Icons.warning_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
-          Expanded(child: _buildStatusStat('Issues', errorCount, Icons.error_rounded)),
+          Expanded(
+              child:
+                  _buildStatusStat('Issues', errorCount, Icons.error_rounded)),
         ],
       ),
     );
@@ -156,7 +173,8 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                     color: integration.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(integration.icon, color: integration.color, size: 28),
+                  child: Icon(integration.icon,
+                      color: integration.color, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -206,20 +224,26 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
                 ),
               ],
             ),
-            if (integration.status != _IntegrationStatus.disconnected) ...<Widget>[
+            if (integration.status !=
+                _IntegrationStatus.disconnected) ...<Widget>[
               const SizedBox(height: 16),
               const Divider(height: 1),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
-                  _buildMetric('Last Sync', integration.lastSync != null ? _formatTime(integration.lastSync!) : 'Never'),
+                  _buildMetric(
+                      'Last Sync',
+                      integration.lastSync != null
+                          ? _formatTime(integration.lastSync!)
+                          : 'Never'),
                   _buildMetric('Synced', '${integration.syncedItems} items'),
                   _buildMetric('Errors', '${integration.errors}'),
                 ],
               ),
             ],
-            if (integration.status == _IntegrationStatus.disconnected) ...<Widget>[
+            if (integration.status ==
+                _IntegrationStatus.disconnected) ...<Widget>[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
@@ -369,7 +393,8 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
             ),
             ListTile(
               leading: const Icon(Icons.link_off_rounded, color: Colors.red),
-              title: const Text('Disconnect', style: TextStyle(color: Colors.red)),
+              title:
+                  const Text('Disconnect', style: TextStyle(color: Colors.red)),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -400,7 +425,9 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
         _integrations[index] = integration.copyWith(
           lastSync: now,
           errors: integration.errors > 0 ? integration.errors - 1 : 0,
-          status: integration.errors <= 1 ? _IntegrationStatus.healthy : _IntegrationStatus.warning,
+          status: integration.errors <= 1
+              ? _IntegrationStatus.healthy
+              : _IntegrationStatus.warning,
         );
       }
     });
@@ -417,7 +444,9 @@ class _SiteIntegrationsHealthPageState extends State<SiteIntegrationsHealthPage>
         _integrations[index] = _integrations[index].copyWith(
           status: _IntegrationStatus.healthy,
           lastSync: now,
-          syncedItems: _integrations[index].syncedItems > 0 ? _integrations[index].syncedItems : 1,
+          syncedItems: _integrations[index].syncedItems > 0
+              ? _integrations[index].syncedItems
+              : 1,
           errors: 0,
         );
         break;

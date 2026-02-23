@@ -14,7 +14,9 @@ class NotificationService {
     required String siteId,
   }) async {
     try {
-      await _functions.httpsCallable('requestNotificationSend').call(<String, dynamic>{
+      await _functions
+          .httpsCallable('requestNotificationSend')
+          .call(<String, dynamic>{
         'channel': channel,
         'threadId': threadId,
         'messageId': messageId,

@@ -5,7 +5,6 @@ import 'parent_models.dart';
 
 /// Service for parent-specific views
 class ParentService extends ChangeNotifier {
-
   ParentService({
     required FirestoreService firestoreService,
     required this.parentId,
@@ -33,33 +32,34 @@ class ParentService extends ChangeNotifier {
 
     try {
       // Load learners linked to this parent
-      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
-          .collection('users')
-          .where('parentIds', arrayContains: parentId)
-          .where('role', isEqualTo: 'learner')
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot =
+          await _firestore
+              .collection('users')
+              .where('parentIds', arrayContains: parentId)
+              .where('role', isEqualTo: 'learner')
+              .get();
 
       final List<LearnerSummary> summaries = <LearnerSummary>[];
-      
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> learnerDoc in learnersSnapshot.docs) {
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> learnerDoc
+          in learnersSnapshot.docs) {
         final Map<String, dynamic> learnerData = learnerDoc.data();
         final String learnerId = learnerDoc.id;
 
         // Get learner progress data
-        final DocumentSnapshot<Map<String, dynamic>> progressDoc = await _firestore
-            .collection('learnerProgress')
-            .doc(learnerId)
-            .get();
-        
+        final DocumentSnapshot<Map<String, dynamic>> progressDoc =
+            await _firestore.collection('learnerProgress').doc(learnerId).get();
+
         final Map<String, dynamic>? progressData = progressDoc.data();
 
         // Get recent activities
-        final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot = await _firestore
-            .collection('activities')
-            .where('learnerId', isEqualTo: learnerId)
-            .orderBy('timestamp', descending: true)
-            .limit(10)
-            .get();
+        final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot =
+            await _firestore
+                .collection('activities')
+                .where('learnerId', isEqualTo: learnerId)
+                .orderBy('timestamp', descending: true)
+                .limit(10)
+                .get();
 
         final List<RecentActivity> activities = activitiesSnapshot.docs.map(
           (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -77,13 +77,14 @@ class ParentService extends ChangeNotifier {
 
         // Get upcoming events
         final DateTime now = DateTime.now();
-        final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await _firestore
-            .collection('events')
-            .where('learnerId', isEqualTo: learnerId)
-            .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
-            .orderBy('dateTime')
-            .limit(5)
-            .get();
+        final QuerySnapshot<Map<String, dynamic>> eventsSnapshot =
+            await _firestore
+                .collection('events')
+                .where('learnerId', isEqualTo: learnerId)
+                .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
+                .orderBy('dateTime')
+                .limit(5)
+                .get();
 
         final List<UpcomingEvent> events = eventsSnapshot.docs.map(
           (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -100,15 +101,17 @@ class ParentService extends ChangeNotifier {
         ).toList();
 
         // Calculate attendance rate from records
-        final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot = await _firestore
-            .collection('attendanceRecords')
-            .where('learnerId', isEqualTo: learnerId)
-            .orderBy('timestamp', descending: true)
-            .limit(30)
-            .get();
+        final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot =
+            await _firestore
+                .collection('attendanceRecords')
+                .where('learnerId', isEqualTo: learnerId)
+                .orderBy('timestamp', descending: true)
+                .limit(30)
+                .get();
 
         int presentCount = 0;
-        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attendanceSnapshot.docs) {
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+            in attendanceSnapshot.docs) {
           if (doc.data()['status'] == 'present') {
             presentCount++;
           }
@@ -127,9 +130,14 @@ class ParentService extends ChangeNotifier {
           currentStreak: progressData?['currentStreak'] as int? ?? 0,
           attendanceRate: attendanceRate,
           pillarProgress: <String, double>{
-            'futureSkills': (progressData?['futureSkillsProgress'] as num?)?.toDouble() ?? 0.0,
-            'leadership': (progressData?['leadershipProgress'] as num?)?.toDouble() ?? 0.0,
-            'impact': (progressData?['impactProgress'] as num?)?.toDouble() ?? 0.0,
+            'futureSkills':
+                (progressData?['futureSkillsProgress'] as num?)?.toDouble() ??
+                    0.0,
+            'leadership':
+                (progressData?['leadershipProgress'] as num?)?.toDouble() ??
+                    0.0,
+            'impact':
+                (progressData?['impactProgress'] as num?)?.toDouble() ?? 0.0,
           },
           recentActivities: activities,
           upcomingEvents: events,
@@ -141,7 +149,8 @@ class ParentService extends ChangeNotifier {
       // Load billing summary
       await _loadBillingSummary();
 
-      debugPrint('Loaded ${_learnerSummaries.length} learner summaries for parent');
+      debugPrint(
+          'Loaded ${_learnerSummaries.length} learner summaries for parent');
     } catch (e) {
       debugPrint('Error loading parent data: $e');
       _error = 'Failed to load data: $e';
@@ -155,10 +164,8 @@ class ParentService extends ChangeNotifier {
   /// Load billing summary from Firebase
   Future<void> _loadBillingSummary() async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> billingDoc = await _firestore
-          .collection('billingAccounts')
-          .doc(parentId)
-          .get();
+      final DocumentSnapshot<Map<String, dynamic>> billingDoc =
+          await _firestore.collection('billingAccounts').doc(parentId).get();
 
       if (!billingDoc.exists) {
         _billingSummary = null;
@@ -172,12 +179,13 @@ class ParentService extends ChangeNotifier {
       }
 
       // Get recent payments
-      final QuerySnapshot<Map<String, dynamic>> paymentsSnapshot = await _firestore
-          .collection('payments')
-          .where('parentId', isEqualTo: parentId)
-          .orderBy('date', descending: true)
-          .limit(10)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> paymentsSnapshot =
+          await _firestore
+              .collection('payments')
+              .where('parentId', isEqualTo: parentId)
+              .orderBy('date', descending: true)
+              .limit(10)
+              .get();
 
       final List<PaymentHistory> payments = paymentsSnapshot.docs.map(
         (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -194,7 +202,8 @@ class ParentService extends ChangeNotifier {
 
       _billingSummary = BillingSummary(
         currentBalance: (data['currentBalance'] as num?)?.toDouble() ?? 0.0,
-        nextPaymentAmount: (data['nextPaymentAmount'] as num?)?.toDouble() ?? 0.0,
+        nextPaymentAmount:
+            (data['nextPaymentAmount'] as num?)?.toDouble() ?? 0.0,
         nextPaymentDate: _parseTimestamp(data['nextPaymentDate']),
         subscriptionPlan: data['subscriptionPlan'] as String? ?? 'Basic',
         recentPayments: payments,

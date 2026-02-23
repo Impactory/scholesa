@@ -10,7 +10,6 @@ enum AttendanceStatus {
 
 /// Attendance record model
 class AttendanceRecord extends Equatable {
-
   const AttendanceRecord({
     this.id,
     this.siteId,
@@ -23,7 +22,8 @@ class AttendanceRecord extends Equatable {
     this.isOffline = false,
   });
 
-  factory AttendanceRecord.fromJson(Map<String, dynamic> json) => AttendanceRecord(
+  factory AttendanceRecord.fromJson(Map<String, dynamic> json) =>
+      AttendanceRecord(
         id: json['id'] as String?,
         siteId: json['siteId'] as String?,
         occurrenceId: json['occurrenceId'] as String,
@@ -98,7 +98,6 @@ class AttendanceRecord extends Equatable {
 
 /// Learner in roster
 class RosterLearner extends Equatable {
-
   const RosterLearner({
     required this.id,
     required this.displayName,
@@ -111,7 +110,8 @@ class RosterLearner extends Equatable {
         displayName: json['displayName'] as String,
         photoUrl: json['photoUrl'] as String?,
         currentAttendance: json['attendance'] != null
-            ? AttendanceRecord.fromJson(json['attendance'] as Map<String, dynamic>)
+            ? AttendanceRecord.fromJson(
+                json['attendance'] as Map<String, dynamic>)
             : null,
       );
   final String id;
@@ -120,12 +120,12 @@ class RosterLearner extends Equatable {
   final AttendanceRecord? currentAttendance;
 
   @override
-  List<Object?> get props => <Object?>[id, displayName, photoUrl, currentAttendance];
+  List<Object?> get props =>
+      <Object?>[id, displayName, photoUrl, currentAttendance];
 }
 
 /// Session occurrence
 class SessionOccurrence extends Equatable {
-
   const SessionOccurrence({
     required this.id,
     required this.sessionId,
@@ -138,18 +138,21 @@ class SessionOccurrence extends Equatable {
     this.learnerCount,
   });
 
-  factory SessionOccurrence.fromJson(Map<String, dynamic> json) => SessionOccurrence(
+  factory SessionOccurrence.fromJson(Map<String, dynamic> json) =>
+      SessionOccurrence(
         id: json['id'] as String,
         sessionId: json['sessionId'] as String,
         siteId: json['siteId'] as String,
         title: json['title'] as String,
-        startTime: DateTime.fromMillisecondsSinceEpoch(json['startTime'] as int),
-        endTime: json['endTime'] != null 
+        startTime:
+            DateTime.fromMillisecondsSinceEpoch(json['startTime'] as int),
+        endTime: json['endTime'] != null
             ? DateTime.fromMillisecondsSinceEpoch(json['endTime'] as int)
             : null,
         roomName: json['roomName'] as String?,
         roster: (json['roster'] as List?)
-                ?.map((dynamic e) => RosterLearner.fromJson(e as Map<String, dynamic>))
+                ?.map((dynamic e) =>
+                    RosterLearner.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             <RosterLearner>[],
         learnerCount: json['learnerCount'] as int?,
@@ -189,5 +192,6 @@ class SessionOccurrence extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[id, sessionId, siteId, title, startTime, endTime, learnerCount];
+  List<Object?> get props =>
+      <Object?>[id, sessionId, siteId, title, startTime, endTime, learnerCount];
 }

@@ -3,7 +3,8 @@ import 'package:flutter/widgets.dart';
 class AppStrings {
   AppStrings._();
 
-  static const Map<String, Map<String, String>> _localized = <String, Map<String, String>>{
+  static const Map<String, Map<String, String>> _localized =
+      <String, Map<String, String>>{
     'en': <String, String>{
       'auth.welcomeBack': 'Welcome back',
       'auth.welcomeToScholesa': 'Welcome to Scholesa',
@@ -17,16 +18,19 @@ class AppStrings {
       'auth.orContinueWith': 'or continue with',
       'auth.google': 'Google',
       'auth.microsoft': 'Microsoft',
-      'auth.provisioningNote': 'Accounts are provisioned by your site or HQ admin.',
+      'auth.provisioningNote':
+          'Accounts are provisioned by your site or HQ admin.',
       'auth.resetPassword': 'Reset Password',
-      'auth.resetPasswordHelp': 'Enter your email address and we\'ll send you a link to reset your password.',
+      'auth.resetPasswordHelp':
+          'Enter your email address and we\'ll send you a link to reset your password.',
       'auth.cancel': 'Cancel',
       'auth.sendResetLink': 'Send Reset Link',
       'auth.resetEmailSent': 'Password reset email sent. Check your inbox.',
       'auth.validation.enterEmail': 'Please enter your email',
       'auth.validation.validEmail': 'Please enter a valid email',
       'auth.validation.enterPassword': 'Please enter your password',
-      'auth.validation.passwordLength': 'Password must be at least 6 characters',
+      'auth.validation.passwordLength':
+          'Password must be at least 6 characters',
       'auth.error.userNotFound': 'No account found with this email',
       'auth.error.wrongPassword': 'Incorrect password',
       'auth.error.invalidCredential': 'Invalid email or password',
@@ -35,10 +39,13 @@ class AppStrings {
       'auth.error.invalidEmail': 'Invalid email address',
       'auth.error.userDisabled': 'This account has been disabled',
       'auth.error.tooManyRequests': 'Too many attempts. Please try again later',
-      'auth.error.networkFailed': 'Network error. Check your connection and try again',
+      'auth.error.networkFailed':
+          'Network error. Check your connection and try again',
       'auth.error.operationNotAllowed': 'Email/password sign-in is not enabled',
-      'auth.error.invalidApiKey': 'Authentication is misconfigured. Contact support',
-      'auth.error.appNotAuthorized': 'This app is not authorized for Firebase Auth',
+      'auth.error.invalidApiKey':
+          'Authentication is misconfigured. Contact support',
+      'auth.error.appNotAuthorized':
+          'This app is not authorized for Firebase Auth',
       'auth.error.popupClosed': 'Sign-in popup was closed before completion',
       'auth.error.popupBlocked': 'Sign-in popup was blocked by your browser',
       'auth.error.googleFailed': 'Failed to sign in with Google',
@@ -51,7 +58,8 @@ class AppStrings {
     'es': <String, String>{
       'auth.welcomeBack': 'Bienvenido de nuevo',
       'auth.welcomeToScholesa': 'Bienvenido a Scholesa',
-      'auth.signInSubtitle': 'Inicia sesión para continuar tu viaje de aprendizaje',
+      'auth.signInSubtitle':
+          'Inicia sesión para continuar tu viaje de aprendizaje',
       'auth.email': 'Correo electrónico',
       'auth.password': 'Contraseña',
       'auth.emailHint': 'tu@ejemplo.com',
@@ -61,16 +69,20 @@ class AppStrings {
       'auth.orContinueWith': 'o continúa con',
       'auth.google': 'Google',
       'auth.microsoft': 'Microsoft',
-      'auth.provisioningNote': 'Las cuentas son aprovisionadas por el administrador del sitio o HQ.',
+      'auth.provisioningNote':
+          'Las cuentas son aprovisionadas por el administrador del sitio o HQ.',
       'auth.resetPassword': 'Restablecer contraseña',
-      'auth.resetPasswordHelp': 'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+      'auth.resetPasswordHelp':
+          'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
       'auth.cancel': 'Cancelar',
       'auth.sendResetLink': 'Enviar enlace',
-      'auth.resetEmailSent': 'Correo de restablecimiento enviado. Revisa tu bandeja de entrada.',
+      'auth.resetEmailSent':
+          'Correo de restablecimiento enviado. Revisa tu bandeja de entrada.',
       'auth.validation.enterEmail': 'Por favor ingresa tu correo electrónico',
       'auth.validation.validEmail': 'Por favor ingresa un correo válido',
       'auth.validation.enterPassword': 'Por favor ingresa tu contraseña',
-      'auth.validation.passwordLength': 'La contraseña debe tener al menos 6 caracteres',
+      'auth.validation.passwordLength':
+          'La contraseña debe tener al menos 6 caracteres',
       'auth.error.userNotFound': 'No se encontró una cuenta con este correo',
       'auth.error.wrongPassword': 'Contraseña incorrecta',
       'auth.error.invalidCredential': 'Correo o contraseña inválidos',
@@ -79,24 +91,33 @@ class AppStrings {
       'auth.error.invalidEmail': 'Correo electrónico inválido',
       'auth.error.userDisabled': 'Esta cuenta ha sido deshabilitada',
       'auth.error.tooManyRequests': 'Demasiados intentos. Inténtalo más tarde',
-      'auth.error.networkFailed': 'Error de red. Verifica tu conexión e inténtalo de nuevo',
-      'auth.error.operationNotAllowed': 'El inicio de sesión con correo/contraseña no está habilitado',
-      'auth.error.invalidApiKey': 'La autenticación está mal configurada. Contacta soporte',
-      'auth.error.appNotAuthorized': 'Esta app no está autorizada para Firebase Auth',
-      'auth.error.popupClosed': 'La ventana emergente de inicio de sesión se cerró antes de completarse',
-      'auth.error.popupBlocked': 'La ventana emergente fue bloqueada por el navegador',
+      'auth.error.networkFailed':
+          'Error de red. Verifica tu conexión e inténtalo de nuevo',
+      'auth.error.operationNotAllowed':
+          'El inicio de sesión con correo/contraseña no está habilitado',
+      'auth.error.invalidApiKey':
+          'La autenticación está mal configurada. Contacta soporte',
+      'auth.error.appNotAuthorized':
+          'Esta app no está autorizada para Firebase Auth',
+      'auth.error.popupClosed':
+          'La ventana emergente de inicio de sesión se cerró antes de completarse',
+      'auth.error.popupBlocked':
+          'La ventana emergente fue bloqueada por el navegador',
       'auth.error.googleFailed': 'No se pudo iniciar sesión con Google',
       'auth.error.microsoftFailed': 'No se pudo iniciar sesión con Microsoft',
       'auth.error.profileLoadFailed': 'No se pudo cargar el perfil de usuario',
       'auth.error.generic': 'Falló la autenticación',
       'auth.error.unexpected': 'Ocurrió un error inesperado',
-      'auth.error.resetFailed': 'No se pudo enviar el correo de restablecimiento',
+      'auth.error.resetFailed':
+          'No se pudo enviar el correo de restablecimiento',
     },
   };
 
   static String of(BuildContext context, String key) {
-    final String localeCode = Localizations.localeOf(context).languageCode.toLowerCase();
-    final Map<String, String> selected = _localized[localeCode] ?? _localized['en']!;
+    final String localeCode =
+        Localizations.localeOf(context).languageCode.toLowerCase();
+    final Map<String, String> selected =
+        _localized[localeCode] ?? _localized['en']!;
     return selected[key] ?? _localized['en']![key] ?? key;
   }
 }

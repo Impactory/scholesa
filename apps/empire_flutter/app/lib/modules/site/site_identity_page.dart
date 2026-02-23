@@ -67,7 +67,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF64748B).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF64748B).withValues(alpha: 0.3)),
+        border:
+            Border.all(color: const Color(0xFF64748B).withValues(alpha: 0.3)),
       ),
       child: const Row(
         children: <Widget>[
@@ -171,7 +172,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: _buildIdentityColumn('Local Account', match.localName, Icons.person_rounded),
+                  child: _buildIdentityColumn(
+                      'Local Account', match.localName, Icons.person_rounded),
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -179,10 +181,12 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                     color: const Color(0xFF64748B).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.compare_arrows_rounded, size: 20, color: Color(0xFF64748B)),
+                  child: const Icon(Icons.compare_arrows_rounded,
+                      size: 20, color: Color(0xFF64748B)),
                 ),
                 Expanded(
-                  child: _buildIdentityColumn('External Account', match.externalName, Icons.cloud_rounded),
+                  child: _buildIdentityColumn('External Account',
+                      match.externalName, Icons.cloud_rounded),
                 ),
               ],
             ),
@@ -277,7 +281,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           child: CircularProgressIndicator(
             value: confidence,
             backgroundColor: Colors.grey.withValues(alpha: 0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(_getConfidenceColor(confidence)),
+            valueColor:
+                AlwaysStoppedAnimation<Color>(_getConfidenceColor(confidence)),
             strokeWidth: 4,
           ),
         ),

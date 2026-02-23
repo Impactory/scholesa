@@ -42,7 +42,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           builder: (BuildContext context, EducatorService service, _) {
             if (service.isLoading) {
               return const Center(
-                child: CircularProgressIndicator(color: ScholesaColors.educator),
+                child:
+                    CircularProgressIndicator(color: ScholesaColors.educator),
               );
             }
 
@@ -57,7 +58,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) => _ClassCard(
                       todayClass: service.todayClasses[index],
-                      onTap: () => _openClassDetail(service.todayClasses[index]),
+                      onTap: () =>
+                          _openClassDetail(service.todayClasses[index]),
                     ),
                     childCount: service.todayClasses.length,
                   ),
@@ -73,7 +75,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
 
   Widget _buildHeader() {
     final DateTime now = DateTime.now();
-    final String greeting = now.hour < 12 ? 'Good morning' : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
+    final String greeting = now.hour < 12
+        ? 'Good morning'
+        : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
 
     return SafeArea(
       bottom: false,
@@ -110,9 +114,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   Text(
                     "Today's Schedule",
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: ScholesaColors.educator,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: ScholesaColors.educator,
+                        ),
                   ),
                 ],
               ),
@@ -190,7 +194,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_today_take_attendance'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_today_take_attendance'
+                  },
                 );
                 context.push('/educator/attendance');
               },
@@ -214,7 +220,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{'cta': 'educator_today_open_messages'},
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_today_open_messages'
+                  },
                 );
                 context.push('/messages');
               },
@@ -253,7 +261,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           Row(
             children: <Widget>[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -303,14 +312,16 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           const SizedBox(height: 8),
           Row(
             children: <Widget>[
-              Icon(Icons.location_on, size: 16, color: Colors.white.withValues(alpha: 0.8)),
+              Icon(Icons.location_on,
+                  size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
                 currentClass.location ?? 'No location',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.people, size: 16, color: Colors.white.withValues(alpha: 0.8)),
+              Icon(Icons.people,
+                  size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
                 '${currentClass.presentCount}/${currentClass.enrolledCount} present',
@@ -387,13 +398,17 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   void _openClassDetail(TodayClass todayClass) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'educator_today_open_class_detail', 'class_id': todayClass.id},
+      metadata: <String, dynamic>{
+        'cta': 'educator_today_open_class_detail',
+        'class_id': todayClass.id
+      },
     );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _ClassDetailSheet(todayClass: todayClass),
+      builder: (BuildContext context) =>
+          _ClassDetailSheet(todayClass: todayClass),
     );
   }
 
@@ -428,10 +443,14 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   }
 
   void _showReviewMissionsDialog() {
-    final int count = context.read<EducatorService>().dayStats?.missionsToReview ?? 0;
+    final int count =
+        context.read<EducatorService>().dayStats?.missionsToReview ?? 0;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'educator_today_open_review_queue_dialog', 'count': count},
+      metadata: <String, dynamic>{
+        'cta': 'educator_today_open_review_queue_dialog',
+        'count': count
+      },
     );
     showDialog<void>(
       context: context,
@@ -455,7 +474,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'educator_today_open_review_queue'},
+                metadata: const <String, dynamic>{
+                  'cta': 'educator_today_open_review_queue'
+                },
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -470,20 +491,41 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   }
 
   String _formatDate(DateTime date) {
-    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const List<String> months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const List<String> days = <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun'
+    ];
+    const List<String> months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
   String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
 
 class _StatCard extends StatelessWidget {
-
   const _StatCard({
     required this.icon,
     required this.value,
@@ -536,7 +578,6 @@ class _StatCard extends StatelessWidget {
 }
 
 class _QuickActionButton extends StatelessWidget {
-
   const _QuickActionButton({
     required this.icon,
     required this.label,
@@ -589,7 +630,6 @@ class _QuickActionButton extends StatelessWidget {
 }
 
 class _ClassCard extends StatelessWidget {
-
   const _ClassCard({
     required this.todayClass,
     required this.onTap,
@@ -669,24 +709,28 @@ class _ClassCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: isCompleted ? Colors.grey : Colors.grey[800],
-                        decoration: isCompleted ? TextDecoration.lineThrough : null,
+                        decoration:
+                            isCompleted ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: <Widget>[
-                        Icon(Icons.location_on, size: 14, color: Colors.grey[400]),
+                        Icon(Icons.location_on,
+                            size: 14, color: Colors.grey[400]),
                         const SizedBox(width: 4),
                         Text(
                           todayClass.location ?? 'TBD',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style:
+                              TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         const SizedBox(width: 12),
                         Icon(Icons.people, size: 14, color: Colors.grey[400]),
                         const SizedBox(width: 4),
                         Text(
                           '${todayClass.enrolledCount}',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style:
+                              TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                       ],
                     ),
@@ -694,7 +738,8 @@ class _ClassCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: _statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -716,14 +761,14 @@ class _ClassCard extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }
 
 class _ClassDetailSheet extends StatelessWidget {
-
   const _ClassDetailSheet({required this.todayClass});
   final TodayClass todayClass;
 
@@ -771,7 +816,8 @@ class _ClassDetailSheet extends StatelessWidget {
                   children: <Widget>[
                     _DetailChip(
                       icon: Icons.access_time,
-                      label: '${_formatTime(todayClass.startTime)} - ${_formatTime(todayClass.endTime)}',
+                      label:
+                          '${_formatTime(todayClass.startTime)} - ${_formatTime(todayClass.endTime)}',
                     ),
                     const SizedBox(width: 12),
                     _DetailChip(
@@ -794,11 +840,13 @@ class _ClassDetailSheet extends StatelessWidget {
                   child: ListView.builder(
                     itemCount: todayClass.learners.length,
                     itemBuilder: (BuildContext context, int index) {
-                      final EnrolledLearner learner = todayClass.learners[index];
+                      final EnrolledLearner learner =
+                          todayClass.learners[index];
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: ScholesaColors.learner.withValues(alpha: 0.1),
+                          backgroundColor:
+                              ScholesaColors.learner.withValues(alpha: 0.1),
                           child: Text(
                             _getInitials(learner.name),
                             style: const TextStyle(
@@ -808,7 +856,8 @@ class _ClassDetailSheet extends StatelessWidget {
                           ),
                         ),
                         title: Text(learner.name),
-                        trailing: _buildAttendanceBadge(learner.attendanceStatus),
+                        trailing:
+                            _buildAttendanceBadge(learner.attendanceStatus),
                       );
                     },
                   ),
@@ -821,7 +870,8 @@ class _ClassDetailSheet extends StatelessWidget {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
-                          'cta': 'educator_today_take_attendance_from_class_detail',
+                          'cta':
+                              'educator_today_take_attendance_from_class_detail',
                           'class_id': todayClass.id,
                         },
                       );
@@ -892,7 +942,8 @@ class _ClassDetailSheet extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    final int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final int hour =
+        time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
@@ -907,7 +958,6 @@ class _ClassDetailSheet extends StatelessWidget {
 }
 
 class _DetailChip extends StatelessWidget {
-
   const _DetailChip({required this.icon, required this.label});
   final IconData icon;
   final String label;
