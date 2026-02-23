@@ -527,3 +527,22 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Coach embeddings
 **Last Updated:** January 17, 2026  
 **Next Steps:** Deploy to staging, validate indexes, test real-time updates with concurrent users
 
+
+---
+
+## Addendum — Live Non-core Coverage Audit (2026-02-23)
+
+Telemetry completion was re-verified against the full canonical event set (core + extended + non-core) using live data:
+
+Command:
+`node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
+
+Result:
+- ✅ `Result: PASS`
+- ✅ Canonical required events present: **36/36**
+- ✅ Unknown event counts: none
+- ✅ Schema/correlation/tenant/PII key checks: pass
+
+Evidence:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/telemetry-live-audit.txt`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/run.json`

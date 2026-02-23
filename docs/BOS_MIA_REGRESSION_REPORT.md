@@ -155,3 +155,21 @@
 All contract elements (Math Contract §1–§8) have corresponding Dart models and server implementations.
 All 8 HOW_TO endpoints are callable from the Flutter client.
 Zero new errors or warnings introduced. 27/27 tests green.
+
+---
+
+## Addendum — Full Regression Re-Run (2026-02-23)
+
+This report was re-validated with full-scope regression gates (not core-only):
+
+- ✅ `npm run rc2:regression` passed end-to-end.
+- ✅ `npm run vibe:all` passed.
+- ✅ `node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json` passed with canonical **36/36** event coverage.
+- ✅ `node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app` passed all required live voice suites.
+- ✅ Live runtime verification confirms Node 24 for deployed voice/telemetry functions.
+
+Evidence bundle:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/run.json`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/junit.xml`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/telemetry-live-audit.txt`
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/cloudrun-services.json`
