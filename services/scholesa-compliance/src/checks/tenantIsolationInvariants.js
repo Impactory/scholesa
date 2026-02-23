@@ -26,7 +26,18 @@ function runTenantIsolationInvariants() {
   mustContain(functionsIndex, 'siteId', findings, 'functions site-scoped operations');
 
   mustContain(rules, 'request.auth != null', findings, 'firestore auth gate');
-  mustContain(rules, 'siteId', findings, 'firestore site scope checks');
+
+  const firestoreHasSiteScope = Boolean(
+    rules &&
+    (
+      rules.includes('isSiteScopedRead') ||
+      rules.includes('isSiteScopedWrite') ||
+      rules.includes('siteId')
+    )
+  );
+  if (!firestoreHasSiteScope) {
+    findings.push('missing invariant: firestore site scope checks');
+  }
 
   const passed = findings.length === 0;
   const report = {

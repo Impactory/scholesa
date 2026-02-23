@@ -40,9 +40,12 @@ function runCommand(command) {
 function executeExternalSuites() {
   const commands = [
     'npm run ai:internal-only:all',
-    'npm run vibe:voice:all',
+    'npm run vibe:all',
     'npm run audit:coppa:no-ads',
   ];
+  if (process.env.COMPLIANCE_INCLUDE_RC2 === '1') {
+    commands.splice(2, 0, 'npm run rc2:regression');
+  }
   return commands.map(runCommand);
 }
 

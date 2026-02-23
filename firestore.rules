@@ -33,6 +33,22 @@ service cloud.firestore {
       return hasRole('admin') || isHQ();
     }
 
+    function getUserSiteId() {
+      return isAuthenticated() ? getUserData().siteId : null;
+    }
+
+    function hasSiteField(data) {
+      return data.keys().hasAny(['siteId']);
+    }
+
+    function isSiteScopedRead(data) {
+      return !hasSiteField(data) || isHQ() || data.siteId == getUserSiteId();
+    }
+
+    function isSiteScopedWrite(data) {
+      return !hasSiteField(data) || isHQ() || data.siteId == getUserSiteId();
+    }
+
     // --- Collection Rules ---
 
     // Users: 
@@ -47,8 +63,8 @@ service cloud.firestore {
     // Content (Sites, Rooms, Programs, Courses, Missions):
     // - Read: All authenticated users.
     // - Write: HQ or Site Leads (depending on scope, defaulting to HQ/Educator for simplicity).
-    match /sites/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
-    match /rooms/{id} { allow read: if isAuthenticated(); allow write: if isEducator(); }
+    match /sites/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow create, update: if isHQ() && isSiteScopedWrite(request.resource.data); allow delete: if false; }
+    match /rooms/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow write: if isEducator() && isSiteScopedWrite(request.resource.data); }
     match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
@@ -56,20 +72,20 @@ service cloud.firestore {
     // Operational (Sessions, Occurrences):
     // - Read: All authenticated users (could be scoped to site).
     // - Write: Educators.
-    match /sessions/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
-    match /sessionOccurrences/{id} { allow read: if isAuthenticated(); allow create, update: if isEducator(); allow delete: if false; }
+    match /sessions/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data); allow delete: if false; }
+    match /sessionOccurrences/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data); allow delete: if false; }
 
     // Student Data (Enrollments, Attendance):
     // - Read: Owner or Educator.
     // - Write: Educator.
     match /enrollments/{id} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (resource.data.userId == request.auth.uid || isEducator());
+      allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
     match /attendanceRecords/{id} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (resource.data.userId == request.auth.uid || isEducator());
+      allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
 

@@ -27,6 +27,10 @@ const POLICY_FILE_ALLOWLIST = new Set([
   'scripts/ai_policy_common.js',
   'src/lib/ai/egressGuard.ts',
   'functions/src/security/egressGuard.ts',
+  'services/scholesa-compliance/src/checks/vendorDependencyBan.js',
+  'services/scholesa-compliance/src/checks/vendorDomainBan.js',
+  'services/scholesa-compliance/src/checks/vendorSecretBan.js',
+  'services/scholesa-compliance/src/checks/runtimeEgressProof.js',
 ]);
 
 function includeByName(fullPath, relativePath) {

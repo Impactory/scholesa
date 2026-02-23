@@ -1,0 +1,24 @@
+steps:
+- name: 'node:24'
+  id: 'compliance-gate'
+  entrypoint: 'bash'
+  args:
+    - -lc
+    - |
+      npm ci
+      COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'docker-build'
+  waitFor:
+    - 'compliance-gate'
+  args:
+    - build
+    - -f
+    - Dockerfile.compliance
+    - -t
+    - gcr.io/${PROJECT_ID}/scholesa-compliance:${_TAG}
+    - .
+images:
+  - gcr.io/${PROJECT_ID}/scholesa-compliance:${_TAG}
+substitutions:
+  _TAG: latest

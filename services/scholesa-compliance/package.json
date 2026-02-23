@@ -12,5 +12,8 @@
     "start": "node src/server.js",
     "run": "node src/cli.js",
     "scan": "node src/cli.js --scan-only"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
   }
 }

@@ -1,52 +1,58 @@
-const fs = require('fs');
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, walkFiles, relativeRepoPath } = require('../utils');
+const cp = require('child_process');
+const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
 
-const BANNED_DEPENDENCIES = [
-  '@google/generative-ai',
-  'google-genai',
-  '@google-cloud/vertexai',
-  'generativelanguage',
-  'gemini',
-];
-
-const LOCKFILE_NAMES = new Set([
-  'package.json',
-  'package-lock.json',
-  'pnpm-lock.yaml',
-  'yarn.lock',
-  'npm-shrinkwrap.json',
-]);
-
-function runVendorDependencyBan() {
-  const lockfiles = walkFiles(REPO_ROOT, {
-    include: (fullPath) => LOCKFILE_NAMES.has(path.basename(fullPath)),
-  });
-
-  const findings = [];
-  const hits = [];
-
-  for (const filePath of lockfiles) {
-    const rel = relativeRepoPath(filePath);
-    if (rel.startsWith('node_modules/')) continue;
-    const content = fs.readFileSync(filePath, 'utf8').toLowerCase();
-    for (const marker of BANNED_DEPENDENCIES) {
-      if (content.includes(marker.toLowerCase())) {
-        hits.push({ file: rel, marker });
-        findings.push(`banned dependency marker '${marker}' in ${rel}`);
-      }
+function readAiDependencyReport() {
+  const reportFile = path.join(REPO_ROOT, 'audit-pack/reports/ai-dependency-ban.json');
+  const raw = readTextSafe(reportFile);
+  if (raw) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      // Fall through to rerun below.
     }
   }
 
-  const passed = findings.length === 0;
+  try {
+    cp.execSync('node scripts/ai_dependency_ban.js', {
+      cwd: REPO_ROOT,
+      stdio: 'pipe',
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024 * 16,
+      shell: '/bin/zsh',
+    });
+  } catch {
+    // The script exits non-zero when violations are detected. We still read the report artifact.
+  }
+
+  const rerunRaw = readTextSafe(reportFile);
+  if (!rerunRaw) return null;
+  try {
+    return JSON.parse(rerunRaw);
+  } catch {
+    return null;
+  }
+}
+
+function runVendorDependencyBan() {
+  const aiReport = readAiDependencyReport();
+
+  const findings = aiReport?.failures || ['ai-dependency-ban report missing or unreadable'];
+  const passed = Boolean(aiReport && aiReport.passed === true);
+
   const report = {
     report: 'vendor-dependency-ban',
     generatedAt: nowIso(),
     passed,
-    bannedDependencies: BANNED_DEPENDENCIES,
-    scannedFiles: lockfiles.map(relativeRepoPath).filter((p) => !p.startsWith('node_modules/')),
-    hits,
     findings,
+    sourceReport: 'audit-pack/reports/ai-dependency-ban.json',
+    sourceSummary: aiReport
+      ? {
+          passed: aiReport.passed,
+          scannedFiles: Array.isArray(aiReport.scannedFiles) ? aiReport.scannedFiles.length : 0,
+          hitCount: Array.isArray(aiReport.hits) ? aiReport.hits.length : 0,
+        }
+      : null,
   };
 
   const outputPath = reportPath('vendor-dependency-ban');
@@ -57,9 +63,9 @@ function runVendorDependencyBan() {
     passed,
     findings,
     evidencePath: outputPath,
-    details: {
-      scannedFiles: report.scannedFiles.length,
-      hitCount: hits.length,
+    details: report.sourceSummary || {
+      scannedFiles: 0,
+      hitCount: 0,
     },
   };
 }

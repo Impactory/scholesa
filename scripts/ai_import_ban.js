@@ -16,12 +16,20 @@ const BANNED_IMPORT_PATTERNS = [
   { label: 'generativelanguage symbol', regex: /generativelanguage/i },
 ];
 
+const POLICY_FILE_ALLOWLIST = new Set([
+  'services/scholesa-compliance/src/checks/vendorDependencyBan.js',
+  'services/scholesa-compliance/src/checks/vendorDomainBan.js',
+  'services/scholesa-compliance/src/checks/vendorSecretBan.js',
+  'services/scholesa-compliance/src/checks/runtimeEgressProof.js',
+]);
+
 function shouldInclude(_fullPath, relativePath) {
   if (relativePath.startsWith('docs/')) return false;
   if (relativePath.startsWith('audit-pack/')) return false;
   if (relativePath.startsWith('scripts/ai_')) return false;
   if (relativePath === 'src/lib/ai/egressGuard.ts') return false;
   if (relativePath === 'functions/src/security/egressGuard.ts') return false;
+  if (POLICY_FILE_ALLOWLIST.has(relativePath)) return false;
   if (relativePath.endsWith('.d.ts')) return false;
   return true;
 }
