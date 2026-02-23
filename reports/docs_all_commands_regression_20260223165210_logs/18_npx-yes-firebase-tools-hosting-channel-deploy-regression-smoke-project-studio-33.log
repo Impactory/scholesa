@@ -1,4 +1,4 @@
-$ npx --yes firebase-tools hosting:channel:list --project studio-3328096157-e3f79
+$ npx --yes firebase-tools hosting:channel:deploy regression-smoke --project studio-3328096157-e3f79 --expires 7d
 cwd: /Users/simonluke/dev/scholesa
 timeout_seconds: 240
 

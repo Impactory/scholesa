@@ -1,4 +1,4 @@
-$ npx --yes firebase-tools hosting:channel:list --project studio-3328096157-e3f79
+$ npx --yes firebase-tools functions:list --project studio-3328096157-e3f79
 cwd: /Users/simonluke/dev/scholesa
 timeout_seconds: 240
 

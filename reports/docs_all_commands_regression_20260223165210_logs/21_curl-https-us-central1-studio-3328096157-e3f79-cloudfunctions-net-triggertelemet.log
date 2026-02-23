@@ -1,0 +1,7 @@
+$ curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/triggerTelemetryAggregation
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: us-central1-studio-3328096157-e3f79.cloudfunctions.net

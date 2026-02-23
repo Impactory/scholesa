@@ -1,0 +1,7 @@
+$ gcloud firestore databases update --project=studio-3328096157-e3f79 --database='(default)' --enable-pitr --quiet
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+WARNING: Could not setup log file in /Users/simonluke/.config/gcloud/logs, (PermissionError: [Errno 1] Operation not permitted: '/Users/simonluke/.config/gcloud/logs/2026.02.23/09.01.57.398020.log'.
+The configuration directory may not be writable. To learn more, see https://cloud.google.com/sdk/docs/configurations#creating_a_configuration
+ERROR: (gcloud.firestore.databases.update) Unable to create private file [/Users/simonluke/.config/gcloud/credentials.db]: [Errno 1] Operation not permitted: '/Users/simonluke/.config/gcloud/credentials.db'
