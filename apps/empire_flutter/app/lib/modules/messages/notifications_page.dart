@@ -60,7 +60,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _Notification(
       id: '4',
       title: 'System Update',
-      body: 'Scholesa has been updated with new features. Check out what\'s new!',
+      body:
+          'Scholesa has been updated with new features. Check out what\'s new!',
       type: _NotificationType.system,
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
       isRead: true,
@@ -69,7 +70,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final int unreadCount = _notifications.where((_Notification n) => !n.isRead).length;
+    final int unreadCount =
+        _notifications.where((_Notification n) => !n.isRead).length;
 
     return Scaffold(
       backgroundColor: ScholesaColors.background,
@@ -81,7 +83,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
           if (unreadCount > 0)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text('Mark all read', style: TextStyle(color: Colors.white)),
+              child: const Text('Mark all read',
+                  style: TextStyle(color: Colors.white)),
             ),
         ],
       ),
@@ -90,7 +93,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _notifications.length,
-              itemBuilder: (BuildContext context, int index) => _buildNotificationCard(_notifications[index]),
+              itemBuilder: (BuildContext context, int index) =>
+                  _buildNotificationCard(_notifications[index]),
             ),
     );
   }
@@ -100,7 +104,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(Icons.notifications_none_rounded, size: 64, color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
+          Icon(Icons.notifications_none_rounded,
+              size: 64,
+              color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text(
             'No notifications',
@@ -131,8 +137,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: const Icon(Icons.delete_rounded, color: Colors.white),
       ),
       onDismissed: (_) {
+        TelemetryService.instance.logEvent(
+          event: 'nudge.snoozed',
+          metadata: <String, dynamic>{
+            'nudge_id': notification.id,
+            'nudge_type': notification.type.name,
+            'surface': 'notifications_list',
+          },
+        );
         setState(() {
-          _notifications.removeWhere((_Notification n) => n.id == notification.id);
+          _notifications
+              .removeWhere((_Notification n) => n.id == notification.id);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Notification dismissed')),
@@ -140,10 +155,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
-        color: notification.isRead ? ScholesaColors.surface : ScholesaColors.primary.withValues(alpha: 0.05),
+        color: notification.isRead
+            ? ScholesaColors.surface
+            : ScholesaColors.primary.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: notification.isRead ? BorderSide.none : BorderSide(color: ScholesaColors.primary.withValues(alpha: 0.2)),
+          side: notification.isRead
+              ? BorderSide.none
+              : BorderSide(
+                  color: ScholesaColors.primary.withValues(alpha: 0.2)),
         ),
         child: InkWell(
           onTap: () => _handleNotificationTap(notification),
@@ -166,7 +186,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               notification.title,
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
+                                fontWeight: notification.isRead
+                                    ? FontWeight.w500
+                                    : FontWeight.bold,
                               ),
                             ),
                           ),
@@ -184,14 +206,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       const SizedBox(height: 4),
                       Text(
                         notification.body,
-                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 13, color: ScholesaColors.textSecondary),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _formatTime(notification.createdAt),
-                        style: const TextStyle(fontSize: 11, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),

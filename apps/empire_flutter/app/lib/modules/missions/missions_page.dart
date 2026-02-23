@@ -14,7 +14,8 @@ class MissionsPage extends StatefulWidget {
   State<MissionsPage> createState() => _MissionsPageState();
 }
 
-class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderStateMixin {
+class _MissionsPageState extends State<MissionsPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -40,7 +41,7 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
         },
       );
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MissionService>().loadMissions();
     });
@@ -100,7 +101,8 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                 ),
               ],
             ),
-            child: const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
+            child:
+                const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
           Column(
@@ -109,9 +111,9 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
               Text(
                 'My Missions',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFF59E0B),
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFF59E0B),
+                    ),
               ),
               Text(
                 'Learn, grow, and level up!',
@@ -135,7 +137,10 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[ScholesaColors.learner, ScholesaColors.learner.withValues(alpha: 0.8)],
+              colors: <Color>[
+                ScholesaColors.learner,
+                ScholesaColors.learner.withValues(alpha: 0.8)
+              ],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: <BoxShadow>[
@@ -198,8 +203,10 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: progress.levelProgress,
-                            backgroundColor: Colors.white.withValues(alpha: 0.3),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.3),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.white),
                           ),
                         ),
                       ],
@@ -260,22 +267,22 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
                   },
                 ),
                 ...Pillar.values.map((Pillar pillar) => _PillarChip(
-                  label: pillar.label,
-                  emoji: pillar.emoji,
-                  selected: service.pillarFilter == pillar,
-                  onTap: () {
-                    TelemetryService.instance.logEvent(
-                      event: 'cta.clicked',
-                      metadata: <String, dynamic>{
-                        'cta': 'missions_filter_pillar',
-                        'surface': 'missions_pillar_filters',
-                        'pillar': pillar.name,
+                      label: pillar.label,
+                      emoji: pillar.emoji,
+                      selected: service.pillarFilter == pillar,
+                      onTap: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'missions_filter_pillar',
+                            'surface': 'missions_pillar_filters',
+                            'pillar': pillar.name,
+                          },
+                        );
+                        service.setPillarFilter(pillar);
                       },
-                    );
-                    service.setPillarFilter(pillar);
-                  },
-                  color: _getPillarColor(pillar),
-                )),
+                      color: _getPillarColor(pillar),
+                    )),
               ],
             ),
           ),
@@ -433,7 +440,6 @@ class _MissionsPageState extends State<MissionsPage> with SingleTickerProviderSt
 // ==================== Sub Widgets ====================
 
 class _ProgressStat extends StatelessWidget {
-
   const _ProgressStat({
     required this.icon,
     required this.value,
@@ -476,7 +482,6 @@ class _ProgressStat extends StatelessWidget {
 }
 
 class _PillarChip extends StatelessWidget {
-
   const _PillarChip({
     required this.label,
     required this.emoji,
@@ -526,7 +531,6 @@ class _PillarChip extends StatelessWidget {
 }
 
 class _MissionCard extends StatelessWidget {
-
   const _MissionCard({
     required this.mission,
     required this.onTap,
@@ -581,7 +585,8 @@ class _MissionCard extends StatelessWidget {
                 children: <Widget>[
                   // Pillar badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _pillarColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -589,7 +594,8 @@ class _MissionCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Text(mission.pillar.emoji, style: const TextStyle(fontSize: 12)),
+                        Text(mission.pillar.emoji,
+                            style: const TextStyle(fontSize: 12)),
                         const SizedBox(width: 4),
                         Text(
                           mission.pillar.label,
@@ -605,7 +611,8 @@ class _MissionCard extends StatelessWidget {
                   const Spacer(),
                   // XP badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -613,7 +620,8 @@ class _MissionCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(Icons.star, color: Color(0xFFF59E0B), size: 14),
+                        const Icon(Icons.star,
+                            color: Color(0xFFF59E0B), size: 14),
                         const SizedBox(width: 2),
                         Text(
                           '${mission.xpReward} XP',
@@ -655,7 +663,8 @@ class _MissionCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: mission.progress,
                           backgroundColor: _pillarColor.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(_pillarColor),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(_pillarColor),
                         ),
                       ),
                     ),
@@ -700,7 +709,8 @@ class _MissionCard extends StatelessWidget {
                   const Spacer(),
                   // Status badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -725,7 +735,6 @@ class _MissionCard extends StatelessWidget {
 }
 
 class _MissionDetailsSheet extends StatelessWidget {
-
   const _MissionDetailsSheet({required this.mission});
   final Mission mission;
 
@@ -772,7 +781,10 @@ class _MissionDetailsSheet extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: <Color>[_pillarColor.withValues(alpha: 0.8), _pillarColor],
+                            colors: <Color>[
+                              _pillarColor.withValues(alpha: 0.8),
+                              _pillarColor
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: <BoxShadow>[
@@ -794,7 +806,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: _pillarColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
@@ -822,7 +835,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Stats row
                   Row(
                     children: <Widget>[
@@ -875,20 +888,23 @@ class _MissionDetailsSheet extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: mission.skills.map((Skill skill) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: _pillarColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          skill.name,
-                          style: TextStyle(
-                            color: _pillarColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      )).toList(),
+                      children: mission.skills
+                          .map((Skill skill) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _pillarColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  skill.name,
+                                  style: TextStyle(
+                                    color: _pillarColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ))
+                          .toList(),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -902,7 +918,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...mission.steps.map((MissionStep step) => _StepItem(step: step, color: _pillarColor)),
+                  ...mission.steps.map((MissionStep step) =>
+                      _StepItem(step: step, color: _pillarColor)),
                   const SizedBox(height: 24),
 
                   // Educator feedback
@@ -912,14 +929,17 @@ class _MissionDetailsSheet extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: ScholesaColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: ScholesaColors.success.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color:
+                                ScholesaColors.success.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           const Row(
                             children: <Widget>[
-                              Icon(Icons.comment, color: ScholesaColors.success, size: 20),
+                              Icon(Icons.comment,
+                                  color: ScholesaColors.success, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 'Educator Feedback',
@@ -933,7 +953,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             mission.educatorFeedback!,
-                            style: TextStyle(color: Colors.grey[700], height: 1.5),
+                            style:
+                                TextStyle(color: Colors.grey[700], height: 1.5),
                           ),
                         ],
                       ),
@@ -954,7 +975,9 @@ class _MissionDetailsSheet extends StatelessWidget {
                               'mission_id': mission.id,
                             },
                           );
-                          context.read<MissionService>().startMission(mission.id);
+                          context
+                              .read<MissionService>()
+                              .startMission(mission.id);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -1004,7 +1027,17 @@ class _MissionDetailsSheet extends StatelessWidget {
                               'mission_id': mission.id,
                             },
                           );
-                          context.read<MissionService>().submitMission(mission.id);
+                          TelemetryService.instance.logEvent(
+                            event: 'mission.attempt.submitted',
+                            metadata: <String, dynamic>{
+                              'mission_id': mission.id,
+                              'mission_status': mission.status.name,
+                              'progress': mission.progress,
+                            },
+                          );
+                          context
+                              .read<MissionService>()
+                              .submitMission(mission.id);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -1052,7 +1085,6 @@ class _MissionDetailsSheet extends StatelessWidget {
 }
 
 class _StatChip extends StatelessWidget {
-
   const _StatChip({
     required this.icon,
     required this.value,
@@ -1090,7 +1122,6 @@ class _StatChip extends StatelessWidget {
 }
 
 class _StepItem extends StatelessWidget {
-
   const _StepItem({required this.step, required this.color});
   final MissionStep step;
   final Color color;
@@ -1127,7 +1158,8 @@ class _StepItem extends StatelessWidget {
               step.title,
               style: TextStyle(
                 color: step.isCompleted ? Colors.grey[500] : Colors.grey[800],
-                decoration: step.isCompleted ? TextDecoration.lineThrough : null,
+                decoration:
+                    step.isCompleted ? TextDecoration.lineThrough : null,
               ),
             ),
           ),

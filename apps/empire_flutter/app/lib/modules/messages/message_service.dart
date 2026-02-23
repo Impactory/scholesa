@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
+import '../../services/telemetry_service.dart';
 import 'message_models.dart';
 
 /// Service for messages and notifications
 class MessageService extends ChangeNotifier {
-
   MessageService({
     required FirestoreService firestoreService,
     required this.userId,
@@ -22,7 +22,8 @@ class MessageService extends ChangeNotifier {
 
   // Getters
   List<Message> get messages => _filteredMessages;
-  List<Message> get unreadMessages => _messages.where((Message m) => !m.isRead).toList();
+  List<Message> get unreadMessages =>
+      _messages.where((Message m) => !m.isRead).toList();
   List<Conversation> get conversations => _conversations;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -48,14 +49,16 @@ class MessageService extends ChangeNotifier {
 
     try {
       // Load messages for this user
-      final QuerySnapshot<Map<String, dynamic>> messagesSnapshot = await _firestore
-          .collection('messages')
-          .where('recipientId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .limit(50)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> messagesSnapshot =
+          await _firestore
+              .collection('messages')
+              .where('recipientId', isEqualTo: userId)
+              .orderBy('createdAt', descending: true)
+              .limit(50)
+              .get();
 
-      _messages = messagesSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      _messages = messagesSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
         return Message(
           id: doc.id,
@@ -73,38 +76,45 @@ class MessageService extends ChangeNotifier {
       }).toList();
 
       // Load conversations for this user
-      final QuerySnapshot<Map<String, dynamic>> conversationsSnapshot = await _firestore
-          .collection('conversations')
-          .where('participantIds', arrayContains: userId)
-          .orderBy('updatedAt', descending: true)
-          .limit(20)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> conversationsSnapshot =
+          await _firestore
+              .collection('conversations')
+              .where('participantIds', arrayContains: userId)
+              .orderBy('updatedAt', descending: true)
+              .limit(20)
+              .get();
 
       _conversations = await Future.wait(
-        conversationsSnapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+        conversationsSnapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
           final Map<String, dynamic> data = doc.data();
-          final List<String> participantIds = List<String>.from(data['participantIds'] as List? ?? <String>[]);
-          final List<String> participantNames = List<String>.from(data['participantNames'] as List? ?? <String>[]);
+          final List<String> participantIds =
+              List<String>.from(data['participantIds'] as List? ?? <String>[]);
+          final List<String> participantNames = List<String>.from(
+              data['participantNames'] as List? ?? <String>[]);
 
           // Get the last message in the conversation
-          final QuerySnapshot<Map<String, dynamic>> lastMsgSnapshot = await _firestore
-              .collection('conversations')
-              .doc(doc.id)
-              .collection('messages')
-              .orderBy('createdAt', descending: true)
-              .limit(1)
-              .get();
+          final QuerySnapshot<Map<String, dynamic>> lastMsgSnapshot =
+              await _firestore
+                  .collection('conversations')
+                  .doc(doc.id)
+                  .collection('messages')
+                  .orderBy('createdAt', descending: true)
+                  .limit(1)
+                  .get();
 
           Message? lastMessage;
           if (lastMsgSnapshot.docs.isNotEmpty) {
-            final Map<String, dynamic> msgData = lastMsgSnapshot.docs.first.data();
+            final Map<String, dynamic> msgData =
+                lastMsgSnapshot.docs.first.data();
             lastMessage = Message(
               id: lastMsgSnapshot.docs.first.id,
               title: '',
               body: msgData['body'] as String? ?? '',
               type: MessageType.direct,
               senderName: msgData['senderName'] as String?,
-              createdAt: _parseTimestamp(msgData['createdAt']) ?? DateTime.now(),
+              createdAt:
+                  _parseTimestamp(msgData['createdAt']) ?? DateTime.now(),
               isRead: msgData['isRead'] as bool? ?? false,
             );
           }
@@ -120,7 +130,8 @@ class MessageService extends ChangeNotifier {
         }),
       );
 
-      debugPrint('Loaded ${_messages.length} messages and ${_conversations.length} conversations');
+      debugPrint(
+          'Loaded ${_messages.length} messages and ${_conversations.length} conversations');
     } catch (e) {
       debugPrint('Error loading messages: $e');
       _error = 'Failed to load messages: $e';
@@ -135,7 +146,10 @@ class MessageService extends ChangeNotifier {
   /// Mark a message as read in Firebase
   Future<bool> markAsRead(String messageId) async {
     try {
-      await _firestore.collection('messages').doc(messageId).update(<String, dynamic>{
+      await _firestore
+          .collection('messages')
+          .doc(messageId)
+          .update(<String, dynamic>{
         'isRead': true,
         'readAt': FieldValue.serverTimestamp(),
       });
@@ -164,18 +178,22 @@ class MessageService extends ChangeNotifier {
       final DateTime now = DateTime.now();
 
       for (final Message message in _messages.where((Message m) => !m.isRead)) {
-        batch.update(_firestore.collection('messages').doc(message.id), <String, dynamic>{
-          'isRead': true,
-          'readAt': FieldValue.serverTimestamp(),
-        });
+        batch.update(
+            _firestore.collection('messages').doc(message.id),
+            <String, dynamic>{
+              'isRead': true,
+              'readAt': FieldValue.serverTimestamp(),
+            });
       }
 
       await batch.commit();
 
-      _messages = _messages.map((Message m) => m.copyWith(
-        isRead: true,
-        readAt: m.readAt ?? now,
-      )).toList();
+      _messages = _messages
+          .map((Message m) => m.copyWith(
+                isRead: true,
+                readAt: m.readAt ?? now,
+              ))
+          .toList();
       notifyListeners();
     } catch (e) {
       debugPrint('Error marking all messages as read: $e');
@@ -207,11 +225,10 @@ class MessageService extends ChangeNotifier {
   }) async {
     try {
       // Get sender info
-      final DocumentSnapshot<Map<String, dynamic>> senderDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get();
-      final String senderName = senderDoc.data()?['displayName'] as String? ?? 'Unknown';
+      final DocumentSnapshot<Map<String, dynamic>> senderDoc =
+          await _firestore.collection('users').doc(userId).get();
+      final String senderName =
+          senderDoc.data()?['displayName'] as String? ?? 'Unknown';
 
       if (conversationId != null) {
         // Add to existing conversation
@@ -227,16 +244,21 @@ class MessageService extends ChangeNotifier {
           'isRead': false,
         });
 
-        await _firestore.collection('conversations').doc(conversationId).update(<String, dynamic>{
+        await _firestore
+            .collection('conversations')
+            .doc(conversationId)
+            .update(<String, dynamic>{
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
         // Create new conversation
-        final DocumentReference<Map<String, dynamic>> convRef = await _firestore
-            .collection('conversations')
-            .add(<String, dynamic>{
+        final DocumentReference<Map<String, dynamic>> convRef =
+            await _firestore.collection('conversations').add(<String, dynamic>{
           'participantIds': <String>[userId, recipientId],
-          'participantNames': <String>[senderName, recipientId], // Will need to lookup recipient name
+          'participantNames': <String>[
+            senderName,
+            recipientId
+          ], // Will need to lookup recipient name
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
@@ -249,6 +271,15 @@ class MessageService extends ChangeNotifier {
           'isRead': false,
         });
       }
+
+      await TelemetryService.instance.logEvent(
+        event: 'message.sent',
+        metadata: <String, dynamic>{
+          'recipient_id': recipientId,
+          'conversation_id': conversationId,
+          'message_length': body.length,
+        },
+      );
 
       await loadMessages();
       return true;

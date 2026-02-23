@@ -127,9 +127,15 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'badge.viewed',
   'leaderboard.viewed',
   'streak.celebrated',
+  'popup.shown',
+  'popup.dismissed',
+  'popup.completed',
   'nudge.accepted',
   'nudge.dismissed',
   'nudge.snoozed',
+  'insight.viewed',
+  'support.applied',
+  'support.outcome.logged',
   'educator.feedback.submitted',
   'support.intervention.logged',
   'motivation.insight.viewed',
@@ -3854,11 +3860,44 @@ export const logSupportIntervention = onCall(async (request: CallableRequest<{
 
   // Log telemetry
   await persistTelemetryEvent({
+    event: 'support.applied',
+    userId: uid,
+    role,
+    siteId,
+    metadata: {
+      learnerId,
+      interventionId: interventionRef.id,
+      strategyType,
+      context,
+    },
+  });
+
+  await persistTelemetryEvent({
     event: 'support.intervention.logged',
     userId: uid,
     role,
     siteId,
-    metadata: { learnerId, interventionId: interventionRef.id, outcome },
+    metadata: {
+      learnerId,
+      interventionId: interventionRef.id,
+      outcome,
+      strategyType,
+      context,
+    },
+  });
+
+  await persistTelemetryEvent({
+    event: 'support.outcome.logged',
+    userId: uid,
+    role,
+    siteId,
+    metadata: {
+      learnerId,
+      interventionId: interventionRef.id,
+      outcome,
+      learnerResponse: learnerResponse || null,
+      recommendForFuture,
+    },
   });
 
   return { success: true, interventionId: interventionRef.id };
@@ -3896,6 +3935,7 @@ export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
     'app.open', 'app.session.end', 'mission.started', 'mission.completed',
     'mission.abandoned', 'reflection.submitted', 'portfolio.item.added',
     'help.requested', 'badge.viewed', 'leaderboard.viewed', 'streak.celebrated',
+    'popup.shown', 'popup.dismissed', 'popup.completed',
     'nudge.accepted', 'nudge.dismissed', 'nudge.snoozed',
   ];
 
@@ -4123,7 +4163,7 @@ export const getClassInsights = onCall(async (request: CallableRequest<{
   sessionOccurrenceId?: string;
   learnerIds?: string[];
 }>) => {
-  await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
+  const { uid, role } = await requireRoleAndSite(request.auth?.uid, ['educator', 'hq'], request.data.siteId);
 
   const { siteId, learnerIds } = request.data;
 
@@ -4190,6 +4230,30 @@ export const getClassInsights = onCall(async (request: CallableRequest<{
     if (a.needsAttention && !b.needsAttention) return -1;
     if (!a.needsAttention && b.needsAttention) return 1;
     return 0;
+  });
+
+  const insightMetadata = {
+    insightType: 'class_insights',
+    sessionOccurrenceId: request.data.sessionOccurrenceId || null,
+    requestedLearnerCount: learnerIds?.length || null,
+    returnedLearnerCount: insights.length,
+  };
+
+  await persistTelemetryEvent({
+    event: 'insight.viewed',
+    userId: uid,
+    role,
+    siteId,
+    metadata: insightMetadata,
+  });
+
+  // Keep legacy telemetry naming until all dashboards have migrated.
+  await persistTelemetryEvent({
+    event: 'motivation.insight.viewed',
+    userId: uid,
+    role,
+    siteId,
+    metadata: insightMetadata,
   });
 
   return { insights };

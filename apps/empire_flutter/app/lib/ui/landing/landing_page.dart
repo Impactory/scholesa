@@ -13,7 +13,8 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage>
+    with TickerProviderStateMixin {
   late AnimationController _heroController;
   late AnimationController _featuresController;
   late Animation<double> _heroFade;
@@ -36,13 +37,23 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     _heroSlide = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _heroController, curve: Curves.easeOutCubic));
-    _featuresFade = CurvedAnimation(parent: _featuresController, curve: Curves.easeOut);
+    ).animate(
+        CurvedAnimation(parent: _heroController, curve: Curves.easeOutCubic));
+    _featuresFade =
+        CurvedAnimation(parent: _featuresController, curve: Curves.easeOut);
 
     _heroController.forward();
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _featuresController.forward();
     });
+
+    TelemetryService.instance.logEvent(
+      event: 'cms.page.viewed',
+      metadata: const <String, dynamic>{
+        'slug': 'landing',
+        'surface': 'public_landing',
+      },
+    );
   }
 
   @override
@@ -182,7 +193,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               label: 'Features',
               onTap: () => _showSectionPreview(
                 title: 'Features',
-                detail: 'Mission-based learning, AI coaching, portfolios, analytics, and offline support.',
+                detail:
+                    'Mission-based learning, AI coaching, portfolios, analytics, and offline support.',
               ),
             ),
             const SizedBox(width: 32),
@@ -190,7 +202,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               label: 'Pillars',
               onTap: () => _showSectionPreview(
                 title: 'Pillars',
-                detail: 'Future Skills, Leadership & Agency, and Impact & Innovation.',
+                detail:
+                    'Future Skills, Leadership & Agency, and Impact & Innovation.',
               ),
             ),
             const SizedBox(width: 32),
@@ -198,7 +211,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               label: 'For Schools',
               onTap: () => _showSectionPreview(
                 title: 'For Schools',
-                detail: 'Role-based dashboards for learners, educators, parents, site teams, and HQ.',
+                detail:
+                    'Role-based dashboards for learners, educators, parents, site teams, and HQ.',
               ),
             ),
             const SizedBox(width: 32),
@@ -328,7 +342,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -352,7 +367,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               label: const Text('Watch Demo'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -574,26 +590,32 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           isWide
               ? Row(
                   children: <Widget>[
-                    Expanded(child: _buildPillarCard(
+                    Expanded(
+                        child: _buildPillarCard(
                       icon: Icons.computer_rounded,
                       title: 'Future Skills',
-                      description: 'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
+                      description:
+                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
                       color: ScholesaColors.futureSkills,
                       emoji: '🚀',
                     )),
                     const SizedBox(width: 24),
-                    Expanded(child: _buildPillarCard(
+                    Expanded(
+                        child: _buildPillarCard(
                       icon: Icons.psychology_rounded,
                       title: 'Leadership & Agency',
-                      description: 'Self-direction, communication, collaboration, and decision-making skills.',
+                      description:
+                          'Self-direction, communication, collaboration, and decision-making skills.',
                       color: ScholesaColors.leadership,
                       emoji: '👑',
                     )),
                     const SizedBox(width: 24),
-                    Expanded(child: _buildPillarCard(
+                    Expanded(
+                        child: _buildPillarCard(
                       icon: Icons.public_rounded,
                       title: 'Impact & Innovation',
-                      description: 'Social responsibility, creative problem-solving, and community contribution.',
+                      description:
+                          'Social responsibility, creative problem-solving, and community contribution.',
                       color: ScholesaColors.impact,
                       emoji: '🌍',
                     )),
@@ -604,7 +626,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     _buildPillarCard(
                       icon: Icons.computer_rounded,
                       title: 'Future Skills',
-                      description: 'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
+                      description:
+                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
                       color: ScholesaColors.futureSkills,
                       emoji: '🚀',
                     ),
@@ -612,7 +635,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     _buildPillarCard(
                       icon: Icons.psychology_rounded,
                       title: 'Leadership & Agency',
-                      description: 'Self-direction, communication, collaboration, and decision-making skills.',
+                      description:
+                          'Self-direction, communication, collaboration, and decision-making skills.',
                       color: ScholesaColors.leadership,
                       emoji: '👑',
                     ),
@@ -620,7 +644,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     _buildPillarCard(
                       icon: Icons.public_rounded,
                       title: 'Impact & Innovation',
-                      description: 'Social responsibility, creative problem-solving, and community contribution.',
+                      description:
+                          'Social responsibility, creative problem-solving, and community contribution.',
                       color: ScholesaColors.impact,
                       emoji: '🌍',
                     ),
@@ -720,9 +745,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             runSpacing: 24,
             alignment: WrapAlignment.center,
             children: <Widget>[
-              _buildFeatureItem(Icons.assignment_turned_in_rounded, 'Mission-Based Learning'),
+              _buildFeatureItem(
+                  Icons.assignment_turned_in_rounded, 'Mission-Based Learning'),
               _buildFeatureItem(Icons.psychology_rounded, 'AI Habit Coaching'),
-              _buildFeatureItem(Icons.folder_special_rounded, 'Portfolio Showcase'),
+              _buildFeatureItem(
+                  Icons.folder_special_rounded, 'Portfolio Showcase'),
               _buildFeatureItem(Icons.insights_rounded, 'Progress Analytics'),
               _buildFeatureItem(Icons.groups_rounded, 'Parent Portal'),
               _buildFeatureItem(Icons.cloud_off_rounded, 'Offline-First'),
@@ -793,11 +820,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             runSpacing: 16,
             alignment: WrapAlignment.center,
             children: <Widget>[
-              _buildRoleChip('Learners', ScholesaColors.learner, Icons.school_rounded),
-              _buildRoleChip('Educators', ScholesaColors.educator, Icons.person_rounded),
-              _buildRoleChip('Parents', ScholesaColors.parent, Icons.family_restroom_rounded),
-              _buildRoleChip('Site Admins', ScholesaColors.site, Icons.business_rounded),
-              _buildRoleChip('HQ', ScholesaColors.hq, Icons.admin_panel_settings_rounded),
+              _buildRoleChip(
+                  'Learners', ScholesaColors.learner, Icons.school_rounded),
+              _buildRoleChip(
+                  'Educators', ScholesaColors.educator, Icons.person_rounded),
+              _buildRoleChip('Parents', ScholesaColors.parent,
+                  Icons.family_restroom_rounded),
+              _buildRoleChip(
+                  'Site Admins', ScholesaColors.site, Icons.business_rounded),
+              _buildRoleChip(
+                  'HQ', ScholesaColors.hq, Icons.admin_panel_settings_rounded),
             ],
           ),
         ],

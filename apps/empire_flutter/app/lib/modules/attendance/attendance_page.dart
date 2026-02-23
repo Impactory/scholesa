@@ -57,7 +57,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
   Widget _buildBody() {
     final AttendanceService? service = context.watch<AttendanceService?>();
-    
+
     if (service == null) {
       return const Center(
         child: Text('Attendance service not available'),
@@ -142,10 +142,10 @@ class _OccurrenceSelector extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           final SessionOccurrence occ = occurrences[index];
           final String timeStr = DateFormat.jm().format(occ.startTime);
-          final String endTimeStr = occ.endTime != null 
+          final String endTimeStr = occ.endTime != null
               ? ' - ${DateFormat.jm().format(occ.endTime!)}'
               : '';
-          
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
@@ -154,9 +154,11 @@ class _OccurrenceSelector extends StatelessWidget {
                 child: const Icon(Icons.class_, color: Colors.white),
               ),
               title: Text(occ.title),
-              subtitle: Text('$timeStr$endTimeStr${occ.roomName != null ? ' • ${occ.roomName}' : ''}'),
+              subtitle: Text(
+                  '$timeStr$endTimeStr${occ.roomName != null ? ' • ${occ.roomName}' : ''}'),
               trailing: Chip(
-                label: Text('${occ.learnerCount ?? occ.roster.length} students'),
+                label:
+                    Text('${occ.learnerCount ?? occ.roster.length} students'),
               ),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -184,7 +186,7 @@ class _OccurrenceSelector extends StatelessWidget {
 /// Roster view for taking attendance
 class _AttendanceRosterView extends StatefulWidget {
   const _AttendanceRosterView({required this.occurrenceId});
-  
+
   final String occurrenceId;
 
   @override
@@ -192,7 +194,8 @@ class _AttendanceRosterView extends StatefulWidget {
 }
 
 class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
-  final Map<String, AttendanceStatus> _attendance = <String, AttendanceStatus>{};
+  final Map<String, AttendanceStatus> _attendance =
+      <String, AttendanceStatus>{};
   final Map<String, String> _notes = <String, String>{};
 
   @override
@@ -207,7 +210,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     final AttendanceService? service = context.read<AttendanceService?>();
     if (service != null) {
       await service.loadOccurrenceRoster(widget.occurrenceId);
-      
+
       // Initialize attendance map from existing records
       if (service.currentOccurrence != null) {
         for (final RosterLearner learner in service.currentOccurrence!.roster) {
@@ -233,7 +236,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   Widget build(BuildContext context) {
     final AttendanceService? service = context.watch<AttendanceService?>();
     final AppState appState = context.watch<AppState>();
-    
+
     if (service == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Class Roster')),
@@ -280,7 +283,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     }
 
     final List<RosterLearner> roster = occurrence.roster;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(occurrence.title),
@@ -372,7 +375,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 height: 48,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.save),
-                  label: Text('Save Attendance (${_attendance.length}/${roster.length})'),
+                  label: Text(
+                      'Save Attendance (${_attendance.length}/${roster.length})'),
                   onPressed: _attendance.length == roster.length
                       ? () => _saveAttendance(service, appState)
                       : null,
@@ -401,7 +405,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     });
   }
 
-  Future<void> _saveAttendance(AttendanceService service, AppState appState) async {
+  Future<void> _saveAttendance(
+      AttendanceService service, AppState appState) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -410,7 +415,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
         'records_count': _attendance.length,
       },
     );
-    final List<AttendanceRecord> records = _attendance.entries.map((MapEntry<String, AttendanceStatus> entry) {
+    final List<AttendanceRecord> records =
+        _attendance.entries.map((MapEntry<String, AttendanceStatus> entry) {
       return AttendanceRecord(
         id: '',
         occurrenceId: widget.occurrenceId,
@@ -423,6 +429,19 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     }).toList();
 
     await service.batchRecordAttendance(records);
+    final Map<String, int> statusCounts = <String, int>{};
+    for (final AttendanceStatus status in _attendance.values) {
+      statusCounts.update(status.name, (int count) => count + 1,
+          ifAbsent: () => 1);
+    }
+    TelemetryService.instance.logEvent(
+      event: 'attendance.recorded',
+      metadata: <String, dynamic>{
+        'occurrence_id': widget.occurrenceId,
+        'records_count': records.length,
+        'status_counts': statusCounts,
+      },
+    );
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -464,11 +483,13 @@ class _StudentAttendanceCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 CircleAvatar(
-                  backgroundImage: learner.photoUrl != null 
+                  backgroundImage: learner.photoUrl != null
                       ? NetworkImage(learner.photoUrl!)
                       : null,
-                  child: learner.photoUrl == null 
-                      ? Text(learner.displayName.isNotEmpty ? learner.displayName[0] : '?')
+                  child: learner.photoUrl == null
+                      ? Text(learner.displayName.isNotEmpty
+                          ? learner.displayName[0]
+                          : '?')
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -531,7 +552,8 @@ class _StudentAttendanceCard extends StatelessWidget {
               ],
             ),
             // Note field (shown for late/absent/excused)
-            if (status != null && status != AttendanceStatus.present) ...<Widget>[
+            if (status != null &&
+                status != AttendanceStatus.present) ...<Widget>[
               const SizedBox(height: 8),
               TextField(
                 decoration: const InputDecoration(
@@ -583,7 +605,8 @@ class _StatusButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
+            color:
+                isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
             border: Border.all(
               color: isSelected ? color : Colors.grey[300]!,
               width: isSelected ? 2 : 1,

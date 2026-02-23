@@ -15,6 +15,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   String _selectedSite = 'all';
 
   @override
+  void initState() {
+    super.initState();
+    TelemetryService.instance.logEvent(
+      event: 'insight.viewed',
+      metadata: const <String, dynamic>{
+        'surface': 'hq_analytics_page',
+        'insight_type': 'platform_overview',
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -121,16 +133,23 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(value: 'all', child: Text('All Sites')),
-                  DropdownMenuItem<String>(value: 'sg', child: Text('Singapore')),
-                  DropdownMenuItem<String>(value: 'kl', child: Text('Kuala Lumpur')),
-                  DropdownMenuItem<String>(value: 'jkt', child: Text('Jakarta')),
+                  DropdownMenuItem<String>(
+                      value: 'all', child: Text('All Sites')),
+                  DropdownMenuItem<String>(
+                      value: 'sg', child: Text('Singapore')),
+                  DropdownMenuItem<String>(
+                      value: 'kl', child: Text('Kuala Lumpur')),
+                  DropdownMenuItem<String>(
+                      value: 'jkt', child: Text('Jakarta')),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
-                      metadata: <String, dynamic>{'cta': 'hq_analytics_site_filter', 'site': value},
+                      metadata: <String, dynamic>{
+                        'cta': 'hq_analytics_site_filter',
+                        'site': value
+                      },
                     );
                     setState(() => _selectedSite = value);
                   }
@@ -152,16 +171,23 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(value: 'week', child: Text('This Week')),
-                  DropdownMenuItem<String>(value: 'month', child: Text('This Month')),
-                  DropdownMenuItem<String>(value: 'quarter', child: Text('This Quarter')),
-                  DropdownMenuItem<String>(value: 'year', child: Text('This Year')),
+                  DropdownMenuItem<String>(
+                      value: 'week', child: Text('This Week')),
+                  DropdownMenuItem<String>(
+                      value: 'month', child: Text('This Month')),
+                  DropdownMenuItem<String>(
+                      value: 'quarter', child: Text('This Quarter')),
+                  DropdownMenuItem<String>(
+                      value: 'year', child: Text('This Year')),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
-                      metadata: <String, dynamic>{'cta': 'hq_analytics_period_filter', 'period': value},
+                      metadata: <String, dynamic>{
+                        'cta': 'hq_analytics_period_filter',
+                        'period': value
+                      },
                     );
                     setState(() => _selectedPeriod = value);
                   }
@@ -262,14 +288,16 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: ScholesaColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
                     children: <Widget>[
-                      Icon(Icons.trending_up, size: 16, color: ScholesaColors.success),
+                      Icon(Icons.trending_up,
+                          size: 16, color: ScholesaColors.success),
                       SizedBox(width: 4),
                       Text(
                         '+18 this month',
@@ -291,12 +319,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
-                  _BarColumn(label: 'Jan', value: 0.45, color: ScholesaColors.hq),
-                  _BarColumn(label: 'Feb', value: 0.52, color: ScholesaColors.hq),
-                  _BarColumn(label: 'Mar', value: 0.61, color: ScholesaColors.hq),
-                  _BarColumn(label: 'Apr', value: 0.58, color: ScholesaColors.hq),
-                  _BarColumn(label: 'May', value: 0.75, color: ScholesaColors.hq),
-                  _BarColumn(label: 'Jun', value: 0.89, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'Jan', value: 0.45, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'Feb', value: 0.52, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'Mar', value: 0.61, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'Apr', value: 0.58, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'May', value: 0.75, color: ScholesaColors.hq),
+                  _BarColumn(
+                      label: 'Jun', value: 0.89, color: ScholesaColors.hq),
                 ],
               ),
             ),
@@ -459,6 +493,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         'period': _selectedPeriod,
       },
     );
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: <String, dynamic>{
+        'popup_id': 'hq_analytics_export_report',
+        'surface': 'hq_analytics_page',
+      },
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -476,6 +517,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   'surface': 'export_report_dialog',
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'popup.dismissed',
+                metadata: const <String, dynamic>{
+                  'popup_id': 'hq_analytics_export_report',
+                  'surface': 'export_report_dialog',
+                },
+              );
               Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
@@ -487,6 +535,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 metadata: const <String, dynamic>{
                   'cta': 'hq_analytics_confirm_export',
                   'surface': 'export_report_dialog',
+                },
+              );
+              TelemetryService.instance.logEvent(
+                event: 'popup.completed',
+                metadata: const <String, dynamic>{
+                  'popup_id': 'hq_analytics_export_report',
+                  'surface': 'export_report_dialog',
+                  'completion_action': 'export',
                 },
               );
               Navigator.pop(dialogContext);
@@ -504,12 +560,28 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     );
   }
 
-  void _showAllTopPerformers() {
+  Future<void> _showAllTopPerformers() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'hq_analytics_view_all_top_performers'},
+      metadata: const <String, dynamic>{
+        'cta': 'hq_analytics_view_all_top_performers'
+      },
     );
-    showModalBottomSheet<void>(
+    TelemetryService.instance.logEvent(
+      event: 'insight.viewed',
+      metadata: const <String, dynamic>{
+        'surface': 'hq_analytics_page',
+        'insight_type': 'top_performers',
+      },
+    );
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: const <String, dynamic>{
+        'popup_id': 'hq_analytics_top_performers',
+        'surface': 'hq_analytics_page',
+      },
+    );
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -553,11 +625,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ),
       ),
     );
+    TelemetryService.instance.logEvent(
+      event: 'popup.dismissed',
+      metadata: const <String, dynamic>{
+        'popup_id': 'hq_analytics_top_performers',
+        'surface': 'hq_analytics_page',
+      },
+    );
   }
 }
 
 class _MetricCard extends StatelessWidget {
-
   const _MetricCard({
     required this.icon,
     required this.value,
@@ -610,14 +688,18 @@ class _MetricCard extends StatelessWidget {
                     Icon(
                       trendUp ? Icons.arrow_upward : Icons.arrow_downward,
                       size: 10,
-                      color: trendUp ? ScholesaColors.success : ScholesaColors.error,
+                      color: trendUp
+                          ? ScholesaColors.success
+                          : ScholesaColors.error,
                     ),
                     Text(
                       trend,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: trendUp ? ScholesaColors.success : ScholesaColors.error,
+                        color: trendUp
+                            ? ScholesaColors.success
+                            : ScholesaColors.error,
                       ),
                     ),
                   ],
@@ -646,8 +728,8 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _BarColumn extends StatelessWidget {
-
-  const _BarColumn({required this.label, required this.value, required this.color});
+  const _BarColumn(
+      {required this.label, required this.value, required this.color});
   final String label;
   final double value;
   final Color color;
@@ -676,7 +758,6 @@ class _BarColumn extends StatelessWidget {
 }
 
 class _PillarAnalyticsRow extends StatelessWidget {
-
   const _PillarAnalyticsRow({
     required this.icon,
     required this.label,
@@ -758,7 +839,6 @@ class _PillarAnalyticsRow extends StatelessWidget {
 }
 
 class _SiteComparisonRow extends StatelessWidget {
-
   const _SiteComparisonRow({
     required this.name,
     required this.learners,
@@ -778,7 +858,8 @@ class _SiteComparisonRow extends StatelessWidget {
         children: <Widget>[
           Expanded(
             flex: 2,
-            child: Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
           ),
           Expanded(
             child: Column(
@@ -837,7 +918,6 @@ class _SiteComparisonRow extends StatelessWidget {
 }
 
 class _TopPerformerCard extends StatelessWidget {
-
   const _TopPerformerCard({
     required this.rank,
     required this.name,

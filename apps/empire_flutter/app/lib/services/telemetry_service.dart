@@ -28,6 +28,8 @@ class TelemetryFailure {
 class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
+  static const String _defaultAppVersion =
+      String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0-rc.2');
 
   static const Set<String> knownCoreEvents = {
     'auth.login',
@@ -37,6 +39,13 @@ class TelemetryService {
     'message.sent',
     'order.paid',
     'cms.page.viewed',
+    'popup.shown',
+    'popup.dismissed',
+    'popup.completed',
+    'nudge.snoozed',
+    'insight.viewed',
+    'support.applied',
+    'support.outcome.logged',
     'lead.submitted',
     'contract.created',
     'contract.approved',
@@ -92,7 +101,6 @@ class TelemetryService {
     );
   }
 
-
   FirebaseFunctions get _requiredFunctions {
     return _functions ??= FirebaseFunctions.instance;
   }
@@ -118,11 +126,16 @@ class TelemetryService {
     String? siteId,
     Map<String, dynamic>? metadata,
   }) async {
+    final Map<String, dynamic> enrichedMetadata = <String, dynamic>{
+      ...(metadata ?? const <String, dynamic>{}),
+    };
+    enrichedMetadata.putIfAbsent('appVersion', () => _defaultAppVersion);
+
     final Map<String, dynamic> payload = <String, dynamic>{
       'event': event,
       if (role != null && role.isNotEmpty) 'role': role,
       if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
-      if (metadata != null) 'metadata': metadata,
+      'metadata': enrichedMetadata,
     };
 
     try {
@@ -151,7 +164,8 @@ class TelemetryService {
         ),
       );
       if (_recentFailures.length > _maxRetainedFailures) {
-        _recentFailures.removeRange(0, _recentFailures.length - _maxRetainedFailures);
+        _recentFailures.removeRange(
+            0, _recentFailures.length - _maxRetainedFailures);
       }
       debugPrint('TelemetryService failure for "$event": $error');
       debugPrintStack(stackTrace: stackTrace);

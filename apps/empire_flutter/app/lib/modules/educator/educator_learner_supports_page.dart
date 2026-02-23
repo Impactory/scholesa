@@ -8,10 +8,12 @@ class EducatorLearnerSupportsPage extends StatefulWidget {
   const EducatorLearnerSupportsPage({super.key});
 
   @override
-  State<EducatorLearnerSupportsPage> createState() => _EducatorLearnerSupportsPageState();
+  State<EducatorLearnerSupportsPage> createState() =>
+      _EducatorLearnerSupportsPageState();
 }
 
-class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPage> {
+class _EducatorLearnerSupportsPageState
+    extends State<EducatorLearnerSupportsPage> {
   final List<_LearnerSupport> _learnerSupports = <_LearnerSupport>[
     _LearnerSupport(
       learnerId: '1',
@@ -44,6 +46,18 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
       priority: _Priority.low,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    TelemetryService.instance.logEvent(
+      event: 'insight.viewed',
+      metadata: const <String, dynamic>{
+        'surface': 'educator_learner_supports',
+        'insight_type': 'support_overview',
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +100,10 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         Expanded(
           child: _buildSummaryCard(
             'High Priority',
-            _learnerSupports.where((_LearnerSupport s) => s.priority == _Priority.high).length.toString(),
+            _learnerSupports
+                .where((_LearnerSupport s) => s.priority == _Priority.high)
+                .length
+                .toString(),
             Colors.red,
             Icons.priority_high_rounded,
           ),
@@ -113,7 +130,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
     );
   }
 
-  Widget _buildSummaryCard(String label, String value, Color color, IconData icon) {
+  Widget _buildSummaryCard(
+      String label, String value, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -163,7 +181,9 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                 children: <Widget>[
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: ScholesaColors.educatorGradient.colors.first.withValues(alpha: 0.2),
+                    backgroundColor: ScholesaColors
+                        .educatorGradient.colors.first
+                        .withValues(alpha: 0.2),
                     child: Text(
                       support.learnerName.substring(0, 1),
                       style: TextStyle(
@@ -204,7 +224,9 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: support.accommodations.map((String a) => _buildAccommodationChip(a)).toList(),
+                children: support.accommodations
+                    .map((String a) => _buildAccommodationChip(a))
+                    .toList(),
               ),
               if (support.notes.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
@@ -274,7 +296,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
     );
   }
 
-  void _showSupportDetails(_LearnerSupport support) {
+  Future<void> _showSupportDetails(_LearnerSupport support) async {
+    bool popupCompleted = false;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -285,7 +308,24 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         'priority': support.priority.name,
       },
     );
-    showModalBottomSheet<void>(
+    TelemetryService.instance.logEvent(
+      event: 'insight.viewed',
+      metadata: <String, dynamic>{
+        'surface': 'educator_learner_supports',
+        'insight_type': 'learner_support_plan',
+        'learner_id': support.learnerId,
+        'support_type': support.supportType,
+      },
+    );
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: <String, dynamic>{
+        'popup_id': 'support_details_sheet',
+        'surface': 'educator_learner_supports',
+        'learner_id': support.learnerId,
+      },
+    );
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
       isScrollControlled: true,
@@ -297,7 +337,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         minChildSize: 0.4,
         maxChildSize: 0.9,
         expand: false,
-        builder: (BuildContext context, ScrollController scrollController) => ListView(
+        builder: (BuildContext context, ScrollController scrollController) =>
+            ListView(
           controller: scrollController,
           padding: const EdgeInsets.all(24),
           children: <Widget>[
@@ -305,7 +346,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
               children: <Widget>[
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: ScholesaColors.educatorGradient.colors.first.withValues(alpha: 0.2),
+                  backgroundColor: ScholesaColors.educatorGradient.colors.first
+                      .withValues(alpha: 0.2),
                   child: Text(
                     support.learnerName.substring(0, 1),
                     style: TextStyle(
@@ -329,7 +371,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                       ),
                       Text(
                         'Support Plan • ${support.supportType}',
-                        style: const TextStyle(color: ScholesaColors.textSecondary),
+                        style: const TextStyle(
+                            color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),
@@ -346,15 +389,16 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
             ),
             const SizedBox(height: 8),
             ...support.accommodations.map((String a) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: <Widget>[
-                  const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
-                  const SizedBox(width: 8),
-                  Text(a),
-                ],
-              ),
-            )),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(Icons.check_circle_rounded,
+                          color: Colors.green, size: 20),
+                      const SizedBox(width: 8),
+                      Text(a),
+                    ],
+                  ),
+                )),
             const SizedBox(height: 16),
             const Text(
               'Notes',
@@ -383,6 +427,15 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                           'learner_id': support.learnerId,
                         },
                       );
+                      TelemetryService.instance.logEvent(
+                        event: 'popup.dismissed',
+                        metadata: <String, dynamic>{
+                          'popup_id': 'support_details_sheet',
+                          'surface': 'educator_learner_supports',
+                          'learner_id': support.learnerId,
+                        },
+                      );
+                      popupCompleted = true;
                       Navigator.pop(context);
                     },
                     child: const Text('Close'),
@@ -401,10 +454,27 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                           'learner_id': support.learnerId,
                         },
                       );
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit support plan')),
+                      TelemetryService.instance.logEvent(
+                        event: 'support.applied',
+                        metadata: <String, dynamic>{
+                          'learner_id': support.learnerId,
+                          'support_type': support.supportType,
+                          'priority': support.priority.name,
+                          'action': 'edit_support_plan',
+                        },
                       );
+                      TelemetryService.instance.logEvent(
+                        event: 'popup.completed',
+                        metadata: <String, dynamic>{
+                          'popup_id': 'support_details_sheet',
+                          'surface': 'educator_learner_supports',
+                          'completion_action': 'edit_support_plan',
+                          'learner_id': support.learnerId,
+                        },
+                      );
+                      popupCompleted = true;
+                      Navigator.pop(context);
+                      _showOutcomeDialog(support);
                     },
                     child: const Text('Edit Plan'),
                   ),
@@ -415,9 +485,21 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         ),
       ),
     );
+    if (!popupCompleted) {
+      TelemetryService.instance.logEvent(
+        event: 'popup.dismissed',
+        metadata: <String, dynamic>{
+          'popup_id': 'support_details_sheet',
+          'surface': 'educator_learner_supports',
+          'learner_id': support.learnerId,
+          'reason': 'closed_without_action',
+        },
+      );
+    }
   }
 
-  void _showSearchDialog() {
+  Future<void> _showSearchDialog() async {
+    bool popupCompleted = false;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -426,9 +508,16 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
         'surface': 'appbar',
       },
     );
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: const <String, dynamic>{
+        'popup_id': 'support_search_dialog',
+        'surface': 'educator_learner_supports',
+      },
+    );
     final TextEditingController controller = TextEditingController();
 
-    showDialog<void>(
+    await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('Search Learner Supports'),
@@ -450,6 +539,14 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                   'surface': 'search_dialog',
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'popup.dismissed',
+                metadata: const <String, dynamic>{
+                  'popup_id': 'support_search_dialog',
+                  'surface': 'educator_learner_supports',
+                },
+              );
+              popupCompleted = true;
               Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
@@ -458,7 +555,8 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
             onPressed: () {
               final String query = controller.text.trim().toLowerCase();
               final int matches = _learnerSupports
-                  .where((support) => support.learnerName.toLowerCase().contains(query))
+                  .where((support) =>
+                      support.learnerName.toLowerCase().contains(query))
                   .length;
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -470,15 +568,111 @@ class _EducatorLearnerSupportsPageState extends State<EducatorLearnerSupportsPag
                   'matches': matches,
                 },
               );
+              TelemetryService.instance.logEvent(
+                event: 'popup.completed',
+                metadata: <String, dynamic>{
+                  'popup_id': 'support_search_dialog',
+                  'surface': 'educator_learner_supports',
+                  'completion_action': 'search',
+                  'matches': matches,
+                },
+              );
+              popupCompleted = true;
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Found $matches matching support plans')),
+                SnackBar(
+                    content: Text('Found $matches matching support plans')),
               );
             },
             child: const Text('Search'),
           ),
         ],
       ),
+    );
+    if (!popupCompleted) {
+      TelemetryService.instance.logEvent(
+        event: 'popup.dismissed',
+        metadata: const <String, dynamic>{
+          'popup_id': 'support_search_dialog',
+          'surface': 'educator_learner_supports',
+          'reason': 'closed_without_action',
+        },
+      );
+    }
+  }
+
+  Future<void> _showOutcomeDialog(_LearnerSupport support) async {
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: <String, dynamic>{
+        'popup_id': 'support_outcome_dialog',
+        'surface': 'educator_learner_supports',
+        'learner_id': support.learnerId,
+      },
+    );
+
+    final String? outcome = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Log Support Outcome'),
+        content: const Text(
+          'Select the outcome from this support action.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'popup.dismissed',
+                metadata: const <String, dynamic>{
+                  'popup_id': 'support_outcome_dialog',
+                  'surface': 'educator_learner_supports',
+                },
+              );
+              Navigator.pop(dialogContext, null);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'partial'),
+            child: const Text('Partial'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'no_change'),
+            child: const Text('No Change'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, 'helped'),
+            child: const Text('Helped'),
+          ),
+        ],
+      ),
+    );
+
+    if (outcome == null) {
+      return;
+    }
+
+    TelemetryService.instance.logEvent(
+      event: 'support.outcome.logged',
+      metadata: <String, dynamic>{
+        'learner_id': support.learnerId,
+        'support_type': support.supportType,
+        'priority': support.priority.name,
+        'outcome': outcome,
+      },
+    );
+    TelemetryService.instance.logEvent(
+      event: 'popup.completed',
+      metadata: <String, dynamic>{
+        'popup_id': 'support_outcome_dialog',
+        'surface': 'educator_learner_supports',
+        'completion_action': 'log_outcome',
+        'outcome': outcome,
+      },
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Support outcome logged: $outcome')),
     );
   }
 }
