@@ -1,2 +1,50 @@
 Launching lib/main.dart on Chrome in debug mode...
-Waiting for connection from debug service on Chrome...          
+Waiting for connection from debug service on Chrome...             12.6s
+
+Flutter run key commands.
+r Hot reload. 🔥🔥🔥
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+This app is linked to the debug service: ws://127.0.0.1:58695/SGhJq4JFqy4=/ws
+Debug service listening on ws://127.0.0.1:58695/SGhJq4JFqy4=/ws
+A Dart VM Service on Chrome is available at: http://127.0.0.1:58695/SGhJq4JFqy4=
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:58695/SGhJq4JFqy4=/devtools/?uri=ws://127.0.0.1:58695/SGhJq4JFqy4=/ws
+Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.
+Found an existing <meta name="viewport"> tag. Flutter Web uses its own viewport configuration for better compatibility with Flutter. This tag will be replaced.
+Firebase initialized successfully
+Got object store box in database offline_queue.
+TelemetryService failure for "cms.page.viewed": [firebase_functions/internal] internal
+
+
+package:cloud_functions_web/https_callable_web.dart 56:7                          <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 598:5                <fn>
+dart-sdk/lib/async/zone.dart 1854:54                                              runBinary
+dart-sdk/lib/async/future_impl.dart 237:22                                        handleError
+dart-sdk/lib/async/future_impl.dart 960:46                                        handleError
+dart-sdk/lib/async/future_impl.dart 981:13                                        _propagateToListeners
+dart-sdk/lib/async/future_impl.dart 738:5                                         [_completeErrorObject]
+dart-sdk/lib/async/future_impl.dart 742:5                                         [_completeError]
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 511:7                completeError
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 582:12               _asyncRethrow
+package:cloud_functions_web/interop/functions.dart 78:31                          <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 598:5                <fn>
+dart-sdk/lib/async/zone.dart 1854:54                                              runBinary
+dart-sdk/lib/async/future_impl.dart 237:22                                        handleError
+dart-sdk/lib/async/future_impl.dart 960:46                                        handleError
+dart-sdk/lib/async/future_impl.dart 981:13                                        _propagateToListeners
+dart-sdk/lib/async/future_impl.dart 738:5                                         [_completeErrorObject]
+dart-sdk/lib/async/future_impl.dart 832:7                                         <fn>
+dart-sdk/lib/async/schedule_microtask.dart 40:34                                  _microtaskLoop
+dart-sdk/lib/async/schedule_microtask.dart 49:5                                   _startMicrotaskLoop
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 188:69               <fn>
+
+[TIMEOUT after 90s]
