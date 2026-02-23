@@ -36,13 +36,13 @@ export function LoginForm() {
   };
 
   return (
-    <div className='flex min-h-screen flex-col justify-center bg-gray-50 py-12 sm:px-6 lg:px-8'>
+    <div className='flex min-h-screen flex-col justify-center bg-app-canvas py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900'>{t('auth.legacyLogin.title')}</h2>
+        <h2 className='mt-6 text-center text-3xl font-extrabold text-app-foreground'>{t('auth.legacyLogin.title')}</h2>
       </div>
 
       <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-        <div className='bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10'>
+        <div className='bg-app-surface py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-app'>
           <form className='space-y-6' onSubmit={handleSubmit}>
             <Input
               id='email'
@@ -74,7 +74,7 @@ export function LoginForm() {
                 <div className='w-full border-t border-gray-300' />
               </div>
               <div className='relative flex justify-center text-sm'>
-                <span className='bg-white px-2 text-gray-500'>{t('auth.legacyLogin.orContinueWith')}</span>
+                <span className='bg-app-surface px-2 text-app-muted'>{t('auth.legacyLogin.orContinueWith')}</span>
               </div>
             </div>
 

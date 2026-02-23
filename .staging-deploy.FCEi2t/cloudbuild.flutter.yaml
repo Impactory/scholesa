@@ -1,0 +1,24 @@
+steps:
+- name: 'node:24'
+  id: 'ai-policy-gates'
+  entrypoint: 'bash'
+  args:
+    - -lc
+    - |
+      npm ci
+      npm run ai:internal-only:all
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'docker-build'
+  waitFor:
+    - 'ai-policy-gates'
+  args:
+    - build
+    - -f
+    - Dockerfile.flutter
+    - -t
+    - gcr.io/studio-3328096157-e3f79/empire-web:${_TAG}
+    - .
+images:
+  - gcr.io/studio-3328096157-e3f79/empire-web:${_TAG}
+substitutions:
+  _TAG: latest

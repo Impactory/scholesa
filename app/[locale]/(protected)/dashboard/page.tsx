@@ -31,8 +31,8 @@ export default function DashboardRedirect() {
   }, [user, profile, loading, router, locale]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-pulse text-lg font-medium text-gray-600">
+    <div className="flex min-h-screen items-center justify-center bg-app-canvas">
+      <div className="animate-pulse text-lg font-medium text-app-muted">
         {t('dashboard.redirecting')}
       </div>
     </div>

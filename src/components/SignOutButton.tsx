@@ -29,7 +29,7 @@ export function SignOutButton() {
         trackInteraction('help_accessed', { cta: 'sign_out_button' });
         handleSignOut();
       }}
-      className="text-sm font-medium text-gray-500 hover:text-gray-900"
+      className="text-sm font-medium text-app-muted hover:text-app-foreground"
     >
       {t('navigation.signOut')}
     </button>

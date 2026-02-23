@@ -9,12 +9,12 @@ export default function LandingPage() {
   const trackInteraction = useInteractionTracking();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-app-canvas p-4">
       <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+        <h1 className="text-4xl font-bold tracking-tight text-app-foreground sm:text-6xl">
           {t('landing.title')}
         </h1>
-        <p className="mt-6 text-lg leading-8 text-gray-600">
+        <p className="mt-6 text-lg leading-8 text-app-muted">
           {t('landing.tagline')}
         </p>
         <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -27,7 +27,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href={`/${locale}/register`}
-            className="text-sm font-semibold leading-6 text-gray-900"
+            className="text-sm font-semibold leading-6 text-app-foreground"
             onClick={() => trackInteraction('feature_discovered', { cta: 'landing_register' })}
           >
             {t('landing.registerArrow')}

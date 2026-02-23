@@ -25,8 +25,8 @@ export default function ProtectedLayout({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex items-center gap-3 text-gray-600">
+      <div className="flex h-screen items-center justify-center bg-app-canvas">
+        <div className="flex items-center gap-3 text-app-muted">
           <Spinner />
           <span>{t('common.loading')}</span>
         </div>
@@ -39,7 +39,7 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-app-canvas">
       <Navigation />
       <main className="py-10">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">

@@ -60,11 +60,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-app-canvas p-4">
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-app-surface p-8 shadow-md border border-app">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">{t('auth.register.title')}</h2>
-          <p className="mt-2 text-sm text-gray-600">{t('auth.register.subtitle')}</p>
+          <h2 className="text-3xl font-bold tracking-tight text-app-foreground">{t('auth.register.title')}</h2>
+          <p className="mt-2 text-sm text-app-muted">{t('auth.register.subtitle')}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
@@ -82,7 +82,7 @@ export default function RegisterPage() {
                 name="name"
                 type="text"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                className="relative block w-full rounded-md border-0 py-1.5 text-app-foreground ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-app-surface"
                 placeholder={t('auth.register.namePlaceholder')}
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -96,7 +96,7 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                className="relative block w-full rounded-md border-0 py-1.5 text-app-foreground ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-app-surface"
                 placeholder={t('auth.register.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -110,18 +110,18 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                className="relative block w-full rounded-md border-0 py-1.5 text-app-foreground ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3 bg-app-surface"
                 placeholder={t('auth.register.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="role" className="block text-sm font-medium leading-6 text-gray-900">{t('auth.register.roleLabel')}</label>
+              <label htmlFor="role" className="block text-sm font-medium leading-6 text-app-foreground">{t('auth.register.roleLabel')}</label>
               <select
                 id="role"
                 name="role"
-                className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-app-foreground ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-app-surface"
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
               >

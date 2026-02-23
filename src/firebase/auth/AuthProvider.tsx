@@ -66,27 +66,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const errors: string[] = [];
+    let firebaseError: unknown = null;
 
     try {
       await clearSessionCookie();
     } catch (error) {
       console.error('Failed to clear session cookie before sign-out.', error);
-      errors.push('session');
     }
 
     try {
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Failed to sign out from Firebase auth.', error);
-      errors.push('firebase');
+      firebaseError = error;
     } finally {
       setUser(null);
       setProfile(null);
     }
 
-    if (errors.length > 0) {
-      throw new Error(`Sign-out completed with partial failures: ${errors.join(', ')}`);
+    if (firebaseError) {
+      throw firebaseError;
     }
   };
 

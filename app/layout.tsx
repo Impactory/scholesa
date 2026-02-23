@@ -5,6 +5,7 @@ import { PageTransition } from '@/src/components/layout/PageTransition';
 import { AuthProvider } from '@/src/firebase/auth/AuthProvider';
 import { OfflineIndicator } from '@/src/components/ui/OfflineIndicator';
 import { ServiceWorkerRegister } from '@/src/components/pwa/ServiceWorkerRegister';
+import { ThemeProvider } from '@/src/lib/theme/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'Scholesa – Future Skills Academy',
@@ -26,13 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <body className="font-scholesa">
         <ServiceWorkerRegister />
-        <AuthProvider>
-          <OfflineIndicator />
-          <PageTransition>{children}</PageTransition>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <OfflineIndicator />
+            <PageTransition>{children}</PageTransition>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
