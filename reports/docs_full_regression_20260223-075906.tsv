@@ -1,1 +1,16 @@
 status	step	workdir	command	log
+PASS	npm-ci	/Users/simonluke/dev/scholesa	npm ci	reports/docs_full_regression_20260223-075906_logs/01_npm_ci.log
+FAIL(1)	npm-lint	/Users/simonluke/dev/scholesa	npm run lint	reports/docs_full_regression_20260223-075906_logs/02_npm_lint.log
+PASS	npm-test	/Users/simonluke/dev/scholesa	npm test	reports/docs_full_regression_20260223-075906_logs/03_npm_test.log
+PASS	npm-build	/Users/simonluke/dev/scholesa	npm run build	reports/docs_full_regression_20260223-075906_logs/04_npm_build.log
+FAIL(1)	ai-internal-all	/Users/simonluke/dev/scholesa	npm run ai:internal-only:all	reports/docs_full_regression_20260223-075906_logs/05_ai_internal.log
+FAIL(1)	vibe-all	/Users/simonluke/dev/scholesa	npm run vibe:all	reports/docs_full_regression_20260223-075906_logs/06_vibe_all.log
+FAIL(1)	rc2-regression	/Users/simonluke/dev/scholesa	npm run rc2:regression	reports/docs_full_regression_20260223-075906_logs/07_rc2_regression.log
+PASS	coppa-no-ads-audit	/Users/simonluke/dev/scholesa	npm run audit:coppa:no-ads	reports/docs_full_regression_20260223-075906_logs/08_coppa_no_ads.log
+FAIL(1)	qa-telemetry-smoke	/Users/simonluke/dev/scholesa	npm run qa:telemetry-smoke	reports/docs_full_regression_20260223-075906_logs/09_qa_telemetry_smoke.log
+PASS	telemetry-live-regression-audit	/Users/simonluke/dev/scholesa	node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json	reports/docs_full_regression_20260223-075906_logs/10_telemetry_live_audit.log
+PASS	voice-live-runner	/Users/simonluke/dev/scholesa	node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app	reports/docs_full_regression_20260223-075906_logs/11_voice_live_runner.log
+FAIL(1)	npm-audit-omit-dev	/Users/simonluke/dev/scholesa	npm audit --omit=dev	reports/docs_full_regression_20260223-075906_logs/12_npm_audit_omit_dev.log
+FAIL(1)	npm-audit	/Users/simonluke/dev/scholesa	npm audit	reports/docs_full_regression_20260223-075906_logs/13_npm_audit.log
+PASS	flutter-pub-get	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter pub get	reports/docs_full_regression_20260223-075906_logs/14_flutter_pub_get.log
+PASS	flutter-analyze	/Users/simonluke/dev/scholesa/apps/empire_flutter/app	flutter analyze	reports/docs_full_regression_20260223-075906_logs/15_flutter_analyze.log

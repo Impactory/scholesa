@@ -1,0 +1,14 @@
+
+> scholesa@0.1.0 ai:internal-only:all
+> npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none
+
+
+> scholesa@0.1.0 ai:dependency-ban
+> node scripts/ai_dependency_ban.js
+
+PASS ai-dependency-ban -> /Users/simonluke/dev/scholesa/audit-pack/reports/ai-dependency-ban.json
+
+> scholesa@0.1.0 ai:import-ban
+> node scripts/ai_import_ban.js
+
+FAIL ai-import-ban -> /Users/simonluke/dev/scholesa/audit-pack/reports/ai-import-ban.json

@@ -1,0 +1,9 @@
+
+> scholesa@0.1.0 audit:coppa:no-ads
+> bash ./scripts/coppa_no_ad_audit.sh
+
+[COPPA no-ads audit] Checking dependency graph...
+No prohibited ad/tracker dependencies detected.
+[COPPA no-ads audit] Checking code patterns...
+No prohibited ad/tracker code patterns detected.
+[COPPA no-ads audit] PASSED

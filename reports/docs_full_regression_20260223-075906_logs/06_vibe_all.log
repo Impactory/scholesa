@@ -1,0 +1,5 @@
+
+> scholesa@0.1.0 vibe:all
+> node scripts/vibe_all.js
+
+FAIL vibe-all-report -> /Users/simonluke/dev/scholesa/audit-pack/reports/vibe-all-report.json

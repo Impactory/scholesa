@@ -1,0 +1,5 @@
+
+> scholesa@0.1.0 test
+> jest --runInBand --passWithNoTests
+
+No tests found, exiting with code 0

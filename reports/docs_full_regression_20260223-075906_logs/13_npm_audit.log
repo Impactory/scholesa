@@ -1,0 +1,180 @@
+# npm audit report
+
+minimatch  <10.2.1
+Severity: high
+minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern - https://github.com/advisories/GHSA-3ppc-4f35-3m26
+fix available via `npm audit fix --force`
+Will install eslint-plugin-react@7.22.0, which is a breaking change
+node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch
+node_modules/filelist/node_modules/minimatch
+node_modules/minimatch
+  @eslint/config-array  <=0.22.0
+  Depends on vulnerable versions of minimatch
+  node_modules/@eslint/config-array
+    eslint  0.7.1 - 2.0.0-rc.1 || 4.1.0 - 10.0.0-rc.2
+    Depends on vulnerable versions of @eslint/config-array
+    Depends on vulnerable versions of @eslint/eslintrc
+    Depends on vulnerable versions of minimatch
+    node_modules/eslint
+  @eslint/eslintrc  0.0.1 || >=0.1.1
+  Depends on vulnerable versions of minimatch
+  node_modules/@eslint/eslintrc
+  @typescript-eslint/typescript-estree  6.16.0 - 8.56.1-alpha.2
+  Depends on vulnerable versions of minimatch
+  node_modules/@typescript-eslint/typescript-estree
+    @typescript-eslint/parser  6.16.0 - 8.56.1-alpha.2
+    Depends on vulnerable versions of @typescript-eslint/typescript-estree
+    node_modules/@typescript-eslint/parser
+      typescript-eslint  <=8.56.1-alpha.2
+      Depends on vulnerable versions of @typescript-eslint/eslint-plugin
+      Depends on vulnerable versions of @typescript-eslint/parser
+      Depends on vulnerable versions of @typescript-eslint/typescript-estree
+      Depends on vulnerable versions of @typescript-eslint/utils
+      node_modules/typescript-eslint
+    @typescript-eslint/type-utils  6.16.0 - 8.56.1-alpha.2
+    Depends on vulnerable versions of @typescript-eslint/typescript-estree
+    Depends on vulnerable versions of @typescript-eslint/utils
+    node_modules/@typescript-eslint/type-utils
+    @typescript-eslint/utils  6.16.0 - 8.56.1-alpha.2
+    Depends on vulnerable versions of @typescript-eslint/typescript-estree
+    node_modules/@typescript-eslint/utils
+      @typescript-eslint/eslint-plugin  6.16.0 - 8.56.1-alpha.2
+      Depends on vulnerable versions of @typescript-eslint/type-utils
+      Depends on vulnerable versions of @typescript-eslint/utils
+      node_modules/@typescript-eslint/eslint-plugin
+  eslint-plugin-import  >=1.15.0
+  Depends on vulnerable versions of minimatch
+  node_modules/eslint-plugin-import
+    eslint-config-next  >=10.2.1-canary.2
+    Depends on vulnerable versions of eslint-plugin-import
+    Depends on vulnerable versions of eslint-plugin-jsx-a11y
+    Depends on vulnerable versions of eslint-plugin-react
+    node_modules/eslint-config-next
+  eslint-plugin-jsx-a11y  >=6.5.0
+  Depends on vulnerable versions of minimatch
+  node_modules/eslint-plugin-jsx-a11y
+  eslint-plugin-react  >=7.23.0
+  Depends on vulnerable versions of minimatch
+  node_modules/eslint-plugin-react
+  filelist  0.0.2 - 1.0.4
+  Depends on vulnerable versions of minimatch
+  node_modules/filelist
+  glob  3.0.0 - 10.5.0
+  Depends on vulnerable versions of minimatch
+  node_modules/glob
+    @jest/reporters  *
+    Depends on vulnerable versions of @jest/transform
+    Depends on vulnerable versions of glob
+    node_modules/@jest/reporters
+      @jest/core  *
+      Depends on vulnerable versions of @jest/reporters
+      Depends on vulnerable versions of @jest/transform
+      Depends on vulnerable versions of jest-config
+      Depends on vulnerable versions of jest-resolve-dependencies
+      Depends on vulnerable versions of jest-runner
+      Depends on vulnerable versions of jest-runtime
+      Depends on vulnerable versions of jest-snapshot
+      node_modules/@jest/core
+        jest  >=19.1.0-alpha.eed82034
+        Depends on vulnerable versions of @jest/core
+        Depends on vulnerable versions of jest-cli
+        node_modules/jest
+          ts-jest  >=25.10.0-alpha.1
+          Depends on vulnerable versions of @jest/transform
+          Depends on vulnerable versions of babel-jest
+          Depends on vulnerable versions of jest
+          node_modules/ts-jest
+        jest-cli  >=19.1.0-alpha.eed82034
+        Depends on vulnerable versions of @jest/core
+        Depends on vulnerable versions of create-jest
+        Depends on vulnerable versions of jest-config
+        node_modules/jest-cli
+    globby  <=10.0.2
+    Depends on vulnerable versions of glob
+    node_modules/del/node_modules/globby
+      del  <=7.1.0
+      Depends on vulnerable versions of globby
+      Depends on vulnerable versions of rimraf
+      node_modules/del
+        clean-webpack-plugin  >=2.0.0
+        Depends on vulnerable versions of del
+        node_modules/clean-webpack-plugin
+          next-pwa  >=0.0.2
+          Depends on vulnerable versions of clean-webpack-plugin
+          Depends on vulnerable versions of workbox-webpack-plugin
+          node_modules/next-pwa
+    jest-config  >=19.1.0-alpha.eed82034
+    Depends on vulnerable versions of babel-jest
+    Depends on vulnerable versions of glob
+    Depends on vulnerable versions of jest-circus
+    Depends on vulnerable versions of jest-runner
+    node_modules/jest-config
+      create-jest  >=29.7.0
+      Depends on vulnerable versions of jest-config
+      node_modules/create-jest
+    jest-runtime  >=24.0.0-alpha.0
+    Depends on vulnerable versions of @jest/globals
+    Depends on vulnerable versions of @jest/transform
+    Depends on vulnerable versions of glob
+    Depends on vulnerable versions of jest-snapshot
+    node_modules/jest-runtime
+      jest-circus  >=25.2.4
+      Depends on vulnerable versions of @jest/expect
+      Depends on vulnerable versions of jest-runtime
+      Depends on vulnerable versions of jest-snapshot
+      node_modules/jest-circus
+      jest-runner  >=24.0.0-alpha.0
+      Depends on vulnerable versions of @jest/transform
+      Depends on vulnerable versions of jest-runtime
+      node_modules/jest-runner
+    rimraf  2.3.0 - 3.0.2 || 4.2.0 - 5.0.10
+    Depends on vulnerable versions of glob
+    node_modules/rimraf
+    test-exclude  4.2.2 || 5.0.0 - 7.0.2
+    Depends on vulnerable versions of glob
+    Depends on vulnerable versions of minimatch
+    node_modules/test-exclude
+      babel-plugin-istanbul  >=5.0.1
+      Depends on vulnerable versions of test-exclude
+      node_modules/babel-plugin-istanbul
+        @jest/transform  *
+        Depends on vulnerable versions of babel-plugin-istanbul
+        node_modules/@jest/transform
+          babel-jest  >=24.0.0-alpha.0
+          Depends on vulnerable versions of @jest/transform
+          Depends on vulnerable versions of babel-plugin-istanbul
+          node_modules/babel-jest
+          jest-snapshot  >=27.0.0-next.0
+          Depends on vulnerable versions of @jest/transform
+          node_modules/jest-snapshot
+            @jest/expect  *
+            Depends on vulnerable versions of jest-snapshot
+            node_modules/@jest/expect
+              @jest/globals  >=28.0.0-alpha.0
+              Depends on vulnerable versions of @jest/expect
+              node_modules/@jest/globals
+            jest-resolve-dependencies  >=27.0.0-next.0
+            Depends on vulnerable versions of jest-snapshot
+            node_modules/jest-resolve-dependencies
+    workbox-build  <=7.3.0
+    Depends on vulnerable versions of glob
+    node_modules/workbox-build
+      workbox-webpack-plugin  <=7.3.0
+      Depends on vulnerable versions of workbox-build
+      node_modules/workbox-webpack-plugin
+
+next  10.0.0 - 15.5.9
+Severity: high
+Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration - https://github.com/advisories/GHSA-9g9p-9gw9-jx7f
+Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components - https://github.com/advisories/GHSA-h25m-26qc-wcjf
+fix available via `npm audit fix --force`
+Will install next@16.1.6, which is a breaking change
+node_modules/next
+
+42 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
