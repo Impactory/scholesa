@@ -1,0 +1,4 @@
+$ npx --yes firebase-tools deploy --only firestore:rules --project studio-3328096157-e3f79
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
