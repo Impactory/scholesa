@@ -93,6 +93,28 @@ Quick link: one-page staging PITR drill checklist in STAGING_PITR_DRILL_CHECKLIS
 1) As any signed-in user, request AI draft with site/title/prompt; verify aiDrafts doc created.
 2) As HQ/site/educator, approve/reject pending draft and add notes; verify status change and audit/telemetry.
 
+### ANA-01 Telemetry Smoke Pass (Core + Non-core, Role-based)
+1) Preconditions:
+   Set `GOOGLE_APPLICATION_CREDENTIALS` and `FIREBASE_PROJECT_ID` for the target environment.
+2) Execute role flows in this order:
+   Learner: login, submit mission attempt, complete at least one popup flow.
+   Educator: open sessions schedule, request substitute, apply and log learner support outcome.
+   Site: complete check-in and check-out, flag one late pickup, create conflicting session to trigger conflict detection, assign substitute.
+   HQ: create curriculum snapshot, apply rubric, share rubric parent summary, approve contract and payout.
+   Partner/Commerce: submit lead, create/approve contract path, submit/accept deliverable, request/review AI draft, trigger checkout intent.
+3) Run validator (full event set):
+   `GOOGLE_APPLICATION_CREDENTIALS=... FIREBASE_PROJECT_ID=... node scripts/telemetry_smoke_check.js --mode=full --hours=2 --site=<siteId> --strict`
+4) Pass criteria:
+   `Result: PASS` from validator.
+   No missing required events for core+extended+non-core.
+   No schema/correlation/tenant/PII key errors.
+5) Verify Firestore sample docs in `telemetryEvents` for newly created events:
+   Required top-level fields: `event`, `userId`, `role`, `siteId`, `createdAt`.
+   Required metadata fields: `requestId`, `traceId`, `redactionApplied`, `redactedPathCount`.
+   For non-HQ telemetry, `siteId` must not be `unscoped`.
+6) Fast command alias:
+   `npm run qa:telemetry-smoke`
+
 ### FL-THEME-01 Visual Sweep
 1) Check landing/login/register/role selector/dashboards use dark gradient + glass aesthetic with Manrope typography.
 
