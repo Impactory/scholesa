@@ -14,11 +14,22 @@
  */
 
 import { modelRouter, type TaskType, type PolicyMode, type ModelRequest, type ModelResponse } from './modelAdapter';
-import { RedactionService, redactStudentQuestion } from './redactionService';
+import { redactStudentQuestion } from './redactionService';
 import { RetrievalService, getHintContext, getRubricCheckContext } from './retrievalService';
 import { AIInteractionLogger, logAICoachInteraction } from './interactionLogger';
 import { getPolicyForGrade } from '@/src/lib/policies/gradeBandPolicy';
 import type { AgeBand } from '@/src/types/schema';
+import type { Role } from '@/schema';
+import { normalizeLocale, type SupportedLocale } from '@/src/lib/i18n/config';
+import {
+  evaluateGuardrailInput,
+  evaluateGuardrailOutput,
+  languageLooksCompatible,
+  localizedRefusal,
+  localizedTutorFallback,
+  policyVersion,
+  type SafetyOutcome,
+} from './multilingualGuardrails';
 
 // ==================== TYPES ====================
 
@@ -40,6 +51,9 @@ export interface AIServiceRequest {
   
   // Optional
   preferredModel?: 'gemini' | 'openai';
+  targetLocale?: SupportedLocale | string;
+  role?: Role;
+  missionAttemptId?: string;
 }
 
 export interface AIServiceResponse {
@@ -54,7 +68,17 @@ export interface AIServiceResponse {
   
   // Metadata
   modelUsed: string;
+  modelVersion: string;
   logId: string; // For tracking outcomes
+  promptTemplateId: string;
+  policyVersion: string;
+  safetyOutcome: SafetyOutcome;
+  safetyReasonCode: string;
+  toolCallIds: string[];
+  targetLocale: SupportedLocale;
+  gradeBand: AgeBand;
+  traceId: string;
+  missionAttemptId?: string;
 }
 
 // ==================== INTEGRATED AI SERVICE ====================
@@ -65,12 +89,18 @@ export class AIService {
    */
   static async request(req: AIServiceRequest): Promise<AIServiceResponse> {
     const startTime = Date.now();
-    
+    const targetLocale = normalizeLocale(req.targetLocale);
+    const role = req.role || 'learner';
+    const traceId = this.createTraceId();
+    const missionAttemptId = req.missionAttemptId || req.missionId;
+
     try {
       // 1. Get policy for age band
       const policy = getPolicyForGrade(req.grade);
       const policyMode: PolicyMode = this.getPolicyMode(req.grade);
       const gradeBand: AgeBand = this.getAgeBand(req.grade);
+      const promptTemplateId = this.getPromptTemplateId(req.taskType, policyMode);
+      const policyVersionTag = policyVersion();
       
       // 2. Redact PII from question
       const redactionResult = redactStudentQuestion(
@@ -82,24 +112,22 @@ export class AIService {
       if (redactionResult.flagged.length > 0) {
         console.warn('Redaction flags:', redactionResult.flagged);
       }
-      
-      // 3. Retrieve relevant context from YOUR stores
-      const contextBlocks = await this.getContextForTask(
-        req.taskType,
-        redactionResult.redacted,
-        req.learnerId,
-        req.missionId || '',
-        gradeBand
-      );
-      
-      // 4. Build model request (YOUR schema)
+
       const modelRequest: ModelRequest = {
         taskType: req.taskType,
         gradeBand,
+        targetLocale,
+        role,
+        siteId: req.siteId,
+        learnerId: req.learnerId,
+        traceId,
+        promptTemplateId,
+        policyVersion: policyVersionTag,
         policyMode,
+        missionAttemptId,
         studentLevel: req.studentLevel,
         studentQuestion: redactionResult.redacted,
-        contextBlocks,
+        contextBlocks: [],
         rubricId: req.missionId ? `rubric_${req.missionId}` : undefined,
         safetyConstraints: {
           blockHarmfulContent: true,
@@ -114,14 +142,86 @@ export class AIService {
           includeCitations: true
         }
       };
+
+      // 3. Input guardrails (multilingual)
+      const inputDecision = evaluateGuardrailInput(redactionResult.redacted, targetLocale);
+      let modelResponse: ModelResponse;
+
+      if (inputDecision.blocked) {
+        modelResponse = {
+          answer: inputDecision.localizedMessage,
+          modelUsed: 'guardrail-blocked',
+          modelVersion: 'guardrail-blocked',
+          promptTemplateId,
+          policyVersion: inputDecision.policyVersion,
+          safetyOutcome: inputDecision.safetyOutcome,
+          safetyReasonCode: inputDecision.safetyReasonCode,
+          toolCallIds: inputDecision.toolCallIds,
+          targetLocale,
+          gradeBand,
+          traceId,
+          missionAttemptId,
+          tokensUsed: 0,
+          latencyMs: Date.now() - startTime,
+        };
+      } else {
+        // 4. Retrieve relevant context from YOUR stores
+        modelRequest.contextBlocks = await this.getContextForTask(
+          req.taskType,
+          redactionResult.redacted,
+          req.learnerId,
+          req.missionId || '',
+          gradeBand
+        );
+
+        // 5. Call model (swappable vendor)
+        modelResponse = await modelRouter.complete(
+          modelRequest,
+          req.preferredModel
+        );
+
+        // 6. Output guardrails (multilingual)
+        const outputDecision = evaluateGuardrailOutput(modelResponse.answer, targetLocale);
+        if (outputDecision.blocked) {
+          modelResponse = {
+            ...modelResponse,
+            answer: outputDecision.localizedMessage,
+            policyVersion: outputDecision.policyVersion,
+            safetyOutcome: outputDecision.safetyOutcome,
+            safetyReasonCode: outputDecision.safetyReasonCode,
+            toolCallIds: outputDecision.toolCallIds,
+          };
+        } else if (!languageLooksCompatible(modelResponse.answer, targetLocale)) {
+          modelResponse = {
+            ...modelResponse,
+            answer: localizedTutorFallback(targetLocale),
+            safetyOutcome: 'modified',
+            safetyReasonCode: 'output_language_mismatch',
+            toolCallIds: [],
+            policyVersion: policyVersionTag,
+          };
+        } else {
+          modelResponse = {
+            ...modelResponse,
+            safetyOutcome: modelResponse.safetyOutcome || 'allowed',
+            safetyReasonCode: modelResponse.safetyReasonCode || 'none',
+            policyVersion: modelResponse.policyVersion || policyVersionTag,
+            toolCallIds: modelResponse.toolCallIds || [],
+          };
+        }
+      }
+
+      modelResponse = {
+        ...modelResponse,
+        targetLocale,
+        gradeBand,
+        traceId,
+        missionAttemptId,
+        promptTemplateId,
+        policyVersion: modelResponse.policyVersion || policyVersionTag,
+      };
       
-      // 5. Call model (swappable vendor)
-      const modelResponse = await modelRouter.complete(
-        modelRequest,
-        req.preferredModel
-      );
-      
-      // 6. Log everything to YOUR training dataset
+      // 7. Log everything to YOUR training dataset
       const logId = await logAICoachInteraction(
         modelRequest,
         modelResponse,
@@ -130,6 +230,10 @@ export class AIService {
           siteId: req.siteId,
           sessionId: req.sessionId,
           missionId: req.missionId,
+          missionAttemptId,
+          traceId,
+          role,
+          targetLocale,
           redactedQuestion: redactionResult.redacted,
           redactionInfo: {
             wasRedacted: redactionResult.replacements.size > 0,
@@ -139,28 +243,50 @@ export class AIService {
         }
       );
       
-      // 7. Return response
+      // 8. Return response
       return {
         answer: modelResponse.answer,
         steps: modelResponse.steps,
         hints: modelResponse.hints,
         followUpQuestions: modelResponse.followUpQuestions,
         citations: modelResponse.citations?.map(c => ({
-          type: contextBlocks.find(b => b.id === c.contextBlockId)?.type || 'unknown',
+          type: modelRequest.contextBlocks.find(b => b.id === c.contextBlockId)?.type || 'unknown',
           snippet: c.snippet
         })),
         modelUsed: modelResponse.modelUsed,
-        logId
+        modelVersion: modelResponse.modelVersion,
+        logId,
+        promptTemplateId: modelResponse.promptTemplateId,
+        policyVersion: modelResponse.policyVersion,
+        safetyOutcome: modelResponse.safetyOutcome,
+        safetyReasonCode: modelResponse.safetyReasonCode,
+        toolCallIds: modelResponse.toolCallIds,
+        targetLocale: modelResponse.targetLocale,
+        gradeBand: modelResponse.gradeBand,
+        traceId: modelResponse.traceId,
+        missionAttemptId: modelResponse.missionAttemptId,
       };
       
     } catch (error) {
       console.error('AI Service error:', error);
       
       // Fallback response (don't break the app)
+      const gradeBand: AgeBand = this.getAgeBand(req.grade);
+      const fallbackPolicyVersion = policyVersion();
       return {
-        answer: 'I\'m having trouble right now. Try asking your question in a different way, or ask your teacher for help.',
+        answer: localizedTutorFallback(targetLocale),
         modelUsed: 'error_fallback',
-        logId: 'error'
+        modelVersion: 'error_fallback',
+        logId: 'error',
+        promptTemplateId: this.getPromptTemplateId(req.taskType, this.getPolicyMode(req.grade)),
+        policyVersion: fallbackPolicyVersion,
+        safetyOutcome: 'escalated',
+        safetyReasonCode: 'service_error',
+        toolCallIds: [],
+        targetLocale,
+        gradeBand,
+        traceId,
+        missionAttemptId,
       };
     }
   }
@@ -194,6 +320,15 @@ export class AIService {
   }
   
   // ===== PRIVATE HELPERS =====
+
+  private static createTraceId(): string {
+    const random = Math.random().toString(36).slice(2, 10);
+    return `ai_${Date.now()}_${random}`;
+  }
+
+  private static getPromptTemplateId(taskType: TaskType, policyMode: PolicyMode): string {
+    return `coach.${taskType}.${policyMode}.v1`;
+  }
   
   private static async getContextForTask(
     taskType: TaskType,
@@ -274,6 +409,9 @@ export async function getAIHint(
     missionId?: string;
     sessionId?: string;
     studentLevel?: 'emerging' | 'proficient' | 'advanced';
+    targetLocale?: SupportedLocale | string;
+    role?: Role;
+    missionAttemptId?: string;
   }
 ): Promise<AIServiceResponse> {
   return AIService.request({
@@ -284,6 +422,9 @@ export async function getAIHint(
     studentLevel: options.studentLevel || 'proficient',
     sessionId: options.sessionId,
     missionId: options.missionId,
+    missionAttemptId: options.missionAttemptId,
+    targetLocale: options.targetLocale,
+    role: options.role,
     taskType: 'hint_generation',
     question
   });
@@ -302,6 +443,9 @@ export async function checkAgainstRubric(
     missionId: string;
     sessionId?: string;
     studentLevel?: 'emerging' | 'proficient' | 'advanced';
+    targetLocale?: SupportedLocale | string;
+    role?: Role;
+    missionAttemptId?: string;
   }
 ): Promise<AIServiceResponse> {
   return AIService.request({
@@ -312,6 +456,9 @@ export async function checkAgainstRubric(
     studentLevel: options.studentLevel || 'proficient',
     sessionId: options.sessionId,
     missionId: options.missionId,
+    missionAttemptId: options.missionAttemptId,
+    targetLocale: options.targetLocale,
+    role: options.role,
     taskType: 'rubric_check',
     question: workDescription
   });
@@ -330,6 +477,9 @@ export async function getDebugHelp(
     missionId?: string;
     sessionId?: string;
     studentLevel?: 'emerging' | 'proficient' | 'advanced';
+    targetLocale?: SupportedLocale | string;
+    role?: Role;
+    missionAttemptId?: string;
   }
 ): Promise<AIServiceResponse> {
   return AIService.request({
@@ -340,6 +490,9 @@ export async function getDebugHelp(
     studentLevel: options.studentLevel || 'proficient',
     sessionId: options.sessionId,
     missionId: options.missionId,
+    missionAttemptId: options.missionAttemptId,
+    targetLocale: options.targetLocale,
+    role: options.role,
     taskType: 'debug_assistance',
     question: problem
   });

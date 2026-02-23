@@ -27,6 +27,7 @@ import {
   TrendingUpIcon
 } from 'lucide-react';
 import { usePageViewTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 interface SDTScores {
   autonomy: number;
@@ -57,10 +58,13 @@ interface Goal {
   progress: number; // 0-100
 }
 
+type TranslateFn = (key: string, interpolation?: Record<string, string | number>) => string;
+
 export function StudentMotivationProfile() {
   usePageViewTracking('learner_profile');
   
   const { profile } = useAuthContext();
+  const { locale, t } = useI18n();
   const [sdtScores, setSDTScores] = useState<SDTScores | null>(null);
   const [skills, setSkills] = useState<SkillProgress[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -96,7 +100,7 @@ export function StudentMotivationProfile() {
           const data = doc.data();
           return {
             skillId: doc.id,
-            skillName: data.skillName || 'Unnamed Skill',
+            skillName: data.skillName || t('motivation.unnamedSkill'),
             evidenceCount: data.evidenceCount || 0,
             level: data.masteryLevel || 'emerging'
           };
@@ -116,7 +120,7 @@ export function StudentMotivationProfile() {
           const data = doc.data();
           return {
             badgeId: doc.id,
-            title: data.badgeName || 'Badge',
+            title: data.badgeName || t('motivation.badgeFallback'),
             description: data.description || '',
             earnedAt: data.createdAt?.toDate() || new Date(),
             iconEmoji: data.iconEmoji || '🏆'
@@ -138,7 +142,7 @@ export function StudentMotivationProfile() {
           const data = doc.data();
           return {
             goalId: doc.id,
-            description: data.description || 'Learning goal',
+            description: data.description || t('motivation.goalFallback'),
             targetDate: data.targetDate?.toDate() || new Date(),
             progress: data.progress || 0
           };
@@ -162,7 +166,7 @@ export function StudentMotivationProfile() {
     };
     
     fetchProfile();
-  }, [learnerId, siteId]);
+  }, [learnerId, siteId, t]);
   
   if (loading) {
     return (
@@ -180,7 +184,7 @@ export function StudentMotivationProfile() {
   if (!sdtScores) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <p className="text-gray-500">No data available yet. Start learning to see your progress!</p>
+        <p className="text-gray-500">{t('motivation.noData')}</p>
       </div>
     );
   }
@@ -189,36 +193,36 @@ export function StudentMotivationProfile() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">My Learning Journey</h1>
-        <p className="text-indigo-100">Track your growth, skills, and achievements</p>
+        <h1 className="text-3xl font-bold mb-2">{t('motivation.headerTitle')}</h1>
+        <p className="text-indigo-100">{t('motivation.headerSubtitle')}</p>
       </div>
       
       {/* SDT Scores */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SDTCard
-          title="Autonomy"
-          subtitle="Your Choices"
+          title={t('motivation.sdt.autonomy.title')}
+          subtitle={t('motivation.sdt.autonomy.subtitle')}
           score={sdtScores.autonomy}
           icon={BrainIcon}
           color="purple"
         />
         <SDTCard
-          title="Competence"
-          subtitle="Skills Mastered"
+          title={t('motivation.sdt.competence.title')}
+          subtitle={t('motivation.sdt.competence.subtitle')}
           score={sdtScores.competence}
           icon={AwardIcon}
           color="blue"
         />
         <SDTCard
-          title="Belonging"
-          subtitle="Community"
+          title={t('motivation.sdt.belonging.title')}
+          subtitle={t('motivation.sdt.belonging.subtitle')}
           score={sdtScores.belonging}
           icon={HeartIcon}
           color="pink"
         />
         <SDTCard
-          title="Overall"
-          subtitle="Total Score"
+          title={t('motivation.sdt.overall.title')}
+          subtitle={t('motivation.sdt.overall.subtitle')}
           score={sdtScores.overall}
           icon={SparklesIcon}
           color="green"
@@ -228,17 +232,17 @@ export function StudentMotivationProfile() {
       {/* Skills Mastery */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Skills I'm Developing</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('motivation.skills.title')}</h2>
         </div>
         <div className="p-6">
           {skills.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
-              No skills tracked yet. Complete missions to build your skill profile!
+              {t('motivation.skills.empty')}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {skills.map(skill => (
-                <SkillCard key={skill.skillId} skill={skill} />
+                <SkillCard key={skill.skillId} skill={skill} t={t} />
               ))}
             </div>
           )}
@@ -248,17 +252,17 @@ export function StudentMotivationProfile() {
       {/* Badges */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Badges Earned</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('motivation.badges.title')}</h2>
         </div>
         <div className="p-6">
           {badges.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
-              No badges earned yet. Keep learning to unlock achievements!
+              {t('motivation.badges.empty')}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {badges.map(badge => (
-                <BadgeCard key={badge.badgeId} badge={badge} />
+                <BadgeCard key={badge.badgeId} badge={badge} locale={locale} />
               ))}
             </div>
           )}
@@ -268,23 +272,23 @@ export function StudentMotivationProfile() {
       {/* Goals */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">My Learning Goals</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('motivation.goals.title')}</h2>
           <button 
             onClick={() => setShowGoalForm(true)}
             className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
-            + Set New Goal
+            {t('motivation.goals.setNew')}
           </button>
         </div>
         <div className="p-6">
           {goals.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
-              No goals set yet. Set goals to guide your learning journey!
+              {t('motivation.goals.empty')}
             </p>
           ) : (
             <div className="space-y-4">
               {goals.map(goal => (
-                <GoalCard key={goal.goalId} goal={goal} />
+                <GoalCard key={goal.goalId} goal={goal} locale={locale} t={t} />
               ))}
             </div>
           )}
@@ -299,7 +303,7 @@ export function StudentMotivationProfile() {
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900">{recognitionCount}</p>
-            <p className="text-gray-600">Times recognized by peers</p>
+            <p className="text-gray-600">{t('motivation.recognitionCount')}</p>
           </div>
         </div>
       </div>
@@ -395,9 +399,10 @@ function SDTCard({ title, subtitle, score, icon: Icon, color }: SDTCardProps) {
 
 interface SkillCardProps {
   skill: SkillProgress;
+  t: TranslateFn;
 }
 
-function SkillCard({ skill }: SkillCardProps) {
+function SkillCard({ skill, t }: SkillCardProps) {
   const levelColors = {
     emerging: 'bg-gray-100 text-gray-800',
     developing: 'bg-yellow-100 text-yellow-800',
@@ -410,12 +415,12 @@ function SkillCard({ skill }: SkillCardProps) {
       <div className="flex items-start justify-between mb-2">
         <h3 className="font-medium text-gray-900">{skill.skillName}</h3>
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${levelColors[skill.level]}`}>
-          {skill.level}
+          {t(`motivation.skillLevel.${skill.level}`)}
         </span>
       </div>
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <TrendingUpIcon className="h-4 w-4" />
-        <span>{skill.evidenceCount} evidence collected</span>
+        <span>{t('motivation.evidenceCollected', { count: skill.evidenceCount })}</span>
       </div>
     </div>
   );
@@ -423,23 +428,26 @@ function SkillCard({ skill }: SkillCardProps) {
 
 interface BadgeCardProps {
   badge: Badge;
+  locale: string;
 }
 
-function BadgeCard({ badge }: BadgeCardProps) {
+function BadgeCard({ badge, locale }: BadgeCardProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition">
       <div className="text-4xl mb-2">{badge.iconEmoji || '🏆'}</div>
       <h3 className="font-medium text-gray-900 text-sm mb-1">{badge.title}</h3>
-      <p className="text-xs text-gray-500">{badge.earnedAt.toLocaleDateString()}</p>
+      <p className="text-xs text-gray-500">{badge.earnedAt.toLocaleDateString(locale)}</p>
     </div>
   );
 }
 
 interface GoalCardProps {
   goal: Goal;
+  locale: string;
+  t: TranslateFn;
 }
 
-function GoalCard({ goal }: GoalCardProps) {
+function GoalCard({ goal, locale, t }: GoalCardProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-start gap-3">
@@ -461,7 +469,9 @@ function GoalCard({ goal }: GoalCardProps) {
             </div>
             <span className="text-sm font-medium text-gray-700">{goal.progress}%</span>
           </div>
-          <p className="text-xs text-gray-500">Target: {goal.targetDate.toLocaleDateString()}</p>
+          <p className="text-xs text-gray-500">
+            {t('motivation.goalTargetDate', { date: goal.targetDate.toLocaleDateString(locale) })}
+          </p>
         </div>
       </div>
     </div>

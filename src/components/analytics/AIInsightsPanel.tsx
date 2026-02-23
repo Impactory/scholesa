@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 import { 
   SparklesIcon, 
   TrendingUpIcon,
@@ -49,10 +50,11 @@ interface AIInsightsPanelProps {
 export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     generateInsights();
-  }, [learners, timeRange]);
+  }, [learners, timeRange, t]);
 
   const generateInsights = () => {
     setLoading(true);

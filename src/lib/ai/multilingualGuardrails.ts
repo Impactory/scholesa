@@ -33,35 +33,35 @@ const INJECTION_PATTERNS = [
   /show (me )?hidden prompt/i,
   /developer mode/i,
   /system prompt/i,
-  /忽略.*指令/u,
-  /顯示.*提示/u,
-  /แสดง.*system prompt/u,
+  /忽略.*指令/,
+  /顯示.*提示/,
+  /แสดง.*system prompt/,
 ];
 
 const CROSS_TENANT_PATTERNS = [
   /other (school|site|district|tenant)/i,
   /another student'?s data/i,
   /cross[- ]tenant/i,
-  /其他(学校|校区|租户|站点)/u,
-  /其他學校|其他租戶/u,
-  /โรงเรียนอื่น|ผู้ใช้โรงเรียนอื่น/u,
+  /其他(学校|校区|租户|站点)/,
+  /其他學校|其他租戶/,
+  /โรงเรียนอื่น|ผู้ใช้โรงเรียนอื่น/,
 ];
 
 const DISALLOWED_CONTENT_PATTERNS = [
   /build (a )?weapon/i,
   /how to hurt/i,
   /self-harm/i,
-  /制作武器/u,
-  /傷害他人/u,
-  /ทำร้าย/u,
+  /制作武器/,
+  /傷害他人/,
+  /ทำร้าย/,
 ];
 
 const IMPERSONATION_PATTERNS = [
   /pretend to be (a )?(teacher|admin|parent)/i,
   /impersonate/i,
-  /冒充(老师|管理员|家长)/u,
-  /假扮(老師|管理員|家長)/u,
-  /แกล้งเป็น(ครู|ผู้ดูแล|ผู้ปกครอง)/u,
+  /冒充(老师|管理员|家长)/,
+  /假扮(老師|管理員|家長)/,
+  /แกล้งเป็น(ครู|ผู้ดูแล|ผู้ปกครอง)/,
 ];
 
 function refusal(locale: SupportedLocale): string {
@@ -124,11 +124,11 @@ export function languageLooksCompatible(text: string, locale: SupportedLocale): 
     case 'en':
       return /[A-Za-z]/.test(text);
     case 'zh-CN':
-      return /[\u4e00-\u9fff]/u.test(text) && /我们|学习|请|你/u.test(text);
+      return /[\u4e00-\u9fff]/.test(text) && /我们|学习|请|你/.test(text);
     case 'zh-TW':
-      return /[\u4e00-\u9fff]/u.test(text) && /我們|學習|請|你/u.test(text);
+      return /[\u4e00-\u9fff]/.test(text) && /我們|學習|請|你/.test(text);
     case 'th':
-      return /[\u0E00-\u0E7F]/u.test(text);
+      return /[\u0E00-\u0E7F]/.test(text);
     default:
       return false;
   }

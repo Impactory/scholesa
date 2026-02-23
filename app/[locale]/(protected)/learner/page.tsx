@@ -5,9 +5,11 @@ import { query, where, getDocs, documentId } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { enrollmentsCollection, sessionsCollection } from '@/src/lib/firestore/collections';
 import type { Session } from '@/schema';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export default function LearnerDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
+  const { t } = useI18n();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +61,7 @@ export default function LearnerDashboard() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">Loading your learning journey...</div>
+        <div className="text-lg text-gray-600">{t('role.learner.loading')}</div>
       </div>
     );
   }
@@ -69,10 +71,10 @@ export default function LearnerDashboard() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Welcome back, {profile?.displayName || 'Learner'}!
+            {t('role.learner.welcome', { name: profile?.displayName || t('role.learner.defaultName') })}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Ready to continue your future skills journey?
+            {t('role.learner.subtitle')}
           </p>
         </header>
 
@@ -80,10 +82,10 @@ export default function LearnerDashboard() {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">Your Active Sessions</h2>
+              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.learner.activeSessions')}</h2>
               {sessions.length === 0 ? (
                 <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  You are not enrolled in any active sessions yet.
+                  {t('role.learner.noSessions')}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -94,7 +96,7 @@ export default function LearnerDashboard() {
                         <p className="mt-1 text-sm text-gray-500 line-clamp-2">{session.description}</p>
                         <div className="mt-4 flex items-center text-xs text-gray-400">
                           <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">
-                            {session.pillarCodes?.[0] || 'General'}
+                            {session.pillarCodes?.[0] || t('common.general')}
                           </span>
                         </div>
                       </div>
@@ -105,10 +107,10 @@ export default function LearnerDashboard() {
             </section>
 
             <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">Recent Missions</h2>
+              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.learner.recentMissions')}</h2>
               <div className="overflow-hidden rounded-lg bg-white shadow">
                 <div className="p-6 text-center text-gray-500">
-                  No recent missions started. Check with your educator!
+                  {t('role.learner.noRecentMissions')}
                 </div>
               </div>
             </section>
@@ -118,15 +120,15 @@ export default function LearnerDashboard() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-lg bg-white shadow">
               <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">My Stats</h3>
+                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.learner.myStats')}</h3>
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <dl className="divide-y divide-gray-100">
                     <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">Sessions Attended</dt>
+                      <dt className="text-gray-500">{t('role.learner.sessionsAttended')}</dt>
                       <dd className="font-medium text-gray-900">0</dd>
                     </div>
                     <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">Skills Mastered</dt>
+                      <dt className="text-gray-500">{t('role.learner.skillsMastered')}</dt>
                       <dd className="font-medium text-gray-900">0</dd>
                     </div>
                   </dl>

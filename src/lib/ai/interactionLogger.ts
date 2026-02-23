@@ -27,6 +27,8 @@ import type {
   PolicyMode
 } from './modelAdapter';
 import type { AgeBand } from '@/src/types/schema';
+import type { Role } from '@/schema';
+import type { SupportedLocale } from '@/src/lib/i18n/config';
 
 // ==================== TYPES ====================
 
@@ -37,11 +39,15 @@ export interface AIInteractionLog {
   siteId: string;
   sessionId?: string;
   missionId?: string;
+  missionAttemptId?: string;
+  traceId: string;
   
   // Request details (YOUR schema, not vendor's)
   taskType: TaskType;
   gradeBand: AgeBand;
   policyMode: PolicyMode;
+  targetLocale: SupportedLocale;
+  role: Role;
   studentLevel: 'emerging' | 'proficient' | 'advanced';
   
   // What we sent (redacted)
@@ -54,6 +60,12 @@ export interface AIInteractionLog {
   
   // What we got back
   modelUsed: string;
+  modelVersion: string;
+  promptTemplateId: string;
+  policyVersion: string;
+  safetyOutcome: 'allowed' | 'blocked' | 'modified' | 'escalated';
+  safetyReasonCode: string;
+  toolCallIds: string[];
   response: string;
   tokensUsed: number;
   latencyMs: number;
@@ -102,6 +114,10 @@ export class AIInteractionLogger {
       siteId: string;
       sessionId?: string;
       missionId?: string;
+      missionAttemptId?: string;
+      traceId: string;
+      role: Role;
+      targetLocale: SupportedLocale;
       uiScreen: string;
       triggeredBy: 'student_click' | 'auto_suggestion' | 'educator_prompt';
       redactedQuestion: string;
@@ -117,10 +133,14 @@ export class AIInteractionLogger {
       siteId: context.siteId,
       sessionId: context.sessionId,
       missionId: context.missionId,
+      missionAttemptId: context.missionAttemptId || request.missionAttemptId,
+      traceId: context.traceId,
       
       taskType: request.taskType,
       gradeBand: request.gradeBand,
       policyMode: request.policyMode,
+      targetLocale: request.targetLocale,
+      role: context.role,
       studentLevel: request.studentLevel,
       
       redactedQuestion: context.redactedQuestion,
@@ -131,6 +151,12 @@ export class AIInteractionLogger {
       })),
       
       modelUsed: response.modelUsed,
+      modelVersion: response.modelVersion,
+      promptTemplateId: response.promptTemplateId,
+      policyVersion: response.policyVersion,
+      safetyOutcome: response.safetyOutcome,
+      safetyReasonCode: response.safetyReasonCode,
+      toolCallIds: response.toolCallIds,
       response: response.answer,
       tokensUsed: response.tokensUsed,
       latencyMs: response.latencyMs,
@@ -185,12 +211,18 @@ export class AIInteractionLogger {
         task_type: log.taskType,
         grade_band: log.gradeBand,
         policy_mode: log.policyMode,
+        target_locale: log.targetLocale,
+        role: log.role,
+        prompt_template_id: log.promptTemplateId,
+        policy_version: log.policyVersion,
         student_level: log.studentLevel,
         question: log.redactedQuestion, // Already redacted
         context_blocks: log.contextBlocksUsed,
         
         // Output
         response: log.response,
+        safety_outcome: log.safetyOutcome,
+        safety_reason_code: log.safetyReasonCode,
         
         // Labels
         helpful: log.outcome?.wasHelpful,
@@ -199,7 +231,9 @@ export class AIInteractionLogger {
         time_to_mastery_minutes: log.outcome?.timeToMastery,
         
         // Metadata
+        trace_id: log.traceId,
         model_used: log.modelUsed,
+        model_version: log.modelVersion,
         tokens: log.tokensUsed,
         latency_ms: log.latencyMs
       }));
@@ -222,6 +256,10 @@ export async function logAICoachInteraction(
     siteId: string;
     sessionId?: string;
     missionId?: string;
+    missionAttemptId?: string;
+    traceId: string;
+    role: Role;
+    targetLocale: SupportedLocale;
     redactedQuestion: string;
     redactionInfo: {
       wasRedacted: boolean;

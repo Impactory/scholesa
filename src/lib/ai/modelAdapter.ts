@@ -434,13 +434,26 @@ export class OpenAIAdapter implements ModelAdapter {
   }
   
   private buildSystemPrompt(request: ModelRequest): string {
-    // Similar to Gemini but adapted for OpenAI
-    return 'You are an AI learning coach...'; // Simplified for brevity
+    return [
+      'You are an AI learning coach for K-12 students.',
+      `Respond strictly in locale "${request.targetLocale}".`,
+      `Task type: ${request.taskType}.`,
+      request.safetyConstraints.noDirectAnswers
+        ? 'Never provide direct answers. Guide the learner with hints and questions.'
+        : 'Provide concise educational support.',
+      request.safetyConstraints.explainBackRequired
+        ? 'End with a question asking the learner to explain back what they learned.'
+        : 'End with a clear next step.'
+    ].join('\n');
   }
   
   private buildUserMessage(request: ModelRequest): string {
-    // Similar structure
-    return request.studentQuestion;
+    const context = request.contextBlocks
+      .map((block, index) => `[Context #${index + 1}] (${block.type})\n${block.content}`)
+      .join('\n\n');
+    return [context, `Student level: ${request.studentLevel}`, `Question: ${request.studentQuestion}`]
+      .filter(Boolean)
+      .join('\n\n');
   }
 }
 

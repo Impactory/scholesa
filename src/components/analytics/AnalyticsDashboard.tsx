@@ -15,6 +15,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useLearnerAnalytics } from '@/src/hooks/useRealtimeAnalytics';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 import { 
   TrendingUpIcon, 
   TrendingDownIcon, 
@@ -40,6 +41,7 @@ interface LearnerEngagement {
 
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
+  const { locale, t } = useI18n();
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
   const trackInteraction = useInteractionTracking();
   
@@ -81,7 +83,7 @@ export function AnalyticsDashboard() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
         <AlertTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <p className="text-red-700">Failed to load analytics. Please try again.</p>
+        <p className="text-red-700">{t('analytics.educator.loadError')}</p>
       </div>
     );
   }
@@ -89,13 +91,24 @@ export function AnalyticsDashboard() {
   const avgEngagement = learners.reduce((sum, s) => sum + s.engagementScore, 0) / learners.length || 0;
   const atRiskCount = learners.filter(s => s.engagementScore < 60).length;
   const highPerformers = learners.filter(s => s.engagementScore >= 80).length;
+  const periodLabel = timeRange === 'week'
+    ? t('analytics.educator.period.week')
+    : t('analytics.educator.period.month');
   
   const handleExportCSV = () => {
     trackInteraction('help_accessed', { cta: 'analytics_export_csv', timeRange, siteId });
     if (learners.length === 0) return;
     
     // Prepare CSV headers
-    const headers = ['Learner Name', 'Engagement %', 'Autonomy %', 'Competence %', 'Belonging %', 'Events', 'Last Active'];
+    const headers = [
+      t('analytics.educator.csvHeaders.learnerName'),
+      t('analytics.educator.csvHeaders.engagement'),
+      t('analytics.educator.csvHeaders.autonomy'),
+      t('analytics.educator.csvHeaders.competence'),
+      t('analytics.educator.csvHeaders.belonging'),
+      t('analytics.educator.csvHeaders.events'),
+      t('analytics.educator.csvHeaders.lastActive'),
+    ];
     
     // Prepare CSV rows
     const rows = learners.map(s => [
@@ -105,7 +118,7 @@ export function AnalyticsDashboard() {
       s.competenceScore.toString(),
       s.belongingScore.toString(),
       s.eventCount.toString(),
-      s.lastActive ? s.lastActive.toLocaleDateString() : 'Never'
+      s.lastActive ? s.lastActive.toLocaleDateString(locale) : t('analytics.educator.never')
     ]);
     
     // Combine headers and rows
@@ -140,7 +153,7 @@ export function AnalyticsDashboard() {
                 : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
             }`}
           >
-            This Week
+            {t('analytics.educator.thisWeek')}
           </button>
           <button
             onClick={() => {
@@ -153,7 +166,7 @@ export function AnalyticsDashboard() {
                 : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 border-l-0'
             }`}
           >
-            This Month
+            {t('analytics.educator.thisMonth')}
           </button>
         </div>
         
@@ -163,37 +176,41 @@ export function AnalyticsDashboard() {
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <DownloadIcon className="h-4 w-4" />
-          Export CSV
+          {t('analytics.educator.exportCsv')}
         </button>
       </div>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
-          title="Total Learners"
+          title={t('analytics.educator.summary.totalLearners')}
           value={learners.length}
           icon={UsersIcon}
           color="blue"
+          trendLabel={periodLabel}
         />
         <SummaryCard
-          title="Avg Engagement"
+          title={t('analytics.educator.summary.avgEngagement')}
           value={`${Math.round(avgEngagement)}%`}
           icon={ActivityIcon}
           color="green"
           trend={avgEngagement > 70 ? 'up' : 'down'}
+          trendLabel={periodLabel}
         />
         <SummaryCard
-          title="High Performers"
+          title={t('analytics.educator.summary.highPerformers')}
           value={highPerformers}
           icon={AwardIcon}
           color="purple"
+          trendLabel={periodLabel}
         />
         <SummaryCard
-          title="At Risk"
+          title={t('analytics.educator.summary.atRisk')}
           value={atRiskCount}
           icon={AlertTriangleIcon}
           color="red"
           trend={atRiskCount > 0 ? 'down' : undefined}
+          trendLabel={periodLabel}
         />
       </div>
       
@@ -204,10 +221,10 @@ export function AnalyticsDashboard() {
             <AlertTriangleIcon className="h-5 w-5 text-amber-600 mt-0.5 mr-3" />
             <div>
               <h3 className="text-sm font-medium text-amber-800">
-                {atRiskCount} learner{atRiskCount > 1 ? 's' : ''} may need support
+                {t('analytics.educator.atRiskTitle', { count: atRiskCount })}
               </h3>
               <p className="mt-1 text-sm text-amber-700">
-                Students with engagement below 60% haven't been active recently or are showing low participation.
+                {t('analytics.educator.atRiskBody')}
               </p>
             </div>
           </div>
@@ -217,8 +234,8 @@ export function AnalyticsDashboard() {
       {/* Student SDT Heatmap */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Student Motivation Profiles (SDT)</h2>
-          <p className="text-sm text-gray-600 mt-1">Self-Determination Theory metrics by student</p>
+          <h2 className="text-lg font-semibold text-gray-900">{t('analytics.educator.table.title')}</h2>
+          <p className="text-sm text-gray-600 mt-1">{t('analytics.educator.table.subtitle')}</p>
         </div>
         
         <div className="overflow-x-auto">
@@ -226,31 +243,31 @@ export function AnalyticsDashboard() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Student
+                  {t('analytics.educator.table.student')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-1">
                     <BrainIcon className="h-4 w-4" />
-                    Autonomy
+                    {t('analytics.educator.table.autonomy')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-1">
                     <AwardIcon className="h-4 w-4" />
-                    Competence
+                    {t('analytics.educator.table.competence')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-1">
                     <HeartIcon className="h-4 w-4" />
-                    Belonging
+                    {t('analytics.educator.table.belonging')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Engagement
+                  {t('analytics.educator.table.engagement')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
+                  {t('analytics.educator.table.lastActive')}
                 </th>
               </tr>
             </thead>
@@ -259,22 +276,22 @@ export function AnalyticsDashboard() {
                 <tr key={learner.learnerId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{learner.learnerName}</div>
-                    <div className="text-sm text-gray-500">{learner.eventCount} events</div>
+                    <div className="text-sm text-gray-500">{t('analytics.educator.eventsCount', { count: learner.eventCount })}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={learner.autonomyScore} color="purple" />
+                    <ScoreBar score={learner.autonomyScore} color="purple" t={t} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={learner.competenceScore} color="blue" />
+                    <ScoreBar score={learner.competenceScore} color="blue" t={t} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={learner.belongingScore} color="pink" />
+                    <ScoreBar score={learner.belongingScore} color="pink" t={t} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <ScoreBar score={learner.engagementScore} color="green" />
+                    <ScoreBar score={learner.engagementScore} color="green" t={t} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatRelativeTime(learner.lastActive)}
+                    {formatRelativeTime(learner.lastActive, locale, t)}
                   </td>
                 </tr>
               ))}
@@ -307,9 +324,10 @@ interface SummaryCardProps {
   icon: React.ComponentType<{ className?: string }>;
   color: 'blue' | 'green' | 'purple' | 'red';
   trend?: 'up' | 'down';
+  trendLabel: string;
 }
 
-function SummaryCard({ title, value, icon: Icon, color, trend }: SummaryCardProps) {
+function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel }: SummaryCardProps) {
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-800',
     green: 'bg-green-100 text-green-800',
@@ -336,7 +354,7 @@ function SummaryCard({ title, value, icon: Icon, color, trend }: SummaryCardProp
             <TrendingDownIcon className="h-4 w-4 text-red-600 mr-1" />
           )}
           <span className={trend === 'up' ? 'text-green-600' : 'text-red-600'}>
-            vs last {title.includes('Week') ? 'week' : 'month'}
+            {trend === 'up' ? `+ ${trendLabel}` : `- ${trendLabel}`}
           </span>
         </div>
       )}
@@ -347,9 +365,10 @@ function SummaryCard({ title, value, icon: Icon, color, trend }: SummaryCardProp
 interface ScoreBarProps {
   score: number; // 0-100
   color: 'purple' | 'blue' | 'pink' | 'green';
+  t: (key: string, interpolation?: Record<string, string | number>) => string;
 }
 
-function ScoreBar({ score, color }: ScoreBarProps) {
+function ScoreBar({ score, color, t }: ScoreBarProps) {
   const colorClasses = {
     purple: 'bg-purple-600',
     blue: 'bg-blue-600',
@@ -370,7 +389,7 @@ function ScoreBar({ score, color }: ScoreBarProps) {
         <div 
           className={`h-full rounded-full ${colorClasses[color]}`}
           data-score={score}
-          aria-label={`Score: ${score}%`}
+          aria-label={t('analytics.educator.scoreAria', { score })}
         >
           <style jsx>{`
             div[data-score="${score}"] {
@@ -384,8 +403,12 @@ function ScoreBar({ score, color }: ScoreBarProps) {
   );
 }
 
-function formatRelativeTime(date: Date | null): string {
-  if (!date) return 'Never';
+function formatRelativeTime(
+  date: Date | null,
+  locale: string,
+  t: (key: string, interpolation?: Record<string, string | number>) => string,
+): string {
+  if (!date) return t('analytics.educator.never');
   
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -393,11 +416,10 @@ function formatRelativeTime(date: Date | null): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
   
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) return t('analytics.educator.relative.justNow');
+  if (diffMins < 60) return t('analytics.educator.relative.minutesAgo', { count: diffMins });
+  if (diffHours < 24) return t('analytics.educator.relative.hoursAgo', { count: diffHours });
+  if (diffDays < 7) return t('analytics.educator.relative.daysAgo', { count: diffDays });
   
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(locale);
 }
-

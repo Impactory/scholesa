@@ -26,6 +26,7 @@ import { useAITracking } from '@/src/hooks/useTelemetry';
 import { AIService } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognition extends EventTarget {
@@ -129,6 +130,7 @@ export function AICoachPopup({
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
+  const { locale } = useI18n();
 
   // Fetch SDT profile for personalization
   useEffect(() => {
@@ -245,6 +247,8 @@ Guidance: ${
         sessionId: sprintSessionId,
         missionId,
         taskType: taskTypeMap[mode],
+        targetLocale: locale,
+        role: 'learner',
         question: personalizedContext 
           ? `${personalizedContext}\n\nStudent Question: ${question}`
           : question
@@ -267,7 +271,16 @@ Guidance: ${
       setResponse({
         answer: "I'm having trouble right now. Try asking your question in a different way, or ask your teacher for help.",
         modelUsed: 'error',
-        logId: 'error'
+        modelVersion: 'error',
+        logId: 'error',
+        promptTemplateId: 'coach.error',
+        policyVersion: 'i18n-guardrails-2026-02-23',
+        safetyOutcome: 'escalated',
+        safetyReasonCode: 'client_error',
+        toolCallIds: [],
+        targetLocale: locale,
+        gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
+        traceId: `ai_popup_${Date.now()}`,
       });
     } finally {
       setLoading(false);

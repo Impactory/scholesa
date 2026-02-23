@@ -1,10 +1,20 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { StudentMotivationProfile } from '@/src/components/motivation/StudentMotivationProfile';
+import { normalizeLocale } from '@/src/lib/i18n/config';
+import { translate } from '@/src/lib/i18n/messages';
 
-export const metadata: Metadata = {
-  title: 'My Learning Profile | Scholesa',
-  description: 'Your motivation, skills, and learning journey'
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const normalized = normalizeLocale(locale);
+  return {
+    title: translate(normalized, 'meta.learnerProfile.title'),
+    description: translate(normalized, 'meta.learnerProfile.description'),
+  };
+}
 
 export default function LearnerProfilePage() {
   return (
