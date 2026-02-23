@@ -89,7 +89,9 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                       onPressed: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
-                          metadata: const <String, dynamic>{'cta': 'habits_back'},
+                          metadata: const <String, dynamic>{
+                            'cta': 'habits_back'
+                          },
                         );
                         Navigator.of(context).pop();
                       },
@@ -188,7 +190,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: progress == 1.0 ? Colors.green : ScholesaColors.learner,
+                  color:
+                      progress == 1.0 ? Colors.green : ScholesaColors.learner,
                 ),
               ),
             ],
@@ -220,7 +223,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
 
   Widget _buildStreakCard(HabitService service) {
     final WeeklyHabitSummary? summary = service.weeklySummary;
-    
+
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -324,9 +327,10 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(7, (int index) {
-        final bool completed = index < dailyCompletions.length && dailyCompletions[index];
+        final bool completed =
+            index < dailyCompletions.length && dailyCompletions[index];
         final bool isToday = index == today;
-        
+
         return Column(
           children: <Widget>[
             Container(
@@ -339,13 +343,13 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                         ? Colors.white.withValues(alpha: 0.3)
                         : Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
-                border: isToday
-                    ? Border.all(color: Colors.white, width: 2)
-                    : null,
+                border:
+                    isToday ? Border.all(color: Colors.white, width: 2) : null,
               ),
               child: Center(
                 child: completed
-                    ? const Icon(Icons.check, size: 18, color: Colors.deepOrange)
+                    ? const Icon(Icons.check,
+                        size: 18, color: Colors.deepOrange)
                     : Text(
                         days[index],
                         style: TextStyle(
@@ -371,11 +375,12 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
           child: Row(
             children: <Widget>[
               _buildCategoryChip(null, 'All', '✨'),
-              ...HabitCategory.values.map((HabitCategory cat) => _buildCategoryChip(
-                cat,
-                cat.label,
-                cat.emoji,
-              )),
+              ...HabitCategory.values
+                  .map((HabitCategory cat) => _buildCategoryChip(
+                        cat,
+                        cat.label,
+                        cat.emoji,
+                      )),
             ],
           ),
         ),
@@ -383,9 +388,10 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCategoryChip(HabitCategory? category, String label, String emoji) {
+  Widget _buildCategoryChip(
+      HabitCategory? category, String label, String emoji) {
     final bool isSelected = _selectedCategory == category;
-    
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -426,7 +432,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
   Widget _buildHabitsList(HabitService service) {
     List<Habit> habits = service.activeHabits;
     if (_selectedCategory != null) {
-      habits = habits.where((Habit h) => h.category == _selectedCategory).toList();
+      habits =
+          habits.where((Habit h) => h.category == _selectedCategory).toList();
     }
 
     if (habits.isEmpty) {
@@ -485,9 +492,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: isCompletedToday
-            ? Border.all(color: Colors.green, width: 2)
-            : null,
+        border:
+            isCompletedToday ? Border.all(color: Colors.green, width: 2) : null,
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -561,7 +567,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                const Text('🔥', style: TextStyle(fontSize: 12)),
+                                const Text('🔥',
+                                    style: TextStyle(fontSize: 12)),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${habit.currentStreak}',
@@ -622,7 +629,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCompleteButton(HabitService service, Habit habit, bool isCompleted) {
+  Widget _buildCompleteButton(
+      HabitService service, Habit habit, bool isCompleted) {
     return GestureDetector(
       onTap: isCompleted
           ? null
@@ -703,30 +711,83 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
     );
   }
 
-  void _showHabitDetail(Habit habit) {
+  Future<void> _showHabitDetail(Habit habit) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'habits_open_detail', 'habit_id': habit.id},
+      metadata: <String, dynamic>{
+        'cta': 'habits_open_detail',
+        'habit_id': habit.id
+      },
     );
-    showModalBottomSheet(
+    bool popupCompleted = false;
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: <String, dynamic>{
+        'popup_id': 'habit_detail_sheet',
+        'surface': 'habits_page',
+        'habit_id': habit.id,
+      },
+    );
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _HabitDetailSheet(habit: habit),
+      builder: (BuildContext context) => _HabitDetailSheet(
+        habit: habit,
+        onDismissed: () {
+          popupCompleted = true;
+        },
+      ),
     );
+    if (!popupCompleted) {
+      TelemetryService.instance.logEvent(
+        event: 'popup.dismissed',
+        metadata: <String, dynamic>{
+          'popup_id': 'habit_detail_sheet',
+          'surface': 'habits_page',
+          'habit_id': habit.id,
+          'reason': 'closed_without_action',
+        },
+      );
+    }
   }
 
-  void _showCreateHabitSheet() {
+  Future<void> _showCreateHabitSheet() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'habits_create_sheet_opened'},
     );
-    showModalBottomSheet(
+    bool popupCompleted = false;
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: const <String, dynamic>{
+        'popup_id': 'habit_create_sheet',
+        'surface': 'habits_page',
+      },
+    );
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => const _CreateHabitSheet(),
+      builder: (BuildContext context) => _CreateHabitSheet(
+        onCompleted: () {
+          popupCompleted = true;
+        },
+        onDismissed: () {
+          popupCompleted = true;
+        },
+      ),
     );
+    if (!popupCompleted) {
+      TelemetryService.instance.logEvent(
+        event: 'popup.dismissed',
+        metadata: const <String, dynamic>{
+          'popup_id': 'habit_create_sheet',
+          'surface': 'habits_page',
+          'reason': 'closed_without_action',
+        },
+      );
+    }
   }
 
   Color _getCategoryColor(HabitCategory category) {
@@ -762,9 +823,12 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
 
 /// Habit detail bottom sheet
 class _HabitDetailSheet extends StatelessWidget {
-
-  const _HabitDetailSheet({required this.habit});
+  const _HabitDetailSheet({
+    required this.habit,
+    required this.onDismissed,
+  });
   final Habit habit;
+  final VoidCallback onDismissed;
 
   @override
   Widget build(BuildContext context) {
@@ -840,6 +904,15 @@ class _HabitDetailSheet extends StatelessWidget {
                         'habit_id': habit.id,
                       },
                     );
+                    TelemetryService.instance.logEvent(
+                      event: 'popup.dismissed',
+                      metadata: <String, dynamic>{
+                        'popup_id': 'habit_detail_sheet',
+                        'surface': 'habits_page',
+                        'habit_id': habit.id,
+                      },
+                    );
+                    onDismissed();
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.close),
@@ -999,8 +1072,18 @@ class _HabitDetailSheet extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final List<String> months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -1008,7 +1091,13 @@ class _HabitDetailSheet extends StatelessWidget {
 
 /// Create new habit bottom sheet
 class _CreateHabitSheet extends StatefulWidget {
-  const _CreateHabitSheet();
+  const _CreateHabitSheet({
+    required this.onCompleted,
+    required this.onDismissed,
+  });
+
+  final VoidCallback onCompleted;
+  final VoidCallback onDismissed;
 
   @override
   State<_CreateHabitSheet> createState() => _CreateHabitSheetState();
@@ -1024,8 +1113,22 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
   int _targetMinutes = 15;
 
   final List<String> _emojis = <String>[
-    '📖', '💻', '🧘', '✍️', '🏃', '🤝', '🎨', '🎵',
-    '🌱', '💪', '🧠', '❤️', '📝', '🎯', '⭐', '🌟',
+    '📖',
+    '💻',
+    '🧘',
+    '✍️',
+    '🏃',
+    '🤝',
+    '🎨',
+    '🎵',
+    '🌱',
+    '💪',
+    '🧠',
+    '❤️',
+    '📝',
+    '🎯',
+    '⭐',
+    '🌟',
   ];
 
   @override
@@ -1068,8 +1171,18 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                   onPressed: () {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
-                      metadata: const <String, dynamic>{'cta': 'habits_create_sheet_close'},
+                      metadata: const <String, dynamic>{
+                        'cta': 'habits_create_sheet_close'
+                      },
                     );
+                    TelemetryService.instance.logEvent(
+                      event: 'popup.dismissed',
+                      metadata: const <String, dynamic>{
+                        'popup_id': 'habit_create_sheet',
+                        'surface': 'habits_page',
+                      },
+                    );
+                    widget.onDismissed();
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.close),
@@ -1247,7 +1360,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
               max: 60,
               divisions: 11,
               activeColor: ScholesaColors.learner,
-              onChanged: (double val) => setState(() => _targetMinutes = val.round()),
+              onChanged: (double val) =>
+                  setState(() => _targetMinutes = val.round()),
             ),
             const SizedBox(height: 24),
             // Create button
@@ -1294,6 +1408,16 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
         'frequency': _selectedFrequency.name,
       },
     );
+    TelemetryService.instance.logEvent(
+      event: 'popup.completed',
+      metadata: <String, dynamic>{
+        'popup_id': 'habit_create_sheet',
+        'surface': 'habits_page',
+        'completion_action': 'create_habit',
+        'category': _selectedCategory.name,
+        'frequency': _selectedFrequency.name,
+      },
+    );
 
     context.read<HabitService>().createHabit(
           title: _titleController.text,
@@ -1307,6 +1431,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
           targetMinutes: _targetMinutes,
         );
 
+    widget.onCompleted();
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

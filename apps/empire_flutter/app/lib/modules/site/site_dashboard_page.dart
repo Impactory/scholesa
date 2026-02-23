@@ -399,7 +399,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: (trendUp
                             ? ScholesaColors.success
@@ -646,7 +647,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   _SiteActivity(
                     icon: Icons.download_done,
                     title: 'Report generated',
-                    subtitle: '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} report ready for download',
+                    subtitle:
+                        '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} report ready for download',
                     time: 'just now',
                     color: ScholesaColors.site,
                   ),
@@ -658,7 +660,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('$_selectedPeriod report prepared for download'),
+                  content:
+                      Text('$_selectedPeriod report prepared for download'),
                   backgroundColor: ScholesaColors.site,
                 ),
               );
@@ -685,7 +688,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   Future<void> _showAllRecentActivity() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'site_dashboard_view_all_recent_activity'},
+      metadata: const <String, dynamic>{
+        'cta': 'site_dashboard_view_all_recent_activity'
+      },
     );
     TelemetryService.instance.logEvent(
       event: 'popup.shown',
@@ -752,7 +757,6 @@ class _SiteActivity {
 }
 
 class _PeriodChip extends StatelessWidget {
-
   const _PeriodChip({
     required this.label,
     required this.isSelected,
@@ -769,7 +773,9 @@ class _PeriodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? ScholesaColors.site : ScholesaColors.site.withValues(alpha: 0.1),
+          color: isSelected
+              ? ScholesaColors.site
+              : ScholesaColors.site.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -786,7 +792,6 @@ class _PeriodChip extends StatelessWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-
   const _MetricCard({
     required this.icon,
     required this.value,
@@ -839,14 +844,18 @@ class _MetricCard extends StatelessWidget {
                     Icon(
                       trendUp ? Icons.arrow_upward : Icons.arrow_downward,
                       size: 10,
-                      color: trendUp ? ScholesaColors.success : ScholesaColors.error,
+                      color: trendUp
+                          ? ScholesaColors.success
+                          : ScholesaColors.error,
                     ),
                     Text(
                       trend,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: trendUp ? ScholesaColors.success : ScholesaColors.error,
+                        color: trendUp
+                            ? ScholesaColors.success
+                            : ScholesaColors.error,
                       ),
                     ),
                   ],
@@ -875,7 +884,6 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _BarColumn extends StatelessWidget {
-
   const _BarColumn({required this.label, required this.value});
   final String label;
   final double value;
@@ -904,7 +912,6 @@ class _BarColumn extends StatelessWidget {
 }
 
 class _PillarProgressRow extends StatelessWidget {
-
   const _PillarProgressRow({
     required this.icon,
     required this.label,
@@ -936,7 +943,8 @@ class _PillarProgressRow extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Text(label,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   Text(
                     '${(progress * 100).toInt()}%',
                     style: TextStyle(color: color, fontWeight: FontWeight.bold),
@@ -962,7 +970,6 @@ class _PillarProgressRow extends StatelessWidget {
 }
 
 class _ActivityItem extends StatelessWidget {
-
   const _ActivityItem({
     required this.icon,
     required this.title,

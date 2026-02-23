@@ -11,7 +11,8 @@ class HqApprovalsPage extends StatefulWidget {
   State<HqApprovalsPage> createState() => _HqApprovalsPageState();
 }
 
-enum _ApprovalType { partnerContract, curriculum, siteConfig, userRole }
+enum _ApprovalType { partnerContract, payout, curriculum, siteConfig, userRole }
+
 enum _ApprovalStatus { pending, approved, rejected }
 
 class _ApprovalItem {
@@ -32,9 +33,10 @@ class _ApprovalItem {
   final _ApprovalStatus status;
 }
 
-class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProviderStateMixin {
+class _HqApprovalsPageState extends State<HqApprovalsPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   final List<_ApprovalItem> _approvals = <_ApprovalItem>[
     _ApprovalItem(
       id: '1',
@@ -46,6 +48,14 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
     ),
     _ApprovalItem(
       id: '2',
+      title: 'Payout Request: TechEd Solutions (Q1)',
+      type: _ApprovalType.payout,
+      submittedBy: 'Finance Ops',
+      submittedAt: DateTime.now().subtract(const Duration(hours: 18)),
+      status: _ApprovalStatus.pending,
+    ),
+    _ApprovalItem(
+      id: '3',
       title: 'Curriculum: AI Fundamentals v2.0',
       type: _ApprovalType.curriculum,
       submittedBy: 'Curriculum Team',
@@ -53,7 +63,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
       status: _ApprovalStatus.pending,
     ),
     _ApprovalItem(
-      id: '3',
+      id: '4',
       title: 'Role Change: Jane D. → Site Lead',
       type: _ApprovalType.userRole,
       submittedBy: 'HR Admin',
@@ -113,11 +123,13 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(Icons.check_circle_outline_rounded, size: 64, color: Colors.green.withValues(alpha: 0.5)),
+            Icon(Icons.check_circle_outline_rounded,
+                size: 64, color: Colors.green.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             const Text(
               'No pending approvals',
-              style: TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
+              style:
+                  TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
           ],
         ),
@@ -127,7 +139,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) => _buildApprovalCard(filtered[index]),
+      itemBuilder: (BuildContext context, int index) =>
+          _buildApprovalCard(filtered[index]),
     );
   }
 
@@ -138,14 +151,16 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
 
     if (completed.isEmpty) {
       return const Center(
-        child: Text('No completed approvals', style: TextStyle(color: ScholesaColors.textSecondary)),
+        child: Text('No completed approvals',
+            style: TextStyle(color: ScholesaColors.textSecondary)),
       );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: completed.length,
-      itemBuilder: (BuildContext context, int index) => _buildApprovalCard(completed[index], showActions: false),
+      itemBuilder: (BuildContext context, int index) =>
+          _buildApprovalCard(completed[index], showActions: false),
     );
   }
 
@@ -169,12 +184,14 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
                     children: <Widget>[
                       Text(
                         item.title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'By ${item.submittedBy}',
-                        style: const TextStyle(fontSize: 13, color: ScholesaColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
                     ],
                   ),
@@ -189,7 +206,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _handleReject(item),
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                      style:
+                          OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: const Text('Reject'),
                     ),
                   ),
@@ -197,7 +215,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _handleApprove(item),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green),
                       child: const Text('Approve'),
                     ),
                   ),
@@ -217,6 +236,9 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
       case _ApprovalType.partnerContract:
         icon = Icons.handshake_rounded;
         color = Colors.purple;
+      case _ApprovalType.payout:
+        icon = Icons.account_balance_wallet_rounded;
+        color = Colors.green;
       case _ApprovalType.curriculum:
         icon = Icons.menu_book_rounded;
         color = Colors.blue;
@@ -259,27 +281,56 @@ class _HqApprovalsPageState extends State<HqApprovalsPage> with SingleTickerProv
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w500, color: color)),
     );
   }
 
   void _handleApprove(_ApprovalItem item) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'hq_approvals_approve', 'approval_id': item.id},
+      metadata: <String, dynamic>{
+        'cta': 'hq_approvals_approve',
+        'approval_id': item.id
+      },
     );
+    if (item.type == _ApprovalType.partnerContract) {
+      TelemetryService.instance.logEvent(
+        event: 'contract.approved',
+        metadata: <String, dynamic>{
+          'approval_id': item.id,
+          'source': 'hq_approvals_page',
+        },
+      );
+    } else if (item.type == _ApprovalType.payout) {
+      TelemetryService.instance.logEvent(
+        event: 'payout.approved',
+        metadata: <String, dynamic>{
+          'approval_id': item.id,
+          'source': 'hq_approvals_page',
+        },
+      );
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Approved: ${item.title}'), backgroundColor: Colors.green),
+      SnackBar(
+          content: Text('Approved: ${item.title}'),
+          backgroundColor: Colors.green),
     );
   }
 
   void _handleReject(_ApprovalItem item) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: <String, dynamic>{'cta': 'hq_approvals_reject', 'approval_id': item.id},
+      metadata: <String, dynamic>{
+        'cta': 'hq_approvals_reject',
+        'approval_id': item.id
+      },
     );
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Rejected: ${item.title}'), backgroundColor: Colors.red),
+      SnackBar(
+          content: Text('Rejected: ${item.title}'),
+          backgroundColor: Colors.red),
     );
   }
 }
