@@ -4,7 +4,6 @@
         <item name="android:windowSplashScreenBackground">#0F172A</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="android:windowSplashScreenAnimationDuration">350</item>
-        <item name="android:postSplashScreenTheme">@style/NormalTheme</item>
     </style>
 
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
