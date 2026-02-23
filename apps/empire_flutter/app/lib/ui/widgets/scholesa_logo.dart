@@ -49,8 +49,9 @@ class ScholesaLogo extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: Image.asset(
-          'assets/icons/android/android-launchericon-512-512.png',
-          fit: BoxFit.cover,
+          'assets/icons/scholesa_launcher.png',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
         ),
       ),
     );

@@ -112,6 +112,101 @@ def remove_edge_background_to_alpha(img: Image.Image, tolerance: int = 18) -> Im
     return rgba
 
 
+def remove_lockup_background_to_alpha(
+    img: Image.Image,
+    tolerance: int = 52,
+    min_aspect_ratio: float = 1.25,
+) -> Image.Image:
+    """
+    Removes edge-connected background inside the non-transparent content box.
+    This handles horizontal lockup assets where the white strip is surrounded
+    by transparent padding and therefore not connected to the full image edges.
+    """
+    rgba = img.convert("RGBA")
+    width, height = rgba.size
+    if width == 0 or height == 0:
+        return rgba
+
+    alpha = rgba.getchannel("A")
+    mask = alpha.point(lambda v: 255 if v > 0 else 0)
+    bbox = mask.getbbox()
+    if not bbox:
+        return rgba
+
+    x0, y0, x1, y1 = bbox
+    box_w = x1 - x0
+    box_h = y1 - y0
+    if box_w <= 0 or box_h <= 0:
+        return rgba
+
+    aspect_ratio = box_w / box_h
+    if aspect_ratio < min_aspect_ratio:
+        return rgba
+
+    pixels = rgba.load()
+    border_colors: list[tuple[int, int, int]] = []
+
+    for x in range(x0, x1):
+        top = pixels[x, y0]
+        bottom = pixels[x, y1 - 1]
+        if top[3] > 0:
+            border_colors.append(top[:3])
+        if bottom[3] > 0:
+            border_colors.append(bottom[:3])
+
+    for y in range(y0, y1):
+        left = pixels[x0, y]
+        right = pixels[x1 - 1, y]
+        if left[3] > 0:
+            border_colors.append(left[:3])
+        if right[3] > 0:
+            border_colors.append(right[:3])
+
+    if not border_colors:
+        return rgba
+
+    bg_rgb = Counter(border_colors).most_common(1)[0][0]
+    channel_span = max(bg_rgb) - min(bg_rgb)
+    mean_luma = sum(bg_rgb) / 3
+    if channel_span > 45 or mean_luma < 150:
+        return rgba
+
+    queue: deque[tuple[int, int]] = deque()
+    visited: set[tuple[int, int]] = set()
+
+    for x in range(x0, x1):
+        queue.append((x, y0))
+        queue.append((x, y1 - 1))
+    for y in range(y0, y1):
+        queue.append((x0, y))
+        queue.append((x1 - 1, y))
+
+    while queue:
+        x, y = queue.popleft()
+        if (x, y) in visited:
+            continue
+        visited.add((x, y))
+
+        r, g, b, a = pixels[x, y]
+        if a == 0:
+            continue
+        if color_distance((r, g, b), bg_rgb) > tolerance:
+            continue
+
+        pixels[x, y] = (r, g, b, 0)
+
+        if x > x0:
+            queue.append((x - 1, y))
+        if x < x1 - 1:
+            queue.append((x + 1, y))
+        if y > y0:
+            queue.append((x, y - 1))
+        if y < y1 - 1:
+            queue.append((x, y + 1))
+
+    return rgba
+
+
 def has_visible_transparency(img: Image.Image) -> bool:
     alpha = img.getchannel("A")
     mn, _mx = alpha.getextrema()
@@ -124,6 +219,8 @@ def load_normalized_master() -> Image.Image:
 
     if not has_visible_transparency(img):
         img = remove_edge_background_to_alpha(img)
+
+    img = remove_lockup_background_to_alpha(img)
     return img
 
 
