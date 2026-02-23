@@ -1,0 +1,63 @@
+docs/SCHOLESA_AUDIT_REPORT_TEMPLATE.md	firebase.json
+docs/IMPLEMENTATION_CHECKLIST.md	npm run lint
+docs/IMPLEMENTATION_CHECKLIST.md	npm run build
+docs/IMPLEMENTATION_CHECKLIST.md	firebase deploy --only firestore:rules
+docs/IMPLEMENTATION_CHECKLIST.md	firebase deploy --only firestore:indexes
+docs/QA_RUNBOOK.md	npm run dev
+docs/QA_RUNBOOK.md	npm run build && docker build
+docs/QA_RUNBOOK.md	flutter pub get
+docs/QA_RUNBOOK.md	flutter run
+docs/QA_RUNBOOK.md	flutter build apk
+docs/QA_RUNBOOK.md	npm run qa:telemetry-smoke
+docs/SDT_PHASE2_COMPLETION_REPORT.md	npm run build && npm start
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	npm audit --omit=dev
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	firebase hosting:channel:deploy regression-smoke --expires 7d
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore databases describe --project=studio-3328096157-e3f79 --database='(default)' --format=json
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	firebase hosting:channel:list --project studio-3328096157-e3f79
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	firebase hosting:channel:deploy regression-smoke --project studio-3328096157-e3f79 --expires 7d
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	firebase functions:list --project studio-3328096157-e3f79
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/triggerTelemetryAggregation
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore databases update --project=studio-3328096157-e3f79 --database='(default)' --enable-pitr --quiet
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore export gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --collection-ids=interactionEvents,orchestrationStates,mvlEpisodes,interventions,telemetryEvents,telemetryAggregates,aiDrafts
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore export gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-pitr-... --snapshot-time=<timestamp> --collection-ids=
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore databases create --project=studio-3328096157-e3f79 --database=restore-smoke --location=us-central1 --type=firestore-native --quiet
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore import gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --project=studio-3328096157-e3f79 --database=restore-smoke --collection-ids=
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	gcloud firestore databases delete --project=studio-3328096157-e3f79 --database=restore-smoke --quiet
+docs/SDT_DEPLOYMENT_GUIDE.md	firebase firestore:indexes
+docs/SDT_DEPLOYMENT_GUIDE.md	npm install
+docs/SDT_DEPLOYMENT_GUIDE.md	firebase deploy --only functions
+docs/SDT_DEPLOYMENT_GUIDE.md	gcloud run deploy scholesa-web \
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	firebase emulators:start
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	npm run start
+docs/STRIPE_SETUP_GUIDE.md	firebase functions:secrets:set STRIPE_SECRET_KEY
+docs/STRIPE_SETUP_GUIDE.md	firebase functions:secrets:set STRIPE_SECRET_KEY --data-file=- <<< "sk_live_your_secret_key"
+docs/STRIPE_SETUP_GUIDE.md	firebase functions:secrets:get STRIPE_SECRET_KEY
+docs/STRIPE_SETUP_GUIDE.md	firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+docs/STRIPE_SETUP_GUIDE.md	firebase functions:log --only stripeWebhook
+docs/75_REPO_FILE_MAP_REQUIRED.md	flutter analyze
+docs/75_REPO_FILE_MAP_REQUIRED.md	flutter test
+docs/75_REPO_FILE_MAP_REQUIRED.md	firebase emulators:exec "npm test"
+docs/75_REPO_FILE_MAP_REQUIRED.md	gcloud run deploy
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	dart pub outdated
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	dart format . --set-exit-if-changed
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	dart format
+docs/BOS_MIA_REGRESSION_REPORT.md	npm run rc2:regression
+docs/BOS_MIA_REGRESSION_REPORT.md	npm run vibe:all
+docs/BOS_MIA_REGRESSION_REPORT.md	node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	flutter run -d chrome
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	firebase emulators:exec
+docs/DEFERMENT_LOG.md	npm test
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	flutter build macos --release --no-tree-shake-icons
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	flutter build ios --release --no-codesign --no-tree-shake-icons
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	flutter build web --release
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	npm audit
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	firebase-admin
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	firebase
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	curl -sS "https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck"
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	curl -sS -o /tmp/callable_resp.json -w "%{http_code}\n" \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	npm ci
+docs/COMPLIANCE_REPORT.md	flutter build
+docs/Scholesa_COPPA_Operational_Pack/08_NO_ADVERTISING_POLICY.md	npm run audit:coppa:no-ads

@@ -1,0 +1,1675 @@
+docs/SCHOLESA_AUDIT_REPORT_TEMPLATE.md	inline	firebase.json
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] **CheckpointSubmission** - Track attempts/passes
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] **ShowcaseGallery** - Track submissions/views
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] **RecognitionFlow** - Track peer recognition
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] **ReflectionJournal** - Track reflections/ratings
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Create `/app/[locale]/(protected)/educator/analytics/page.tsx`
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Components:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] ClassEngagementOverview (heatmap by student)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] SDTProfileChart (autonomy/competence/belonging per student)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] AtRiskStudents (low engagement alerts)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] TopPerformers (high SDT scores)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] WeeklyTrends (line charts)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] ExportCSV (download analytics)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Create `/app/[locale]/(protected)/learner/profile/page.tsx`
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Components:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] LearningStyleCard (interests, preferred difficulty)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] SkillMasteryDashboard (skills proven, badges earned)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] RecognitionWall (peer props received)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] ReflectionTimeline (growth over time)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] GoalTracker (current goals + progress)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	Choose ONE option:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Enable Firestore Vector Search in Firebase Console
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Create vector index on `vectorDocuments` collection
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Get OpenAI API key (for embeddings)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Implement `EmbeddingService.generateEmbedding()`:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Implement `VectorStore.search()` using Firestore Vector Search
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Run `VectorIndexer.reindexAll()` to populate
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Set `useVectorSearch = true` in retrievalService.ts
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Test with sample queries
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Sign up for Pinecone (free tier or $70/month)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Create index (1536 dims, cosine similarity)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Install `@pinecone-database/pinecone`
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Implement VectorStore methods with Pinecone SDK
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Migrate existing rubrics/exemplars
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Set `useVectorSearch = true`
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Deploy Weaviate (Cloud Run / GKE / Weaviate Cloud)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Install `weaviate-ts-client`
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Define schema (VectorDocument class)
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Implement VectorStore methods
+docs/IMPLEMENTATION_CHECKLIST.md	fence	- [ ] Migrate data
+docs/IMPLEMENTATION_CHECKLIST.md	fence	Add rules for new collections:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	Add to `firestore.indexes.json`:
+docs/IMPLEMENTATION_CHECKLIST.md	fence	Create background function to aggregate telemetry daily:
+docs/IMPLEMENTATION_CHECKLIST.md	inline	npm run lint
+docs/IMPLEMENTATION_CHECKLIST.md	inline	npm run build
+docs/IMPLEMENTATION_CHECKLIST.md	inline	firebase deploy --only firestore:rules
+docs/IMPLEMENTATION_CHECKLIST.md	inline	firebase deploy --only firestore:indexes
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	---
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**File:** `src/lib/ai/vectorStore.ts`
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Changes:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Implemented OpenAI embeddings API integration (completed earlier)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Added Firestore-based vector document storage
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Implemented in-memory cosine similarity search
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Added filtering by type, missionId, gradeBand
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Implemented `delete()` method for document removal
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Implemented `updateEmbedding()` for content changes
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Added `cosineSimilarity()` utility method
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Production-Ready Features:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Performance Notes:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- **Current:** In-memory cosine similarity (good for < 1000 documents)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- **Scale-up Option:** Firestore Vector Search (requires index configuration)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- **Alternative:** Pinecone, Weaviate for production scale
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	---
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**File:** `src/hooks/useRealtimeAnalytics.ts` (NEW - 342 lines)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Hooks Created:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Real-time student engagement data for educators
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Uses `onSnapshot` for live updates
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Fetches SDT scores automatically
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Tracks last active timestamps
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Auto-unsubscribes on cleanup
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Usage:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Platform-wide statistics for HQ
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Total sites, learners, educators
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Average engagement across platform
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Active sites count
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Live updates on new sites/users
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Real-time activity feed for parents
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Last N telemetry events
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Auto-refreshes on new activity
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Formatted activity descriptions
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Live SDT score updates
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Triggers recalculation on new events
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Returns autonomy, competence, belonging, overall
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Optimized to prevent excessive queries
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Key Features:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Automatic subscription cleanup (no memory leaks)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Error handling with error states
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Loading states for UI feedback
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Optimistic updates
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	---
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**File:** `src/components/analytics/AnalyticsDashboard.tsx`
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Changes:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Replaced `useEffect` + `getDocs` with `useStudentAnalytics` hook
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Removed manual polling logic
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Students list now updates live
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Added error state display
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- ✅ Maintained AI Insights Panel integration
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Before:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**After:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	**Impact:**
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Educator sees new student activity immediately
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- At-risk alerts appear in real-time
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Dashboard reflects current engagement without refresh
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	---
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- All hooks return cleanup functions
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- `onSnapshot` listeners unsubscribe on unmount
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- No orphaned subscriptions
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Prevents memory leaks in long-running sessions
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Limit queries to necessary document counts
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Index-aware query construction
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Debounced recalculations where needed
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- Cached SDT scores in TelemetryService
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	---
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [x] All TODOs in motivationEngine resolved
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [x] Vector store implements core RAG functionality
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [x] Real-time hooks created and tested
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [x] Educator dashboard converted to real-time
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [ ] Student dashboard converted to real-time (in progress)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [ ] Parent dashboard converted to real-time (pending)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	- [ ] HQ dashboard converted to real-time (pending)
+docs/REALTIME_ANALYTICS_COMPLETION.md	fence	Add to `firestore.indexes.json`:
+docs/QA_RUNBOOK.md	inline	npm run dev
+docs/QA_RUNBOOK.md	inline	npm run build
+docs/QA_RUNBOOK.md	inline	npm run build && docker build
+docs/QA_RUNBOOK.md	inline	flutterfire configure
+docs/QA_RUNBOOK.md	inline	flutter pub get
+docs/QA_RUNBOOK.md	inline	flutter run
+docs/QA_RUNBOOK.md	inline	flutter build apk
+docs/QA_RUNBOOK.md	inline	npm run qa:telemetry-smoke
+docs/QA_RUNBOOK.md	inline	firebase deploy --only firestore:indexes
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	User Activity → TelemetryService.track() → telemetryEvents collection
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	↓
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	Cloud Function (aggregator)
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	↓
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	telemetryAggregates collection
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	↓
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	AnalyticsDashboard.tsx
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	↓
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	Educator UI (charts)
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌─────────────────────────────────────────────────────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│                     Student Interactions                     │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  (Mission select, Checkpoint, Reflection, AI Coach, etc.)   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└─────────────────────┬───────────────────────────────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	▼
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌────────────────────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│   Telemetry React Hooks    │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  (useAutonomyTracking,     │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│   useCompetenceTracking,   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│   useReflectionTracking)   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└────────────┬───────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	▼
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌────────────────────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│    TelemetryService.ts     │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  - Auto-enrich metadata    │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  - Validate event schema   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  - Write to Firestore      │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└────────────┬───────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌───────────┴───────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│                       │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	▼                       ▼
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌──────────────────┐    ┌──────────────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│ telemetryEvents  │    │ SDT Motivation Eng.  │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  Collection      │    │ (AutonomyEngine,     │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  (~1000 docs/    │    │  CompetenceEngine,   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│   user/month)    │    │  BelongingEngine)    │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└────────┬─────────┘    └──────────────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│ (Cloud Function - daily cron)
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	▼
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌──────────────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│ telemetryAggregates  │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  Collection          │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│  (1 doc/user/day)    │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└────────┬─────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌────┴─────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│          │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	▼          ▼
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	┌────────┐ ┌──────────────┐
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│ Educator│ │ Student      │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│Analytics│ │ Motivation   │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	│Dashboard│ │ Profile      │
+docs/SDT_PHASE2_COMPLETION_REPORT.md	fence	└─────────┘ └──────────────┘
+docs/SDT_PHASE2_COMPLETION_REPORT.md	inline	showcaseSubmissions
+docs/SDT_PHASE2_COMPLETION_REPORT.md	inline	firebase deploy --only firestore:indexes
+docs/SDT_PHASE2_COMPLETION_REPORT.md	inline	firebase deploy --only firestore:rules
+docs/SDT_PHASE2_COMPLETION_REPORT.md	inline	firebase deploy --only firestore:indexes
+docs/SDT_PHASE2_COMPLETION_REPORT.md	inline	npm run build && npm start
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Note**: `AIService.request()` automatically redacts, you usually don't need to call this directly
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Note**: `AIService.request()` automatically retrieves context, you usually don't need to call this directly
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Always provide `studentName` for redaction mapping
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Record feedback for training dataset
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Use `AIService.request()` (not direct model calls)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Version your rubrics when making significant changes
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Tag rubrics for easy retrieval
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Check response.citations to see which context was used
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Don't send raw student data to models (use AIService for auto-redaction)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Don't hardcode rubrics in prompts (store in DB)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Don't skip feedback recording (you lose training signals)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Don't delete old rubric versions (breaks audit trail)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	- Don't expose API keys in client code (use NEXT_PUBLIC_* only for Gemini)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Check**: API key valid? Quota not exceeded?
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Fix**: Verify env vars, check API console for errors
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Check**: Does a rubric exist for this mission/grade/site?
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Fix**: Create a global fallback (`siteId: '*'`) or seed default rubrics
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Check**: Are you using `AIService.request()` or bypassing redaction?
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Fix**: Always use `AIService.request()`, never call model adapters directly
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Check**: Vector store not implemented yet (using mocks)
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	**Fix**: Wait for Phase 2 (vector DB integration) or manually curate exemplars
+docs/AI_SERVICES_QUICK_REFERENCE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/analytics/StudentAnalyticsDashboard.tsx](src/components/analytics/StudentAnalyticsDashboard.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Real-Time Features:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Live SDT scores via `useSDTScores` hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Real-time activity feed via `useChildActivity` hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Personal progress updates instantly
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Streak tracking and achievements
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Key Improvements:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Replaced manual SDT polling with real-time hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Activity feed updates as events occur
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Removed TelemetryService polling from useEffect
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Loading states properly managed across hooks
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Usage:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/analytics/ParentAnalyticsDashboard.tsx](src/components/analytics/ParentAnalyticsDashboard.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Real-Time Features:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Live child activity updates via `useChildActivity` hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Real-time SDT scores for selected child via `useSDTScores` hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Instant notification of achievements
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Multiple children support
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Key Improvements:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Removed manual SDT polling for each child
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Activity feed updates live when child selected
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Placeholder engagement for list view (optimized performance)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Real-time data only for selected child (reduces Firestore reads)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Usage:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/analytics/HQAnalyticsDashboard.tsx](src/components/analytics/HQAnalyticsDashboard.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Real-Time Features:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Platform-wide statistics via `usePlatformStats` hook
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Live site metrics (learners, educators, engagement)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Active sites count updates instantly
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Real-time health monitoring
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Key Improvements:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Removed manual aggregation of platform stats
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Site-level details still fetched per-site (detailed metrics)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Platform totals from real-time hook (efficient aggregation)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	- Export functionality maintained
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Usage:**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**1. Mission Selection**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [LearnerMissions.tsx](LearnerMissions.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner clicks and selects a mission
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Autonomy (learner chooses their learning path)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**2. Goal Setting**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/goals/GoalSettingForm.tsx](src/components/goals/GoalSettingForm.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner sets a personal learning goal
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Autonomy (self-directed goal setting)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**1. Checkpoint Attempts**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/checkpoints/CheckpointSubmission.tsx](src/components/checkpoints/CheckpointSubmission.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner starts checkpoint submission
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Competence (attempting skill demonstration)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**2. Checkpoint Success**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner successfully passes checkpoint
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Competence (mastery achieved)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**3. Mission Submission**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [LearnerMissions.tsx](LearnerMissions.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner submits completed mission work
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Competence (demonstrating learning)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**1. Peer Recognition**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [src/components/recognition/PeerRecognitionForm.tsx](src/components/recognition/PeerRecognitionForm.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner gives recognition to a peer
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**SDT Dimension:** Belonging (social connection and appreciation)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**1. Mission Reflection**
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**File:** [ReflectionForm.tsx](ReflectionForm.tsx)
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Triggers:** When learner submits mission reflection
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	**Purpose:** Track metacognitive development and self-awareness
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	---
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	Add to [firestore.indexes.json](firestore.indexes.json):
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	fence	Already configured:
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	inline	goal_set
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	inline	showcase_viewed
+docs/ANALYTICS_AND_TELEMETRY_COMPLETE.md	inline	node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Data Sources:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `learnerGoals` collection
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `checkpointHistory` collection
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `badgeAchievements` collection
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `recognitionBadges` collection
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `telemetryEvents` collection
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**File:** `src/components/analytics/ParentAnalyticsDashboard.tsx` (NEW - 448 lines)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Features:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Multi-child support with tab selector
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Child-specific SDT scores
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Recent activity timeline
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Upcoming learning goals with progress bars
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Recent achievements (badges, checkpoints, recognition)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Parent-friendly engagement insights
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Simplified language appropriate for parent audience
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Engagement Insight Levels:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- 🎉 Thriving (70%+): "Your child is highly engaged"
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- 👍 Good Progress (40-69%): "On the right track"
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- 💪 Needs Encouragement (<40%): "May need extra support"
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Note:** Schema enhancement needed for `parentChildRelationships` collection or `parentIds` array in user profiles
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**File:** `src/components/analytics/HQAnalyticsDashboard.tsx` (NEW - 465 lines)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Features:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Platform-wide statistics (total sites, learners, educators)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Active sites tracking
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Average platform engagement
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Site comparison table (sortable)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Site health indicators (healthy/warning/critical)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Last activity tracking per site
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- CSV export for all platform data
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Health Status Algorithm:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Sort Options:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- By site name (alphabetical)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- By engagement score (highest/lowest)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- By learner count (most/least)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**File:** `src/components/sdt/AICoachPopup.tsx` (MODIFIED)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Enhancements:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Fetches student's SDT profile on mount
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Includes SDT context in AI prompts
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Personalizes recommendations based on weak dimensions
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Provides dimension-specific guidance
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Personalization Logic:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Impact:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- AI responses are now contextually aware of student motivation
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Suggestions adapt to individual needs
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Supports differentiated learning at scale
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**File:** `src/components/motivation/StudentMotivationProfile.tsx`
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Changes:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `skillMastery` collection queries
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `badgeAchievements` collection queries
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `learnerGoals` collection queries
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `recognitionBadges` collection queries
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Removed placeholder empty arrays
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Now displays real student data (skills, badges, goals, recognition)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Queries Added:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**File:** `src/lib/ai/vectorStore.ts`
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Changes:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `generateEmbedding()` with OpenAI API
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Implemented `generateEmbeddingsBatch()` for efficiency
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Added API key validation
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Added graceful fallback to deterministic mock embeddings
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Batch processing (100 texts per request, well under 2048 limit)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- ✅ Error handling with fallback mechanism
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Implementation Details:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Environment Variables Required:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `NEXT_PUBLIC_OPENAI_API_KEY` (client-side) OR
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `OPENAI_API_KEY` (server-side)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**TODO Documented:**
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	**Recommendation:** Add `parentIds: string[]` field to User schema for parent-child relationship tracking
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	All dashboards use consistent SDT scoring:
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	All components query Firestore directly:
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `telemetryEvents` - Activity tracking
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `telemetryAggregates` - Pre-computed metrics
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `learnerGoals` - Goal setting
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `badgeAchievements` - Badges earned
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `recognitionBadges` - Peer recognition
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `checkpointHistory` - Learning milestones
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- `skillMastery` - Skill development
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Circular Progress:** SDT scores, engagement levels
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Stacked Bar Charts:** Activity by dimension over time
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Progress Bars:** Goal completion, skill mastery
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Cards:** Stats, insights, achievements
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Tables:** Site comparison, student lists
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Compound Queries:** `siteId + userId + timestamp` for efficient retrieval
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Pagination:** `limit()` used to prevent over-fetching
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Real-time:** Ready for `onSnapshot()` conversion if needed
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Indexes Required:** Composite indexes for multi-field queries (configured in `firestore.indexes.json`)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Batch Reads:** Multiple queries run in parallel where possible
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Cached SDT Scores:** TelemetryService caches recent calculations
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **Lazy Loading:** Dashboards fetch data only when mounted
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- **CSV Export:** Client-side generation (no server round-trip)
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- All async operations wrapped in try/catch
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Loading states with skeleton UI
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Empty states with helpful prompts
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	- Graceful degradation on API failures
+docs/ANALYTICS_COMPLETION_REPORT.md	fence	---
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	cd functions && npm ci && npm run build
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	firebase deploy --only firestore:rules
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	npm audit --omit=dev
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	firebase hosting:channel:deploy regression-smoke --expires 7d
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	cd functions && npm ci && npm run build
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	cd functions && npm audit --omit=dev
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore databases describe --project=studio-3328096157-e3f79 --database='(default)' --format=json
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	firebase hosting:channel:list --project studio-3328096157-e3f79
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	firebase hosting:channel:deploy regression-smoke --project studio-3328096157-e3f79 --expires 7d
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	firebase functions:list --project studio-3328096157-e3f79
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/triggerTelemetryAggregation
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore databases update --project=studio-3328096157-e3f79 --database='(default)' --enable-pitr --quiet
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore export gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --collection-ids=interactionEvents,orchestrationStates,mvlEpisodes,interventions,telemetryEvents,telemetryAggregates,aiDrafts
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore export gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-pitr-... --snapshot-time=<timestamp> --collection-ids=
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore databases create --project=studio-3328096157-e3f79 --database=restore-smoke --location=us-central1 --type=firestore-native --quiet
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore import gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --project=studio-3328096157-e3f79 --database=restore-smoke --collection-ids=
+docs/GOLD_RELEASE_AI_REGRESSION_REPORT.md	inline	gcloud firestore databases delete --project=studio-3328096157-e3f79 --database=restore-smoke --quiet
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_API_KEY=<your-api-key>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_PROJECT_ID=<your-project-id>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-auth-domain>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_APP_ID=<your-app-id>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<your-storage-bucket>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<your-sender-id>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	FIREBASE_SERVICE_ACCOUNT=<base64-encoded-service-account-json>
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccount.json
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	firebase deploy --only firestore:rules
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	firebase deploy --only firestore:indexes
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	firebase firestore:indexes
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	cd functions
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	npm install
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	firebase deploy --only functions
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	curl https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net/triggerTelemetryAggregation
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	npm run build
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	vercel --prod
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	docker build -t gcr.io/YOUR_PROJECT_ID/scholesa-web:latest
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	docker push gcr.io/YOUR_PROJECT_ID/scholesa-web:latest
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	gcloud run deploy scholesa-web \
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	--image gcr.io/YOUR_PROJECT_ID/scholesa-web:latest \
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	--platform managed \
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	--region us-central1 \
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	--allow-unauthenticated
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	/scripts/deploy.sh cloudrun-web
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify event appears in Firestore `telemetryEvents` collection
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `userId`, `siteId`, `category`, `eventName`, `timestamp`, and `metadata` fields
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] **AutonomyEngine**: Set a goal
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `learnerGoals` document created with correct fields
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `goal_set` telemetry event tracked
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] **CompetenceEngine**: Record checkpoint passed
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `checkpointHistory` document created
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `checkpoint_passed` telemetry event tracked
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] **BelongingEngine**: Give recognition
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `recognitionBadges` document created
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify `recognition_given` telemetry event tracked
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Add test vector document:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Verify document in `vectorDocuments` collection
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Test similarity search (returns empty array without OpenAI API key)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Navigate to [Student Motivation Profile](../src/components/motivation/StudentMotivationProfile.tsx)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Click "+ Set New Goal" button
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Fill in goal description: "Complete 5 missions this month"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. Set target date: Tomorrow's date
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	5. Click "Set Goal"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Modal closes after submission
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `learnerGoals` document appears in Firestore with correct `userId`, `siteId`, `description`, `targetDate`, `status='active'`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `goal_set` telemetry event in `telemetryEvents` with metadata: `{ goalId, description, targetDate, daysUntilTarget }`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Navigate to checkpoint submission page
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Answer questions (any answers)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Submit checkpoint
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] "Grading" loader appears briefly
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Result screen shows either "Passed" or "Try Again"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `checkpointHistory` document created with `status='passed'` or `status='failed'`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `checkpoint_attempted` telemetry event tracked
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `checkpoint_passed` telemetry event tracked (if passed)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Navigate to [Showcase Gallery](../src/components/showcase/ShowcaseGallery.tsx)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Click "Submit Work" button
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Fill in title: "My Amazing Project"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. Fill in description: "I built a robot that..."
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	5. Select visibility: "Site"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	6. Click "Submit to Showcase"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Modal closes after submission
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `showcaseSubmissions` document created with `status='pending'`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `showcase_submitted` telemetry event tracked with metadata: `{ visibility, titleLength, descriptionLength, hasArtifact }`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Document appears in Firestore with correct fields
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Navigate to Showcase Gallery
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Click "Recognize" button on any showcase item
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Select recognition type: "Helpful"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. Add optional message: "You helped me so much!"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	5. Click "Send Recognition"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Modal closes after submission
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `recognitionBadges` document created
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `recognition_given` telemetry event tracked with metadata: `{ recipientId, recognitionType, hasMessage, messageLength }`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Recognition count increments on showcase item (after refresh)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Navigate to mission completion page
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Fill in reflection prompts:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- Effort rating: 4/5
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- Enjoyment rating: 5/5
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- What I learned: "I learned about..."
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- What was challenging: "The hardest part was..."
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Submit reflection
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `reflectionEntries` document created
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `reflection_submitted` telemetry event tracked with metadata: `{ effort, enjoyment, hasLearning, hasChallenges }`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Log in as educator
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Navigate to [Analytics Dashboard](../src/components/analytics/AnalyticsDashboard.tsx)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. Select time range: "Last Week"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. View student engagement data
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Table displays students with real data (not mock data)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] SDT scores calculated correctly (autonomy %, competence %, belonging %)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Event count matches Firestore `telemetryEvents` count for each student
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Last active timestamp is accurate
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] At-risk students highlighted (engagement < 30%)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] SVG chart renders with 4 lines (engagement, autonomy, competence, belonging)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] X-axis labels show dates for last 7 days
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Y-axis scale 0-100%
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Legend displays with color indicators
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Data points match aggregated telemetry data
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Test Flow:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. Click "Export CSV" button
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. Wait for download
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] CSV file downloads with correct filename: `{siteName}_analytics_YYYY-MM-DD.csv`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] CSV has headers: `Student Name,Engagement %,Autonomy %,Competence %,Belonging %,Events,Last Active`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] All students included in export
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Data matches table display
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Manual Trigger:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Function completes without errors (check Cloud Functions logs)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `telemetryAggregates` collection has new documents
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Document ID format: `{userId}_{siteId}_YYYY-MM-DD`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Fields populated correctly:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `userId`, `siteId`, `date`, `aggregationType='daily'`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `totalEvents` > 0
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `categoryCounts` object with counts per category
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `sdtCounts` object with autonomy/competence/belonging/reflection counts
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `engagementScore` (0-100)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- `createdAt` timestamp
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Manual Test:** Change schedule to run in 1 minute, redeploy, wait
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Function runs on schedule (check logs every Monday at 3:00 AM UTC)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `telemetryAggregates` collection has weekly documents
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Document ID format: `{userId}_{siteId}_week_YYYY-MM-DD`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] `aggregationType='weekly'`
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Data aggregates last 7 days correctly
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. **Login** as learner
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. **Set Goal**: "Complete 3 missions this week"
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. **Start Mission**: Select a mission from dashboard
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. **Complete Checkpoint**: Submit answers, receive feedback
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	5. **Submit Reflection**: Rate effort/enjoyment, write learnings
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	6. **Submit to Showcase**: Share completed work with site
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	7. **Give Recognition**: Recognize a peer's showcase submission
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	8. **View Motivation Profile**: Check SDT scores and progress
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify at each step:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Telemetry events tracked correctly
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Firestore documents created
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] UI updates reflect changes
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] No console errors
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	1. **Login** as educator
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	2. **View Analytics Dashboard**: See real-time student engagement
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	3. **Identify At-Risk Students**: Check students with low engagement
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	4. **Export CSV**: Download analytics report
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	5. **View Weekly Trends**: Analyze engagement over time
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Verify:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Dashboard displays real data (not mock)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Charts render correctly
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Export works
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Data is accurate
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	Monitor daily reads to ensure costs stay within budget:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- **Without aggregation**: ~100 reads per dashboard load (queries all events for all students)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- **With aggregation**: ~10 reads per dashboard load (queries aggregates only)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Expected savings**: ~90% reduction in Firestore reads after aggregation is active
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	Check Cloud Functions dashboard for:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Execution times (should be < 30 seconds for daily aggregation)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Error rates (should be 0%)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Memory usage (should be < 512MB)
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	- [ ] Cold start times
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	---
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	If critical issues are found after deployment:
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Vercel:**
+docs/SDT_DEPLOYMENT_GUIDE.md	fence	**Cloud Run:**
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	npm run build
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	npm run lint
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	goal_set
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	goal_set
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	showcaseSubmissions
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	showcase_submitted
+docs/SDT_DEPLOYMENT_GUIDE.md	inline	firebase firestore:indexes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_API_KEY=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_APP_ID=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	FIREBASE_SERVICE_ACCOUNT=  # JSON string or base64
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	GOOGLE_APPLICATION_CREDENTIALS=  # Path to service account JSON
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	firebase deploy --only firestore:rules
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	firebase deploy --only firestore:indexes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	✔  firestore: released rules firestore.rules to cloud.firestore
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	✔  firestore: deployed indexes in firestore.indexes.json successfully
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	firebase firestore:indexes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	firebase emulators:start
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	npm run dev
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	npm run build
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	npm run start
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	vercel --prod
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	/scripts/deploy.sh cloudrun-web
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	Deploy:
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **Log in as a test student**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Complete a mission** (triggers `mission_selected`, `artifact_submitted`)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Submit a reflection** (triggers `reflection_submitted`)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	4. **Check Firestore Console:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- `telemetryEvents` collection should have 3+ documents
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Each event should have: `userId`, `siteId`, `category`, `eventName`, `timestamp`, `metadata`
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	5. **Log in as educator**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	6. **Open Analytics Dashboard** (`/educator/analytics`)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Should display student engagement scores
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- SDT heatmap should show autonomy/competence/belonging percentages
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	7. **Check student profile** (`/learner/profile`)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Should display SDT scores from telemetry
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Skills/badges sections ready for data (once populated)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	If writes are failing, check rules:
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	Test specific operations:
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Symptom:** Error: "The query requires an index."
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Solution:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. Check index status: `firebase firestore:indexes`
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. Wait for indexes to build (can take 5-20 minutes)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. Alternatively, click the URL in the error message to auto-create the index
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Symptom:** TelemetryService.track() doesn't create documents
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Possible causes:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **Firestore rules:** User not authenticated
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Missing siteId:** Check `profile.activeSiteId` is set
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Network error:** Check browser console for Firebase errors
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Debug:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Symptom:** Dashboard shows no data despite events in Firestore
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Possible causes:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **No aggregates:** Aggregation functions not deployed
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Date filtering:** Check queries for date range mismatch
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Site scoping:** User's `activeSiteId` doesn't match event `siteId`
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Quick fix (mock data):**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- The current implementation uses mock data for demonstration
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Once real aggregates exist, replace mock data with Firestore queries
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Symptom:** SDT scores show 0% despite activity
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Possible causes:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **Event category mismatch:** Events not tagged with `autonomy`/`competence`/`belonging`
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Missing metadata:** Events missing required metadata fields
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Query filters:** TelemetryService.getSDTProfile() filtering incorrectly
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	**Debug:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- **Average event size:** ~500 bytes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- **Write frequency:** 5-10 events per minute (active user)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- **Firestore writes:** ~0.1 cents per 1000 writes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- **Monthly cost estimate:** $1-5 per 100 active students
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **Batch similar events:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Use aggregates for dashboards:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Query `telemetryAggregates` (1 doc per user-day)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- Instead of `telemetryEvents` (100+ docs per user-day)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Implement sampling for high-frequency events:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] 50+ telemetry events per active student
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] All 4 SDT categories represented (autonomy, competence, belonging, reflection)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] No Firestore permission errors in logs
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Analytics dashboard displays data
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Educators can view class engagement
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] SDT heatmap shows meaningful variance (not all 0% or 100%)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] At-risk student alerts trigger appropriately
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Export CSV functionality works
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Students view their own profiles
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] SDT scores update after activities
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Badge awards appear in profile
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Reflection timeline shows growth
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Telemetry insights lead to 1+ educator intervention
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Student engagement improves (compare SDT scores week-over-week)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] System performance acceptable (<2s dashboard load)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	- [ ] Cost within budget (<$10/month for 100 students)
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	If critical issues arise:
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	1. **Disable telemetry tracking:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	2. **Revert Firestore rules:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	fence	3. **Roll back Next.js deployment:**
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	inline	firebase firestore:indexes
+docs/SDT_TELEMETRY_DEPLOYMENT_GUIDE.md	inline	npm run build
+docs/STRIPE_SETUP_GUIDE.md	fence	firebase functions:secrets:set STRIPE_SECRET_KEY
+docs/STRIPE_SETUP_GUIDE.md	fence	firebase functions:secrets:set STRIPE_SECRET_KEY --data-file=- <<< "sk_live_your_secret_key"
+docs/STRIPE_SETUP_GUIDE.md	fence	firebase functions:secrets:get STRIPE_SECRET_KEY
+docs/STRIPE_SETUP_GUIDE.md	fence	https://stripewebhook-gu5vyrn2tq-uc.a.run.app
+docs/STRIPE_SETUP_GUIDE.md	fence	firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+docs/STRIPE_SETUP_GUIDE.md	fence	> **Note**: For security, Stripe API calls should go through Firebase Functions, not directly from Next.js
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	1. Go to [Products](https://dashboard.stripe.com/products)
+docs/STRIPE_SETUP_GUIDE.md	fence	2. Click **Add product**
+docs/STRIPE_SETUP_GUIDE.md	fence	3. Create products for each plan:
+docs/STRIPE_SETUP_GUIDE.md	fence	| Product Name | Price | Billing |
+docs/STRIPE_SETUP_GUIDE.md	fence	|-------------|-------|---------|
+docs/STRIPE_SETUP_GUIDE.md	fence	| Learner Plan | $29/month | Recurring |
+docs/STRIPE_SETUP_GUIDE.md	fence	| Educator Plan | $49/month | Recurring |
+docs/STRIPE_SETUP_GUIDE.md	fence	| Site License | $299/month | Recurring |
+docs/STRIPE_SETUP_GUIDE.md	fence	4. Copy the **Price IDs** (e.g., `price_1ABC...`)
+docs/STRIPE_SETUP_GUIDE.md	fence	Edit `src/components/stripe/PricingPlans.tsx` with your actual price IDs:
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	After setting all secrets:
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	1. Go to Stripe Dashboard → Webhooks → Your endpoint
+docs/STRIPE_SETUP_GUIDE.md	fence	2. Click **Send test webhook**
+docs/STRIPE_SETUP_GUIDE.md	fence	3. Select an event (e.g., `checkout.session.completed`)
+docs/STRIPE_SETUP_GUIDE.md	fence	4. Click **Send test webhook**
+docs/STRIPE_SETUP_GUIDE.md	fence	5. Check Firebase Functions logs:
+docs/STRIPE_SETUP_GUIDE.md	fence	1. Use [Stripe test cards](https://stripe.com/docs/testing#cards):
+docs/STRIPE_SETUP_GUIDE.md	fence	- **Success**: `4242 4242 4242 4242`
+docs/STRIPE_SETUP_GUIDE.md	fence	- **Decline**: `4000 0000 0000 0002`
+docs/STRIPE_SETUP_GUIDE.md	fence	- **Requires auth**: `4000 0025 0000 3155`
+docs/STRIPE_SETUP_GUIDE.md	fence	2. Complete a test checkout
+docs/STRIPE_SETUP_GUIDE.md	fence	3. Verify subscription created in Firestore `subscriptions` collection
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	| Variable | Location | Example Value |
+docs/STRIPE_SETUP_GUIDE.md	fence	|----------|----------|---------------|
+docs/STRIPE_SETUP_GUIDE.md	fence	| `STRIPE_SECRET_KEY` | Firebase Secrets | `sk_live_...` |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `STRIPE_WEBHOOK_SECRET` | Firebase Secrets | `whsec_...` |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `.env.production` | `pk_live_...` |
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	| Function | URL |
+docs/STRIPE_SETUP_GUIDE.md	fence	|----------|-----|
+docs/STRIPE_SETUP_GUIDE.md	fence	| Stripe Webhook | `https://stripewebhook-gu5vyrn2tq-uc.a.run.app` |
+docs/STRIPE_SETUP_GUIDE.md	fence	| Health Check | `https://healthcheck-gu5vyrn2tq-uc.a.run.app` |
+docs/STRIPE_SETUP_GUIDE.md	fence	| Checkout Webhook | `https://completecheckoutwebhook-gu5vyrn2tq-uc.a.run.app` |
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	- Ensure `STRIPE_SECRET_KEY` is set: `firebase functions:secrets:get STRIPE_SECRET_KEY`
+docs/STRIPE_SETUP_GUIDE.md	fence	- Redeploy functions after setting secrets
+docs/STRIPE_SETUP_GUIDE.md	fence	- Ensure `STRIPE_WEBHOOK_SECRET` matches the signing secret from Stripe Dashboard
+docs/STRIPE_SETUP_GUIDE.md	fence	- Check if using the correct endpoint (test vs live)
+docs/STRIPE_SETUP_GUIDE.md	fence	- Check Firestore `stripeWebhookLogs` collection for errors
+docs/STRIPE_SETUP_GUIDE.md	fence	- Verify webhook events are correctly selected
+docs/STRIPE_SETUP_GUIDE.md	fence	- Check function logs: `firebase functions:log --only stripeWebhook`
+docs/STRIPE_SETUP_GUIDE.md	fence	- Ensure [Customer Portal is configured](https://dashboard.stripe.com/settings/billing/portal) in Stripe Dashboard
+docs/STRIPE_SETUP_GUIDE.md	fence	- Enable features: cancel subscription, update payment method, view invoices
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	1. **Never commit secret keys** to version control
+docs/STRIPE_SETUP_GUIDE.md	fence	2. **Use test keys** for development, live keys for production only
+docs/STRIPE_SETUP_GUIDE.md	fence	3. **Rotate keys** periodically and if compromised
+docs/STRIPE_SETUP_GUIDE.md	fence	4. **Restrict API key** permissions in Stripe Dashboard if needed
+docs/STRIPE_SETUP_GUIDE.md	fence	5. **Monitor webhook failures** via the `getWebhookLogs` function
+docs/STRIPE_SETUP_GUIDE.md	fence	6. **Use the customer portal** instead of building custom payment forms
+docs/STRIPE_SETUP_GUIDE.md	fence	---
+docs/STRIPE_SETUP_GUIDE.md	fence	The platform includes pre-built components in `src/components/stripe/`:
+docs/STRIPE_SETUP_GUIDE.md	fence	| Component | Purpose |
+docs/STRIPE_SETUP_GUIDE.md	fence	|-----------|---------|
+docs/STRIPE_SETUP_GUIDE.md	fence	| `PricingPlans` | Display pricing cards with checkout integration |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `SubscriptionManager` | List and manage user subscriptions |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `SubscriptionCard` | Individual subscription display/actions |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `InvoiceHistory` | View and retry invoices |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `StripeDashboard` | Admin metrics and revenue overview (HQ only) |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `WebhookMonitor` | Monitor webhook events and failures (HQ only) |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `RefundManager` | Process refunds for payments (HQ only) |
+docs/STRIPE_SETUP_GUIDE.md	fence	| `PlanManager` | Create/edit products and pricing (HQ only) |
+docs/STRIPE_SETUP_GUIDE.md	inline	firebase functions:secrets:get STRIPE_SECRET_KEY
+docs/STRIPE_SETUP_GUIDE.md	inline	firebase functions:log --only stripeWebhook
+docs/75_REPO_FILE_MAP_REQUIRED.md	inline	firebase.json
+docs/75_REPO_FILE_MAP_REQUIRED.md	inline	flutter analyze
+docs/75_REPO_FILE_MAP_REQUIRED.md	inline	flutter test
+docs/75_REPO_FILE_MAP_REQUIRED.md	inline	firebase emulators:exec "npm test"
+docs/75_REPO_FILE_MAP_REQUIRED.md	inline	gcloud run deploy
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- 15-30min sprints, Hint + Debug AI, crews enabled, evidence-based badges
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- 20-45min sprints, Hint + Rubric + Debug AI, student-owned portfolio, mastery badges
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- 30-90min sprints, all AI modes including Critique, exportable portfolio, professional badges
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Helper Functions**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**File**: [src/lib/telemetry/sdtTelemetry.ts](src/lib/telemetry/sdtTelemetry.ts)
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	Real-time behavioral tracking system to understand what motivates each learner
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Event Types Tracked**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **Autonomy signals**: mission browsed/selected/switched, goals set
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **Competence signals**: evidence submitted/revised, checkpoints attempted/passed/failed
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **Belonging signals**: showcases submitted, recognition given/received, peer feedback
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **Reflection signals**: reflections submitted, effort/enjoyment rated
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **AI Coach signals**: AI used, explain-back submitted
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- **Time signals**: sessions started/resumed/paused/completed
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Motivation Metrics Computed**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Motivation Insights Generated**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- "High first-time success rate → Suggest harder missions"
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- "Struggles with checkpoints but persists → Offer AI Coach nudge"
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- "Not giving peer feedback → Prompt to review teammate's work"
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Collections**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- `telemetryEvents` - Raw event stream (timestamp, type, metadata, ageBand)
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- `motivationAnalytics` - Real-time aggregates (efficient reads, auto-increments)
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	**Convenience Functions**:
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Events fire asynchronously (don't block UI)
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Real-time aggregates update in background
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Telemetry failures are silent (logged but don't throw)
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Firebase Function processes telemetry events weekly
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Computes motivation metrics per learner
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Groups by age band for cohort analysis
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Rule-based insights for immediate patterns
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- ML model (future) for complex motivation prediction
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Educator dashboard shows actionable suggestions
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Low choice diversity → Surface more mission options
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- High revision persistence → Suggest AI Coach or scaffolding
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- Low peer feedback → Nudge to review teammate's work
+docs/AI_COACH_TELEMETRY_IMPLEMENTATION.md	fence	- High first-time success → Recommend harder missions
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	flutter analyze
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	flutter test
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	dart pub outdated
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	dart format . --set-exit-if-changed
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	flutter analyze
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	flutter test
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	dart pub outdated
+docs/SCHOLESA_AUDIT_FIX_AND_REMEDIATION_VIBE.md	inline	dart format
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**File:** [src/components/analytics/AnalyticsDashboard.tsx](src/components/analytics/AnalyticsDashboard.tsx)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Changes:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `StudentEngagement` interface → `LearnerEngagement`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Import updated to `useLearnerAnalytics`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- All state variables: `students` → `learners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Summary card: "Total Students" → "Total Learners"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Alert messages: "student" → "learner"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- CSV export header: "Student Name" → "Learner Name"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Table mapping: `students.map(student =>` → `learners.map(learner =>`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Empty state message: "students complete activities" → "learners complete activities"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**UI Changes:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Dashboard now consistently shows "Learners" everywhere
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Export files use "Learner" terminology
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- All calculations reference learners
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**File:** [src/components/analytics/AIInsightsPanel.tsx](src/components/analytics/AIInsightsPanel.tsx)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Changes:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- File header comments updated
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `StudentData` interface → `LearnerData`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `affectedStudents` → `affectedLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Props: `students` → `learners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- All local variables standardized:
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `atRiskStudents` → `atRiskLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `lowAutonomyStudents` → `lowAutonomyLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `lowCompetenceStudents` → `lowCompetenceLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `lowBelongingStudents` → `lowBelongingLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `thrivingStudents` → `thrivingLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- `inactiveStudents` → `inactiveLearners`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Insight Messages Updated:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "X Student(s) At Risk" → "X Learner(s) At Risk"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "Students Need More Choice" → "Learners Need More Choice"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "students show low autonomy" → "learners show low autonomy"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "Inactive Student(s)" → "Inactive Learner(s)"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "Thriving Student(s)" → "Thriving Learner(s)"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "Survey students about..." → "Survey learners about..."
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "Affected Students:" → "Affected Learners:"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- "peer tutoring" → "peer mentoring"
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**File:** [src/components/analytics/ParentAnalyticsDashboard.tsx](src/components/analytics/ParentAnalyticsDashboard.tsx)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Changes:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Default child name: `'Student'` → `'Learner'`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Uses `useChildActivity` and `useSDTScores` hooks (already using learner terminology)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**File:** [src/components/analytics/StudentAnalyticsDashboard.tsx](src/components/analytics/StudentAnalyticsDashboard.tsx)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Status:**
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- File name intentionally kept as `StudentAnalyticsDashboard.tsx` for backward compatibility
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- All internal references use "learner" terminology
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Component uses `useLearnerAnalytics` hook
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Display text updated to "Learner" where user-facing
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	**Note:** File may be renamed to `LearnerAnalyticsDashboard.tsx` in future refactor
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "Total Learners" (was "Total Students")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "X Learner(s) At Risk" (was "X Student(s) At Risk")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "Learner Analytics" (was "Student Analytics")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "Learner" column (was "Student")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "Affected Learners" (was "Affected Students")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "learners may need support" (was "students may need support")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "learners haven't been active" (was "students haven't been active")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "learners show exceptional engagement" (was "students show exceptional engagement")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "Survey learners about interests" (was "Survey students about interests")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ "peer mentoring opportunities" (was "peer tutoring opportunities")
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| Component | Learner ✓ | Educator ✓ | Notes |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	|-----------|-----------|------------|-------|
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| useRealtimeAnalytics.ts | ✅ | ✅ | Core hook updated |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| AnalyticsDashboard.tsx | ✅ | ✅ | All references fixed |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| AIInsightsPanel.tsx | ✅ | ✅ | Insights messages updated |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| StudentAnalyticsDashboard.tsx | ✅ | N/A | Internal refs updated |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| ParentAnalyticsDashboard.tsx | ✅ | N/A | Default name fixed |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| HQAnalyticsDashboard.tsx | ✅ | ✅ | Uses real-time hooks |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| LearnerMissions.tsx | ✅ | N/A | Already using learner |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| GoalSettingForm.tsx | ✅ | N/A | Already correct |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| CheckpointSubmission.tsx | ✅ | N/A | Already correct |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| PeerRecognitionForm.tsx | ✅ | N/A | Already correct |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	| ReflectionForm.tsx | ✅ | N/A | Already correct |
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ Zero errors in useRealtimeAnalytics.ts
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ Zero errors in AnalyticsDashboard.tsx
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ Zero errors in AIInsightsPanel.tsx
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ Zero errors in ParentAnalyticsDashboard.tsx
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ All interfaces renamed consistently
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ All function signatures updated
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ All props correctly typed
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ No type mismatches
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ⚠️ Breaking change: `useStudentAnalytics` → `useLearnerAnalytics`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ File structure unchanged
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ Database schema unaffected
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- ✅ API contracts maintained
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	If other components are using the old terminology:
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Find & replace "student" → "learner" in user-facing strings
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Find & replace "Student" → "Learner" in titles/headers
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Update CSV export headers
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	- Update table column names
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	---
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	1. **File Renaming:** Consider renaming `StudentAnalyticsDashboard.tsx` to `LearnerAnalyticsDashboard.tsx`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	2. **Route Updates:** Update any routes from `/student-analytics` to `/learner-analytics`
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	3. **Database:** Review Firestore collection names (currently using `role: 'learner'` which is correct)
+docs/TERMINOLOGY_STANDARDIZATION.md	fence	4. **Documentation:** Update all README files and documentation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: [src/lib/motivation/sdtMotivation.ts](src/lib/motivation/sdtMotivation.ts)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	Comprehensive TypeScript service (~400 lines) with three modules:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	All components in [src/components/sdt/](src/components/sdt/)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: `StudentDashboard.tsx`
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Hero Card**: Today's mission with progress bar
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Quick Resume**: Continue where they left off
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Streak Tracker**: Current/best streaks (attendance + effort)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Next Checkpoint**: Due time and number
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Notifications**: Unread feedback + pending reflections
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Compact Version**: For mobile/sidebar
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: `LearningPathMap.tsx`
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Visual Journey**: Units → Missions → Micro-skills
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Locked/Unlocked States**: Evidence gates progress
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Next Mission Highlight**: What to do next
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Skills Proven**: Green badges for completed micro-skills
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Skills In Progress**: Blue indicators
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Expandable Units**: Click to see details
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Compact Version**: Current unit progress only
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: `AICoachScreen.tsx`
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **3 Safe Modes**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	1. **Give me a hint** - Nudge without answers
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	2. **Check my work vs rubric** - Gap analysis
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	3. **Help me debug** - Ask questions to guide thinking
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Guardrails**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Explain-it-back required
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Version history checks
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- No direct answers
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Rubric Alignment**: Shows current vs. target level
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Next Steps**: Suggested actions
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Safety Reminders**: "AI helps you think, not do the work"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: `ReflectionJournal.tsx`
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Core Prompts**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "I'm proud of..." (accomplishment)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Next I will..." (growth mindset)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Emoji Scales**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Effort: 😴 🙂 💪 🔥 🚀
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Enjoyment: 😐 🙂 😊 😄 🤩
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Effective Strategy**: Optional meta-cognition
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Quick Version**: Post-sprint compact form
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Encouragement**: "Reflection helps your brain remember!"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: `AICoachPopup.tsx`
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Floating Assistant**: Lower-right corner, minimizable
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Speech Input**: Microphone button for younger learners (Web Speech API)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Text Input**: Typed questions for older students
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Age-Aware Modes**: Adapts based on GradeBandPolicy
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- K-3: Hint only, teacher guidance required
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 4-6: Hint + Debug
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 7-9: Hint + Rubric Check + Debug
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 10-12: All modes including Critique
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Explain-Back Requirement**: Must demonstrate understanding
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Telemetry Integration**: Tracks usage patterns by age band
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- **Safety First**: "AI helps you think, not do the work"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: [src/lib/policies/gradeBandPolicy.ts](src/lib/policies/gradeBandPolicy.ts)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	Complete developmental appropriateness framework with 4 age bands:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 15-30min sprints with 2 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Hint + Debug AI modes
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Structured peer feedback enabled
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Crew system introduced
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 3-level rubrics
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Badge style: evidence-based
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 20-45min sprints with 2-3 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Hint + Rubric Check + Debug AI modes
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Identity-focused reflection ("I am becoming...")
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Student-owned portfolio
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 3-level rubrics with criteria co-creation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Badge style: mastery-based
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 30-90min sprints with 3-4 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- All AI modes including Critique
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Professional badging (LinkedIn-style)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Exportable portfolio
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 4-level rubrics
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Real-world showcase events
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Policy Enforcement**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**File**: [src/lib/telemetry/sdtTelemetry.ts](src/lib/telemetry/sdtTelemetry.ts)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	Real-time behavioral tracking to understand motivation patterns:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Example Insights**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "High first-time success rate → Suggest harder missions"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Struggles with checkpoints but persists → Offer AI Coach nudge"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Not giving peer feedback → Prompt to review teammate's work"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- `telemetryEvents` - Raw event stream with timestamps
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- `motivationAnalytics` - Real-time aggregates (efficient reads)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Auto-increments on key events (mission selected, checkpoint passed, etc.)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Progress bars show "skills proven" not "time spent"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Badges require evidence (upload/quiz/demo/version history)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Rubrics use student-friendly language
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 3 difficulty levels per mission (Bronze/Silver/Gold)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Interest-based mission themes
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Student voice: "What do you want to build for?"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Recognition tokens for behaviors (Helper, Debugger, etc.)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Reflection on "what strategy worked"
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Mistakes are data" messaging
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Show your v1" prompts
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Crew system for stable peer support
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Peer feedback templates with kindness guardrails
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Evidence-Based Metrics:**
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Proof of Learning rate (artifact + reflection submitted)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Checkpoint pass rate (attempts to mastery)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Revisions per project (iteration = learning)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Peer feedback given (belonging signals)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Role rotation completions (crew engagement)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Choice distribution (difficulty levels picked)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ AI Coach usage patterns (by mode and age band)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Effort/enjoyment trends over time
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Session completion rate
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Optimal time of day for engagement
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Skip (Harmful Vanity Metrics):**
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Total points
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Leaderboards (comparison kills motivation)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Speed-based rewards
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Streak shaming ("you broke your streak!")
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Public failure indicators
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Age-Band Specific Tracking:**
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- K-3: Focus on effort emoji trends, teacher guidance needs
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 4-6: Track choice diversity, crew participation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 7-9: Monitor reflection depth, identity language
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- 10-12: Analyze portfolio quality, real-world connections
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Sprint**: 5-10 minutes, 1 checkpoint
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**AI Coach**: Hint only, teacher guidance required, explain-back enforced
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Social**: No peer feedback, no crews (1:1 teacher connection)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Reflection**: One emoji + one sentence ("I'm proud I...")
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Rubric**: 2 levels (Not Yet / Got It) with pictures
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Portfolio**: Parent + educator view only
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Gamification**: Sticker-style badges
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**UI**: Large buttons, lots of visual cues, minimal text
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Key Constraints**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- No public leaderboards
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- No timed challenges
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- No peer messaging
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Teacher must approve AI Coach use
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Sprint**: 15-30 minutes, 2 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**AI Coach**: Hint + Debug modes, explain-back required
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Social**: Structured peer feedback ("I like / I wonder / Next step"), crews enabled with roles
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Reflection**: Two prompts ("Proud of... Next I will..."), effort + enjoyment emojis
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Rubric**: 3 levels (Emerging / Proficient / Advanced) with examples
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Portfolio**: Student-curated, parent + educator view
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Gamification**: Evidence-based badges (upload proof)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**UI**: Clear navigation, progress bars, achievement unlocks
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Key Features**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Bronze/Silver/Gold difficulty choice
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Crew roles (Builder/Tester/Reporter) with rotation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Recognition tokens for behaviors
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Mistakes are data" messaging
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Sprint**: 20-45 minutes, 2-3 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**AI Coach**: Hint + Rubric Check + Debug, explain-back required
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Social**: Open peer feedback with moderation, crew competitions, showcase events
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Reflection**: Identity-focused ("I am becoming... I care about...")
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Rubric**: 3 levels with criteria co-creation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Portfolio**: Student-owned, selective public sharing
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Gamification**: Mastery-based badges with pathways
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**UI**: Personalization options, dark mode, minimal friction
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Key Features**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Community issue-based missions
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Plan/Predict/Monitor/Reflect metacognition cycle
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Portfolio as identity artifact
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Real-world mentor connections
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Sprint**: 30-90 minutes, 3-4 checkpoints
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**AI Coach**: All modes including Critique, explain-back for new concepts
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Social**: Full peer review, professional networking, public showcases
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Reflection**: Career + impact focus ("This connects to...")
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Rubric**: 4 levels (professional standard)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Portfolio**: Exportable (LinkedIn, resume), public by default
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Gamification**: Professional badging (stackable credentials)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**UI**: Clean, portfolio-first, export options
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	**Key Features**:
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Real clients/problems
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Industry mentors
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- "Evidence over opinions" culture
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- College/career integration
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- Capstone showcase events
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Crew Hub** - Team dashboard with goals, roles, shout-outs
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Peer Feedback Screen** - "I like/I wonder/Next step" templates
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Progress Insights** - Skills timeline, suggested next missions
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Showcase Gallery** - Presentation mode for crew/site showcases
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Portfolio Builder** - Auto-collect showcase projects with curation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Parent Snapshot** - Weekly 1-page summary generator
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Rubrics Editor** - Age-appropriate success criteria
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Educator Feedback Inbox** - Comments + resubmission flow
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Goal Setter** - Weekly personal targets with progress tracking
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Interest Picker** - Mission theme customization engine
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Choice History** - Self-awareness tool showing patterns
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] **Motivation Dashboard** - Learner-facing insights
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Implement Firebase Functions for all `sdtMotivation.ts` operations
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Add Firestore security rules for 17 new collections
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Set up composite indexes for compound queries
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Implement server-side telemetry aggregation (Cloud Functions)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Add ML-based motivation insight generation
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Create parent snapshot auto-generator function
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Build crew rotation scheduler
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Implement badge award verification logic
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Add Web Speech API polyfill for older browsers
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Set up telemetry event batching (reduce Firestore writes)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Create admin dashboard for monitoring telemetry patterns
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Build educator insight reports (per-site analytics)
+docs/SDT_IMPLEMENTATION_SUMMARY.md	fence	- [ ] Implement offline support for telemetry (queue events)
+docs/BOS_MIA_DATA_MODEL.md	inline	shareScope
+docs/BOS_MIA_REGRESSION_REPORT.md	inline	npm run rc2:regression
+docs/BOS_MIA_REGRESSION_REPORT.md	inline	npm run vibe:all
+docs/BOS_MIA_REGRESSION_REPORT.md	inline	node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+docs/BOS_MIA_REGRESSION_REPORT.md	inline	node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	inline	flutter run -d chrome
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	inline	flutter analyze
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	inline	flutter test
+docs/74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md	inline	firebase emulators:exec
+docs/64_MASTER_IMPLEMENTATION_PLAN.md	inline	flutter run
+docs/RC2_FREEZE_2026-02-20.md	inline	npm run rc2:regression
+docs/DEFERMENT_LOG.md	inline	npm install
+docs/DEFERMENT_LOG.md	inline	npm test
+docs/DEFERMENT_LOG.md	inline	npm run build
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	npm run lint
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	npm run build
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	npm test
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	flutter analyze
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	flutter test
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	flutter build macos --release --no-tree-shake-icons
+docs/09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md	inline	flutter build ios --release --no-codesign --no-tree-shake-icons
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	npm run rc2:regression
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	flutter analyze
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	flutter test
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	flutter build web --release
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	nodejs24
+docs/51_IMPLEMENTATION_AUDIT_GO_LIVE.md	inline	npm audit
+docs/BOS_MIA_MATH_CONTRACT.md	fence	> If you later expand \(c_t, a_t, m_t\) into vectors, keep this mapping by storing a `components` object and a `collapsed` summary (for UI + policy gating)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\(u_t\) represents the intervention chosen by BOS (hint type, scaffold, retrieval, pacing, teacher handoff)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation (v1):**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Represent \(u_t\) as a structured action with an internal numeric embedding used by policy:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\(y_t\) is produced by the Feature Detection Module (FDM) from events
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation (v1):**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Store \(y_t\) as a named feature map + a stable ordered list:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Paper baseline:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	x_{t+1} = A x_t + B u_t + w_t,\quad w_t \sim \mathcal{N}(0,Q)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	y_t = C x_t + v_t,\quad v_t \sim \mathcal{N}(0,R)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation guidance**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- v1 can start with **locally linear** heuristics:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(A\): “inertia” (habit persistence + forgetting)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(B\): intervention effect (small bounded changes per step)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(C\): mapping from latent state to observable proxies (often implicit, via learned/fit functions)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Paper nonlinear form:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	x_{t+1} = f(x_t, u_t) + w_t,\quad y_t = h(x_t) + v_t
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation requirement**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- You may implement EKF-lite (heuristic estimator) first,
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- **but** you must persist fields so EKF can be swapped in without schema changes
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Predict:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\hat{x}_{t|t-1} = f(\hat{x}_{t-1|t-1}, u_{t-1})
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	P_{t|t-1} = F_t P_{t-1|t-1} F_t^\top + Q
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Update:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	K_t = P_{t|t-1} H_t^\top (H_t P_{t|t-1} H_t^\top + R)^{-1}
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\hat{x}_{t|t} = \hat{x}_{t|t-1} + K_t (y_t - h(\hat{x}_{t|t-1}))
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	P_{t|t} = (I - K_t H_t) P_{t|t-1}
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	with Jacobians \(F_t = \partial f / \partial x\), \(H_t = \partial h / \partial x\)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Collection: `orchestrationStates/{docId}`
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Minimum required fields (v1):
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Notes**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- v1 may store only `diag/trace` rather than full \(P\) to reduce complexity
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Keep `model.version` so you can compare behavior across estimator changes
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Rule:** No single proxy may trigger high-salience actions (MVL gate, teacher alert, “high” salience intervention)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Implementation:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Compute `fusionFamiliesPresent` for each feature window
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Set `sensorFusionMet = (uniqueFamilies >= 2)` for any escalation path
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Paper finite-horizon objective:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	J = \sum_{t=0}^{T-1} \Big[(x_t - x^\star)^\top W_x (x_t - x^\star) + u_t^\top W_u u_t + \lambda \Omega(u_t, x_t)\Big]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(x^\star\): target region (“productive band”), not necessarily a point
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(W_x \succeq 0\), \(W_u \succ 0\)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(\lambda \ge 0\) weights autonomy preservation
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Paper practical form:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\Omega(u_t, x_t) = \mathbf{1}_{\text{high-assist}(u_t)} \cdot \max(0, m^\dagger - m_t)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation contract**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Define `highAssist(u)` deterministically from the intervention:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- `salience === "high"` OR
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- `type === "scaffold"` with “answer-revealing” hint OR
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- AI `mode === "hint"` with `assistLevel === "high"`
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Define \(m_t\) as `x_hat.integrity`
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- \(m^\dagger\) is a config threshold per grade band:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	> Tune these during Phase 1/2; do not hardcode without versioning
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Collection: `interventions/{docId}`
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Must include the policy terms needed for audits:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Paper supervisory control:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	u^{exec}_t = (1 - g_t)u^{BOS}_t + g_t u^{teacher}_t,\quad g_t \in \{0,1\}
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Implementation contract**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Any educator override sets `g_t = 1` and records both recommendations:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- `u_bos` (what BOS suggested)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- `u_teacher` (what teacher applied)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Persist as:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Event: `teacher_override_applied`
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Doc update: `interventions/{docId}` with:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Given prompt \(p\), sample \(K\) responses \(\{r^{(k)}\}_{k=1}^K\)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Cluster responses into \(M\) semantic equivalence classes \(\{C_j\}_{j=1}^M\)
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Let:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	p_j = \frac{1}{K}\sum_{k=1}^K \mathbf{1}_{r^{(k)} \in C_j}
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Semantic entropy:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\[
+docs/BOS_MIA_MATH_CONTRACT.md	fence	H_{\text{sem}}(p) = -\sum_{j=1}^M p_j \log p_j
+docs/BOS_MIA_MATH_CONTRACT.md	fence	\]
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Option A (offline / eval / slow path):** compute \(H_{\text{sem}}\) with true sampling + clustering
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Option B (real-time):** use **SEPs** (Semantic Entropy Probes) as lightweight proxies for “high dispersion”
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Contract (v1):**
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- Store a reliability-risk score in `mvlEpisodes` for any AI-mediated action:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- **Never** treat this as punitive. It only gates *formative verification prompts*
+docs/BOS_MIA_MATH_CONTRACT.md	fence	---
+docs/BOS_MIA_MATH_CONTRACT.md	fence	Autonomy risk is inferred from behavior patterns (non-punitive), e.g.:
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- rapid submit immediately after high-assist
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- minimal edits/paraphrase variance
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- low self-explanation following assistance
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- repeated hints without independent attempt
+docs/BOS_MIA_MATH_CONTRACT.md	fence	- verification gap when reliability risk is non-trivial
+docs/BOS_MIA_MATH_CONTRACT.md	fence	**Contract:** Autonomy risk is stored as *evidence and reason codes*:
+docs/BOS_MIA_MATH_CONTRACT.md	inline	source_check_performed
+docs/ANALYTICS_IMPLEMENTATION.md	fence	**API Endpoints Used:**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- `gemini-1.5-flash:generateContent` - For all AI insights
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- Temperature: 0.7-0.8 (balanced creativity)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- Max tokens: 1024-2048 (appropriate for educational content)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	---
+docs/ANALYTICS_IMPLEMENTATION.md	fence	Already implemented in `src/lib/telemetry/telemetryService.ts`:
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ SDT motivation tracking (autonomy, competence, belonging, reflection)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Engagement scoring (0-100)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ User profiling (30-day SDT distribution)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Event categorization (8 categories)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Aggregate updates (daily/weekly rollups)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	---
+docs/ANALYTICS_IMPLEMENTATION.md	fence	---
+docs/ANALYTICS_IMPLEMENTATION.md	fence	All analytics respect grade band policies from `analytics.json`:
+docs/ANALYTICS_IMPLEMENTATION.md	fence	| Grade Band | AI Modes Allowed | Explain-Back Required | Peer Feedback |
+docs/ANALYTICS_IMPLEMENTATION.md	fence	|------------|------------------|----------------------|---------------|
+docs/ANALYTICS_IMPLEMENTATION.md	fence	| K-3 | HINT_GUIDED, QUESTIONS_ONLY_GUIDED | ✅ | ❌ |
+docs/ANALYTICS_IMPLEMENTATION.md	fence	| 4-6 | HINT, QUESTIONS_ONLY, RUBRIC_CHECK_LITE | ✅ | ✅ (templates) |
+docs/ANALYTICS_IMPLEMENTATION.md	fence	| 7-9 | All except CRITIQUE | ✅ | ✅ (templates) |
+docs/ANALYTICS_IMPLEMENTATION.md	fence	| 10-12 | All modes | ✅ | ✅ (open) |
+docs/ANALYTICS_IMPLEMENTATION.md	fence	Events are tagged with `grade_band_id` for policy enforcement
+docs/ANALYTICS_IMPLEMENTATION.md	fence	---
+docs/ANALYTICS_IMPLEMENTATION.md	fence	Ready for teacher-facing dashboards (from `analytics.json` spec):
+docs/ANALYTICS_IMPLEMENTATION.md	fence	**Dashboard Widgets Specified:**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Mastery distribution (stacked bar)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Stuck point funnel
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ⏳ Concept heatmap (needs concept tracking)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ AI dependency KPI
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ⏳ Collaboration health KPI
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- ✅ Next lesson recommendations (AI-powered)
+docs/ANALYTICS_IMPLEMENTATION.md	fence	---
+docs/ANALYTICS_IMPLEMENTATION.md	fence	**CRITICAL: NO STUDENT DATA EXPOSED TO GEMINI**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	✅ **Aggregated Metrics Only**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- Gemini receives ONLY class-level percentages and averages
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- NO individual student names, IDs, emails, or scores
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- NO class IDs or site IDs sent in prompts
+docs/ANALYTICS_IMPLEMENTATION.md	fence	✅ **Text Sanitization**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- All user-provided text sanitized before sending to Gemini
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- Removes: emails, phone numbers, student IDs, names
+docs/ANALYTICS_IMPLEMENTATION.md	fence	- Pattern matching for PII detection
+docs/ANALYTICS_IMPLEMENTATION.md	fence	✅ **What Gemini Receives:**
+docs/ANALYTICS_IMPLEMENTATION.md	fence	✅ **What Gemini NEVER Receives:**
+docs/ANALYTICS_IMPLEMENTATION.md	inline	shallow_understanding_explain_it_back_low
+docs/ANALYTICS_IMPLEMENTATION.md	inline	gold_mismatch_need_bridge
+docs/ANALYTICS_IMPLEMENTATION.md	inline	npm run build
+docs/ANALYTICS_IMPLEMENTATION.md	inline	npm run build
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	> Goal: All core framework and UI component versions stay **current, compatible, and consistent** across the platform, without random drift or version conflicts
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	You must treat **dependencies and shared components** as first-class citizens, not an afterthought
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	1. Create and maintain a doc at the repo root:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- `DEPENDENCY_BASELINE_SCHOLESA.md`
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	It must list the **minimum and target versions** for all core libraries, for example (examples only):
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Next.js
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- React / ReactDOM
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- TypeScript
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Firebase SDKs (`firebase`, `firebase-admin`)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- TailwindCSS
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Testing libs (Jest / Vitest / Playwright / Cypress, etc.)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- PWA / SW helpers (e.g. `next-pwa` if used)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Any internal design system / UI library packages
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	2. For each key package, specify:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- **Current locked version** in `package.json` (e.g. `next: 15.0.5`)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- **Supported range** if applicable (e.g. “15.x only; do not jump to 16.x without a migration plan”)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	3. This doc is the **authority**
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	Whenever you change versions in `package.json`, you must update this doc
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	---
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	You must obey these rules:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	1. **No mixed majors** for core frameworks:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Never have multiple major versions of React, Next, Firebase, or the main UI library in the same repo
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- If you upgrade Next.js or React:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Upgrade all dependent packages that require a specific peer version
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Update the baseline doc
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	2. **Stay on latest stable within the chosen major:**
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- For each core lib, you should target the **latest stable** version within your chosen major that is supported by:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Next.js + React ecosystem,
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Firebase tooling / hosting,
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Your PWA setup
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Example: If the baseline says “Next 15.x”, you should aim to keep to the latest `15.*` that is stable and supported
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	3. **Respect peer dependencies:**
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Before installing or updating a package, inspect its `peerDependencies`
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Do **not** create peer conflicts and then “fix” them with `--force` or `--legacy-peer-deps`
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Instead, adjust the root dependencies to a compatible set or choose another version of the package that fits
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	---
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	If you use a component library (e.g., internal `@scholesa/ui` or external `@shadcn/ui` etc.):
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	1. Maintain a section in `DEPENDENCY_BASELINE_SCHOLESA.md` for **UI components**:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Library name
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Version
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Notes (e.g., “v1 tokens, do not mix with v0”)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	2. You must **never mix** components from different major versions of the same design system
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	3. When upgrading the component library:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Plan the migration (breaking changes, tokens, themes)
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Update all affected imports
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	- Update baseline doc and run the full build + tests
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	---
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	For any substantial platform task (not just one-line fixes), you must:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	fence	1. Run:
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	inline	firebase-admin
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	inline	firebase
+docs/SCHOLESA_SUPREME_MASTER_VIBE.md	inline	firebase-admin
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	**Updated components**:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ✅ **AICoachPopup** - Migrated from `trackAICoachUse` to `useAITracking()` hook
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Tracks hint requests, rubric checks, debug help, critique requests
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Records explain-back completions
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ✅ **StudentDashboard** - Added `usePageViewTracking('student_dashboard')`
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	Add hooks to:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **MissionList** - Track mission browsing, mission selection
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **CheckpointSubmission** - Track attempts, passes, skill evidence
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **ShowcaseGallery** - Track showcase views, submissions
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **RecognitionFlow** - Track recognition given/received
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **ReflectionJournal** - Track reflection submissions, ratings
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	Create dashboard showing:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Class engagement scores** - Per student + class average
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **SDT profile heatmap** - Autonomy/competence/belonging by student
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **At-risk students** - Low engagement, missing reflections
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Top performers** - High autonomy + competence + belonging
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	Show learner:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Your learning style** - Interests, preferred difficulty, work style
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Skills you've proven** - Skill mastery dashboard with badges
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Recognition received** - Peer props + educator feedback
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Reflection timeline** - Growth over time
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	Add rules for new collections:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	**3 TODOs** identified:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Line 62: "TODO: Integrate with vector store"
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Line 114: "TODO: Store in vector DB"
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Line 123: "TODO: Generate embedding and update"
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	**Implementation plan**:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	1. Choose vector DB (Pinecone, Weaviate, or Firestore Vector Search)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	2. Generate embeddings for rubrics + exemplars (OpenAI `text-embedding-3-small` or Vertex AI)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	3. Replace mock `retrieve()` with semantic search
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	4. Add caching layer for frequent queries
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Unit tests** for each engine (Autonomy, Competence, Belonging, Reflection)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Integration tests** for telemetry → aggregates pipeline
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **E2E tests** for key flows:
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Mission select → checkpoint → reflection
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Recognition given → received notification
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Showcase submit → peer feedback
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Load testing** for telemetry (1000 events/second)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Session duration** - Time on task per session
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Return frequency** - Sessions per week
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Idle detection** - Focus loss patterns
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Autonomy score** - % missions self-selected, goals set, interests updated
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Competence score** - % checkpoints passed, skills proven, badges earned
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Belonging score** - Recognition given/received, showcase submissions, peer feedback
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **AI hint usage** - By mission, by student level
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Explain-back completion rate** - % students who complete metacognition
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **AI feedback sentiment** - Positive vs negative ratings
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Page load times** - P50, P90, P99
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **API error rates** - By endpoint
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Client errors** - JavaScript exceptions logged
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Old approach** (`sdtMotivation.ts`): Cloud Functions via `httpsCallable`
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Pro: Server-side validation, centralized logic
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Con: Higher latency, harder to debug, cold starts
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **New approach** (`motivationEngine.ts`): Client-side with telemetry hooks
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Pro: Real-time tracking, lower latency, simpler debugging
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ✅ Pro: Better offline support (can queue telemetry)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- ❌ Con: Client-side validation needed
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Hybrid recommended**: Use client-side for tracking, Cloud Functions for heavy aggregation
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	1. **Fail silently** - Never let telemetry errors break app flow
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	2. **Batch writes** - Max 1 telemetry write per 5 seconds per user (prevent spam)
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	3. **Use aggregates** - Don't query raw events for dashboards
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	4. **Cache profiles** - Update motivation profiles hourly, not per-event
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	5. **Respect privacy** - Truncate sensitive data (questions, reflections) before logging
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Firestore reads**: Telemetry queries will increase read costs
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Mitigation: Use aggregates, cache dashboards, limit real-time listeners
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Firestore writes**: 50+ event types × 100 students × 10 events/session = 50,000 writes/day
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Mitigation: Use batch writes where possible, aggregate daily
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- **Client bundle size**: Telemetry service + hooks add ~15KB gzipped
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	fence	- Acceptable for 580 lines of comprehensive tracking
+docs/SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md	inline	showcaseSubmissions
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Fetches all active assessment rubrics from Firestore
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Processes rubrics in batches of 10 for efficient API usage
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Combines rubric name, description, and criteria into searchable text
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Generates 1536-dim embeddings using OpenAI text-embedding-3-small
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Stores in vector DB with metadata (gradeBand, missionId, skillIds)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Returns count of indexed rubrics
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Use case:** AI coach retrieves relevant rubric criteria when helping students
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Fetches student artifacts marked as exemplars (`isExemplar: true, status: 'approved'`)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Processes high-quality student work in batches
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Includes mission context and educator notes in embedding
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Stores with learner ID and skill associations
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Use case:** AI coach shows students examples of excellent work
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Fetches common learning misconceptions from library
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Seeds default misconceptions if none exist:
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Variables & Functions (Programming, 4-6)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Loops (Programming, 4-6)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Fractions (Mathematics, K-3)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Includes topic, reasoning, correct understanding, and teaching strategy
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Use case:** AI coach recognizes when students have common misconceptions
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Creates starter set of 3 common misconceptions
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Auto-runs if misconceptions collection is empty
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Extensible - educators can add more through admin UI (future)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Change:** Enabled semantic search in RAG pipeline
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**How it works:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	1. User asks AI coach a question
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	2. System generates embedding for question
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	3. Vector search finds top 5 most similar documents (rubrics, exemplars, misconceptions)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	4. AI coach uses retrieved context to give accurate, relevant answer
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	5. Fallback to keyword search if vector search fails
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Benefits:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- AI understands intent, not just keywords ("How do I make a loop?" finds loop examples)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Context-aware responses based on grade band and mission
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Learns from exemplar work patterns
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Catches common mistakes before they happen
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Issue:** TODO comment for parent-child relationship query
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Solution:** Implemented proper `parentIds` array-contains query
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Schema Reference:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- `User.parentIds` is an array of parent user IDs
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Learner documents have `parentIds: ['parent-uid-1', 'parent-uid-2']`
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Parents can view analytics for their linked children only
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Respects multi-parent households
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	All four dashboards confirmed to use **real-time data hooks**:
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Real-time learner engagement scores
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Live SDT tracking (autonomy, competence, belonging)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Auto-updates when new telemetry events arrive
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Personal SDT scores update in real-time
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Activity feed shows live events
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Goals, badges, and streaks tracked
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Multi-child support with proper `parentIds` query
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Real-time SDT scores per child
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Recent activity feed for each child
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Platform-wide metrics updated in real-time
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Multi-site comparison
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Educator activity tracking
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Collection:** `vectorDocuments`
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Document Structure:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Search Algorithm:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	1. Filter by metadata (gradeBand, missionId, type)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	2. Calculate cosine similarity between query embedding and document embeddings
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	3. Sort by score (0-1, higher is better)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	4. Return top K results
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Performance:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Batched embedding generation (10 docs at a time)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Limits search to 100 candidates to avoid memory issues
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- In-memory cosine similarity calculation
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- Future: Firestore Vector Search for production scale
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **When:** Platform grows beyond 10,000 vector documents
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Why:** Native integration, auto-scales, built-in filtering
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Steps:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	1. Enable Firestore Vector Search in Firebase Console
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	2. Create vector index on `vectorDocuments` collection
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	3. Update `VectorStore.search()` to use Firestore Vector Query
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	4. No code changes needed for indexing
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **When:** Need advanced features (hybrid search, multi-vector)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Why:** Purpose-built, very fast, supports up to 20,000 dimensions
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Cost:** ~$70/month starter tier
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Steps:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	1. Sign up for Pinecone, create index
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	2. Install `@pinecone-database/pinecone`
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	3. Implement `VectorStore` adapter
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	4. Migrate existing vectors
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **When:** Want full control and data sovereignty
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Why:** Open-source, hybrid search, GraphQL API
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- **Steps:**
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	1. Deploy Weaviate to Cloud Run or GKE
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	2. Install `weaviate-ts-client`
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	3. Define schema and implement adapter
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	For production deployment, create these composite indexes:
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	**Auto-generated on first query** - Firebase will prompt with index creation link
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Rubric indexing works with real rubric data
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Exemplar indexing handles artifacts correctly
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Misconception seeding creates defaults
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Embedding generation uses OpenAI API (or mock in dev)
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Cosine similarity calculation is accurate
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Search filters by metadata correctly
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Vector search flag enabled
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Fallback to keyword search if vector fails
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Rubric retrieval for mission-specific queries
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Top-K ranking by relevance score
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Context blocks formatted correctly for AI
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Educator dashboard shows real-time learner data
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Learner dashboard updates SDT scores live
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Parent dashboard queries children via parentIds
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] HQ dashboard aggregates platform stats
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] All dashboards handle loading states
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	- [x] Error states display properly
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	---
+docs/AI_VECTOR_STORE_COMPLETION.md	fence	Parents now see only their own children's data:
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa && npm outdated || true
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa/apps/empire_flutter/app && flutter pub outdated
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa/functions && npm ci && npm run build
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cat firebase.json
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa/apps/empire_flutter/app \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	&& flutter pub get \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	&& flutter analyze \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	&& flutter test
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	runTests(files=[apps/empire_flutter/app/test/deploy_ops_regression_test.dart])
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa/functions && npm ci && npm run build
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa && firebase hosting:channel:list --project studio-3328096157-e3f79
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	cd /Users/simonluke/dev/scholesa && firebase functions:list --project studio-3328096157-e3f79
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	curl -sS "https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck"
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	curl -sS -o /tmp/callable_resp.json -w "%{http_code}\n" \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	-X POST "https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/genAiCoach" \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	-H "Content-Type: application/json" \
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	fence	-d '{"data":{"prompt":"health"}}'
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	firebase deploy --only functions
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	firebase
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	npm ci
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	npm run build
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	nodejs24
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	flutter pub get
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	flutter analyze
+docs/DEPLOYMENT_OPS_REGRESSION_REPORT.md	inline	flutter test
+docs/COMPLIANCE_REPORT.md	inline	flutter run
+docs/COMPLIANCE_REPORT.md	inline	flutter build
+docs/COMPLIANCE_REPORT.md	inline	npm test
+docs/COMPLIANCE_REPORT.md	inline	npm run build
+docs/COMPLIANCE_REPORT.md	inline	flutter test
+docs/COMPLIANCE_REPORT.md	inline	flutter build
+docs/50_PROVIDER_WIRING_PATTERNS.md	fence	---
+docs/50_PROVIDER_WIRING_PATTERNS.md	fence	Each feature exports `routes.dart` to keep main router clean
+docs/50_PROVIDER_WIRING_PATTERNS.md	fence	`lib/features/incidents/routes.dart`
+docs/50_PROVIDER_WIRING_PATTERNS.md	fence	Main router:
+docs/73_COMPLETE_DOC_SET_TO_RUN.md	inline	flutter run -d chrome
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Key Insight**: Model receives YOUR rubrics/policies as context (not baked into training)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/lib/ai/redactionService.ts`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Purpose**: Strip PII before sending to ANY model
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Policy-based configs**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- K-3: Strictest (redact names, ages, schools)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Grades 4-6: Moderate
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Grades 7-9: Standard
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Grades 10-12: Relaxed (but still emails/IDs)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/lib/ai/retrievalService.ts`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Purpose**: Fetch context from YOUR data stores
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Vector Store Pattern** (TODO: implement real vector DB):
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Store embeddings for rubrics, exemplars, misconceptions
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Semantic search for relevant context
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Provenance tracking (which blocks informed the answer)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/lib/ai/rubricManager.ts`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Purpose**: Store assessment rubrics as versioned configs
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Why this matters**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Iterate on rubrics without retraining models
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Version tracking for experiments
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Audit which rubric version was used
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Compare student performance across rubric versions
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/lib/ai/interactionLogger.ts`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Purpose**: Collect training dataset (YOUR proprietary data)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Training dataset includes**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Question (redacted)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Answer
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Context blocks used (which rubrics/exemplars informed response)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- UI trigger (coach popup, inline help, reflection prompt)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Outcomes (was it helpful? did student improve?)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Redaction audit (what PII was removed)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/lib/ai/aiService.ts`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Purpose**: Orchestrate all components
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Convenience functions**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `src/components/sdt/AICoachPopup.tsx`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Changes**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	1. Added `studentName` prop (required for redaction)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	2. Replaced `sdtMotivation.requestAICoach()` with `AIService.request()`
+docs/AI_ARCHITECTURE_GUIDE.md	fence	3. Added feedback buttons ("Was this helpful?")
+docs/AI_ARCHITECTURE_GUIDE.md	fence	4. Records feedback to training dataset
+docs/AI_ARCHITECTURE_GUIDE.md	fence	5. Shows model attribution ("Powered by gemini")
+docs/AI_ARCHITECTURE_GUIDE.md	fence	6. Displays citations (which context blocks were used)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**Usage**:
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- User profiles (`users` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Artifacts (`artifacts` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Enrollments, attendance, assessments
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- **Privacy**: Firestore rules enforce role-based access
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- **Consent**: K-3 requires teacher approval for AI features
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- AI interaction logs (`aiInteractionLogs` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Outcomes tracking (helpful?, revised?, passed checkpoint?)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Redacted student questions + model responses
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Context provenance (which rubrics/exemplars were used)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- **Export**: JSONL format for fine-tuning (`AIInteractionLogger.exportForTraining()`)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Assessment rubrics (`assessmentRubrics` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Exemplars (TODO: `exemplarArtifacts` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Misconceptions library (TODO: `commonMisconceptions` collection)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Teacher feedback patterns (TODO: aggregate from logs)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- **Version control**: Rubrics have version numbers, track which version was used
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	1. **`aiInteractionLogs`** - Training dataset
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Request, response, context, outcomes
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Redaction audit trail
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- UI trigger, timestamp, model used
+docs/AI_ARCHITECTURE_GUIDE.md	fence	2. **`assessmentRubrics`** - Versioned rubrics
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Name, description, version, status
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Criteria with levels (Emerging, Proficient, Advanced)
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Site/grade/skill/mission scoping
+docs/AI_ARCHITECTURE_GUIDE.md	fence	- Tags for retrieval
+docs/AI_ARCHITECTURE_GUIDE.md	fence	---
+docs/AI_ARCHITECTURE_GUIDE.md	fence	**File**: `scripts/seedRubrics.ts`
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	lib/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	features/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	data/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>_repository.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>_datasource.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	domain/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	models.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	usecases.dart              // optional
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	state/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>_controller.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>_provider.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	ui/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	<module_name>_screen.dart
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	widgets/
+docs/48_FEATURE_MODULE_BUILD_PLAYBOOK.md	fence	routes.dart                  // Route factory + route names
+docs/Scholesa_COPPA_Operational_Pack/08_NO_ADVERTISING_POLICY.md	inline	npm run audit:coppa:no-ads
+docs/Scholesa_COPPA_Operational_Pack/01_COPPA_MASTER_ALIGNMENT.md	inline	npm run audit:coppa:no-ads
+docs/Scholesa_COPPA_Operational_Pack/01_COPPA_MASTER_ALIGNMENT.md	inline	npm run audit:coppa:no-ads
+docs/Scholesa_COPPA_Operational_Pack/06_PARENT_REQUEST_WORKFLOW.md	inline	export
