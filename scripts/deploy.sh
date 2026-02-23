@@ -7,6 +7,7 @@
 #   ./scripts/deploy.sh functions    # Deploy only Cloud Functions
 #   ./scripts/deploy.sh rules        # Deploy Firestore + Storage rules
 #   ./scripts/deploy.sh cloudrun-web # Build Flutter web & deploy to Cloud Run
+#   ./scripts/deploy.sh compliance-operator # Deploy scholesa-compliance Cloud Run service
 #   ./scripts/deploy.sh flutter-web  # Alias of cloudrun-web
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-macos # Build Flutter macOS app (release)
@@ -44,7 +45,7 @@ preflight() {
     command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH"
   fi
 
-  if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "all" ]]; then
+  if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
     command -v gcloud >/dev/null 2>&1 || fail "gcloud not found on PATH"
   fi
 }
@@ -124,6 +125,34 @@ deploy_cloud_run_web() {
   log "Cloud Run web deployed ✓"
 }
 
+deploy_compliance_operator() {
+  local project_id
+  project_id="${GCP_PROJECT_ID:-}"
+  if [[ -z "$project_id" ]]; then
+    project_id="$(cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})')"
+  fi
+  [[ -n "$project_id" ]] || fail "Unable to resolve GCP project ID. Set GCP_PROJECT_ID in env."
+
+  local region service image_tag
+  region="${GCP_REGION:-us-central1}"
+  service="${COMPLIANCE_RUN_SERVICE:-scholesa-compliance}"
+  image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
+
+  log "Building compliance operator image with Cloud Build..."
+  (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --config cloudbuild.compliance.yaml --substitutions "_TAG=$image_tag")
+
+  log "Deploying compliance operator to Cloud Run (service=$service region=$region)..."
+  (cd "$REPO_ROOT" && gcloud run deploy "$service" \
+    --image "gcr.io/${project_id}/scholesa-compliance:${image_tag}" \
+    --project "$project_id" \
+    --region "$region" \
+    --platform managed \
+    --no-allow-unauthenticated \
+    --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0")
+
+  log "Compliance operator deployed ✓"
+}
+
 deploy_flutter_web() {
   deploy_cloud_run_web
 }
@@ -154,6 +183,7 @@ deploy_all() {
   deploy_functions
   deploy_rules
   deploy_cloud_run_web
+  deploy_compliance_operator
   log "Full deploy complete ✓"
 }
 
@@ -165,9 +195,10 @@ case "$TARGET" in
   functions)        deploy_functions ;;
   rules)            deploy_rules ;;
   cloudrun-web)     deploy_cloud_run_web ;;
+  compliance-operator) deploy_compliance_operator ;;
   flutter-web)      deploy_flutter_web ;;
   flutter-ios)      deploy_flutter_ios ;;
   flutter-macos)    deploy_flutter_macos ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | compliance-operator | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
 esac

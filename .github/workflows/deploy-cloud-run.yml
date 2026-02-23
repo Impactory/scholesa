@@ -15,6 +15,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compliance regression gate
+        run: COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
@@ -32,6 +44,13 @@ jobs:
           docker build -t $IMAGE .
           docker push $IMAGE
 
+      - name: Build compliance operator image and push to GCR
+        env:
+          COMPLIANCE_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa-compliance:${{ github.sha }}
+        run: |
+          docker build -f Dockerfile.compliance -t $COMPLIANCE_IMAGE .
+          docker push $COMPLIANCE_IMAGE
+
       - name: Deploy to Cloud Run
         env:
           IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa:${{ github.sha }}
@@ -47,3 +66,23 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Deployed to Cloud Run service: ${{ secrets.CLOUD_RUN_SERVICE }} (region ${{ secrets.GCP_REGION }})"
+
+      - name: Deploy compliance operator
+        env:
+          COMPLIANCE_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa-compliance:${{ github.sha }}
+          COMPLIANCE_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
+        run: |
+          SERVICE_NAME="${COMPLIANCE_SERVICE:-scholesa-compliance}"
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$COMPLIANCE_IMAGE" \
+            --region "${{ secrets.GCP_REGION }}" \
+            --platform managed \
+            --no-allow-unauthenticated \
+            --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0"
+
+      - name: Verify compliance deployment
+        env:
+          COMPLIANCE_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
+        run: |
+          SERVICE_NAME="${COMPLIANCE_SERVICE:-scholesa-compliance}"
+          echo "Deployed compliance operator to Cloud Run service: $SERVICE_NAME (region ${{ secrets.GCP_REGION }})"
