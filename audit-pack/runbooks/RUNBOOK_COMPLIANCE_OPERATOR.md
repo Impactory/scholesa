@@ -11,7 +11,7 @@ Run and verify COPPA controls for internal AI-only policy, tenant isolation, ret
 - Report fetch: `GET /compliance/report/:reportId`
 
 ## CI/Nightly Gates
-- CI gate: `COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate`
+- CI gate: `npm run rc2:regression && npm run compliance:gate`
 - Nightly workflow: `.github/workflows/compliance-nightly.yml`
 - Required artifacts: `audit-pack/reports/*.json`
 

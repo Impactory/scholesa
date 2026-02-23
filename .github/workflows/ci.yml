@@ -36,8 +36,11 @@ jobs:
       - name: Jest analytics integration (opt-in)
         run: npm run test:integration:analytics
 
+      - name: Full RC2 regression chain
+        run: npm run rc2:regression
+
       - name: COPPA compliance operator gate
-        run: COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate
+        run: npm run compliance:gate
 
       - name: Upload audit artifacts
         if: always()

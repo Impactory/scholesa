@@ -24,8 +24,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Full RC2 regression chain
+        run: npm run rc2:regression
+
       - name: Compliance regression gate
-        run: COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate
+        run: npm run compliance:gate
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1

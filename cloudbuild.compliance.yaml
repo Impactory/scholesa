@@ -6,7 +6,8 @@ steps:
     - -lc
     - |
       npm ci
-      COMPLIANCE_INCLUDE_RC2=1 npm run compliance:gate
+      npm run rc2:regression
+      npm run compliance:gate
 - name: 'gcr.io/cloud-builders/docker'
   id: 'docker-build'
   waitFor:

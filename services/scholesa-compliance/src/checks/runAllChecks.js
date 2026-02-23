@@ -44,7 +44,7 @@ function executeExternalSuites() {
     'npm run vibe:all',
     'npm run audit:coppa:no-ads',
   ];
-  if (process.env.COMPLIANCE_INCLUDE_RC2 === '1') {
+  if (process.env.COMPLIANCE_RUN_RC2_INLINE === '1') {
     commands.splice(2, 0, 'npm run rc2:regression');
   }
   return commands.map(runCommand);
