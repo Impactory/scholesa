@@ -26,6 +26,7 @@ import {
   Trophy
 } from 'lucide-react';
 import { usePageViewTracking } from '@/src/hooks/useTelemetry';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 interface StudentStats {
   totalEvents: number;
@@ -50,6 +51,7 @@ export function StudentAnalyticsDashboard() {
   usePageViewTracking('student_analytics');
   
   const { profile } = useAuthContext();
+  const { locale, t } = useI18n();
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,7 +167,7 @@ export function StudentAnalyticsDashboard() {
           });
           
           activityDataPoints.push({
-            date: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            date: dayDate.toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
             autonomyEvents: categoryCounts.autonomy,
             competenceEvents: categoryCounts.competence,
             belongingEvents: categoryCounts.belonging,
@@ -183,7 +185,7 @@ export function StudentAnalyticsDashboard() {
     };
     
     fetchAnalytics();
-  }, [learnerId, siteId, timeRange]);
+  }, [learnerId, siteId, timeRange, locale]);
   
   if (loading || sdtLoading || activitiesLoading) {
     return (
@@ -204,8 +206,8 @@ export function StudentAnalyticsDashboard() {
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">My Learning Analytics</h1>
-            <p className="text-indigo-100">Track your growth and celebrate your achievements</p>
+            <h1 className="text-3xl font-bold mb-2">{t('analytics.student.headerTitle')}</h1>
+            <p className="text-indigo-100">{t('analytics.student.headerSubtitle')}</p>
           </div>
           <SparklesIcon className="h-16 w-16 text-indigo-200" />
         </div>
@@ -222,7 +224,7 @@ export function StudentAnalyticsDashboard() {
                 : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
             }`}
           >
-            This Week
+            {t('analytics.student.thisWeek')}
           </button>
           <button
             onClick={() => setTimeRange('month')}
@@ -232,7 +234,7 @@ export function StudentAnalyticsDashboard() {
                 : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 border-l-0'
             }`}
           >
-            This Month
+            {t('analytics.student.thisMonth')}
           </button>
         </div>
       </div>
@@ -240,29 +242,29 @@ export function StudentAnalyticsDashboard() {
       {/* SDT Scores */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SDTScoreCard
-          title="Autonomy"
-          subtitle="My Choices"
+          title={t('analytics.student.sdt.autonomy.title')}
+          subtitle={t('analytics.student.sdt.autonomy.subtitle')}
           score={sdtScores.autonomy}
           icon={BrainIcon}
           color="purple"
         />
         <SDTScoreCard
-          title="Competence"
-          subtitle="Skills Mastered"
+          title={t('analytics.student.sdt.competence.title')}
+          subtitle={t('analytics.student.sdt.competence.subtitle')}
           score={sdtScores.competence}
           icon={AwardIcon}
           color="blue"
         />
         <SDTScoreCard
-          title="Belonging"
-          subtitle="Community"
+          title={t('analytics.student.sdt.belonging.title')}
+          subtitle={t('analytics.student.sdt.belonging.subtitle')}
           score={sdtScores.belonging}
           icon={HeartIcon}
           color="pink"
         />
         <SDTScoreCard
-          title="Overall"
-          subtitle="Total Score"
+          title={t('analytics.student.sdt.overall.title')}
+          subtitle={t('analytics.student.sdt.overall.subtitle')}
           score={sdtScores.overall}
           icon={Trophy}
           color="green"
@@ -272,23 +274,23 @@ export function StudentAnalyticsDashboard() {
       {/* Stats Grid */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={TargetIcon} label="Goals Set" value={stats.goalsSet} color="indigo" />
-          <StatCard icon={Trophy} label="Goals Achieved" value={stats.goalsAchieved} color="green" />
-          <StatCard icon={AwardIcon} label="Checkpoints Passed" value={stats.checkpointsPassed} color="blue" />
-          <StatCard icon={SparklesIcon} label="Badges Earned" value={stats.badgesEarned} color="yellow" />
-          <StatCard icon={HeartIcon} label="Recognition" value={stats.recognitionReceived} color="pink" />
-          <StatCard icon={Zap} label="Current Streak" value={`${stats.currentStreak} days`} color="orange" />
+          <StatCard icon={TargetIcon} label={t('analytics.student.stats.goalsSet')} value={stats.goalsSet} color="indigo" />
+          <StatCard icon={Trophy} label={t('analytics.student.stats.goalsAchieved')} value={stats.goalsAchieved} color="green" />
+          <StatCard icon={AwardIcon} label={t('analytics.student.stats.checkpointsPassed')} value={stats.checkpointsPassed} color="blue" />
+          <StatCard icon={SparklesIcon} label={t('analytics.student.stats.badgesEarned')} value={stats.badgesEarned} color="yellow" />
+          <StatCard icon={HeartIcon} label={t('analytics.student.stats.recognition')} value={stats.recognitionReceived} color="pink" />
+          <StatCard icon={Zap} label={t('analytics.student.stats.currentStreak')} value={t('analytics.student.currentStreakValue', { count: stats.currentStreak })} color="orange" />
         </div>
       )}
       
       {/* Activity Chart */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">My Learning Activity</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.student.activityTitle')}</h3>
         {activityData.length > 0 ? (
-          <ActivityChart data={activityData} />
+          <ActivityChart data={activityData} t={t} />
         ) : (
           <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-            Start learning to see your activity!
+            {t('analytics.student.activityEmpty')}
           </div>
         )}
       </div>
@@ -300,12 +302,12 @@ export function StudentAnalyticsDashboard() {
             <SparklesIcon className="h-6 w-6 text-purple-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">Keep Going!</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{t('analytics.student.keepGoingTitle')}</h3>
             <p className="text-gray-700 text-sm">
-              {sdtScores.overall >= 80 && 'You are doing amazing! Your dedication is inspiring. Keep up the excellent work!'}
-              {sdtScores.overall >= 60 && sdtScores.overall < 80 && 'Great progress! You are building momentum. Try setting a new goal to keep growing.'}
-              {sdtScores.overall >= 40 && sdtScores.overall < 60 && 'You are on the right path! Consider completing more missions to boost your skills.'}
-              {sdtScores.overall < 40 && 'Every journey starts somewhere! Set a small goal and take one step at a time. You can do this!'}
+              {sdtScores.overall >= 80 && t('analytics.student.motivation.veryHigh')}
+              {sdtScores.overall >= 60 && sdtScores.overall < 80 && t('analytics.student.motivation.high')}
+              {sdtScores.overall >= 40 && sdtScores.overall < 60 && t('analytics.student.motivation.medium')}
+              {sdtScores.overall < 40 && t('analytics.student.motivation.low')}
             </p>
           </div>
         </div>
@@ -455,9 +457,10 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
 
 interface ActivityChartProps {
   data: ActivityData[];
+  t: (key: string, interpolation?: Record<string, string | number>) => string;
 }
 
-function ActivityChart({ data }: ActivityChartProps) {
+function ActivityChart({ data, t }: ActivityChartProps) {
   const maxValue = Math.max(...data.flatMap(d => [d.autonomyEvents, d.competenceEvents, d.belongingEvents, d.reflectionEvents]));
   const chartHeight = 200;
   const barWidth = 40;
@@ -513,7 +516,7 @@ function ActivityChart({ data }: ActivityChartProps) {
       <div className="flex justify-center gap-4 mt-4 text-xs">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded-full bg-purple-600" />
-          <span>Total Activity</span>
+          <span>{t('analytics.student.totalActivity')}</span>
         </div>
       </div>
     </div>

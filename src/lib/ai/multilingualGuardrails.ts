@@ -52,7 +52,9 @@ const DISALLOWED_CONTENT_PATTERNS = [
   /how to hurt/i,
   /self-harm/i,
   /制作武器/,
+  /製作武器/,
   /傷害他人/,
+  /อาวุธ/,
   /ทำร้าย/,
 ];
 

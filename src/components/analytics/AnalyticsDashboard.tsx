@@ -188,6 +188,7 @@ export function AnalyticsDashboard() {
           icon={UsersIcon}
           color="blue"
           trendLabel={periodLabel}
+          t={t}
         />
         <SummaryCard
           title={t('analytics.educator.summary.avgEngagement')}
@@ -196,6 +197,7 @@ export function AnalyticsDashboard() {
           color="green"
           trend={avgEngagement > 70 ? 'up' : 'down'}
           trendLabel={periodLabel}
+          t={t}
         />
         <SummaryCard
           title={t('analytics.educator.summary.highPerformers')}
@@ -203,6 +205,7 @@ export function AnalyticsDashboard() {
           icon={AwardIcon}
           color="purple"
           trendLabel={periodLabel}
+          t={t}
         />
         <SummaryCard
           title={t('analytics.educator.summary.atRisk')}
@@ -211,6 +214,7 @@ export function AnalyticsDashboard() {
           color="red"
           trend={atRiskCount > 0 ? 'down' : undefined}
           trendLabel={periodLabel}
+          t={t}
         />
       </div>
       
@@ -325,9 +329,10 @@ interface SummaryCardProps {
   color: 'blue' | 'green' | 'purple' | 'red';
   trend?: 'up' | 'down';
   trendLabel: string;
+  t: (key: string, interpolation?: Record<string, string | number>) => string;
 }
 
-function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel }: SummaryCardProps) {
+function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel, t }: SummaryCardProps) {
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-800',
     green: 'bg-green-100 text-green-800',
@@ -354,7 +359,9 @@ function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel }: Sum
             <TrendingDownIcon className="h-4 w-4 text-red-600 mr-1" />
           )}
           <span className={trend === 'up' ? 'text-green-600' : 'text-red-600'}>
-            {trend === 'up' ? `+ ${trendLabel}` : `- ${trendLabel}`}
+            {trend === 'up'
+              ? t('analytics.educator.trendUp', { period: trendLabel })
+              : t('analytics.educator.trendDown', { period: trendLabel })}
           </span>
         </div>
       )}

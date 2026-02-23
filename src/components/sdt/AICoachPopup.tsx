@@ -80,32 +80,39 @@ interface AICoachPopupProps {
 
 type CoachMode = 'hint' | 'rubric_check' | 'debug' | 'critique';
 
-const MODE_CONFIG = {
-  hint: {
-    icon: LightbulbIcon,
-    label: 'Get a Hint',
-    color: 'purple',
-    placeholder: 'What are you stuck on?'
-  },
-  rubric_check: {
-    icon: ClipboardCheckIcon,
-    label: 'Check My Work',
-    color: 'indigo',
-    placeholder: 'What did you complete?'
-  },
-  debug: {
-    icon: BugIcon,
-    label: 'Help Me Debug',
-    color: 'blue',
-    placeholder: 'What\'s not working?'
-  },
-  critique: {
-    icon: SparklesIcon,
-    label: 'Give Feedback',
-    color: 'pink',
-    placeholder: 'What would you like feedback on?'
-  }
-};
+function buildModeConfig(t: (key: string) => string) {
+  return {
+    hint: {
+      icon: LightbulbIcon,
+      label: t('aiCoach.mode.hint.label'),
+      color: 'purple',
+      placeholder: t('aiCoach.mode.hint.placeholder')
+    },
+    rubric_check: {
+      icon: ClipboardCheckIcon,
+      label: t('aiCoach.mode.rubric.label'),
+      color: 'indigo',
+      placeholder: t('aiCoach.mode.rubric.placeholder')
+    },
+    debug: {
+      icon: BugIcon,
+      label: t('aiCoach.mode.debug.label'),
+      color: 'blue',
+      placeholder: t('aiCoach.mode.debug.placeholder')
+    },
+    critique: {
+      icon: SparklesIcon,
+      label: t('aiCoach.mode.critique.label'),
+      color: 'pink',
+      placeholder: t('aiCoach.mode.critique.placeholder')
+    }
+  } satisfies Record<CoachMode, {
+    icon: typeof LightbulbIcon;
+    label: string;
+    color: string;
+    placeholder: string;
+  }>;
+}
 
 export function AICoachPopup({
   learnerId,
@@ -130,7 +137,8 @@ export function AICoachPopup({
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
+  const modeConfig = buildModeConfig((key) => t(key));
 
   // Fetch SDT profile for personalization
   useEffect(() => {
@@ -269,7 +277,7 @@ Guidance: ${
       console.error('AI Coach error:', err);
       // Show friendly error
       setResponse({
-        answer: "I'm having trouble right now. Try asking your question in a different way, or ask your teacher for help.",
+        answer: t('aiCoach.errorFallback'),
         modelUsed: 'error',
         modelVersion: 'error',
         logId: 'error',
@@ -311,7 +319,7 @@ Guidance: ${
     setCurrentLogId(null);
     
     // Show success
-    alert('Great explanation! 🎉');
+    alert(t('aiCoach.explainBackSuccess'));
   };
 
   const reset = () => {
@@ -327,14 +335,14 @@ Guidance: ${
       <button
         onClick={() => setIsMinimized(false)}
         className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50 group"
-        aria-label="Open AI Coach"
+        aria-label={t('aiCoach.openAria')}
       >
         <MessageCircleIcon className="w-8 h-8 text-white" />
         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
         
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-          Ask AI Coach
+          {t('aiCoach.tooltip')}
         </div>
       </button>
     );
@@ -346,13 +354,13 @@ Guidance: ${
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-lg p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
           <MessageCircleIcon className="w-5 h-5" />
-          <h3 className="font-semibold">AI Coach</h3>
+          <h3 className="font-semibold">{t('aiCoach.title')}</h3>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setIsMinimized(true)}
             className="text-white hover:bg-white/20 rounded p-1 transition-colors"
-            aria-label="Minimize"
+            aria-label={t('aiCoach.minimizeAria')}
           >
             <XIcon className="w-5 h-5" />
           </button>
@@ -364,16 +372,16 @@ Guidance: ${
         {/* Teacher guidance notice for K-3 */}
         {policy.aiCoach.requireTeacherGuidance && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
-            <p className="text-yellow-800">💡 Ask your teacher before using AI Coach!</p>
+            <p className="text-yellow-800">{t('aiCoach.teacherGuidance')}</p>
           </div>
         )}
 
         {/* Mode selection */}
         {!mode && !response && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 mb-3">How can I help you today?</p>
+            <p className="text-sm text-gray-600 mb-3">{t('aiCoach.howCanIHelp')}</p>
             {availableModes.map((modeKey) => {
-              const config = MODE_CONFIG[modeKey];
+              const config = modeConfig[modeKey];
               const Icon = config.icon;
               
               // Static color classes
@@ -437,17 +445,17 @@ Guidance: ${
               onClick={reset}
               className="text-sm text-gray-600 hover:text-gray-900"
             >
-              ← Back
+              {t('aiCoach.back')}
             </button>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {MODE_CONFIG[mode].placeholder}
+                {modeConfig[mode].placeholder}
               </label>
               <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Type your question or use the microphone..."
+                placeholder={t('aiCoach.questionPlaceholder')}
                 className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
                 disabled={loading}
               />
@@ -467,12 +475,12 @@ Guidance: ${
                 {isListening ? (
                   <>
                     <Volume2Icon className="w-5 h-5 animate-pulse" />
-                    <span>Listening...</span>
+                    <span>{t('aiCoach.listening')}</span>
                   </>
                 ) : (
                   <>
                     <MicIcon className="w-5 h-5" />
-                    <span>Speak Your Question</span>
+                    <span>{t('aiCoach.speakQuestion')}</span>
                   </>
                 )}
               </button>
@@ -487,12 +495,12 @@ Guidance: ${
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  <span>Thinking...</span>
+                  <span>{t('aiCoach.thinking')}</span>
                 </>
               ) : (
                 <>
                   <SendIcon className="w-5 h-5" />
-                  <span>Ask</span>
+                  <span>{t('aiCoach.ask')}</span>
                 </>
               )}
             </button>
@@ -503,38 +511,40 @@ Guidance: ${
         {response && (
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
-              <p className="font-medium text-purple-900 mb-2">AI Coach:</p>
+              <p className="font-medium text-purple-900 mb-2">{t('aiCoach.responseLabel')}</p>
               <p className="text-gray-700 whitespace-pre-wrap">{response.answer}</p>
               
               {/* Model attribution */}
               {response.modelUsed && response.modelUsed !== 'error' && (
-                <p className="text-xs text-gray-500 mt-2">Powered by {response.modelUsed}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {t('aiCoach.poweredBy', { model: response.modelUsed })}
+                </p>
               )}
             </div>
 
             {/* Feedback buttons (was this helpful?) */}
             {currentLogId && currentLogId !== 'error' && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-600">Was this helpful?</span>
+                <span className="text-gray-600">{t('aiCoach.wasHelpful')}</span>
                 <button
                   onClick={async () => {
                     // TODO: Re-implement feedback recording
                     // await recordAIFeedback(currentLogId, true, 'Student marked helpful');
-                    alert('Thanks for the feedback! 👍');
+                    alert(t('aiCoach.feedbackThanks'));
                   }}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
                 >
-                  👍 Yes
+                  {t('aiCoach.helpfulYes')}
                 </button>
                 <button
                   onClick={async () => {
                     // TODO: Re-implement feedback recording
                     // await recordAIFeedback(currentLogId, false, 'Student marked not helpful');
-                    alert('Thanks for letting us know. Try asking differently.');
+                    alert(t('aiCoach.feedbackTryDifferent'));
                   }}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                 >
-                  👎 No
+                  {t('aiCoach.helpfulNo')}
                 </button>
               </div>
             )}
@@ -542,7 +552,7 @@ Guidance: ${
             {/* Citations (if any) */}
             {response.citations && response.citations.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                <p className="font-medium text-gray-900">Based on:</p>
+                <p className="font-medium text-gray-900">{t('aiCoach.basedOn')}</p>
                 {response.citations.map((citation, idx) => (
                   <div key={idx} className="text-gray-700 text-xs">
                     • {citation.type}: {citation.snippet}
@@ -554,7 +564,7 @@ Guidance: ${
             {/* Next steps - use hints instead of suggestedNextSteps */}
             {response.hints && response.hints.length > 0 && (
               <div className="bg-blue-50 rounded-lg p-3 text-sm">
-                <p className="font-medium text-blue-900 mb-2">Try these next:</p>
+                <p className="font-medium text-blue-900 mb-2">{t('aiCoach.tryNext')}</p>
                 <ul className="list-disc list-inside space-y-1 text-blue-800 text-xs">
                   {response.hints.map((step, idx) => (
                     <li key={idx}>{step}</li>
@@ -566,11 +576,11 @@ Guidance: ${
             {/* Explain-it-back (if required by policy) */}
             {policy.aiCoach.explainBackRequired && (
               <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 space-y-2">
-                <p className="font-medium text-yellow-900 text-sm">Now explain it back!</p>
+                <p className="font-medium text-yellow-900 text-sm">{t('aiCoach.explainBackPrompt')}</p>
                 <textarea
                   value={explainBack}
                   onChange={(e) => setExplainBack(e.target.value)}
-                  placeholder="Tell me what you learned..."
+                  placeholder={t('aiCoach.explainBackPlaceholder')}
                   className="w-full h-20 px-3 py-2 border border-yellow-300 rounded-lg text-sm resize-none"
                 />
                 <button
@@ -578,7 +588,7 @@ Guidance: ${
                   disabled={!explainBack.trim()}
                   className="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 disabled:bg-gray-300 text-sm"
                 >
-                  Submit Explanation
+                  {t('aiCoach.submitExplanation')}
                 </button>
               </div>
             )}
@@ -587,7 +597,7 @@ Guidance: ${
               onClick={reset}
               className="text-sm text-gray-600 hover:text-gray-900"
             >
-              ← Ask another question
+              {t('aiCoach.askAnother')}
             </button>
           </div>
         )}
@@ -596,7 +606,7 @@ Guidance: ${
       {/* Footer tip */}
       <div className="border-t border-gray-200 p-3 bg-gray-50 rounded-b-lg">
         <p className="text-xs text-gray-600 text-center">
-          💡 Remember: AI helps you think, not do the work!
+          {t('aiCoach.footerTip')}
         </p>
       </div>
     </div>

@@ -209,38 +209,49 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     const minDimension = Math.min(avgAutonomy, avgCompetence, avgBelonging);
     
     if (maxDimension - minDimension > 30) {
-      let weakDimension = '';
+      let weakDimensionKey: 'autonomy' | 'competence' | 'belonging' = 'belonging';
       let recommendations: string[] = [];
       
       if (avgAutonomy === minDimension) {
-        weakDimension = 'Autonomy';
+        weakDimensionKey = 'autonomy';
         recommendations = [
-          'Increase student choice in missions',
-          'Allow learners to set personal goals',
-          'Offer self-paced learning paths'
+          t('aiInsights.sdtImbalance.actions.autonomy.choice'),
+          t('aiInsights.sdtImbalance.actions.autonomy.goals'),
+          t('aiInsights.sdtImbalance.actions.autonomy.selfPaced'),
         ];
       } else if (avgCompetence === minDimension) {
-        weakDimension = 'Competence';
+        weakDimensionKey = 'competence';
         recommendations = [
-          'Provide more skill-building checkpoints',
-          'Celebrate mastery with badges',
-          'Offer progressive challenges'
+          t('aiInsights.sdtImbalance.actions.competence.checkpoints'),
+          t('aiInsights.sdtImbalance.actions.competence.badges'),
+          t('aiInsights.sdtImbalance.actions.competence.challenges'),
         ];
       } else {
-        weakDimension = 'Belonging';
+        weakDimensionKey = 'belonging';
         recommendations = [
-          'Increase peer collaboration opportunities',
-          'Encourage showcase submissions',
-          'Facilitate peer recognition activities'
+          t('aiInsights.sdtImbalance.actions.belonging.collaboration'),
+          t('aiInsights.sdtImbalance.actions.belonging.showcase'),
+          t('aiInsights.sdtImbalance.actions.belonging.recognition'),
         ];
       }
+
+      const strongDimensionKey = maxDimension === avgAutonomy
+        ? 'autonomy'
+        : maxDimension === avgCompetence
+          ? 'competence'
+          : 'belonging';
       
       generatedInsights.push({
         id: 'sdt-imbalance',
         type: 'recommendation',
         priority: 'medium',
-        title: `${weakDimension} Dimension Needs Attention`,
-        description: `Class shows strong ${maxDimension === avgAutonomy ? 'autonomy' : maxDimension === avgCompetence ? 'competence' : 'belonging'} but weaker ${weakDimension.toLowerCase()}.`,
+        title: t('aiInsights.sdtImbalance.title', {
+          dimension: t(`aiInsights.dimension.${weakDimensionKey}`),
+        }),
+        description: t('aiInsights.sdtImbalance.description', {
+          strong: t(`aiInsights.dimension.${strongDimensionKey}`),
+          weak: t(`aiInsights.dimension.${weakDimensionKey}`),
+        }),
         actionItems: recommendations
       });
     }
@@ -271,9 +282,9 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
       <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
         <div className="flex items-center gap-2">
           <SparklesIcon className="h-5 w-5 text-indigo-600" />
-          <h2 className="text-lg font-semibold text-gray-900">AI Insights</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('aiInsights.panelTitle')}</h2>
           <span className="ml-auto text-xs text-gray-500">
-            {insights.length} insight{insights.length !== 1 ? 's' : ''}
+            {t('aiInsights.countLabel', { count: insights.length })}
           </span>
         </div>
       </div>
@@ -282,7 +293,7 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
         {insights.length === 0 ? (
           <div className="text-center py-8">
             <LightbulbIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No insights available yet. Check back after students engage more with the platform.</p>
+            <p className="text-gray-500">{t('aiInsights.empty')}</p>
           </div>
         ) : (
           insights.map(insight => (
@@ -303,6 +314,7 @@ interface InsightCardProps {
 function InsightCard({ insight }: InsightCardProps) {
   const [expanded, setExpanded] = useState(false);
   const trackInteraction = useInteractionTracking();
+  const { t } = useI18n();
   
   const iconMap = {
     alert: AlertTriangleIcon,
@@ -337,7 +349,7 @@ function InsightCard({ insight }: InsightCardProps) {
               insight.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
               'bg-green-100 text-green-700'
             }`}>
-              {insight.priority}
+              {t(`aiInsights.priority.${insight.priority}`)}
             </span>
           </div>
           
@@ -356,7 +368,7 @@ function InsightCard({ insight }: InsightCardProps) {
               }}
               className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2"
             >
-              {expanded ? 'Show less' : 'Show details'}
+              {expanded ? t('aiInsights.showLess') : t('aiInsights.showDetails')}
             </button>
           )}
           
@@ -364,7 +376,7 @@ function InsightCard({ insight }: InsightCardProps) {
             <div className="mt-3 space-y-3">
               {insight.affectedLearners && insight.affectedLearners.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Affected Learners:</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1">{t('aiInsights.affectedLearners')}</p>
                   <div className="flex flex-wrap gap-1">
                     {insight.affectedLearners.map((name, idx) => (
                       <span key={idx} className="text-xs bg-white px-2 py-1 rounded border border-gray-200">
@@ -377,7 +389,7 @@ function InsightCard({ insight }: InsightCardProps) {
               
               {insight.actionItems && insight.actionItems.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-1">Recommended Actions:</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">{t('aiInsights.recommendedActions')}</p>
                   <ul className="space-y-1">
                     {insight.actionItems.map((action, idx) => (
                       <li key={idx} className="text-xs text-gray-700 flex items-start gap-2">
