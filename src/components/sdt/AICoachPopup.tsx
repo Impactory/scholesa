@@ -27,6 +27,8 @@ import { AIService } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { sendCopilotVoiceMessage, transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognition extends EventTarget {
@@ -130,15 +132,28 @@ export function AICoachPopup({
   const [response, setResponse] = useState<AIServiceResponse | null>(null);
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
   const { locale, t } = useI18n();
+  const { user } = useAuthContext();
   const modeConfig = buildModeConfig((key) => t(key));
+  const hasVoiceInputControl = Boolean(
+    recognitionRef.current ||
+    (typeof window !== 'undefined' &&
+      typeof MediaRecorder !== 'undefined' &&
+      Boolean(navigator.mediaDevices?.getUserMedia) &&
+      user &&
+      voiceApiConfigured())
+  );
 
   // Fetch SDT profile for personalization
   useEffect(() => {
@@ -154,9 +169,9 @@ export function AICoachPopup({
     fetchSDT();
   }, [learnerId, siteId]);
 
-  // Initialize speech recognition
+  // Initialize speech recognition fallback
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
       if (!SpeechRecognitionAPI) return;
       
@@ -178,9 +193,74 @@ export function AICoachPopup({
         setIsListening(false);
       };
     }
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      mediaStreamRef.current = null;
+    };
   }, []);
 
-  const startListening = () => {
+  const startListening = async () => {
+    if (loading || isTranscribing) return;
+
+    const canRecordAudio = typeof window !== 'undefined'
+      && typeof MediaRecorder !== 'undefined'
+      && typeof navigator !== 'undefined'
+      && Boolean(navigator.mediaDevices?.getUserMedia)
+      && user
+      && voiceApiConfigured();
+
+    if (canRecordAudio) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+        audioChunksRef.current = [];
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (event: BlobEvent) => {
+          if (event.data.size > 0) audioChunksRef.current.push(event.data);
+        };
+        recorder.onerror = () => {
+          setIsListening(false);
+        };
+        recorder.onstop = async () => {
+          setIsListening(false);
+          mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+          if (!user || audioChunksRef.current.length === 0) return;
+          setIsTranscribing(true);
+          try {
+            const idToken = await user.getIdToken();
+            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const transcribed = await transcribeVoiceAudio({
+              idToken,
+              audioBlob: blob,
+              locale,
+              partial: false,
+            });
+            setQuestion((prev) => `${prev} ${transcribed.transcript}`.trim());
+          } catch (error) {
+            console.error('Voice transcription failed; keeping manual input path.', error);
+          } finally {
+            audioChunksRef.current = [];
+            setIsTranscribing(false);
+          }
+        };
+
+        recorder.start();
+        setIsListening(true);
+        return;
+      } catch (error) {
+        console.error('Microphone capture unavailable; falling back to browser speech recognition.', error);
+      }
+    }
+
     if (recognitionRef.current) {
       setIsListening(true);
       recognitionRef.current.start();
@@ -188,6 +268,10 @@ export function AICoachPopup({
   };
 
   const stopListening = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      return;
+    }
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -199,6 +283,7 @@ export function AICoachPopup({
 
     try {
       setLoading(true);
+      const resolvedGradeBand = grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12';
 
       // Map mode to task type
       const taskTypeMap = {
@@ -245,22 +330,76 @@ Guidance: ${
 }`;
       }
 
-      // Call new AI service (vendor-agnostic, with redaction & retrieval)
-      const aiResponse = await AIService.request({
-        learnerId,
-        studentName,
-        siteId,
-        grade,
-        studentLevel,
-        sessionId: sprintSessionId,
-        missionId,
-        taskType: taskTypeMap[mode],
-        targetLocale: locale,
-        role: 'learner',
-        question: personalizedContext 
-          ? `${personalizedContext}\n\nStudent Question: ${question}`
-          : question
-      });
+      const composedQuestion = personalizedContext
+        ? `${personalizedContext}\n\nStudent Question: ${question}`
+        : question;
+      let aiResponse: AIServiceResponse | null = null;
+
+      // Primary path: voice system endpoint contract (/copilot/message)
+      if (user && voiceApiConfigured()) {
+        try {
+          const idToken = await user.getIdToken();
+          const voiceResponse = await sendCopilotVoiceMessage({
+            idToken,
+            message: composedQuestion,
+            locale,
+            screenId: 'ai_coach_popup',
+            gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
+            context: {
+              learnerId,
+              missionId,
+              sprintSessionId,
+            },
+            voice: {
+              enabled: true,
+              output: true,
+            },
+          });
+
+          aiResponse = {
+            answer: voiceResponse.text,
+            hints: voiceResponse.metadata.toolsInvoked.map((tool) => `${tool}`),
+            modelUsed: 'voice-orchestrator',
+            modelVersion: voiceResponse.metadata.modelVersion,
+            logId: voiceResponse.metadata.traceId,
+            promptTemplateId: 'voice.copilot.message',
+            policyVersion: voiceResponse.metadata.policyVersion,
+            safetyOutcome: voiceResponse.metadata.safetyOutcome,
+            safetyReasonCode: voiceResponse.metadata.safetyReasonCode,
+            toolCallIds: voiceResponse.metadata.toolsInvoked,
+            targetLocale: voiceResponse.metadata.locale,
+            gradeBand: resolvedGradeBand,
+            traceId: voiceResponse.metadata.traceId,
+            missionAttemptId: missionId,
+          };
+
+          if (voiceResponse.tts.available && voiceResponse.tts.audioUrl) {
+            const audio = new Audio(voiceResponse.tts.audioUrl);
+            void audio.play().catch((error) => {
+              console.error('Voice playback failed in AI coach popup:', error);
+            });
+          }
+        } catch (voiceError) {
+          console.error('Voice endpoint request failed; falling back to AI service path.', voiceError);
+        }
+      }
+
+      // Fallback path: existing integrated AI service
+      if (!aiResponse) {
+        aiResponse = await AIService.request({
+          learnerId,
+          studentName,
+          siteId,
+          grade,
+          studentLevel,
+          sessionId: sprintSessionId,
+          missionId,
+          taskType: taskTypeMap[mode],
+          targetLocale: locale,
+          role: 'learner',
+          question: composedQuestion,
+        });
+      }
 
       setResponse(aiResponse);
       setCurrentLogId(aiResponse.logId);
@@ -462,10 +601,10 @@ Guidance: ${
             </div>
 
             {/* Speech input button */}
-            {recognitionRef.current && (
+            {hasVoiceInputControl && (
               <button
                 onClick={isListening ? stopListening : startListening}
-                disabled={loading}
+                disabled={loading || isTranscribing}
                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                   isListening
                     ? 'bg-red-600 text-white hover:bg-red-700'
@@ -489,10 +628,10 @@ Guidance: ${
             {/* Send button */}
             <button
               onClick={handleAsk}
-              disabled={!question.trim() || loading}
+              disabled={!question.trim() || loading || isTranscribing}
               className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {loading || isTranscribing ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   <span>{t('aiCoach.thinking')}</span>
