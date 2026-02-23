@@ -938,20 +938,149 @@ async function requireRoleAndSite(authUid: string | undefined, allowedRoles: Rol
   return { uid: authUid, role: profile.role, profile };
 }
 
+function normalizeTelemetryKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function toHeaderString(value: string | string[] | undefined): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    return toHeaderString(value[0]);
+  }
+  return undefined;
+}
+
+function extractTraceIdFromHeader(headerValue: string | undefined): string | undefined {
+  if (!headerValue) return undefined;
+  const traceId = headerValue.split('/')[0]?.trim();
+  return traceId && traceId.length > 0 ? traceId : undefined;
+}
+
+function shouldRedactTelemetryKey(keyPath: string): boolean {
+  const leaf = keyPath.split('.').pop() ?? keyPath;
+  const normalized = normalizeTelemetryKey(leaf.replace(/\[\d+\]/g, ''));
+  return TELEMETRY_PII_KEY_BLOCKLIST.has(normalized);
+}
+
+function sanitizeTelemetryValue(
+  value: unknown,
+  keyPath: string,
+  depth: number,
+  redactedPaths: Set<string>,
+): unknown {
+  if (depth > TELEMETRY_MAX_METADATA_DEPTH) {
+    redactedPaths.add(`${keyPath}:depth_limit`);
+    return null;
+  }
+
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === 'string') {
+    if (shouldRedactTelemetryKey(keyPath)) {
+      redactedPaths.add(keyPath);
+      return '[redacted]';
+    }
+    const trimmed = value.trim();
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+      redactedPaths.add(keyPath);
+      return '[redacted_email]';
+    }
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length >= 10 && digits.length <= 15) {
+      redactedPaths.add(keyPath);
+      return '[redacted_phone]';
+    }
+    return trimmed.length > TELEMETRY_MAX_STRING_LENGTH
+      ? `${trimmed.slice(0, TELEMETRY_MAX_STRING_LENGTH)}...`
+      : trimmed;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, TELEMETRY_MAX_COLLECTION_LENGTH)
+      .map((item, index) => sanitizeTelemetryValue(item, `${keyPath}[${index}]`, depth + 1, redactedPaths));
+  }
+
+  if (typeof value === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    let count = 0;
+    for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      if (count >= TELEMETRY_MAX_COLLECTION_LENGTH) break;
+      const nestedPath = keyPath ? `${keyPath}.${key}` : key;
+      if (shouldRedactTelemetryKey(nestedPath)) {
+        redactedPaths.add(nestedPath);
+        continue;
+      }
+      sanitized[key] = sanitizeTelemetryValue(nestedValue, nestedPath, depth + 1, redactedPaths);
+      count += 1;
+    }
+    return sanitized;
+  }
+
+  return String(value);
+}
+
+function sanitizeTelemetryMetadata(
+  metadata: Record<string, unknown> | undefined,
+): { metadata: Record<string, unknown>; redactedPaths: string[] } {
+  const source = metadata ?? {};
+  const redactedPaths = new Set<string>();
+  const sanitized: Record<string, unknown> = {};
+  let count = 0;
+
+  for (const [key, value] of Object.entries(source)) {
+    if (count >= TELEMETRY_MAX_COLLECTION_LENGTH) break;
+    if (shouldRedactTelemetryKey(key)) {
+      redactedPaths.add(key);
+      continue;
+    }
+    sanitized[key] = sanitizeTelemetryValue(value, key, 0, redactedPaths);
+    count += 1;
+  }
+
+  return {
+    metadata: sanitized,
+    redactedPaths: Array.from(redactedPaths.values()),
+  };
+}
+
 async function persistTelemetryEvent(params: {
   event: string;
   userId: string;
   role?: Role;
   siteId?: string;
   metadata?: Record<string, unknown>;
+  requestId?: string;
+  traceId?: string;
 }) {
-  const { event, userId, role, siteId, metadata } = params;
+  const { event, userId, role, siteId, metadata, requestId, traceId } = params;
+  const { metadata: sanitizedMetadata, redactedPaths } = sanitizeTelemetryMetadata(metadata);
+  const effectiveSiteId = siteId && siteId.trim().length > 0 ? siteId.trim() : TELEMETRY_UNSCOPED_SITE_ID;
+  const effectiveRequestId = requestId ?? `telemetry-${randomUUID()}`;
+  const effectiveTraceId = traceId ?? effectiveRequestId;
   return admin.firestore().collection(TELEMETRY_COLLECTION).add({
     event,
     userId,
     role,
-    siteId,
-    metadata: metadata ?? {},
+    siteId: effectiveSiteId,
+    metadata: {
+      ...sanitizedMetadata,
+      requestId: effectiveRequestId,
+      traceId: effectiveTraceId,
+      redactionApplied: redactedPaths.length > 0,
+      redactedPathCount: redactedPaths.length,
+    },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -977,7 +1106,9 @@ async function handleTelemetry(request: CallableRequest) {
     throw new HttpsError('permission-denied', 'User profile missing role.');
   }
 
-  const siteFromRequest = typeof request.data?.siteId === 'string' ? request.data.siteId : undefined;
+  const siteFromRequest = typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+    ? request.data.siteId.trim()
+    : undefined;
   if (siteFromRequest) {
     const allowed = (userProfile.siteIds ?? []).includes(siteFromRequest) || userProfile.activeSiteId === siteFromRequest;
     if (!allowed) {
@@ -985,8 +1116,13 @@ async function handleTelemetry(request: CallableRequest) {
     }
   }
 
+  const requestId = toHeaderString(request.rawRequest?.headers?.['x-request-id']);
+  const traceId = extractTraceIdFromHeader(toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context']));
   const role = userProfile.role;
-  const siteId = siteFromRequest ?? userProfile.activeSiteId ?? (userProfile.siteIds?.[0] ?? undefined);
+  const siteId = siteFromRequest ?? userProfile.activeSiteId ?? (userProfile.siteIds?.[0] ?? TELEMETRY_UNSCOPED_SITE_ID);
+  if (siteId === TELEMETRY_UNSCOPED_SITE_ID && role !== 'hq') {
+    throw new HttpsError('permission-denied', 'No active site context available.');
+  }
 
   await persistTelemetryEvent({
     event,
@@ -994,6 +1130,8 @@ async function handleTelemetry(request: CallableRequest) {
     role,
     siteId,
     metadata: metadata as Record<string, unknown> | undefined,
+    requestId,
+    traceId,
   });
 
   return { status: 'ok' };
