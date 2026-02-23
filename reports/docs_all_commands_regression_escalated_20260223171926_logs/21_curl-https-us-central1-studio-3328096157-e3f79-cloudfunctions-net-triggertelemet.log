@@ -1,0 +1,17 @@
+$ curl https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/triggerTelemetryAggregation
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   322  100   322    0     0   1033      0 --:--:-- --:--:-- --:--:--  1035
+
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/triggerTelemetryAggregation</code> from this server.</h2>
+<h2></h2>
+</body></html>

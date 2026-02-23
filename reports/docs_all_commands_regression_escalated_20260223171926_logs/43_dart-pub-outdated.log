@@ -1,0 +1,5 @@
+$ dart pub outdated
+cwd: /Users/simonluke/dev/scholesa/apps/empire_flutter/app
+timeout_seconds: 240
+
+Package not available (the Flutter SDK is not available).

@@ -1,0 +1,15 @@
+$ npm run start
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 120
+
+
+> scholesa@0.1.0 start
+> next start
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 582ms
+
+[TIMEOUT after 120s]

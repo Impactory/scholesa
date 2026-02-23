@@ -1,0 +1,5 @@
+$ gcloud run deploy
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+ERROR: (gcloud.run.deploy) Missing required argument [--image]: Requires a container image to deploy (e.g. `gcr.io/cloudrun/hello:latest`) if no build source is provided.

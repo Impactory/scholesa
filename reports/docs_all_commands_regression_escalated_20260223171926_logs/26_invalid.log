@@ -1,0 +1,2 @@
+Skipped: template placeholder present ("..." or "<timestamp>")
+Raw: gcloud firestore import gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --project=studio-3328096157-e3f79 --database=restore-smoke --collection-ids=

@@ -1,0 +1,77 @@
+$ node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+
+Telemetry Live Regression Input
+hours=720
+limit=20000
+siteFilter=(none)
+project=studio-3328096157-e3f79
+credentials=firebase-service-account.json
+strict=true
+requireLiveCoverage=true
+
+Registry Sizes
+docsRequiredEvents=14
+smokeCoreExtendedEvents=24
+smokeNonCoreEvents=12
+canonicalRequiredEvents=36
+backendAllowedEvents=89
+flutterKnownEvents=68
+
+Canonical Required Event Coverage (live)
+aiDraft.requested=1
+aiDraft.reviewed=1
+attendance.recorded=1
+auth.login=1
+auth.logout=1
+cms.page.viewed=1
+contract.approved=1
+contract.created=1
+cta.clicked=1
+deliverable.accepted=1
+deliverable.submitted=1
+educator.review.completed=1
+insight.viewed=1
+lead.submitted=1
+message.sent=1
+mission.attempt.submitted=1
+mission.snapshot.created=1
+notification.requested=1
+nudge.snoozed=1
+order.intent=1
+order.paid=1
+payout.approved=1
+popup.completed=1
+popup.dismissed=1
+popup.shown=1
+room.conflict.detected=1
+rubric.applied=1
+rubric.shared_to_parent_summary=1
+schedule.viewed=1
+site.checkin=1
+site.checkout=1
+site.late_pickup.flagged=1
+substitute.assigned=1
+substitute.requested=1
+support.applied=1
+support.outcome.logged=1
+
+Live Dataset
+docsScanned=50
+docsAfterSiteFilter=50
+distinctEventsSeen=40
+
+Live Role Counts
+educator=7
+hq=9
+learner=7
+partner=6
+site=14
+system=7
+
+Live Unknown Event Counts
+(none)
+
+Result: PASS

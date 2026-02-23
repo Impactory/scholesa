@@ -1,0 +1,58 @@
+$ npm audit --omit=dev
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 300
+
+# npm audit report
+
+minimatch  <10.2.1
+Severity: high
+minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern - https://github.com/advisories/GHSA-3ppc-4f35-3m26
+fix available via `npm audit fix --force`
+Will install next-pwa@0.0.1, which is a breaking change
+node_modules/filelist/node_modules/minimatch
+node_modules/minimatch
+  filelist  0.0.2 - 1.0.4
+  Depends on vulnerable versions of minimatch
+  node_modules/filelist
+  glob  3.0.0 - 10.5.0
+  Depends on vulnerable versions of minimatch
+  node_modules/glob
+    globby  <=10.0.2
+    Depends on vulnerable versions of glob
+    node_modules/del/node_modules/globby
+      del  <=7.1.0
+      Depends on vulnerable versions of globby
+      Depends on vulnerable versions of rimraf
+      node_modules/del
+        clean-webpack-plugin  >=2.0.0
+        Depends on vulnerable versions of del
+        node_modules/clean-webpack-plugin
+          next-pwa  >=0.0.2
+          Depends on vulnerable versions of clean-webpack-plugin
+          Depends on vulnerable versions of workbox-webpack-plugin
+          node_modules/next-pwa
+    rimraf  2.3.0 - 3.0.2 || 4.2.0 - 5.0.10
+    Depends on vulnerable versions of glob
+    node_modules/rimraf
+    workbox-build  <=7.3.0
+    Depends on vulnerable versions of glob
+    node_modules/workbox-build
+      workbox-webpack-plugin  <=7.3.0
+      Depends on vulnerable versions of workbox-build
+      node_modules/workbox-webpack-plugin
+
+next  10.0.0 - 15.5.9
+Severity: high
+Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration - https://github.com/advisories/GHSA-9g9p-9gw9-jx7f
+Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components - https://github.com/advisories/GHSA-h25m-26qc-wcjf
+fix available via `npm audit fix --force`
+Will install next@16.1.6, which is a breaking change
+node_modules/next
+
+11 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

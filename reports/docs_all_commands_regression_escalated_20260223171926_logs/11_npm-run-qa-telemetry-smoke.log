@@ -1,0 +1,67 @@
+$ npm run qa:telemetry-smoke
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+
+> scholesa@0.1.0 qa:telemetry-smoke
+> node scripts/telemetry_smoke_check.js --mode=full --strict
+
+
+Telemetry Smoke Input
+mode=full
+hours=24
+limit=5000
+siteFilter=(none)
+strict=true
+
+Dataset
+docsScanned=36
+docsAfterSiteFilter=36
+distinctEventsSeen=36
+
+Role Counts
+educator=7
+hq=9
+learner=7
+partner=6
+site=7
+
+Required Event Coverage
+auth.login=1
+auth.logout=1
+attendance.recorded=1
+mission.attempt.submitted=1
+message.sent=1
+order.paid=1
+cms.page.viewed=1
+popup.shown=1
+popup.dismissed=1
+popup.completed=1
+nudge.snoozed=1
+insight.viewed=1
+support.applied=1
+support.outcome.logged=1
+site.checkin=1
+site.checkout=1
+site.late_pickup.flagged=1
+schedule.viewed=1
+room.conflict.detected=1
+substitute.requested=1
+substitute.assigned=1
+mission.snapshot.created=1
+rubric.applied=1
+rubric.shared_to_parent_summary=1
+lead.submitted=1
+contract.created=1
+contract.approved=1
+deliverable.submitted=1
+deliverable.accepted=1
+payout.approved=1
+aiDraft.requested=1
+aiDraft.reviewed=1
+order.intent=1
+cta.clicked=1
+notification.requested=1
+educator.review.completed=1
+
+Result: PASS

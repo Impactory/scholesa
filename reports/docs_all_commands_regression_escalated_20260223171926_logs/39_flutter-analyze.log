@@ -1,0 +1,6 @@
+$ flutter analyze
+cwd: /Users/simonluke/dev/scholesa/apps/empire_flutter/app
+timeout_seconds: 240
+
+Analyzing app...                                                
+No issues found! (ran in 5.4s)

@@ -1,0 +1,10 @@
+$ flutter run
+cwd: /Users/simonluke/dev/scholesa/apps/empire_flutter/app
+timeout_seconds: 180
+
+Checking for wireless devices...
+
+More than one device connected; please specify a device with the '-d <deviceId>' flag, or use '-d all' to act on all devices.
+
+macOS (desktop) • macos  • darwin-arm64   • macOS 26.3 25D125 darwin-arm64
+Chrome (web)    • chrome • web-javascript • Google Chrome 145.0.7632.76

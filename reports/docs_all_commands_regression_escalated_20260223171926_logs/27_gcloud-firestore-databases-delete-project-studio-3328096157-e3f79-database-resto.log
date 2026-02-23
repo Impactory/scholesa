@@ -1,0 +1,27 @@
+$ gcloud firestore databases delete --project=studio-3328096157-e3f79 --database=restore-smoke --quiet
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+metadata:
+  '@type': type.googleapis.com/google.firestore.admin.v1.DeleteDatabaseMetadata
+name: projects/studio-3328096157-e3f79/databases/restore-smoke/operations/Aoux4rgQBszynd8IDBoHEAKylfDYEAbM8puyCAwKHho
+response:
+  '@type': type.googleapis.com/google.firestore.admin.v1.Database
+  appEngineIntegrationMode: DISABLED
+  concurrencyMode: PESSIMISTIC
+  createTime: '2026-02-23T17:26:10.642087Z'
+  databaseEdition: STANDARD
+  deleteProtectionState: DELETE_PROTECTION_DISABLED
+  deleteTime: '2026-02-23T17:26:11.560755Z'
+  earliestVersionTime: '2026-02-23T17:26:11.560755Z'
+  etag: IK3sxImR8JIDMLPCxImR8JID
+  freeTier: false
+  locationId: us-central1
+  name: projects/studio-3328096157-e3f79/databases/717e74a1-bce3-41ac-be0a-045158d6cd83
+  pointInTimeRecoveryEnablement: POINT_IN_TIME_RECOVERY_DISABLED
+  previousId: restore-smoke
+  realtimeUpdatesMode: REALTIME_UPDATES_MODE_ENABLED
+  type: FIRESTORE_NATIVE
+  uid: 717e74a1-bce3-41ac-be0a-045158d6cd83
+  updateTime: '2026-02-23T17:26:10.642087Z'
+  versionRetentionPeriod: 3600s

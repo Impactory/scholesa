@@ -1,0 +1,25 @@
+$ gcloud firestore databases create --project=studio-3328096157-e3f79 --database=restore-smoke --location=us-central1 --type=firestore-native --quiet
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+metadata:
+  '@type': type.googleapis.com/google.firestore.admin.v1.CreateDatabaseMetadata
+name: projects/studio-3328096157-e3f79/databases/restore-smoke/operations/g83WWFEECr6sQeO8oXR-cRAqMWxhcnRuZWMtc3ULIgUQArKV8NgQBszym7IIDAovGg
+response:
+  '@type': type.googleapis.com/google.firestore.admin.v1.Database
+  appEngineIntegrationMode: DISABLED
+  concurrencyMode: PESSIMISTIC
+  createTime: '2026-02-23T17:26:10.642087Z'
+  databaseEdition: STANDARD
+  deleteProtectionState: DELETE_PROTECTION_DISABLED
+  earliestVersionTime: '2026-02-23T17:26:10.642087Z'
+  etag: IOzvjImR8JIDMKe5jImR8JID
+  freeTier: false
+  locationId: us-central1
+  name: projects/studio-3328096157-e3f79/databases/restore-smoke
+  pointInTimeRecoveryEnablement: POINT_IN_TIME_RECOVERY_DISABLED
+  realtimeUpdatesMode: REALTIME_UPDATES_MODE_ENABLED
+  type: FIRESTORE_NATIVE
+  uid: 717e74a1-bce3-41ac-be0a-045158d6cd83
+  updateTime: '2026-02-23T17:26:10.642087Z'
+  versionRetentionPeriod: 3600s

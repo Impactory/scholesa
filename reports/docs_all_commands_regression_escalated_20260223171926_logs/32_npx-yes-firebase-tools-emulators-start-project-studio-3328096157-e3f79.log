@@ -1,0 +1,147 @@
+$ npx --yes firebase-tools emulators:start --project studio-3328096157-e3f79
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 180
+
+i  emulators: Starting emulators: auth, functions, firestore, storage, extensions
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⬢  extensions: Unable to look up project number for studio-3328096157-e3f79.
+ If this is a real project, ensure that you are logged in and have access to it.
+ If this is a fake project, please use a project ID starting with 'demo-' to skip production calls.
+ Continuing with a fake project number - secrets and other features that require production access may behave unexpectedly.
+⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, database, hosting, pubsub, dataconnect
+⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect.
+i  firestore: Firestore Emulator logging to firestore-debug.log
+✔  firestore: Firestore Emulator UI websocket is running on 9150.
+i  functions: Watching "/Users/simonluke/dev/scholesa/functions" for Cloud Functions...
+✔  functions: Using node@24 from host.
+i  functions: Loaded environment variables from .env.studio-3328096157-e3f79.
+Serving at port 8801
+
+⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!
+✔  functions: Loaded functions definitions from source: aggregateDailyTelemetry, aggregateWeeklyTelemetry, triggerTelemetryAggregation, bosIngestEvent, bosGetOrchestrationState, bosGetIntervention, bosScoreMvl, bosSubmitMvlEvidence, bosTeacherOverrideMvl, bosGetClassInsights, bosContestability, upsertSchoolConsentRecord, getSchoolConsentRecord, upsertCoppaRetentionOverride, submitParentDataRequest, processParentDataRequest, runCoppaRetentionSweep, scheduledCoppaRetentionSweep, getCoppaComplianceSnapshot, voiceApi, copilotMessage, voiceTranscribe, ttsSpeak, voiceAudio, genAiCoach, logTelemetryEvent, logAnalyticsEvent, getTelemetryDashboardMetrics, listUsers, updateUserRoles, processCheckout, requestNotificationSend, resetUserPassword, listAuditLogs, processNotificationRequests, createCheckoutIntent, completeCheckout, completeCheckoutWebhook, createStripeCheckoutSession, createStripeSubscription, stripeWebhook, createStripePortalSession, getUserSubscriptions, getUserEntitlements, healthCheck, checkExpiringSubscriptions, archiveOldTelemetry, cleanupExpiredIntents, cancelSubscription, resumeSubscription, updateSubscriptionPaymentMethod, getInvoiceHistory, retryInvoicePayment, monitorWebhookHealth, processRefund, getWebhookLogs, getStripeMetrics, getStripeProducts, createStripeProduct, updateStripeProduct, createStripePrice, updateStripePrice, archiveStripeProduct, submitEducatorFeedback, logSupportIntervention, trackLearnerInteraction, getLearnerMotivationProfile, getLearnerNudges, respondToNudge, computeMotivationSignals, generateMotivationNudges, getClassInsights.
+i  functions[us-central1-aggregateDailyTelemetry]: function ignored because the pubsub emulator does not exist or is not running.
+i  functions[us-central1-aggregateWeeklyTelemetry]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-triggerTelemetryAggregation]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/triggerTelemetryAggregation).
+✔  functions[us-central1-bosIngestEvent]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosIngestEvent).
+✔  functions[us-central1-bosGetOrchestrationState]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosGetOrchestrationState).
+✔  functions[us-central1-bosGetIntervention]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosGetIntervention).
+✔  functions[us-central1-bosScoreMvl]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosScoreMvl).
+✔  functions[us-central1-bosSubmitMvlEvidence]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosSubmitMvlEvidence).
+✔  functions[us-central1-bosTeacherOverrideMvl]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosTeacherOverrideMvl).
+✔  functions[us-central1-bosGetClassInsights]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosGetClassInsights).
+✔  functions[us-central1-bosContestability]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/bosContestability).
+✔  functions[us-central1-upsertSchoolConsentRecord]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/upsertSchoolConsentRecord).
+✔  functions[us-central1-getSchoolConsentRecord]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getSchoolConsentRecord).
+✔  functions[us-central1-upsertCoppaRetentionOverride]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/upsertCoppaRetentionOverride).
+✔  functions[us-central1-submitParentDataRequest]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/submitParentDataRequest).
+✔  functions[us-central1-processParentDataRequest]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/processParentDataRequest).
+✔  functions[us-central1-runCoppaRetentionSweep]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/runCoppaRetentionSweep).
+i  functions[us-central1-scheduledCoppaRetentionSweep]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-getCoppaComplianceSnapshot]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getCoppaComplianceSnapshot).
+✔  functions[us-central1-voiceApi]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/voiceApi).
+✔  functions[us-central1-copilotMessage]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/copilotMessage).
+✔  functions[us-central1-voiceTranscribe]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/voiceTranscribe).
+✔  functions[us-central1-ttsSpeak]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/ttsSpeak).
+✔  functions[us-central1-voiceAudio]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/voiceAudio).
+✔  functions[us-central1-genAiCoach]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/genAiCoach).
+✔  functions[us-central1-logTelemetryEvent]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/logTelemetryEvent).
+✔  functions[us-central1-logAnalyticsEvent]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/logAnalyticsEvent).
+✔  functions[us-central1-getTelemetryDashboardMetrics]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getTelemetryDashboardMetrics).
+✔  functions[us-central1-listUsers]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/listUsers).
+✔  functions[us-central1-updateUserRoles]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/updateUserRoles).
+✔  functions[us-central1-processCheckout]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/processCheckout).
+✔  functions[us-central1-requestNotificationSend]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/requestNotificationSend).
+✔  functions[us-central1-resetUserPassword]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/resetUserPassword).
+✔  functions[us-central1-listAuditLogs]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/listAuditLogs).
+i  functions[us-central1-processNotificationRequests]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-createCheckoutIntent]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createCheckoutIntent).
+✔  functions[us-central1-completeCheckout]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/completeCheckout).
+✔  functions[us-central1-completeCheckoutWebhook]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/completeCheckoutWebhook).
+✔  functions[us-central1-createStripeCheckoutSession]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createStripeCheckoutSession).
+✔  functions[us-central1-createStripeSubscription]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createStripeSubscription).
+✔  functions[us-central1-stripeWebhook]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/stripeWebhook).
+✔  functions[us-central1-createStripePortalSession]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createStripePortalSession).
+✔  functions[us-central1-getUserSubscriptions]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getUserSubscriptions).
+✔  functions[us-central1-getUserEntitlements]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getUserEntitlements).
+✔  functions[us-central1-healthCheck]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/healthCheck).
+i  functions[us-central1-checkExpiringSubscriptions]: function ignored because the pubsub emulator does not exist or is not running.
+i  functions[us-central1-archiveOldTelemetry]: function ignored because the pubsub emulator does not exist or is not running.
+i  functions[us-central1-cleanupExpiredIntents]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-cancelSubscription]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/cancelSubscription).
+✔  functions[us-central1-resumeSubscription]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/resumeSubscription).
+✔  functions[us-central1-updateSubscriptionPaymentMethod]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/updateSubscriptionPaymentMethod).
+✔  functions[us-central1-getInvoiceHistory]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getInvoiceHistory).
+✔  functions[us-central1-retryInvoicePayment]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/retryInvoicePayment).
+i  functions[us-central1-monitorWebhookHealth]: function ignored because the pubsub emulator does not exist or is not running.
+✔  functions[us-central1-processRefund]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/processRefund).
+✔  functions[us-central1-getWebhookLogs]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getWebhookLogs).
+✔  functions[us-central1-getStripeMetrics]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getStripeMetrics).
+✔  functions[us-central1-getStripeProducts]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getStripeProducts).
+✔  functions[us-central1-createStripeProduct]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createStripeProduct).
+✔  functions[us-central1-updateStripeProduct]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/updateStripeProduct).
+✔  functions[us-central1-createStripePrice]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/createStripePrice).
+✔  functions[us-central1-updateStripePrice]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/updateStripePrice).
+✔  functions[us-central1-archiveStripeProduct]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/archiveStripeProduct).
+✔  functions[us-central1-submitEducatorFeedback]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/submitEducatorFeedback).
+✔  functions[us-central1-logSupportIntervention]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/logSupportIntervention).
+✔  functions[us-central1-trackLearnerInteraction]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/trackLearnerInteraction).
+✔  functions[us-central1-getLearnerMotivationProfile]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getLearnerMotivationProfile).
+✔  functions[us-central1-getLearnerNudges]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getLearnerNudges).
+✔  functions[us-central1-respondToNudge]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/respondToNudge).
+✔  functions[us-central1-computeMotivationSignals]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/computeMotivationSignals).
+✔  functions[us-central1-generateMotivationNudges]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/generateMotivationNudges).
+✔  functions[us-central1-getClassInsights]: http function initialized (http://127.0.0.1:5001/studio-3328096157-e3f79/us-central1/getClassInsights).
+
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬────────────────┬──────────────────────────────────┐
+│ Emulator       │ Host:Port      │ View in Emulator UI              │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Authentication │ 127.0.0.1:9099 │ http://127.0.0.1:4000/auth       │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Functions      │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions  │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Firestore      │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore  │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Storage        │ 127.0.0.1:9199 │ http://127.0.0.1:4000/storage    │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Extensions     │ 127.0.0.1:5001 │ http://127.0.0.1:4000/extensions │
+└────────────────┴────────────────┴──────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+┌─────────────────────────┬───────────────┬─────────────────────┐
+│ Extension Instance Name │ Extension Ref │ View in Emulator UI │
+└─────────────────────────┴───────────────┴─────────────────────┘
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+
+[TIMEOUT after 180s]
+ 
+i  emulators: Received SIGTERM for the first time. Starting a clean shutdown.
+i  emulators: Please wait for a clean shutdown or send the SIGTERM signal again to stop right now.
+i  emulators: Shutting down emulators.
+i  ui: Stopping Emulator UI
+i  extensions: Stopping Extensions Emulator
+i  functions: Stopping Functions Emulator
+i  firestore: Stopping Firestore Emulator
+i  auth: Stopping Authentication Emulator
+i  storage: Stopping Storage Emulator
+i  eventarc: Stopping Eventarc Emulator
+i  tasks: Stopping Cloud Tasks Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

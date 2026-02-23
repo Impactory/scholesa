@@ -1,0 +1,9 @@
+$ npm install
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 600
+
+
+up to date in 878ms
+
+197 packages are looking for funding
+  run `npm fund` for details

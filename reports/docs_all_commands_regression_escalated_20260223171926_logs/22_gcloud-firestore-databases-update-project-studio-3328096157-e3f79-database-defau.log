@@ -1,0 +1,28 @@
+$ gcloud firestore databases update --project=studio-3328096157-e3f79 --database='(default)' --enable-pitr --quiet
+cwd: /Users/simonluke/dev/scholesa
+timeout_seconds: 240
+
+Request issued for: [(default)]
+Updated database [(default)].
+done: true
+metadata:
+  '@type': type.googleapis.com/google.firestore.admin.v1.UpdateDatabaseMetadata
+name: projects/studio-3328096157-e3f79/databases/(default)/operations/BhACyqHm8BAGycelrQgMChAa
+response:
+  '@type': type.googleapis.com/google.firestore.admin.v1.Database
+  appEngineIntegrationMode: DISABLED
+  concurrencyMode: PESSIMISTIC
+  createTime: '2025-12-04T18:27:57.692614Z'
+  databaseEdition: STANDARD
+  deleteProtectionState: DELETE_PROTECTION_DISABLED
+  earliestVersionTime: '2026-02-20T12:53:00Z'
+  etag: IPa5sIiR8JIDMI2DsIiR8JID
+  freeTier: true
+  locationId: us-central1
+  name: projects/studio-3328096157-e3f79/databases/(default)
+  pointInTimeRecoveryEnablement: POINT_IN_TIME_RECOVERY_ENABLED
+  realtimeUpdatesMode: REALTIME_UPDATES_MODE_ENABLED
+  type: FIRESTORE_NATIVE
+  uid: 425ab674-9d7f-4e23-b48d-7c49106c7cd2
+  updateTime: '2025-12-04T18:27:57.692614Z'
+  versionRetentionPeriod: 604800s
