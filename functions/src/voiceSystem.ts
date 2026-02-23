@@ -811,7 +811,7 @@ function parseMultipartForm(req: Request): {
         data: Buffer.from(bodyBlock, 'latin1'),
       };
     } else {
-      fields[fieldName] = bodyBlock.trim();
+      fields[fieldName] = Buffer.from(bodyBlock, 'latin1').toString('utf8').trim();
     }
   }
   return { fields, files };
