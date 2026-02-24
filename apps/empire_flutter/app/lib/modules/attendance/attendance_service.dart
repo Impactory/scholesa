@@ -51,8 +51,7 @@ class AttendanceService extends ChangeNotifier {
       );
 
       _todayOccurrences = await Future.wait(
-        docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+        docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
           final Map<String, dynamic> data = doc.data();
 
           // Count enrolled learners
@@ -67,7 +66,8 @@ class AttendanceService extends ChangeNotifier {
             id: doc.id,
             sessionId: data['sessionId'] as String? ?? '',
             siteId: data['siteId'] as String? ?? '',
-            title: _stringOrDefault(data['title'], data['sessionTitle'], 'Untitled Session'),
+            title: _stringOrDefault(
+                data['title'], data['sessionTitle'], 'Untitled Session'),
             startTime: _parseTimestamp(data['startTime']) ??
                 _parseTimestamp(data['date']) ??
                 DateTime.now(),
@@ -324,7 +324,8 @@ class AttendanceService extends ChangeNotifier {
     return null;
   }
 
-  String _stringOrDefault(dynamic primary, dynamic fallback, String fallbackText) {
+  String _stringOrDefault(
+      dynamic primary, dynamic fallback, String fallbackText) {
     if (primary is String && primary.trim().isNotEmpty) {
       return primary.trim();
     }
@@ -385,7 +386,8 @@ class AttendanceService extends ChangeNotifier {
     }
   }
 
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _fetchTodayOccurrenceDocs({
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _fetchTodayOccurrenceDocs({
     required Timestamp startTs,
     required Timestamp endTs,
   }) async {

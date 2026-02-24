@@ -47,28 +47,29 @@ class EducatorService extends ChangeNotifier {
 
       _todayClasses = occurrenceDocs
           .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-            final Map<String, dynamic> data = doc.data();
-            final DateTime startTime = _parseTimestamp(data['startTime']) ??
-                _parseTimestamp(data['date']) ??
-                DateTime.now();
-            final DateTime endTime = _parseTimestamp(data['endTime']) ??
-                startTime.add(const Duration(hours: 1));
-            return TodayClass(
-              id: doc.id,
-              sessionId: data['sessionId'] as String? ?? '',
-              title: _stringOrDefault(data['title'], data['sessionTitle'], 'Session'),
-              description: _stringOrDefault(data['description'], null, ''),
-              startTime: startTime,
-              endTime: endTime,
-              location: _stringOrDefault(data['location'], data['roomName'], ''),
-              enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
-              presentCount: (data['presentCount'] as num?)?.toInt() ?? 0,
-              status: _stringOrDefault(data['status'], null, 'upcoming'),
-              learners: const <EnrolledLearner>[],
-            );
-          })
-          .toList()
-        ..sort((TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
+        final Map<String, dynamic> data = doc.data();
+        final DateTime startTime = _parseTimestamp(data['startTime']) ??
+            _parseTimestamp(data['date']) ??
+            DateTime.now();
+        final DateTime endTime = _parseTimestamp(data['endTime']) ??
+            startTime.add(const Duration(hours: 1));
+        return TodayClass(
+          id: doc.id,
+          sessionId: data['sessionId'] as String? ?? '',
+          title:
+              _stringOrDefault(data['title'], data['sessionTitle'], 'Session'),
+          description: _stringOrDefault(data['description'], null, ''),
+          startTime: startTime,
+          endTime: endTime,
+          location: _stringOrDefault(data['location'], data['roomName'], ''),
+          enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+          presentCount: (data['presentCount'] as num?)?.toInt() ?? 0,
+          status: _stringOrDefault(data['status'], null, 'upcoming'),
+          learners: const <EnrolledLearner>[],
+        );
+      }).toList()
+        ..sort(
+            (TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
 
       _dayStats = _calculateStats();
       debugPrint(
@@ -102,7 +103,8 @@ class EducatorService extends ChangeNotifier {
     return null;
   }
 
-  String _stringOrDefault(dynamic primary, dynamic fallback, String defaultValue) {
+  String _stringOrDefault(
+      dynamic primary, dynamic fallback, String defaultValue) {
     if (primary is String && primary.trim().isNotEmpty) {
       return primary.trim();
     }
@@ -284,41 +286,40 @@ class EducatorService extends ChangeNotifier {
       final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
           await _loadEducatorSessionDocs();
 
-      _sessions = sessionDocs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-            final Map<String, dynamic> data = doc.data();
-            final String pillar = _stringOrDefault(
-              data['pillar'],
-              (data['pillarCodes'] is List<dynamic> &&
-                      (data['pillarCodes'] as List<dynamic>).isNotEmpty)
-                  ? data['pillarCodes'][0]
-                  : null,
-              'future_skills',
-            );
-            final DateTime startTime = _parseTimestamp(data['startTime']) ??
-                _parseTimestamp(data['startDate']) ??
-                DateTime.now();
-            final DateTime endTime = _parseTimestamp(data['endTime']) ??
-                _parseTimestamp(data['endDate']) ??
-                startTime.add(const Duration(hours: 1));
-            return EducatorSession(
-              id: doc.id,
-              title: _stringOrDefault(data['title'], null, 'Session'),
-              description: _stringOrDefault(data['description'], null, ''),
-              pillar: pillar,
-              startTime: startTime,
-              endTime: endTime,
-              location: _stringOrDefault(data['location'], data['roomName'], ''),
-              enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
-              maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
-              status: _stringOrDefault(data['status'], null, 'upcoming'),
-            );
-          })
-          .toList()
-        ..sort(
-          (EducatorSession a, EducatorSession b) =>
-              b.startTime.compareTo(a.startTime),
+      _sessions =
+          sessionDocs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String pillar = _stringOrDefault(
+          data['pillar'],
+          (data['pillarCodes'] is List<dynamic> &&
+                  (data['pillarCodes'] as List<dynamic>).isNotEmpty)
+              ? data['pillarCodes'][0]
+              : null,
+          'future_skills',
         );
+        final DateTime startTime = _parseTimestamp(data['startTime']) ??
+            _parseTimestamp(data['startDate']) ??
+            DateTime.now();
+        final DateTime endTime = _parseTimestamp(data['endTime']) ??
+            _parseTimestamp(data['endDate']) ??
+            startTime.add(const Duration(hours: 1));
+        return EducatorSession(
+          id: doc.id,
+          title: _stringOrDefault(data['title'], null, 'Session'),
+          description: _stringOrDefault(data['description'], null, ''),
+          pillar: pillar,
+          startTime: startTime,
+          endTime: endTime,
+          location: _stringOrDefault(data['location'], data['roomName'], ''),
+          enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+          maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
+          status: _stringOrDefault(data['status'], null, 'upcoming'),
+        );
+      }).toList()
+            ..sort(
+              (EducatorSession a, EducatorSession b) =>
+                  b.startTime.compareTo(a.startTime),
+            );
 
       debugPrint('Loaded ${_sessions.length} sessions for educator');
     } catch (e) {
@@ -534,7 +535,8 @@ class EducatorService extends ChangeNotifier {
       return;
     }
     for (int index = 0; index < values.length; index += size) {
-      final int end = (index + size < values.length) ? index + size : values.length;
+      final int end =
+          (index + size < values.length) ? index + size : values.length;
       yield values.sublist(index, end);
     }
   }
@@ -576,7 +578,7 @@ class EducatorService extends ChangeNotifier {
 
   Future<Set<String>> _resolveLearnerIdsForEducator() async {
     final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> enrollments =
-        <String, QueryDocumentSnapshot<Map<String, dynamic>>{};
+        <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
 
     await _appendEnrollmentQueryResults(
       query: _firestore

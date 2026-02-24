@@ -258,16 +258,37 @@ class UserAdminService extends ChangeNotifier {
     try {
       // Create user document in Firebase
       final DocumentReference<Map<String, dynamic>> docRef =
-          await _firestore.collection('users').add(<String, dynamic>{
+          _firestore.collection('users').doc();
+      await docRef.set(<String, dynamic>{
+        'uid': docRef.id,
         'email': email,
         'displayName': displayName,
         'role': role.name,
         'status': 'pending',
         'siteIds': siteIds,
+        if (siteIds.isNotEmpty) 'activeSiteId': siteIds.first,
         'entitlements': <Map<String, dynamic>>[],
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      final UserModel newUser = UserModel(
+        uid: docRef.id,
+        email: email,
+        displayName: displayName,
+        role: role,
+        status: UserStatus.pending,
+        siteIds: siteIds,
+        createdAt: DateTime.now(),
+      );
+
+      for (final String siteId in siteIds) {
+        await _syncSiteRoleLink(
+          siteId: siteId,
+          user: newUser,
+          add: true,
+        );
+      }
 
       // Log the action
       await _logAuditAction(
@@ -279,16 +300,6 @@ class UserAdminService extends ChangeNotifier {
           'role': role.name,
           'siteIds': siteIds,
         },
-      );
-
-      final UserModel newUser = UserModel(
-        uid: docRef.id,
-        email: email,
-        displayName: displayName,
-        role: role,
-        status: UserStatus.pending,
-        siteIds: siteIds,
-        createdAt: DateTime.now(),
       );
 
       _users = <UserModel>[..._users, newUser];
@@ -393,8 +404,14 @@ class UserAdminService extends ChangeNotifier {
 
       await _firestore.collection('users').doc(userId).update(<String, dynamic>{
         'siteIds': newSiteIds,
+        if (user.siteIds.isEmpty) 'activeSiteId': siteId,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      await _syncSiteRoleLink(
+        siteId: siteId,
+        user: user,
+        add: true,
+      );
 
       // Log the action
       await _logAuditAction(
@@ -429,8 +446,15 @@ class UserAdminService extends ChangeNotifier {
 
       await _firestore.collection('users').doc(userId).update(<String, dynamic>{
         'siteIds': newSiteIds,
+        if (newSiteIds.isEmpty) 'activeSiteId': null,
+        if (newSiteIds.isNotEmpty) 'activeSiteId': newSiteIds.first,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      await _syncSiteRoleLink(
+        siteId: siteId,
+        user: user,
+        add: false,
+      );
 
       // Log the action
       await _logAuditAction(
@@ -479,5 +503,45 @@ class UserAdminService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Failed to log audit action: $e');
     }
+  }
+
+  List<String> _siteRoleFields(UserRole role) {
+    switch (role) {
+      case UserRole.site:
+        return <String>['siteLeadIds', 'educatorIds'];
+      case UserRole.educator:
+        return <String>['educatorIds'];
+      case UserRole.learner:
+        return <String>['learnerIds'];
+      case UserRole.parent:
+        return <String>['parentIds'];
+      case UserRole.hq:
+        return <String>['hqIds'];
+      case UserRole.partner:
+        return <String>['partnerIds'];
+    }
+  }
+
+  Future<void> _syncSiteRoleLink({
+    required String siteId,
+    required UserModel user,
+    required bool add,
+  }) async {
+    final List<String> fields = _siteRoleFields(user.role);
+    if (fields.isEmpty) return;
+
+    final Map<String, dynamic> updates = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    for (final String field in fields) {
+      updates[field] = add
+          ? FieldValue.arrayUnion(<String>[user.uid])
+          : FieldValue.arrayRemove(<String>[user.uid]);
+    }
+
+    await _firestore
+        .collection('sites')
+        .doc(siteId)
+        .set(updates, SetOptions(merge: true));
   }
 }
