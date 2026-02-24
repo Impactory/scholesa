@@ -61,3 +61,12 @@ For every task (feature, fix, refactor):
 - Parent privacy boundary (parents cannot read teacher intelligence)
 - Offline-first for class operations
 - Stable builds (pinned versions, reproducible builds)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `00_README_HOW_TO_USE_THE_VIBES.md`
+<!-- TELEMETRY_WIRING:END -->

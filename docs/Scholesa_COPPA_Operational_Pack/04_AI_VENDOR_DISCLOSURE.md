@@ -28,3 +28,12 @@ Scholesa may use third-party AI providers for educational assistance features.
 ## Parent-Facing Position
 - AI is used only to support education features.
 - Data handling details are surfaced via school privacy notice and district process.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_COPPA_Operational_Pack/04_AI_VENDOR_DISCLOSURE.md`
+<!-- TELEMETRY_WIRING:END -->

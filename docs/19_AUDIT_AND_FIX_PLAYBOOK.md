@@ -25,3 +25,12 @@ No release with P0/P1 open.
 - security denial proof
 - offline sync proof
 - audit report (`docs/20`)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `19_AUDIT_AND_FIX_PLAYBOOK.md`
+<!-- TELEMETRY_WIRING:END -->

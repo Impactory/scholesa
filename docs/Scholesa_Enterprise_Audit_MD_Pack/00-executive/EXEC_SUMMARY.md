@@ -15,3 +15,12 @@ This pack is designed to prove Scholesa is:
 3. Show AI guardrail test evidence
 4. Show release gate outputs + SBOM + scan results
 5. Show deletion/export workflows and logs
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_Enterprise_Audit_MD_Pack/00-executive/EXEC_SUMMARY.md`
+<!-- TELEMETRY_WIRING:END -->

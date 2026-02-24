@@ -140,3 +140,12 @@ Quick link: one-page staging PITR drill checklist in STAGING_PITR_DRILL_CHECKLIS
 3) Execute PITR restore to a timestamp immediately before mutation.
 4) Verify marker/doc state restored correctly and application can read restored data.
 5) Capture drill evidence: restore timestamp, completion time, validation queries, rollback decision.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `QA_RUNBOOK.md`
+<!-- TELEMETRY_WIRING:END -->

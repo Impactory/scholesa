@@ -60,3 +60,12 @@ Evidence:
 
 ## Investor takeaway
 Scholesa reduces the highest failure modes of K–12 AI platforms (privacy, safety, integrity) while preserving iteration speed via serverless infrastructure.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_Enterprise_Audit_Pack_PLUS/00-executive/VC_TECH_RISK_BRIEF.md`
+<!-- TELEMETRY_WIRING:END -->

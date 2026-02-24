@@ -48,3 +48,12 @@
 3) Update Firestore/Storage and rules using `BOS_MIA_DATA_MODEL.md`.
 4) Rewire routes and layouts using `BOS_MIA_UI_WIRING_MAP.md`.
 5) Validate UX tone with `MOTIVATION_ENGINE_VIBE_INSTRUCTIONS.md`.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `BOS_MIA_FILE_REPLACEMENT_NOTES.md`
+<!-- TELEMETRY_WIRING:END -->

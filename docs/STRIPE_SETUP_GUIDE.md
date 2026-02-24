@@ -309,3 +309,12 @@ export default function BillingPage() {
 - [Stripe Documentation](https://stripe.com/docs)
 - [Firebase Functions with Secrets](https://firebase.google.com/docs/functions/config-env#secret-manager)
 - [Stripe Webhook Testing](https://stripe.com/docs/webhooks/test)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `STRIPE_SETUP_GUIDE.md`
+<!-- TELEMETRY_WIRING:END -->

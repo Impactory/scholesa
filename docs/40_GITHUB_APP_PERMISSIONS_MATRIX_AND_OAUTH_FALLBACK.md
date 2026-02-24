@@ -92,3 +92,12 @@ Use GitHub’s official OAuth scope reference. citeturn0search2turn4vie
    - token type (IAT vs UAT)
    - resulting `X-Accepted-GitHub-Permissions` header (when present)
 3) If a call fails with permissions, surface a “Fix permissions” UI for admins, not for students.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `40_GITHUB_APP_PERMISSIONS_MATRIX_AND_OAUTH_FALLBACK.md`
+<!-- TELEMETRY_WIRING:END -->

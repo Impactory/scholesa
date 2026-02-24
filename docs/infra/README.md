@@ -17,3 +17,12 @@ This folder provides **Terraform module stubs** (skeletons) to implement the blu
 ## Notes
 - These are stubs: placeholders marked `TODO:` must be completed for your org/regions/projects.
 - Ensure voice buckets have lifecycle rules and are excluded from long-term backups.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `infra/README.md`
+<!-- TELEMETRY_WIRING:END -->

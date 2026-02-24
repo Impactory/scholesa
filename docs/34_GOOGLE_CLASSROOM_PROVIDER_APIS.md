@@ -49,3 +49,12 @@ Your Dart API must implement:
 
 ## 5) Critical implementation constraint
 Classroom writes that modify CourseWork/submissions must be made with the same Developer Console project OAuth client that created the work item (important when you manage multiple environments). citeturn0search4turn0search5
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `34_GOOGLE_CLASSROOM_PROVIDER_APIS.md`
+<!-- TELEMETRY_WIRING:END -->

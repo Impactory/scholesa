@@ -26,3 +26,12 @@ C) Voice Output Branches (TTS)
 - C6 Redaction: remove identifiers before speaking if required
 - C7 Audit Trace: metrics only
 - C8 Cache: safe caching rules
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_TTS_Full_Deployment_MD_Pack/01-architecture/BOS_BRANCH_MAP.md`
+<!-- TELEMETRY_WIRING:END -->

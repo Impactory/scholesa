@@ -48,3 +48,12 @@ Queue item recommended fields:
 - “saved locally” confirmations
 - manual “sync now”
 - error inspector for failed items
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `05_OFFLINE_FIRST_ISAR_SYNC_POLICY.md`
+<!-- TELEMETRY_WIRING:END -->

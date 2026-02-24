@@ -283,3 +283,12 @@ Before deploying to production:
 - `src/hooks/useTelemetry.ts` (NEW)
 - `src/components/sdt/AICoachPopup.tsx` (UPDATED)
 - `src/components/sdt/StudentDashboard.tsx` (UPDATED)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `SDT_TELEMETRY_IMPLEMENTATION_SUMMARY.md`
+<!-- TELEMETRY_WIRING:END -->

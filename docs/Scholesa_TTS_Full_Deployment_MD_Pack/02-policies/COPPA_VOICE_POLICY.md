@@ -20,3 +20,12 @@ Applies to all student voice features (STT + TTS), especially under age 13 (K–
 - Grade-band setting: voice_student_default_on (K–5 = ON with safe-mode, but allow opt-out)
 - Quiet hours: teacher-configurable
 - Audit logs: no raw content
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_TTS_Full_Deployment_MD_Pack/02-policies/COPPA_VOICE_POLICY.md`
+<!-- TELEMETRY_WIRING:END -->

@@ -14,3 +14,12 @@ See PRIVACY/EXPORT_DELETE_RUNBOOK.md and PRIVACY/RETENTION_DELETION.md.
 
 ## How do you respond to incidents?
 See OPS/INCIDENT_RESPONSE_PLAN.md and OPS/POSTMORTEM_TEMPLATE.md.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_Enterprise_Audit_MD_Pack/00-executive/AUDITOR_QA.md`
+<!-- TELEMETRY_WIRING:END -->

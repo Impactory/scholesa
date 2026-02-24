@@ -19,3 +19,12 @@
 - VIBE tenant isolation tests
 - Egress proof: no external calls
 - Logs demonstrate redaction flags
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_TTS_Full_Deployment_MD_Pack/04-security/VOICE_SECURITY_MODEL.md`
+<!-- TELEMETRY_WIRING:END -->

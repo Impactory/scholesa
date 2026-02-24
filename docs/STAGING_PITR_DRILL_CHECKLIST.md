@@ -116,3 +116,12 @@ Validate Firestore Point-in-Time Recovery (PITR) readiness in staging by proving
 - Follow-ups:
   - Add quarterly PITR schedule entry (Owner: SRE Lead, Due: 2026-03-01)
   - Automate marker checksum verification script (Owner: Platform Eng, Due: 2026-03-08)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `STAGING_PITR_DRILL_CHECKLIST.md`
+<!-- TELEMETRY_WIRING:END -->

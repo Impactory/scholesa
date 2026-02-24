@@ -45,3 +45,12 @@ CheckInOut is the “facility presence” record.
 - site.checkin
 - site.checkout
 - site.late_pickup.flagged
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `42_PHYSICAL_SITE_CHECKIN_CHECKOUT_SPEC.md`
+<!-- TELEMETRY_WIRING:END -->

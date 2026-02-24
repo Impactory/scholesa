@@ -4,6 +4,11 @@ Implementation Audit & Go-Live Checklist
 Last Updated: 2026-02-23
 Audit Mode: Full-scope (Core + Extended + Non-core)
 
+## Canonical Enforcement Contract
+
+Primary policy source for telemetry/compliance automation:
+- `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+
 ## Final Status
 
 **GO (functional + regression gates passed)**
@@ -104,3 +109,11 @@ Generated artifacts:
 Status:
 - ⚠️ Functional go-live gates pass, but dependency hardening remains an explicit security remediation track.
 
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `51_IMPLEMENTATION_AUDIT_GO_LIVE.md`
+<!-- TELEMETRY_WIRING:END -->

@@ -94,3 +94,12 @@ API:
 
 Evidence required:
 - screenshots + logs for each section
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `09_TEST_STRATEGY_QA_FINAL_COMPLIANCE.md`
+<!-- TELEMETRY_WIRING:END -->

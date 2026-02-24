@@ -76,3 +76,12 @@ Write AuditLog entries for:
 If deploying at scale:
 - publish the app to Workspace Marketplace as appropriate
 - domain admin may need to whitelist/enable add-ons/integration features
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `30_GOOGLE_CLASSROOM_OAUTH_SECURITY.md`
+<!-- TELEMETRY_WIRING:END -->

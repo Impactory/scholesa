@@ -51,3 +51,12 @@ When a mission pack is sold, the pack references immutable mission snapshots or 
 - mission.snapshot.created
 - rubric.applied
 - rubric.shared_to_parent_summary
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md`
+<!-- TELEMETRY_WIRING:END -->

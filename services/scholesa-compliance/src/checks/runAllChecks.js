@@ -16,6 +16,11 @@ const { runTenantIsolationInvariants } = require('./tenantIsolationInvariants');
 const { runVoiceRetentionControls } = require('./voiceRetentionControls');
 const { runLogPrivacySafety } = require('./logPrivacySafety');
 const { runStudentDataTrainingBan } = require('./studentDataTrainingBan');
+const { runTenantIsolation } = require('./tenantIsolation');
+const { runInferenceAuthz } = require('./inferenceAuthz');
+const { runInferenceIngressPrivate } = require('./inferenceIngressPrivate');
+const { runInfraDrift } = require('./infraDrift');
+const { runI18nCoverage } = require('./i18nCoverage');
 
 function runCommand(command) {
   try {
@@ -95,9 +100,14 @@ function runComplianceSuite(trigger = 'manual') {
     runVendorSecretBan(),
     runRuntimeEgressProof(),
     runTenantIsolationInvariants(),
+    runTenantIsolation(),
+    runInferenceAuthz(),
+    runInferenceIngressPrivate(),
     runVoiceRetentionControls(),
     runLogPrivacySafety(),
     runStudentDataTrainingBan(),
+    runInfraDrift(),
+    runI18nCoverage(),
   ];
 
   const failures = summarizeChecks(checks, externalSuites);
@@ -128,9 +138,14 @@ function runComplianceSuite(trigger = 'manual') {
       vendorSecretBan: 'audit-pack/reports/vendor-secret-ban.json',
       vendorEgressProof: 'audit-pack/reports/vendor-egress-proof.json',
       tenantIsolationInvariants: 'audit-pack/reports/tenant-isolation-invariants.json',
+      tenantIsolation: 'audit-pack/reports/tenant-isolation.json',
+      inferenceAuthz: 'audit-pack/reports/inference-authz.json',
+      inferenceIngressPrivate: 'audit-pack/reports/inference-ingress-private.json',
       voiceRetentionControls: 'audit-pack/reports/voice-retention-controls.json',
       logPrivacySafety: 'audit-pack/reports/log-privacy-safety.json',
       studentDataTrainingBan: 'audit-pack/reports/student-data-training-ban.json',
+      infraDrift: 'audit-pack/reports/infra-drift.json',
+      i18nCoverage: 'audit-pack/reports/i18n-coverage.json',
       aiDependencyBan: 'audit-pack/reports/ai-dependency-ban.json',
       aiImportBan: 'audit-pack/reports/ai-import-ban.json',
       aiDomainBan: 'audit-pack/reports/ai-domain-ban.json',
@@ -173,9 +188,14 @@ function runComplianceSuite(trigger = 'manual') {
       aiEgressNone: latestJson('ai-egress-none.json')?.passed === true,
       voiceTenantIsolation: latestJson('voice-tenant-isolation.json')?.passed === true,
       tenantIsolationInvariants: checks.find((item) => item.checkId === 'tenant_isolation_invariants')?.passed === true,
+      tenantIsolation: checks.find((item) => item.checkId === 'tenant_isolation')?.passed === true,
+      inferenceAuthz: checks.find((item) => item.checkId === 'inference_authz')?.passed === true,
+      inferenceIngressPrivate: checks.find((item) => item.checkId === 'inference_ingress_private')?.passed === true,
       voiceRetentionControls: checks.find((item) => item.checkId === 'voice_retention_controls')?.passed === true,
       logPrivacySafety: checks.find((item) => item.checkId === 'log_privacy_safety')?.passed === true,
       studentDataTrainingBan: checks.find((item) => item.checkId === 'student_data_training_ban')?.passed === true,
+      infraDrift: checks.find((item) => item.checkId === 'infra_drift')?.passed === true,
+      i18nCoverage: checks.find((item) => item.checkId === 'i18n_coverage')?.passed === true,
     },
     reportPath: path.relative(REPO_ROOT, runReportPath),
   });

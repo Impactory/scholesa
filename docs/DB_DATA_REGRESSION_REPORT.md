@@ -60,3 +60,11 @@
 - Query-plan introspection is limited in emulator; latency + index definition checks are used as practical proxies.
 - PITR must be validated against managed Firestore in a cloud project (not emulator).
 
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `DB_DATA_REGRESSION_REPORT.md`
+<!-- TELEMETRY_WIRING:END -->

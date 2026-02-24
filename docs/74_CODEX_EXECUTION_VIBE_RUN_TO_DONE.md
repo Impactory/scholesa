@@ -128,3 +128,12 @@ Deliverable proof:
 - At least two real workflows implemented end-to-end with real storage, not mocks.
 - Route flips recorded in `49_ROUTE_FLIP_TRACKER.md`.
 - Evidence recorded in `51_IMPLEMENTATION_AUDIT_GO_LIVE.md`.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `74_CODEX_EXECUTION_VIBE_RUN_TO_DONE.md`
+<!-- TELEMETRY_WIRING:END -->

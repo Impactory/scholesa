@@ -20,3 +20,12 @@ These requirements are deferred while the web stack (Next.js/PWA/Cloud Run) rema
 2) Run `npm install` and `npm test`.
 3) Run `npm run build` and address PWA/runtimeCaching.
 4) Resume repos/tests for remaining deferred items (REQ-024–027, 031, 033–036, 039–040, 043, 045).
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `DEFERMENT_LOG.md`
+<!-- TELEMETRY_WIRING:END -->

@@ -88,3 +88,12 @@ Expected:
 Visually confirm:
 - no typography/color/component changes introduced by add-on pages
 - add-on pages use the same design tokens as the core app
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `38_QA_SCRIPT_CLASSROOM_ADDON_GITHUB.md`
+<!-- TELEMETRY_WIRING:END -->

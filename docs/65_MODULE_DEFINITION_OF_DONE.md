@@ -75,3 +75,12 @@ When DoD passes:
 2) Add provider wiring to the route factory
 3) Run smoke test: open dashboard card and complete one core action
 4) Capture evidence (screenshot/video) and link in audit
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `65_MODULE_DEFINITION_OF_DONE.md`
+<!-- TELEMETRY_WIRING:END -->

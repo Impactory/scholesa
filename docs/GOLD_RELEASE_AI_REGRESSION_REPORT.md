@@ -97,3 +97,12 @@ None. Gold checklist items are covered for this release pass.
 - `gcloud firestore import gs://studio-3328096157-e3f79.firebasestorage.app/firestore-backups/ai-gold-... --project=studio-3328096157-e3f79 --database=restore-smoke --collection-ids=...`
 - `gcloud firestore databases delete --project=studio-3328096157-e3f79 --database=restore-smoke --quiet`
 - `for i in {1..20}; do curl -o /dev/null -s -w '%{time_total}\n' https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/healthCheck; done | sort -n | awk ...`
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `GOLD_RELEASE_AI_REGRESSION_REPORT.md`
+<!-- TELEMETRY_WIRING:END -->

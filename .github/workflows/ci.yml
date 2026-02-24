@@ -37,7 +37,14 @@ jobs:
         run: npm run test:integration:analytics
 
       - name: Full RC2 regression chain
+        env:
+          VIBE_ENV: staging
         run: npm run rc2:regression
+
+      - name: VIBE telemetry blocker gate
+        env:
+          VIBE_ENV: staging
+        run: npm run qa:vibe-telemetry:blockers
 
       - name: COPPA compliance operator gate
         run: npm run compliance:gate

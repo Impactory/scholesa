@@ -27,3 +27,12 @@
 ## Notes
 - Web stack repositories remain scaffolded; full wiring paused.
 - Flutter app (apps/empire_flutter/app) uses the same Firestore collections (users, sessions, occurrences, enrollments, attendanceRecords, missions, missionAttempts, portfolioItems) with site-scoped queries and offline queue support.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `SCHEMA_PORT_REPORT.md`
+<!-- TELEMETRY_WIRING:END -->

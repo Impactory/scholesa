@@ -67,3 +67,12 @@ Define the exact steps to cutover safely to production.
 - verify billing events and entitlements
 - verify Classroom/GitHub jobs (if enabled)
 - run a test export and verify access controls
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `72_RELEASE_CUTOVER_RUNBOOK.md`
+<!-- TELEMETRY_WIRING:END -->

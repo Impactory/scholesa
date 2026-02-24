@@ -95,3 +95,12 @@ Based on the findings, the recommended order for remediation is:
 | 2025-12-21 | A-09 | Created `src/lib/logic/invariants.ts`. | ✅ Fixed |
 | 2025-12-21 | A-XX | Created `AiDraftBadge` for future AI usage. | ✅ Fixed |
 | 2025-12-21 | A-XX | Verified build and smoke tests. | ✅ Fixed |
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `SCHOLESA_AUDIT_REPORT_TEMPLATE.md`
+<!-- TELEMETRY_WIRING:END -->

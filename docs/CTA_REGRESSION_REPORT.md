@@ -842,3 +842,11 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L352: `/// A quick action button with icon and label`
 - L380: `'cta_id': 'tap_quick_action',`
 
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `CTA_REGRESSION_REPORT.md`
+<!-- TELEMETRY_WIRING:END -->

@@ -25,6 +25,8 @@
     "qa:telemetry-live-repair:apply": "node scripts/telemetry_live_repair.js --apply --strict",
     "qa:telemetry-live-seed": "node scripts/telemetry_live_seed_coverage.js --strict",
     "qa:telemetry-live-seed:apply": "node scripts/telemetry_live_seed_coverage.js --apply --strict",
+    "qa:vibe-telemetry:audit": "node scripts/vibe_telemetry_audit_master.js --strict",
+    "qa:vibe-telemetry:blockers": "node scripts/vibe_ci_blocker_gate.js --strict",
     "vibe:i18n:lint": "node scripts/vibe_i18n_lint.js",
     "vibe:i18n:keys": "node scripts/vibe_i18n_keys.js",
     "vibe:ui:screens:i18n": "node scripts/vibe_ui_screens_i18n.js",

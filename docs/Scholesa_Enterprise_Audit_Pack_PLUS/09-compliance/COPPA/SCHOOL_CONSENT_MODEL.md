@@ -12,3 +12,12 @@ Scholesa is designed for school deployments where the school/district acts as th
 - Grade-band gating (K–5 safest defaults)
 - Data minimization to AI providers
 - Export/delete workflows administered via school channels
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `Scholesa_Enterprise_Audit_Pack_PLUS/09-compliance/COPPA/SCHOOL_CONSENT_MODEL.md`
+<!-- TELEMETRY_WIRING:END -->

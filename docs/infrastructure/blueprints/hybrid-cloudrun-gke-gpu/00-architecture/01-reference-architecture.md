@@ -40,3 +40,12 @@
 ## Key security stance
 - No direct client access to inference plane.
 - All inference endpoints are private, reachable only from Cloud Run through VPC connectors / private ingress.
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `infrastructure/blueprints/hybrid-cloudrun-gke-gpu/00-architecture/01-reference-architecture.md`
+<!-- TELEMETRY_WIRING:END -->

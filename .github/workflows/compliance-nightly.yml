@@ -22,7 +22,14 @@ jobs:
         run: npm ci
 
       - name: Run full RC2 regression chain
+        env:
+          VIBE_ENV: prod
         run: npm run rc2:regression
+
+      - name: Run VIBE telemetry blocker gate
+        env:
+          VIBE_ENV: prod
+        run: npm run qa:vibe-telemetry:blockers
 
       - name: Run compliance operator
         run: npm run compliance:gate

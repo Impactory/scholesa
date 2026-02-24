@@ -14,8 +14,18 @@ This docs pack is designed to be copied into your repo under:
 - CI/CD release gates and audit artifact requirements
 - Runbooks for operations and incident response
 - K–12 content modularization layout (subject packs, standards packs, prompt modules)
+- Master audit enforcement contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 
 ## Hard constraints
 - No external AI vendors (Gemini/OpenAI/Anthropic/etc.)
 - COPPA-safe defaults (no training on student data, no raw audio retention, no raw logs)
 - Tenant isolation absolute (siteId from verified claims only)
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `infrastructure/blueprints/hybrid-cloudrun-gke-gpu/README.md`
+<!-- TELEMETRY_WIRING:END -->

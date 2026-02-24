@@ -133,3 +133,12 @@ Example:
 4) Learner: missions + habit coach + portfolio
 5) Integrations: Classroom add-on and GitHub link-based
 6) HQ: approvals + audit + billing admin
+
+<!-- TELEMETRY_WIRING:START -->
+## Telemetry & End-to-End Wiring
+- Wired end-to-end: yes
+- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
+- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
+- Doc scope: `47_ROLE_DASHBOARD_CARD_REGISTRY.md`
+<!-- TELEMETRY_WIRING:END -->

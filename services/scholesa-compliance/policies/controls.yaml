@@ -44,3 +44,25 @@ controls:
       - audit-pack/reports/student-data-training-ban.json
     remediation:
       runbook: audit-pack/runbooks/RUNBOOK_NO_TRAINING.md
+  - id: COPPA-08
+    name: Internal Inference Auth and Private Ingress
+    severity: blocker
+    checks:
+      - inference_authz
+      - inference_ingress_private
+    evidence:
+      - audit-pack/reports/inference-authz.json
+      - audit-pack/reports/inference-ingress-private.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_TENANT_ISOLATION.md
+  - id: COPPA-09
+    name: Infrastructure Drift and Locale Coverage
+    severity: blocker
+    checks:
+      - infra_drift
+      - i18n_coverage
+    evidence:
+      - audit-pack/reports/infra-drift.json
+      - audit-pack/reports/i18n-coverage.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_VENDOR_BAN.md
