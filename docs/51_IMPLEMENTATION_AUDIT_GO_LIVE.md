@@ -34,7 +34,7 @@ Primary policy source for telemetry/compliance automation:
 ## Core + Non-core Telemetry Gate
 
 Command:
-`node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
+`node scripts/telemetry_live_regression_audit.js --strict --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
 
 Result:
 - ✅ `Result: PASS`

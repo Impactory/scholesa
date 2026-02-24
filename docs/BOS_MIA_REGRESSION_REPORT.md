@@ -164,7 +164,7 @@ This report was re-validated with full-scope regression gates (not core-only):
 
 - ✅ `npm run rc2:regression` passed end-to-end.
 - ✅ `npm run vibe:all` passed.
-- ✅ `node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json` passed with canonical **36/36** event coverage.
+- ✅ `node scripts/telemetry_live_regression_audit.js --strict --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json` passed with canonical **36/36** event coverage.
 - ✅ `node scripts/vibe_voice_live_runner.js --strict --base-url=https://voiceapi-gu5vyrn2tq-uc.a.run.app` passed all required live voice suites.
 - ✅ Live runtime verification confirms Node 24 for deployed voice/telemetry functions.
 

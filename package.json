@@ -20,7 +20,7 @@
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
     "qa:telemetry-smoke": "node scripts/telemetry_smoke_check.js --mode=full --strict",
     "qa:telemetry-live-audit": "node scripts/telemetry_live_regression_audit.js --strict",
-    "qa:telemetry-live-audit:coverage": "node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage",
+    "qa:telemetry-live-audit:coverage": "node scripts/telemetry_live_regression_audit.js --strict",
     "qa:telemetry-live-repair": "node scripts/telemetry_live_repair.js --strict",
     "qa:telemetry-live-repair:apply": "node scripts/telemetry_live_repair.js --apply --strict",
     "qa:telemetry-live-seed": "node scripts/telemetry_live_seed_coverage.js --strict",

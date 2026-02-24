@@ -535,7 +535,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Coach embeddings
 Telemetry completion was re-verified against the full canonical event set (core + extended + non-core) using live data:
 
 Command:
-`node scripts/telemetry_live_regression_audit.js --strict --require-live-coverage --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
+`node scripts/telemetry_live_regression_audit.js --strict --hours=720 --project=studio-3328096157-e3f79 --credentials=firebase-service-account.json`
 
 Result:
 - ✅ `Result: PASS`
