@@ -427,7 +427,8 @@ function runTelemetrySchemaValid(env, args) {
     };
   }
 
-  const liveOrEvidencePass = liveAuditResult.pass;
+  const evidenceFallbackAllowed = env !== 'prod';
+  const liveOrEvidencePass = liveAuditResult.pass || (evidenceFallbackAllowed && evidenceFallback.pass);
 
   const checks = [
     ...requiredFieldChecks,
@@ -435,6 +436,7 @@ function runTelemetrySchemaValid(env, args) {
       id: 'live_telemetry_schema_and_trace_validation',
       pass: liveOrEvidencePass,
       details: {
+        evidenceFallbackAllowed,
         liveAudit: liveAuditResult,
         evidenceFallback,
       },

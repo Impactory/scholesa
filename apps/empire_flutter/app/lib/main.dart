@@ -13,6 +13,7 @@ import 'auth/auth_service.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'services/session_bootstrap.dart';
 import 'services/telemetry_service.dart';
@@ -22,6 +23,7 @@ import 'offline/sync_coordinator.dart';
 import 'router/app_router.dart';
 import 'modules/hq_admin/hq_admin.dart';
 import 'modules/checkin/checkin.dart';
+import 'modules/provisioning/provisioning_service.dart';
 import 'modules/missions/missions.dart';
 import 'modules/habits/habits.dart';
 import 'modules/messages/messages.dart';
@@ -206,6 +208,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => CheckinService(
             firestoreService: _firestoreService,
             siteId: _appState.activeSiteId ?? 'default_site',
+          ),
+        ),
+        // Site provisioning services
+        ChangeNotifierProvider(
+          create: (_) => ProvisioningService(
+            apiClient: ApiClient(),
+            firestore: _firestoreService.firestore,
+            auth: FirebaseAuth.instance,
           ),
         ),
         // Learner Missions services

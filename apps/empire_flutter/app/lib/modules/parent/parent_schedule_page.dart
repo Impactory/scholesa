@@ -277,11 +277,21 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withValues(alpha: 0.1),
-              ScholesaColors.leadership.withValues(alpha: 0.05),
+              ScholesaColors.parent.withValues(alpha: 0.2),
+              ScholesaColors.leadership.withValues(alpha: 0.14),
             ],
           ),
+          border: Border.all(
+            color: ScholesaColors.parent.withValues(alpha: 0.28),
+          ),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: <Widget>[
@@ -289,29 +299,44 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
+                border: Border.all(
+                  color: ScholesaColors.parent.withValues(alpha: 0.25),
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.event_available,
                   color: ScholesaColors.parent),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
                     'Next Session in 2 hours',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
                   ),
                   Text(
                     'Python Programming @ Lab A',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                 ],
               ),
             ),
             TextButton(
               onPressed: _showNextSessionDetails,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: ScholesaColors.parent,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
               child: const Text('Details'),
             ),
           ],

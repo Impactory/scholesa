@@ -22,7 +22,7 @@ service cloud.firestore {
     }
     
     function isEducator() {
-      return hasRole('educator') || hasRole('siteLead') || hasRole('hq');
+      return hasRole('educator') || hasRole('siteLead') || hasRole('site') || hasRole('hq');
     }
     
     function isHQ() {
