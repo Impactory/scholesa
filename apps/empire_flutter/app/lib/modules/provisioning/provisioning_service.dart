@@ -146,9 +146,27 @@ class ProvisioningService extends ChangeNotifier {
       notifyListeners();
       return learner;
     } catch (e) {
-      _error = 'Failed to create learner: $e';
-      debugPrint(_error);
-      return null;
+      debugPrint('Failed to create learner via API, falling back: $e');
+      try {
+        final LearnerProfile learner = await _createOrLinkLearnerInFirestore(
+          siteId: siteId,
+          email: email,
+          displayName: displayName,
+          gradeLevel: gradeLevel,
+          dateOfBirth: dateOfBirth,
+          notes: notes,
+        );
+        _learners.removeWhere((LearnerProfile l) => l.id == learner.id);
+        _learners.add(learner);
+        _learners.sort((LearnerProfile a, LearnerProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return learner;
+      } catch (fallbackError) {
+        _error = 'Failed to create learner: $fallbackError';
+        debugPrint(_error);
+        return null;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -181,9 +199,25 @@ class ProvisioningService extends ChangeNotifier {
       notifyListeners();
       return parent;
     } catch (e) {
-      _error = 'Failed to create parent: $e';
-      debugPrint(_error);
-      return null;
+      debugPrint('Failed to create parent via API, falling back: $e');
+      try {
+        final ParentProfile parent = await _createOrLinkParentInFirestore(
+          siteId: siteId,
+          email: email,
+          displayName: displayName,
+          phone: phone,
+        );
+        _parents.removeWhere((ParentProfile p) => p.id == parent.id);
+        _parents.add(parent);
+        _parents.sort((ParentProfile a, ParentProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return parent;
+      } catch (fallbackError) {
+        _error = 'Failed to create parent: $fallbackError';
+        debugPrint(_error);
+        return null;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -233,6 +267,8 @@ class ProvisioningService extends ChangeNotifier {
           'createdAt': FieldValue.serverTimestamp(),
           'createdBy': createdBy,
         });
+        await _ensureUserLinkedToSite(userId: parentId, siteId: siteId);
+        await _ensureUserLinkedToSite(userId: learnerId, siteId: siteId);
         try {
           await _syncLearnerParentIds(
             learnerId: learnerId,
@@ -426,19 +462,11 @@ class ProvisioningService extends ChangeNotifier {
       );
     }).toList();
 
-    if (userLearners.isNotEmpty) {
-      userLearners.sort((LearnerProfile a, LearnerProfile b) =>
-          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
-      _learners = userLearners;
-      return;
-    }
-
     final QuerySnapshot<Map<String, dynamic>> profileSnapshot = await _firestore
         .collection('learnerProfiles')
         .where('siteId', isEqualTo: siteId)
         .get();
-
-    _learners = profileSnapshot.docs.map((doc) {
+    final List<LearnerProfile> profileLearners = profileSnapshot.docs.map((doc) {
       final Map<String, dynamic> data = doc.data();
       final String userId =
           (data['userId'] as String?)?.trim().isNotEmpty == true
@@ -455,6 +483,11 @@ class ProvisioningService extends ChangeNotifier {
       );
     }).toList();
 
+    final Map<String, LearnerProfile> merged = <String, LearnerProfile>{
+      for (final LearnerProfile learner in userLearners) learner.id: learner,
+      for (final LearnerProfile learner in profileLearners) learner.id: learner,
+    };
+    _learners = merged.values.toList();
     _learners.sort((LearnerProfile a, LearnerProfile b) =>
         a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
   }
@@ -480,19 +513,11 @@ class ProvisioningService extends ChangeNotifier {
       );
     }).toList();
 
-    if (userParents.isNotEmpty) {
-      userParents.sort((ParentProfile a, ParentProfile b) =>
-          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
-      _parents = userParents;
-      return;
-    }
-
     final QuerySnapshot<Map<String, dynamic>> profileSnapshot = await _firestore
         .collection('parentProfiles')
         .where('siteId', isEqualTo: siteId)
         .get();
-
-    _parents = profileSnapshot.docs.map((doc) {
+    final List<ParentProfile> profileParents = profileSnapshot.docs.map((doc) {
       final Map<String, dynamic> data = doc.data();
       final String userId =
           (data['userId'] as String?)?.trim().isNotEmpty == true
@@ -508,6 +533,11 @@ class ProvisioningService extends ChangeNotifier {
       );
     }).toList();
 
+    final Map<String, ParentProfile> merged = <String, ParentProfile>{
+      for (final ParentProfile parent in userParents) parent.id: parent,
+      for (final ParentProfile parent in profileParents) parent.id: parent,
+    };
+    _parents = merged.values.toList();
     _parents.sort((ParentProfile a, ParentProfile b) =>
         a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
   }
@@ -616,6 +646,135 @@ class ProvisioningService extends ChangeNotifier {
       'parentIds': FieldValue.arrayRemove(<String>[parentId]),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<LearnerProfile> _createOrLinkLearnerInFirestore({
+    required String siteId,
+    required String email,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    final String normalizedEmail = email.trim().toLowerCase();
+    final DocumentSnapshot<Map<String, dynamic>>? userDoc =
+        await _findUserByEmail(normalizedEmail);
+
+    final String learnerId = userDoc?.id ??
+        _firestore.collection('learnerProfiles').doc().id;
+
+    if (userDoc != null) {
+      await _ensureUserLinkedToSite(userId: learnerId, siteId: siteId);
+    }
+
+    final DocumentReference<Map<String, dynamic>> profileRef =
+        _firestore.collection('learnerProfiles').doc(learnerId);
+    await profileRef.set(<String, dynamic>{
+      'siteId': siteId,
+      'learnerId': learnerId,
+      'userId': learnerId,
+      'displayName': displayName.trim(),
+      'email': normalizedEmail,
+      if (gradeLevel != null) 'gradeLevel': gradeLevel,
+      if (dateOfBirth != null)
+        'dateOfBirth': dateOfBirth.millisecondsSinceEpoch,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return LearnerProfile(
+      id: learnerId,
+      siteId: siteId,
+      userId: learnerId,
+      displayName: displayName.trim(),
+      gradeLevel: gradeLevel,
+      dateOfBirth: dateOfBirth,
+      notes: notes?.trim().isNotEmpty == true ? notes!.trim() : null,
+    );
+  }
+
+  Future<ParentProfile> _createOrLinkParentInFirestore({
+    required String siteId,
+    required String email,
+    required String displayName,
+    String? phone,
+  }) async {
+    final String normalizedEmail = email.trim().toLowerCase();
+    final DocumentSnapshot<Map<String, dynamic>>? userDoc =
+        await _findUserByEmail(normalizedEmail);
+
+    final String parentId = userDoc?.id ??
+        _firestore.collection('parentProfiles').doc().id;
+
+    if (userDoc != null) {
+      await _ensureUserLinkedToSite(userId: parentId, siteId: siteId);
+    }
+
+    final DocumentReference<Map<String, dynamic>> profileRef =
+        _firestore.collection('parentProfiles').doc(parentId);
+    await profileRef.set(<String, dynamic>{
+      'siteId': siteId,
+      'parentId': parentId,
+      'userId': parentId,
+      'displayName': displayName.trim(),
+      'email': normalizedEmail,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return ParentProfile(
+      id: parentId,
+      siteId: siteId,
+      userId: parentId,
+      displayName: displayName.trim(),
+      phone: phone?.trim().isNotEmpty == true ? phone!.trim() : null,
+      email: normalizedEmail,
+    );
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _findUserByEmail(
+    String email,
+  ) async {
+    if (email.trim().isEmpty) return null;
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email.trim().toLowerCase())
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    return snapshot.docs.first;
+  }
+
+  Future<void> _ensureUserLinkedToSite({
+    required String userId,
+    required String siteId,
+  }) async {
+    if (userId.trim().isEmpty || siteId.trim().isEmpty) return;
+    final DocumentReference<Map<String, dynamic>> userRef =
+        _firestore.collection('users').doc(userId);
+    final DocumentSnapshot<Map<String, dynamic>> userDoc = await userRef.get();
+    if (!userDoc.exists) return;
+
+    final Map<String, dynamic> data = userDoc.data() ?? <String, dynamic>{};
+    final List<String> existingSiteIds =
+        List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]);
+    final String? activeSiteId = data['activeSiteId'] as String?;
+
+    final Map<String, dynamic> updates = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (!existingSiteIds.contains(siteId)) {
+      updates['siteIds'] = FieldValue.arrayUnion(<String>[siteId]);
+    }
+    if (activeSiteId == null || activeSiteId.trim().isEmpty) {
+      updates['activeSiteId'] = siteId;
+    }
+
+    if (updates.length > 1) {
+      await userRef.set(updates, SetOptions(merge: true));
+    }
   }
 
   String _canonicalRole(dynamic role) {

@@ -44,6 +44,14 @@ service cloud.firestore {
       return data.keys().hasAny(['siteId']);
     }
 
+    function actorSiteIds() {
+      return getUserData().keys().hasAny(['siteIds']) ? getUserData().siteIds : [];
+    }
+
+    function requestSharesActorSite(data) {
+      return data.keys().hasAny(['siteIds']) && data.siteIds.hasAny(actorSiteIds());
+    }
+
     function isSiteScopedRead(data) {
       return hasSiteField(data) ? (isHQ() || userHasSite(data.siteId)) : true;
     }
@@ -60,7 +68,17 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isEducator();
       allow create: if isHQ();
-      allow update: if isOwner(userId) || isHQ();
+      allow update: if isOwner(userId) || isHQ() || (
+        hasRole('site')
+        && requestSharesActorSite(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'siteIds',
+          'activeSiteId',
+          'parentIds',
+          'displayName',
+          'updatedAt'
+        ])
+      );
     }
 
     // Content (Sites, Rooms, Programs, Courses, Missions):
@@ -262,7 +280,7 @@ service cloud.firestore {
     match /parentProfiles/{id} {
       allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator());
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isHQ());
+      allow update: if isAuthenticated() && (resource.data.parentId == request.auth.uid || isEducator() || isHQ());
       allow delete: if false;
     }
     match /guardianLinks/{id} {

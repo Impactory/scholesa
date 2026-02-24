@@ -1,4 +1,4 @@
-Feb 23, 2026 9:34:11 A.M. com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+Feb 24, 2026 2:30:37 P.M. com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
 INFO: Started WebSocket server on ws://127.0.0.1:9150
 API endpoint: http://127.0.0.1:8080
 If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
@@ -12,14 +12,14 @@ If you are running a Firestore in Datastore Mode project, run:
 Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
 Dev App Server is now running.
 
-Feb 23, 2026 9:34:11 A.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Feb 24, 2026 2:30:37 P.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 23, 2026 9:34:12 A.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 24, 2026 2:30:38 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
-false for 'create' @ L629
+false for 'create' @ L647
 com.google.cloud.datastore.core.exception.DatastoreException: 
-false for 'create' @ L629
+false for 'create' @ L647
 	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:139)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:318)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:295)
@@ -47,11 +47,11 @@ false for 'create' @ L629
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 23, 2026 9:34:12 A.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 24, 2026 2:30:38 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
-false for 'create' @ L629
+false for 'create' @ L647
 com.google.cloud.datastore.core.exception.DatastoreException: 
-false for 'create' @ L629
+false for 'create' @ L647
 	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:139)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:318)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:295)
@@ -80,11 +80,11 @@ false for 'create' @ L629
 
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 23, 2026 9:34:12 A.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 24, 2026 2:30:38 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
-false for 'create' @ L159, false for 'create' @ L629
+false for 'create' @ L177, false for 'create' @ L647
 com.google.cloud.datastore.core.exception.DatastoreException: 
-false for 'create' @ L159, false for 'create' @ L629
+false for 'create' @ L177, false for 'create' @ L647
 	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:139)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:318)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:295)
@@ -112,11 +112,11 @@ false for 'create' @ L159, false for 'create' @ L629
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 23, 2026 9:34:12 A.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 24, 2026 2:30:38 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
-false for 'create' @ L629
+false for 'create' @ L647
 com.google.cloud.datastore.core.exception.DatastoreException: 
-false for 'create' @ L629
+false for 'create' @ L647
 	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:139)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:318)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:295)
@@ -144,11 +144,11 @@ false for 'create' @ L629
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
 Multiple projectIds are not recommended in single project mode. Requested project ID scholesa-test, but the emulator is configured for studio-3328096157-e3f79. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
-Feb 23, 2026 9:34:12 A.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+Feb 24, 2026 2:30:38 P.M. com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
 WARNING: Operation failed: 
-false for 'create' @ L159, false for 'create' @ L629
+false for 'create' @ L177, false for 'create' @ L647
 com.google.cloud.datastore.core.exception.DatastoreException: 
-false for 'create' @ L159, false for 'create' @ L629
+false for 'create' @ L177, false for 'create' @ L647
 	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:139)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:318)
 	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:295)
