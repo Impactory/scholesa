@@ -55,7 +55,6 @@ function isWhitelistedDocsPath(relativePath) {
 
 function main() {
   const failures = [];
-  const warnings = [];
   const details = {
     scannedFileCount: 0,
     bannedPatterns: BANNED_PATTERNS.map((p) => p.label),
@@ -87,7 +86,7 @@ function main() {
         if (relativePath.startsWith('docs/')) {
           if (isWhitelistedDocsPath(relativePath)) continue;
           details.docHits.push(hitRecord);
-          warnings.push(`docs_policy_violation:${relativePath}:${hit.line}:${pattern.label}`);
+          failures.push(`docs_policy_violation:${relativePath}:${hit.line}:${pattern.label}`);
         } else {
           details.runtimeHits.push(hitRecord);
           failures.push(`banned_domain_or_keyword:${relativePath}:${hit.line}:${pattern.label}`);
@@ -96,7 +95,7 @@ function main() {
     }
   }
 
-  finish('ai-domain-ban', failures, details, warnings);
+  finish('ai-domain-ban', failures, details);
 }
 
 main();

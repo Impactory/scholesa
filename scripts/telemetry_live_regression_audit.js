@@ -46,7 +46,6 @@ function usage() {
     '  --site=SITE_ID              Optional site filter applied in-memory',
     '  --project=PROJECT_ID        Firebase project override',
     '  --credentials=PATH          Service account JSON path override',
-    '  --require-live-coverage     Fail when required canonical events are missing in live data window',
     '  --strict                    Exit 1 on any failed validation',
     '  --help                      Show this help',
     '',
@@ -63,7 +62,6 @@ function parseArgs(argv) {
     site: undefined,
     project: process.env.FIREBASE_PROJECT_ID,
     credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    requireLiveCoverage: false,
     strict: false,
     help: false,
   };
@@ -75,10 +73,6 @@ function parseArgs(argv) {
     }
     if (arg === '--strict') {
       args.strict = true;
-      continue;
-    }
-    if (arg === '--require-live-coverage') {
-      args.requireLiveCoverage = true;
       continue;
     }
     if (!arg.startsWith('--')) continue;
@@ -470,7 +464,6 @@ async function run() {
     `project=${args.project || '(from credentials/default)'}`,
     `credentials=${args.credentials || '(applicationDefault)'}`,
     `strict=${args.strict}`,
-    `requireLiveCoverage=${args.requireLiveCoverage}`,
   ]);
 
   printSection('Registry Sizes', [
@@ -497,7 +490,6 @@ async function run() {
   printMapSection('Live Unknown Event Counts', live.unknownEventCounts);
 
   const failures = [];
-  const warnings = [];
 
   if (docsMissingInBackend.length > 0) {
     failures.push(`docsMissingInBackend=${docsMissingInBackend.length}`);
@@ -572,19 +564,11 @@ async function run() {
   }
 
   if (live.missingRequiredLiveCoverage.length > 0) {
-    if (args.requireLiveCoverage) {
-      failures.push(`liveMissingCanonicalCoverage=${live.missingRequiredLiveCoverage.length}`);
-    } else {
-      warnings.push(`liveMissingCanonicalCoverage=${live.missingRequiredLiveCoverage.length}`);
-    }
+    failures.push(`liveMissingCanonicalCoverage=${live.missingRequiredLiveCoverage.length}`);
     printSection(
       'Canonical Required Events Missing In Live Window',
       live.missingRequiredLiveCoverage.map((event) => `- ${event}`),
     );
-  }
-
-  if (warnings.length > 0) {
-    printSection('Warnings', warnings.map((warning) => `- ${warning}`));
   }
 
   if (failures.length === 0) {

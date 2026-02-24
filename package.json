@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "jest --runInBand --passWithNoTests",
+    "test": "jest --runInBand",
     "test:integration:rules": "npx --yes firebase-tools emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
     "test:integration:analytics": "jest --runInBand --config jest.analytics.config.js",
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",

@@ -373,6 +373,7 @@ function runTelemetrySchemaValid(env, args) {
 
   const commandParts = [
     'node scripts/telemetry_live_regression_audit.js',
+    '--strict',
     `--hours=${Number.isFinite(args.hours) ? args.hours : 168}`,
     `--limit=${Number.isFinite(args.limit) ? args.limit : 20000}`,
   ];
