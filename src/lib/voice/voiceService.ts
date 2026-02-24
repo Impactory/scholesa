@@ -19,6 +19,7 @@ export interface CopilotVoiceRequest {
 export interface CopilotVoiceResponse {
   text: string;
   metadata: {
+    requestId?: string;
     traceId: string;
     safetyOutcome: 'allowed' | 'blocked' | 'modified' | 'escalated';
     safetyReasonCode: string;
@@ -50,12 +51,20 @@ export interface TranscribeVoiceResponse {
   transcript: string;
   confidence: number;
   metadata: {
+    requestId?: string;
     traceId: string;
     locale: SupportedLocale;
     latencyMs: number;
     partial: boolean;
     modelVersion: string;
   };
+}
+
+function createVoiceRequestId(prefix: string): string {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
+    return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function defaultVoiceApiBaseUrl(): string | null {
@@ -94,12 +103,16 @@ async function parseErrorResponse(response: Response): Promise<string> {
 async function postJson<TResponse>(path: string, idToken: string, body: Record<string, unknown>): Promise<TResponse> {
   const baseUrl = defaultVoiceApiBaseUrl();
   if (!baseUrl) throw new Error('Voice API base URL is not configured.');
+  const localeHeader = typeof body.locale === 'string' ? normalizeLocale(body.locale) : 'en';
+  const requestId = createVoiceRequestId('voice-json');
   const response = await withTimeout(
     aiSafeFetch(`${baseUrl}${path}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${idToken}`,
         'Content-Type': 'application/json',
+        'x-request-id': requestId,
+        'x-scholesa-locale': localeHeader,
       },
       body: JSON.stringify(body),
     }, 'voiceService.postJson'),
@@ -130,6 +143,7 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
   const baseUrl = defaultVoiceApiBaseUrl();
   if (!baseUrl) throw new Error('Voice API base URL is not configured.');
   const locale = normalizeLocale(req.locale);
+  const requestId = createVoiceRequestId('voice-stt');
   const formData = new FormData();
   formData.append('audio', req.audioBlob, 'voice-input.webm');
   formData.append('locale', locale);
@@ -140,6 +154,8 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
       method: 'POST',
       headers: {
         Authorization: `Bearer ${req.idToken}`,
+        'x-request-id': requestId,
+        'x-scholesa-locale': locale,
       },
       body: formData,
     }, 'voiceService.transcribe'),

@@ -13,6 +13,7 @@ Telemetry answers: “Is the Education 2.0 loop happening?”
 - insight.viewed
 - support.applied
 - support.outcome.logged
+- voice.transcribe, voice.message, voice.tts
 
 ## Privacy rules
 - no PII in telemetry payloads (no names, emails, message bodies)

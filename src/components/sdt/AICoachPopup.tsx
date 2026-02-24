@@ -133,6 +133,7 @@ export function AICoachPopup({
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceInputTraceId, setVoiceInputTraceId] = useState<string | null>(null);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
   
@@ -245,6 +246,9 @@ export function AICoachPopup({
               partial: false,
             });
             setQuestion((prev) => `${prev} ${transcribed.transcript}`.trim());
+            if (transcribed.metadata?.traceId) {
+              setVoiceInputTraceId(transcribed.metadata.traceId);
+            }
           } catch (error) {
             console.error('Voice transcription failed; keeping manual input path.', error);
           } finally {
@@ -349,6 +353,7 @@ Guidance: ${
               learnerId,
               missionId,
               sprintSessionId,
+              voiceInputTraceId,
             },
             voice: {
               enabled: true,
@@ -379,6 +384,7 @@ Guidance: ${
               console.error('Voice playback failed in AI coach popup:', error);
             });
           }
+          setVoiceInputTraceId(voiceResponse.metadata.traceId);
         } catch (voiceError) {
           console.error('Voice endpoint request failed; falling back to AI service path.', voiceError);
         }

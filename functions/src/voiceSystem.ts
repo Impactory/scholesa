@@ -14,6 +14,15 @@ const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
 const STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
 const TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
 const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
+const TELEMETRY_COLLECTION = 'telemetryEvents';
+const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
+
+type VoiceTelemetryEvent =
+  | 'voice.transcribe'
+  | 'voice.message'
+  | 'voice.tts'
+  | 'voice.blocked'
+  | 'voice.escalated';
 
 interface VoiceSettings {
   voiceEnabled: boolean;
@@ -285,6 +294,64 @@ function dedupeStrings(values: string[]): string[] {
     out.push(value);
   }
   return out;
+}
+
+function toHeaderString(value: string | string[] | undefined): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    return toHeaderString(value[0]);
+  }
+  return undefined;
+}
+
+function extractTraceIdFromHeader(headerValue: string | undefined): string | undefined {
+  if (!headerValue) return undefined;
+  const traceId = headerValue.split('/')[0]?.trim();
+  return traceId && traceId.length > 0 ? traceId : undefined;
+}
+
+function resolveTelemetryEnv(): 'dev' | 'staging' | 'prod' {
+  const raw = String(process.env.VIBE_ENV || process.env.APP_ENV || process.env.NODE_ENV || '')
+    .trim()
+    .toLowerCase();
+  if (raw === 'production' || raw === 'prod') return 'prod';
+  if (raw === 'staging' || raw === 'stage') return 'staging';
+  return 'dev';
+}
+
+function toCanonicalGradeBand(gradeBand: GradeBand): 'k5' | 'ms' | 'hs' {
+  if (gradeBand === 'K-5') return 'k5';
+  if (gradeBand === '6-8') return 'ms';
+  if (gradeBand === '9-12') return 'hs';
+  return 'ms';
+}
+
+function resolveRequestId(req: Request): string {
+  const headerRequestId = toHeaderString(req.header('x-request-id'));
+  return headerRequestId ?? `voice-${randomUUID()}`;
+}
+
+function resolveTraceId(req: Request, body: Record<string, unknown>): string {
+  const context = body.context && typeof body.context === 'object'
+    ? body.context as Record<string, unknown>
+    : undefined;
+
+  const candidates = [
+    normalizeString(body.traceId),
+    normalizeString(context?.traceId),
+    normalizeString(context?.voiceTraceId),
+    normalizeString(context?.voiceInputTraceId),
+    normalizeString(toHeaderString(req.header('x-trace-id'))),
+    extractTraceIdFromHeader(toHeaderString(req.header('x-cloud-trace-context'))),
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate) return candidate;
+  }
+  return randomUUID();
 }
 
 function normalizeGradeBand(rawBand: unknown, rawGrade: unknown): GradeBand {
@@ -843,7 +910,9 @@ async function maybeValidateTeacherLearnerScope(
 }
 
 async function recordVoiceAuditEvent(payload: {
+  eventType: VoiceTelemetryEvent;
   endpoint: string;
+  requestId: string;
   traceId: string;
   authContext: VoiceAuthContext;
   locale: VoiceLocale;
@@ -854,13 +923,25 @@ async function recordVoiceAuditEvent(payload: {
   toolCount?: number;
   latencyMs: number;
 }) {
+  const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
+  const telemetryEnv = resolveTelemetryEnv();
+
   await admin.firestore().collection('voiceAuditEvents').add({
+    eventType: payload.eventType,
     endpoint: payload.endpoint,
+    requestId: payload.requestId,
     traceId: payload.traceId,
+    service: payload.endpoint === 'voice_transcribe'
+      ? 'scholesa-stt'
+      : payload.endpoint === 'tts_speak'
+      ? 'scholesa-tts'
+      : 'scholesa-ai',
+    env: telemetryEnv,
     uid: payload.authContext.uid,
     role: payload.authContext.role,
     siteId: payload.authContext.siteId,
     gradeBand: payload.authContext.gradeBand,
+    gradeBandCanonical: canonicalGradeBand,
     locale: payload.locale,
     safetyOutcome: payload.safetyOutcome,
     redactionApplied: payload.redactionApplied ?? false,
@@ -868,6 +949,75 @@ async function recordVoiceAuditEvent(payload: {
     quietModeActive: payload.quietModeActive ?? false,
     toolCount: payload.toolCount ?? 0,
     latencyMs: payload.latencyMs,
+    timestamp: new Date().toISOString(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function recordVoiceTelemetryEvent(payload: {
+  eventType: VoiceTelemetryEvent;
+  endpoint: string;
+  requestId: string;
+  traceId: string;
+  authContext: VoiceAuthContext;
+  locale: VoiceLocale;
+  latencyMs: number;
+  safetyOutcome?: SafetyOutcome;
+  redactionApplied?: boolean;
+  redactionCount?: number;
+  quietModeActive?: boolean;
+  toolCount?: number;
+  transcriptProvided?: boolean;
+  transcriptLength?: number;
+  partial?: boolean;
+  audioBytes?: number;
+  textLength?: number;
+}) {
+  const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
+  const telemetryEnv = resolveTelemetryEnv();
+  const service = payload.endpoint === 'voice_transcribe'
+    ? 'scholesa-stt'
+    : payload.endpoint === 'tts_speak'
+    ? 'scholesa-tts'
+    : 'scholesa-ai';
+
+  await admin.firestore().collection(TELEMETRY_COLLECTION).add({
+    event: payload.eventType,
+    userId: payload.authContext.uid || 'system',
+    role: payload.authContext.role || 'system',
+    siteId: payload.authContext.siteId || TELEMETRY_UNSCOPED_SITE_ID,
+    metadata: {
+      requestId: payload.requestId,
+      traceId: payload.traceId,
+      service,
+      env: telemetryEnv,
+      siteId: payload.authContext.siteId,
+      role: payload.authContext.role,
+      gradeBand: canonicalGradeBand,
+      locale: payload.locale,
+      eventType: payload.eventType,
+      endpoint: payload.endpoint,
+      timestamp: new Date().toISOString(),
+      latencyMs: payload.latencyMs,
+      safetyOutcome: payload.safetyOutcome ?? 'allowed',
+      redactionApplied: payload.redactionApplied ?? false,
+      redactionCount: payload.redactionCount ?? 0,
+      quietModeActive: payload.quietModeActive ?? false,
+      toolCount: payload.toolCount ?? 0,
+      transcriptProvided: payload.transcriptProvided ?? false,
+      transcriptLength: payload.transcriptLength ?? 0,
+      partial: payload.partial ?? false,
+      audioBytes: payload.audioBytes ?? 0,
+      textLength: payload.textLength ?? 0,
+      modelVersion:
+        payload.eventType === 'voice.transcribe'
+          ? STT_MODEL_VERSION
+          : payload.eventType === 'voice.tts'
+          ? TTS_MODEL_VERSION
+          : VOICE_MODEL_VERSION,
+      policyVersion: VOICE_POLICY_VERSION,
+      redactedPathCount: 0,
+    },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -940,7 +1090,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       throw new VoiceHttpError(400, 'invalid_argument', 'message is required.');
     }
 
-    const traceId = randomUUID();
+    const requestId = resolveRequestId(req);
+    const traceId = resolveTraceId(req, body);
     const safety = evaluateSafetyDecision(message, authContext.role, locale);
     const candidateText = safety.safetyOutcome === 'allowed'
       ? generateLocalizedResponse(authContext.role, locale, safety.category)
@@ -976,22 +1127,71 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       ? candidateText
       : generateLocalizedResponse(authContext.role, locale, 'generic');
     const latencyMs = Date.now() - startedAt;
-    await recordVoiceAuditEvent({
-      endpoint: 'copilot_message',
-      traceId,
-      authContext,
-      locale,
-      safetyOutcome: safety.safetyOutcome,
-      redactionApplied: preparedSpeech.redactionApplied,
-      redactionCount: preparedSpeech.redactionCount,
-      quietModeActive,
-      toolCount: toolsInvoked.length,
-      latencyMs,
-    });
+    const supplementalSafetyEvent: VoiceTelemetryEvent | null =
+      safety.safetyOutcome === 'escalated'
+        ? 'voice.escalated'
+        : (safety.safetyOutcome === 'blocked' || safety.safetyOutcome === 'modified')
+        ? 'voice.blocked'
+        : null;
+
+    const telemetryWrites: Promise<unknown>[] = [
+      recordVoiceAuditEvent({
+        eventType: 'voice.message',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        safetyOutcome: safety.safetyOutcome,
+        redactionApplied: preparedSpeech.redactionApplied,
+        redactionCount: preparedSpeech.redactionCount,
+        quietModeActive,
+        toolCount: toolsInvoked.length,
+        latencyMs,
+      }),
+      recordVoiceTelemetryEvent({
+        eventType: 'voice.message',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        safetyOutcome: safety.safetyOutcome,
+        redactionApplied: preparedSpeech.redactionApplied,
+        redactionCount: preparedSpeech.redactionCount,
+        quietModeActive,
+        toolCount: toolsInvoked.length,
+        textLength: message.length,
+      }),
+    ];
+
+    if (supplementalSafetyEvent) {
+      telemetryWrites.push(
+        recordVoiceTelemetryEvent({
+          eventType: supplementalSafetyEvent,
+          endpoint: 'copilot_message',
+          requestId,
+          traceId,
+          authContext,
+          locale,
+          latencyMs,
+          safetyOutcome: safety.safetyOutcome,
+          redactionApplied: preparedSpeech.redactionApplied,
+          redactionCount: preparedSpeech.redactionCount,
+          quietModeActive,
+          toolCount: toolsInvoked.length,
+          textLength: message.length,
+        }),
+      );
+    }
+
+    await Promise.all(telemetryWrites);
 
     res.status(200).json({
       text: responseText,
       metadata: {
+        requestId,
         traceId,
         safetyOutcome: safety.safetyOutcome,
         safetyReasonCode: safety.safetyReasonCode,
@@ -1065,21 +1265,40 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     const confidence = transcriptRaw
       ? 0.96
       : Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
-    const traceId = randomUUID();
+    const requestId = resolveRequestId(req);
+    const traceId = resolveTraceId(req, body);
     const latencyMs = Date.now() - startedAt;
-    await recordVoiceAuditEvent({
-      endpoint: 'voice_transcribe',
-      traceId,
-      authContext,
-      locale,
-      safetyOutcome: 'allowed',
-      latencyMs,
-    });
+    await Promise.all([
+      recordVoiceAuditEvent({
+        eventType: 'voice.transcribe',
+        endpoint: 'voice_transcribe',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        safetyOutcome: 'allowed',
+        latencyMs,
+      }),
+      recordVoiceTelemetryEvent({
+        eventType: 'voice.transcribe',
+        endpoint: 'voice_transcribe',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        transcriptProvided: Boolean(transcriptRaw),
+        transcriptLength: transcript.length,
+        partial,
+        audioBytes: uploadedAudioLength,
+      }),
+    ]);
 
     res.status(200).json({
       transcript,
       confidence,
       metadata: {
+        requestId,
         traceId,
         locale,
         latencyMs,
@@ -1115,7 +1334,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     const knownNames = extractKnownNames(body);
     const speech = redactTextForSpeech(rawText, knownNames);
     const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
-    const traceId = randomUUID();
+    const requestId = resolveRequestId(req);
+    const traceId = resolveTraceId(req, body);
     const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
     const checksum = createHash('sha256')
       .update(`${traceId}|${locale}|${voiceProfile}|${speech.speechText}|${expMs}`)
@@ -1130,20 +1350,37 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     });
     const audioUrl = buildAudioUrl(req, token);
     const latencyMs = Date.now() - startedAt;
-    await recordVoiceAuditEvent({
-      endpoint: 'tts_speak',
-      traceId,
-      authContext,
-      locale,
-      safetyOutcome: 'allowed',
-      redactionApplied: speech.redactionApplied,
-      redactionCount: speech.redactionCount,
-      latencyMs,
-    });
+    await Promise.all([
+      recordVoiceAuditEvent({
+        eventType: 'voice.tts',
+        endpoint: 'tts_speak',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        safetyOutcome: 'allowed',
+        redactionApplied: speech.redactionApplied,
+        redactionCount: speech.redactionCount,
+        latencyMs,
+      }),
+      recordVoiceTelemetryEvent({
+        eventType: 'voice.tts',
+        endpoint: 'tts_speak',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        redactionApplied: speech.redactionApplied,
+        redactionCount: speech.redactionCount,
+        textLength: speech.speechText.length,
+      }),
+    ]);
 
     res.status(200).json({
       audioUrl,
       metadata: {
+        requestId,
         traceId,
         modelVersion: TTS_MODEL_VERSION,
         latencyMs,
