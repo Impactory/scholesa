@@ -34,21 +34,27 @@ const BLOCKER_REPORTS = [
   'vendor-secret-ban',
   'vendor-egress-proof',
   'tenant-isolation',
+  'safety-fixtures',
   'voice-retention-ttl',
   'logging-no-raw-content',
+  'telemetry-schema-valid',
   'inference-authz',
   'inference-ingress-private',
+  'infra-drift',
   'i18n-coverage',
 ];
 
 function parseArgs(argv) {
+  const defaultCredentialsPath = path.resolve(process.cwd(), 'firebase-service-account.json');
+  const hasDefaultCredentials = fs.existsSync(defaultCredentialsPath);
+
   const args = {
     env: process.env.VIBE_ENV || process.env.NODE_ENV || 'dev',
     strict: false,
     hours: 168,
     limit: 20000,
     project: process.env.FIREBASE_PROJECT_ID,
-    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || (hasDefaultCredentials ? 'firebase-service-account.json' : undefined),
   };
 
   for (const arg of argv) {
@@ -67,6 +73,19 @@ function parseArgs(argv) {
   }
 
   args.env = resolveEnv(args.env);
+
+  if (!args.project && args.credentials) {
+    try {
+      const credentialsPath = path.resolve(process.cwd(), args.credentials);
+      const credentialsJson = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+      if (typeof credentialsJson.project_id === 'string' && credentialsJson.project_id.trim()) {
+        args.project = credentialsJson.project_id.trim();
+      }
+    } catch {
+      // Ignore and let downstream checks handle missing/invalid project credentials.
+    }
+  }
+
   return args;
 }
 

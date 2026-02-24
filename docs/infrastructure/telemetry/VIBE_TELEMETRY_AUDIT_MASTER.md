@@ -287,10 +287,13 @@ Blocker list:
 - `vendor-secret-ban`
 - `vendor-egress-proof`
 - `tenant-isolation`
+- `safety-fixtures`
 - `voice-retention-ttl`
 - `logging-no-raw-content`
+- `telemetry-schema-valid`
 - `inference-authz`
 - `inference-ingress-private`
+- `infra-drift`
 - `i18n-coverage`
 
 ---
@@ -300,10 +303,13 @@ Blocker list:
 Audit passes only if:
 - No vendor AI detected
 - No raw content logged
+- Telemetry schema and cross-service trace continuity validated
 - Voice TTL enforced
 - Tenant isolation proven
 - Inference auth enforced
+- Safety fixture guard behavior validated
 - No external egress
+- Infrastructure drift checks pass
 - All required locales present
 - All reports pass
 

@@ -47,6 +47,8 @@ function executeExternalSuites() {
   const commands = [
     'npm run ai:internal-only:all',
     'npm run vibe:all',
+    'npm run qa:vibe-telemetry:audit',
+    'npm run qa:vibe-telemetry:blockers',
     'npm run audit:coppa:no-ads',
   ];
   if (process.env.COMPLIANCE_RUN_RC2_INLINE === '1') {
@@ -139,13 +141,19 @@ function runComplianceSuite(trigger = 'manual') {
       vendorEgressProof: 'audit-pack/reports/vendor-egress-proof.json',
       tenantIsolationInvariants: 'audit-pack/reports/tenant-isolation-invariants.json',
       tenantIsolation: 'audit-pack/reports/tenant-isolation.json',
+      safetyFixtures: 'audit-pack/reports/safety-fixtures.json',
       inferenceAuthz: 'audit-pack/reports/inference-authz.json',
       inferenceIngressPrivate: 'audit-pack/reports/inference-ingress-private.json',
       voiceRetentionControls: 'audit-pack/reports/voice-retention-controls.json',
+      voiceRetentionTtl: 'audit-pack/reports/voice-retention-ttl.json',
       logPrivacySafety: 'audit-pack/reports/log-privacy-safety.json',
+      loggingNoRawContent: 'audit-pack/reports/logging-no-raw-content.json',
+      telemetrySchemaValid: 'audit-pack/reports/telemetry-schema-valid.json',
       studentDataTrainingBan: 'audit-pack/reports/student-data-training-ban.json',
       infraDrift: 'audit-pack/reports/infra-drift.json',
       i18nCoverage: 'audit-pack/reports/i18n-coverage.json',
+      vibeTelemetryAuditMaster: 'audit-pack/reports/vibe-telemetry-audit-master.json',
+      vibeCiBlockerGate: 'audit-pack/reports/vibe-ci-blocker-gate.json',
       aiDependencyBan: 'audit-pack/reports/ai-dependency-ban.json',
       aiImportBan: 'audit-pack/reports/ai-import-ban.json',
       aiDomainBan: 'audit-pack/reports/ai-domain-ban.json',
@@ -196,6 +204,9 @@ function runComplianceSuite(trigger = 'manual') {
       studentDataTrainingBan: checks.find((item) => item.checkId === 'student_data_training_ban')?.passed === true,
       infraDrift: checks.find((item) => item.checkId === 'infra_drift')?.passed === true,
       i18nCoverage: checks.find((item) => item.checkId === 'i18n_coverage')?.passed === true,
+      safetyFixtures: latestJson('safety-fixtures.json')?.pass === true || latestJson('safety-fixtures.json')?.passed === true,
+      telemetrySchemaValid: latestJson('telemetry-schema-valid.json')?.pass === true || latestJson('telemetry-schema-valid.json')?.passed === true,
+      vibeCiBlockerGate: latestJson('vibe-ci-blocker-gate.json')?.pass === true || latestJson('vibe-ci-blocker-gate.json')?.passed === true,
     },
     reportPath: path.relative(REPO_ROOT, runReportPath),
   });

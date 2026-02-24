@@ -66,3 +66,14 @@ controls:
       - audit-pack/reports/i18n-coverage.json
     remediation:
       runbook: audit-pack/runbooks/RUNBOOK_VENDOR_BAN.md
+  - id: COPPA-10
+    name: Telemetry Schema and Safety Fixtures
+    severity: blocker
+    checks:
+      - telemetry_schema_valid
+      - safety_fixtures
+    evidence:
+      - audit-pack/reports/telemetry-schema-valid.json
+      - audit-pack/reports/safety-fixtures.json
+    remediation:
+      runbook: audit-pack/runbooks/RUNBOOK_VENDOR_BAN.md

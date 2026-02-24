@@ -18,10 +18,13 @@ const REQUIRED_BLOCKERS = [
   'vendor-secret-ban',
   'vendor-egress-proof',
   'tenant-isolation',
+  'safety-fixtures',
   'voice-retention-ttl',
   'logging-no-raw-content',
+  'telemetry-schema-valid',
   'inference-authz',
   'inference-ingress-private',
+  'infra-drift',
   'i18n-coverage',
 ];
 
