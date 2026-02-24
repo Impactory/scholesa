@@ -170,7 +170,6 @@ function legacyChecks(legacyReport) {
 function writeFromLegacy({ reportName, env, commandResult, legacyName, extraChecks = [], metadata = {} }) {
   const legacyPath = reportPath(legacyName);
   const legacyReport = readJsonSafe(legacyPath);
-  const pass = Boolean(commandResult.pass && extractPass(legacyReport));
 
   const checks = [
     {
@@ -185,6 +184,7 @@ function writeFromLegacy({ reportName, env, commandResult, legacyName, extraChec
     ...legacyChecks(legacyReport),
     ...extraChecks,
   ];
+  const pass = checks.every((check) => check && check.pass === true);
 
   const report = buildCanonicalReport({
     reportName,
@@ -201,7 +201,6 @@ function writeFromLegacy({ reportName, env, commandResult, legacyName, extraChec
 function writeFromModule({ reportName, env, moduleResult, legacyName }) {
   const legacyPath = reportPath(legacyName);
   const legacyReport = readJsonSafe(legacyPath);
-  const pass = Boolean(moduleResult.passed && extractPass(legacyReport));
 
   const checks = [
     {
@@ -214,6 +213,7 @@ function writeFromModule({ reportName, env, moduleResult, legacyName }) {
     },
     ...legacyChecks(legacyReport),
   ];
+  const pass = checks.every((check) => check && check.pass === true);
 
   const report = buildCanonicalReport({
     reportName,
@@ -426,7 +426,7 @@ function runTelemetrySchemaValid(env, args) {
     };
   }
 
-  const liveOrEvidencePass = liveAuditResult.pass || evidenceFallback.pass;
+  const liveOrEvidencePass = liveAuditResult.pass;
 
   const checks = [
     ...requiredFieldChecks,

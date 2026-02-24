@@ -109,7 +109,7 @@ Result:
 
 ### Assessment
 - CI/CD-style gates pass end-to-end for frontend and backend build/test.
-- Warnings are non-blocking but should be remediated for release hardening.
+- Any warning affecting security, compliance, or telemetry is treated as release-blocking until remediated.
 
 ---
 
@@ -178,7 +178,7 @@ Result:
 
 ## Findings & Actions
 
-### Non-blocking findings
+### Blocking findings
 1. **Environment file hygiene warning (closed)**
   - Finding: deployment/ops regression test warned about `.env.local` and `.env.production` at repo root.
   - Action taken: added tracked-env blocker and removed tracked `/.env.production` from repository.
@@ -186,7 +186,7 @@ Result:
 ## Final Status
 
 - Deployment & Ops regressions requested by category are complete.
-- Current release posture: **GO** (with listed non-blocking hygiene warnings).
+- Current release posture: **GO** only when all blocker findings are closed.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
