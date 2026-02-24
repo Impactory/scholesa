@@ -45,7 +45,7 @@ Allowed:
 - Debug/test labels in dev-only code paths, flagged and excluded in prod builds.
 
 ### 3.4 Build-time checks (must implement)
-- Script to scan for hardcoded strings (best-effort) and enforce:
+- Script to scan for hardcoded strings with deterministic enforcement:
   - No literal text in JSX except approved whitelist
   - No `dangerouslySetInnerHTML` for translatable content
 - Enforce locale files exist and parse.

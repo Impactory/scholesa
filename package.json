@@ -16,7 +16,7 @@
     "lint:fix": "eslint . --fix",
     "test": "jest --runInBand --passWithNoTests",
     "test:integration:rules": "npx --yes firebase-tools emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
-    "test:integration:analytics": "node -e \"if(process.env.RUN_EXTERNAL_ANALYTICS_TESTS==='1'){process.exit(0)};console.log('Skipping external analytics integration tests (set RUN_EXTERNAL_ANALYTICS_TESTS=1 to enable).');\" && ( [ \"$RUN_EXTERNAL_ANALYTICS_TESTS\" = \"1\" ] && jest --runInBand --config jest.analytics.config.js || true )",
+    "test:integration:analytics": "jest --runInBand --config jest.analytics.config.js",
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
     "qa:telemetry-smoke": "node scripts/telemetry_smoke_check.js --mode=full --strict",
     "qa:telemetry-live-audit": "node scripts/telemetry_live_regression_audit.js --strict",

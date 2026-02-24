@@ -27,7 +27,7 @@ Scope: Install/Upgrade, Config, CI/CD, Rollback, Monitoring/Alert
 
 #### JavaScript dependency drift (root)
 ```bash
-cd /Users/simonluke/dev/scholesa && npm outdated || true
+cd /Users/simonluke/dev/scholesa && npm outdated
 ```
 Result highlights:
 - Framework/tooling drift detected and inventoried (e.g. `next`, `firebase`, `tailwindcss`, `zod`, `eslint`).

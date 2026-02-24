@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TRACKED_ENV_FILES="$(git ls-files '.env*' ':!:*.example' || true)"
+TRACKED_ENV_FILES="$(git ls-files '.env*' ':!:*.example')"
 
 EXPOSABLE_ENV_FILES=""
 if [[ -n "${TRACKED_ENV_FILES}" ]]; then

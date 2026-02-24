@@ -34,21 +34,21 @@ find . -maxdepth 7 \
 # 3) Gemini usage grep (deps/imports/domains/env)
 GEMINI_PATTERNS='gemini|generativelanguage|@google/generative-ai|google-genai|GenerativeModel|vertexai|aiplatform|texttospeech|speech-to-text|tts|stt'
 grep -RIn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=build --exclude-dir=dist -E "$GEMINI_PATTERNS" . \
-  > "${OUT_DIR}/gemini-grep.txt" || true
+  > "${OUT_DIR}/gemini-grep.txt" || [[ $? -eq 1 ]]
 
 # 4) Likely secrets/env references
 KEY_PATTERNS='GEMINI|GENERATIVE|GOOGLE_API_KEY|VERTEX|AIPLATFORM|GENAI|OPENAI|API_KEY'
 grep -RIn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=build --exclude-dir=dist -E "$KEY_PATTERNS" . \
-  > "${OUT_DIR}/vendor-key-grep.txt" || true
+  > "${OUT_DIR}/vendor-key-grep.txt" || [[ $? -eq 1 ]]
 
-# 5) Create a structured Gemini usage inventory JSON (best-effort)
+# 5) Create a structured Gemini usage inventory JSON
 python3 scripts/compliance/make_gemini_inventory.py \
-  --repo-root "$ROOT" \chmod +x scripts/compliance/deep_dive_scan.sh scripts/compliance/make_gemini_inventory.py
+  --repo-root "$ROOT" \
   --git-sha "$SHA" \
   --timestamp "$TS" \
   --gemini-grep "${OUT_DIR}/gemini-grep.txt" \
   --key-grep "${OUT_DIR}/vendor-key-grep.txt" \
-  --out "${OUT_DIR}/gemini-usage-inventory.json" || true
+  --out "${OUT_DIR}/gemini-usage-inventory.json"
 
 echo "Done. Reports written to ${OUT_DIR}/"
 echo "Key outputs:"

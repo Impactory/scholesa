@@ -33,7 +33,7 @@ jobs:
       - name: Jest rules integration
         run: npm run test:integration:rules
 
-      - name: Jest analytics integration (opt-in)
+      - name: Jest analytics integration
         run: npm run test:integration:analytics
 
       - name: Full RC2 regression chain
@@ -55,4 +55,4 @@ jobs:
         with:
           name: audit-pack-reports
           path: audit-pack/reports
-          if-no-files-found: warn
+          if-no-files-found: error
