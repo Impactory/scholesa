@@ -476,6 +476,7 @@ function runMasterAudit(args) {
 
   // Phase 1 — Static Scan
   const depCommand = runCommand('node scripts/ai_dependency_ban.js');
+  runVendorDependencyBan();
   phaseReports.vendorDependencyBan = writeFromLegacy({
     reportName: 'vendor-dependency-ban',
     env: args.env,
@@ -483,9 +484,9 @@ function runMasterAudit(args) {
     legacyName: 'ai-dependency-ban',
     metadata: { phase: 1 },
   });
-  runVendorDependencyBan();
 
   const domainCommand = runCommand('node scripts/ai_domain_ban.js');
+  runVendorDomainBan();
   phaseReports.vendorDomainBan = writeFromLegacy({
     reportName: 'vendor-domain-ban',
     env: args.env,
@@ -493,7 +494,6 @@ function runMasterAudit(args) {
     legacyName: 'ai-domain-ban',
     metadata: { phase: 1 },
   });
-  runVendorDomainBan();
 
   const vendorSecretResult = runVendorSecretBan();
   phaseReports.vendorSecretBan = writeFromModule({

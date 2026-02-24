@@ -14,6 +14,7 @@ const TEXT_EXTENSIONS = new Set(['.env', '.yaml', '.yml', '.json', '.ts', '.tsx'
 const FILE_ALLOWLIST = new Set([
   'services/scholesa-compliance/src/checks/vendorSecretBan.js',
   'scripts/ai_egress_none.js',
+  'scripts/compliance/ai_policy_gates.mjs',
 ]);
 
 function shouldInclude(fullPath, relPath) {
