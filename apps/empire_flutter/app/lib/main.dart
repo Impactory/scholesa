@@ -204,11 +204,29 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => UserAdminService(firestoreService: _firestoreService),
         ),
         // Site Check-in services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, CheckinService>(
           create: (_) => CheckinService(
             firestoreService: _firestoreService,
-            siteId: _appState.activeSiteId ?? 'default_site',
+            siteId: '',
           ),
+          update:
+              (_, AppState appState, CheckinService? previousCheckinService) {
+            final String siteId = _normalizeContextValue(appState.activeSiteId);
+            if (previousCheckinService != null &&
+                previousCheckinService.siteId == siteId) {
+              return previousCheckinService;
+            }
+
+            final CheckinService service = CheckinService(
+              firestoreService: _firestoreService,
+              siteId: siteId,
+            );
+            if (siteId.isNotEmpty &&
+                (appState.role == UserRole.site || appState.role == UserRole.hq)) {
+              Future<void>.microtask(service.loadTodayData);
+            }
+            return service;
+          },
         ),
         // Site provisioning services
         ChangeNotifierProvider(
@@ -219,39 +237,120 @@ class _ScholesaAppState extends State<ScholesaApp> {
           ),
         ),
         // Learner Missions services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, MissionService>(
           create: (_) => MissionService(
             firestoreService: _firestoreService,
-            learnerId: _appState.userId ?? '',
+            learnerId: '',
           ),
+          update: (_, AppState appState, MissionService? previousMission) {
+            final String learnerId = _normalizeContextValue(appState.userId);
+            if (previousMission != null && previousMission.learnerId == learnerId) {
+              return previousMission;
+            }
+            final MissionService service = MissionService(
+              firestoreService: _firestoreService,
+              learnerId: learnerId,
+            );
+            if (learnerId.isNotEmpty &&
+                (appState.role == UserRole.learner || appState.role == UserRole.hq)) {
+              Future<void>.microtask(service.loadMissions);
+            }
+            return service;
+          },
         ),
         // Learner Habits services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, HabitService>(
           create: (_) => HabitService(
             firestoreService: _firestoreService,
-            learnerId: _appState.userId ?? '',
+            learnerId: '',
           ),
+          update: (_, AppState appState, HabitService? previousHabitService) {
+            final String learnerId = _normalizeContextValue(appState.userId);
+            if (previousHabitService != null &&
+                previousHabitService.learnerId == learnerId) {
+              return previousHabitService;
+            }
+            final HabitService service = HabitService(
+              firestoreService: _firestoreService,
+              learnerId: learnerId,
+            );
+            if (learnerId.isNotEmpty &&
+                (appState.role == UserRole.learner || appState.role == UserRole.hq)) {
+              Future<void>.microtask(service.loadHabits);
+            }
+            return service;
+          },
         ),
         // Messages services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, MessageService>(
           create: (_) => MessageService(
             firestoreService: _firestoreService,
-            userId: _appState.userId ?? '',
+            userId: '',
           ),
+          update: (_, AppState appState, MessageService? previousMessageService) {
+            final String userId = _normalizeContextValue(appState.userId);
+            if (previousMessageService != null &&
+                previousMessageService.userId == userId) {
+              return previousMessageService;
+            }
+            final MessageService service = MessageService(
+              firestoreService: _firestoreService,
+              userId: userId,
+            );
+            if (userId.isNotEmpty) {
+              Future<void>.microtask(service.loadMessages);
+            }
+            return service;
+          },
         ),
         // Parent services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, ParentService>(
           create: (_) => ParentService(
             firestoreService: _firestoreService,
-            parentId: _appState.userId ?? '',
+            parentId: '',
           ),
+          update: (_, AppState appState, ParentService? previousParentService) {
+            final String parentId = _normalizeContextValue(appState.userId);
+            if (previousParentService != null &&
+                previousParentService.parentId == parentId) {
+              return previousParentService;
+            }
+            final ParentService service = ParentService(
+              firestoreService: _firestoreService,
+              parentId: parentId,
+            );
+            if (parentId.isNotEmpty &&
+                (appState.role == UserRole.parent || appState.role == UserRole.hq)) {
+              Future<void>.microtask(service.loadParentData);
+            }
+            return service;
+          },
         ),
         // Educator services
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AppState, EducatorService>(
           create: (_) => EducatorService(
             firestoreService: _firestoreService,
-            educatorId: _appState.userId ?? '',
+            educatorId: '',
           ),
+          update:
+              (_, AppState appState, EducatorService? previousEducatorService) {
+            final String educatorId = _normalizeContextValue(appState.userId);
+            if (previousEducatorService != null &&
+                previousEducatorService.educatorId == educatorId) {
+              return previousEducatorService;
+            }
+            final EducatorService service = EducatorService(
+              firestoreService: _firestoreService,
+              educatorId: educatorId,
+            );
+            if (educatorId.isNotEmpty &&
+                (appState.role == UserRole.educator ||
+                    appState.role == UserRole.site ||
+                    appState.role == UserRole.hq)) {
+              Future<void>.microtask(service.loadTodaySchedule);
+            }
+            return service;
+          },
         ),
       ],
       child: Consumer<ThemeService>(
@@ -269,6 +368,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
       ),
     );
   }
+
+  String _normalizeContextValue(String? value) => value?.trim() ?? '';
 }
 
 class _ErrorBootstrapScreen extends StatelessWidget {

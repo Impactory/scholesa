@@ -37,14 +37,29 @@ extension UserRoleExtension on UserRole {
   String get label => displayName;
 
   static UserRole fromString(String value) {
-    final String normalized = value.trim();
+    final String normalized = value.trim().toLowerCase();
     switch (normalized) {
-      case 'siteLead':
+      case 'student':
+      case 'learner':
+        return UserRole.learner;
+      case 'teacher':
+      case 'educator':
+        return UserRole.educator;
+      case 'guardian':
+      case 'parent':
+        return UserRole.parent;
+      case 'sitelead':
       case 'site_lead':
+      case 'site':
         return UserRole.site;
+      case 'partner':
+        return UserRole.partner;
+      case 'hq':
+      case 'admin':
+        return UserRole.hq;
       default:
         return UserRole.values.firstWhere(
-          (UserRole role) => role.name == normalized,
+          (UserRole role) => role.name == normalized.toLowerCase(),
           orElse: () => UserRole.learner,
         );
     }
