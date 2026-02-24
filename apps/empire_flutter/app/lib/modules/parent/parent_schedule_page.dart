@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'parent_models.dart';
+import 'parent_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+
+const Color kParentScheduleHighlightStart = Color(0xFFC2185B);
+const Color kParentScheduleHighlightEnd = Color(0xFFAD1457);
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
 class ParentSchedulePage extends StatefulWidget {
@@ -14,6 +20,14 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   String _selectedLearner = 'all';
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week'; // day, week, month
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ParentService>().loadParentData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,22 +44,45 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ],
           ),
         ),
-        child: CustomScrollView(
-          slivers: <Widget>[
-            SliverToBoxAdapter(child: _buildHeader()),
-            SliverToBoxAdapter(child: _buildLearnerFilter()),
-            SliverToBoxAdapter(child: _buildCalendarStrip()),
-            SliverToBoxAdapter(child: _buildUpcomingSection()),
-            SliverToBoxAdapter(child: _buildTodaySchedule()),
-            SliverToBoxAdapter(child: _buildWeekOverview()),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
-          ],
+        child: Consumer<ParentService>(
+          builder: (BuildContext context, ParentService service, Widget? child) {
+            if (service.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: ScholesaColors.parent),
+              );
+            }
+            if (service.learnerSummaries.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'No learner links found yet. Ask your site admin to link parent and learner accounts.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                  ),
+                ),
+              );
+            }
+            return CustomScrollView(
+              slivers: <Widget>[
+                SliverToBoxAdapter(child: _buildHeader(service)),
+                SliverToBoxAdapter(child: _buildLearnerFilter(service)),
+                SliverToBoxAdapter(child: _buildCalendarStrip(service)),
+                SliverToBoxAdapter(child: _buildUpcomingSection(service)),
+                SliverToBoxAdapter(child: _buildTodaySchedule(service)),
+                SliverToBoxAdapter(child: _buildWeekOverview(service)),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ParentService service) {
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -86,6 +123,19 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Refresh',
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'parent_schedule_refresh',
+                  },
+                );
+                service.loadParentData();
+              },
+              icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
             ),
             Container(
               decoration: BoxDecoration(
@@ -142,7 +192,18 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
-  Widget _buildLearnerFilter() {
+  Widget _buildLearnerFilter(ParentService service) {
+    final Set<String> linkedLearnerIds = service.learnerSummaries
+        .map((LearnerSummary learner) => learner.learnerId)
+        .toSet();
+    if (_selectedLearner != 'all' &&
+        !linkedLearnerIds.contains(_selectedLearner)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedLearner = 'all');
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -157,12 +218,17 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           isExpanded: true,
           underline: const SizedBox(),
           icon: const Icon(Icons.keyboard_arrow_down),
-          items: const <DropdownMenuItem<String>>[
-            DropdownMenuItem<String>(value: 'all', child: Text('All Learners')),
-            DropdownMenuItem<String>(
-                value: 'emma', child: Text('Emma Johnson')),
-            DropdownMenuItem<String>(
-                value: 'jack', child: Text('Jack Johnson')),
+          items: <DropdownMenuItem<String>>[
+            const DropdownMenuItem<String>(
+              value: 'all',
+              child: Text('All Learners'),
+            ),
+            ...service.learnerSummaries.map(
+              (LearnerSummary learner) => DropdownMenuItem<String>(
+                value: learner.learnerId,
+                child: Text(learner.learnerName),
+              ),
+            ),
           ],
           onChanged: (String? value) {
             if (value != null) {
@@ -181,7 +247,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
-  Widget _buildCalendarStrip() {
+  Widget _buildCalendarStrip(ParentService service) {
     final DateTime today = DateTime.now();
     final List<DateTime> days = List<DateTime>.generate(
       7,
@@ -247,7 +313,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    if (_hasEvents(date))
+                    if (_hasEvents(date, service))
                       Container(
                         width: 6,
                         height: 6,
@@ -267,7 +333,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
-  Widget _buildUpcomingSection() {
+  Widget _buildUpcomingSection(ParentService service) {
+    final _ParentScheduleEntry? nextSession = _nextSession(service);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -276,19 +343,17 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: <Color>[
-              ScholesaColors.parent.withValues(alpha: 0.2),
-              ScholesaColors.leadership.withValues(alpha: 0.14),
+            colors: const <Color>[
+              kParentScheduleHighlightStart,
+              kParentScheduleHighlightEnd,
             ],
           ),
-          border: Border.all(
-            color: ScholesaColors.parent.withValues(alpha: 0.28),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           borderRadius: BorderRadius.circular(16),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 14,
               offset: const Offset(0, 4),
             ),
           ],
@@ -298,14 +363,11 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(
-                  color: ScholesaColors.parent.withValues(alpha: 0.25),
-                ),
+                color: Colors.white.withValues(alpha: 0.2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.event_available,
-                  color: ScholesaColors.parent),
+              child: const Icon(Icons.event_available, color: Colors.white),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -313,16 +375,20 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Next Session in 2 hours',
+                    nextSession == null
+                        ? 'No upcoming sessions'
+                        : 'Next session ${_formatRelative(nextSession.dateTime)}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: Colors.black87,
+                          color: Colors.white,
                         ),
                   ),
                   Text(
-                    'Python Programming @ Lab A',
+                    nextSession == null
+                        ? 'Check back later for learner schedules'
+                        : '${nextSession.title} @ ${nextSession.location}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black87,
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w500,
                         ),
                   ),
@@ -330,10 +396,12 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               ),
             ),
             TextButton(
-              onPressed: _showNextSessionDetails,
+              onPressed: nextSession == null
+                  ? null
+                  : () => _showNextSessionDetails(nextSession),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: ScholesaColors.parent,
+                foregroundColor: kParentScheduleHighlightStart,
+                backgroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               ),
@@ -345,7 +413,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
-  Widget _buildTodaySchedule() {
+  Widget _buildTodaySchedule(ParentService service) {
+    final List<_ParentScheduleEntry> entries = _entriesForSelectedDate(service);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -359,62 +428,61 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               Text(
-                '3 sessions',
+                '${entries.length} session${entries.length == 1 ? '' : 's'}',
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const _ScheduleItem(
-            time: '9:00 AM',
-            title: 'Python Programming',
-            learner: 'Emma Johnson',
-            location: 'Lab A',
-            pillar: 'Future Skills',
-            pillarColor: ScholesaColors.futureSkills,
-            status: 'completed',
-          ),
-          const _ScheduleItem(
-            time: '11:00 AM',
-            title: 'Leadership Workshop',
-            learner: 'Emma Johnson',
-            location: 'Room 201',
-            pillar: 'Leadership',
-            pillarColor: ScholesaColors.leadership,
-            status: 'in_progress',
-          ),
-          const _ScheduleItem(
-            time: '2:00 PM',
-            title: 'Community Project',
-            learner: 'Jack Johnson',
-            location: 'Main Hall',
-            pillar: 'Impact',
-            pillarColor: ScholesaColors.impact,
-            status: 'upcoming',
+          if (entries.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Text(
+                'No sessions on this date.',
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+            ),
+          ...entries.map(
+            (_ParentScheduleEntry entry) => _ScheduleItem(
+              time: _formatTime(entry.dateTime),
+              title: entry.title,
+              learner: entry.learnerName,
+              location: entry.location,
+              pillar: entry.pillarLabel,
+              pillarColor: entry.pillarColor,
+              status: entry.status,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showNextSessionDetails() {
+  void _showNextSessionDetails(_ParentScheduleEntry nextSession) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'parent_schedule_open_next_session_details',
         'view_mode': _viewMode,
         'selected_learner': _selectedLearner,
+        'session_title': nextSession.title,
       },
     );
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('Next Session Details'),
-        content: const Text(
-          'Python Programming\n'
-          'Location: Lab A\n'
-          'Starts in: 2 hours\n'
-          'Facilitator: Ms. Sarah Chen',
+        content: Text(
+          '${nextSession.title}\n'
+          'Location: ${nextSession.location}\n'
+          'Starts: ${_formatDateTime(nextSession.dateTime)}\n'
+          'Learner: ${nextSession.learnerName}',
         ),
         actions: <Widget>[
           TextButton(
@@ -452,7 +520,22 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
-  Widget _buildWeekOverview() {
+  Widget _buildWeekOverview(ParentService service) {
+    final List<_ParentScheduleEntry> weekEntries = _entriesForWeek(service);
+    final Map<int, List<_ParentScheduleEntry>> byWeekday =
+        <int, List<_ParentScheduleEntry>>{};
+    for (final _ParentScheduleEntry entry in weekEntries) {
+      byWeekday.putIfAbsent(entry.dateTime.weekday, () => <_ParentScheduleEntry>[]).add(entry);
+    }
+    final int futureSkillsCount = weekEntries
+        .where((entry) => entry.pillarKey == 'futureSkills')
+        .length;
+    final int leadershipCount = weekEntries
+        .where((entry) => entry.pillarKey == 'leadership')
+        .length;
+    final int impactCount =
+        weekEntries.where((entry) => entry.pillarKey == 'impact').length;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -470,37 +553,41 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: const Column(
+            child: Column(
               children: <Widget>[
                 _WeekDayRow(
                   day: 'Monday',
-                  sessions: 3,
-                  hours: '9 AM - 4 PM',
-                  isToday: true,
+                  sessions: byWeekday[DateTime.monday]?.length ?? 0,
+                  hours: _hoursLabel(byWeekday[DateTime.monday] ?? <_ParentScheduleEntry>[]),
+                  isToday: DateTime.now().weekday == DateTime.monday,
                 ),
-                Divider(),
+                const Divider(),
                 _WeekDayRow(
                   day: 'Tuesday',
-                  sessions: 2,
-                  hours: '10 AM - 2 PM',
+                  sessions: byWeekday[DateTime.tuesday]?.length ?? 0,
+                  hours: _hoursLabel(byWeekday[DateTime.tuesday] ?? <_ParentScheduleEntry>[]),
+                  isToday: DateTime.now().weekday == DateTime.tuesday,
                 ),
-                Divider(),
+                const Divider(),
                 _WeekDayRow(
                   day: 'Wednesday',
-                  sessions: 4,
-                  hours: '9 AM - 5 PM',
+                  sessions: byWeekday[DateTime.wednesday]?.length ?? 0,
+                  hours: _hoursLabel(byWeekday[DateTime.wednesday] ?? <_ParentScheduleEntry>[]),
+                  isToday: DateTime.now().weekday == DateTime.wednesday,
                 ),
-                Divider(),
+                const Divider(),
                 _WeekDayRow(
                   day: 'Thursday',
-                  sessions: 2,
-                  hours: '11 AM - 3 PM',
+                  sessions: byWeekday[DateTime.thursday]?.length ?? 0,
+                  hours: _hoursLabel(byWeekday[DateTime.thursday] ?? <_ParentScheduleEntry>[]),
+                  isToday: DateTime.now().weekday == DateTime.thursday,
                 ),
-                Divider(),
+                const Divider(),
                 _WeekDayRow(
                   day: 'Friday',
-                  sessions: 3,
-                  hours: '9 AM - 4 PM',
+                  sessions: byWeekday[DateTime.friday]?.length ?? 0,
+                  hours: _hoursLabel(byWeekday[DateTime.friday] ?? <_ParentScheduleEntry>[]),
+                  isToday: DateTime.now().weekday == DateTime.friday,
                 ),
               ],
             ),
@@ -515,10 +602,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ),
             child: Row(
               children: <Widget>[
-                const Expanded(
+                Expanded(
                   child: _WeekStat(
                     label: 'Total Sessions',
-                    value: '14',
+                    value: '${weekEntries.length}',
                     icon: Icons.event,
                     color: ScholesaColors.parent,
                   ),
@@ -528,10 +615,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                const Expanded(
+                Expanded(
                   child: _WeekStat(
                     label: 'Future Skills',
-                    value: '6',
+                    value: '$futureSkillsCount',
                     icon: Icons.code,
                     color: ScholesaColors.futureSkills,
                   ),
@@ -541,10 +628,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                const Expanded(
+                Expanded(
                   child: _WeekStat(
                     label: 'Leadership',
-                    value: '4',
+                    value: '$leadershipCount',
                     icon: Icons.emoji_events,
                     color: ScholesaColors.leadership,
                   ),
@@ -554,10 +641,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   height: 40,
                   color: Colors.grey.shade200,
                 ),
-                const Expanded(
+                Expanded(
                   child: _WeekStat(
                     label: 'Impact',
-                    value: '4',
+                    value: '$impactCount',
                     icon: Icons.eco,
                     color: ScholesaColors.impact,
                   ),
@@ -575,11 +662,177 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     return days[weekday - 1];
   }
 
-  bool _hasEvents(DateTime date) {
-    // RC2: Weekday heuristic until SessionOccurrence queries are available.
-    // Will be replaced with actual schedule data from Firestore in a future release.
-    return date.weekday <= 5;
+  List<_ParentScheduleEntry> _visibleEntries(ParentService service) {
+    final DateTime now = DateTime.now();
+    final List<_ParentScheduleEntry> entries = <_ParentScheduleEntry>[];
+    for (final LearnerSummary learner in service.learnerSummaries) {
+      if (_selectedLearner != 'all' && learner.learnerId != _selectedLearner) {
+        continue;
+      }
+      for (final UpcomingEvent event in learner.upcomingEvents) {
+        final String normalizedType = event.type.trim().toLowerCase();
+        final String pillarKey = _pillarKeyForType(normalizedType);
+        entries.add(
+          _ParentScheduleEntry(
+            learnerId: learner.learnerId,
+            learnerName: learner.learnerName,
+            title: event.title,
+            location: event.location?.trim().isNotEmpty == true
+                ? event.location!.trim()
+                : 'TBD',
+            dateTime: event.dateTime,
+            pillarKey: pillarKey,
+            pillarLabel: _pillarLabel(pillarKey),
+            pillarColor: _pillarColor(pillarKey),
+            status: _statusForDate(event.dateTime, now),
+          ),
+        );
+      }
+    }
+    entries.sort(
+      (_ParentScheduleEntry a, _ParentScheduleEntry b) =>
+          a.dateTime.compareTo(b.dateTime),
+    );
+    return entries;
   }
+
+  List<_ParentScheduleEntry> _entriesForSelectedDate(ParentService service) {
+    return _visibleEntries(service)
+        .where((entry) => _isSameDay(entry.dateTime, _selectedDate))
+        .toList();
+  }
+
+  List<_ParentScheduleEntry> _entriesForWeek(ParentService service) {
+    final DateTime weekStart = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    ).subtract(Duration(days: _selectedDate.weekday - 1));
+    final DateTime weekEnd = weekStart.add(const Duration(days: 7));
+    return _visibleEntries(service)
+        .where(
+          (_ParentScheduleEntry entry) =>
+              !entry.dateTime.isBefore(weekStart) &&
+              entry.dateTime.isBefore(weekEnd),
+        )
+        .toList();
+  }
+
+  _ParentScheduleEntry? _nextSession(ParentService service) {
+    final DateTime now = DateTime.now();
+    for (final _ParentScheduleEntry entry in _visibleEntries(service)) {
+      if (entry.dateTime.isAfter(now)) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  bool _hasEvents(DateTime date, ParentService service) {
+    return _visibleEntries(service)
+        .any((_ParentScheduleEntry entry) => _isSameDay(entry.dateTime, date));
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _statusForDate(DateTime dateTime, DateTime now) {
+    if (dateTime.isBefore(now.subtract(const Duration(minutes: 30)))) {
+      return 'completed';
+    }
+    if (dateTime.isBefore(now.add(const Duration(hours: 1)))) {
+      return 'in_progress';
+    }
+    return 'upcoming';
+  }
+
+  String _pillarKeyForType(String type) {
+    if (type.contains('leader')) return 'leadership';
+    if (type.contains('impact') || type.contains('community')) return 'impact';
+    return 'futureSkills';
+  }
+
+  String _pillarLabel(String key) {
+    switch (key) {
+      case 'leadership':
+        return 'Leadership';
+      case 'impact':
+        return 'Impact';
+      default:
+        return 'Future Skills';
+    }
+  }
+
+  Color _pillarColor(String key) {
+    switch (key) {
+      case 'leadership':
+        return ScholesaColors.leadership;
+      case 'impact':
+        return ScholesaColors.impact;
+      default:
+        return ScholesaColors.futureSkills;
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
+    final String suffix = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $suffix';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    const List<String> weekdays = <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun'
+    ];
+    return '${weekdays[dateTime.weekday - 1]} ${dateTime.month}/${dateTime.day} ${_formatTime(dateTime)}';
+  }
+
+  String _formatRelative(DateTime dateTime) {
+    final Duration delta = dateTime.difference(DateTime.now());
+    if (delta.inMinutes <= 0) return 'now';
+    if (delta.inMinutes < 60) return 'in ${delta.inMinutes} min';
+    if (delta.inHours < 24) return 'in ${delta.inHours} hr';
+    return 'on ${dateTime.month}/${dateTime.day}';
+  }
+
+  String _hoursLabel(List<_ParentScheduleEntry> entries) {
+    if (entries.isEmpty) return '-';
+    entries.sort((_ParentScheduleEntry a, _ParentScheduleEntry b) =>
+        a.dateTime.compareTo(b.dateTime));
+    return '${_formatTime(entries.first.dateTime)} - ${_formatTime(entries.last.dateTime)}';
+  }
+}
+
+class _ParentScheduleEntry {
+  const _ParentScheduleEntry({
+    required this.learnerId,
+    required this.learnerName,
+    required this.title,
+    required this.location,
+    required this.dateTime,
+    required this.pillarKey,
+    required this.pillarLabel,
+    required this.pillarColor,
+    required this.status,
+  });
+
+  final String learnerId;
+  final String learnerName;
+  final String title;
+  final String location;
+  final DateTime dateTime;
+  final String pillarKey;
+  final String pillarLabel;
+  final Color pillarColor;
+  final String status;
 }
 
 class _ViewModeButton extends StatelessWidget {
