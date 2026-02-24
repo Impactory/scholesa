@@ -39,34 +39,36 @@ class EducatorService extends ChangeNotifier {
       final DateTime startOfDay = DateTime(now.year, now.month, now.day);
       final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
 
-      // Query session occurrences for this educator today
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
-          .collection('sessionOccurrences')
-          .where('educatorId', isEqualTo: educatorId)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('date', isLessThan: Timestamp.fromDate(endOfDay))
-          .orderBy('date')
-          .orderBy('startTime')
-          .get();
+      final List<QueryDocumentSnapshot<Map<String, dynamic>>> occurrenceDocs =
+          await _loadTodayOccurrenceDocs(
+        startOfDay: startOfDay,
+        endOfDay: endOfDay,
+      );
 
-      _todayClasses =
-          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        return TodayClass(
-          id: doc.id,
-          sessionId: data['sessionId'] as String? ?? '',
-          title: data['title'] as String? ?? 'Session',
-          description: data['description'] as String? ?? '',
-          startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
-          endTime: _parseTimestamp(data['endTime']) ??
-              DateTime.now().add(const Duration(hours: 1)),
-          location: data['location'] as String? ?? '',
-          enrolledCount: data['enrolledCount'] as int? ?? 0,
-          presentCount: data['presentCount'] as int? ?? 0,
-          status: data['status'] as String? ?? 'upcoming',
-          learners: const <EnrolledLearner>[],
-        );
-      }).toList();
+      _todayClasses = occurrenceDocs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final DateTime startTime = _parseTimestamp(data['startTime']) ??
+                _parseTimestamp(data['date']) ??
+                DateTime.now();
+            final DateTime endTime = _parseTimestamp(data['endTime']) ??
+                startTime.add(const Duration(hours: 1));
+            return TodayClass(
+              id: doc.id,
+              sessionId: data['sessionId'] as String? ?? '',
+              title: _stringOrDefault(data['title'], data['sessionTitle'], 'Session'),
+              description: _stringOrDefault(data['description'], null, ''),
+              startTime: startTime,
+              endTime: endTime,
+              location: _stringOrDefault(data['location'], data['roomName'], ''),
+              enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+              presentCount: (data['presentCount'] as num?)?.toInt() ?? 0,
+              status: _stringOrDefault(data['status'], null, 'upcoming'),
+              learners: const <EnrolledLearner>[],
+            );
+          })
+          .toList()
+        ..sort((TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
 
       _dayStats = _calculateStats();
       debugPrint(
@@ -92,8 +94,127 @@ class EducatorService extends ChangeNotifier {
   DateTime? _parseTimestamp(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
     return null;
+  }
+
+  String _stringOrDefault(dynamic primary, dynamic fallback, String defaultValue) {
+    if (primary is String && primary.trim().isNotEmpty) {
+      return primary.trim();
+    }
+    if (fallback is String && fallback.trim().isNotEmpty) {
+      return fallback.trim();
+    }
+    return defaultValue;
+  }
+
+  Iterable<String> _asStringIterable(dynamic value) {
+    if (value is List<dynamic>) {
+      return value
+          .whereType<String>()
+          .map((String item) => item.trim())
+          .where((String item) => item.isNotEmpty);
+    }
+    return const <String>[];
+  }
+
+  bool _recordMatchesEducator(Map<String, dynamic> data) {
+    if ((data['educatorId'] as String?)?.trim() == educatorId) {
+      return true;
+    }
+    if ((data['teacherId'] as String?)?.trim() == educatorId) {
+      return true;
+    }
+    final Set<String> educatorIds = <String>{
+      ..._asStringIterable(data['educatorIds']),
+      ..._asStringIterable(data['teacherIds']),
+    };
+    return educatorIds.contains(educatorId);
+  }
+
+  Future<void> _appendOccurrenceQueryResults({
+    required Query<Map<String, dynamic>> query,
+    required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
+    bool filterByEducator = false,
+  }) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        sink[doc.id] = doc;
+      }
+    } catch (error) {
+      debugPrint('Educator occurrence query fallback skipped: $error');
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadTodayOccurrenceDocs({
+    required DateTime startOfDay,
+    required DateTime endOfDay,
+  }) async {
+    final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> merged =
+        <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+
+    final Timestamp startTs = Timestamp.fromDate(startOfDay);
+    final Timestamp endTs = Timestamp.fromDate(endOfDay);
+
+    await _appendOccurrenceQueryResults(
+      query: _firestore
+          .collection('sessionOccurrences')
+          .where('educatorId', isEqualTo: educatorId)
+          .where('startTime', isGreaterThanOrEqualTo: startTs)
+          .where('startTime', isLessThan: endTs)
+          .orderBy('startTime'),
+      sink: merged,
+    );
+
+    if (merged.isEmpty) {
+      await _appendOccurrenceQueryResults(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('startTime', isGreaterThanOrEqualTo: startTs)
+            .where('startTime', isLessThan: endTs)
+            .orderBy('startTime'),
+        sink: merged,
+        filterByEducator: true,
+      );
+    }
+
+    if (merged.isEmpty) {
+      await _appendOccurrenceQueryResults(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('educatorId', isEqualTo: educatorId)
+            .where('date', isGreaterThanOrEqualTo: startTs)
+            .where('date', isLessThan: endTs)
+            .orderBy('date')
+            .orderBy('startTime'),
+        sink: merged,
+      );
+    }
+
+    if (merged.isEmpty) {
+      await _appendOccurrenceQueryResults(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('date', isGreaterThanOrEqualTo: startTs)
+            .where('date', isLessThan: endTs)
+            .orderBy('date')
+            .orderBy('startTime'),
+        sink: merged,
+        filterByEducator: true,
+      );
+    }
+
+    return merged.values.toList();
   }
 
   EducatorDayStats _calculateStats() {
@@ -160,29 +281,44 @@ class EducatorService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
-          .collection('sessions')
-          .where('educatorId', isEqualTo: educatorId)
-          .orderBy('startTime', descending: true)
-          .get();
+      final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
+          await _loadEducatorSessionDocs();
 
-      _sessions =
-          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        return EducatorSession(
-          id: doc.id,
-          title: data['title'] as String? ?? 'Session',
-          description: data['description'] as String? ?? '',
-          pillar: data['pillar'] as String? ?? 'future_skills',
-          startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
-          endTime: _parseTimestamp(data['endTime']) ??
-              DateTime.now().add(const Duration(hours: 1)),
-          location: data['location'] as String? ?? '',
-          enrolledCount: data['enrolledCount'] as int? ?? 0,
-          maxCapacity: data['maxCapacity'] as int? ?? 20,
-          status: data['status'] as String? ?? 'upcoming',
+      _sessions = sessionDocs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final String pillar = _stringOrDefault(
+              data['pillar'],
+              (data['pillarCodes'] is List<dynamic> &&
+                      (data['pillarCodes'] as List<dynamic>).isNotEmpty)
+                  ? data['pillarCodes'][0]
+                  : null,
+              'future_skills',
+            );
+            final DateTime startTime = _parseTimestamp(data['startTime']) ??
+                _parseTimestamp(data['startDate']) ??
+                DateTime.now();
+            final DateTime endTime = _parseTimestamp(data['endTime']) ??
+                _parseTimestamp(data['endDate']) ??
+                startTime.add(const Duration(hours: 1));
+            return EducatorSession(
+              id: doc.id,
+              title: _stringOrDefault(data['title'], null, 'Session'),
+              description: _stringOrDefault(data['description'], null, ''),
+              pillar: pillar,
+              startTime: startTime,
+              endTime: endTime,
+              location: _stringOrDefault(data['location'], data['roomName'], ''),
+              enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+              maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
+              status: _stringOrDefault(data['status'], null, 'upcoming'),
+            );
+          })
+          .toList()
+        ..sort(
+          (EducatorSession a, EducatorSession b) =>
+              b.startTime.compareTo(a.startTime),
         );
-      }).toList();
 
       debugPrint('Loaded ${_sessions.length} sessions for educator');
     } catch (e) {
@@ -213,6 +349,7 @@ class EducatorService extends ChangeNotifier {
         'sessions',
         <String, dynamic>{
           'educatorId': educatorId,
+          'educatorIds': <String>[educatorId],
           'title': title,
           'description': description ?? '',
           'pillar': pillar,
@@ -257,18 +394,7 @@ class EducatorService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Get enrollments for this educator's sessions
-      final QuerySnapshot<Map<String, dynamic>> enrollmentSnapshot =
-          await _firestore
-              .collection('enrollments')
-              .where('educatorId', isEqualTo: educatorId)
-              .get();
-
-      final Set<String> learnerIds = enrollmentSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
-              doc.data()['learnerId'] as String?)
-          .whereType<String>()
-          .toSet();
+      final Set<String> learnerIds = await _resolveLearnerIdsForEducator();
 
       if (learnerIds.isEmpty) {
         _learners = <EducatorLearner>[];
@@ -310,5 +436,189 @@ class EducatorService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _appendSessionQueryResults({
+    required Query<Map<String, dynamic>> query,
+    required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
+    bool filterByEducator = false,
+  }) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        sink[doc.id] = doc;
+      }
+    } catch (error) {
+      debugPrint('Educator session query fallback skipped: $error');
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadEducatorSessionDocs() async {
+    final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> merged =
+        <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+
+    await _appendSessionQueryResults(
+      query: _firestore
+          .collection('sessions')
+          .where('educatorId', isEqualTo: educatorId)
+          .orderBy('startTime', descending: true),
+      sink: merged,
+    );
+
+    await _appendSessionQueryResults(
+      query: _firestore
+          .collection('sessions')
+          .where('educatorIds', arrayContains: educatorId)
+          .orderBy('startTime', descending: true),
+      sink: merged,
+    );
+
+    if (merged.isEmpty) {
+      await _appendSessionQueryResults(
+        query: _firestore
+            .collection('sessions')
+            .where('educatorId', isEqualTo: educatorId)
+            .orderBy('startDate', descending: true),
+        sink: merged,
+      );
+      await _appendSessionQueryResults(
+        query: _firestore
+            .collection('sessions')
+            .where('educatorIds', arrayContains: educatorId)
+            .orderBy('startDate', descending: true),
+        sink: merged,
+      );
+    }
+
+    if (merged.isEmpty) {
+      await _appendSessionQueryResults(
+        query: _firestore
+            .collection('sessions')
+            .orderBy('createdAt', descending: true)
+            .limit(300),
+        sink: merged,
+        filterByEducator: true,
+      );
+    }
+
+    return merged.values.toList();
+  }
+
+  Future<void> _appendEnrollmentQueryResults({
+    required Query<Map<String, dynamic>> query,
+    required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
+    bool filterByEducator = false,
+  }) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        sink[doc.id] = doc;
+      }
+    } catch (error) {
+      debugPrint('Educator enrollment query fallback skipped: $error');
+    }
+  }
+
+  Iterable<List<String>> _chunked(List<String> values, int size) sync* {
+    if (size <= 0) {
+      yield values;
+      return;
+    }
+    for (int index = 0; index < values.length; index += size) {
+      final int end = (index + size < values.length) ? index + size : values.length;
+      yield values.sublist(index, end);
+    }
+  }
+
+  Future<Set<String>> _resolveSessionIdsForEducator() async {
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
+        await _loadEducatorSessionDocs();
+    return sessionDocs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
+        .where((String id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  Future<Set<String>> _resolveLearnerIdsFromSessions(
+      Set<String> sessionIds) async {
+    if (sessionIds.isEmpty) {
+      return <String>{};
+    }
+    final Set<String> learnerIds = <String>{};
+    for (final List<String> chunk in _chunked(sessionIds.toList(), 10)) {
+      try {
+        final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+            .collection('enrollments')
+            .where('sessionId', whereIn: chunk)
+            .get();
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+            in snapshot.docs) {
+          final String? learnerId = doc.data()['learnerId'] as String?;
+          if (learnerId != null && learnerId.trim().isNotEmpty) {
+            learnerIds.add(learnerId.trim());
+          }
+        }
+      } catch (error) {
+        debugPrint('Session enrollment fallback skipped: $error');
+      }
+    }
+    return learnerIds;
+  }
+
+  Future<Set<String>> _resolveLearnerIdsForEducator() async {
+    final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> enrollments =
+        <String, QueryDocumentSnapshot<Map<String, dynamic>>{};
+
+    await _appendEnrollmentQueryResults(
+      query: _firestore
+          .collection('enrollments')
+          .where('educatorId', isEqualTo: educatorId),
+      sink: enrollments,
+    );
+
+    if (enrollments.isEmpty) {
+      await _appendEnrollmentQueryResults(
+        query: _firestore
+            .collection('enrollments')
+            .where('educatorIds', arrayContains: educatorId),
+        sink: enrollments,
+      );
+    }
+
+    final Set<String> learnerIds = enrollments.values
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            doc.data()['learnerId'] as String?)
+        .whereType<String>()
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toSet();
+
+    if (learnerIds.isEmpty) {
+      final Set<String> sessionIds = await _resolveSessionIdsForEducator();
+      learnerIds.addAll(await _resolveLearnerIdsFromSessions(sessionIds));
+    }
+
+    if (learnerIds.isEmpty) {
+      try {
+        final DocumentSnapshot<Map<String, dynamic>> educatorDoc =
+            await _firestore.collection('users').doc(educatorId).get();
+        final Map<String, dynamic>? data = educatorDoc.data();
+        learnerIds.addAll(_asStringIterable(data?['learnerIds']));
+        learnerIds.addAll(_asStringIterable(data?['studentIds']));
+      } catch (error) {
+        debugPrint('Educator learnerIds fallback skipped: $error');
+      }
+    }
+
+    return learnerIds;
   }
 }

@@ -657,14 +657,31 @@ class ProvisioningService extends ChangeNotifier {
     String? notes,
   }) async {
     final String normalizedEmail = email.trim().toLowerCase();
-    final DocumentSnapshot<Map<String, dynamic>>? userDoc =
+    DocumentSnapshot<Map<String, dynamic>>? userDoc =
         await _findUserByEmail(normalizedEmail);
 
-    final String learnerId = userDoc?.id ??
-        _firestore.collection('learnerProfiles').doc().id;
-
+    String learnerId;
     if (userDoc != null) {
+      learnerId = userDoc.id;
       await _ensureUserLinkedToSite(userId: learnerId, siteId: siteId);
+    } else {
+      final DocumentReference<Map<String, dynamic>> userRef =
+          _firestore.collection('users').doc();
+      learnerId = userRef.id;
+      await userRef.set(<String, dynamic>{
+        'uid': learnerId,
+        'email': normalizedEmail,
+        'displayName': displayName.trim(),
+        'role': 'learner',
+        'siteIds': <String>[siteId],
+        'activeSiteId': siteId,
+        'parentIds': const <String>[],
+        'isActive': true,
+        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      userDoc = await userRef.get();
     }
 
     final DocumentReference<Map<String, dynamic>> profileRef =
@@ -701,14 +718,30 @@ class ProvisioningService extends ChangeNotifier {
     String? phone,
   }) async {
     final String normalizedEmail = email.trim().toLowerCase();
-    final DocumentSnapshot<Map<String, dynamic>>? userDoc =
+    DocumentSnapshot<Map<String, dynamic>>? userDoc =
         await _findUserByEmail(normalizedEmail);
 
-    final String parentId = userDoc?.id ??
-        _firestore.collection('parentProfiles').doc().id;
-
+    String parentId;
     if (userDoc != null) {
+      parentId = userDoc.id;
       await _ensureUserLinkedToSite(userId: parentId, siteId: siteId);
+    } else {
+      final DocumentReference<Map<String, dynamic>> userRef =
+          _firestore.collection('users').doc();
+      parentId = userRef.id;
+      await userRef.set(<String, dynamic>{
+        'uid': parentId,
+        'email': normalizedEmail,
+        'displayName': displayName.trim(),
+        'role': 'parent',
+        'siteIds': <String>[siteId],
+        'activeSiteId': siteId,
+        'isActive': true,
+        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      userDoc = await userRef.get();
     }
 
     final DocumentReference<Map<String, dynamic>> profileRef =

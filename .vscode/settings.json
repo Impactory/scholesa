@@ -4,5 +4,6 @@
     "geminicodeassist.agentDebugMode": true,
     "geminicodeassist.project": "studio-3328096157-e3f79",
     "cloudcode.project": "studio-3328096157-e3f79",
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "chatgpt.openOnStartup": true
 }

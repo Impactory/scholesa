@@ -41,25 +41,17 @@ class AttendanceService extends ChangeNotifier {
       final DateTime now = DateTime.now();
       final DateTime startOfDay = DateTime(now.year, now.month, now.day);
       final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+      final Timestamp startTs = Timestamp.fromDate(startOfDay);
+      final Timestamp endTs = Timestamp.fromDate(endOfDay);
 
-      // Build query based on available identifiers
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('sessionOccurrences')
-          .where('startTime',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
-          .orderBy('startTime');
-
-      if (educatorId != null && educatorId!.isNotEmpty) {
-        query = query.where('educatorId', isEqualTo: educatorId);
-      } else if (siteId != null && siteId!.isNotEmpty) {
-        query = query.where('siteId', isEqualTo: siteId);
-      }
-
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+          await _fetchTodayOccurrenceDocs(
+        startTs: startTs,
+        endTs: endTs,
+      );
 
       _todayOccurrences = await Future.wait(
-        snapshot.docs
+        docs
             .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
           final Map<String, dynamic> data = doc.data();
 
@@ -75,10 +67,12 @@ class AttendanceService extends ChangeNotifier {
             id: doc.id,
             sessionId: data['sessionId'] as String? ?? '',
             siteId: data['siteId'] as String? ?? '',
-            title: data['title'] as String? ?? 'Untitled Session',
-            startTime: _parseTimestamp(data['startTime']) ?? DateTime.now(),
+            title: _stringOrDefault(data['title'], data['sessionTitle'], 'Untitled Session'),
+            startTime: _parseTimestamp(data['startTime']) ??
+                _parseTimestamp(data['date']) ??
+                DateTime.now(),
             endTime: _parseTimestamp(data['endTime']),
-            roomName: data['roomName'] as String?,
+            roomName: _stringOrDefault(data['roomName'], data['location'], ''),
             roster: const <RosterLearner>[], // Roster loaded separately
             learnerCount: enrollmentsSnapshot.docs.length,
           );
@@ -322,8 +316,139 @@ class AttendanceService extends ChangeNotifier {
   DateTime? _parseTimestamp(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
     return null;
+  }
+
+  String _stringOrDefault(dynamic primary, dynamic fallback, String fallbackText) {
+    if (primary is String && primary.trim().isNotEmpty) {
+      return primary.trim();
+    }
+    if (fallback is String && fallback.trim().isNotEmpty) {
+      return fallback.trim();
+    }
+    return fallbackText;
+  }
+
+  Iterable<String> _asStringIterable(dynamic value) {
+    if (value is List<dynamic>) {
+      return value
+          .whereType<String>()
+          .map((String item) => item.trim())
+          .where((String item) => item.isNotEmpty);
+    }
+    return const <String>[];
+  }
+
+  bool _occurrenceMatchesContext(Map<String, dynamic> data) {
+    if (educatorId != null && educatorId!.isNotEmpty) {
+      if ((data['educatorId'] as String?)?.trim() == educatorId) {
+        return true;
+      }
+      if ((data['teacherId'] as String?)?.trim() == educatorId) {
+        return true;
+      }
+      final Set<String> educatorIds = <String>{
+        ..._asStringIterable(data['educatorIds']),
+        ..._asStringIterable(data['teacherIds']),
+      };
+      return educatorIds.contains(educatorId);
+    }
+
+    if (siteId != null && siteId!.isNotEmpty) {
+      return (data['siteId'] as String?)?.trim() == siteId;
+    }
+
+    return true;
+  }
+
+  Future<void> _appendOccurrenceQuery({
+    required Query<Map<String, dynamic>> query,
+    required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
+    bool filterByContext = false,
+  }) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        if (filterByContext && !_occurrenceMatchesContext(doc.data())) {
+          continue;
+        }
+        sink[doc.id] = doc;
+      }
+    } catch (error) {
+      debugPrint('Attendance occurrence query fallback skipped: $error');
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _fetchTodayOccurrenceDocs({
+    required Timestamp startTs,
+    required Timestamp endTs,
+  }) async {
+    final Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> merged =
+        <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+
+    if (educatorId != null && educatorId!.isNotEmpty) {
+      await _appendOccurrenceQuery(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('startTime', isGreaterThanOrEqualTo: startTs)
+            .where('startTime', isLessThan: endTs)
+            .where('educatorId', isEqualTo: educatorId)
+            .orderBy('startTime'),
+        sink: merged,
+      );
+    } else if (siteId != null && siteId!.isNotEmpty) {
+      await _appendOccurrenceQuery(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('startTime', isGreaterThanOrEqualTo: startTs)
+            .where('startTime', isLessThan: endTs)
+            .where('siteId', isEqualTo: siteId)
+            .orderBy('startTime'),
+        sink: merged,
+      );
+    }
+
+    if (merged.isEmpty) {
+      await _appendOccurrenceQuery(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('startTime', isGreaterThanOrEqualTo: startTs)
+            .where('startTime', isLessThan: endTs)
+            .orderBy('startTime'),
+        sink: merged,
+        filterByContext: true,
+      );
+    }
+
+    if (merged.isEmpty) {
+      await _appendOccurrenceQuery(
+        query: _firestore
+            .collection('sessionOccurrences')
+            .where('date', isGreaterThanOrEqualTo: startTs)
+            .where('date', isLessThan: endTs)
+            .orderBy('date')
+            .orderBy('startTime'),
+        sink: merged,
+        filterByContext: true,
+      );
+    }
+
+    return merged.values.toList()
+      ..sort((a, b) {
+        final DateTime aStart = _parseTimestamp(a.data()['startTime']) ??
+            _parseTimestamp(a.data()['date']) ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final DateTime bStart = _parseTimestamp(b.data()['startTime']) ??
+            _parseTimestamp(b.data()['date']) ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        return aStart.compareTo(bStart);
+      });
   }
 
   AttendanceStatus _parseAttendanceStatus(String? status) {
