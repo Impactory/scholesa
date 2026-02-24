@@ -272,6 +272,12 @@ Each file must match schema:
 }
 ```
 
+For restricted CI/sandbox environments where live Firestore access is unavailable, `telemetry-schema-valid` may use a fallback evidence artifact:
+- `docs/Scholesa_Enterprise_Audit_MD_Pack/EVIDENCE/telemetry-live-audit.txt`
+- Must contain `Result: PASS`
+- Must be recent (<= 45 days old)
+- Otherwise the blocker fails
+
 ---
 
 ## 11. CI Integration
