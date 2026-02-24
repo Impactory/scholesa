@@ -20,6 +20,8 @@ async function runLiveSmoke(locale, baseUrl, token) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
+      'x-scholesa-locale': locale,
+      'x-request-id': `vibe-stt-smoke-${locale}-${Date.now()}`,
     },
     body: formData,
   });
@@ -112,4 +114,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

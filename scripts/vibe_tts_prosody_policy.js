@@ -9,6 +9,8 @@ async function callLiveTts({ baseUrl, token, locale, gradeBand, text }) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'x-scholesa-locale': locale,
+      'x-request-id': `vibe-tts-prosody-${locale}-${Date.now()}`,
     },
     body: JSON.stringify({
       text,
@@ -132,4 +134,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

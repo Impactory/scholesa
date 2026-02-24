@@ -23,6 +23,8 @@ async function runLiveRoundTrip(baseUrl, token, fixture) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'x-scholesa-locale': fixture.locale,
+      'x-request-id': `vibe-voice-utf8-${fixture.locale}-${Date.now()}`,
     },
     body: JSON.stringify({
       message: fixture.text,
@@ -125,4 +127,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

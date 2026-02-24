@@ -17,6 +17,8 @@ async function runLivePronunciation(locale, baseUrl, token) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'x-scholesa-locale': locale,
+      'x-request-id': `vibe-tts-pronunciation-${locale}-${Date.now()}`,
     },
     body: JSON.stringify({
       text,
@@ -108,4 +110,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

@@ -299,6 +299,8 @@ async function runFixtureViaLiveEndpoint(fixture, options) {
     headers: {
       Authorization: `Bearer ${idToken}`,
       'Content-Type': 'application/json',
+      'x-scholesa-locale': fixture.locale,
+      'x-request-id': `vibe-voice-fixture-${fixture.id || Date.now()}`,
     },
     body: JSON.stringify(body),
   });

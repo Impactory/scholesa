@@ -955,7 +955,7 @@ async function recordVoiceAuditEvent(payload: {
 }
 
 async function recordVoiceTelemetryEvent(payload: {
-  eventType: VoiceTelemetryEvent;
+  event: VoiceTelemetryEvent;
   endpoint: string;
   requestId: string;
   traceId: string;
@@ -982,7 +982,7 @@ async function recordVoiceTelemetryEvent(payload: {
     : 'scholesa-ai';
 
   await admin.firestore().collection(TELEMETRY_COLLECTION).add({
-    event: payload.eventType,
+    event: payload.event,
     userId: payload.authContext.uid || 'system',
     role: payload.authContext.role || 'system',
     siteId: payload.authContext.siteId || TELEMETRY_UNSCOPED_SITE_ID,
@@ -995,7 +995,7 @@ async function recordVoiceTelemetryEvent(payload: {
       role: payload.authContext.role,
       gradeBand: canonicalGradeBand,
       locale: payload.locale,
-      eventType: payload.eventType,
+      eventType: payload.event,
       endpoint: payload.endpoint,
       timestamp: new Date().toISOString(),
       latencyMs: payload.latencyMs,
@@ -1010,9 +1010,9 @@ async function recordVoiceTelemetryEvent(payload: {
       audioBytes: payload.audioBytes ?? 0,
       textLength: payload.textLength ?? 0,
       modelVersion:
-        payload.eventType === 'voice.transcribe'
+        payload.event === 'voice.transcribe'
           ? STT_MODEL_VERSION
-          : payload.eventType === 'voice.tts'
+          : payload.event === 'voice.tts'
           ? TTS_MODEL_VERSION
           : VOICE_MODEL_VERSION,
       policyVersion: VOICE_POLICY_VERSION,
@@ -1150,7 +1150,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         latencyMs,
       }),
       recordVoiceTelemetryEvent({
-        eventType: 'voice.message',
+        event: 'voice.message',
         endpoint: 'copilot_message',
         requestId,
         traceId,
@@ -1169,7 +1169,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     if (supplementalSafetyEvent) {
       telemetryWrites.push(
         recordVoiceTelemetryEvent({
-          eventType: supplementalSafetyEvent,
+          event: supplementalSafetyEvent,
           endpoint: 'copilot_message',
           requestId,
           traceId,
@@ -1280,7 +1280,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         latencyMs,
       }),
       recordVoiceTelemetryEvent({
-        eventType: 'voice.transcribe',
+        event: 'voice.transcribe',
         endpoint: 'voice_transcribe',
         requestId,
         traceId,
@@ -1364,7 +1364,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         latencyMs,
       }),
       recordVoiceTelemetryEvent({
-        eventType: 'voice.tts',
+        event: 'voice.tts',
         endpoint: 'tts_speak',
         requestId,
         traceId,

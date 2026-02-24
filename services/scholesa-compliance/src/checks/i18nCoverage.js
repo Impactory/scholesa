@@ -50,11 +50,21 @@ function runI18nCoverage() {
   const localeHeadersPath = path.join(REPO_ROOT, 'src/lib/i18n/localeHeaders.ts');
   const aiContractsPath = path.join(REPO_ROOT, 'docs/infrastructure/blueprints/hybrid-cloudrun-gke-gpu/03-ai/01-internal-ai-service-contracts.md');
   const voiceSystemPath = path.join(REPO_ROOT, 'functions/src/voiceSystem.ts');
+  const voiceClientPath = path.join(REPO_ROOT, 'src/lib/voice/voiceService.ts');
+  const sttSmokePath = path.join(REPO_ROOT, 'scripts/vibe_stt_smoke.js');
+  const ttsPronunciationPath = path.join(REPO_ROOT, 'scripts/vibe_tts_pronunciation.js');
+  const ttsProsodyPath = path.join(REPO_ROOT, 'scripts/vibe_tts_prosody_policy.js');
+  const voiceFixturesPath = path.join(REPO_ROOT, 'scripts/voice_vibe_shared.js');
 
   const localeConfig = readTextSafe(localeConfigPath) || '';
   const localeHeaders = readTextSafe(localeHeadersPath) || '';
   const aiContracts = readTextSafe(aiContractsPath) || '';
   const voiceSystem = readTextSafe(voiceSystemPath) || '';
+  const voiceClient = readTextSafe(voiceClientPath) || '';
+  const sttSmokeScript = readTextSafe(sttSmokePath) || '';
+  const ttsPronunciationScript = readTextSafe(ttsPronunciationPath) || '';
+  const ttsProsodyScript = readTextSafe(ttsProsodyPath) || '';
+  const voiceFixturesScript = readTextSafe(voiceFixturesPath) || '';
 
   const localePackChecks = REQUIRED_LOCALES.map((locale) => {
     const filePath = path.join(REPO_ROOT, `packages/i18n/locales/${locale}.json`);
@@ -102,6 +112,28 @@ function runI18nCoverage() {
       id: 'voice_system_supports_required_locales',
       pass: REQUIRED_LOCALES.every((locale) => voiceSystem.includes(`'${locale}'`)),
       details: { voiceSystemPath: path.relative(REPO_ROOT, voiceSystemPath) },
+    },
+    {
+      id: 'voice_client_includes_locale_headers',
+      pass:
+        voiceClient.includes("'x-scholesa-locale'") &&
+        voiceClient.includes("'x-request-id'") &&
+        voiceClient.includes("formData.append('locale', locale)"),
+      details: { voiceClientPath: path.relative(REPO_ROOT, voiceClientPath) },
+    },
+    {
+      id: 'voice_live_checks_send_locale_headers',
+      pass:
+        sttSmokeScript.includes("'x-scholesa-locale'") &&
+        ttsPronunciationScript.includes("'x-scholesa-locale'") &&
+        ttsProsodyScript.includes("'x-scholesa-locale'") &&
+        voiceFixturesScript.includes("'x-scholesa-locale'"),
+      details: {
+        sttSmokePath: path.relative(REPO_ROOT, sttSmokePath),
+        ttsPronunciationPath: path.relative(REPO_ROOT, ttsPronunciationPath),
+        ttsProsodyPath: path.relative(REPO_ROOT, ttsProsodyPath),
+        voiceFixturesPath: path.relative(REPO_ROOT, voiceFixturesPath),
+      },
     },
     {
       id: 'vibe_api_locale_report_passed',

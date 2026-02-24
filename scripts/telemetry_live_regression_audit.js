@@ -13,6 +13,28 @@ const SMOKE_FILE = path.join(ROOT, 'scripts/telemetry_smoke_check.js');
 const DOCS_TELEMETRY_SPEC_FILE = path.join(ROOT, 'docs/18_ANALYTICS_TELEMETRY_SPEC.md');
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const UNMAPPED_SITE_ID = 'unscoped';
+const VOICE_EVENTS = new Set([
+  'voice.transcribe',
+  'voice.message',
+  'voice.tts',
+  'voice.blocked',
+  'voice.escalated',
+]);
+const VOICE_REQUIRED_METADATA_KEYS = [
+  'traceId',
+  'service',
+  'env',
+  'siteId',
+  'role',
+  'gradeBand',
+  'locale',
+  'eventType',
+  'timestamp',
+];
+const VALID_VOICE_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
+const VALID_VOICE_ROLES = new Set(['student', 'teacher', 'admin']);
+const VALID_VOICE_GRADE_BANDS = new Set(['k5', 'ms', 'hs']);
+const VALID_VOICE_ENVS = new Set(['dev', 'staging', 'prod']);
 
 const PII_KEY_BLOCKLIST = new Set([
   'name',
@@ -293,6 +315,10 @@ function printSection(title, lines) {
   }
 }
 
+function isIsoTimestamp(value) {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value));
+}
+
 function initializeAdmin(args) {
   const appOptions = {};
   if (args.project) {
@@ -335,6 +361,8 @@ async function runLiveAudit(args, registries) {
   const tenantTagErrors = [];
   const piiKeyErrors = [];
   const unknownEventCounts = new Map();
+  const voiceMetadataErrors = [];
+  const voiceTraceEvents = new Map();
 
   const allowedEventSet = new Set(registries.backendAllowedEvents);
 
@@ -382,6 +410,55 @@ async function runLiveAudit(args, registries) {
       });
     }
 
+    if (VOICE_EVENTS.has(event)) {
+      const missingKeys = VOICE_REQUIRED_METADATA_KEYS.filter((key) => metadata[key] === undefined || metadata[key] === null);
+      const invalids = [];
+      if (typeof metadata.eventType !== 'string' || metadata.eventType !== event) {
+        invalids.push(`eventType_mismatch:${String(metadata.eventType || 'missing')}`);
+      }
+      if (typeof metadata.service !== 'string' || metadata.service.trim().length === 0) {
+        invalids.push('service_missing_or_invalid');
+      }
+      if (typeof metadata.env !== 'string' || !VALID_VOICE_ENVS.has(metadata.env)) {
+        invalids.push(`env_invalid:${String(metadata.env || 'missing')}`);
+      }
+      if (typeof metadata.role !== 'string' || !VALID_VOICE_ROLES.has(metadata.role)) {
+        invalids.push(`role_invalid:${String(metadata.role || 'missing')}`);
+      }
+      if (typeof metadata.gradeBand !== 'string' || !VALID_VOICE_GRADE_BANDS.has(metadata.gradeBand)) {
+        invalids.push(`gradeBand_invalid:${String(metadata.gradeBand || 'missing')}`);
+      }
+      if (typeof metadata.locale !== 'string' || !VALID_VOICE_LOCALES.has(metadata.locale)) {
+        invalids.push(`locale_invalid:${String(metadata.locale || 'missing')}`);
+      }
+      if (!isIsoTimestamp(metadata.timestamp)) {
+        invalids.push(`timestamp_invalid:${String(metadata.timestamp || 'missing')}`);
+      }
+      if (typeof metadata.siteId !== 'string' || metadata.siteId !== siteId) {
+        invalids.push(`siteId_mismatch:${String(metadata.siteId || 'missing')}:${siteId}`);
+      }
+      if (typeof metadata.role === 'string' && metadata.role !== role) {
+        invalids.push(`role_mismatch:${metadata.role}:${role}`);
+      }
+
+      if (missingKeys.length > 0 || invalids.length > 0) {
+        voiceMetadataErrors.push({
+          id: row.id,
+          event,
+          missingKeys,
+          invalids,
+        });
+      }
+
+      if (typeof metadata.traceId === 'string' && metadata.traceId.trim().length > 0) {
+        const traceId = metadata.traceId.trim();
+        if (!voiceTraceEvents.has(traceId)) {
+          voiceTraceEvents.set(traceId, new Set());
+        }
+        voiceTraceEvents.get(traceId).add(event);
+      }
+    }
+
     if (!allowedEventSet.has(event)) {
       unknownEventCounts.set(event, (unknownEventCounts.get(event) ?? 0) + 1);
     }
@@ -398,6 +475,17 @@ async function runLiveAudit(args, registries) {
     (event) => !eventCounts.has(event),
   );
 
+  const tracesWithSttAndMessage = Array.from(voiceTraceEvents.values()).filter(
+    (events) => events.has('voice.transcribe') && events.has('voice.message'),
+  ).length;
+  const voiceTraceContinuityErrors = [];
+  if (eventCounts.has('voice.transcribe') && eventCounts.has('voice.message') && tracesWithSttAndMessage === 0) {
+    voiceTraceContinuityErrors.push({
+      reason: 'no_shared_trace_between_stt_and_message',
+      tracesObserved: voiceTraceEvents.size,
+    });
+  }
+
   return {
     docsScanned: snapshot.docs.length,
     docsAfterSiteFilter: docs.length,
@@ -409,6 +497,8 @@ async function runLiveAudit(args, registries) {
     correlationErrors,
     tenantTagErrors,
     piiKeyErrors,
+    voiceMetadataErrors,
+    voiceTraceContinuityErrors,
     unknownEventCounts,
   };
 }
@@ -556,6 +646,22 @@ async function run() {
     printSection(
       'Live PII Key Errors (sample)',
       sample(live.piiKeyErrors, 10).map((row) => JSON.stringify(row)),
+    );
+  }
+
+  if (live.voiceMetadataErrors.length > 0) {
+    failures.push(`liveVoiceMetadataErrors=${live.voiceMetadataErrors.length}`);
+    printSection(
+      'Live Voice Metadata Schema Errors (sample)',
+      sample(live.voiceMetadataErrors, 10).map((row) => JSON.stringify(row)),
+    );
+  }
+
+  if (live.voiceTraceContinuityErrors.length > 0) {
+    failures.push(`liveVoiceTraceContinuityErrors=${live.voiceTraceContinuityErrors.length}`);
+    printSection(
+      'Live Voice Trace Continuity Errors',
+      live.voiceTraceContinuityErrors.map((row) => JSON.stringify(row)),
     );
   }
 

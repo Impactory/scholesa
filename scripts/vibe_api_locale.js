@@ -9,6 +9,7 @@ const files = {
   localeConfig: path.resolve('src/lib/i18n/config.ts'),
   loginRoute: path.resolve('app/api/auth/session-login/route.ts'),
   logoutRoute: path.resolve('app/api/auth/session-logout/route.ts'),
+  voiceService: path.resolve('src/lib/voice/voiceService.ts'),
 };
 
 const failures = [];
@@ -27,6 +28,7 @@ if (!failures.length) {
   const localeConfigSource = fs.readFileSync(files.localeConfig, 'utf8');
   const loginSource = fs.readFileSync(files.loginRoute, 'utf8');
   const logoutSource = fs.readFileSync(files.logoutRoute, 'utf8');
+  const voiceServiceSource = fs.readFileSync(files.voiceService, 'utf8');
 
   const checks = {
     resolveHeaderPriority: /x-scholesa-locale/.test(localeHeadersSource) && /accept-language/.test(localeHeadersSource),
@@ -36,6 +38,9 @@ if (!failures.length) {
     loginRoutePersistsPreferredLocale: /preferredLocale/.test(loginSource),
     loginRouteSetsLocaleCookie: /scholesa_locale/.test(loginSource),
     logoutRouteSetsLocaleCookie: /scholesa_locale/.test(logoutSource),
+    voiceServiceSendsLocaleHeader: /x-scholesa-locale/.test(voiceServiceSource),
+    voiceServiceSendsRequestId: /x-request-id/.test(voiceServiceSource),
+    voiceServiceCallsSttAndCopilot: /\/voice\/transcribe/.test(voiceServiceSource) && /\/copilot\/message/.test(voiceServiceSource),
   };
 
   for (const [check, passed] of Object.entries(checks)) {
@@ -55,4 +60,3 @@ if (!failures.length) {
 }
 
 finish('vibe-api-locale-report', failures, details);
-
