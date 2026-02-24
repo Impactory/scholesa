@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function runLogPrivacySafety() {
   const findings = [];
@@ -27,18 +34,49 @@ function runLogPrivacySafety() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const checkMap = {
+    telemetryPath,
+    voicePath,
+    telemetryPiiBlocklistPresent: Boolean(telemetry && telemetry.includes('TELEMETRY_PII_KEY_BLOCKLIST')),
+    voiceRedactionPresent: Boolean(voice && voice.includes('redactTextForSpeech')),
+  };
+
+  const legacyReport = {
     report: 'log-privacy-safety',
     generatedAt: nowIso(),
     passed,
     findings,
-    checks: {
-      telemetryPath,
-      voicePath,
-      telemetryPiiBlocklistPresent: Boolean(telemetry && telemetry.includes('TELEMETRY_PII_KEY_BLOCKLIST')),
-      voiceRedactionPresent: Boolean(voice && voice.includes('redactTextForSpeech')),
-    },
+    checks: checkMap,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'log-privacy-safety',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'telemetry_pii_blocklist_present',
+        pass: checkMap.telemetryPiiBlocklistPresent,
+        details: { telemetryPath },
+      },
+      {
+        id: 'voice_redaction_present',
+        pass: checkMap.voiceRedactionPresent,
+        details: { voicePath },
+      },
+      {
+        id: 'no_transcript_console_logging',
+        pass: !(voice && /console\.log\(.*transcript/i.test(voice)),
+        details: { voicePath },
+      },
+      {
+        id: 'no_raw_voice_collection_logging',
+        pass: !(voice && /collection\(['"]voiceRawLogs['"]\)/i.test(voice)),
+        details: { voicePath },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('log-privacy-safety');
   writeJson(outputPath, report);
@@ -48,7 +86,7 @@ function runLogPrivacySafety() {
     passed,
     findings,
     evidencePath: outputPath,
-    details: report.checks,
+    details: checkMap,
   };
 }
 

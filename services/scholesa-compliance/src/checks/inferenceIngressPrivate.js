@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function contains(content, needle) {
   return Boolean(content && content.includes(needle));
@@ -58,13 +65,21 @@ function runInferenceIngressPrivate() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'inference-ingress-private',
     generatedAt: nowIso(),
     passed,
     findings,
     checks,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'inference-ingress-private',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: checks.map((check) => ({ id: check.id, pass: check.pass, details: check.details })),
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('inference-ingress-private');
   writeJson(outputPath, report);

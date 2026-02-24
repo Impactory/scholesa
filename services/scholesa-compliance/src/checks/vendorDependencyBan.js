@@ -1,6 +1,13 @@
 const path = require('path');
 const cp = require('child_process');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function readAiDependencyReport() {
   const reportFile = path.join(REPO_ROOT, 'audit-pack/reports/ai-dependency-ban.json');
@@ -40,7 +47,7 @@ function runVendorDependencyBan() {
   const findings = aiReport?.failures || ['ai-dependency-ban report missing or unreadable'];
   const passed = Boolean(aiReport && aiReport.passed === true);
 
-  const report = {
+  const legacyReport = {
     report: 'vendor-dependency-ban',
     generatedAt: nowIso(),
     passed,
@@ -54,6 +61,25 @@ function runVendorDependencyBan() {
         }
       : null,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'vendor-dependency-ban',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'source_ai_dependency_report_present',
+        pass: Boolean(aiReport),
+        details: { sourceReport: legacyReport.sourceReport },
+      },
+      {
+        id: 'source_ai_dependency_report_passed',
+        pass: Boolean(aiReport && aiReport.passed === true),
+        details: legacyReport.sourceSummary || { scannedFiles: 0, hitCount: 0 },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('vendor-dependency-ban');
   writeJson(outputPath, report);

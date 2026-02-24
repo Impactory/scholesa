@@ -1,6 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function contains(content, needle) {
   return Boolean(content && content.includes(needle));
@@ -109,13 +116,21 @@ function runInfraDrift() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'infra-drift',
     generatedAt: nowIso(),
     passed,
     findings,
     checks,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'infra-drift',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: checks.map((check) => ({ id: check.id, pass: check.pass, details: check.details })),
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('infra-drift');
   writeJson(outputPath, report);

@@ -1,6 +1,13 @@
 const path = require('path');
 const cp = require('child_process');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function readAiDomainReport() {
   const reportFile = path.join(REPO_ROOT, 'audit-pack/reports/ai-domain-ban.json');
@@ -40,7 +47,7 @@ function runVendorDomainBan() {
   const findings = aiReport?.failures || ['ai-domain-ban report missing or unreadable'];
   const passed = Boolean(aiReport && aiReport.passed === true);
 
-  const report = {
+  const legacyReport = {
     report: 'vendor-domain-ban',
     generatedAt: nowIso(),
     passed,
@@ -55,6 +62,30 @@ function runVendorDomainBan() {
         }
       : null,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'vendor-domain-ban',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'source_ai_domain_report_present',
+        pass: Boolean(aiReport),
+        details: { sourceReport: legacyReport.sourceReport },
+      },
+      {
+        id: 'source_ai_domain_report_passed',
+        pass: Boolean(aiReport && aiReport.passed === true),
+        details:
+          legacyReport.sourceSummary || {
+            runtimeHitCount: 0,
+            docsWarningCount: 0,
+            scannedFiles: 0,
+          },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('vendor-domain-ban');
   writeJson(outputPath, report);

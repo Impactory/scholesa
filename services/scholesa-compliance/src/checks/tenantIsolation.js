@@ -6,6 +6,7 @@ const {
   writeJson,
   nowIso,
   readTextSafe,
+  toCanonicalReport,
 } = require('../utils');
 const { runTenantIsolationInvariants } = require('./tenantIsolationInvariants');
 
@@ -83,13 +84,21 @@ function runTenantIsolation() {
 
   const passed = findings.length === 0;
 
-  const report = {
+  const legacyReport = {
     report: 'tenant-isolation',
     generatedAt: nowIso(),
     passed,
     findings,
     checks,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'tenant-isolation',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: checks.map((check) => ({ id: check.id, pass: check.pass, details: check.details })),
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('tenant-isolation');
   writeJson(outputPath, report);

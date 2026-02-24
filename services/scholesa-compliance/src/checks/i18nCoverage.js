@@ -7,6 +7,7 @@ const {
   writeJson,
   nowIso,
   readTextSafe,
+  toCanonicalReport,
 } = require('../utils');
 
 const REQUIRED_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'];
@@ -122,7 +123,7 @@ function runI18nCoverage() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'i18n-coverage',
     generatedAt: nowIso(),
     passed,
@@ -130,6 +131,14 @@ function runI18nCoverage() {
     checks,
     requiredLocales: REQUIRED_LOCALES,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'i18n-coverage',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: checks.map((check) => ({ id: check.id, pass: check.pass, details: check.details })),
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('i18n-coverage');
   writeJson(outputPath, report);

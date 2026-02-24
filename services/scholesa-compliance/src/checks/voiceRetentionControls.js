@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function runVoiceRetentionControls() {
   const findings = [];
@@ -32,25 +39,51 @@ function runVoiceRetentionControls() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const checkMap = {
+    voiceSystemPath,
+    hasAudioTokenTtl: Boolean(voiceSystem && voiceSystem.includes('AUDIO_TOKEN_TTL_MS')),
+    hasK5Policy: Boolean(voiceSystem && (voiceSystem.includes('K-5') || voiceSystem.includes('K_5'))),
+    storesRawAudio: Boolean(
+      voiceSystem && (
+        voiceSystem.includes('bucket.upload') ||
+        voiceSystem.includes('file.save(') ||
+        voiceSystem.includes('collection(\'rawAudio\')') ||
+        voiceSystem.includes('collection("rawAudio")')
+      )
+    ),
+  };
+
+  const legacyReport = {
     report: 'voice-retention-controls',
     generatedAt: nowIso(),
     passed,
     findings,
-    checks: {
-      voiceSystemPath,
-      hasAudioTokenTtl: Boolean(voiceSystem && voiceSystem.includes('AUDIO_TOKEN_TTL_MS')),
-      hasK5Policy: Boolean(voiceSystem && (voiceSystem.includes('K-5') || voiceSystem.includes('K_5'))),
-      storesRawAudio: Boolean(
-        voiceSystem && (
-          voiceSystem.includes('bucket.upload') ||
-          voiceSystem.includes('file.save(') ||
-          voiceSystem.includes('collection(\'rawAudio\')') ||
-          voiceSystem.includes('collection("rawAudio")')
-        )
-      ),
-    },
+    checks: checkMap,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'voice-retention-controls',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'audio_token_ttl_control_present',
+        pass: checkMap.hasAudioTokenTtl,
+        details: { voiceSystemPath },
+      },
+      {
+        id: 'k5_policy_marker_present',
+        pass: checkMap.hasK5Policy,
+        details: { voiceSystemPath },
+      },
+      {
+        id: 'raw_audio_not_persisted',
+        pass: !checkMap.storesRawAudio,
+        details: { voiceSystemPath },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('voice-retention-controls');
   writeJson(outputPath, report);
@@ -60,7 +93,7 @@ function runVoiceRetentionControls() {
     passed,
     findings,
     evidencePath: outputPath,
-    details: report.checks,
+    details: checkMap,
   };
 }
 

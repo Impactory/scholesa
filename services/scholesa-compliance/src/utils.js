@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const cp = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const REPORT_DIR = path.join(REPO_ROOT, 'audit-pack', 'reports');
+const VALID_AUDIT_ENVS = new Set(['dev', 'staging', 'prod']);
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -24,6 +26,65 @@ function writeJson(filePath, payload) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function gitSha() {
+  try {
+    return cp.execSync('git rev-parse HEAD', {
+      cwd: REPO_ROOT,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
+function resolveAuditEnv(rawValue) {
+  const value = String(
+    rawValue || process.env.VIBE_ENV || process.env.NODE_ENV || 'dev',
+  ).trim().toLowerCase();
+  return VALID_AUDIT_ENVS.has(value) ? value : 'dev';
+}
+
+function normalizeChecksArray(checks, fallbackId = 'check') {
+  if (!Array.isArray(checks)) return [];
+  return checks.map((check, index) => ({
+    id:
+      (typeof check?.id === 'string' && check.id) ||
+      (typeof check?.checkId === 'string' && check.checkId) ||
+      `${fallbackId}_${index + 1}`,
+    pass:
+      typeof check?.pass === 'boolean'
+        ? check.pass
+        : typeof check?.passed === 'boolean'
+        ? check.passed
+        : false,
+    ...(check && typeof check === 'object' && check.details !== undefined
+      ? { details: check.details }
+      : {}),
+  }));
+}
+
+function toCanonicalReport({
+  reportName,
+  passed,
+  checks = [],
+  generatedAt = nowIso(),
+  legacy = {},
+  env,
+}) {
+  return {
+    ...legacy,
+    reportName,
+    generatedAt,
+    gitSha: gitSha(),
+    env: resolveAuditEnv(env),
+    pass: Boolean(passed),
+    // Compatibility with legacy consumers.
+    passed: Boolean(passed),
+    checks: normalizeChecksArray(checks, reportName),
+  };
 }
 
 function reportPath(name) {
@@ -79,13 +140,18 @@ function lineMatches(content, regex) {
 module.exports = {
   REPO_ROOT,
   REPORT_DIR,
+  VALID_AUDIT_ENVS,
   ensureDir,
+  gitSha,
   lineMatches,
+  normalizeChecksArray,
   nowIso,
   readText,
   readTextSafe,
   relativeRepoPath,
+  resolveAuditEnv,
   reportPath,
+  toCanonicalReport,
   walkFiles,
   writeJson,
 };

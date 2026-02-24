@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function safeJson(filePath) {
   const raw = readTextSafe(filePath);
@@ -37,20 +44,51 @@ function runRuntimeEgressProof() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const checkMap = {
+    srcGuardPresent: Boolean(srcGuard),
+    srcGuardHasSecurityEvent: Boolean(srcGuard && srcGuard.includes('SECURITY_EGRESS_BLOCKED')),
+    functionsGuardPresent: Boolean(fnGuard),
+    functionsGuardHasSecurityEvent: Boolean(fnGuard && fnGuard.includes('SECURITY_EGRESS_BLOCKED')),
+    aiEgressReportPassed: Boolean(aiEgressReport && aiEgressReport.passed === true),
+    voiceEgressReportPassed: Boolean(voiceEgressReport && voiceEgressReport.passed === true),
+  };
+
+  const legacyReport = {
     report: 'vendor-egress-proof',
     generatedAt: nowIso(),
     passed,
     findings,
-    checks: {
-      srcGuardPresent: Boolean(srcGuard),
-      srcGuardHasSecurityEvent: Boolean(srcGuard && srcGuard.includes('SECURITY_EGRESS_BLOCKED')),
-      functionsGuardPresent: Boolean(fnGuard),
-      functionsGuardHasSecurityEvent: Boolean(fnGuard && fnGuard.includes('SECURITY_EGRESS_BLOCKED')),
-      aiEgressReportPassed: Boolean(aiEgressReport && aiEgressReport.passed === true),
-      voiceEgressReportPassed: Boolean(voiceEgressReport && voiceEgressReport.passed === true),
-    },
+    checks: checkMap,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'vendor-egress-proof',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'src_egress_guard_emits_security_event',
+        pass: checkMap.srcGuardPresent && checkMap.srcGuardHasSecurityEvent,
+        details: { srcGuardPath },
+      },
+      {
+        id: 'functions_egress_guard_emits_security_event',
+        pass: checkMap.functionsGuardPresent && checkMap.functionsGuardHasSecurityEvent,
+        details: { fnGuardPath },
+      },
+      {
+        id: 'ai_runtime_egress_report_passed',
+        pass: checkMap.aiEgressReportPassed,
+        details: { source: 'audit-pack/reports/ai-egress-none.json' },
+      },
+      {
+        id: 'voice_runtime_egress_report_passed',
+        pass: checkMap.voiceEgressReportPassed,
+        details: { source: 'audit-pack/reports/voice-egress.json' },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('vendor-egress-proof');
   writeJson(outputPath, report);
@@ -60,7 +98,7 @@ function runRuntimeEgressProof() {
     passed,
     findings,
     evidencePath: outputPath,
-    details: report.checks,
+    details: checkMap,
   };
 }
 

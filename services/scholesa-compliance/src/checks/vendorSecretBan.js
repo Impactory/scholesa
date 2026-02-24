@@ -1,6 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, walkFiles, relativeRepoPath, lineMatches } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  walkFiles,
+  relativeRepoPath,
+  lineMatches,
+  toCanonicalReport,
+} = require('../utils');
 
 const SECRET_BAN_PATTERNS = [
   { label: 'GEMINI_API_KEY', regex: /\bGEMINI_API_KEY\b/i },
@@ -59,7 +68,7 @@ function runVendorSecretBan() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'vendor-secret-ban',
     generatedAt: nowIso(),
     passed,
@@ -68,6 +77,25 @@ function runVendorSecretBan() {
     hits,
     findings,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'vendor-secret-ban',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'secret_pattern_scan_executed',
+        pass: files.length > 0,
+        details: { scannedFiles: files.length },
+      },
+      {
+        id: 'no_banned_secret_patterns_found',
+        pass: hits.length === 0,
+        details: { hitCount: hits.length },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('vendor-secret-ban');
   writeJson(outputPath, report);

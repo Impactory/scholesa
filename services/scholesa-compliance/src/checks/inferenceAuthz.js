@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function hasAllNeedles(content, needles) {
   if (!content) return false;
@@ -71,7 +78,7 @@ function runInferenceAuthz() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'inference-authz',
     generatedAt: nowIso(),
     passed,
@@ -79,6 +86,14 @@ function runInferenceAuthz() {
     checks,
     matrix,
   };
+
+  const report = toCanonicalReport({
+    reportName: 'inference-authz',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: checks.map((check) => ({ id: check.id, pass: check.pass, details: check.details })),
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('inference-authz');
   writeJson(outputPath, report);

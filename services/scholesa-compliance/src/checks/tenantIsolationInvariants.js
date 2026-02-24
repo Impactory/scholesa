@@ -1,5 +1,12 @@
 const path = require('path');
-const { REPO_ROOT, reportPath, writeJson, nowIso, readTextSafe } = require('../utils');
+const {
+  REPO_ROOT,
+  reportPath,
+  writeJson,
+  nowIso,
+  readTextSafe,
+  toCanonicalReport,
+} = require('../utils');
 
 function mustContain(content, needle, findings, label) {
   if (!content || !content.includes(needle)) {
@@ -40,7 +47,7 @@ function runTenantIsolationInvariants() {
   }
 
   const passed = findings.length === 0;
-  const report = {
+  const legacyReport = {
     report: 'tenant-isolation-invariants',
     generatedAt: nowIso(),
     passed,
@@ -51,6 +58,37 @@ function runTenantIsolationInvariants() {
       rulesPath,
     },
   };
+
+  const report = toCanonicalReport({
+    reportName: 'tenant-isolation-invariants',
+    passed,
+    generatedAt: legacyReport.generatedAt,
+    checks: [
+      {
+        id: 'voice_runtime_tenant_scoping_invariants',
+        pass:
+          Boolean(voiceSystem) &&
+          voiceSystem.includes('resolveAuthContext') &&
+          voiceSystem.includes('validateSiteAccess') &&
+          voiceSystem.includes('siteId'),
+        details: { voiceSystemPath },
+      },
+      {
+        id: 'functions_role_and_site_gate_invariants',
+        pass:
+          Boolean(functionsIndex) &&
+          functionsIndex.includes('requireRoleAndSite') &&
+          functionsIndex.includes('siteId'),
+        details: { functionsIndexPath },
+      },
+      {
+        id: 'firestore_site_scope_invariants',
+        pass: Boolean(rules) && firestoreHasSiteScope && rules.includes('request.auth != null'),
+        details: { rulesPath },
+      },
+    ],
+    legacy: legacyReport,
+  });
 
   const outputPath = reportPath('tenant-isolation-invariants');
   writeJson(outputPath, report);
