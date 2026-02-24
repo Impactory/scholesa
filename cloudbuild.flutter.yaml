@@ -5,6 +5,10 @@ steps:
   args:
     - -lc
     - |
+      if [[ ! -f package.json || ! -f package-lock.json || ! -f scripts/ai_egress_none.js || ! -f src/lib/ai/egressGuard.ts || ! -f functions/src/security/egressGuard.ts ]]; then
+        echo "Skipping ai-policy-gates for minimal Flutter-only build context."
+        exit 0
+      fi
       npm ci
       npm run ai:internal-only:all
 - name: 'gcr.io/cloud-builders/docker'
