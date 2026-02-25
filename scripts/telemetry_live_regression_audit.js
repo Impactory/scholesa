@@ -755,6 +755,13 @@ async function runLiveAudit(args, registries) {
       if (traceId && Object.prototype.hasOwnProperty.call(bosVoiceTraceByEvent, eventType)) {
         bosVoiceTraceByEvent[eventType].add(traceId);
       }
+      if (Object.prototype.hasOwnProperty.call(bosVoiceUnderstandingCoverage, eventType)) {
+        const coverage = bosVoiceUnderstandingCoverage[eventType];
+        coverage.total += 1;
+        if (hasValidUnderstandingShape(payload)) {
+          coverage.withSignals += 1;
+        }
+      }
     }
   }
 
@@ -800,6 +807,67 @@ async function runLiveAudit(args, registries) {
       voiceTtsCount,
       aiCoachResponseCount,
     });
+  }
+
+  const voiceUnderstandingCandidateErrors = [];
+  for (const [eventName, coverage] of Object.entries(voiceUnderstandingCoverage)) {
+    if (coverage.total > 0 && coverage.withSignals === 0) {
+      voiceUnderstandingCandidateErrors.push({
+        reason: `voice_understanding_signals_missing_for_${eventName.replace(/\./g, '_')}`,
+        total: coverage.total,
+        withSignals: coverage.withSignals,
+      });
+    }
+  }
+
+  const bosVoiceUnderstandingCandidateErrors = [];
+  for (const [eventName, coverage] of Object.entries(bosVoiceUnderstandingCoverage)) {
+    if (coverage.total > 0 && coverage.withSignals === 0) {
+      bosVoiceUnderstandingCandidateErrors.push({
+        reason: `bos_voice_understanding_signals_missing_for_${eventName}`,
+        total: coverage.total,
+        withSignals: coverage.withSignals,
+      });
+    }
+  }
+
+  const learningProfilesWithSignals = learningProfileDocs.filter((row) => {
+    const learning = row.learning && typeof row.learning === 'object' && !Array.isArray(row.learning)
+      ? row.learning
+      : {};
+    const metrics = row.metrics && typeof row.metrics === 'object' && !Array.isArray(row.metrics)
+      ? row.metrics
+      : {};
+    return (
+      typeof learning.lastIntent === 'string' &&
+      learning.lastIntent.trim().length > 0 &&
+      typeof learning.lastUnderstandingConfidence === 'number' &&
+      Number.isFinite(learning.lastUnderstandingConfidence) &&
+      typeof metrics.totalInteractions === 'number' &&
+      Number.isFinite(metrics.totalInteractions)
+    );
+  });
+
+  const totalVoiceUnderstandingEvents = Object.values(voiceUnderstandingCoverage)
+    .reduce((sum, coverage) => sum + coverage.withSignals, 0);
+  const totalBosVoiceUnderstandingEvents = Object.values(bosVoiceUnderstandingCoverage)
+    .reduce((sum, coverage) => sum + coverage.withSignals, 0);
+  const voiceUnderstandingRolloutActive =
+    totalVoiceUnderstandingEvents > 0 ||
+    totalBosVoiceUnderstandingEvents > 0 ||
+    learningProfilesWithSignals.length > 0;
+
+  if (voiceUnderstandingRolloutActive) {
+    voiceUnderstandingCompatibilityErrors.push(...voiceUnderstandingCandidateErrors);
+    bosVoiceUnderstandingCompatibilityErrors.push(...bosVoiceUnderstandingCandidateErrors);
+    if (totalVoiceUnderstandingEvents > 0 && learningProfilesWithSignals.length === 0) {
+      bosLearningProfileCompatibilityErrors.push({
+        reason: 'bos_learning_profiles_missing_understanding_state',
+        totalVoiceUnderstandingEvents,
+        learningProfilesScanned: learningProfileDocs.length,
+        learningProfilesWithSignals: 0,
+      });
+    }
   }
 
   const sttToMessageTraceOverlap = overlap(voiceTraceByEvent.transcribe, voiceTraceByEvent.message);
@@ -848,6 +916,8 @@ async function runLiveAudit(args, registries) {
     docsAfterSiteFilter: docs.length,
     interactionDocsScanned: interactionSnapshot.docs.length,
     interactionDocsAfterSiteFilter: interactionDocs.length,
+    learningProfilesScanned: learningProfilesSnapshot.docs.length,
+    learningProfilesAfterSiteFilter: learningProfileDocs.length,
     distinctEventsSeen: eventCounts.size,
     eventCounts,
     bosEventCounts,
@@ -861,8 +931,19 @@ async function runLiveAudit(args, registries) {
     nonCoreMetadataErrors,
     voiceTraceContinuityErrors,
     bosCompatibilityErrors,
+    voiceUnderstandingCompatibilityErrors,
+    bosVoiceUnderstandingCompatibilityErrors,
+    bosLearningProfileCompatibilityErrors,
     bosInteractionSchemaErrors,
     bosVoiceTraceContinuityErrors,
+    voiceUnderstandingCoverage,
+    bosVoiceUnderstandingCoverage,
+    voiceUnderstandingRolloutActive,
+    voiceUnderstandingSignalCounts: {
+      telemetry: totalVoiceUnderstandingEvents,
+      interaction: totalBosVoiceUnderstandingEvents,
+      learningProfiles: learningProfilesWithSignals.length,
+    },
     traceOverlap: {
       sttToMessage: sttToMessageTraceOverlap.length,
       sttToBosOpened: sttToBosTraceOverlap.length,
@@ -870,6 +951,7 @@ async function runLiveAudit(args, registries) {
       ttsToBosResponse: ttsToBosTraceOverlap.length,
     },
     interactionQueryErrors,
+    learningProfileQueryErrors,
     unknownEventCounts,
   };
 }
@@ -947,6 +1029,8 @@ async function run() {
     `docsAfterSiteFilter=${live.docsAfterSiteFilter}`,
     `interactionDocsScanned=${live.interactionDocsScanned}`,
     `interactionDocsAfterSiteFilter=${live.interactionDocsAfterSiteFilter}`,
+    `learningProfilesScanned=${live.learningProfilesScanned}`,
+    `learningProfilesAfterSiteFilter=${live.learningProfilesAfterSiteFilter}`,
     `distinctEventsSeen=${live.distinctEventsSeen}`,
   ]);
 
@@ -962,6 +1046,24 @@ async function run() {
     `stt_to_bos_opened=${live.traceOverlap.sttToBosOpened}`,
     `message_to_bos_used=${live.traceOverlap.messageToBosUsed}`,
     `tts_to_bos_response=${live.traceOverlap.ttsToBosResponse}`,
+  ]);
+  printSection(
+    'Voice Understanding Coverage',
+    Object.entries(live.voiceUnderstandingCoverage).map(([eventName, coverage]) =>
+      `${eventName}=with_signals:${coverage.withSignals}/total:${coverage.total}`,
+    ),
+  );
+  printSection(
+    'BOS Voice Understanding Coverage',
+    Object.entries(live.bosVoiceUnderstandingCoverage).map(([eventName, coverage]) =>
+      `${eventName}=with_signals:${coverage.withSignals}/total:${coverage.total}`,
+    ),
+  );
+  printSection('Voice Understanding Rollout', [
+    `rolloutActive=${live.voiceUnderstandingRolloutActive}`,
+    `telemetrySignalDocs=${live.voiceUnderstandingSignalCounts.telemetry}`,
+    `interactionSignalDocs=${live.voiceUnderstandingSignalCounts.interaction}`,
+    `learningProfilesWithSignals=${live.voiceUnderstandingSignalCounts.learningProfiles}`,
   ]);
 
   const failures = [];
@@ -1066,6 +1168,30 @@ async function run() {
     );
   }
 
+  if (live.voiceUnderstandingCompatibilityErrors.length > 0) {
+    failures.push(`liveVoiceUnderstandingCompatibilityErrors=${live.voiceUnderstandingCompatibilityErrors.length}`);
+    printSection(
+      'Live Voice Understanding Compatibility Errors',
+      live.voiceUnderstandingCompatibilityErrors.map((row) => JSON.stringify(row)),
+    );
+  }
+
+  if (live.bosVoiceUnderstandingCompatibilityErrors.length > 0) {
+    failures.push(`liveBosVoiceUnderstandingCompatibilityErrors=${live.bosVoiceUnderstandingCompatibilityErrors.length}`);
+    printSection(
+      'Live BOS Voice Understanding Compatibility Errors',
+      live.bosVoiceUnderstandingCompatibilityErrors.map((row) => JSON.stringify(row)),
+    );
+  }
+
+  if (live.bosLearningProfileCompatibilityErrors.length > 0) {
+    failures.push(`liveBosLearningProfileCompatibilityErrors=${live.bosLearningProfileCompatibilityErrors.length}`);
+    printSection(
+      'Live BOS Learning Profile Compatibility Errors',
+      live.bosLearningProfileCompatibilityErrors.map((row) => JSON.stringify(row)),
+    );
+  }
+
   if (live.bosInteractionSchemaErrors.length > 0) {
     failures.push(`liveBosInteractionSchemaErrors=${live.bosInteractionSchemaErrors.length}`);
     printSection(
@@ -1085,6 +1211,11 @@ async function run() {
   if (live.interactionQueryErrors.length > 0) {
     failures.push(`interactionQueryErrors=${live.interactionQueryErrors.length}`);
     printSection('Interaction Query Errors', live.interactionQueryErrors);
+  }
+
+  if (live.learningProfileQueryErrors.length > 0) {
+    failures.push(`learningProfileQueryErrors=${live.learningProfileQueryErrors.length}`);
+    printSection('Learning Profile Query Errors', live.learningProfileQueryErrors);
   }
 
   if (live.unknownEventCounts.size > 0) {
