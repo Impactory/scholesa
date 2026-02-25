@@ -27,22 +27,9 @@ const { runInferenceAuthz } = require('../services/scholesa-compliance/src/check
 const { runInferenceIngressPrivate } = require('../services/scholesa-compliance/src/checks/inferenceIngressPrivate');
 const { runInfraDrift } = require('../services/scholesa-compliance/src/checks/infraDrift');
 const { runI18nCoverage } = require('../services/scholesa-compliance/src/checks/i18nCoverage');
+const { VIBE_BLOCKER_REPORTS } = require('./vibe_blockers');
 
-const BLOCKER_REPORTS = [
-  'vendor-dependency-ban',
-  'vendor-domain-ban',
-  'vendor-secret-ban',
-  'vendor-egress-proof',
-  'tenant-isolation',
-  'safety-fixtures',
-  'voice-retention-ttl',
-  'logging-no-raw-content',
-  'telemetry-schema-valid',
-  'inference-authz',
-  'inference-ingress-private',
-  'infra-drift',
-  'i18n-coverage',
-];
+const BLOCKER_REPORTS = VIBE_BLOCKER_REPORTS;
 
 function parseArgs(argv) {
   const defaultCredentialsPath = path.resolve(process.cwd(), 'firebase-service-account.json');
