@@ -88,6 +88,11 @@ export function isInternalInferenceEnabled(service: InternalInferenceService): b
   return Boolean(resolveEndpoint(service));
 }
 
+export function isInternalInferenceRequired(): boolean {
+  const raw = envString('INTERNAL_INFERENCE_REQUIRED')?.toLowerCase();
+  return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'required';
+}
+
 function resolveAuthMode(): InternalInferenceAuthMode {
   const explicit = envString('INTERNAL_INFERENCE_AUTH_MODE')?.toLowerCase();
   if (explicit === 'none') return 'none';

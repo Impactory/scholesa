@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
   callInternalInferenceJson,
+  isInternalInferenceRequired,
   type InternalInferenceAuthMode,
   type InternalInferenceCallResult,
 } from './internalInferenceGateway';
@@ -2027,6 +2028,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           callerService: 'scholesa-ai',
         }),
       });
+      if (isInternalInferenceRequired() && !llmResult.ok) {
+        throw new VoiceHttpError(503, 'inference_unavailable', 'Internal LLM inference is required but unavailable.');
+      }
 
       const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
       const suggestedText = llmPayload?.text ? normalizeSpeechText(llmPayload.text) : undefined;
@@ -2051,6 +2055,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_blocked');
         }
       } else if (llmResult.ok) {
+        if (isInternalInferenceRequired()) {
+          throw new VoiceHttpError(503, 'inference_unavailable', 'Internal LLM response was empty.');
+        }
         inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
       } else {
         inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
@@ -2407,6 +2414,9 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
           callerService: 'scholesa-stt',
         }),
       });
+      if (isInternalInferenceRequired() && !sttResult.ok) {
+        throw new VoiceHttpError(503, 'inference_unavailable', 'Internal STT inference is required but unavailable.');
+      }
       const sttPayload = sttResult.ok ? extractInternalSttPayload(sttResult.data) : undefined;
       if (sttPayload?.modelVersion) {
         sttModelVersion = sttPayload.modelVersion;
@@ -2419,6 +2429,9 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         inferenceMeta = buildInferenceMeta('stt', sttResult);
         confidence = sttPayload.confidence ?? confidence;
       } else if (sttResult.ok) {
+        if (isInternalInferenceRequired()) {
+          throw new VoiceHttpError(503, 'inference_unavailable', 'Internal STT returned an empty transcript.');
+        }
         inferenceMeta = buildInferenceMeta('stt', sttResult, 'empty_transcript');
       } else {
         inferenceMeta = buildInferenceMeta('stt', sttResult, 'internal_call_failed');
@@ -2615,6 +2628,9 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         callerService: 'scholesa-tts',
       }),
     });
+    if (isInternalInferenceRequired() && !ttsResult.ok) {
+      throw new VoiceHttpError(503, 'inference_unavailable', 'Internal TTS inference is required but unavailable.');
+    }
     const ttsPayload = ttsResult.ok ? extractInternalTtsPayload(ttsResult.data) : undefined;
     if (ttsPayload?.modelVersion) {
       ttsModelVersion = ttsPayload.modelVersion;
@@ -2627,9 +2643,15 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         }
         inferenceMeta = buildInferenceMeta('tts', ttsResult);
       } else {
+        if (isInternalInferenceRequired()) {
+          throw new VoiceHttpError(503, 'inference_unavailable', 'Internal TTS returned a non-internal audio URL.');
+        }
         inferenceMeta = buildInferenceMeta('tts', ttsResult, 'non_internal_audio_url_rejected');
       }
     } else if (ttsResult.ok) {
+      if (isInternalInferenceRequired()) {
+        throw new VoiceHttpError(503, 'inference_unavailable', 'Internal TTS response did not include audioUrl.');
+      }
       inferenceMeta = buildInferenceMeta('tts', ttsResult, 'missing_audio_url');
     } else {
       inferenceMeta = buildInferenceMeta('tts', ttsResult, 'internal_call_failed');
