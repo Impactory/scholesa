@@ -141,7 +141,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[ScholesaColors.learner, Color(0xFF059669)],
+          colors: <Color>[Color(0xFF0E9F6E), Color(0xFF04684A)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: <BoxShadow>[
@@ -152,65 +152,86 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  '🌟 Keep Going!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    Colors.black.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.18),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  "You're making amazing progress. Complete today's habits to maintain your streak!",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Consumer<HabitService>(
-              builder: (BuildContext context, HabitService service, _) {
-                return Column(
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const Text(
-                      '🔥',
-                      style: TextStyle(fontSize: 32),
-                    ),
-                    Text(
-                      '${service.totalStreak}',
-                      style: const TextStyle(
+                      '🌟 Keep Going!',
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     Text(
-                      'day streak',
+                      "You're making amazing progress. Complete today's habits to maintain your streak!",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.96),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(16),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.34)),
+                ),
+                child: Consumer<HabitService>(
+                  builder: (BuildContext context, HabitService service, _) {
+                    return Column(
+                      children: <Widget>[
+                        const Text(
+                          '🔥',
+                          style: TextStyle(fontSize: 32),
+                        ),
+                        Text(
+                          '${service.totalStreak}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'day streak',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -437,16 +458,18 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final double progress = total > 0 ? completed / total : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: scheme.outlineVariant),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -462,7 +485,7 @@ class _ProgressCard extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: context.schTextSecondary,
+                  color: scheme.onSurfaceVariant,
                   fontSize: 13,
                 ),
               ),
@@ -483,14 +506,14 @@ class _ProgressCard extends StatelessWidget {
                 '/$total',
                 style: TextStyle(
                   fontSize: 18,
-                  color: context.schTextSecondary.withValues(alpha: 0.74),
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 label ?? 'done',
                 style: TextStyle(
-                  color: context.schTextSecondary.withValues(alpha: 0.88),
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                   fontSize: 12,
                 ),
               ),
@@ -526,8 +549,9 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
-      color: color.withValues(alpha: 0.1),
+      color: scheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () {
@@ -569,16 +593,17 @@ class _HabitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: habit.isCompletedToday
               ? ScholesaColors.success.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.2),
+              : scheme.outlineVariant,
         ),
       ),
       child: Row(
@@ -596,13 +621,15 @@ class _HabitTile extends StatelessWidget {
                     decoration: habit.isCompletedToday
                         ? TextDecoration.lineThrough
                         : null,
-                    color: habit.isCompletedToday ? Colors.grey : null,
+                    color: habit.isCompletedToday
+                        ? scheme.onSurfaceVariant
+                        : scheme.onSurface,
                   ),
                 ),
                 Text(
                   '${habit.targetMinutes} min',
                   style: TextStyle(
-                      color: context.schTextSecondary.withValues(alpha: 0.88),
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                       fontSize: 12),
                 ),
               ],
@@ -638,15 +665,17 @@ class _MissionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -673,7 +702,10 @@ class _MissionTile extends StatelessWidget {
               children: <Widget>[
                 Text(
                   mission.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: scheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -695,7 +727,7 @@ class _MissionTile extends StatelessWidget {
                     Text(
                       '${(mission.progress * 100).toInt()}%',
                       style: const TextStyle(
-                        color: Color(0xFFF59E0B),
+                        color: Color(0xFFB45309),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),

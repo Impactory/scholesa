@@ -29,6 +29,23 @@ class GradientCard extends StatelessWidget {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final Color disabledSurface = scheme.surfaceContainerHigh;
     final Color disabledText = scheme.onSurfaceVariant;
+    final bool darkForeground = isEnabled && _useDarkForeground(gradient);
+    final Color foregroundColor = darkForeground
+        ? const Color(0xFF0F172A)
+        : Colors.white;
+    final Color subtitleColor = darkForeground
+        ? const Color(0xFF1E293B).withValues(alpha: 0.88)
+        : Colors.white.withValues(alpha: 0.92);
+    final Color iconChipColor = darkForeground
+        ? Colors.white.withValues(alpha: 0.52)
+        : Colors.white.withValues(alpha: 0.28);
+    final Color decorativeIconColor = darkForeground
+        ? Colors.black.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.2);
+    final Color badgeBackgroundColor = darkForeground
+        ? Colors.white.withValues(alpha: 0.56)
+        : Colors.white.withValues(alpha: 0.25);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       child: Material(
@@ -55,6 +72,13 @@ class GradientCard extends StatelessWidget {
               gradient: isEnabled ? gradient : null,
               color: isEnabled ? null : disabledSurface,
               borderRadius: BorderRadius.circular(20),
+              border: isEnabled
+                  ? Border.all(
+                      color: Colors.white.withValues(
+                        alpha: darkForeground ? 0.12 : 0.2,
+                      ),
+                    )
+                  : null,
               boxShadow: isEnabled
                   ? <BoxShadow>[
                       BoxShadow(
@@ -75,10 +99,31 @@ class GradientCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 80,
-                    color:
-                        Colors.white.withValues(alpha: isEnabled ? 0.2 : 0.1),
+                    color: isEnabled
+                        ? decorativeIconColor
+                        : Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
+                if (isEnabled)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: darkForeground
+                              ? <Color>[
+                                  Colors.black.withValues(alpha: 0.04),
+                                  Colors.black.withValues(alpha: 0.1),
+                                ]
+                              : <Color>[
+                                  Colors.black.withValues(alpha: 0.08),
+                                  Colors.black.withValues(alpha: 0.16),
+                                ],
+                        ),
+                      ),
+                    ),
+                  ),
                 // Content
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,14 +133,15 @@ class GradientCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white
-                                .withValues(alpha: isEnabled ? 0.25 : 0.5),
+                            color: isEnabled
+                                ? iconChipColor
+                                : Colors.white.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             icon,
                             size: 28,
-                            color: isEnabled ? Colors.white : disabledText,
+                            color: isEnabled ? foregroundColor : disabledText,
                           ),
                         ),
                         const Spacer(),
@@ -107,14 +153,15 @@ class GradientCard extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.25),
+                                  color: badgeBackgroundColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   badgeText!,
                                   style: TextStyle(
-                                    color:
-                                        isEnabled ? Colors.white : disabledText,
+                                    color: isEnabled
+                                        ? foregroundColor
+                                        : disabledText,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -133,7 +180,8 @@ class GradientCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isEnabled ? Colors.white : scheme.onSurface,
+                        color:
+                            isEnabled ? foregroundColor : scheme.onSurface,
                       ),
                     ),
                     if (subtitle != null) ...<Widget>[
@@ -142,9 +190,7 @@ class GradientCard extends StatelessWidget {
                         subtitle!,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isEnabled
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : disabledText,
+                          color: isEnabled ? subtitleColor : disabledText,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -177,6 +223,14 @@ class GradientCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool _useDarkForeground(LinearGradient value) {
+    final double totalLuminance = value.colors
+        .map((Color color) => color.computeLuminance())
+        .fold<double>(0, (double a, double b) => a + b);
+    final double averageLuminance = totalLuminance / value.colors.length;
+    return averageLuminance >= 0.56;
   }
 }
 
