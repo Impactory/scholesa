@@ -1,173 +1,239 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { query, getDocs, limit } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { getDocs, limit, query } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
+import {
+  fetchRoleDashboardSnapshot,
+  fetchRoleLinkedRoster,
+  type RoleDashboardStat,
+  type RoleLinkedRoster,
+} from '@/src/lib/dashboard/roleDashboardApi';
+import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
 import { sitesCollection } from '@/src/lib/firestore/collections';
-import type { Site } from '@/schema';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import type { Site } from '@/schema';
 
 export default function HQDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
   const { locale, t } = useI18n();
   const trackInteraction = useInteractionTracking();
+  usePageViewTracking('hq_dashboard', { role: 'hq' });
+
   const [sites, setSites] = useState<Site[]>([]);
+  const [stats, setStats] = useState<RoleDashboardStat[]>([]);
+  const [roster, setRoster] = useState<RoleLinkedRoster | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const activeSiteId = useMemo(
+    () => profile?.activeSiteId || profile?.siteIds?.[0] || undefined,
+    [profile?.activeSiteId, profile?.siteIds],
+  );
 
   useEffect(() => {
     async function fetchHQData() {
-      // HQ users typically have access to all sites.
-      // We'll fetch a subset for the dashboard overview.
       try {
-        const qSites = query(
-          sitesCollection, 
-          // orderBy('createdAt', 'desc'), // Requires index, skipping for now to avoid runtime error if index missing
-          limit(12)
-        );
-        const sitesSnap = await getDocs(qSites);
-        setSites(sitesSnap.docs.map(doc => doc.data()));
+        const [sitesSnap, snapshot, linkedRoster] = await Promise.all([
+          getDocs(query(sitesCollection, limit(12))),
+          fetchRoleDashboardSnapshot({
+            role: 'hq',
+            siteId: activeSiteId,
+            period: 'week',
+          }),
+          activeSiteId
+            ? fetchRoleLinkedRoster({
+                role: 'hq',
+                siteId: activeSiteId,
+              })
+            : Promise.resolve(null),
+        ]);
+        setSites(sitesSnap.docs.map((doc) => doc.data()));
+        setStats(snapshot.stats);
+        setRoster(linkedRoster);
       } catch (error) {
-        console.error('Error fetching HQ data:', error);
+        console.error('Error fetching HQ dashboard data:', error);
+        setSites([]);
+        setStats([]);
+        setRoster(null);
       } finally {
         setLoading(false);
       }
     }
 
     if (!authLoading) {
-      fetchHQData();
+      void fetchHQData();
     }
-  }, [authLoading]);
+  }, [activeSiteId, authLoading]);
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">{t('role.hq.loading')}</div>
-      </div>
-    );
-  }
+  const visibleStats = stats.length > 0 ? stats : [
+    { label: 'Active Sites', value: String(sites.length) },
+    { label: 'Total Users', value: '0' },
+    { label: 'Pending', value: '0' },
+  ];
+  const activeSitesValue =
+    visibleStats.find((stat) => stat.label.toLowerCase().includes('site'))?.value ||
+    String(sites.length);
+  const activeUsersValue =
+    visibleStats.find((stat) => stat.label.toLowerCase().includes('user'))?.value || '0';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            {t('role.hq.title')}
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            {t('role.hq.subtitle', { name: profile?.displayName || t('role.hq.defaultName') })}
-          </p>
-        </header>
+    <RoleRouteGuard allowedRoles={['hq']}>
+      {authLoading || loading ? (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-lg text-gray-600">{t('role.hq.loading')}</div>
+        </div>
+      ) : (
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+          <div className="mx-auto max-w-7xl">
+            <header className="mb-8 border-b border-gray-200 pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                {t('role.hq.title')}
+              </h1>
+              <p className="mt-2 text-sm text-gray-500">
+                {t('role.hq.subtitle', {
+                  name: profile?.displayName || t('role.hq.defaultName'),
+                })}
+              </p>
+            </header>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Main Content: Site List */}
-          <div className="lg:col-span-2 space-y-6">
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium leading-6 text-gray-900">{t('role.hq.networkSites')}</h2>
-                <Link
-                  href={`/${locale}/hq`}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                  onClick={() => trackInteraction('feature_discovered', { cta: 'hq_view_all_sites' })}
-                >
-                  {t('common.viewAll')}
-                </Link>
-              </div>
-              
-              {sites.length === 0 ? (
-                <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  <p>{t('role.hq.noSites')}</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {sites.map((site) => (
-                    <div key={site.id} className="overflow-hidden rounded-lg bg-white shadow hover:shadow-md transition-shadow">
-                      <div className="p-5">
-                        <h3 className="text-lg font-medium text-gray-900">{site.name}</h3>
-                        <p className="text-sm text-gray-500">{site.location || t('role.hq.locationFallback')}</p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                            {t('common.operational')}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {t('role.hq.siteIdPrefix')}: {site.id.substring(0, 6)}...
-                          </span>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <section>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-medium leading-6 text-gray-900">
+                      {t('role.hq.networkSites')}
+                    </h2>
+                    <Link
+                      href={`/${locale}/hq`}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                      onClick={() =>
+                        trackInteraction('feature_discovered', {
+                          cta: 'hq_view_all_sites',
+                        })
+                      }
+                    >
+                      {t('common.viewAll')}
+                    </Link>
+                  </div>
+
+                  {sites.length === 0 ? (
+                    <div className="overflow-hidden rounded-lg bg-white p-6 text-center text-gray-500 shadow">
+                      <p>{t('role.hq.noSites')}</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {sites.map((site) => (
+                        <div
+                          key={site.id}
+                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                        >
+                          <div className="p-5">
+                            <h3 className="text-lg font-medium text-gray-900">{site.name}</h3>
+                            <p className="text-sm text-gray-500">
+                              {site.location || t('role.hq.locationFallback')}
+                            </p>
+                            <div className="mt-4 flex items-center justify-between">
+                              <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+                                {t('common.operational')}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {t('role.hq.siteIdPrefix')}: {site.id.substring(0, 6)}...
+                              </span>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 px-5 py-3">
+                            <Link
+                              href={`/${locale}/hq`}
+                              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                              onClick={() =>
+                                trackInteraction('feature_discovered', {
+                                  cta: 'hq_manage_site',
+                                  siteId: site.id,
+                                })
+                              }
+                            >
+                              {t('role.hq.manageSite')}
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                      <div className="bg-gray-50 px-5 py-3">
-                        <div className="text-sm">
-                          <Link
-                            href={`/${locale}/hq`}
-                            className="font-medium text-indigo-700 hover:text-indigo-900"
-                            onClick={() => trackInteraction('feature_discovered', { cta: 'hq_manage_site', siteId: site.id })}
-                          >
-                            {t('role.hq.manageSite')}
-                          </Link>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* Sidebar: System Stats */}
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-lg bg-white shadow">
-              <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.hq.systemHealth')}</h3>
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <dl className="divide-y divide-gray-100">
-                    <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">{t('role.hq.totalSites')}</dt>
-                      <dd className="font-medium text-gray-900">{sites.length}</dd>
-                    </div>
-                    <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">{t('role.hq.activeUsers')}</dt>
-                      <dd className="font-medium text-gray-900">-</dd>
-                    </div>
-                    <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">{t('role.hq.systemStatus')}</dt>
-                      <dd className="font-medium text-green-600">{t('common.healthy')}</dd>
-                    </div>
-                  </dl>
-                </div>
+                  )}
+                </section>
               </div>
-            </div>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow">
-              <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.hq.adminActions')}</h3>
-                <div className="mt-4 space-y-3">
-                  <Link
-                    href={`/${locale}/hq`}
-                    className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_add_new_site' })}
-                  >
-                    {t('role.hq.addSite')}
-                  </Link>
-                  <Link
-                    href={`/${locale}/hq`}
-                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_user_management' })}
-                  >
-                    {t('role.hq.userManagement')}
-                  </Link>
-                  <Link
-                    href={`/${locale}/hq`}
-                    className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    onClick={() => trackInteraction('feature_discovered', { cta: 'hq_global_settings' })}
-                  >
-                    {t('role.hq.globalSettings')}
-                  </Link>
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg bg-white shadow">
+                  <div className="p-5">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                      {t('role.hq.systemHealth')}
+                    </h3>
+                    <div className="mt-4 border-t border-gray-100 pt-4">
+                      <dl className="divide-y divide-gray-100">
+                        {visibleStats.map((stat) => (
+                          <div key={stat.label} className="flex justify-between py-2 text-sm">
+                            <dt className="text-gray-500">{stat.label}</dt>
+                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                          </div>
+                        ))}
+                        {roster && (
+                          <div className="flex justify-between py-2 text-sm">
+                            <dt className="text-gray-500">Active site roster</dt>
+                            <dd className="font-medium text-gray-900">
+                              {roster.counts.learners + roster.counts.parents + roster.counts.educators}
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg bg-white shadow">
+                  <div className="p-5">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                      {t('role.hq.adminActions')}
+                    </h3>
+                    <div className="mt-4 space-y-3">
+                      <Link
+                        href={`/${locale}/hq`}
+                        className="block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        onClick={() =>
+                          trackInteraction('feature_discovered', {
+                            cta: 'hq_add_new_site',
+                          })
+                        }
+                      >
+                        {t('role.hq.addSite')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/hq`}
+                        className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        onClick={() =>
+                          trackInteraction('feature_discovered', {
+                            cta: 'hq_user_management',
+                          })
+                        }
+                      >
+                        {t('role.hq.userManagement')}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg bg-white shadow">
+                  <div className="p-5 text-sm text-gray-600">
+                    <div>Total sites: {activeSitesValue}</div>
+                    <div className="mt-1">Active users: {activeUsersValue}</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </RoleRouteGuard>
   );
 }
