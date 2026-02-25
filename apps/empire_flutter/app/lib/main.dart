@@ -20,6 +20,7 @@ import 'services/telemetry_service.dart';
 import 'services/theme_service.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
+import 'runtime/global_ai_assistant_overlay.dart';
 import 'router/app_router.dart';
 import 'modules/hq_admin/hq_admin.dart';
 import 'modules/checkin/checkin.dart';
@@ -362,6 +363,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
             theme: ScholesaTheme.light,
             darkTheme: ScholesaTheme.dark,
             themeMode: themeService.themeMode,
+            builder: (BuildContext context, Widget? child) {
+              return Stack(
+                children: <Widget>[
+                  if (child != null) child,
+                  const GlobalAiAssistantOverlay(),
+                ],
+              );
+            },
             routerConfig: _router!,
           );
         },
