@@ -28,6 +28,7 @@
     "qa:vibe-telemetry:audit": "node scripts/vibe_telemetry_audit_master.js --strict",
     "qa:vibe-telemetry:blockers": "node scripts/vibe_ci_blocker_gate.js --strict",
     "qa:firebase-ui-field-wiring": "node scripts/audit_firebase_ui_field_wiring.js --strict",
+    "qa:firebase-ui-field-wiring:bulk": "node scripts/audit_firebase_ui_field_wiring_bulk.js --strict",
     "docs:telemetry:wiring:sync": "node scripts/docs_telemetry_wiring_sync.js",
     "vibe:i18n:lint": "node scripts/vibe_i18n_lint.js",
     "vibe:i18n:keys": "node scripts/vibe_i18n_keys.js",
