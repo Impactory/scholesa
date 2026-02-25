@@ -46,6 +46,10 @@ const BOS_PAYLOAD_MAX_DEPTH = 4;
 const BOS_PAYLOAD_MAX_COLLECTION_LENGTH = 40;
 const BOS_PAYLOAD_MAX_STRING_LENGTH = 256;
 const SUPPORTED_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
+const BOS_LOGIC_SPEC = Object.freeze({
+  source: 'BOS Logic.tex',
+  version: 'bos-logic-2026-02-25',
+});
 
 // ──────────────────────────────────────────────────────
 // §4.2  Grade-band thresholds
@@ -300,6 +304,17 @@ interface FeatureVector {
   engagement: number;
   integrity: number;
   quality: { missingness: number; driftFlag: boolean; fusionFamiliesPresent: string[] };
+}
+
+interface ReliabilityRiskFromEvents {
+  riskType: 'reliability';
+  method: 'sep';
+  K: number;
+  M: number;
+  H_sem: number;
+  riskScore: number;
+  threshold: number;
+  signals: string[];
 }
 
 interface VoiceUnderstandingObservation {
@@ -671,59 +686,344 @@ interface InterventionDecision {
   mvlReason?: string;
 }
 
+interface StateTargetRegion {
+  cognitionTarget: number;
+  engagementTarget: number;
+  integrityFloor: number;
+}
+
+interface InterventionCandidate {
+  type: InterventionDecision['type'];
+  salience: InterventionDecision['salience'];
+  mode?: InterventionDecision['mode'];
+  assistCost: number;
+  effect: { cognition: number; engagement: number; integrity: number };
+  reasonCode: string;
+}
+
+function round3(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+function normalizedShannonEntropy(tokens: string[]): number {
+  if (tokens.length <= 1) return 0;
+  const counts = new Map<string, number>();
+  for (const token of tokens) {
+    counts.set(token, (counts.get(token) ?? 0) + 1);
+  }
+  if (counts.size <= 1) return 0;
+  const total = tokens.length;
+  let entropy = 0;
+  for (const count of counts.values()) {
+    const p = count / total;
+    if (p > 0) entropy -= p * Math.log2(p);
+  }
+  const maxEntropy = Math.log2(counts.size);
+  if (!Number.isFinite(maxEntropy) || maxEntropy <= 0) return 0;
+  return clamp(entropy / maxEntropy);
+}
+
+function resolveTargetRegion(gradeBand: string): StateTargetRegion {
+  if (gradeBand === 'G1_3' || gradeBand === 'G4_6') {
+    return { cognitionTarget: 0.66, engagementTarget: 0.68, integrityFloor: 0.60 };
+  }
+  if (gradeBand === 'G7_9') {
+    return { cognitionTarget: 0.70, engagementTarget: 0.64, integrityFloor: 0.65 };
+  }
+  if (gradeBand === 'G10_12') {
+    return { cognitionTarget: 0.74, engagementTarget: 0.62, integrityFloor: 0.70 };
+  }
+  return { cognitionTarget: 0.70, engagementTarget: 0.65, integrityFloor: 0.60 };
+}
+
+function interventionLibrary(): InterventionCandidate[] {
+  return [
+    {
+      type: 'nudge',
+      salience: 'low',
+      mode: 'hint',
+      assistCost: 0.25,
+      effect: { cognition: 0.07, engagement: 0.05, integrity: 0.01 },
+      reasonCode: 'target_region_soft_nudge',
+    },
+    {
+      type: 'scaffold',
+      salience: 'medium',
+      mode: 'hint',
+      assistCost: 0.52,
+      effect: { cognition: 0.17, engagement: 0.07, integrity: -0.03 },
+      reasonCode: 'target_region_scaffold_hint',
+    },
+    {
+      type: 'scaffold',
+      salience: 'high',
+      mode: 'explain',
+      assistCost: 0.68,
+      effect: { cognition: 0.24, engagement: 0.05, integrity: -0.05 },
+      reasonCode: 'target_region_scaffold_explain',
+    },
+    {
+      type: 'revisit',
+      salience: 'medium',
+      mode: 'verify',
+      assistCost: 0.33,
+      effect: { cognition: 0.12, engagement: 0.03, integrity: 0.15 },
+      reasonCode: 'target_region_verify_loop',
+    },
+    {
+      type: 'pace',
+      salience: 'high',
+      mode: 'verify',
+      assistCost: 0.40,
+      effect: { cognition: 0.08, engagement: 0.22, integrity: 0.05 },
+      reasonCode: 'target_region_engagement_recovery',
+    },
+    {
+      type: 'handoff',
+      salience: 'high',
+      mode: 'debug',
+      assistCost: 0.62,
+      effect: { cognition: 0.10, engagement: 0.12, integrity: 0.17 },
+      reasonCode: 'target_region_teacher_handoff',
+    },
+  ];
+}
+
 function computeIntervention(
   state: StateEstimate,
   gradeBand: string,
   lambda: number = 0.5,
 ): InterventionDecision {
   const x = state.x_hat;
-  const mDagger = M_DAGGER[gradeBand] ?? 0.60;
-  const reasonCodes: string[] = [];
-
-  // Determine intervention type based on state
+  const target = resolveTargetRegion(gradeBand);
+  const mDagger = Math.max(M_DAGGER[gradeBand] ?? 0.60, target.integrityFloor);
+  const reasonCodes: string[] = ['bos_closed_loop_control'];
+  const cognitionDeficit = Math.max(0, target.cognitionTarget - x.cognition);
+  const engagementDeficit = Math.max(0, target.engagementTarget - x.engagement);
+  const integrityDeficit = Math.max(0, mDagger - x.integrity);
+  const deficitWeights = { cognition: 0.45, engagement: 0.30, integrity: 0.25 };
+  const baselineNeed = (cognitionDeficit * deficitWeights.cognition) +
+    (engagementDeficit * deficitWeights.engagement) +
+    (integrityDeficit * deficitWeights.integrity);
   let type: InterventionDecision['type'] = 'nudge';
   let salience: InterventionDecision['salience'] = 'low';
-  let mode: InterventionDecision['mode'];
+  let mode: InterventionDecision['mode'] = 'hint';
   let triggerMvl = false;
   let mvlReason: string | undefined;
+  let selectedAssistCost = 0.25;
+  let omega = 0;
 
-  if (x.cognition < 0.3) {
-    type = 'scaffold';
-    mode = 'explain';
-    salience = 'high';
-    reasonCodes.push('low_cognition');
-  } else if (x.cognition < 0.5) {
-    type = 'scaffold';
-    mode = 'hint';
-    salience = 'medium';
-    reasonCodes.push('moderate_cognition');
+  if (baselineNeed > 0) {
+    let bestCandidate: InterventionCandidate | null = null;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (const candidate of interventionLibrary()) {
+      const postCognitionDeficit = Math.max(0, cognitionDeficit - candidate.effect.cognition);
+      const postEngagementDeficit = Math.max(0, engagementDeficit - candidate.effect.engagement);
+      const postIntegrityDeficit = Math.max(0, integrityDeficit - candidate.effect.integrity);
+      const residualNeed = (postCognitionDeficit * deficitWeights.cognition) +
+        (postEngagementDeficit * deficitWeights.engagement) +
+        (postIntegrityDeficit * deficitWeights.integrity);
+      const autonomyCost = lambda * candidate.assistCost * (1 + integrityDeficit);
+      const interventionScore = residualNeed + autonomyCost;
+      if (interventionScore < bestScore) {
+        bestCandidate = candidate;
+        bestScore = interventionScore;
+        omega = autonomyCost;
+      }
+    }
+
+    if (bestCandidate) {
+      type = bestCandidate.type;
+      salience = bestCandidate.salience;
+      mode = bestCandidate.mode;
+      selectedAssistCost = bestCandidate.assistCost;
+      reasonCodes.push(bestCandidate.reasonCode);
+    }
   }
 
-  if (x.engagement < 0.3) {
-    type = 'pace';
-    salience = 'high';
-    reasonCodes.push('low_engagement');
-  }
+  if (x.cognition < 0.3) reasonCodes.push('low_cognition');
+  else if (x.cognition < 0.5) reasonCodes.push('moderate_cognition');
+  if (x.engagement < 0.3) reasonCodes.push('low_engagement');
 
   if (x.integrity < mDagger) {
     reasonCodes.push('integrity_below_threshold');
     triggerMvl = true;
     mvlReason = `integrity ${x.integrity.toFixed(2)} < m_dagger ${mDagger.toFixed(2)}`;
+    if (mode !== 'verify') {
+      mode = 'verify';
+      reasonCodes.push('integrity_enforced_verify_mode');
+    }
+    if (type === 'nudge') {
+      type = 'revisit';
+      salience = salience === 'low' ? 'medium' : salience;
+      reasonCodes.push('integrity_promoted_to_revisit');
+    }
   }
 
-  // Compute autonomy cost
-  const isHighAssist = salience === 'high' || (type === 'scaffold' && mode === 'hint');
-  const omega = isHighAssist ? Math.max(0, mDagger - x.integrity) : 0;
+  const isHighAssist = salience === 'high' || selectedAssistCost >= 0.55;
+  const omegaFinal = isHighAssist ? Math.max(omega, integrityDeficit) : omega;
 
   return {
     type,
     salience,
     mode,
-    reasonCodes,
-    policy: { lambda, m_dagger: mDagger, highAssist: isHighAssist, omega },
+    reasonCodes: Array.from(new Set(reasonCodes)),
+    policy: { lambda, m_dagger: mDagger, highAssist: isHighAssist, omega: round3(omegaFinal) },
     triggerMvl,
     mvlReason,
   };
+}
+
+function applyRoleIntelligenceToIntervention(
+  intervention: InterventionDecision,
+  roleIntelligence: BosRoleIntelligenceContext,
+): InterventionDecision {
+  const next: InterventionDecision = {
+    ...intervention,
+    reasonCodes: Array.from(new Set(intervention.reasonCodes)),
+  };
+  if (roleIntelligence.signalCount === 0) {
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'role_intelligence_sparse']));
+    return next;
+  }
+
+  if ((roleIntelligence.learnerLinks?.assignedMissionCount ?? 0) === 0) {
+    if (next.type === 'nudge') {
+      next.type = 'revisit';
+      if (next.salience === 'low') next.salience = 'medium';
+      next.mode = next.mode ?? 'verify';
+    }
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'missing_assigned_mission_context']));
+  }
+
+  if ((roleIntelligence.siteProfile?.openMvlCount ?? 0) >= 10) {
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'site_integrity_watchlist']));
+    if (next.mode !== 'verify') {
+      next.mode = 'verify';
+    }
+  }
+
+  return next;
+}
+
+function computeSemanticEntropyRiskFromEvents(
+  state: StateEstimate,
+  events: FirebaseFirestore.DocumentData[],
+): ReliabilityRiskFromEvents {
+  const voiceEvents = events.filter((event) => {
+    const payload = asRecord(event?.payload);
+    return normalizeString(payload?.source)?.toLowerCase() === 'voice';
+  });
+  if (voiceEvents.length === 0) {
+    return {
+      riskType: 'reliability',
+      method: 'sep',
+      K: 0,
+      M: 0,
+      H_sem: 0,
+      riskScore: round3((1 - clamp(state.P.confidence)) * 0.35),
+      threshold: 0.6,
+      signals: [],
+    };
+  }
+
+  const intents: string[] = [];
+  const responseModes: string[] = [];
+  const confidenceValues: number[] = [];
+  for (const event of voiceEvents) {
+    const payload = asRecord(event.payload) ?? {};
+    const intent = normalizeString(payload.understandingIntent);
+    const responseMode = normalizeString(payload.responseMode);
+    if (intent) intents.push(intent);
+    if (responseMode) responseModes.push(responseMode);
+    const confidence = toFiniteNumber(payload.understandingConfidence, NaN);
+    if (Number.isFinite(confidence)) {
+      confidenceValues.push(clamp(confidence));
+    }
+  }
+
+  const intentEntropy = normalizedShannonEntropy(intents);
+  const responseModeEntropy = normalizedShannonEntropy(responseModes);
+  const lowConfidenceRatio = confidenceValues.length > 0
+    ? confidenceValues.filter((value) => value < 0.58).length / confidenceValues.length
+    : 0;
+  const confidenceSpread = confidenceValues.length > 1
+    ? Math.min(
+      1,
+      (Math.max(...confidenceValues) - Math.min(...confidenceValues)) / 0.75,
+    )
+    : 0;
+  const estimatorUncertainty = 1 - clamp(state.P.confidence);
+
+  const H_sem = clamp(
+    (intentEntropy * 0.40) +
+    (responseModeEntropy * 0.20) +
+    (lowConfidenceRatio * 0.25) +
+    (confidenceSpread * 0.15),
+  );
+  const riskScore = clamp((H_sem * 0.65) + (estimatorUncertainty * 0.35));
+
+  const signals: string[] = [];
+  if (intentEntropy >= 0.75) signals.push('high_intent_entropy');
+  if (responseModeEntropy >= 0.70) signals.push('high_response_mode_entropy');
+  if (lowConfidenceRatio >= 0.45) signals.push('low_understanding_confidence_ratio');
+  if (estimatorUncertainty >= 0.55) signals.push('state_estimator_uncertain');
+  if (confidenceSpread >= 0.55) signals.push('understanding_volatility');
+
+  return {
+    riskType: 'reliability',
+    method: 'sep',
+    K: new Set(intents).size,
+    M: new Set(responseModes).size,
+    H_sem: round3(H_sem),
+    riskScore: round3(riskScore),
+    threshold: 0.6,
+    signals,
+  };
+}
+
+function applyRiskAwarePolicy({
+  intervention,
+  autonomyRisk,
+  reliabilityRisk,
+}: {
+  intervention: InterventionDecision;
+  autonomyRisk: AutonomyRiskFromEvents;
+  reliabilityRisk: ReliabilityRiskFromEvents;
+}): InterventionDecision {
+  const next: InterventionDecision = {
+    ...intervention,
+    reasonCodes: Array.from(new Set(intervention.reasonCodes)),
+  };
+  const highAutonomy = autonomyRisk.riskScore > autonomyRisk.threshold;
+  const highReliability = reliabilityRisk.riskScore > reliabilityRisk.threshold;
+
+  if (highAutonomy) {
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'autonomy_risk_enforced_verify']));
+    if (next.mode !== 'verify') next.mode = 'verify';
+    if (next.type === 'scaffold' && next.salience === 'high') {
+      next.salience = 'medium';
+      next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'autonomy_assist_deescalated']));
+    }
+  }
+
+  if (highReliability) {
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'reliability_risk_sep']));
+    if (next.mode !== 'verify') next.mode = 'verify';
+    if (next.type === 'nudge') {
+      next.type = 'revisit';
+      next.salience = next.salience === 'low' ? 'medium' : next.salience;
+      next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'reliability_promoted_revisit']));
+    }
+  }
+
+  if (highAutonomy && highReliability) {
+    next.triggerMvl = true;
+    next.mvlReason = 'autonomy_and_reliability_joint_risk';
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'mvl_joint_risk_trigger']));
+  }
+
+  return next;
 }
 
 // ──────────────────────────────────────────────────────
@@ -1045,6 +1345,13 @@ export const bosGetIntervention = onCall(
     const locale = normalizeLocale(requestData.locale ?? tokenClaims?.locale);
     const canonicalRole = toCanonicalTelemetryRole(actorRole);
     const canonicalGradeBand = toCanonicalTelemetryGradeBand(normalizeBosGradeBand(gBand));
+    const roleIntelligence = await loadBosRoleIntelligenceContext({
+      siteId,
+      learnerId: targetLearnerId,
+      actorRole,
+      actorId: uid,
+    });
+    intervention = applyRoleIntelligenceToIntervention(intervention, roleIntelligence);
     let bosModelVersion = 'bos-policy-local-v1';
     let bosInferenceMeta: Record<string, unknown> = {
       service: 'bos',
@@ -1076,6 +1383,8 @@ export const bosGetIntervention = onCall(
           needsScaffoldCount: learningSnapshot.needsScaffoldCount,
           frustrationSignalCount: learningSnapshot.frustrationSignalCount,
         } : null,
+        roleIntelligenceContext: roleIntelligence,
+        logicSpec: BOS_LOGIC_SPEC,
         policy: intervention,
       },
       context: {
@@ -1196,24 +1505,26 @@ export const bosGetIntervention = onCall(
       };
     }
 
-    // Step 3b: Compute autonomy risk from behavioral signals (Math Contract §7)
-    const autonomyRiskResult = computeAutonomyRiskFromEvents(targetLearnerId, sessionOccurrenceId, newState, gBand,
-      (await db.collection('interactionEvents')
-        .where('actorId', '==', targetLearnerId)
-        .where('sessionOccurrenceId', '==', sessionOccurrenceId)
-        .orderBy('timestamp', 'desc')
-        .limit(20)
-        .get()).docs.map(d => d.data()),
+    // Step 3b: Compute risk signals from recent events.
+    const recentEvents = (await db.collection('interactionEvents')
+      .where('actorId', '==', targetLearnerId)
+      .where('sessionOccurrenceId', '==', sessionOccurrenceId)
+      .orderBy('timestamp', 'desc')
+      .limit(20)
+      .get()).docs.map(d => d.data());
+    const autonomyRiskResult = computeAutonomyRiskFromEvents(
+      targetLearnerId,
+      sessionOccurrenceId,
+      newState,
+      gBand,
+      recentEvents,
     );
-
-    // Step 3c: Compute reliability risk proxy (Math Contract §6)
-    const reliabilityRiskResult = {
-      riskType: 'reliability' as const,
-      method: 'sep' as const,
-      K: 1, M: 1, H_sem: 0,
-      riskScore: Math.round((1 - newState.P.confidence) * 0.5 * 1000) / 1000,
-      threshold: 0.6,
-    };
+    const reliabilityRiskResult = computeSemanticEntropyRiskFromEvents(newState, recentEvents);
+    intervention = applyRiskAwarePolicy({
+      intervention,
+      autonomyRisk: autonomyRiskResult,
+      reliabilityRisk: reliabilityRiskResult,
+    });
 
     // Augment intervention with risk data
     const riskSources: string[] = [];
@@ -1252,11 +1563,46 @@ export const bosGetIntervention = onCall(
         lastEmotionalState: learningSnapshot.lastEmotionalState,
         lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
       } : null,
+      roleIntelligenceContext: roleIntelligence,
+      logicSpec: BOS_LOGIC_SPEC,
       autonomyRisk: autonomyRiskResult,
       reliabilityRisk: reliabilityRiskResult,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     await db.collection('interventions').add(interventionDoc);
+    await db.collection(TELEMETRY_COLLECTION).add({
+      event: 'bos.intervention.decided',
+      eventType: 'bos.intervention.decided',
+      userId: uid,
+      role: canonicalRole,
+      service: 'scholesa-ai',
+      env: resolveTelemetryEnv(),
+      siteId,
+      gradeBand: canonicalGradeBand,
+      locale,
+      traceId,
+      timestampIso: new Date().toISOString(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      metadata: {
+        requestId,
+        traceId,
+        role: canonicalRole,
+        gradeBand: canonicalGradeBand,
+        locale,
+        service: 'scholesa-ai',
+        env: resolveTelemetryEnv(),
+        eventType: 'bos.intervention.decided',
+        modelVersion: bosModelVersion,
+        inference: bosInferenceMeta,
+        triggerMvl: shouldTriggerMvl,
+        autonomyRiskScore: autonomyRiskResult.riskScore,
+        reliabilityRiskScore: reliabilityRiskResult.riskScore,
+        roleIntelligenceSignals: roleIntelligence.signalCount,
+        logicSpecVersion: BOS_LOGIC_SPEC.version,
+        logicSpecSource: BOS_LOGIC_SPEC.source,
+      },
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
     // Step 4: If MVL triggered, create episode with risk data (Math Contract §6-§7)
     let mvlEpisodeId: string | null = null;
@@ -1310,6 +1656,8 @@ export const bosGetIntervention = onCall(
         lastEmotionalState: learningSnapshot.lastEmotionalState,
         lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
       } : null,
+      roleIntelligenceContext: roleIntelligence,
+      logicSpec: BOS_LOGIC_SPEC,
     };
   }
 );
