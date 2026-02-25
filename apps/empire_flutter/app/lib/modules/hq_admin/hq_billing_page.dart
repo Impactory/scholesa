@@ -38,7 +38,7 @@ class _HqBillingPageState extends State<HqBillingPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.hq.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               ScholesaColors.success.withValues(alpha: 0.03),
             ],
           ),
@@ -108,7 +108,8 @@ class _HqBillingPageState extends State<HqBillingPage>
                   ),
                   Text(
                     'Invoices, payments & subscriptions',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -141,7 +142,7 @@ class _HqBillingPageState extends State<HqBillingPage>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: context.schBorder),
               ),
               child: DropdownButton<String>(
                 value: _selectedSite,
@@ -181,7 +182,7 @@ class _HqBillingPageState extends State<HqBillingPage>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: context.schBorder),
               ),
               child: DropdownButton<String>(
                 value: _selectedPeriod,
@@ -340,13 +341,13 @@ class _HqBillingPageState extends State<HqBillingPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
         controller: _tabController,
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         indicator: BoxDecoration(
           color: ScholesaColors.hq,
           borderRadius: BorderRadius.circular(12),
@@ -655,7 +656,7 @@ class _InvoiceCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Column(
           children: <Widget>[
@@ -681,7 +682,8 @@ class _InvoiceCard extends StatelessWidget {
                       ),
                       Text(
                         '${invoice['parent']} • ${invoice['learner']}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(
+                            color: context.schTextSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -724,14 +726,16 @@ class _InvoiceCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   '${invoice['site']} • ${invoice['date']}',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(
+                      color: context.schTextSecondary.withValues(alpha: 0.88),
+                      fontSize: 12),
                 ),
                 Row(
                   children: <Widget>[
                     IconButton(
                       onPressed: () => _viewInvoice(context),
                       icon: const Icon(Icons.visibility, size: 20),
-                      color: Colors.grey[600],
+                      color: context.schTextSecondary,
                     ),
                     IconButton(
                       onPressed: () => _sendInvoice(context),
@@ -762,7 +766,7 @@ class _PaymentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Row(
           children: <Widget>[
@@ -786,7 +790,8 @@ class _PaymentCard extends StatelessWidget {
                   ),
                   Text(
                     '${payment['method']} • ${payment['date']}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 12),
                   ),
                 ],
               ),
@@ -804,7 +809,9 @@ class _PaymentCard extends StatelessWidget {
                 ),
                 Text(
                   payment['invoice'] as String,
-                  style: TextStyle(color: Colors.grey[500], fontSize: 10),
+                  style: TextStyle(
+                      color: context.schTextSecondary.withValues(alpha: 0.88),
+                      fontSize: 10),
                 ),
               ],
             ),
@@ -841,7 +848,7 @@ class _SubscriptionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Column(
           children: <Widget>[
@@ -866,7 +873,8 @@ class _SubscriptionCard extends StatelessWidget {
                       ),
                       Text(
                         '${subscription['learners']} learner(s) • ${subscription['plan']} Plan',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(
+                            color: context.schTextSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -900,7 +908,10 @@ class _SubscriptionCard extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       'Next billing: ${subscription['nextBilling']}',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      style: TextStyle(
+                          color:
+                              context.schTextSecondary.withValues(alpha: 0.88),
+                          fontSize: 12),
                     ),
                   ],
                 ),

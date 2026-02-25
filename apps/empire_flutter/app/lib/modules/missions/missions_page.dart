@@ -63,7 +63,7 @@ class _MissionsPageState extends State<MissionsPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.learner.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               const Color(0xFFF59E0B).withValues(alpha: 0.03),
             ],
           ),
@@ -117,7 +117,7 @@ class _MissionsPageState extends State<MissionsPage>
               ),
               Text(
                 'Learn, grow, and level up!',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -295,7 +295,7 @@ class _MissionsPageState extends State<MissionsPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -305,7 +305,7 @@ class _MissionsPageState extends State<MissionsPage>
           borderRadius: BorderRadius.circular(12),
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         tabs: const <Widget>[
           Tab(text: 'Available'),
           Tab(text: 'In Progress'),
@@ -402,7 +402,7 @@ class _MissionsPageState extends State<MissionsPage>
           const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+          Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
         ],
       ),
     );
@@ -647,7 +647,7 @@ class _MissionCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 mission.description,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: context.schTextSecondary, fontSize: 13),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -687,24 +687,28 @@ class _MissionCard extends StatelessWidget {
                   Icon(
                     Icons.signal_cellular_alt,
                     size: 14,
-                    color: Colors.grey[400],
+                    color: context.schTextSecondary.withValues(alpha: 0.74),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     mission.difficulty.label,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary.withValues(alpha: 0.88),
+                        fontSize: 12),
                   ),
                   const SizedBox(width: 12),
                   // Steps
                   Icon(
                     Icons.checklist,
                     size: 14,
-                    color: Colors.grey[400],
+                    color: context.schTextSecondary.withValues(alpha: 0.74),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${mission.completedStepsCount}/${mission.totalStepsCount} steps',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary.withValues(alpha: 0.88),
+                        fontSize: 12),
                   ),
                   const Spacer(),
                   // Status badge
@@ -871,7 +875,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     mission.description,
-                    style: TextStyle(color: Colors.grey[600], height: 1.5),
+                    style:
+                        TextStyle(color: context.schTextSecondary, height: 1.5),
                   ),
                   const SizedBox(height: 24),
 
@@ -1161,7 +1166,7 @@ class _StepItem extends StatelessWidget {
                   : Text(
                       '${step.order}',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: context.schTextSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -1173,7 +1178,9 @@ class _StepItem extends StatelessWidget {
             child: Text(
               step.title,
               style: TextStyle(
-                color: step.isCompleted ? Colors.grey[500] : Colors.grey[800],
+                color: step.isCompleted
+                    ? context.schTextSecondary.withValues(alpha: 0.88)
+                    : Colors.grey[800],
                 decoration:
                     step.isCompleted ? TextDecoration.lineThrough : null,
               ),

@@ -46,7 +46,7 @@ class _CheckinPageState extends State<CheckinPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.site.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               const Color(0xFF3B82F6).withValues(alpha: 0.03),
             ],
           ),
@@ -103,7 +103,7 @@ class _CheckinPageState extends State<CheckinPage>
               ),
               Text(
                 'Manage arrivals and pickups',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -307,7 +307,7 @@ class _CheckinPageState extends State<CheckinPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -327,7 +327,7 @@ class _CheckinPageState extends State<CheckinPage>
           borderRadius: BorderRadius.circular(12),
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         tabs: const <Widget>[
           Tab(text: 'Learners'),
           Tab(text: "Today's Log"),
@@ -423,7 +423,7 @@ class _CheckinPageState extends State<CheckinPage>
           const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+          Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
         ],
       ),
     );
@@ -627,7 +627,7 @@ class _StatMiniCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 10, color: context.schTextSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -815,15 +815,15 @@ class _LearnerCheckinCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'In: ${_formatTime(summary.checkedInAt!)}${summary.checkedInBy != null ? ' by ${summary.checkedInBy}' : ''}',
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style: TextStyle(
+                              color: context.schTextSecondary, fontSize: 12),
                         ),
                       ],
                       if (summary.checkedOutAt != null) ...<Widget>[
                         Text(
                           'Out: ${_formatTime(summary.checkedOutAt!)}${summary.checkedOutBy != null ? ' by ${summary.checkedOutBy}' : ''}',
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 12),
+                          style: TextStyle(
+                              color: context.schTextSecondary, fontSize: 12),
                         ),
                       ],
                     ],
@@ -924,7 +924,7 @@ class _LearnerCheckinCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'For ${summary.learnerName}',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: context.schTextSecondary),
             ),
             const SizedBox(height: 16),
             ...summary.authorizedPickups
@@ -932,7 +932,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                       leading: CircleAvatar(
                         backgroundColor: pickup.isPrimaryContact
                             ? ScholesaColors.success.withValues(alpha: 0.1)
-                            : Colors.grey[100],
+                            : context.schSurfaceMuted,
                         child: Icon(
                           Icons.person,
                           color: pickup.isPrimaryContact
@@ -1132,13 +1132,15 @@ class _CheckRecordCard extends StatelessWidget {
                   ),
                   Text(
                     'by ${record.visitorName}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 12),
                   ),
                   if (record.notes != null)
                     Text(
                       record.notes!,
                       style: TextStyle(
-                          color: Colors.grey[500],
+                          color:
+                              context.schTextSecondary.withValues(alpha: 0.88),
                           fontSize: 11,
                           fontStyle: FontStyle.italic),
                     ),
@@ -1147,7 +1149,9 @@ class _CheckRecordCard extends StatelessWidget {
             ),
             Text(
               _formatTime(record.timestamp),
-              style: TextStyle(color: Colors.grey[500], fontSize: 11),
+              style: TextStyle(
+                  color: context.schTextSecondary.withValues(alpha: 0.88),
+                  fontSize: 11),
             ),
           ],
         ),
@@ -1249,7 +1253,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                           ),
                           Text(
                             widget.summary.learnerName,
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: context.schTextSecondary),
                           ),
                         ],
                       ),
@@ -1268,7 +1272,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: context.schSurfaceMuted,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -1447,7 +1451,7 @@ class _PickupOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? ScholesaColors.success.withValues(alpha: 0.1)
-              : Colors.grey[50],
+              : context.schSurfaceMuted,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
@@ -1504,7 +1508,8 @@ class _PickupOption extends StatelessWidget {
                   ),
                   Text(
                     pickup.relationship,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 12),
                   ),
                 ],
               ),

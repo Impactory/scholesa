@@ -42,7 +42,7 @@ class _MessagesPageState extends State<MessagesPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               const Color(0xFF6366F1).withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               const Color(0xFF8B5CF6).withValues(alpha: 0.03),
             ],
           ),
@@ -97,7 +97,8 @@ class _MessagesPageState extends State<MessagesPage>
                   ),
                   Text(
                     '${service.unreadCount} unread',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -130,7 +131,7 @@ class _MessagesPageState extends State<MessagesPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -140,7 +141,7 @@ class _MessagesPageState extends State<MessagesPage>
           borderRadius: BorderRadius.circular(12),
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         tabs: const <Widget>[
           Tab(text: 'Notifications'),
           Tab(text: 'Conversations'),
@@ -302,7 +303,7 @@ class _MessagesPageState extends State<MessagesPage>
           const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+          Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
         ],
       ),
     );
@@ -500,7 +501,7 @@ class _NotificationCard extends StatelessWidget {
                       Text(
                         message.body,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: context.schTextSecondary,
                           fontSize: 13,
                         ),
                         maxLines: 2,
@@ -511,22 +512,30 @@ class _NotificationCard extends StatelessWidget {
                         children: <Widget>[
                           if (message.senderName != null) ...<Widget>[
                             Icon(Icons.person_outline,
-                                size: 14, color: Colors.grey[400]),
+                                size: 14,
+                                color: context.schTextSecondary
+                                    .withValues(alpha: 0.74)),
                             const SizedBox(width: 4),
                             Text(
                               message.senderName!,
                               style: TextStyle(
-                                  color: Colors.grey[500], fontSize: 12),
+                                  color: context.schTextSecondary
+                                      .withValues(alpha: 0.88),
+                                  fontSize: 12),
                             ),
                             const SizedBox(width: 12),
                           ],
                           Icon(Icons.access_time,
-                              size: 14, color: Colors.grey[400]),
+                              size: 14,
+                              color: context.schTextSecondary
+                                  .withValues(alpha: 0.74)),
                           const SizedBox(width: 4),
                           Text(
                             _formatTime(message.createdAt),
                             style: TextStyle(
-                                color: Colors.grey[500], fontSize: 12),
+                                color: context.schTextSecondary
+                                    .withValues(alpha: 0.88),
+                                fontSize: 12),
                           ),
                           if (message.priority == MessagePriority.urgent ||
                               message.priority ==
@@ -654,14 +663,16 @@ class _ConversationCard extends StatelessWidget {
         subtitle: conversation.lastMessage != null
             ? Text(
                 conversation.lastMessage!.body,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: context.schTextSecondary, fontSize: 13),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               )
             : null,
         trailing: Text(
           _formatTime(conversation.updatedAt),
-          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+          style: TextStyle(
+              color: context.schTextSecondary.withValues(alpha: 0.88),
+              fontSize: 12),
         ),
       ),
     );
@@ -779,7 +790,7 @@ class _MessageDetailSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'From: ${message.senderName}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: context.schTextSecondary),
                   ),
                 ],
               ),
@@ -791,7 +802,7 @@ class _MessageDetailSheet extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   _formatFullDate(message.createdAt),
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: context.schTextSecondary),
                 ),
               ],
             ),

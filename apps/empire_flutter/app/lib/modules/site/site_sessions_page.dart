@@ -116,7 +116,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.site.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               ScholesaColors.scheduleGradient.colors.first
                   .withValues(alpha: 0.03),
             ],
@@ -198,7 +198,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                   ),
                   Text(
                     'Manage site sessions and rooms',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -215,7 +216,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: context.schSurfaceMuted,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -353,7 +354,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                                 ? Colors.white
                                 : isToday
                                     ? ScholesaColors.site
-                                    : Colors.grey[600],
+                                    : context.schTextSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -432,7 +433,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   void _showFilterSheet() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.schSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -623,7 +624,7 @@ class _ViewToggleButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? Colors.white : context.schTextSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -667,7 +668,7 @@ class _SessionTimeSlot extends StatelessWidget {
               child: Text(
                 time,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: context.schTextSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -755,25 +756,34 @@ class _SessionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                Icon(Icons.person, size: 14, color: Colors.grey[500]),
+                Icon(Icons.person,
+                    size: 14,
+                    color: context.schTextSecondary.withValues(alpha: 0.88)),
                 const SizedBox(width: 4),
                 Text(
                   session.educator,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.meeting_room, size: 14, color: Colors.grey[500]),
+                Icon(Icons.meeting_room,
+                    size: 14,
+                    color: context.schTextSecondary.withValues(alpha: 0.88)),
                 const SizedBox(width: 4),
                 Text(
                   session.room,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
                 const Spacer(),
-                Icon(Icons.people, size: 14, color: Colors.grey[500]),
+                Icon(Icons.people,
+                    size: 14,
+                    color: context.schTextSecondary.withValues(alpha: 0.88)),
                 const SizedBox(width: 4),
                 Text(
                   '${session.learnerCount}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -910,7 +920,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     decoration: InputDecoration(
                       labelText: 'Session Title',
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -980,7 +990,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     decoration: InputDecoration(
                       labelText: 'Time Slot',
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -1017,7 +1027,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     decoration: InputDecoration(
                       labelText: 'Educator',
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -1031,7 +1041,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     decoration: InputDecoration(
                       labelText: 'Learner Count',
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -1044,7 +1054,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     decoration: InputDecoration(
                       labelText: 'Room',
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,

@@ -470,6 +470,7 @@ class RoleDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (BuildContext context, AppState appState, _) {
+        final ColorScheme scheme = Theme.of(context).colorScheme;
         final UserRole? role = appState.role;
 
         if (role == null) {
@@ -486,7 +487,7 @@ class RoleDashboard extends StatelessWidget {
         final Color roleColor = role.name.roleColor;
 
         return Scaffold(
-          backgroundColor: ScholesaColors.background,
+          backgroundColor: scheme.surfaceContainerLowest,
           body: CustomScrollView(
             slivers: <Widget>[
               // Beautiful gradient header
@@ -631,12 +632,12 @@ class RoleDashboard extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                   child: Row(
                     children: <Widget>[
-                      const Text(
+                      Text(
                         'Quick Actions',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: ScholesaColors.textPrimary,
+                          color: scheme.onSurface,
                         ),
                       ),
                       const Spacer(),
@@ -734,7 +735,8 @@ class RoleDashboard extends StatelessWidget {
     });
     final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
     if (payload == null) return _fallbackStatsForRole(role);
-    final List<dynamic> rawStats = payload['stats'] as List<dynamic>? ?? <dynamic>[];
+    final List<dynamic> rawStats =
+        payload['stats'] as List<dynamic>? ?? <dynamic>[];
     if (rawStats.isEmpty) return _fallbackStatsForRole(role);
 
     final List<Map<String, dynamic>> stats = <Map<String, dynamic>>[];
@@ -922,7 +924,7 @@ class RoleDashboard extends StatelessWidget {
     );
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -934,14 +936,14 @@ class RoleDashboard extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (BuildContext context, int index) {
             if (index == 0) {
-              return const Padding(
+              return Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
                   'All Quick Actions',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: ScholesaColors.textPrimary,
+                    color: Theme.of(sheetContext).colorScheme.onSurface,
                   ),
                 ),
               );
@@ -951,7 +953,9 @@ class RoleDashboard extends StatelessWidget {
             final bool enabled = isRouteEnabled(card.route);
             return ListTile(
               leading: Icon(card.icon,
-                  color: enabled ? null : ScholesaColors.textMuted),
+                  color: enabled
+                      ? null
+                      : Theme.of(sheetContext).colorScheme.onSurfaceVariant),
               title: Text(card.title),
               subtitle: Text(card.subtitle ?? ''),
               trailing: Icon(
@@ -1013,7 +1017,7 @@ class RoleDashboard extends StatelessWidget {
   void _showSiteSwitcher(BuildContext context, AppState appState) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1044,7 +1048,7 @@ class RoleDashboard extends StatelessWidget {
                       Icons.business,
                       color: siteId == appState.activeSiteId
                           ? ScholesaColors.primary
-                          : ScholesaColors.textMuted,
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   title: Text(siteId),

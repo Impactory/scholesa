@@ -8,13 +8,13 @@ export interface InputProps
 export const Input = ({ id, label, ...props }: InputProps) => {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+      <label htmlFor={id} className="block text-sm font-medium text-app-foreground">
         {label}
       </label>
       <div className="mt-1">
         <input
           id={id}
-          className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="block w-full appearance-none rounded-md border border-app bg-app-surface px-3 py-2 text-app-foreground shadow-sm placeholder:text-app-muted focus:border-[hsl(var(--ring))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] sm:text-sm"
           {...props}
         />
       </div>

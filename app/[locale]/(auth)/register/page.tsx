@@ -9,6 +9,7 @@ import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { Role } from '@/schema';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { syncSessionCookie } from '@/src/firebase/auth/sessionClient';
+import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -61,6 +62,9 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-app-canvas p-4">
+      <div className="fixed right-4 top-4 z-10">
+        <ThemeModeToggle compact />
+      </div>
       <div className="w-full max-w-md space-y-8 rounded-lg bg-app-surface p-8 shadow-md border border-app">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-app-foreground">{t('auth.register.title')}</h2>
@@ -139,7 +143,7 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}
-              className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+              className="group relative flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))] disabled:opacity-50"
             >
               {loading ? t('auth.register.submitting') : t('auth.register.submit')}
             </button>
@@ -148,7 +152,7 @@ export default function RegisterPage() {
           <div className="text-center text-sm">
             <a
               href={`/${locale}/login`}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary/80"
               onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}
             >
               {t('auth.register.switchToLogin')}

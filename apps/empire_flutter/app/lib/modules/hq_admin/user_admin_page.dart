@@ -61,7 +61,7 @@ class _UserAdminPageState extends State<UserAdminPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.hq.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               ScholesaColors.purple.withValues(alpha: 0.03),
             ],
           ),
@@ -118,7 +118,7 @@ class _UserAdminPageState extends State<UserAdminPage>
               ),
               Text(
                 'Manage all platform users',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -294,7 +294,7 @@ class _UserAdminPageState extends State<UserAdminPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -304,7 +304,7 @@ class _UserAdminPageState extends State<UserAdminPage>
           borderRadius: BorderRadius.circular(12),
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         tabs: const <Widget>[
           Tab(text: 'All Users'),
           Tab(text: 'Sites'),
@@ -426,7 +426,7 @@ class _UserAdminPageState extends State<UserAdminPage>
           const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+          Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
         ],
       ),
     );
@@ -538,7 +538,7 @@ class _StatMiniCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 10, color: context.schTextSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -748,7 +748,8 @@ class _UserCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       user.email,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                          color: context.schTextSecondary, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -772,12 +773,16 @@ class _UserCard extends StatelessWidget {
                         if (user.siteIds.isNotEmpty) ...<Widget>[
                           const SizedBox(width: 8),
                           Icon(Icons.location_on,
-                              size: 14, color: Colors.grey[400]),
+                              size: 14,
+                              color: context.schTextSecondary
+                                  .withValues(alpha: 0.74)),
                           const SizedBox(width: 2),
                           Text(
                             '${user.siteIds.length} site${user.siteIds.length > 1 ? 's' : ''}',
                             style: TextStyle(
-                                color: Colors.grey[500], fontSize: 12),
+                                color: context.schTextSecondary
+                                    .withValues(alpha: 0.88),
+                                fontSize: 12),
                           ),
                         ],
                       ],
@@ -785,7 +790,8 @@ class _UserCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
+              Icon(Icons.chevron_right,
+                  color: context.schTextSecondary.withValues(alpha: 0.74)),
             ],
           ),
         ),
@@ -847,7 +853,8 @@ class _SiteCard extends StatelessWidget {
                   if (site.location != null)
                     Text(
                       site.location!,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                          color: context.schTextSecondary, fontSize: 13),
                     ),
                   const SizedBox(height: 8),
                   Row(
@@ -890,17 +897,17 @@ class _SiteStatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 14, color: Colors.grey[600]),
+          Icon(icon, size: 14, color: context.schTextSecondary),
           const SizedBox(width: 4),
           Text(
             '$value $label',
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 11, color: context.schTextSecondary),
           ),
         ],
       ),
@@ -960,14 +967,17 @@ class _AuditLogCard extends StatelessWidget {
                   ),
                   Text(
                     'by ${log.actorEmail}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 12),
                   ),
                 ],
               ),
             ),
             Text(
               _formatTime(log.timestamp),
-              style: TextStyle(color: Colors.grey[500], fontSize: 11),
+              style: TextStyle(
+                  color: context.schTextSecondary.withValues(alpha: 0.88),
+                  fontSize: 11),
             ),
           ],
         ),
@@ -1088,7 +1098,7 @@ class _UserDetailsSheet extends StatelessWidget {
                             ),
                             Text(
                               user.email,
-                              style: TextStyle(color: Colors.grey[600]),
+                              style: TextStyle(color: context.schTextSecondary),
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -1470,7 +1480,7 @@ class _InfoSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1507,9 +1517,11 @@ class _InfoItem extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: <Widget>[
-          Icon(icon, size: 18, color: Colors.grey[500]),
+          Icon(icon,
+              size: 18,
+              color: context.schTextSecondary.withValues(alpha: 0.88)),
           const SizedBox(width: 12),
-          Text(label, style: TextStyle(color: Colors.grey[600])),
+          Text(label, style: TextStyle(color: context.schTextSecondary)),
           const Spacer(),
           Text(
             value,

@@ -38,7 +38,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: context.schSurfaceMuted,
       body: Consumer<HabitService>(
         builder: (BuildContext context, HabitService service, _) {
           if (service.isLoading) {
@@ -204,7 +204,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 'Today',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.grey[600],
+                  color: context.schTextSecondary,
                 ),
               ),
               Text(
@@ -418,7 +418,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
         },
         selectedColor: ScholesaColors.learner.withValues(alpha: 0.2),
         checkmarkColor: ScholesaColors.learner,
-        backgroundColor: Colors.white,
+        backgroundColor: context.schSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
@@ -453,7 +453,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                     : 'Start building your habits!',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.grey[600],
+                  color: context.schTextSecondary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -461,7 +461,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 'Tap + to create your first habit',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[400],
+                  color: context.schTextSecondary.withValues(alpha: 0.74),
                 ),
               ),
             ],
@@ -590,28 +590,32 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                         Icon(
                           _getTimeIcon(habit.preferredTime),
                           size: 14,
-                          color: Colors.grey[400],
+                          color:
+                              context.schTextSecondary.withValues(alpha: 0.74),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           habit.preferredTime.label,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.88),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Icon(
                           Icons.timer_outlined,
                           size: 14,
-                          color: Colors.grey[400],
+                          color:
+                              context.schTextSecondary.withValues(alpha: 0.74),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${habit.targetMinutes} min',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.88),
                           ),
                         ),
                       ],
@@ -925,7 +929,7 @@ class _HabitDetailSheet extends StatelessWidget {
                 habit.description!,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: context.schTextSecondary,
                 ),
               ),
             ],
@@ -935,6 +939,7 @@ class _HabitDetailSheet extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     '🔥',
                     '${habit.currentStreak}',
                     'Current Streak',
@@ -944,6 +949,7 @@ class _HabitDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     '🏆',
                     '${habit.longestStreak}',
                     'Best Streak',
@@ -957,6 +963,7 @@ class _HabitDetailSheet extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     '✅',
                     '${habit.totalCompletions}',
                     'Total Done',
@@ -966,6 +973,7 @@ class _HabitDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     '⏱️',
                     '${habit.targetMinutes}m',
                     'Target Time',
@@ -985,16 +993,19 @@ class _HabitDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _buildSettingRow(
+              context,
               Icons.repeat,
               'Frequency',
               habit.frequency.name.toUpperCase(),
             ),
             _buildSettingRow(
+              context,
               Icons.schedule,
               'Preferred Time',
               habit.preferredTime.label,
             ),
             _buildSettingRow(
+              context,
               Icons.calendar_today,
               'Started',
               _formatDate(habit.createdAt),
@@ -1006,7 +1017,8 @@ class _HabitDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String emoji, String value, String label, Color color) {
+  Widget _buildStatCard(BuildContext context, String emoji, String value,
+      String label, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1035,7 +1047,7 @@ class _HabitDetailSheet extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: context.schTextSecondary,
             ),
           ),
         ],
@@ -1043,18 +1055,21 @@ class _HabitDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingRow(IconData icon, String label, String value) {
+  Widget _buildSettingRow(
+      BuildContext context, IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: <Widget>[
-          Icon(icon, size: 20, color: Colors.grey[500]),
+          Icon(icon,
+              size: 20,
+              color: context.schTextSecondary.withValues(alpha: 0.88)),
           const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: context.schTextSecondary,
             ),
           ),
           const Spacer(),
@@ -1221,7 +1236,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? ScholesaColors.learner.withValues(alpha: 0.2)
-                          : Colors.grey[100],
+                          : context.schSurfaceMuted,
                       borderRadius: BorderRadius.circular(12),
                       border: isSelected
                           ? Border.all(color: ScholesaColors.learner, width: 2)
@@ -1245,7 +1260,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 labelText: 'Habit name',
                 hintText: 'e.g., Morning Reading',
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: context.schSurfaceMuted,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1261,7 +1276,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 labelText: 'Description (optional)',
                 hintText: 'What does this habit involve?',
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: context.schSurfaceMuted,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,

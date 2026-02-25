@@ -33,7 +33,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.educator.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               const Color(0xFF10B981).withValues(alpha: 0.03),
             ],
           ),
@@ -109,7 +109,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 children: <Widget>[
                   Text(
                     greeting,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                   Text(
                     "Today's Schedule",
@@ -344,7 +345,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 context.push('/educator/attendance');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: context.schSurface,
                 foregroundColor: ScholesaColors.educator,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -568,7 +569,7 @@ class _StatCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: context.schTextSecondary,
             ),
           ),
         ],
@@ -685,7 +686,7 @@ class _ClassCard extends StatelessWidget {
                       _formatTime(todayClass.endTime),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[500],
+                        color: context.schTextSecondary.withValues(alpha: 0.88),
                       ),
                     ),
                   ],
@@ -717,20 +718,29 @@ class _ClassCard extends StatelessWidget {
                     Row(
                       children: <Widget>[
                         Icon(Icons.location_on,
-                            size: 14, color: Colors.grey[400]),
+                            size: 14,
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.74)),
                         const SizedBox(width: 4),
                         Text(
                           todayClass.location ?? 'TBD',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style: TextStyle(
+                              color: context.schTextSecondary
+                                  .withValues(alpha: 0.88),
+                              fontSize: 12),
                         ),
                         const SizedBox(width: 12),
-                        Icon(Icons.people, size: 14, color: Colors.grey[400]),
+                        Icon(Icons.people,
+                            size: 14,
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.74)),
                         const SizedBox(width: 4),
                         Text(
                           '${todayClass.enrolledCount}',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style: TextStyle(
+                              color: context.schTextSecondary
+                                  .withValues(alpha: 0.88),
+                              fontSize: 12),
                         ),
                       ],
                     ),
@@ -808,7 +818,7 @@ class _ClassDetailSheet extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     todayClass.description!,
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: context.schTextSecondary),
                   ),
                 ],
                 const SizedBox(height: 20),
@@ -856,8 +866,8 @@ class _ClassDetailSheet extends StatelessWidget {
                           ),
                         ),
                         title: Text(learner.name),
-                        trailing:
-                            _buildAttendanceBadge(learner.attendanceStatus),
+                        trailing: _buildAttendanceBadge(
+                            context, learner.attendanceStatus),
                       );
                     },
                   ),
@@ -897,7 +907,7 @@ class _ClassDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAttendanceBadge(String? status) {
+  Widget _buildAttendanceBadge(BuildContext context, String? status) {
     if (status == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -907,7 +917,7 @@ class _ClassDetailSheet extends StatelessWidget {
         ),
         child: Text(
           'Not recorded',
-          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 11, color: context.schTextSecondary),
         ),
       );
     }
@@ -967,13 +977,13 @@ class _DetailChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 16, color: Colors.grey[600]),
+          Icon(icon, size: 16, color: context.schTextSecondary),
           const SizedBox(width: 6),
           Text(
             label,

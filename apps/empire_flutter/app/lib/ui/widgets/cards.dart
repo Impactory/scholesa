@@ -26,6 +26,9 @@ class GradientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final Color disabledSurface = scheme.surfaceContainerHigh;
+    final Color disabledText = scheme.onSurfaceVariant;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       child: Material(
@@ -50,7 +53,7 @@ class GradientCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               gradient: isEnabled ? gradient : null,
-              color: isEnabled ? null : ScholesaColors.surfaceVariant,
+              color: isEnabled ? null : disabledSurface,
               borderRadius: BorderRadius.circular(20),
               boxShadow: isEnabled
                   ? <BoxShadow>[
@@ -92,9 +95,7 @@ class GradientCard extends StatelessWidget {
                           child: Icon(
                             icon,
                             size: 28,
-                            color: isEnabled
-                                ? Colors.white
-                                : ScholesaColors.textMuted,
+                            color: isEnabled ? Colors.white : disabledText,
                           ),
                         ),
                         const Spacer(),
@@ -112,9 +113,8 @@ class GradientCard extends StatelessWidget {
                                 child: Text(
                                   badgeText!,
                                   style: TextStyle(
-                                    color: isEnabled
-                                        ? Colors.white
-                                        : ScholesaColors.textMuted,
+                                    color:
+                                        isEnabled ? Colors.white : disabledText,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -133,9 +133,7 @@ class GradientCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isEnabled
-                            ? Colors.white
-                            : ScholesaColors.textSecondary,
+                        color: isEnabled ? Colors.white : scheme.onSurface,
                       ),
                     ),
                     if (subtitle != null) ...<Widget>[
@@ -146,7 +144,7 @@ class GradientCard extends StatelessWidget {
                           fontSize: 13,
                           color: isEnabled
                               ? Colors.white.withValues(alpha: 0.85)
-                              : ScholesaColors.textMuted,
+                              : disabledText,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -158,16 +156,15 @@ class GradientCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color:
-                              ScholesaColors.textMuted.withValues(alpha: 0.2),
+                          color: disabledText.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Unavailable',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: ScholesaColors.textMuted,
+                            color: disabledText,
                           ),
                         ),
                       ),
@@ -205,8 +202,9 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: scheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap == null
@@ -227,7 +225,7 @@ class StatCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: ScholesaColors.border),
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
@@ -256,10 +254,10 @@ class StatCard extends StatelessWidget {
                             value,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: ScholesaColors.textPrimary,
+                              color: scheme.onSurface,
                             ),
                           ),
                         ),
@@ -269,9 +267,9 @@ class StatCard extends StatelessWidget {
                       label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: ScholesaColors.textSecondary,
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -346,7 +344,7 @@ class StatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: compact ? 20 : 28,
                       fontWeight: FontWeight.bold,
-                      color: ScholesaColors.textPrimary,
+                      color: scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -356,7 +354,7 @@ class StatCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: compact ? 11 : 13,
-                      color: ScholesaColors.textSecondary,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -385,8 +383,9 @@ class QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: scheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap == null
@@ -407,7 +406,7 @@ class QuickActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: ScholesaColors.border),
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -434,10 +433,10 @@ class QuickActionButton extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: ScholesaColors.textPrimary,
+                  color: scheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -513,12 +512,13 @@ class ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ScholesaColors.border),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -532,10 +532,10 @@ class ProgressCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: ScholesaColors.textPrimary,
+                    color: scheme.onSurface,
                   ),
                 ),
               ),
@@ -552,9 +552,9 @@ class ProgressCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: ScholesaColors.textSecondary,
+              color: scheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),
@@ -601,12 +601,12 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Stack(
       children: <Widget>[
         CircleAvatar(
           radius: size / 2,
-          backgroundColor:
-              backgroundColor ?? ScholesaColors.primary.withValues(alpha: 0.1),
+          backgroundColor: backgroundColor ?? scheme.primaryContainer,
           backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
           child: imageUrl == null
               ? Text(
@@ -616,7 +616,7 @@ class UserAvatar extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: backgroundColor != null
                         ? Colors.white
-                        : ScholesaColors.primary,
+                        : scheme.onPrimaryContainer,
                   ),
                 )
               : null,
@@ -629,11 +629,10 @@ class UserAvatar extends StatelessWidget {
               width: size * 0.3,
               height: size * 0.3,
               decoration: BoxDecoration(
-                color: isOnline
-                    ? ScholesaColors.success
-                    : ScholesaColors.textMuted,
+                color:
+                    isOnline ? ScholesaColors.success : scheme.onSurfaceVariant,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: scheme.surface, width: 2),
               ),
             ),
           ),
@@ -662,6 +661,7 @@ class ColorfulListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return ListTile(
       onTap: onTap == null
           ? null
@@ -686,22 +686,22 @@ class ColorfulListTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: ScholesaColors.textPrimary,
+          color: scheme.onSurface,
         ),
       ),
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style: const TextStyle(
-                color: ScholesaColors.textSecondary,
+              style: TextStyle(
+                color: scheme.onSurfaceVariant,
                 fontSize: 13,
               ),
             )
           : null,
-      trailing: trailing ??
-          const Icon(Icons.chevron_right, color: ScholesaColors.textMuted),
+      trailing:
+          trailing ?? Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

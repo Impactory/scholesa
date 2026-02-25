@@ -5,9 +5,6 @@ import 'parent_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Color kParentScheduleHighlightStart = Color(0xFFC2185B);
-const Color kParentScheduleHighlightEnd = Color(0xFFAD1457);
-
 /// Parent Schedule Page - View learner schedules and upcoming sessions
 class ParentSchedulePage extends StatefulWidget {
   const ParentSchedulePage({super.key});
@@ -31,6 +28,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -38,14 +36,15 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.parent.withValues(alpha: 0.05),
-              Colors.white,
-              ScholesaColors.leadership.withValues(alpha: 0.03),
+              scheme.surfaceContainerLowest,
+              scheme.surface,
+              scheme.surfaceContainerLow,
             ],
           ),
         ),
         child: Consumer<ParentService>(
-          builder: (BuildContext context, ParentService service, Widget? child) {
+          builder:
+              (BuildContext context, ParentService service, Widget? child) {
             if (service.isLoading) {
               return const Center(
                 child: CircularProgressIndicator(color: ScholesaColors.parent),
@@ -59,7 +58,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                     'No learner links found yet. Ask your site admin to link parent and learner accounts.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[700],
+                          color: scheme.onSurfaceVariant,
                         ),
                   ),
                 ),
@@ -83,6 +82,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildHeader(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -119,7 +119,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   ),
                   Text(
                     'View upcoming sessions',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style:
+                        TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
                   ),
                 ],
               ),
@@ -193,6 +194,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildLearnerFilter(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final Set<String> linkedLearnerIds = service.learnerSummaries
         .map((LearnerSummary learner) => learner.learnerId)
         .toSet();
@@ -209,9 +211,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: DropdownButton<String>(
           value: _selectedLearner,
@@ -248,6 +250,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildCalendarStrip(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final DateTime today = DateTime.now();
     final List<DateTime> days = List<DateTime>.generate(
       7,
@@ -259,9 +262,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -298,7 +301,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                     Text(
                       _getDayName(date.weekday),
                       style: TextStyle(
-                        color: isSelected ? Colors.white70 : Colors.grey[600],
+                        color: isSelected
+                            ? Colors.white70
+                            : scheme.onSurfaceVariant,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -307,7 +312,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                     Text(
                       '${date.day}',
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected ? Colors.white : scheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -334,7 +339,12 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildUpcomingSection(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool isDark = scheme.brightness == Brightness.dark;
     final _ParentScheduleEntry? nextSession = _nextSession(service);
+    final List<Color> highlightColors = isDark
+        ? const <Color>[Color(0xFF7A123A), Color(0xFF4D0E2F)]
+        : const <Color>[Color(0xFFB51250), Color(0xFF8F1547)];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -343,16 +353,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: const <Color>[
-              kParentScheduleHighlightStart,
-              kParentScheduleHighlightEnd,
-            ],
+            colors: highlightColors,
           ),
           border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           borderRadius: BorderRadius.circular(16),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: highlightColors.last.withValues(alpha: 0.34),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -400,8 +407,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   ? null
                   : () => _showNextSessionDetails(nextSession),
               style: TextButton.styleFrom(
-                foregroundColor: kParentScheduleHighlightStart,
-                backgroundColor: Colors.white,
+                foregroundColor: highlightColors.first,
+                backgroundColor: Colors.white.withValues(alpha: 0.96),
+                disabledForegroundColor: Colors.white.withValues(alpha: 0.65),
+                disabledBackgroundColor: Colors.white.withValues(alpha: 0.18),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               ),
@@ -414,6 +423,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildTodaySchedule(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final List<_ParentScheduleEntry> entries = _entriesForSelectedDate(service);
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -429,7 +439,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               ),
               Text(
                 '${entries.length} session${entries.length == 1 ? '' : 's'}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
               ),
             ],
           ),
@@ -439,13 +449,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: scheme.outlineVariant),
               ),
               child: Text(
                 'No sessions on this date.',
-                style: TextStyle(color: Colors.grey[700]),
+                style: TextStyle(color: scheme.onSurfaceVariant),
               ),
             ),
           ...entries.map(
@@ -521,18 +531,19 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   Widget _buildWeekOverview(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     final List<_ParentScheduleEntry> weekEntries = _entriesForWeek(service);
     final Map<int, List<_ParentScheduleEntry>> byWeekday =
         <int, List<_ParentScheduleEntry>>{};
     for (final _ParentScheduleEntry entry in weekEntries) {
-      byWeekday.putIfAbsent(entry.dateTime.weekday, () => <_ParentScheduleEntry>[]).add(entry);
+      byWeekday
+          .putIfAbsent(entry.dateTime.weekday, () => <_ParentScheduleEntry>[])
+          .add(entry);
     }
-    final int futureSkillsCount = weekEntries
-        .where((entry) => entry.pillarKey == 'futureSkills')
-        .length;
-    final int leadershipCount = weekEntries
-        .where((entry) => entry.pillarKey == 'leadership')
-        .length;
+    final int futureSkillsCount =
+        weekEntries.where((entry) => entry.pillarKey == 'futureSkills').length;
+    final int leadershipCount =
+        weekEntries.where((entry) => entry.pillarKey == 'leadership').length;
     final int impactCount =
         weekEntries.where((entry) => entry.pillarKey == 'impact').length;
 
@@ -549,44 +560,49 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: scheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: scheme.outlineVariant),
             ),
             child: Column(
               children: <Widget>[
                 _WeekDayRow(
                   day: 'Monday',
                   sessions: byWeekday[DateTime.monday]?.length ?? 0,
-                  hours: _hoursLabel(byWeekday[DateTime.monday] ?? <_ParentScheduleEntry>[]),
+                  hours: _hoursLabel(
+                      byWeekday[DateTime.monday] ?? <_ParentScheduleEntry>[]),
                   isToday: DateTime.now().weekday == DateTime.monday,
                 ),
                 const Divider(),
                 _WeekDayRow(
                   day: 'Tuesday',
                   sessions: byWeekday[DateTime.tuesday]?.length ?? 0,
-                  hours: _hoursLabel(byWeekday[DateTime.tuesday] ?? <_ParentScheduleEntry>[]),
+                  hours: _hoursLabel(
+                      byWeekday[DateTime.tuesday] ?? <_ParentScheduleEntry>[]),
                   isToday: DateTime.now().weekday == DateTime.tuesday,
                 ),
                 const Divider(),
                 _WeekDayRow(
                   day: 'Wednesday',
                   sessions: byWeekday[DateTime.wednesday]?.length ?? 0,
-                  hours: _hoursLabel(byWeekday[DateTime.wednesday] ?? <_ParentScheduleEntry>[]),
+                  hours: _hoursLabel(byWeekday[DateTime.wednesday] ??
+                      <_ParentScheduleEntry>[]),
                   isToday: DateTime.now().weekday == DateTime.wednesday,
                 ),
                 const Divider(),
                 _WeekDayRow(
                   day: 'Thursday',
                   sessions: byWeekday[DateTime.thursday]?.length ?? 0,
-                  hours: _hoursLabel(byWeekday[DateTime.thursday] ?? <_ParentScheduleEntry>[]),
+                  hours: _hoursLabel(
+                      byWeekday[DateTime.thursday] ?? <_ParentScheduleEntry>[]),
                   isToday: DateTime.now().weekday == DateTime.thursday,
                 ),
                 const Divider(),
                 _WeekDayRow(
                   day: 'Friday',
                   sessions: byWeekday[DateTime.friday]?.length ?? 0,
-                  hours: _hoursLabel(byWeekday[DateTime.friday] ?? <_ParentScheduleEntry>[]),
+                  hours: _hoursLabel(
+                      byWeekday[DateTime.friday] ?? <_ParentScheduleEntry>[]),
                   isToday: DateTime.now().weekday == DateTime.friday,
                 ),
               ],
@@ -596,9 +612,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: scheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: scheme.outlineVariant),
             ),
             child: Row(
               children: <Widget>[
@@ -613,7 +629,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 Container(
                   width: 1,
                   height: 40,
-                  color: Colors.grey.shade200,
+                  color: scheme.outlineVariant,
                 ),
                 Expanded(
                   child: _WeekStat(
@@ -626,7 +642,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 Container(
                   width: 1,
                   height: 40,
-                  color: Colors.grey.shade200,
+                  color: scheme.outlineVariant,
                 ),
                 Expanded(
                   child: _WeekStat(
@@ -639,7 +655,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 Container(
                   width: 1,
                   height: 40,
-                  color: Colors.grey.shade200,
+                  color: scheme.outlineVariant,
                 ),
                 Expanded(
                   child: _WeekStat(
@@ -848,6 +864,7 @@ class _ViewModeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -859,7 +876,7 @@ class _ViewModeButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : ScholesaColors.parent,
+            color: isSelected ? Colors.white : scheme.onSurfaceVariant,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
@@ -899,26 +916,27 @@ class _ScheduleItem extends StatelessWidget {
     }
   }
 
-  Color get _statusColor {
+  Color _statusColor(ColorScheme scheme) {
     switch (status) {
       case 'completed':
         return ScholesaColors.success;
       case 'in_progress':
         return ScholesaColors.warning;
       default:
-        return Colors.grey;
+        return scheme.onSurfaceVariant;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: IntrinsicHeight(
           child: Row(
@@ -944,13 +962,14 @@ class _ScheduleItem extends StatelessWidget {
                           Text(
                             time,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: scheme.onSurfaceVariant,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Icon(_statusIcon, color: _statusColor, size: 20),
+                          Icon(_statusIcon,
+                              color: _statusColor(scheme), size: 20),
                         ],
                       ),
                       const SizedBox(width: 16),
@@ -960,8 +979,9 @@ class _ScheduleItem extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
+                                color: scheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -987,12 +1007,12 @@ class _ScheduleItem extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Icon(Icons.person,
-                                    size: 12, color: Colors.grey[500]),
+                                    size: 12, color: scheme.onSurfaceVariant),
                                 const SizedBox(width: 4),
                                 Text(
                                   learner,
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: scheme.onSurfaceVariant,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -1007,12 +1027,12 @@ class _ScheduleItem extends StatelessWidget {
                           Row(
                             children: <Widget>[
                               Icon(Icons.location_on,
-                                  size: 12, color: Colors.grey[500]),
+                                  size: 12, color: scheme.onSurfaceVariant),
                               const SizedBox(width: 4),
                               Text(
                                 location,
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: scheme.onSurfaceVariant,
                                   fontSize: 11,
                                 ),
                               ),
@@ -1047,6 +1067,7 @@ class _WeekDayRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1067,19 +1088,19 @@ class _WeekDayRow extends StatelessWidget {
               day,
               style: TextStyle(
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                color: isToday ? ScholesaColors.parent : Colors.black87,
+                color: isToday ? ScholesaColors.parent : scheme.onSurface,
               ),
             ),
           ),
           Expanded(
             child: Text(
               '$sessions sessions',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
             ),
           ),
           Text(
             hours,
-            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
           ),
         ],
       ),
@@ -1102,6 +1123,7 @@ class _WeekStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Column(
       children: <Widget>[
         Icon(icon, color: color, size: 20),
@@ -1116,7 +1138,7 @@ class _WeekStat extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[600], fontSize: 9),
+          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 9),
           textAlign: TextAlign.center,
         ),
       ],

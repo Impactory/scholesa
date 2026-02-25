@@ -34,7 +34,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.learner.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               const Color(0xFFF59E0B).withValues(alpha: 0.03),
             ],
           ),
@@ -84,7 +84,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               children: <Widget>[
                 Text(
                   _getGreeting(),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 14),
                 ),
                 Text(
                   'Today',
@@ -109,7 +110,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               icon: Stack(
                 children: <Widget>[
                   Icon(Icons.notifications_outlined,
-                      color: Colors.grey[600], size: 28),
+                      color: context.schTextSecondary, size: 28),
                   Positioned(
                     right: 0,
                     top: 0,
@@ -461,7 +462,7 @@ class _ProgressCard extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: context.schTextSecondary,
                   fontSize: 13,
                 ),
               ),
@@ -482,14 +483,14 @@ class _ProgressCard extends StatelessWidget {
                 '/$total',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.grey[400],
+                  color: context.schTextSecondary.withValues(alpha: 0.74),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 label ?? 'done',
                 style: TextStyle(
-                  color: Colors.grey[500],
+                  color: context.schTextSecondary.withValues(alpha: 0.88),
                   fontSize: 12,
                 ),
               ),
@@ -600,7 +601,9 @@ class _HabitTile extends StatelessWidget {
                 ),
                 Text(
                   '${habit.targetMinutes} min',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  style: TextStyle(
+                      color: context.schTextSecondary.withValues(alpha: 0.88),
+                      fontSize: 12),
                 ),
               ],
             ),

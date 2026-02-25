@@ -56,7 +56,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             end: Alignment.bottomRight,
             colors: <Color>[
               ScholesaColors.learner.withValues(alpha: 0.05),
-              Colors.white,
+              context.schSurface,
               ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
@@ -137,7 +137,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   ),
                   Text(
                     'Showcase your achievements',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -262,7 +263,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +336,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             const SizedBox(height: 8),
             Text(
               '250 XP to Level 13 - Aspiring Trailblazer',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: TextStyle(color: context.schTextSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -386,13 +387,13 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: context.schSurfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
         controller: _tabController,
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: context.schTextSecondary,
         indicator: BoxDecoration(
           color: ScholesaColors.learner,
           borderRadius: BorderRadius.circular(12),
@@ -684,7 +685,7 @@ class _PillarStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.schBorder),
       ),
       child: Column(
         children: <Widget>[
@@ -707,7 +708,9 @@ class _PillarStatCard extends StatelessWidget {
           ),
           Text(
             'missions',
-            style: TextStyle(color: Colors.grey[500], fontSize: 10),
+            style: TextStyle(
+                color: context.schTextSecondary.withValues(alpha: 0.88),
+                fontSize: 10),
           ),
         ],
       ),
@@ -731,7 +734,7 @@ class _BadgeCard extends StatelessWidget {
         border: Border.all(
           color: earned
               ? (badge['color'] as Color).withValues(alpha: 0.3)
-              : Colors.grey.shade200,
+              : context.schBorder,
         ),
       ),
       child: Column(
@@ -743,7 +746,7 @@ class _BadgeCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: earned
                   ? (badge['color'] as Color).withValues(alpha: 0.15)
-                  : Colors.grey.shade100,
+                  : context.schSurfaceMuted,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -765,21 +768,22 @@ class _BadgeCard extends StatelessWidget {
           if (earned)
             Text(
               badge['date'] as String,
-              style: TextStyle(color: Colors.grey[600], fontSize: 10),
+              style: TextStyle(color: context.schTextSecondary, fontSize: 10),
             )
           else
             Column(
               children: <Widget>[
                 Text(
                   '${badge['progress']}/${badge['total']}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 10),
                 ),
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: (badge['progress'] as int) / (badge['total'] as int),
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: context.schBorder,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       badge['color'] as Color,
                     ),
@@ -807,7 +811,7 @@ class _SkillCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,7 +878,8 @@ class _SkillCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   '${((skill['progress'] as double) * 100).toInt()}% to next level',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
                 Row(
                   children: List<Widget>.generate(
@@ -912,7 +917,7 @@ class _ProjectCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.schBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -963,7 +968,10 @@ class _ProjectCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         project['date'] as String,
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: TextStyle(
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.88),
+                            fontSize: 12),
                       ),
                     ],
                   ),
@@ -978,7 +986,8 @@ class _ProjectCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     project['description'] as String,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),

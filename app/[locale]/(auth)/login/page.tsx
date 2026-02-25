@@ -7,6 +7,7 @@ import { auth } from '@/src/firebase/client-init';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { syncSessionCookie } from '@/src/firebase/auth/sessionClient';
+import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,6 +40,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-app-canvas p-4">
+      <div className="fixed right-4 top-4 z-10">
+        <ThemeModeToggle compact />
+      </div>
       <div className="w-full max-w-md space-y-8 rounded-lg bg-app-surface p-8 shadow-md border border-app">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-app-foreground">{t('auth.login.title')}</h2>
@@ -88,7 +92,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               onClick={() => trackInteraction('help_accessed', { cta: 'auth_login_submit' })}
-              className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+              className="group relative flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))] disabled:opacity-50"
             >
               {loading ? t('auth.login.submitting') : t('auth.login.submit')}
             </button>
@@ -97,7 +101,7 @@ export default function LoginPage() {
           <div className="text-center text-sm">
             <a
               href={`/${locale}/register`}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary/80"
               onClick={() => trackInteraction('feature_discovered', { cta: 'auth_login_to_register' })}
             >
               {t('auth.login.switchToRegister')}
