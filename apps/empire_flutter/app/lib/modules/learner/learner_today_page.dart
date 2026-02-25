@@ -26,6 +26,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool isDark = scheme.brightness == Brightness.dark;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -33,10 +35,11 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.learner.withValues(alpha: 0.05),
-              context.schSurface,
-              const Color(0xFFF59E0B).withValues(alpha: 0.03),
+              isDark ? scheme.surface : const Color(0xFFF0FDF8),
+              isDark ? scheme.surfaceContainerLow : const Color(0xFFF8FAFC),
+              isDark ? scheme.surfaceContainer : const Color(0xFFFFFBEB),
             ],
+            stops: const <double>[0.0, 0.5, 1.0],
           ),
         ),
         child: CustomScrollView(
@@ -55,6 +58,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   }
 
   Widget _buildHeader() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -84,14 +88,17 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               children: <Widget>[
                 Text(
                   _getGreeting(),
-                  style:
-                      TextStyle(color: context.schTextSecondary, fontSize: 14),
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   'Today',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: ScholesaColors.learner,
+                        color: scheme.onSurface,
                       ),
                 ),
               ],

@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { AICoachPopup } from './AICoachPopup';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 function defaultGradeForRole(role: string | undefined): number {
   switch (role) {
@@ -24,6 +25,7 @@ function defaultGradeForRole(role: string | undefined): number {
 
 export function GlobalAIAssistantDock() {
   const { user, profile, loading } = useAuthContext();
+  const { t } = useI18n();
   const pathname = usePathname();
 
   const activeSiteId = useMemo(
@@ -46,7 +48,7 @@ export function GlobalAIAssistantDock() {
   return (
     <AICoachPopup
       learnerId={user.uid}
-      studentName={profile.displayName || 'Scholesa User'}
+      studentName={profile.displayName || t('common.userLabel')}
       siteId={activeSiteId}
       grade={defaultGradeForRole(profile.role)}
     />

@@ -12,7 +12,7 @@ import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
 import type { Session } from '@/schema';
 
-function formatSessionDate(rawDate: unknown): string {
+function formatSessionDate(rawDate: unknown, fallback: string): string {
   if (typeof rawDate === 'number') {
     return new Date(rawDate).toLocaleDateString();
   }
@@ -22,7 +22,7 @@ function formatSessionDate(rawDate: unknown): string {
       return new Date(parsed).toLocaleDateString();
     }
   }
-  return 'TBD';
+  return fallback;
 }
 
 export default function LearnerDashboard() {
@@ -121,6 +121,12 @@ export default function LearnerDashboard() {
     { label: t('role.learner.fallback.activeMissions'), value: '0' },
     { label: t('role.learner.fallback.unreadMessages'), value: '0' },
   ];
+  const activeMissionsValue =
+    visibleStats.find((stat) =>
+      stat.label.toLowerCase().includes('mission'),
+    )?.value ||
+    visibleStats[1]?.value ||
+    '0';
 
   const loading = authLoading || sessionsLoading || statsLoading;
 
@@ -168,7 +174,7 @@ export default function LearnerDashboard() {
                               <span className="rounded-full bg-indigo-50 px-2 py-1 font-medium text-indigo-700">
                                 {session.pillarCodes?.[0] || t('common.general')}
                               </span>
-                              <span>{formatSessionDate(session.startDate)}</span>
+                              <span>{formatSessionDate(session.startDate, t('common.tbd'))}</span>
                             </div>
                           </div>
                           <div className="bg-app-canvas px-5 py-3">
@@ -198,10 +204,7 @@ export default function LearnerDashboard() {
                   <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                     <div className="p-6 text-sm text-app-muted">
                       {t('role.learner.activeMissionsThisWeek', {
-                        count:
-                          visibleStats.find((stat) =>
-                            stat.label.toLowerCase().includes('mission'),
-                          )?.value || '0',
+                        count: activeMissionsValue,
                       })}
                     </div>
                   </div>

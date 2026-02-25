@@ -80,9 +80,15 @@ export default function SiteDashboard() {
     { label: t('role.site.fallback.checkedIn'), value: '0' },
     { label: t('role.site.fallback.openIncidents'), value: '0' },
   ];
-
-  const statByLabel = (labelPart: string): string =>
-    visibleStats.find((stat) => stat.label.toLowerCase().includes(labelPart))?.value || '0';
+  const onSiteValue = String(roster?.counts.learners ?? Number(visibleStats[0]?.value || 0));
+  const checkedInValue =
+    visibleStats.find((stat) =>
+      ['checked', 'session', 'attendance'].some((needle) =>
+        stat.label.toLowerCase().includes(needle),
+      ),
+    )?.value ||
+    visibleStats[1]?.value ||
+    '0';
 
   return (
     <RoleRouteGuard allowedRoles={['site']}>
@@ -123,7 +129,7 @@ export default function SiteDashboard() {
                         </dt>
                         <dd>
                           <div className="text-lg font-medium text-app-foreground">
-                            {roster?.counts.learners ?? statByLabel('site')}
+                            {onSiteValue}
                           </div>
                         </dd>
                       </dl>
@@ -158,7 +164,7 @@ export default function SiteDashboard() {
                         </dt>
                         <dd>
                           <div className="text-lg font-medium text-app-foreground">
-                            {statByLabel('checked') === '0' ? statByLabel('session') : statByLabel('checked')}
+                            {checkedInValue}
                           </div>
                         </dd>
                       </dl>

@@ -16,13 +16,13 @@ import { sessionsCollection } from '@/src/lib/firestore/collections';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import type { Session } from '@/schema';
 
-function formatDate(rawDate: unknown): string {
+function formatDate(rawDate: unknown, fallback: string): string {
   if (typeof rawDate === 'number') return new Date(rawDate).toLocaleDateString();
   if (typeof rawDate === 'string' && rawDate.trim().length > 0) {
     const parsed = Date.parse(rawDate);
     if (!Number.isNaN(parsed)) return new Date(parsed).toLocaleDateString();
   }
-  return 'TBD';
+  return fallback;
 }
 
 export default function EducatorDashboard() {
@@ -155,7 +155,7 @@ export default function EducatorDashboard() {
                                 {session.pillarCodes?.[0] || t('common.general')}
                               </span>
                               <span className="text-xs text-app-muted">
-                                {formatDate(session.startDate)}
+                                {formatDate(session.startDate, t('common.tbd'))}
                               </span>
                             </div>
                           </div>

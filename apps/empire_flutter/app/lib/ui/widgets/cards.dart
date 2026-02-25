@@ -230,7 +230,8 @@ class GradientCard extends StatelessWidget {
         .map((Color color) => color.computeLuminance())
         .fold<double>(0, (double a, double b) => a + b);
     final double averageLuminance = totalLuminance / value.colors.length;
-    return averageLuminance >= 0.56;
+    // Lower threshold to keep contrast high on mint/yellow dashboard cards.
+    return averageLuminance >= 0.42;
   }
 }
 

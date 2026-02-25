@@ -546,7 +546,7 @@ Guidance: ${
         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
         
         {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+        <div className="absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-lg bg-black/90 px-3 py-2 text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
           {t('aiCoach.tooltip')}
         </div>
       </button>
@@ -584,7 +584,7 @@ Guidance: ${
         {/* Mode selection */}
         {!mode && !response && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 mb-3">{t('aiCoach.howCanIHelp')}</p>
+            <p className="mb-3 text-sm text-app-muted">{t('aiCoach.howCanIHelp')}</p>
             {availableModes.map((modeKey) => {
               const config = modeConfig[modeKey];
               const Icon = config.icon;
@@ -598,25 +598,25 @@ Guidance: ${
               }> = {
                 purple: {
                   border: 'hover:border-purple-500',
-                  bg: 'hover:bg-purple-50',
+                  bg: 'hover:bg-app-surface-muted',
                   iconBg: 'bg-purple-100',
                   iconText: 'text-purple-600'
                 },
                 indigo: {
                   border: 'hover:border-indigo-500',
-                  bg: 'hover:bg-indigo-50',
+                  bg: 'hover:bg-app-surface-muted',
                   iconBg: 'bg-indigo-100',
                   iconText: 'text-indigo-600'
                 },
                 blue: {
                   border: 'hover:border-blue-500',
-                  bg: 'hover:bg-blue-50',
+                  bg: 'hover:bg-app-surface-muted',
                   iconBg: 'bg-blue-100',
                   iconText: 'text-blue-600'
                 },
                 pink: {
                   border: 'hover:border-pink-500',
-                  bg: 'hover:bg-pink-50',
+                  bg: 'hover:bg-app-surface-muted',
                   iconBg: 'bg-pink-100',
                   iconText: 'text-pink-600'
                 }
@@ -628,14 +628,14 @@ Guidance: ${
                 <button
                   key={modeKey}
                   onClick={() => setMode(modeKey)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 ${colors.border} ${colors.bg} transition-all text-left`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 border-app ${colors.border} ${colors.bg} transition-all text-left`}
                 >
                   <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-5 h-5 ${colors.iconText}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{config.label}</p>
-                    <p className="text-xs text-gray-600">{config.placeholder}</p>
+                    <p className="font-medium text-app-foreground">{config.label}</p>
+                    <p className="text-xs text-app-muted">{config.placeholder}</p>
                   </div>
                 </button>
               );
@@ -648,20 +648,20 @@ Guidance: ${
           <div className="space-y-3">
             <button
               onClick={reset}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-app-muted hover:text-app-foreground"
             >
               {t('aiCoach.back')}
             </button>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-app-foreground">
                 {modeConfig[mode].placeholder}
               </label>
               <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder={t('aiCoach.questionPlaceholder')}
-                className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+                className="h-24 w-full resize-none rounded-lg border border-app bg-app-surface px-3 py-2 text-sm text-app-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
                 disabled={loading}
               />
             </div>
@@ -674,7 +674,7 @@ Guidance: ${
                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                   isListening
                     ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-app-surface-muted text-app-foreground hover:bg-app-surface'
                 }`}
               >
                 {isListening ? (
@@ -695,7 +695,7 @@ Guidance: ${
             <button
               onClick={handleAsk}
               disabled={!question.trim() || loading || isTranscribing}
-              className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-3 font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-app-surface-muted disabled:text-app-muted"
             >
               {loading || isTranscribing ? (
                 <>
@@ -717,11 +717,11 @@ Guidance: ${
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
               <p className="font-medium text-purple-900 mb-2">{t('aiCoach.responseLabel')}</p>
-              <p className="text-gray-700 whitespace-pre-wrap">{response.answer}</p>
+              <p className="whitespace-pre-wrap text-app-foreground">{response.answer}</p>
               
               {/* Model attribution */}
               {response.modelUsed && response.modelUsed !== 'error' && (
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="mt-2 text-xs text-app-muted">
                   {t('aiCoach.poweredBy', { model: response.modelUsed })}
                 </p>
               )}
@@ -730,7 +730,7 @@ Guidance: ${
             {/* Feedback buttons (was this helpful?) */}
             {currentLogId && currentLogId !== 'error' && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-600">{t('aiCoach.wasHelpful')}</span>
+                <span className="text-app-muted">{t('aiCoach.wasHelpful')}</span>
                 <button
                   onClick={async () => {
                     // TODO: Re-implement feedback recording
@@ -756,10 +756,10 @@ Guidance: ${
 
             {/* Citations (if any) */}
             {response.citations && response.citations.length > 0 && (
-              <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                <p className="font-medium text-gray-900">{t('aiCoach.basedOn')}</p>
+              <div className="space-y-2 rounded-lg bg-app-surface-muted p-3 text-sm">
+                <p className="font-medium text-app-foreground">{t('aiCoach.basedOn')}</p>
                 {response.citations.map((citation, idx) => (
-                  <div key={idx} className="text-gray-700 text-xs">
+                  <div key={idx} className="text-xs text-app-muted">
                     • {citation.type}: {citation.snippet}
                   </div>
                 ))}
@@ -791,7 +791,7 @@ Guidance: ${
                 <button
                   onClick={handleSubmitExplainBack}
                   disabled={!explainBack.trim()}
-                  className="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 disabled:bg-gray-300 text-sm"
+                  className="w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:bg-app-surface-muted disabled:text-app-muted"
                 >
                   {t('aiCoach.submitExplanation')}
                 </button>
@@ -800,7 +800,7 @@ Guidance: ${
 
             <button
               onClick={reset}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-app-muted hover:text-app-foreground"
             >
               {t('aiCoach.askAnother')}
             </button>
