@@ -1,143 +1,244 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { query, where, getDocs, documentId } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { documentId, getDocs, query, where } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
+import type { RoleDashboardStat } from '@/src/lib/dashboard/roleDashboardApi';
+import { fetchRoleDashboardSnapshot } from '@/src/lib/dashboard/roleDashboardApi';
 import { enrollmentsCollection, sessionsCollection } from '@/src/lib/firestore/collections';
-import type { Session } from '@/schema';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
+import type { Session } from '@/schema';
+
+function formatSessionDate(rawDate: unknown): string {
+  if (typeof rawDate === 'number') {
+    return new Date(rawDate).toLocaleDateString();
+  }
+  if (typeof rawDate === 'string' && rawDate.trim().length > 0) {
+    const parsed = Date.parse(rawDate);
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed).toLocaleDateString();
+    }
+  }
+  return 'TBD';
+}
 
 export default function LearnerDashboard() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const trackInteraction = useInteractionTracking();
+  usePageViewTracking('learner_dashboard', { role: 'learner' });
+
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [stats, setStats] = useState<RoleDashboardStat[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const activeSiteId = useMemo(
+    () => profile?.activeSiteId || profile?.siteIds?.[0] || undefined,
+    [profile?.activeSiteId, profile?.siteIds],
+  );
 
   useEffect(() => {
     async function fetchLearnerData() {
-      if (!user) return;
+      if (!user) {
+        setSessionsLoading(false);
+        return;
+      }
 
       try {
-        // 1. Fetch Enrollments for this learner
-        const qEnrollments = query(
-          enrollmentsCollection, 
-          where('learnerId', '==', user.uid),
-          where('status', '==', 'active')
+        const enrollmentsSnap = await getDocs(
+          query(
+            enrollmentsCollection,
+            where('learnerId', '==', user.uid),
+            where('status', '==', 'active'),
+          ),
         );
-        const enrollmentsSnap = await getDocs(qEnrollments);
-        
+
         if (enrollmentsSnap.empty) {
-          setLoading(false);
+          setSessions([]);
           return;
         }
 
-        // 2. Extract Session IDs
-        const sessionIds = enrollmentsSnap.docs.map(doc => doc.data().sessionId);
-        
-        // 3. Fetch Session Details
-        // Note: Firestore 'in' query is limited to 10 items. 
-        // For a real app, you'd chunk this or fetch individually if > 10.
-        if (sessionIds.length > 0) {
-          const safeSessionIds = sessionIds.slice(0, 10);
-          const qSessions = query(
-            sessionsCollection, 
-            where(documentId(), 'in', safeSessionIds)
-          );
-          const sessionsSnap = await getDocs(qSessions);
-          setSessions(sessionsSnap.docs.map(doc => doc.data()));
+        const sessionIds = enrollmentsSnap.docs
+          .map((doc) => doc.data().sessionId)
+          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          .slice(0, 10);
+
+        if (sessionIds.length === 0) {
+          setSessions([]);
+          return;
         }
+
+        const sessionsSnap = await getDocs(
+          query(sessionsCollection, where(documentId(), 'in', sessionIds)),
+        );
+        setSessions(sessionsSnap.docs.map((doc) => doc.data()));
       } catch (error) {
         console.error('Error fetching learner data:', error);
+        setSessions([]);
       } finally {
-        setLoading(false);
+        setSessionsLoading(false);
       }
     }
 
     if (!authLoading) {
-      fetchLearnerData();
+      void fetchLearnerData();
     }
-  }, [user, authLoading]);
+  }, [authLoading, user]);
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-gray-600">{t('role.learner.loading')}</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    async function fetchStats() {
+      if (!profile) {
+        setStatsLoading(false);
+        return;
+      }
+
+      try {
+        const snapshot = await fetchRoleDashboardSnapshot({
+          role: 'learner',
+          siteId: activeSiteId,
+          period: 'week',
+        });
+        setStats(snapshot.stats);
+      } catch (error) {
+        console.error('Error fetching learner dashboard snapshot:', error);
+        setStats([]);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+
+    if (!authLoading) {
+      void fetchStats();
+    }
+  }, [activeSiteId, authLoading, profile]);
+
+  const visibleStats = stats.length > 0 ? stats : [
+    { label: 'Active Sessions', value: '0' },
+    { label: 'Active Missions', value: '0' },
+    { label: 'Unread Messages', value: '0' },
+  ];
+
+  const loading = authLoading || sessionsLoading || statsLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            {t('role.learner.welcome', { name: profile?.displayName || t('role.learner.defaultName') })}
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            {t('role.learner.subtitle')}
-          </p>
-        </header>
+    <RoleRouteGuard allowedRoles={['learner']}>
+      {loading ? (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-lg text-gray-600">{t('role.learner.loading')}</div>
+        </div>
+      ) : (
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+          <div className="mx-auto max-w-7xl">
+            <header className="mb-8 border-b border-gray-200 pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                {t('role.learner.welcome', {
+                  name: profile?.displayName || t('role.learner.defaultName'),
+                })}
+              </h1>
+              <p className="mt-2 text-sm text-gray-500">{t('role.learner.subtitle')}</p>
+            </header>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
-            <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.learner.activeSessions')}</h2>
-              {sessions.length === 0 ? (
-                <div className="overflow-hidden rounded-lg bg-white shadow p-6 text-center text-gray-500">
-                  {t('role.learner.noSessions')}
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {sessions.map((session) => (
-                    <div key={session.id} className="overflow-hidden rounded-lg bg-white shadow hover:shadow-md transition-shadow">
-                      <div className="p-5">
-                        <h3 className="text-lg font-medium text-gray-900">{session.title}</h3>
-                        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{session.description}</p>
-                        <div className="mt-4 flex items-center text-xs text-gray-400">
-                          <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">
-                            {session.pillarCodes?.[0] || t('common.general')}
-                          </span>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                <section>
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                    {t('role.learner.activeSessions')}
+                  </h2>
+                  {sessions.length === 0 ? (
+                    <div className="overflow-hidden rounded-lg bg-white p-6 text-center text-gray-500 shadow">
+                      {t('role.learner.noSessions')}
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {sessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                        >
+                          <div className="p-5">
+                            <h3 className="text-lg font-medium text-gray-900">{session.title}</h3>
+                            <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+                              {session.description}
+                            </p>
+                            <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                              <span className="rounded-full bg-indigo-50 px-2 py-1 font-medium text-indigo-700">
+                                {session.pillarCodes?.[0] || t('common.general')}
+                              </span>
+                              <span>{formatSessionDate(session.startDate)}</span>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 px-5 py-3">
+                            <Link
+                              href={`/${locale}/learner`}
+                              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
+                              onClick={() =>
+                                trackInteraction('feature_discovered', {
+                                  cta: 'learner_open_session',
+                                  sessionId: session.id,
+                                })
+                              }
+                            >
+                              View session
+                            </Link>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
+                  )}
+                </section>
 
-            <section>
-              <h2 className="text-lg font-medium leading-6 text-gray-900 mb-4">{t('role.learner.recentMissions')}</h2>
-              <div className="overflow-hidden rounded-lg bg-white shadow">
-                <div className="p-6 text-center text-gray-500">
-                  {t('role.learner.noRecentMissions')}
-                </div>
+                <section>
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                    {t('role.learner.recentMissions')}
+                  </h2>
+                  <div className="overflow-hidden rounded-lg bg-white shadow">
+                    <div className="p-6 text-sm text-gray-600">
+                      {visibleStats.find((stat) => stat.label.toLowerCase().includes('mission'))
+                        ?.value || '0'}{' '}
+                      active missions this week.
+                    </div>
+                  </div>
+                </section>
               </div>
-            </section>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-lg bg-white shadow">
-              <div className="p-5">
-                <h3 className="text-base font-semibold leading-6 text-gray-900">{t('role.learner.myStats')}</h3>
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <dl className="divide-y divide-gray-100">
-                    <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">{t('role.learner.sessionsAttended')}</dt>
-                      <dd className="font-medium text-gray-900">0</dd>
+              <div className="space-y-6">
+                <div className="overflow-hidden rounded-lg bg-white shadow">
+                  <div className="p-5">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                      {t('role.learner.myStats')}
+                    </h3>
+                    <div className="mt-4 border-t border-gray-100 pt-4">
+                      <dl className="divide-y divide-gray-100">
+                        {visibleStats.map((stat) => (
+                          <div key={stat.label} className="flex justify-between py-2 text-sm">
+                            <dt className="text-gray-500">{stat.label}</dt>
+                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
                     </div>
-                    <div className="flex justify-between py-2 text-sm">
-                      <dt className="text-gray-500">{t('role.learner.skillsMastered')}</dt>
-                      <dd className="font-medium text-gray-900">0</dd>
-                    </div>
-                  </dl>
+                    <Link
+                      href={`/${locale}/learner`}
+                      className="mt-4 block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                      onClick={() =>
+                        trackInteraction('feature_discovered', {
+                          cta: 'learner_open_missions',
+                        })
+                      }
+                    >
+                      Open mission board
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </RoleRouteGuard>
   );
 }
