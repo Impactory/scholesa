@@ -8,6 +8,17 @@ export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
 type VoiceRole = 'student' | 'teacher' | 'admin';
 type SafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
 type GradeBand = 'K-5' | '6-8' | '9-12' | 'All';
+type VoiceIntent =
+  | 'hint_request'
+  | 'explain_request'
+  | 'translation_request'
+  | 'planning_request'
+  | 'reflection'
+  | 'safety_support'
+  | 'general_support';
+type VoiceComplexity = 'low' | 'medium' | 'high';
+type VoiceEmotionalState = 'frustrated' | 'neutral' | 'confident';
+type VoiceResponseMode = 'hint' | 'explain' | 'translate' | 'plan' | 'safety';
 
 const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
 const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
@@ -74,6 +85,16 @@ interface SpeechPreparation {
   speechText: string;
   redactionApplied: boolean;
   redactionCount: number;
+}
+
+interface VoiceUnderstandingSignal {
+  intent: VoiceIntent;
+  complexity: VoiceComplexity;
+  needsScaffold: boolean;
+  emotionalState: VoiceEmotionalState;
+  confidence: number;
+  responseMode: VoiceResponseMode;
+  topicTags: string[];
 }
 
 interface AudioTokenPayload {
@@ -198,6 +219,88 @@ const TEACHER_PRODUCTIVITY_PATTERNS = [
   /ผู้ปกครอง/,
 ];
 
+const HINT_REQUEST_PATTERNS = [
+  /\bhint\b/i,
+  /\bnext step\b/i,
+  /give me a clue/i,
+  /提示|線索/,
+  /ช่วยใบ้/,
+];
+
+const EXPLAIN_REQUEST_PATTERNS = [
+  /\bexplain\b/i,
+  /\bwhy\b/i,
+  /break this down/i,
+  /講解|解释|解釋|原因/,
+  /อธิบาย/,
+];
+
+const TRANSLATION_PATTERNS = [
+  /\btranslate\b/i,
+  /\bin (english|chinese|thai)\b/i,
+  /翻译|翻譯|轉成/,
+  /แปล/,
+];
+
+const PLANNING_PATTERNS = [
+  /\bplan\b/i,
+  /\bchecklist\b/i,
+  /\bnext\b.*\bdo\b/i,
+  /步骤|步驟|清单|清單/,
+  /แผน|ขั้นตอน/,
+];
+
+const REFLECTION_PATTERNS = [
+  /\bi learned\b/i,
+  /\bi understood\b/i,
+  /\bsummary\b/i,
+  /我学会|我學會|总结|總結/,
+  /ฉันเรียนรู้|สรุป/,
+];
+
+const FRUSTRATION_PATTERNS = [
+  /\bstuck\b/i,
+  /\bconfused\b/i,
+  /\bfrustrat(ed|ing)\b/i,
+  /\bcan'?t\b/i,
+  /卡住|不会|不會|好难|好難/,
+  /งง|ยากมาก|ทำไม่ได้/,
+];
+
+const CONFIDENCE_PATTERNS = [
+  /\bI can\b/i,
+  /\bgot it\b/i,
+  /\bunderstand now\b/i,
+  /我会了|我會了|我懂了/,
+  /เข้าใจแล้ว|ทำได้/,
+];
+
+const HIGH_COMPLEXITY_PATTERNS = [
+  /\bproof\b/i,
+  /\bderive\b/i,
+  /\banaly(s|z)e\b/i,
+  /\bcompare\b/i,
+  /证明|證明|推导|推導|分析|比較/,
+  /พิสูจน์|วิเคราะห์/,
+];
+
+const LOW_COMPLEXITY_PATTERNS = [
+  /\bread\b/i,
+  /\bspell\b/i,
+  /\bcount\b/i,
+  /\bwhat is\b/i,
+  /朗读|朗讀|拼写|拼寫|数数|數數/,
+  /อ่าน|สะกด|นับ/,
+];
+
+const TOPIC_TAG_PATTERNS: Array<{ tag: string; patterns: RegExp[] }> = [
+  { tag: 'math', patterns: [/\bmath\b/i, /\balgebra\b/i, /\bgeometry\b/i, /数学|數學|คณิต/] },
+  { tag: 'science', patterns: [/\bscience\b/i, /\bphysics\b/i, /\bchemistry\b/i, /科学|科學|วิทยา/] },
+  { tag: 'language', patterns: [/\breading\b/i, /\bwriting\b/i, /\bgrammar\b/i, /阅读|閱讀|写作|寫作|ภาษา/] },
+  { tag: 'coding', patterns: [/\bcod(e|ing)\b/i, /\bpython\b/i, /\bjavascript\b/i, /编程|程式|เขียนโค้ด/] },
+  { tag: 'history', patterns: [/\bhistory\b/i, /\bcivilization\b/i, /历史|歷史|ประวัติ/] },
+];
+
 const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
 const PHONE_PATTERN = /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
 const ADDRESS_PATTERN = /\b\d+\s+[A-Za-z0-9.\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln)\b/gi;
@@ -253,6 +356,53 @@ const LOCALE_TEXT: Record<VoiceLocale, {
     teacherProductive: 'ร่างสั้นสำหรับชั้นเรียน: งานแกนหลัก ระดับเสริมช่วยพยุง ระดับท้าทาย พร้อมการปรับและจุดเช็กความเข้าใจ',
     teacherGeneric: 'ฉันช่วยร่างข้อความสั้นสำหรับห้องเรียน แนวทางสอนแบบแตกต่าง และข้อความถึงผู้ปกครองแบบสนับสนุนได้',
     adminGeneric: 'ฉันช่วยตั้งค่าระบบและแก้ปัญหาทั่วไปที่ไม่อ่อนไหว โดยจะไม่เปิดเผยความลับ คีย์ หรือข้อมูลส่งออกดิบของนักเรียน',
+  },
+};
+
+const LOCALE_INTELLIGENCE_TEXT: Record<VoiceLocale, {
+  hintStep: string;
+  explainStep: string;
+  translationStep: string;
+  planningStep: string;
+  reflectionStep: string;
+  frustrationSupport: string;
+  scaffoldPrompt: string;
+}> = {
+  en: {
+    hintStep: 'Try one concrete move, then tell me what changed.',
+    explainStep: 'I can explain with a short reason, then a quick check question.',
+    translationStep: 'I can keep the same meaning and switch to your preferred language.',
+    planningStep: 'Let us make a three-step plan and complete step one first.',
+    reflectionStep: 'Share one thing you learned and one thing you still want to improve.',
+    frustrationSupport: 'You are not behind. We can shrink this into a smaller step.',
+    scaffoldPrompt: 'I will keep each step short so you can respond quickly.',
+  },
+  'zh-CN': {
+    hintStep: '先做一个具体小步骤，然后告诉我发生了什么变化。',
+    explainStep: '我可以先给简短原因，再给一个快速检查题。',
+    translationStep: '我可以保持原意并切换到你偏好的语言。',
+    planningStep: '我们先做三步计划，先完成第一步。',
+    reflectionStep: '说一件你已经学会的，再说一件还想加强的。',
+    frustrationSupport: '你没有落后。我们可以把任务再拆小一点。',
+    scaffoldPrompt: '我会把每一步都说短一些，方便你快速回应。',
+  },
+  'zh-TW': {
+    hintStep: '先做一個具體小步驟，再告訴我有什麼變化。',
+    explainStep: '我可以先給簡短原因，再給一題快速檢核。',
+    translationStep: '我可以保留原意並切換到你偏好的語言。',
+    planningStep: '我們先做三步計畫，先完成第一步。',
+    reflectionStep: '說一件你已經學會的，再說一件想加強的。',
+    frustrationSupport: '你沒有落後。我們可以把任務再拆小一點。',
+    scaffoldPrompt: '我會把每一步都講短一些，方便你快速回應。',
+  },
+  th: {
+    hintStep: 'ลองทำหนึ่งขั้นที่ชัดเจนก่อน แล้วบอกว่ามีอะไรเปลี่ยนไปบ้าง',
+    explainStep: 'ฉันอธิบายเหตุผลสั้น ๆ แล้วให้คำถามเช็กความเข้าใจได้',
+    translationStep: 'ฉันคงความหมายเดิมและสลับเป็นภาษาที่ต้องการได้',
+    planningStep: 'มาวางแผน 3 ขั้นและเริ่มจากขั้นแรกก่อน',
+    reflectionStep: 'บอกสิ่งที่ได้เรียนรู้ 1 อย่าง และสิ่งที่ยังอยากพัฒนาอีก 1 อย่าง',
+    frustrationSupport: 'คุณไม่ได้ตามหลังนะ เราแบ่งเป็นขั้นเล็กลงได้',
+    scaffoldPrompt: 'ฉันจะตอบเป็นขั้นสั้น ๆ เพื่อให้คุณตามได้ทันที',
   },
 };
 
@@ -699,6 +849,115 @@ function evaluateSafetyDecision(message: string, role: VoiceRole, locale: VoiceL
   };
 }
 
+function clampProbability(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function inferVoiceIntent(message: string, role: VoiceRole, safetyOutcome: SafetyOutcome): VoiceIntent {
+  if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return 'safety_support';
+  if (TRANSLATION_PATTERNS.some((pattern) => pattern.test(message))) return 'translation_request';
+  if (HINT_REQUEST_PATTERNS.some((pattern) => pattern.test(message))) return 'hint_request';
+  if (EXPLAIN_REQUEST_PATTERNS.some((pattern) => pattern.test(message))) return 'explain_request';
+  if (PLANNING_PATTERNS.some((pattern) => pattern.test(message))) return 'planning_request';
+  if (REFLECTION_PATTERNS.some((pattern) => pattern.test(message))) return 'reflection';
+  if (role === 'student') return 'hint_request';
+  return 'general_support';
+}
+
+function inferVoiceComplexity(message: string): VoiceComplexity {
+  if (!message) return 'low';
+  if (HIGH_COMPLEXITY_PATTERNS.some((pattern) => pattern.test(message))) return 'high';
+  if (LOW_COMPLEXITY_PATTERNS.some((pattern) => pattern.test(message))) return 'low';
+  const tokenCount = message.split(/\s+/).filter(Boolean).length;
+  if (tokenCount >= 18 || /[,;:]/.test(message)) return 'high';
+  if (tokenCount <= 7) return 'low';
+  if (/[\u4e00-\u9fff\u0E00-\u0E7F]/.test(message) && message.length >= 28) return 'high';
+  return 'medium';
+}
+
+function inferVoiceEmotionalState(message: string): VoiceEmotionalState {
+  if (FRUSTRATION_PATTERNS.some((pattern) => pattern.test(message))) return 'frustrated';
+  if (CONFIDENCE_PATTERNS.some((pattern) => pattern.test(message))) return 'confident';
+  return 'neutral';
+}
+
+function inferTopicTags(message: string): string[] {
+  const tags: string[] = [];
+  for (const candidate of TOPIC_TAG_PATTERNS) {
+    if (candidate.patterns.some((pattern) => pattern.test(message))) {
+      tags.push(candidate.tag);
+    }
+  }
+  return tags.slice(0, 4);
+}
+
+function responseModeForIntent(intent: VoiceIntent): VoiceResponseMode {
+  if (intent === 'translation_request') return 'translate';
+  if (intent === 'planning_request') return 'plan';
+  if (intent === 'explain_request' || intent === 'reflection') return 'explain';
+  if (intent === 'safety_support') return 'safety';
+  return 'hint';
+}
+
+function deriveUnderstandingSignal(input: {
+  message: string;
+  role: VoiceRole;
+  safety: SafetyDecision;
+}): VoiceUnderstandingSignal {
+  const intent = inferVoiceIntent(input.message, input.role, input.safety.safetyOutcome);
+  const complexity = inferVoiceComplexity(input.message);
+  const emotionalState = inferVoiceEmotionalState(input.message);
+  const topicTags = inferTopicTags(input.message);
+  const responseMode = responseModeForIntent(intent);
+  const needsScaffold = input.role === 'student'
+    ? (complexity !== 'low' || emotionalState === 'frustrated' || intent === 'hint_request' || intent === 'explain_request')
+    : (emotionalState === 'frustrated' || complexity === 'high');
+
+  let confidence = 0.55;
+  if (intent !== 'general_support') confidence += 0.17;
+  if (topicTags.length > 0) confidence += 0.1;
+  if (complexity === 'medium') confidence += 0.05;
+  if (complexity === 'high') confidence -= 0.08;
+  if (emotionalState === 'frustrated') confidence -= 0.08;
+  if (input.safety.category !== 'generic') confidence += 0.05;
+  if (input.safety.safetyOutcome !== 'allowed' && input.safety.safetyOutcome !== 'modified') {
+    confidence = Math.max(confidence, 0.92);
+  }
+
+  return {
+    intent,
+    complexity,
+    needsScaffold,
+    emotionalState,
+    confidence: clampProbability(confidence),
+    responseMode,
+    topicTags,
+  };
+}
+
+function buildAdaptiveLocalizedResponse(
+  role: VoiceRole,
+  locale: VoiceLocale,
+  category: SafetyDecision['category'],
+  understanding: VoiceUnderstandingSignal,
+): string {
+  const base = generateLocalizedResponse(role, locale, category);
+  const localized = LOCALE_INTELLIGENCE_TEXT[locale];
+  let nextStep = localized.hintStep;
+  if (understanding.responseMode === 'explain') nextStep = localized.explainStep;
+  if (understanding.responseMode === 'translate') nextStep = localized.translationStep;
+  if (understanding.responseMode === 'plan') nextStep = localized.planningStep;
+  if (understanding.intent === 'reflection') nextStep = localized.reflectionStep;
+  const pieces = [base];
+  if (understanding.emotionalState === 'frustrated') pieces.push(localized.frustrationSupport);
+  pieces.push(nextStep);
+  if (understanding.needsScaffold && understanding.responseMode !== 'safety') {
+    pieces.push(localized.scaffoldPrompt);
+  }
+  return pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+
 function generateLocalizedResponse(role: VoiceRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
   const localized = LOCALE_TEXT[locale];
   if (role === 'student' && category === 'focus_nudge') return localized.focusNudge;
@@ -708,9 +967,23 @@ function generateLocalizedResponse(role: VoiceRole, locale: VoiceLocale, categor
   return localized.adminGeneric;
 }
 
-function selectToolCalls(role: VoiceRole, category: SafetyDecision['category'], safetyOutcome: SafetyOutcome): string[] {
+function selectToolCalls(
+  role: VoiceRole,
+  category: SafetyDecision['category'],
+  safetyOutcome: SafetyOutcome,
+  understanding?: VoiceUnderstandingSignal,
+): string[] {
   if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return [];
   const allowedTools = ROLE_ALLOWED_TOOLS[role];
+  if (understanding?.responseMode === 'translate' && allowedTools.includes('translate')) {
+    return ['translate'];
+  }
+  if (understanding?.responseMode === 'explain' && role === 'student') {
+    return ['hint_ladder', 'read_aloud'];
+  }
+  if (understanding?.responseMode === 'plan' && role === 'teacher') {
+    return ['differentiate_lesson', 'class_summary'];
+  }
   if (role === 'student' && category === 'focus_nudge') return ['hint_ladder', 'read_aloud'];
   if (role === 'teacher' && category === 'teacher_productivity') return ['differentiate_lesson', 'rubric_feedback_draft'];
   if (role === 'admin') return ['setup_help'];
@@ -1061,6 +1334,7 @@ async function recordVoiceTelemetryEvent(payload: {
   partial?: boolean;
   audioBytes?: number;
   textLength?: number;
+  understanding?: VoiceUnderstandingSignal;
 }) {
   const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1108,6 +1382,13 @@ async function recordVoiceTelemetryEvent(payload: {
       partial: payload.partial ?? false,
       audioPresent: (payload.audioBytes ?? 0) > 0,
       textLength: payload.textLength ?? 0,
+      understandingIntent: payload.understanding?.intent ?? 'general_support',
+      understandingConfidence: payload.understanding?.confidence ?? 0,
+      responseMode: payload.understanding?.responseMode ?? 'hint',
+      needsScaffold: payload.understanding?.needsScaffold ?? false,
+      emotionalState: payload.understanding?.emotionalState ?? 'neutral',
+      complexity: payload.understanding?.complexity ?? 'medium',
+      topicTags: payload.understanding?.topicTags ?? [],
       modelVersion:
         payload.event === 'voice.transcribe'
           ? STT_MODEL_VERSION
@@ -1136,6 +1417,7 @@ async function recordBosInteractionEvent(payload: {
   transcriptLength?: number;
   audioBytes?: number;
   ttsAvailable?: boolean;
+  understanding?: VoiceUnderstandingSignal;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1188,10 +1470,113 @@ async function recordBosInteractionEvent(payload: {
       requesterRole: payload.authContext.role,
       contextMode: bosContext.contextMode,
       conceptTags: bosContext.conceptTags,
+      understandingIntent: payload.understanding?.intent ?? 'general_support',
+      understandingConfidence: payload.understanding?.confidence ?? 0,
+      responseMode: payload.understanding?.responseMode ?? 'hint',
+      needsScaffold: payload.understanding?.needsScaffold ?? false,
+      emotionalState: payload.understanding?.emotionalState ?? 'neutral',
+      complexity: payload.understanding?.complexity ?? 'medium',
+      topicTags: payload.understanding?.topicTags ?? [],
     },
     timestampIso: new Date().toISOString(),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function upsertBosLearningProfile(payload: {
+  endpoint: string;
+  traceId: string;
+  authContext: VoiceAuthContext;
+  body: Record<string, unknown>;
+  locale: VoiceLocale;
+  safetyOutcome: SafetyOutcome;
+  understanding?: VoiceUnderstandingSignal;
+  textLength?: number;
+  transcriptLength?: number;
+}) {
+  const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
+  const profileId = `${payload.authContext.siteId}__${bosContext.actorId}`;
+  const profileRef = admin.firestore().collection('bosLearningProfiles').doc(profileId);
+  const nowIso = new Date().toISOString();
+
+  const metrics: Record<string, unknown> = {
+    totalInteractions: admin.firestore.FieldValue.increment(1),
+  };
+  if (payload.endpoint === 'voice_transcribe') {
+    metrics.voiceTranscribeCount = admin.firestore.FieldValue.increment(1);
+  } else if (payload.endpoint === 'tts_speak') {
+    metrics.voiceTtsCount = admin.firestore.FieldValue.increment(1);
+  } else {
+    metrics.voiceMessageCount = admin.firestore.FieldValue.increment(1);
+  }
+  if (payload.safetyOutcome === 'blocked' || payload.safetyOutcome === 'modified') {
+    metrics.blockedCount = admin.firestore.FieldValue.increment(1);
+  }
+  if (payload.safetyOutcome === 'escalated') {
+    metrics.escalatedCount = admin.firestore.FieldValue.increment(1);
+  }
+  if ((payload.textLength ?? 0) > 0) {
+    metrics.totalTextLength = admin.firestore.FieldValue.increment(payload.textLength ?? 0);
+  }
+  if ((payload.transcriptLength ?? 0) > 0) {
+    metrics.totalTranscriptLength = admin.firestore.FieldValue.increment(payload.transcriptLength ?? 0);
+  }
+
+  const learning: Record<string, unknown> = {};
+  if (payload.understanding) {
+    metrics.intentCounts = {
+      [payload.understanding.intent]: admin.firestore.FieldValue.increment(1),
+    };
+    metrics.understandingConfidence = {
+      sum: admin.firestore.FieldValue.increment(payload.understanding.confidence),
+      count: admin.firestore.FieldValue.increment(1),
+    };
+    if (payload.understanding.needsScaffold) {
+      metrics.needsScaffoldCount = admin.firestore.FieldValue.increment(1);
+    }
+    if (payload.understanding.emotionalState === 'frustrated') {
+      metrics.frustrationSignalCount = admin.firestore.FieldValue.increment(1);
+    }
+    learning.lastIntent = payload.understanding.intent;
+    learning.lastComplexity = payload.understanding.complexity;
+    learning.lastResponseMode = payload.understanding.responseMode;
+    learning.lastNeedsScaffold = payload.understanding.needsScaffold;
+    learning.lastEmotionalState = payload.understanding.emotionalState;
+    learning.lastUnderstandingConfidence = payload.understanding.confidence;
+    learning.lastTopicTags = payload.understanding.topicTags;
+  }
+
+  const updateDoc: Record<string, unknown> = {
+    profileId,
+    siteId: payload.authContext.siteId,
+    actorId: bosContext.actorId,
+    actorRole: bosContext.actorRole,
+    roleCanonical: payload.authContext.role,
+    locale: payload.locale,
+    lastTraceId: payload.traceId,
+    lastEndpoint: payload.endpoint,
+    lastSafetyOutcome: payload.safetyOutcome,
+    lastContextMode: bosContext.contextMode,
+    updatedAtIso: nowIso,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    metrics,
+  };
+  if (Object.keys(learning).length > 0) {
+    updateDoc.learning = learning;
+  }
+
+  await admin.firestore().runTransaction(async (transaction) => {
+    const profileSnap = await transaction.get(profileRef);
+    if (!profileSnap.exists) {
+      transaction.set(profileRef, {
+        ...updateDoc,
+        createdAtIso: nowIso,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return;
+    }
+    transaction.set(profileRef, updateDoc, { merge: true });
   });
 }
 
@@ -1266,11 +1651,16 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
     const safety = evaluateSafetyDecision(message, authContext.role, locale);
+    const understanding = deriveUnderstandingSignal({
+      message,
+      role: authContext.role,
+      safety,
+    });
     const candidateText = safety.safetyOutcome === 'allowed'
-      ? generateLocalizedResponse(authContext.role, locale, safety.category)
+      ? buildAdaptiveLocalizedResponse(authContext.role, locale, safety.category, understanding)
       : safety.localizedMessage;
 
-    const toolsInvoked = selectToolCalls(authContext.role, safety.category, safety.safetyOutcome);
+    const toolsInvoked = selectToolCalls(authContext.role, safety.category, safety.safetyOutcome, understanding);
     const voiceInput = body.voice as Record<string, unknown> | undefined;
     const voiceOutputEnabled = normalizeBoolean(voiceInput?.enabled, true) && normalizeBoolean(voiceInput?.output, true);
     const quietModeActive = isQuietModeActive(settings, new Date());
@@ -1296,9 +1686,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       audioUrl = buildAudioUrl(req, token);
     }
 
+    const adaptiveFallback = buildAdaptiveLocalizedResponse(authContext.role, locale, 'generic', understanding);
     const responseText = detectLanguageCompatibility(candidateText, locale)
       ? candidateText
-      : generateLocalizedResponse(authContext.role, locale, 'generic');
+      : adaptiveFallback;
     const latencyMs = Date.now() - startedAt;
     const supplementalSafetyEvent: VoiceTelemetryEvent | null =
       safety.safetyOutcome === 'escalated'
@@ -1336,10 +1727,21 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         quietModeActive,
         toolCount: toolsInvoked.length,
         textLength: message.length,
+        understanding,
       }),
     ];
 
     const compatibilityWrites: Promise<unknown>[] = [
+      upsertBosLearningProfile({
+        endpoint: 'copilot_message',
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: safety.safetyOutcome,
+        understanding,
+        textLength: message.length,
+      }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
         endpoint: 'copilot_message',
@@ -1351,6 +1753,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: safety.safetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: message.length,
+        understanding,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_used',
@@ -1363,6 +1766,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: safety.safetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: message.length,
+        understanding,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -1375,6 +1779,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: safety.safetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: responseText.length,
+        understanding,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -1389,6 +1794,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: message.length,
         ttsAvailable: Boolean(audioUrl),
+        understanding,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_used',
@@ -1403,6 +1809,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: message.length,
         ttsAvailable: Boolean(audioUrl),
+        understanding,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -1417,6 +1824,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: responseText.length,
         ttsAvailable: Boolean(audioUrl),
+        understanding,
       }),
     ];
 
@@ -1436,6 +1844,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           quietModeActive,
           toolCount: toolsInvoked.length,
           textLength: message.length,
+          understanding,
         }),
       );
     }
@@ -1459,6 +1868,15 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         quietModeActive,
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
+        understanding: {
+          intent: understanding.intent,
+          complexity: understanding.complexity,
+          needsScaffold: understanding.needsScaffold,
+          emotionalState: understanding.emotionalState,
+          confidence: understanding.confidence,
+          responseMode: understanding.responseMode,
+          topicTags: understanding.topicTags,
+        },
       },
       tts: {
         available: Boolean(audioUrl),
@@ -1533,6 +1951,12 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
 
     const locale = resolveLocale(localeHint, req, settings.allowedLocales);
     const transcript = cleanTranscript(transcriptRaw ?? defaultTranscriptByLocale(locale));
+    const transcribeSafety = evaluateSafetyDecision(transcript, authContext.role, locale);
+    const understanding = deriveUnderstandingSignal({
+      message: transcript,
+      role: authContext.role,
+      safety: transcribeSafety,
+    });
     const partial = normalizeBoolean(partialHint, false);
     const confidence = transcriptRaw
       ? 0.96
@@ -1548,7 +1972,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         traceId,
         authContext,
         locale,
-        safetyOutcome: 'allowed',
+        safetyOutcome: transcribeSafety.safetyOutcome,
         latencyMs,
       }),
       recordVoiceTelemetryEvent({
@@ -1563,9 +1987,21 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         transcriptLength: transcript.length,
         partial,
         audioBytes: uploadedAudioLength,
+        safetyOutcome: transcribeSafety.safetyOutcome,
+        understanding,
       }),
     ]);
     await Promise.allSettled([
+      upsertBosLearningProfile({
+        endpoint: 'voice_transcribe',
+        traceId,
+        authContext,
+        body: resolvedBody,
+        locale,
+        safetyOutcome: transcribeSafety.safetyOutcome,
+        understanding,
+        transcriptLength: transcript.length,
+      }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
         endpoint: 'voice_transcribe',
@@ -1578,6 +2014,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         transcriptLength: transcript.length,
         partial,
         audioBytes: uploadedAudioLength,
+        safetyOutcome: transcribeSafety.safetyOutcome,
+        understanding,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -1587,10 +2025,11 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         authContext,
         body: resolvedBody,
         locale,
-        safetyOutcome: 'allowed',
+        safetyOutcome: transcribeSafety.safetyOutcome,
         latencyMs,
         transcriptLength: transcript.length,
         audioBytes: uploadedAudioLength,
+        understanding,
       }),
     ]);
 
@@ -1604,6 +2043,15 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         latencyMs,
         partial,
         modelVersion: STT_MODEL_VERSION,
+        understanding: {
+          intent: understanding.intent,
+          complexity: understanding.complexity,
+          needsScaffold: understanding.needsScaffold,
+          emotionalState: understanding.emotionalState,
+          confidence: understanding.confidence,
+          responseMode: understanding.responseMode,
+          topicTags: understanding.topicTags,
+        },
       },
     });
   } catch (error) {
@@ -1629,10 +2077,20 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     if (!rawText) {
       throw new VoiceHttpError(400, 'invalid_argument', 'text is required.');
     }
+    const ttsSafety = evaluateSafetyDecision(rawText, authContext.role, locale);
+    const understanding = deriveUnderstandingSignal({
+      message: rawText,
+      role: authContext.role,
+      safety: ttsSafety,
+    });
+    const ttsInputText =
+      ttsSafety.safetyOutcome === 'blocked' || ttsSafety.safetyOutcome === 'escalated'
+        ? ttsSafety.localizedMessage
+        : rawText;
     const requestedGradeBand = normalizeGradeBand(body.gradeBand, body.grade);
     const effectiveGradeBand = authContext.role === 'student' ? authContext.gradeBand : requestedGradeBand;
     const knownNames = extractKnownNames(body);
-    const speech = redactTextForSpeech(rawText, knownNames);
+    const speech = redactTextForSpeech(ttsInputText, knownNames);
     const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
@@ -1658,7 +2116,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         traceId,
         authContext,
         locale,
-        safetyOutcome: 'allowed',
+        safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
         latencyMs,
@@ -1671,12 +2129,24 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         authContext,
         locale,
         latencyMs,
+        safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
         textLength: speech.speechText.length,
+        understanding,
       }),
     ]);
     await Promise.allSettled([
+      upsertBosLearningProfile({
+        endpoint: 'tts_speak',
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: ttsSafety.safetyOutcome,
+        understanding,
+        textLength: speech.speechText.length,
+      }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
         endpoint: 'tts_speak',
@@ -1685,10 +2155,11 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         authContext,
         locale,
         latencyMs,
-        safetyOutcome: 'allowed',
+        safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
         textLength: speech.speechText.length,
+        understanding,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -1698,10 +2169,11 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         authContext,
         body,
         locale,
-        safetyOutcome: 'allowed',
+        safetyOutcome: ttsSafety.safetyOutcome,
         latencyMs,
         textLength: speech.speechText.length,
         ttsAvailable: true,
+        understanding,
       }),
     ]);
 
@@ -1715,8 +2187,18 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         locale,
         voiceProfile,
         prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+        safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
+        understanding: {
+          intent: understanding.intent,
+          complexity: understanding.complexity,
+          needsScaffold: understanding.needsScaffold,
+          emotionalState: understanding.emotionalState,
+          confidence: understanding.confidence,
+          responseMode: understanding.responseMode,
+          topicTags: understanding.topicTags,
+        },
       },
     });
   } catch (error) {
@@ -1780,8 +2262,10 @@ export async function handleVoiceApi(req: Request, res: Response): Promise<void>
 }
 
 export const __voiceSystemInternals = {
+  buildAdaptiveLocalizedResponse,
   cleanTranscript,
   createAudioToken,
+  deriveUnderstandingSignal,
   detectLanguageCompatibility,
   evaluateSafetyDecision,
   normalizeVoiceLocale,

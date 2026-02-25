@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
@@ -56,14 +58,14 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
     required String siteId,
     required String learnerId,
   }) async {
-    await TelemetryService.instance.logEvent(
+    unawaited(TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'global_ai_assistant_open',
         'surface': 'floating_assistant',
         'role': role.name,
       },
-    );
+    ));
 
     await showModalBottomSheet<void>(
       context: context,

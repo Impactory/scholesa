@@ -278,6 +278,45 @@ interface FeatureVector {
   quality: { missingness: number; driftFlag: boolean; fusionFamiliesPresent: string[] };
 }
 
+interface VoiceUnderstandingObservation {
+  intent: string;
+  responseMode: string;
+  complexity: string;
+  emotionalState: string;
+  needsScaffold: boolean;
+  confidence: number;
+}
+
+function readVoiceUnderstandingObservation(event: FirebaseFirestore.DocumentData): VoiceUnderstandingObservation | null {
+  if (!event || typeof event !== 'object') return null;
+  const payload = event.payload && typeof event.payload === 'object'
+    ? event.payload as Record<string, unknown>
+    : {};
+  const source = normalizeString(payload.source)?.toLowerCase();
+  if (source !== 'voice') return null;
+
+  const confidenceRaw = payload.understandingConfidence;
+  const confidence = typeof confidenceRaw === 'number'
+    ? clamp(confidenceRaw)
+    : clamp(Number(confidenceRaw ?? 0));
+  if (!Number.isFinite(confidence) || confidence <= 0) return null;
+
+  const intent = normalizeString(payload.understandingIntent) ?? 'general_support';
+  const responseMode = normalizeString(payload.responseMode) ?? 'hint';
+  const complexity = normalizeString(payload.complexity) ?? 'medium';
+  const emotionalState = normalizeString(payload.emotionalState) ?? 'neutral';
+  const needsScaffold = Boolean(payload.needsScaffold);
+
+  return {
+    intent,
+    responseMode,
+    complexity,
+    emotionalState,
+    needsScaffold,
+    confidence,
+  };
+}
+
 /**
  * Extract feature vector from recent interaction events.
  * V1: simple heuristics. V2+: ML pipeline.
@@ -297,26 +336,64 @@ async function extractFeatures(
 
   const events = eventsSnap.docs.map(d => d.data());
 
-  // V1 heuristic feature extraction
+  // V1 heuristic feature extraction + voice understanding adaptation
   const totalEvents = events.length;
   const checkpointSubmissions = events.filter(e => e.eventType === 'checkpoint_submitted').length;
   const aiHelpUsed = events.filter(e => e.eventType === 'ai_help_used').length;
   const idleDetected = events.filter(e => e.eventType === 'idle_detected').length;
 
-  // Cognition proxy: checkpoint success rate
-  const cognition = totalEvents > 0
+  const voiceSignals = events
+    .map((event) => readVoiceUnderstandingObservation(event))
+    .filter((event): event is VoiceUnderstandingObservation => Boolean(event));
+  const voiceSignalCount = voiceSignals.length;
+  const avgUnderstandingConfidence = voiceSignalCount > 0
+    ? voiceSignals.reduce((sum, signal) => sum + signal.confidence, 0) / voiceSignalCount
+    : 0;
+  const scaffoldSignals = voiceSignals.filter((signal) => signal.needsScaffold).length;
+  const frustrationSignals = voiceSignals.filter((signal) => signal.emotionalState === 'frustrated').length;
+  const explainSignals = voiceSignals.filter((signal) =>
+    signal.intent === 'explain_request' ||
+    signal.intent === 'reflection' ||
+    signal.responseMode === 'explain',
+  ).length;
+  const hintSignals = voiceSignals.filter((signal) =>
+    signal.intent === 'hint_request' ||
+    signal.responseMode === 'hint',
+  ).length;
+
+  // Cognition proxy: checkpoint success rate blended with voice understanding confidence.
+  let cognition = totalEvents > 0
     ? Math.min(1.0, checkpointSubmissions / Math.max(totalEvents * 0.3, 1))
     : 0.5;
+  if (voiceSignalCount > 0) {
+    const scaffoldRatio = scaffoldSignals / Math.max(voiceSignalCount, 1);
+    cognition = clamp((cognition * 0.75) + (avgUnderstandingConfidence * 0.25) - (scaffoldRatio * 0.12));
+  }
 
-  // Engagement proxy: inverse idle rate
-  const engagement = totalEvents > 0
+  // Engagement proxy: inverse idle rate adjusted with voice frustration and participation.
+  let engagement = totalEvents > 0
     ? Math.max(0.0, 1.0 - (idleDetected / Math.max(totalEvents, 1)))
     : 0.5;
+  if (voiceSignalCount > 0) {
+    const frustrationRatio = frustrationSignals / Math.max(voiceSignalCount, 1);
+    const participationBoost = Math.min(0.12, (voiceSignalCount / Math.max(totalEvents, 1)) * 0.12);
+    engagement = clamp(engagement + participationBoost - (frustrationRatio * 0.2));
+  }
 
-  // Integrity proxy: lower if heavy AI assistance
-  const integrity = totalEvents > 0
+  // Integrity proxy: lower if heavy AI assistance, softened by explain/reflection evidence.
+  let integrity = totalEvents > 0
     ? Math.max(0.0, 1.0 - (aiHelpUsed / Math.max(totalEvents * 0.5, 1)))
     : 0.5;
+  if (voiceSignalCount > 0) {
+    const dependencyRatio = hintSignals / Math.max(voiceSignalCount, 1);
+    const independenceRatio = explainSignals / Math.max(voiceSignalCount, 1);
+    integrity = clamp(integrity + (independenceRatio * 0.1) - (dependencyRatio * 0.14));
+  }
+
+  const fusionFamiliesPresent = totalEvents > 0 ? ['interaction'] : [];
+  if (voiceSignalCount > 0) {
+    fusionFamiliesPresent.push('voice_understanding');
+  }
 
   return {
     cognition: clamp(cognition),
@@ -325,7 +402,7 @@ async function extractFeatures(
     quality: {
       missingness: totalEvents === 0 ? 1.0 : 0.0,
       driftFlag: false,
-      fusionFamiliesPresent: totalEvents > 0 ? ['interaction'] : [],
+      fusionFamiliesPresent,
     },
   };
 }

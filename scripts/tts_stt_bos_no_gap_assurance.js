@@ -182,6 +182,23 @@ function readReportCheck({ id, reportName, relativePath }) {
   };
 }
 
+function sourceContainsCheck({ id, relativePath, requiredSnippets }) {
+  const absolutePath = path.resolve(ROOT, relativePath);
+  const exists = fs.existsSync(absolutePath);
+  const source = exists ? fs.readFileSync(absolutePath, 'utf8') : '';
+  const missingSnippets = requiredSnippets.filter((snippet) => !source.includes(snippet));
+  return {
+    id,
+    pass: exists && missingSnippets.length === 0,
+    details: {
+      exists,
+      path: relativePath,
+      requiredSnippetCount: requiredSnippets.length,
+      missingSnippets,
+    },
+  };
+}
+
 function summarizeResult(checks) {
   const failed = checks.filter((check) => !check.pass);
   return {
@@ -295,6 +312,32 @@ function main() {
       id: 'ci_blocker_gate',
       scriptPath: 'scripts/vibe_ci_blocker_gate.js',
       args: ['--strict'],
+    }),
+  );
+
+  checks.push(
+    sourceContainsCheck({
+      id: 'voice_bos_learning_intelligence_wiring',
+      relativePath: 'functions/src/voiceSystem.ts',
+      requiredSnippets: [
+        'deriveUnderstandingSignal',
+        'buildAdaptiveLocalizedResponse',
+        "collection('bosLearningProfiles')",
+        'upsertBosLearningProfile',
+        'understandingIntent',
+      ],
+    }),
+  );
+  checks.push(
+    sourceContainsCheck({
+      id: 'bos_runtime_voice_understanding_fusion',
+      relativePath: 'functions/src/bosRuntime.ts',
+      requiredSnippets: [
+        'readVoiceUnderstandingObservation',
+        'understandingConfidence',
+        'voice_understanding',
+        'avgUnderstandingConfidence',
+      ],
     }),
   );
 
