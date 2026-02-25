@@ -5,5 +5,10 @@
     "geminicodeassist.project": "studio-3328096157-e3f79",
     "cloudcode.project": "studio-3328096157-e3f79",
     "java.configuration.updateBuildConfiguration": "automatic",
-    "chatgpt.openOnStartup": true
+    "chatgpt.openOnStartup": true,
+    "geminicodeassist.updateChannel": "Default",
+    "geminicodeassist.inlineSuggestions.suggestionSpeed": "Slow",
+    "geminicodeassist.codeGenerationPaneViewEnabled": true,
+    "geminicodeassist.chat.defaultCodeBlockDisplay": "Expanded",
+    "inlineChat.defaultModel": "Gemini 3.1 Pro (Preview) (copilot)"
 }
