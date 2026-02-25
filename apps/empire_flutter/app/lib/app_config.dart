@@ -28,6 +28,12 @@ class AppConfig {
     'USE_EMULATORS',
   );
 
+  /// Provisioning API is optional. Keep Firestore-first by default for RC3.
+  static const bool enableProvisioningApi = bool.fromEnvironment(
+    'ENABLE_PROVISIONING_API',
+    defaultValue: false,
+  );
+
   /// Firestore emulator host
   static const String firestoreEmulatorHost = String.fromEnvironment(
     'FIRESTORE_EMULATOR_HOST',

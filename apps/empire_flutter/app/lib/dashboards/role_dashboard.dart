@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
@@ -620,7 +621,7 @@ class RoleDashboard extends StatelessWidget {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                    child: _buildQuickStats(role),
+                    child: _buildQuickStats(role, appState),
                   ),
                 ),
 
@@ -684,53 +685,148 @@ class RoleDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStats(UserRole role) {
-    final List<Map<String, dynamic>> stats = _getStatsForRole(role);
-    return SizedBox(
-      height: 100,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: stats.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (BuildContext context, int index) {
-          final Map<String, dynamic> stat = stats[index];
-          return SizedBox(
-            width: 140,
-            child: StatCard(
-              label: stat['label'] as String,
-              value: stat['value'] as String,
-              icon: stat['icon'] as IconData,
-              color: stat['color'] as Color,
-              trend: stat['trend'] as String?,
-              isPositive: stat['positive'] as bool? ?? true,
-            ),
-          );
-        },
-      ),
+  Widget _buildQuickStats(UserRole role, AppState appState) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _loadRoleStats(role, appState),
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<List<Map<String, dynamic>>> snapshot,
+      ) {
+        final List<Map<String, dynamic>> stats =
+            snapshot.data ?? _fallbackStatsForRole(role);
+        return SizedBox(
+          height: 100,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: stats.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (BuildContext context, int index) {
+              final Map<String, dynamic> stat = stats[index];
+              return SizedBox(
+                width: 140,
+                child: StatCard(
+                  label: stat['label'] as String,
+                  value: stat['value'] as String,
+                  icon: stat['icon'] as IconData,
+                  color: stat['color'] as Color,
+                  trend: stat['trend'] as String?,
+                  isPositive: stat['positive'] as bool? ?? true,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  List<Map<String, dynamic>> _getStatsForRole(UserRole role) {
+  Future<List<Map<String, dynamic>>> _loadRoleStats(
+    UserRole role,
+    AppState appState,
+  ) async {
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('getRoleDashboardSnapshot');
+    final HttpsCallableResult<dynamic> result =
+        await callable.call(<String, dynamic>{
+      'role': role.name,
+      'siteId': appState.activeSiteId,
+      'period': 'week',
+    });
+    final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
+    if (payload == null) return _fallbackStatsForRole(role);
+    final List<dynamic> rawStats = payload['stats'] as List<dynamic>? ?? <dynamic>[];
+    if (rawStats.isEmpty) return _fallbackStatsForRole(role);
+
+    final List<Map<String, dynamic>> stats = <Map<String, dynamic>>[];
+    for (final dynamic raw in rawStats) {
+      final Map<String, dynamic>? item = _asStringDynamicMap(raw);
+      if (item == null) continue;
+      final String label = (item['label'] as String? ?? '').trim();
+      final String value = (item['value'] as String? ?? '').trim();
+      if (label.isEmpty || value.isEmpty) continue;
+      final String iconKey = (item['icon'] as String? ?? '').trim();
+      final String colorKey = (item['color'] as String? ?? '').trim();
+      stats.add(<String, dynamic>{
+        'label': label,
+        'value': value,
+        'icon': _iconFromKey(iconKey),
+        'color': _colorFromKey(colorKey),
+        if (item['trend'] is String) 'trend': item['trend'] as String,
+        if (item['positive'] is bool) 'positive': item['positive'] as bool,
+      });
+    }
+    if (stats.isEmpty) return _fallbackStatsForRole(role);
+    return stats;
+  }
+
+  Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((dynamic key, dynamic nestedValue) =>
+          MapEntry<String, dynamic>(String(key), nestedValue));
+    }
+    return null;
+  }
+
+  IconData _iconFromKey(String key) {
+    switch (key) {
+      case 'people':
+        return Icons.people;
+      case 'check_circle':
+        return Icons.check_circle;
+      case 'rate_review':
+        return Icons.rate_review;
+      case 'location_on':
+        return Icons.location_on;
+      case 'login':
+        return Icons.login;
+      case 'warning':
+        return Icons.warning;
+      case 'business':
+        return Icons.business;
+      case 'pending_actions':
+        return Icons.pending_actions;
+      default:
+        return Icons.bar_chart;
+    }
+  }
+
+  Color _colorFromKey(String key) {
+    switch (key) {
+      case 'primary':
+        return ScholesaColors.primary;
+      case 'info':
+        return ScholesaColors.info;
+      case 'success':
+        return ScholesaColors.success;
+      case 'warning':
+        return ScholesaColors.warning;
+      case 'error':
+        return ScholesaColors.error;
+      default:
+        return ScholesaColors.primary;
+    }
+  }
+
+  List<Map<String, dynamic>> _fallbackStatsForRole(UserRole role) {
     switch (role) {
       case UserRole.educator:
         return <Map<String, dynamic>>[
           <String, dynamic>{
             'label': 'Students Today',
-            'value': '24',
+            'value': '0',
             'icon': Icons.people,
             'color': ScholesaColors.info,
-            'trend': '+3'
           },
           <String, dynamic>{
             'label': 'Attendance',
-            'value': '96%',
+            'value': '0%',
             'icon': Icons.check_circle,
             'color': ScholesaColors.success,
-            'trend': '+2%'
           },
           <String, dynamic>{
             'label': 'To Review',
-            'value': '12',
+            'value': '0',
             'icon': Icons.rate_review,
             'color': ScholesaColors.warning
           },
@@ -739,20 +835,19 @@ class RoleDashboard extends StatelessWidget {
         return <Map<String, dynamic>>[
           <String, dynamic>{
             'label': 'On Site',
-            'value': '45',
+            'value': '0',
             'icon': Icons.location_on,
             'color': ScholesaColors.info
           },
           <String, dynamic>{
             'label': 'Checked In',
-            'value': '42',
+            'value': '0',
             'icon': Icons.login,
             'color': ScholesaColors.success,
-            'trend': '+5'
           },
           <String, dynamic>{
             'label': 'Open Incidents',
-            'value': '2',
+            'value': '0',
             'icon': Icons.warning,
             'color': ScholesaColors.error
           },
@@ -761,20 +856,19 @@ class RoleDashboard extends StatelessWidget {
         return <Map<String, dynamic>>[
           <String, dynamic>{
             'label': 'Active Sites',
-            'value': '12',
+            'value': '0',
             'icon': Icons.business,
             'color': ScholesaColors.primary
           },
           <String, dynamic>{
             'label': 'Total Users',
-            'value': '1.2K',
+            'value': '0',
             'icon': Icons.people,
             'color': ScholesaColors.info,
-            'trend': '+8%'
           },
           <String, dynamic>{
             'label': 'Pending',
-            'value': '5',
+            'value': '0',
             'icon': Icons.pending_actions,
             'color': ScholesaColors.warning
           },

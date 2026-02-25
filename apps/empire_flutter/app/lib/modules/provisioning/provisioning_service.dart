@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../../app_config.dart';
 import '../../services/api_client.dart';
 import 'provisioning_models.dart';
 
@@ -10,12 +11,16 @@ class ProvisioningService extends ChangeNotifier {
     required ApiClient apiClient,
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
+    bool? useProvisioningApi,
   })  : _apiClient = apiClient,
         _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+        _auth = auth ?? FirebaseAuth.instance,
+        _useProvisioningApi =
+            useProvisioningApi ?? AppConfig.enableProvisioningApi;
   final ApiClient _apiClient;
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final bool _useProvisioningApi;
 
   List<LearnerProfile> _learners = <LearnerProfile>[];
   List<ParentProfile> _parents = <ParentProfile>[];
