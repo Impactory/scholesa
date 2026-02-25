@@ -25,6 +25,7 @@ type VoiceIntent =
 type VoiceComplexity = 'low' | 'medium' | 'high';
 type VoiceEmotionalState = 'frustrated' | 'neutral' | 'confident';
 type VoiceResponseMode = 'hint' | 'explain' | 'translate' | 'plan' | 'safety';
+type UnderstandingSource = 'heuristic' | 'model' | 'blended';
 
 const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
 const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
@@ -130,6 +131,19 @@ interface VoiceInferenceMeta {
   errorCode?: string;
   reason?: string;
   endpoint?: string;
+}
+
+interface VoiceLearningSnapshot {
+  profileId: string;
+  actorId: string;
+  actorRole: 'learner' | 'educator' | 'admin';
+  lastIntent: string;
+  lastResponseMode: string;
+  lastNeedsScaffold: boolean;
+  lastEmotionalState: string;
+  lastUnderstandingConfidence: number;
+  needsScaffoldCount: number;
+  frustrationSignalCount: number;
 }
 
 class VoiceHttpError extends Error {
@@ -1197,6 +1211,12 @@ function firstNumber(...values: unknown[]): number | undefined {
   return undefined;
 }
 
+function toFiniteNumber(value: unknown, fallback: number = 0): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return numeric;
+}
+
 function extractInternalLlmPayload(data: unknown): {
   text?: string;
   modelVersion?: string;
@@ -1277,7 +1297,12 @@ function extractInternalSttPayload(data: unknown): {
   };
 }
 
-function extractInternalTtsPayload(data: unknown): { audioUrl?: string; voiceProfile?: string; modelVersion?: string } {
+function extractInternalTtsPayload(data: unknown): {
+  audioUrl?: string;
+  voiceProfile?: string;
+  modelVersion?: string;
+  understanding?: PartialVoiceUnderstandingSignal;
+} {
   const root = asRecord(data);
   const metadata = asRecord(root?.metadata);
   const result = asRecord(root?.result);
@@ -1288,6 +1313,11 @@ function extractInternalTtsPayload(data: unknown): { audioUrl?: string; voicePro
     audioUrl,
     voiceProfile: firstString(root?.voiceProfile, result?.voiceProfile, metadata?.voiceProfile),
     modelVersion: firstString(root?.modelVersion, root?.model, result?.modelVersion, metadata?.modelVersion),
+    understanding: parsePartialUnderstanding(
+      root?.understanding ??
+      result?.understanding ??
+      metadata?.understanding,
+    ),
   };
 }
 
@@ -1323,6 +1353,37 @@ function prosodyPolicyTag(role: VoiceRole, gradeBand: GradeBand): string {
   if (role === 'student' && gradeBand === 'K-5') return 'k5_safe_mode';
   if (role === 'student') return 'student_standard_mode';
   return 'professional_mode';
+}
+
+function buildTtsStyleHints(input: {
+  understanding: VoiceUnderstandingSignal;
+  learningSnapshot: VoiceLearningSnapshot | null;
+  role: VoiceRole;
+}): Record<string, unknown> {
+  const hasPersistentSupportSignal = Boolean(input.learningSnapshot) && (
+    input.learningSnapshot!.lastNeedsScaffold ||
+    input.learningSnapshot!.lastEmotionalState === 'frustrated' ||
+    input.learningSnapshot!.lastUnderstandingConfidence < 0.6
+  );
+  const speechRate = hasPersistentSupportSignal || input.understanding.needsScaffold
+    ? 'slow'
+    : input.understanding.complexity === 'high'
+    ? 'measured'
+    : 'normal';
+  const tone = input.understanding.emotionalState === 'frustrated'
+    ? 'supportive'
+    : input.role === 'teacher' || input.role === 'admin'
+    ? 'professional'
+    : 'encouraging';
+
+  return {
+    speechRate,
+    tone,
+    responseMode: input.understanding.responseMode,
+    emotionalState: input.understanding.emotionalState,
+    needsScaffold: input.understanding.needsScaffold,
+    confidence: input.understanding.confidence,
+  };
 }
 
 function redactTextForSpeech(text: string, knownNames: string[]): SpeechPreparation {
@@ -1651,6 +1712,9 @@ async function recordVoiceTelemetryEvent(payload: {
   understanding?: VoiceUnderstandingSignal;
   modelVersionOverride?: string;
   inference?: VoiceInferenceMeta;
+  understandingSource?: UnderstandingSource;
+  modelToolHintCount?: number;
+  personalizationContextUsed?: boolean;
 }) {
   const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1719,6 +1783,9 @@ async function recordVoiceTelemetryEvent(payload: {
       inferenceStatusCode: payload.inference?.statusCode ?? null,
       inferenceErrorCode: payload.inference?.errorCode ?? null,
       inferenceReason: payload.inference?.reason ?? null,
+      understandingSource: payload.understandingSource ?? 'heuristic',
+      modelToolHintCount: payload.modelToolHintCount ?? 0,
+      personalizationContextUsed: payload.personalizationContextUsed ?? false,
     },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -1741,6 +1808,9 @@ async function recordBosInteractionEvent(payload: {
   ttsAvailable?: boolean;
   understanding?: VoiceUnderstandingSignal;
   inference?: VoiceInferenceMeta;
+  understandingSource?: UnderstandingSource;
+  modelToolHintCount?: number;
+  personalizationContextUsed?: boolean;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1806,6 +1876,9 @@ async function recordBosInteractionEvent(payload: {
       inferenceStatusCode: payload.inference?.statusCode ?? null,
       inferenceErrorCode: payload.inference?.errorCode ?? null,
       inferenceReason: payload.inference?.reason ?? null,
+      understandingSource: payload.understandingSource ?? 'heuristic',
+      modelToolHintCount: payload.modelToolHintCount ?? 0,
+      personalizationContextUsed: payload.personalizationContextUsed ?? false,
     },
     timestampIso: new Date().toISOString(),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -1823,6 +1896,9 @@ async function upsertBosLearningProfile(payload: {
   understanding?: VoiceUnderstandingSignal;
   textLength?: number;
   transcriptLength?: number;
+  understandingSource?: UnderstandingSource;
+  modelToolHintCount?: number;
+  personalizationContextUsed?: boolean;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const profileId = `${payload.authContext.siteId}__${bosContext.actorId}`;
@@ -1850,6 +1926,15 @@ async function upsertBosLearningProfile(payload: {
   }
   if ((payload.transcriptLength ?? 0) > 0) {
     metrics.totalTranscriptLength = admin.firestore.FieldValue.increment(payload.transcriptLength ?? 0);
+  }
+  if (payload.understandingSource === 'model' || payload.understandingSource === 'blended') {
+    metrics.modelAugmentedCount = admin.firestore.FieldValue.increment(1);
+  }
+  if ((payload.modelToolHintCount ?? 0) > 0) {
+    metrics.modelToolHintsApplied = admin.firestore.FieldValue.increment(payload.modelToolHintCount ?? 0);
+  }
+  if (payload.personalizationContextUsed) {
+    metrics.personalizedContextCount = admin.firestore.FieldValue.increment(1);
   }
 
   const learning: Record<string, unknown> = {};
@@ -1887,6 +1972,7 @@ async function upsertBosLearningProfile(payload: {
     lastEndpoint: payload.endpoint,
     lastSafetyOutcome: payload.safetyOutcome,
     lastContextMode: bosContext.contextMode,
+    lastUnderstandingSource: payload.understandingSource ?? 'heuristic',
     updatedAtIso: nowIso,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     metrics,
@@ -1957,6 +2043,46 @@ function extractKnownNames(body: Record<string, unknown>): string[] {
   return dedupeStrings(merged).slice(0, 20);
 }
 
+function toInferenceLearningSnapshot(snapshot: VoiceLearningSnapshot | null): Record<string, unknown> | null {
+  if (!snapshot) return null;
+  return {
+    actorRole: snapshot.actorRole,
+    lastIntent: snapshot.lastIntent,
+    lastResponseMode: snapshot.lastResponseMode,
+    lastNeedsScaffold: snapshot.lastNeedsScaffold,
+    lastEmotionalState: snapshot.lastEmotionalState,
+    lastUnderstandingConfidence: snapshot.lastUnderstandingConfidence,
+    needsScaffoldCount: snapshot.needsScaffoldCount,
+    frustrationSignalCount: snapshot.frustrationSignalCount,
+  };
+}
+
+async function loadVoiceLearningSnapshot(
+  authContext: VoiceAuthContext,
+  body: Record<string, unknown>,
+): Promise<VoiceLearningSnapshot | null> {
+  const bosContext = resolveBosInteractionContext(body, authContext);
+  if (!authContext.siteId || !bosContext.actorId) return null;
+  const profileId = `${authContext.siteId}__${bosContext.actorId}`;
+  const snapshot = await admin.firestore().collection('bosLearningProfiles').doc(profileId).get();
+  if (!snapshot.exists) return null;
+  const data = snapshot.data() ?? {};
+  const learning = asRecord(data.learning) ?? {};
+  const metrics = asRecord(data.metrics) ?? {};
+  return {
+    profileId,
+    actorId: bosContext.actorId,
+    actorRole: bosContext.actorRole,
+    lastIntent: normalizeString(learning.lastIntent) ?? 'general_support',
+    lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
+    lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
+    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
+    lastUnderstandingConfidence: clampProbability(toFiniteNumber(learning.lastUnderstandingConfidence, 0)),
+    needsScaffoldCount: Math.max(0, Math.floor(toFiniteNumber(metrics.needsScaffoldCount, 0))),
+    frustrationSignalCount: Math.max(0, Math.floor(toFiniteNumber(metrics.frustrationSignalCount, 0))),
+  };
+}
+
 export async function handleCopilotMessage(req: Request, res: Response): Promise<void> {
   const startedAt = Date.now();
   if (req.method !== 'POST') {
@@ -1986,7 +2112,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       safety,
     });
     let understanding = heuristicUnderstanding;
+    let understandingSource: UnderstandingSource = 'heuristic';
     let modelToolHints: string[] = [];
+    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, body);
+    const personalizationContextUsed = Boolean(learningSnapshot);
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
       ? buildAdaptiveLocalizedResponse(authContext.role, locale, safety.category, understanding)
       : safety.localizedMessage;
@@ -2018,6 +2147,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
             responseMode: heuristicUnderstanding.responseMode,
             topicTags: heuristicUnderstanding.topicTags,
           },
+          learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
           maxTokens: 220,
         },
         context: buildInferenceContextHeaders({
@@ -2039,6 +2169,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       }
       if (llmPayload?.understanding) {
         understanding = mergeUnderstandingSignal(understanding, llmPayload.understanding);
+        understandingSource = 'blended';
       }
       if ((llmPayload?.toolSuggestions?.length ?? 0) > 0) {
         modelToolHints = llmPayload?.toolSuggestions ?? [];
@@ -2071,6 +2202,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       understanding,
       modelToolHints,
     );
+    const modelToolHintCount = modelToolHints.length > 0
+      ? toolsInvoked.filter((tool) => modelToolHints.includes(tool)).length
+      : 0;
     const voiceInput = body.voice as Record<string, unknown> | undefined;
     const voiceOutputEnabled = normalizeBoolean(voiceInput?.enabled, true) && normalizeBoolean(voiceInput?.output, true);
     const quietModeActive = isQuietModeActive(settings, new Date());
@@ -2140,6 +2274,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understanding,
         modelVersionOverride: llmModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
     ];
 
@@ -2153,6 +2290,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: safety.safetyOutcome,
         understanding,
         textLength: message.length,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -2168,6 +2308,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understanding,
         modelVersionOverride: llmModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_used',
@@ -2183,6 +2326,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understanding,
         modelVersionOverride: llmModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -2198,6 +2344,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understanding,
         modelVersionOverride: llmModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2214,6 +2363,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         ttsAvailable: Boolean(audioUrl),
         understanding,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_used',
@@ -2230,6 +2382,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         ttsAvailable: Boolean(audioUrl),
         understanding,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2246,6 +2401,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         ttsAvailable: Boolean(audioUrl),
         understanding,
         inference: inferenceMeta,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
       }),
     ];
 
@@ -2268,6 +2426,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           understanding,
           modelVersionOverride: llmModelVersion,
           inference: inferenceMeta,
+          understandingSource,
+          modelToolHintCount,
+          personalizationContextUsed,
         }),
       );
     }
@@ -2291,6 +2452,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         quietModeActive,
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
+        understandingSource,
+        modelToolHintCount,
+        personalizationContextUsed,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,
@@ -2387,11 +2551,14 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     const locale = resolveLocale(localeHint, req, settings.allowedLocales);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, resolvedBody);
+    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, resolvedBody);
+    const personalizationContextUsed = Boolean(learningSnapshot);
     const partial = normalizeBoolean(partialHint, false);
     let transcriptCandidate = transcriptRaw;
     let confidence = transcriptRaw ? 0.96 : undefined;
     let sttModelVersion = STT_MODEL_VERSION;
     let sttModelUnderstanding: PartialVoiceUnderstandingSignal | undefined;
+    let understandingSource: UnderstandingSource = 'heuristic';
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
       'stt',
       transcriptRaw ? 'transcript_supplied' : 'not_attempted',
@@ -2405,6 +2572,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
           partial,
           role: authContext.role,
           gradeBand: authContext.gradeBand,
+          learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
         },
         context: buildInferenceContextHeaders({
           traceId,
@@ -2423,6 +2591,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
       }
       if (sttPayload?.understanding) {
         sttModelUnderstanding = sttPayload.understanding;
+        understandingSource = 'blended';
       }
       if (sttResult.ok && sttPayload?.transcript) {
         transcriptCandidate = sttPayload.transcript;
@@ -2476,6 +2645,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understanding,
         modelVersionOverride: sttModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
     ]);
     await Promise.allSettled([
@@ -2488,6 +2659,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         safetyOutcome: transcribeSafety.safetyOutcome,
         understanding,
         transcriptLength: transcript.length,
+        understandingSource,
+        personalizationContextUsed,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -2505,6 +2678,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understanding,
         modelVersionOverride: sttModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2520,6 +2695,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         audioBytes: uploadedAudioLength,
         understanding,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
     ]);
 
@@ -2532,6 +2709,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         locale,
         latencyMs,
         partial,
+        understandingSource,
+        personalizationContextUsed,
         modelVersion: sttModelVersion,
         inference: {
           service: inferenceMeta.service,
@@ -2577,11 +2756,12 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
       throw new VoiceHttpError(400, 'invalid_argument', 'text is required.');
     }
     const ttsSafety = evaluateSafetyDecision(rawText, authContext.role, locale);
-    const understanding = deriveUnderstandingSignal({
+    let understanding = deriveUnderstandingSignal({
       message: rawText,
       role: authContext.role,
       safety: ttsSafety,
     });
+    let understandingSource: UnderstandingSource = 'heuristic';
     const ttsInputText =
       ttsSafety.safetyOutcome === 'blocked' || ttsSafety.safetyOutcome === 'escalated'
         ? ttsSafety.localizedMessage
@@ -2593,6 +2773,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
+    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, body);
+    const personalizationContextUsed = Boolean(learningSnapshot);
     const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
     const checksum = createHash('sha256')
       .update(`${traceId}|${locale}|${voiceProfile}|${speech.speechText}|${expMs}`)
@@ -2619,6 +2801,12 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         gradeBand: effectiveGradeBand,
         voiceProfile,
         prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+        styleHints: buildTtsStyleHints({
+          understanding,
+          learningSnapshot,
+          role: authContext.role,
+        }),
+        learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
       },
       context: buildInferenceContextHeaders({
         traceId,
@@ -2634,6 +2822,10 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     const ttsPayload = ttsResult.ok ? extractInternalTtsPayload(ttsResult.data) : undefined;
     if (ttsPayload?.modelVersion) {
       ttsModelVersion = ttsPayload.modelVersion;
+    }
+    if (ttsPayload?.understanding) {
+      understanding = mergeUnderstandingSignal(understanding, ttsPayload.understanding);
+      understandingSource = 'blended';
     }
     if (ttsResult.ok && ttsPayload?.audioUrl) {
       if (isInternalAudioUrl(ttsPayload.audioUrl)) {
@@ -2685,6 +2877,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understanding,
         modelVersionOverride: ttsModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
     ]);
     await Promise.allSettled([
@@ -2697,6 +2891,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         safetyOutcome: ttsSafety.safetyOutcome,
         understanding,
         textLength: speech.speechText.length,
+        understandingSource,
+        personalizationContextUsed,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -2713,6 +2909,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understanding,
         modelVersionOverride: ttsModelVersion,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2728,6 +2926,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         ttsAvailable: true,
         understanding,
         inference: inferenceMeta,
+        understandingSource,
+        personalizationContextUsed,
       }),
     ]);
 
@@ -2744,6 +2944,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
+        understandingSource,
+        personalizationContextUsed,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,
