@@ -763,7 +763,7 @@ class RoleDashboard extends StatelessWidget {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) {
       return value.map((dynamic key, dynamic nestedValue) =>
-          MapEntry<String, dynamic>(String(key), nestedValue));
+          MapEntry<String, dynamic>(key.toString(), nestedValue));
     }
     return null;
   }

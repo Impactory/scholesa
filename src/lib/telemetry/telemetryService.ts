@@ -10,22 +10,16 @@
  */
 
 import {
-  collection,
-  doc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  getDoc,
-  increment,
   serverTimestamp,
   Timestamp,
   query,
   where,
   getDocs,
-  orderBy,
-  limit
+  collection
 } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/src/firebase/client-init';
 import type { AgeBand, UserRole } from '@/src/types/schema';
 import { getAgeBandFromGrade } from '@/src/lib/policies/gradeBandPolicy';
 
@@ -144,6 +138,78 @@ export interface TelemetryPayload {
 // ==================== TELEMETRY SERVICE ====================
 
 export class TelemetryService {
+  private static readonly callableAllowedEvents = new Set<string>([
+    'auth.login',
+    'auth.logout',
+    'attendance.recorded',
+    'mission.attempt.submitted',
+    'message.sent',
+    'order.intent',
+    'order.paid',
+    'cta.clicked',
+    'site.switched',
+    'cms.page.viewed',
+    'insight.viewed',
+    'support.applied',
+    'support.outcome.logged',
+    'educator.feedback.submitted',
+    'educator.review.completed',
+    'rubric.applied',
+    'notification.requested',
+    'fdm.state.changed',
+    'mission_viewed',
+    'mission_selected',
+    'mission_started',
+    'mission_completed',
+    'checkpoint_started',
+    'checkpoint_submitted',
+    'checkpoint_graded',
+    'artifact_created',
+    'artifact_submitted',
+    'artifact_reviewed',
+    'ai_help_opened',
+    'ai_help_used',
+    'ai_coach_response',
+    'ai_coach_feedback',
+    'session_joined',
+    'session_left',
+    'idle_detected',
+    'focus_restored'
+  ]);
+
+  private static readonly legacyEventMap: Record<string, string> = {
+    page_viewed: 'cms.page.viewed',
+    feature_discovered: 'cta.clicked',
+    help_accessed: 'cta.clicked',
+    mission_browsed: 'mission_viewed',
+    mission_selected: 'mission_selected',
+    artifact_submitted: 'artifact_submitted',
+    checkpoint_passed: 'checkpoint_graded',
+    checkpoint_failed: 'checkpoint_submitted',
+    reflection_submitted: 'ai_coach_feedback',
+    session_started: 'session_joined',
+    session_resumed: 'session_joined',
+    session_paused: 'idle_detected',
+    session_completed: 'session_left',
+    focus_regained: 'focus_restored',
+    attendance_marked: 'attendance.recorded',
+    feedback_given: 'educator.feedback.submitted',
+    assessment_graded: 'educator.review.completed',
+    rubric_created: 'rubric.applied',
+    session_facilitated: 'session_joined',
+    ai_hint_requested: 'ai_help_used',
+    ai_rubric_check: 'ai_help_used',
+    ai_debug_help: 'ai_help_used',
+    ai_critique_requested: 'ai_help_used',
+    ai_explain_back_submitted: 'ai_coach_feedback',
+    ai_feedback_positive: 'ai_coach_feedback',
+    ai_feedback_negative: 'ai_coach_feedback',
+    page_load_time: 'insight.viewed',
+    slow_query_detected: 'insight.viewed',
+    api_error: 'fdm.state.changed',
+    client_error: 'fdm.state.changed'
+  };
+
   /**
    * Track a telemetry event
    */
@@ -157,16 +223,35 @@ export class TelemetryService {
         browser: this.getBrowser(),
         ageBand: payload.ageBand || (payload.grade ? getAgeBandFromGrade(payload.grade) : undefined)
       }) as TelemetryPayload;
-      
-      // Store in telemetry collection
-      const docRef = await addDoc(collection(db, 'telemetryEvents'), enrichedPayload);
-      
-      // Update aggregates (async, non-blocking)
-      this.updateAggregates(enrichedPayload).catch(err => {
-        console.warn('Failed to update telemetry aggregates:', err);
+
+      const canonicalEvent = this.toCanonicalCallableEvent(enrichedPayload.event);
+      const metadata = this.removeUndefined({
+        ...enrichedPayload.metadata,
+        category: enrichedPayload.category,
+        originalEvent: enrichedPayload.event,
+        userId: enrichedPayload.userId,
+        userRole: enrichedPayload.userRole,
+        grade: enrichedPayload.grade,
+        ageBand: enrichedPayload.ageBand,
+        sessionId: enrichedPayload.sessionId,
+        sessionOccurrenceId: enrichedPayload.sessionOccurrenceId,
+        missionId: enrichedPayload.missionId,
+        artifactId: enrichedPayload.artifactId,
+        skillId: enrichedPayload.skillId,
+        duration: enrichedPayload.duration,
+        loadTime: enrichedPayload.loadTime,
+        deviceType: enrichedPayload.deviceType,
+        browser: enrichedPayload.browser
+      }) as Record<string, unknown>;
+
+      const logTelemetryEvent = httpsCallable(functions, 'logTelemetryEvent');
+      await logTelemetryEvent({
+        event: canonicalEvent,
+        siteId: enrichedPayload.siteId,
+        metadata
       });
-      
-      return docRef.id;
+
+      return `${canonicalEvent}-${Date.now()}`;
     } catch (err) {
       if (!this.isExpectedTelemetryWriteError(err)) {
         console.error('Telemetry tracking failed:', err);
@@ -174,6 +259,14 @@ export class TelemetryService {
       // Don't throw - telemetry failures shouldn't break app
       return 'error';
     }
+  }
+
+  private static toCanonicalCallableEvent(event: TelemetryEvent): string {
+    const mapped = this.legacyEventMap[event] || event;
+    if (this.callableAllowedEvents.has(mapped)) {
+      return mapped;
+    }
+    return 'cta.clicked';
   }
   
   /**
@@ -426,10 +519,10 @@ export class TelemetryService {
 
       const totalEvents = snapshot.size;
       const checkpointsPassed = snapshot.docs.filter(
-        doc => doc.data().event === 'checkpoint_passed'
+        doc => doc.data().event === 'checkpoint_passed' || doc.data().event === 'checkpoint_graded'
       ).length;
       const reflections = snapshot.docs.filter(
-        doc => doc.data().category === 'reflection'
+        doc => doc.data().category === 'reflection' || doc.data().metadata?.category === 'reflection'
       ).length;
 
       const score = Math.min(100, (
@@ -477,8 +570,13 @@ export class TelemetryService {
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.category in categoryCount) {
-          categoryCount[data.category as keyof typeof categoryCount]++;
+        const category = typeof data.category === 'string'
+          ? data.category
+          : typeof data.metadata?.category === 'string'
+          ? data.metadata.category
+          : '';
+        if (category in categoryCount) {
+          categoryCount[category as keyof typeof categoryCount]++;
         }
       });
 

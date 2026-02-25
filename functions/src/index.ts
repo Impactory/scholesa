@@ -1658,10 +1658,727 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
   };
 });
 
+function parseDateFromUnknown(value: unknown): Date | null {
+  if (value instanceof admin.firestore.Timestamp) return value.toDate();
+  if (value instanceof Date) return value;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(value);
+  }
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed);
+    }
+  }
+  return null;
+}
+
+function formatCompactCount(value: number): string {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}K`;
+  }
+  return String(value);
+}
+
+function hasSiteAccess(profile: UserRecord, siteId: string): boolean {
+  if (!siteId.trim()) return false;
+  return (profile.siteIds ?? []).includes(siteId) || profile.activeSiteId === siteId;
+}
+
+function resolveRoleSiteId(
+  profile: UserRecord,
+  actorRole: Role,
+  requestedSiteId: string | undefined,
+): string | undefined {
+  if (requestedSiteId && requestedSiteId.trim().length > 0) {
+    if (actorRole === 'hq' || hasSiteAccess(profile, requestedSiteId)) {
+      return requestedSiteId;
+    }
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+  if (actorRole === 'hq') {
+    return undefined;
+  }
+  const siteId = profile.activeSiteId ?? profile.siteIds?.[0];
+  if (!siteId) {
+    throw new HttpsError('permission-denied', 'No active site context available.');
+  }
+  return siteId;
+}
+
+async function fetchUsersByIds(userIds: string[]): Promise<Array<{ id: string; data: UserRecord }>> {
+  const uniqueIds = Array.from(new Set(userIds.filter((id) => typeof id === 'string' && id.trim().length > 0)));
+  if (uniqueIds.length === 0) return [];
+  const docs = await Promise.all(
+    uniqueIds.map((id) => admin.firestore().collection(USERS_COLLECTION).doc(id).get()),
+  );
+  return docs
+    .filter((doc) => doc.exists)
+    .map((doc) => ({ id: doc.id, data: doc.data() as UserRecord }));
+}
+
+function toRosterItem(id: string, data: UserRecord): Record<string, unknown> {
+  return {
+    id,
+    uid: id,
+    displayName: data.displayName ?? data.email ?? id,
+    email: data.email ?? null,
+    role: normalizeRoleValue(data.role),
+    siteIds: data.siteIds ?? [],
+    activeSiteId: data.activeSiteId ?? null,
+  };
+}
+
+async function collectParentLinkedLearnerIds(params: {
+  parentId: string;
+  siteId?: string;
+}): Promise<string[]> {
+  const { parentId, siteId } = params;
+  const learnerIds = new Set<string>();
+
+  const parentDoc = await admin.firestore().collection(USERS_COLLECTION).doc(parentId).get();
+  if (parentDoc.exists) {
+    const parentData = parentDoc.data() as UserRecord;
+    for (const learnerId of toStringArray(parentData.learnerIds)) {
+      learnerIds.add(learnerId);
+    }
+  }
+
+  try {
+    let guardianQuery: FirebaseFirestore.Query = admin
+      .firestore()
+      .collection('guardianLinks')
+      .where('parentId', '==', parentId);
+    if (siteId && siteId.trim().length > 0) {
+      guardianQuery = guardianQuery.where('siteId', '==', siteId);
+    }
+    const guardianLinks = await guardianQuery.get();
+    for (const doc of guardianLinks.docs) {
+      const learnerId = typeof doc.data().learnerId === 'string' ? doc.data().learnerId.trim() : '';
+      if (learnerId) learnerIds.add(learnerId);
+    }
+  } catch {
+    // Guardian links are best-effort for compatibility with legacy schemas.
+  }
+
+  try {
+    const usersByParent = await admin
+      .firestore()
+      .collection(USERS_COLLECTION)
+      .where('parentIds', 'array-contains', parentId)
+      .get();
+    for (const doc of usersByParent.docs) {
+      const role = normalizeRoleValue(doc.data().role);
+      if (role === 'learner') {
+        learnerIds.add(doc.id);
+      }
+    }
+  } catch {
+    // Keep deterministic fallback behavior.
+  }
+
+  if (!siteId || !siteId.trim()) {
+    return Array.from(learnerIds.values());
+  }
+
+  const linkedUsers = await fetchUsersByIds(Array.from(learnerIds.values()));
+  return linkedUsers
+    .filter(({ data }) => hasSiteAccess(data, siteId))
+    .map(({ id }) => id);
+}
+
+async function buildParentLearnerSummary(params: {
+  learnerId: string;
+  siteId?: string;
+}): Promise<Record<string, unknown> | null> {
+  const { learnerId, siteId } = params;
+  const learnerDoc = await admin.firestore().collection(USERS_COLLECTION).doc(learnerId).get();
+  if (!learnerDoc.exists) return null;
+  const learnerData = learnerDoc.data() as UserRecord;
+  if (normalizeRoleValue(learnerData.role) !== 'learner') return null;
+  if (siteId && !hasSiteAccess(learnerData, siteId)) return null;
+
+  const now = new Date();
+  const progressDoc = await admin.firestore().collection('learnerProgress').doc(learnerId).get();
+  const progressData = progressDoc.exists
+    ? (progressDoc.data() as Record<string, unknown>)
+    : {};
+
+  let recentActivities: Array<Record<string, unknown>> = [];
+  try {
+    const activitiesSnap = await admin
+      .firestore()
+      .collection('activities')
+      .where('learnerId', '==', learnerId)
+      .orderBy('timestamp', 'desc')
+      .limit(10)
+      .get();
+    recentActivities = activitiesSnap.docs.map((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      return {
+        id: doc.id,
+        title: typeof data.title === 'string' ? data.title : '',
+        description: typeof data.description === 'string' ? data.description : '',
+        type: typeof data.type === 'string' ? data.type : 'activity',
+        emoji: typeof data.emoji === 'string' ? data.emoji : '📝',
+        timestamp: parseDateFromUnknown(data.timestamp)?.toISOString() ?? now.toISOString(),
+      };
+    });
+  } catch {
+    recentActivities = [];
+  }
+
+  let upcomingEvents: Array<Record<string, unknown>> = [];
+  try {
+    const eventsSnap = await admin
+      .firestore()
+      .collection('events')
+      .where('learnerId', '==', learnerId)
+      .where('dateTime', '>=', admin.firestore.Timestamp.fromDate(now))
+      .orderBy('dateTime')
+      .limit(5)
+      .get();
+    upcomingEvents = eventsSnap.docs.map((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      return {
+        id: doc.id,
+        title: typeof data.title === 'string' ? data.title : 'Session',
+        description: typeof data.description === 'string' ? data.description : null,
+        dateTime: parseDateFromUnknown(data.dateTime)?.toISOString() ?? now.toISOString(),
+        type: typeof data.type === 'string' ? data.type : 'event',
+        location: typeof data.location === 'string' ? data.location : null,
+      };
+    });
+  } catch {
+    upcomingEvents = [];
+  }
+
+  let attendanceRate = 0;
+  try {
+    const attendanceSnap = await admin
+      .firestore()
+      .collection('attendanceRecords')
+      .where('learnerId', '==', learnerId)
+      .orderBy('timestamp', 'desc')
+      .limit(30)
+      .get();
+    const total = attendanceSnap.size;
+    const present = attendanceSnap.docs.filter((doc) => doc.data().status === 'present').length;
+    attendanceRate = total > 0 ? present / total : 0;
+  } catch {
+    attendanceRate = 0;
+  }
+
+  const currentLevel =
+    typeof progressData.level === 'number' && Number.isFinite(progressData.level)
+      ? Math.round(progressData.level)
+      : 1;
+  const totalXp =
+    typeof progressData.totalXp === 'number' && Number.isFinite(progressData.totalXp)
+      ? Math.round(progressData.totalXp)
+      : 0;
+  const missionsCompleted =
+    typeof progressData.missionsCompleted === 'number' &&
+    Number.isFinite(progressData.missionsCompleted)
+      ? Math.round(progressData.missionsCompleted)
+      : 0;
+  const currentStreak =
+    typeof progressData.currentStreak === 'number' &&
+    Number.isFinite(progressData.currentStreak)
+      ? Math.round(progressData.currentStreak)
+      : 0;
+
+  return {
+    learnerId,
+    learnerName: learnerData.displayName ?? learnerData.email ?? learnerId,
+    photoUrl: null,
+    currentLevel,
+    totalXp,
+    missionsCompleted,
+    currentStreak,
+    attendanceRate,
+    pillarProgress: {
+      futureSkills:
+        typeof progressData.futureSkillsProgress === 'number'
+          ? progressData.futureSkillsProgress
+          : 0,
+      leadership:
+        typeof progressData.leadershipProgress === 'number'
+          ? progressData.leadershipProgress
+          : 0,
+      impact:
+        typeof progressData.impactProgress === 'number'
+          ? progressData.impactProgress
+          : 0,
+    },
+    recentActivities,
+    upcomingEvents,
+  };
+}
+
+export const getParentDashboardBundle = onCall(async (request: CallableRequest<{
+  siteId?: string;
+  locale?: string;
+  range?: string;
+  parentId?: string;
+}>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const actorProfile = await getUserProfile(authUid);
+  const actorRole = normalizeRoleValue(actorProfile?.role);
+  if (!actorProfile || !actorRole || !['parent', 'site', 'hq'].includes(actorRole)) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
+
+  const requestedSiteId =
+    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+      ? request.data.siteId.trim()
+      : undefined;
+  const siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
+
+  const parentIdInput =
+    typeof request.data?.parentId === 'string' && request.data.parentId.trim().length > 0
+      ? request.data.parentId.trim()
+      : undefined;
+  const parentId = actorRole === 'parent' ? authUid : parentIdInput;
+  if (!parentId) {
+    throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
+  }
+
+  const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
+  const learnerSummaries = (
+    await Promise.all(
+      learnerIds.map((learnerId) => buildParentLearnerSummary({ learnerId, siteId })),
+    )
+  ).filter((summary): summary is Record<string, unknown> => summary !== null);
+
+  return {
+    parentId,
+    siteId: siteId ?? null,
+    locale: normalizeTelemetryLocale(request.data?.locale),
+    range:
+      typeof request.data?.range === 'string' && request.data.range.trim().length > 0
+        ? request.data.range.trim()
+        : 'week',
+    linkedLearnerCount: learnerSummaries.length,
+    learners: learnerSummaries,
+  };
+});
+
+async function computeRoleDashboardStats(params: {
+  role: Role;
+  uid: string;
+  siteId?: string;
+  profile: UserRecord;
+}): Promise<Array<Record<string, unknown>>> {
+  const { role, uid, siteId, profile } = params;
+  const db = admin.firestore();
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+  if (role === 'learner') {
+    let activeSessions = 0;
+    let activeMissions = 0;
+    let unreadMessages = 0;
+
+    try {
+      const enrollments = await db
+        .collection('enrollments')
+        .where('learnerId', '==', uid)
+        .where('status', '==', 'active')
+        .get();
+      activeSessions = enrollments.size;
+    } catch {
+      activeSessions = 0;
+    }
+
+    try {
+      const assignments = await db
+        .collection('missionAssignments')
+        .where('learnerId', '==', uid)
+        .get();
+      activeMissions = assignments.docs.filter((doc) => doc.data().status !== 'completed').length;
+    } catch {
+      activeMissions = 0;
+    }
+
+    try {
+      const messages = await db
+        .collection('messages')
+        .where('recipientId', '==', uid)
+        .where('isRead', '==', false)
+        .get();
+      unreadMessages = messages.size;
+    } catch {
+      unreadMessages = 0;
+    }
+
+    return [
+      { label: 'Active Sessions', value: String(activeSessions), icon: 'event', color: 'info' },
+      { label: 'Active Missions', value: String(activeMissions), icon: 'rocket', color: 'primary' },
+      { label: 'Unread Messages', value: String(unreadMessages), icon: 'mail', color: 'warning' },
+    ];
+  }
+
+  if (role === 'educator') {
+    let studentsToday = 0;
+    let attendanceRate = 0;
+    let toReview = 0;
+
+    try {
+      const occurrences = await db
+        .collection('sessionOccurrences')
+        .where('educatorId', '==', uid)
+        .get();
+      let present = 0;
+      let total = 0;
+      for (const doc of occurrences.docs) {
+        const data = doc.data();
+        const start = parseDateFromUnknown(data.startTime ?? data.date);
+        if (!start || start < startOfDay || start >= endOfDay) continue;
+        const enrolledCount = typeof data.enrolledCount === 'number' ? data.enrolledCount : 0;
+        const presentCount = typeof data.presentCount === 'number' ? data.presentCount : 0;
+        studentsToday += enrolledCount;
+        total += enrolledCount;
+        present += presentCount;
+      }
+      attendanceRate = total > 0 ? (present / total) * 100 : 0;
+    } catch {
+      studentsToday = 0;
+      attendanceRate = 0;
+    }
+
+    try {
+      const attempts = await db
+        .collection('missionAttempts')
+        .where('educatorId', '==', uid)
+        .get();
+      toReview = attempts.docs.filter((doc) => {
+        const status = typeof doc.data().status === 'string' ? doc.data().status : '';
+        return status === 'submitted' || status === 'pending_review';
+      }).length;
+    } catch {
+      toReview = 0;
+    }
+
+    return [
+      { label: 'Students Today', value: String(studentsToday), icon: 'people', color: 'info' },
+      {
+        label: 'Attendance',
+        value: `${Math.round(attendanceRate)}%`,
+        icon: 'check_circle',
+        color: 'success',
+      },
+      { label: 'To Review', value: String(toReview), icon: 'rate_review', color: 'warning' },
+    ];
+  }
+
+  if (role === 'parent') {
+    const learnerIds = await collectParentLinkedLearnerIds({
+      parentId: uid,
+      siteId,
+    });
+    let upcomingSessions = 0;
+    try {
+      if (learnerIds.length > 0) {
+        let query: FirebaseFirestore.Query = db.collection('events');
+        query = query.where('dateTime', '>=', admin.firestore.Timestamp.fromDate(now));
+        const events = await query.get();
+        upcomingSessions = events.docs.filter((doc) => learnerIds.includes(String(doc.data().learnerId || ''))).length;
+      }
+    } catch {
+      upcomingSessions = 0;
+    }
+
+    return [
+      { label: 'Linked Learners', value: String(learnerIds.length), icon: 'people', color: 'primary' },
+      { label: 'Upcoming Sessions', value: String(upcomingSessions), icon: 'event', color: 'info' },
+      { label: 'Alerts', value: '0', icon: 'warning', color: 'warning' },
+    ];
+  }
+
+  if (role === 'site') {
+    if (!siteId) {
+      throw new HttpsError('invalid-argument', 'siteId is required for site dashboard snapshot.');
+    }
+
+    let onSite = 0;
+    let checkedIn = 0;
+    let openIncidents = 0;
+
+    try {
+      const users = await db
+        .collection(USERS_COLLECTION)
+        .where('siteIds', 'array-contains', siteId)
+        .get();
+      onSite = users.docs.filter((doc) => normalizeRoleValue(doc.data().role) === 'learner').length;
+    } catch {
+      onSite = 0;
+    }
+
+    try {
+      const records = await db
+        .collection('presenceRecords')
+        .where('siteId', '==', siteId)
+        .where('type', '==', 'checkin')
+        .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
+        .where('timestamp', '<', admin.firestore.Timestamp.fromDate(endOfDay))
+        .get();
+      checkedIn = records.size;
+    } catch {
+      checkedIn = 0;
+    }
+
+    try {
+      const incidents = await db
+        .collection('incidents')
+        .where('siteId', '==', siteId)
+        .where('status', '==', 'open')
+        .get();
+      openIncidents = incidents.size;
+    } catch {
+      openIncidents = 0;
+    }
+
+    return [
+      { label: 'On Site', value: String(onSite), icon: 'location_on', color: 'info' },
+      { label: 'Checked In', value: String(checkedIn), icon: 'login', color: 'success' },
+      { label: 'Open Incidents', value: String(openIncidents), icon: 'warning', color: 'error' },
+    ];
+  }
+
+  if (role === 'partner') {
+    const partnerSiteIds = profile.siteIds ?? [];
+    let learnersSupported = 0;
+    try {
+      const users = await db
+        .collection(USERS_COLLECTION)
+        .where('siteIds', 'array-contains-any', partnerSiteIds.slice(0, 10))
+        .get();
+      learnersSupported = users.docs.filter((doc) => normalizeRoleValue(doc.data().role) === 'learner').length;
+    } catch {
+      learnersSupported = 0;
+    }
+
+    return [
+      { label: 'Associated Sites', value: String(partnerSiteIds.length), icon: 'business', color: 'primary' },
+      { label: 'Learners Supported', value: formatCompactCount(learnersSupported), icon: 'people', color: 'info' },
+      { label: 'Active Programs', value: String(partnerSiteIds.length), icon: 'event', color: 'success' },
+    ];
+  }
+
+  let activeSites = 0;
+  let totalUsers = 0;
+  let pending = 0;
+  try {
+    const sites = await db.collection('sites').get();
+    activeSites = sites.docs.filter((doc) => String(doc.data().status || 'active') !== 'inactive').length;
+  } catch {
+    activeSites = 0;
+  }
+  try {
+    totalUsers = (await db.collection(USERS_COLLECTION).get()).size;
+  } catch {
+    totalUsers = 0;
+  }
+  try {
+    pending = (await db.collection('approvals').where('status', '==', 'pending').get()).size;
+  } catch {
+    pending = 0;
+  }
+
+  return [
+    { label: 'Active Sites', value: String(activeSites), icon: 'business', color: 'primary' },
+    { label: 'Total Users', value: formatCompactCount(totalUsers), icon: 'people', color: 'info' },
+    { label: 'Pending', value: String(pending), icon: 'pending_actions', color: 'warning' },
+  ];
+}
+
+export const getRoleDashboardSnapshot = onCall(async (request: CallableRequest<{
+  role?: string;
+  siteId?: string;
+  period?: string;
+}>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const profile = await getUserProfile(authUid);
+  const actorRole = normalizeRoleValue(profile?.role);
+  if (!profile || !actorRole) {
+    throw new HttpsError('permission-denied', 'User profile missing role.');
+  }
+
+  const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
+  if (actorRole !== 'hq' && requestedRole !== actorRole) {
+    throw new HttpsError('permission-denied', 'Cannot request dashboard for another role.');
+  }
+
+  const requestedSiteId =
+    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+      ? request.data.siteId.trim()
+      : undefined;
+  const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
+  const stats = await computeRoleDashboardStats({
+    role: requestedRole,
+    uid: authUid,
+    siteId,
+    profile,
+  });
+
+  return {
+    role: requestedRole,
+    siteId: siteId ?? null,
+    period:
+      typeof request.data?.period === 'string' && request.data.period.trim().length > 0
+        ? request.data.period.trim()
+        : 'week',
+    stats,
+  };
+});
+
+export const getRoleLinkedRoster = onCall(async (request: CallableRequest<{
+  role?: string;
+  siteId?: string;
+  parentId?: string;
+  educatorId?: string;
+}>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const profile = await getUserProfile(authUid);
+  const actorRole = normalizeRoleValue(profile?.role);
+  if (!profile || !actorRole) {
+    throw new HttpsError('permission-denied', 'User profile missing role.');
+  }
+
+  const requestedRole = normalizeRoleValue(request.data?.role) ?? actorRole;
+  if (actorRole !== 'hq' && requestedRole !== actorRole) {
+    throw new HttpsError('permission-denied', 'Cannot request roster for another role.');
+  }
+
+  const requestedSiteId =
+    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+      ? request.data.siteId.trim()
+      : undefined;
+  const siteId = resolveRoleSiteId(profile, actorRole, requestedSiteId);
+  const db = admin.firestore();
+
+  let learners: Array<Record<string, unknown>> = [];
+  let parents: Array<Record<string, unknown>> = [];
+  let educators: Array<Record<string, unknown>> = [];
+
+  if (requestedRole === 'parent') {
+    const parentId =
+      actorRole === 'parent'
+        ? authUid
+        : typeof request.data?.parentId === 'string'
+        ? request.data.parentId.trim()
+        : '';
+    if (!parentId) {
+      throw new HttpsError('invalid-argument', 'parentId is required for non-parent actors.');
+    }
+    const learnerIds = await collectParentLinkedLearnerIds({ parentId, siteId });
+    learners = (await fetchUsersByIds(learnerIds)).map((item) => toRosterItem(item.id, item.data));
+    const parentDoc = await db.collection(USERS_COLLECTION).doc(parentId).get();
+    if (parentDoc.exists) {
+      parents = [toRosterItem(parentDoc.id, parentDoc.data() as UserRecord)];
+    }
+  } else if (requestedRole === 'educator') {
+    const educatorId =
+      actorRole === 'educator'
+        ? authUid
+        : typeof request.data?.educatorId === 'string'
+        ? request.data.educatorId.trim()
+        : '';
+    if (!educatorId) {
+      throw new HttpsError('invalid-argument', 'educatorId is required for non-educator actors.');
+    }
+
+    const learnerIdSet = new Set<string>();
+    try {
+      let linksQuery: FirebaseFirestore.Query = db
+        .collection('educatorLearnerLinks')
+        .where('educatorId', '==', educatorId);
+      if (siteId) {
+        linksQuery = linksQuery.where('siteId', '==', siteId);
+      }
+      const links = await linksQuery.get();
+      for (const doc of links.docs) {
+        const learnerId = typeof doc.data().learnerId === 'string' ? doc.data().learnerId.trim() : '';
+        if (learnerId) learnerIdSet.add(learnerId);
+      }
+    } catch {
+      // Continue with fallback sources.
+    }
+
+    try {
+      const usersByEducator = await db
+        .collection(USERS_COLLECTION)
+        .where('educatorIds', 'array-contains', educatorId)
+        .get();
+      for (const doc of usersByEducator.docs) {
+        if (normalizeRoleValue(doc.data().role) === 'learner') {
+          learnerIdSet.add(doc.id);
+        }
+      }
+    } catch {
+      // Keep deterministic output.
+    }
+
+    learners = (await fetchUsersByIds(Array.from(learnerIdSet.values()))).map((item) =>
+      toRosterItem(item.id, item.data),
+    );
+    const educatorDoc = await db.collection(USERS_COLLECTION).doc(educatorId).get();
+    if (educatorDoc.exists) {
+      educators = [toRosterItem(educatorDoc.id, educatorDoc.data() as UserRecord)];
+    }
+  } else {
+    if (!siteId) {
+      throw new HttpsError('invalid-argument', 'siteId is required for this roster view.');
+    }
+    const users = await db
+      .collection(USERS_COLLECTION)
+      .where('siteIds', 'array-contains', siteId)
+      .get();
+    for (const doc of users.docs) {
+      const userData = doc.data() as UserRecord;
+      const normalizedRole = normalizeRoleValue(userData.role);
+      if (normalizedRole === 'learner') learners.push(toRosterItem(doc.id, userData));
+      if (normalizedRole === 'parent') parents.push(toRosterItem(doc.id, userData));
+      if (normalizedRole === 'educator') educators.push(toRosterItem(doc.id, userData));
+    }
+  }
+
+  return {
+    role: requestedRole,
+    siteId: siteId ?? null,
+    learners,
+    parents,
+    educators,
+    counts: {
+      learners: learners.length,
+      parents: parents.length,
+      educators: educators.length,
+    },
+  };
+});
+
 export const listUsers = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
 
-  const role = typeof request.data?.role === 'string' ? (request.data.role as Role) : undefined;
+  const role = normalizeRoleValue(request.data?.role);
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId : undefined;
   const searchEmail = typeof request.data?.email === 'string' ? request.data.email.toLowerCase() : undefined;
   const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100 ? request.data.limit : 50;
@@ -1691,7 +2408,7 @@ export const updateUserRoles = onCall(async (request: CallableRequest) => {
     throw new HttpsError('invalid-argument', 'uid is required');
   }
 
-  const nextRole = typeof request.data?.role === 'string' ? (request.data.role as Role) : undefined;
+  const nextRole = normalizeRoleValue(request.data?.role) ?? undefined;
   const siteIds = toStringArray(request.data?.siteIds);
   const activeSiteId = typeof request.data?.activeSiteId === 'string' ? request.data.activeSiteId : undefined;
   const isActive = typeof request.data?.isActive === 'boolean' ? request.data.isActive : undefined;

@@ -7,8 +7,54 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
+import { TelemetryService, type TelemetryCategory, type TelemetryEvent } from '@/src/lib/telemetry/telemetryService';
 import type { UserRole } from '@/src/types/schema';
+
+const LEGACY_EVENT_TO_CANONICAL: Record<string, string> = {
+  page_viewed: 'cms.page.viewed',
+  feature_discovered: 'cta.clicked',
+  help_accessed: 'cta.clicked',
+  session_started: 'session_joined',
+  session_resumed: 'session_joined',
+  session_paused: 'idle_detected',
+  session_completed: 'session_left',
+  focus_regained: 'focus_restored',
+  attendance_marked: 'attendance.recorded',
+  feedback_given: 'educator.feedback.submitted',
+  assessment_graded: 'educator.review.completed',
+  rubric_created: 'rubric.applied',
+  ai_hint_requested: 'ai_help_used',
+  ai_rubric_check: 'ai_help_used',
+  ai_debug_help: 'ai_help_used',
+  ai_critique_requested: 'ai_help_used'
+};
+
+function canonicalEventForLegacy(eventType: string): string {
+  return LEGACY_EVENT_TO_CANONICAL[eventType] || 'cta.clicked';
+}
+
+function trackMappedTelemetry(params: {
+  eventType: TelemetryEvent;
+  category: TelemetryCategory;
+  userId: string;
+  userRole: UserRole;
+  siteId: string;
+  metadata?: Record<string, unknown>;
+}) {
+  const { eventType, category, userId, userRole, siteId, metadata } = params;
+  return TelemetryService.track({
+    event: eventType,
+    category,
+    userId,
+    userRole,
+    siteId,
+    metadata: {
+      ...metadata,
+      legacyEvent: eventType,
+      canonicalEvent: canonicalEventForLegacy(eventType)
+    }
+  });
+}
 
 /**
  * Auto-track page views when component mounts
@@ -28,7 +74,7 @@ export function usePageViewTracking(pageName: string, metadata?: Record<string, 
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: 'page_viewed',
       category: 'navigation',
       userId: user.uid,
@@ -63,28 +109,26 @@ export function useSessionTracking(sessionId: string) {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     // Track session start
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: 'session_started',
       category: 'engagement',
       userId: user.uid,
       userRole: profile.role as UserRole,
       siteId,
-      sessionId,
-      metadata: {}
+      metadata: { sessionId }
     }).catch(err => console.warn('Telemetry failed:', err));
     
     startedRef.current = true;
     
     // Track session end on unmount
     return () => {
-      TelemetryService.track({
+      trackMappedTelemetry({
         event: 'session_completed',
         category: 'engagement',
         userId: user.uid,
         userRole: profile.role as UserRole,
         siteId,
-        sessionId,
-        metadata: {}
+        metadata: { sessionId }
       }).catch(err => console.warn('Telemetry failed:', err));
     };
   }, [user, profile, sessionId]);
@@ -112,7 +156,7 @@ export function useInteractionTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'navigation',
       userId: user.uid,
@@ -145,7 +189,7 @@ export function useAutonomyTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'autonomy',
       userId: user.uid,
@@ -179,7 +223,7 @@ export function useCompetenceTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'competence',
       userId: user.uid,
@@ -212,7 +256,7 @@ export function useBelongingTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'belonging',
       userId: user.uid,
@@ -245,7 +289,7 @@ export function useReflectionTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'reflection',
       userId: user.uid,
@@ -278,7 +322,7 @@ export function useAITracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'ai_interaction',
       userId: user.uid,
@@ -314,7 +358,7 @@ export function usePerformanceTracking() {
     
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
-    TelemetryService.track({
+    trackMappedTelemetry({
       event: eventType,
       category: 'performance',
       userId: user.uid,
@@ -324,4 +368,3 @@ export function usePerformanceTracking() {
     }).catch(err => console.warn('Telemetry failed:', err));
   };
 }
-

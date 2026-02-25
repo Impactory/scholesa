@@ -11,18 +11,16 @@
  */
 
 import {
-  collection,
   doc,
-  addDoc,
   updateDoc,
   increment,
   serverTimestamp,
-  Timestamp,
-  type Firestore
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
 import type { AgeBand } from '@/src/types/schema';
 import { getAgeBandFromGrade } from '@/src/lib/policies/gradeBandPolicy';
+import { TelemetryService, type TelemetryCategory, type TelemetryEvent as CanonicalTelemetryEvent } from '@/src/lib/telemetry/telemetryService';
 
 // ==================== TYPES ====================
 
@@ -118,11 +116,21 @@ class SDTTelemetry {
   async trackEvent(event: Omit<TelemetryEvent, 'timestamp' | 'ageBand'>): Promise<void> {
     try {
       const ageBand = getAgeBandFromGrade(event.grade);
-      
-      await addDoc(collection(db, 'telemetryEvents'), {
-        ...event,
+
+      await TelemetryService.track({
+        event: this.mapEventType(event.eventType),
+        category: this.mapEventCategory(event.eventType),
+        userId: event.learnerId,
+        userRole: 'learner',
+        siteId: event.siteId,
+        grade: event.grade,
         ageBand,
-        timestamp: serverTimestamp()
+        sessionId: event.sessionId,
+        missionId: event.missionId,
+        metadata: {
+          ...event.metadata,
+          sdtEventType: event.eventType
+        }
       });
 
       // Update real-time aggregates
@@ -131,6 +139,88 @@ class SDTTelemetry {
       console.error('Telemetry tracking error:', error);
       // Don't throw - telemetry failures should not break app
     }
+  }
+
+  private mapEventType(eventType: TelemetryEventType): CanonicalTelemetryEvent {
+    const map: Record<string, CanonicalTelemetryEvent> = {
+      mission_browsed: 'mission_browsed',
+      mission_selected: 'mission_selected',
+      mission_switched: 'mission_variant_chosen',
+      goal_set: 'goal_set',
+      interest_updated: 'interest_profile_updated',
+      evidence_submitted: 'artifact_submitted',
+      evidence_revised: 'artifact_revised',
+      checkpoint_attempted: 'checkpoint_attempted',
+      checkpoint_passed: 'checkpoint_passed',
+      checkpoint_failed: 'checkpoint_failed',
+      skill_proven: 'skill_proven',
+      rubric_viewed: 'rubric_viewed',
+      showcase_submitted: 'showcase_submitted',
+      recognition_given: 'recognition_given',
+      recognition_received: 'recognition_received',
+      peer_feedback_given: 'peer_feedback_given',
+      peer_feedback_received: 'peer_feedback_received',
+      crew_joined: 'crew_joined',
+      reflection_submitted: 'reflection_submitted',
+      effort_rated: 'effort_rated',
+      enjoyment_rated: 'enjoyment_rated',
+      ai_coach_used: 'ai_hint_requested',
+      explain_back_submitted: 'ai_explain_back_submitted',
+      session_started: 'session_started',
+      session_resumed: 'session_resumed',
+      session_paused: 'session_paused',
+      session_completed: 'session_completed'
+    };
+    return map[eventType] || 'feature_discovered';
+  }
+
+  private mapEventCategory(eventType: TelemetryEventType): TelemetryCategory {
+    if (
+      eventType === 'mission_browsed' ||
+      eventType === 'mission_selected' ||
+      eventType === 'mission_switched' ||
+      eventType === 'goal_set' ||
+      eventType === 'interest_updated'
+    ) {
+      return 'autonomy';
+    }
+
+    if (
+      eventType === 'evidence_submitted' ||
+      eventType === 'evidence_revised' ||
+      eventType === 'checkpoint_attempted' ||
+      eventType === 'checkpoint_passed' ||
+      eventType === 'checkpoint_failed' ||
+      eventType === 'skill_proven' ||
+      eventType === 'rubric_viewed'
+    ) {
+      return 'competence';
+    }
+
+    if (
+      eventType === 'showcase_submitted' ||
+      eventType === 'recognition_given' ||
+      eventType === 'recognition_received' ||
+      eventType === 'peer_feedback_given' ||
+      eventType === 'peer_feedback_received' ||
+      eventType === 'crew_joined'
+    ) {
+      return 'belonging';
+    }
+
+    if (
+      eventType === 'reflection_submitted' ||
+      eventType === 'effort_rated' ||
+      eventType === 'enjoyment_rated'
+    ) {
+      return 'reflection';
+    }
+
+    if (eventType === 'ai_coach_used' || eventType === 'explain_back_submitted') {
+      return 'ai_interaction';
+    }
+
+    return 'engagement';
   }
 
   /**
