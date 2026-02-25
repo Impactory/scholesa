@@ -21,6 +21,11 @@ const VOICE_EVENTS = new Set([
   'voice.blocked',
   'voice.escalated',
 ]);
+const VOICE_EVENTS_REQUIRING_UNDERSTANDING = new Set([
+  'voice.transcribe',
+  'voice.message',
+  'voice.tts',
+]);
 const BOS_COMPATIBILITY_EVENTS = [
   'ai_help_opened',
   'ai_help_used',
@@ -409,6 +414,21 @@ function overlap(leftSet, rightSet) {
   return out;
 }
 
+function hasValidUnderstandingShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const metadata = value;
+  const intentOk = typeof metadata.understandingIntent === 'string' && metadata.understandingIntent.trim().length > 0;
+  const responseModeOk = typeof metadata.responseMode === 'string' && metadata.responseMode.trim().length > 0;
+  const complexityOk = typeof metadata.complexity === 'string' && metadata.complexity.trim().length > 0;
+  const emotionalStateOk = typeof metadata.emotionalState === 'string' && metadata.emotionalState.trim().length > 0;
+  const needsScaffoldOk = typeof metadata.needsScaffold === 'boolean';
+  const confidenceOk = typeof metadata.understandingConfidence === 'number' &&
+    Number.isFinite(metadata.understandingConfidence) &&
+    metadata.understandingConfidence >= 0 &&
+    metadata.understandingConfidence <= 1;
+  return intentOk && responseModeOk && complexityOk && emotionalStateOk && needsScaffoldOk && confidenceOk;
+}
+
 function initializeAdmin(args) {
   const appOptions = {};
   if (args.project) {
@@ -445,6 +465,7 @@ async function runLiveAudit(args, registries) {
     .filter((row) => !args.site || row.siteId === args.site);
 
   const interactionQueryErrors = [];
+  const learningProfileQueryErrors = [];
   let interactionSnapshot = { docs: [] };
   try {
     interactionSnapshot = await db
@@ -476,7 +497,20 @@ async function runLiveAudit(args, registries) {
   const bosCompatibilityErrors = [];
   const bosInteractionSchemaErrors = [];
   const bosVoiceTraceContinuityErrors = [];
+  const voiceUnderstandingCompatibilityErrors = [];
+  const bosVoiceUnderstandingCompatibilityErrors = [];
+  const bosLearningProfileCompatibilityErrors = [];
   const bosEventCounts = new Map();
+  const voiceUnderstandingCoverage = {
+    'voice.transcribe': { total: 0, withSignals: 0 },
+    'voice.message': { total: 0, withSignals: 0 },
+    'voice.tts': { total: 0, withSignals: 0 },
+  };
+  const bosVoiceUnderstandingCoverage = {
+    ai_help_opened: { total: 0, withSignals: 0 },
+    ai_help_used: { total: 0, withSignals: 0 },
+    ai_coach_response: { total: 0, withSignals: 0 },
+  };
   const voiceTraceByEvent = {
     transcribe: new Set(),
     message: new Set(),
@@ -487,6 +521,23 @@ async function runLiveAudit(args, registries) {
     ai_help_used: new Set(),
     ai_coach_response: new Set(),
   };
+
+  let learningProfilesSnapshot = { docs: [] };
+  try {
+    learningProfilesSnapshot = await db
+      .collection('bosLearningProfiles')
+      .orderBy('updatedAt', 'desc')
+      .limit(Math.max(200, Math.min(args.limit, 2000)))
+      .get();
+  } catch (error) {
+    learningProfileQueryErrors.push(
+      `bos_learning_profiles_query_failed:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  const learningProfileDocs = learningProfilesSnapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((row) => !args.site || row.siteId === args.site);
 
   const allowedEventSet = new Set(registries.backendAllowedEvents);
   const nonCoreEventSet = new Set(registries.nonCoreRequiredEvents);
@@ -584,6 +635,16 @@ async function runLiveAudit(args, registries) {
         if (event === 'voice.transcribe') voiceTraceByEvent.transcribe.add(traceId);
         if (event === 'voice.message') voiceTraceByEvent.message.add(traceId);
         if (event === 'voice.tts') voiceTraceByEvent.tts.add(traceId);
+      }
+
+      if (VOICE_EVENTS_REQUIRING_UNDERSTANDING.has(event)) {
+        const coverage = voiceUnderstandingCoverage[event];
+        if (coverage) {
+          coverage.total += 1;
+          if (hasValidUnderstandingShape(metadata)) {
+            coverage.withSignals += 1;
+          }
+        }
       }
     }
 
