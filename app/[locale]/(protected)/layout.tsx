@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { Navigation } from '@/src/features/navigation/components/Navigation';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { GlobalAIAssistantDock } from '@/src/components/sdt/GlobalAIAssistantDock';
 
 export default function ProtectedLayout({
   children,
@@ -46,6 +47,7 @@ export default function ProtectedLayout({
           {children}
         </div>
       </main>
+      <GlobalAIAssistantDock />
     </div>
   );
 }
