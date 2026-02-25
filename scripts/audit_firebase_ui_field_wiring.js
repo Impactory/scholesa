@@ -33,6 +33,58 @@ const ROLE_MAP = {
   admin: 'hq',
 };
 
+const VOICE_TELEMETRY_EVENTS = new Set([
+  'voice.transcribe',
+  'voice.message',
+  'voice.tts',
+  'voice.blocked',
+  'voice.escalated',
+]);
+
+const REQUIRED_VOICE_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
+const REQUIRED_VOICE_METADATA_KEYS = [
+  'traceId',
+  'service',
+  'env',
+  'siteId',
+  'role',
+  'gradeBand',
+  'locale',
+  'eventType',
+  'timestamp',
+];
+
+const BOS_EVENT_TYPES = new Set([
+  'mission_viewed',
+  'mission_selected',
+  'mission_started',
+  'mission_completed',
+  'checkpoint_started',
+  'checkpoint_submitted',
+  'checkpoint_graded',
+  'artifact_created',
+  'artifact_submitted',
+  'artifact_reviewed',
+  'ai_help_opened',
+  'ai_help_used',
+  'ai_coach_response',
+  'ai_coach_feedback',
+  'mvl_gate_triggered',
+  'mvl_evidence_attached',
+  'mvl_passed',
+  'mvl_failed',
+  'teacher_override_mvl',
+  'teacher_override_intervention',
+  'contestability_requested',
+  'contestability_resolved',
+  'session_joined',
+  'session_left',
+  'idle_detected',
+  'focus_restored',
+]);
+
+const BOS_GRADE_BANDS = new Set(['G1_3', 'G4_6', 'G7_9', 'G10_12', 'K_5', 'G6_8', 'G9_12']);
+
 function parseArgs(argv) {
   const args = {
     env: resolveEnv(process.env.VIBE_ENV || process.env.NODE_ENV || 'dev'),
