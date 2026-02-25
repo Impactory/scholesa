@@ -158,6 +158,98 @@ function initializeAdmin() {
   };
 }
 
+function readTextSafe(filePath) {
+  if (!fs.existsSync(filePath)) return '';
+  return fs.readFileSync(filePath, 'utf8');
+}
+
+function isObjectRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isTimestampLike(value) {
+  return (
+    value instanceof admin.firestore.Timestamp ||
+    value instanceof Date ||
+    typeof value === 'string' ||
+    typeof value === 'number'
+  );
+}
+
+function hasFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function checkVoiceBosStaticSupport() {
+  const indexSourcePath = path.resolve(process.cwd(), 'functions/src/index.ts');
+  const voiceSourcePath = path.resolve(process.cwd(), 'functions/src/voiceSystem.ts');
+  const bosSourcePath = path.resolve(process.cwd(), 'functions/src/bosRuntime.ts');
+  const voiceServicePath = path.resolve(process.cwd(), 'src/lib/voice/voiceService.ts');
+
+  const indexSource = readTextSafe(indexSourcePath);
+  const voiceSource = readTextSafe(voiceSourcePath);
+  const bosSource = readTextSafe(bosSourcePath);
+  const voiceServiceSource = readTextSafe(voiceServicePath);
+
+  const checks = [
+    {
+      id: 'voice_events_allowed_backend',
+      pass:
+        indexSource.includes("'voice.transcribe'") &&
+        indexSource.includes("'voice.message'") &&
+        indexSource.includes("'voice.tts'") &&
+        indexSource.includes("'voice.blocked'") &&
+        indexSource.includes("'voice.escalated'"),
+    },
+    {
+      id: 'voice_locales_supported_backend',
+      pass:
+        voiceSource.includes("SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th']") ||
+        (voiceSource.includes("'zh-CN'") &&
+          voiceSource.includes("'zh-TW'") &&
+          voiceSource.includes("'th'") &&
+          voiceSource.includes("'en'")),
+    },
+    {
+      id: 'voice_locale_forwarded_from_web_client',
+      pass:
+        voiceServiceSource.includes("'x-scholesa-locale'") &&
+        voiceServiceSource.includes('/voice/transcribe') &&
+        voiceServiceSource.includes('/copilot/message'),
+    },
+    {
+      id: 'bos_callables_exported',
+      pass:
+        indexSource.includes('bosIngestEvent') &&
+        indexSource.includes('bosGetIntervention') &&
+        indexSource.includes('bosGetOrchestrationState') &&
+        indexSource.includes('bosScoreMvl') &&
+        indexSource.includes('bosSubmitMvlEvidence') &&
+        indexSource.includes('bosContestability'),
+    },
+    {
+      id: 'bos_runtime_collections_declared',
+      pass:
+        bosSource.includes("collection('interactionEvents')") &&
+        bosSource.includes("collection('fdmFeatures')") &&
+        bosSource.includes("collection('orchestrationStates')") &&
+        bosSource.includes("collection('interventions')") &&
+        bosSource.includes("collection('mvlEpisodes')"),
+    },
+  ];
+
+  return {
+    pass: checks.every((check) => check.pass === true),
+    checks,
+    sourceFiles: {
+      indexSourcePath: path.relative(process.cwd(), indexSourcePath),
+      voiceSourcePath: path.relative(process.cwd(), voiceSourcePath),
+      bosSourcePath: path.relative(process.cwd(), bosSourcePath),
+      voiceServicePath: path.relative(process.cwd(), voiceServicePath),
+    },
+  };
+}
+
 function checkUserCoreFields(users, siteId) {
   const missing = [];
   for (const [uid, user] of users.entries()) {
@@ -455,6 +547,199 @@ async function checkEducatorSessionCardFields(db, users, siteId) {
   };
 }
 
+async function checkVoiceBosTelemetrySupport(db, siteId) {
+  const queryErrors = [];
+  const voiceFailures = [];
+  const bosFailures = [];
+
+  let telemetryDocs = [];
+  let interactionDocs = [];
+  let orchestrationDocs = [];
+  let mvlDocs = [];
+
+  try {
+    const telemetrySnap = await db
+      .collection('telemetryEvents')
+      .where('siteId', '==', siteId)
+      .limit(300)
+      .get();
+    telemetryDocs = telemetrySnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`telemetryEvents_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const interactionSnap = await db
+      .collection('interactionEvents')
+      .where('siteId', '==', siteId)
+      .limit(300)
+      .get();
+    interactionDocs = interactionSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`interactionEvents_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const orchestrationSnap = await db
+      .collection('orchestrationStates')
+      .where('siteId', '==', siteId)
+      .limit(120)
+      .get();
+    orchestrationDocs = orchestrationSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`orchestrationStates_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const mvlSnap = await db
+      .collection('mvlEpisodes')
+      .where('siteId', '==', siteId)
+      .limit(120)
+      .get();
+    mvlDocs = mvlSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`mvlEpisodes_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const voiceDocs = telemetryDocs.filter((doc) => {
+    const event = typeof doc.data.event === 'string' ? doc.data.event.trim() : '';
+    const eventType = typeof doc.data.eventType === 'string' ? doc.data.eventType.trim() : '';
+    return VOICE_TELEMETRY_EVENTS.has(event || eventType);
+  });
+
+  for (const doc of voiceDocs) {
+    const metadata = isObjectRecord(doc.data.metadata) ? doc.data.metadata : null;
+    if (!metadata) {
+      voiceFailures.push(`voice_metadata_missing:${doc.id}`);
+      continue;
+    }
+
+    for (const key of REQUIRED_VOICE_METADATA_KEYS) {
+      if (metadata[key] === undefined || metadata[key] === null || metadata[key] === '') {
+        voiceFailures.push(`voice_metadata_missing_key:${doc.id}:${key}`);
+      }
+    }
+
+    const event = typeof doc.data.event === 'string' ? doc.data.event.trim() : '';
+    const eventType = typeof metadata.eventType === 'string' ? metadata.eventType.trim() : '';
+    if (event && eventType && event !== eventType) {
+      voiceFailures.push(`voice_event_type_mismatch:${doc.id}:${event}:${eventType}`);
+    }
+
+    const metadataSiteId = typeof metadata.siteId === 'string' ? metadata.siteId.trim() : '';
+    if (metadataSiteId && metadataSiteId !== siteId) {
+      voiceFailures.push(`voice_site_mismatch:${doc.id}:${metadataSiteId}`);
+    }
+
+    const locale = typeof metadata.locale === 'string' ? metadata.locale.trim() : '';
+    if (!REQUIRED_VOICE_LOCALES.has(locale)) {
+      voiceFailures.push(`voice_locale_invalid:${doc.id}:${locale || 'missing'}`);
+    }
+
+    if (!isTimestampLike(metadata.timestamp)) {
+      voiceFailures.push(`voice_timestamp_invalid:${doc.id}`);
+    }
+
+    const metadataRole = typeof metadata.role === 'string' ? metadata.role.trim() : '';
+    if (!metadataRole) {
+      voiceFailures.push(`voice_role_missing:${doc.id}`);
+    }
+  }
+
+  const bosEventDocs = interactionDocs.filter((doc) => {
+    const eventType = typeof doc.data.eventType === 'string' ? doc.data.eventType.trim() : '';
+    return BOS_EVENT_TYPES.has(eventType);
+  });
+
+  for (const doc of bosEventDocs) {
+    const data = doc.data;
+    if (typeof data.eventType !== 'string' || !data.eventType.trim()) {
+      bosFailures.push(`bos_event_type_missing:${doc.id}`);
+    }
+    if (typeof data.siteId !== 'string' || data.siteId.trim() !== siteId) {
+      bosFailures.push(`bos_site_mismatch:${doc.id}:${String(data.siteId || 'missing')}`);
+    }
+    if (typeof data.actorId !== 'string' || !data.actorId.trim()) {
+      bosFailures.push(`bos_actor_missing:${doc.id}`);
+    }
+    if (typeof data.actorRole !== 'string' || !data.actorRole.trim()) {
+      bosFailures.push(`bos_actor_role_missing:${doc.id}`);
+    }
+    if (typeof data.gradeBand !== 'string' || !BOS_GRADE_BANDS.has(data.gradeBand.trim())) {
+      bosFailures.push(`bos_grade_band_invalid:${doc.id}:${String(data.gradeBand || 'missing')}`);
+    }
+    if (!isTimestampLike(data.timestamp)) {
+      bosFailures.push(`bos_timestamp_missing:${doc.id}`);
+    }
+    if (data.payload !== undefined && !isObjectRecord(data.payload)) {
+      bosFailures.push(`bos_payload_not_object:${doc.id}`);
+    }
+  }
+
+  for (const doc of orchestrationDocs) {
+    const data = doc.data;
+    if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
+      bosFailures.push(`orchestration_missing_learner:${doc.id}`);
+    }
+    if (typeof data.sessionOccurrenceId !== 'string' || !data.sessionOccurrenceId.trim()) {
+      bosFailures.push(`orchestration_missing_session:${doc.id}`);
+    }
+    if (!isObjectRecord(data.x_hat)) {
+      bosFailures.push(`orchestration_missing_x_hat:${doc.id}`);
+    } else {
+      const xHat = data.x_hat;
+      if (!hasFiniteNumber(xHat.cognition)) bosFailures.push(`orchestration_bad_cognition:${doc.id}`);
+      if (!hasFiniteNumber(xHat.engagement)) bosFailures.push(`orchestration_bad_engagement:${doc.id}`);
+      if (!hasFiniteNumber(xHat.integrity)) bosFailures.push(`orchestration_bad_integrity:${doc.id}`);
+    }
+    if (!isObjectRecord(data.P) || !hasFiniteNumber(data.P.confidence)) {
+      bosFailures.push(`orchestration_missing_covariance:${doc.id}`);
+    }
+  }
+
+  for (const doc of mvlDocs) {
+    const data = doc.data;
+    if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
+      bosFailures.push(`mvl_missing_learner:${doc.id}`);
+    }
+    if (!Array.isArray(data.riskSources)) {
+      bosFailures.push(`mvl_missing_risk_sources:${doc.id}`);
+    }
+    if (!isTimestampLike(data.createdAt) && !isTimestampLike(data.updatedAt)) {
+      bosFailures.push(`mvl_missing_timestamps:${doc.id}`);
+    }
+  }
+
+  const staticSupport = checkVoiceBosStaticSupport();
+  const pass =
+    queryErrors.length === 0 &&
+    voiceFailures.length === 0 &&
+    bosFailures.length === 0 &&
+    staticSupport.pass;
+
+  return {
+    id: 'voice_bos_telemetry_intelligence_support',
+    pass,
+    details: {
+      siteId,
+      queryErrors: queryErrors.slice(0, 40),
+      staticSupport,
+      counts: {
+        telemetryDocs: telemetryDocs.length,
+        voiceDocs: voiceDocs.length,
+        interactionDocs: interactionDocs.length,
+        bosEventDocs: bosEventDocs.length,
+        orchestrationDocs: orchestrationDocs.length,
+        mvlDocs: mvlDocs.length,
+      },
+      voiceFailureCount: voiceFailures.length,
+      bosFailureCount: bosFailures.length,
+      voiceFailureSample: voiceFailures.slice(0, 80),
+      bosFailureSample: bosFailures.slice(0, 80),
+    },
+  };
+}
+
 function checkRoleDashboardStatSources(db, siteId) {
   const requiredCollections = [
     'users',
@@ -524,6 +809,7 @@ async function run() {
   checks.push(await checkParentDashboardContract(db, users, args.siteId));
   checks.push(await checkEducatorRosterContract(db, users, args.siteId));
   checks.push(await checkEducatorSessionCardFields(db, users, args.siteId));
+  checks.push(await checkVoiceBosTelemetrySupport(db, args.siteId));
   checks.push(checkRoleDashboardStatSources(db, args.siteId));
 
   const pass = checks.every((check) => check.pass === true);
