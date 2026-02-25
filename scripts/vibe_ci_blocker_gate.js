@@ -11,22 +11,9 @@ const {
   validateCanonicalReport,
   writeCanonicalReport,
 } = require('./vibe_audit_report_schema');
+const { VIBE_BLOCKER_REPORTS } = require('./vibe_blockers');
 
-const REQUIRED_BLOCKERS = [
-  'vendor-dependency-ban',
-  'vendor-domain-ban',
-  'vendor-secret-ban',
-  'vendor-egress-proof',
-  'tenant-isolation',
-  'safety-fixtures',
-  'voice-retention-ttl',
-  'logging-no-raw-content',
-  'telemetry-schema-valid',
-  'inference-authz',
-  'inference-ingress-private',
-  'infra-drift',
-  'i18n-coverage',
-];
+const REQUIRED_BLOCKERS = VIBE_BLOCKER_REPORTS;
 
 function parseArgs(argv) {
   const args = {
