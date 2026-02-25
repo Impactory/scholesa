@@ -1,0 +1,28 @@
+siteId,userId,role,intendedRole,email,displayName,activeSiteId,siteLinked,createdBySeedScript,source,exists
+6h9gugxtiSwFIPsHTvJM,seed_6h9gugxtiswfipshtvjm_educator_001,educator,educator,seed.6h9gugxtiswfipshtvjm.educator@scholesa.local,Seed educator 6h9gugxtiSwFIPsHTvJM,6h9gugxtiSwFIPsHTvJM,true,true,seed-core-roles-sites,true
+6h9gugxtiSwFIPsHTvJM,seed_6h9gugxtiswfipshtvjm_learner_001,learner,learner,seed.6h9gugxtiswfipshtvjm.learner@scholesa.local,Seed learner 6h9gugxtiSwFIPsHTvJM,6h9gugxtiSwFIPsHTvJM,true,true,seed-core-roles-sites,true
+6h9gugxtiSwFIPsHTvJM,seed_6h9gugxtiswfipshtvjm_parent_001,parent,parent,seed.6h9gugxtiswfipshtvjm.parent@scholesa.local,Seed parent 6h9gugxtiSwFIPsHTvJM,6h9gugxtiSwFIPsHTvJM,true,true,seed-core-roles-sites,true
+6h9gugxtiSwFIPsHTvJM,seed_6h9gugxtiswfipshtvjm_site_001,site,site,seed.6h9gugxtiswfipshtvjm.site@scholesa.local,Seed site 6h9gugxtiSwFIPsHTvJM,6h9gugxtiSwFIPsHTvJM,true,true,seed-core-roles-sites,true
+gQgNvqfLgf6wOMANubX1,seed_gqgnvqflgf6womanubx1_educator_001,educator,educator,seed.gqgnvqflgf6womanubx1.educator@scholesa.local,Seed educator gQgNvqfLgf6wOMANubX1,gQgNvqfLgf6wOMANubX1,true,true,seed-core-roles-sites,true
+gQgNvqfLgf6wOMANubX1,seed_gqgnvqflgf6womanubx1_learner_001,learner,learner,seed.gqgnvqflgf6womanubx1.learner@scholesa.local,Seed learner gQgNvqfLgf6wOMANubX1,gQgNvqfLgf6wOMANubX1,true,true,seed-core-roles-sites,true
+gQgNvqfLgf6wOMANubX1,seed_gqgnvqflgf6womanubx1_parent_001,parent,parent,seed.gqgnvqflgf6womanubx1.parent@scholesa.local,Seed parent gQgNvqfLgf6wOMANubX1,gQgNvqfLgf6wOMANubX1,true,true,seed-core-roles-sites,true
+gQgNvqfLgf6wOMANubX1,seed_gqgnvqflgf6womanubx1_site_001,site,site,seed.gqgnvqflgf6womanubx1.site@scholesa.local,Seed site gQgNvqfLgf6wOMANubX1,gQgNvqfLgf6wOMANubX1,true,true,seed-core-roles-sites,true
+lXvd5x50mDXbjlM5Av9Z,seed_lxvd5x50mdxbjlm5av9z_educator_001,educator,educator,seed.lxvd5x50mdxbjlm5av9z.educator@scholesa.local,Seed educator lXvd5x50mDXbjlM5Av9Z,lXvd5x50mDXbjlM5Av9Z,true,true,seed-core-roles-sites,true
+lXvd5x50mDXbjlM5Av9Z,seed_lxvd5x50mdxbjlm5av9z_learner_001,learner,learner,seed.lxvd5x50mdxbjlm5av9z.learner@scholesa.local,Seed learner lXvd5x50mDXbjlM5Av9Z,lXvd5x50mDXbjlM5Av9Z,true,true,seed-core-roles-sites,true
+lXvd5x50mDXbjlM5Av9Z,seed_lxvd5x50mdxbjlm5av9z_parent_001,parent,parent,seed.lxvd5x50mdxbjlm5av9z.parent@scholesa.local,Seed parent lXvd5x50mDXbjlM5Av9Z,lXvd5x50mDXbjlM5Av9Z,true,true,seed-core-roles-sites,true
+lXvd5x50mDXbjlM5Av9Z,seed_lxvd5x50mdxbjlm5av9z_site_001,site,site,seed.lxvd5x50mdxbjlm5av9z.site@scholesa.local,Seed site lXvd5x50mDXbjlM5Av9Z,lXvd5x50mDXbjlM5Av9Z,true,true,seed-core-roles-sites,true
+pilot-site-001,seed_pilot_site_001_educator_001,educator,educator,seed.pilot_site_001.educator@scholesa.local,Seed educator pilot-site-001,pilot-site-001,true,true,seed-core-roles-sites,true
+pilot-site-001,test-educator-001,educator,,educator@scholesa.dev,Seed Pilot Educator 001,pilot-site-001,true,false,pilot-legacy-link-repair,true
+pilot-site-001,FD3V35hureMivVtjxQ7fZNsQvnI3,learner,,learner@scholesa.test,Test Learner,site-1,false,false,pilot-legacy-link-repair,true
+pilot-site-001,seed_pilot_site_001_learner_001,learner,learner,seed.pilot_site_001.learner@scholesa.local,Seed learner pilot-site-001,pilot-site-001,true,true,seed-core-roles-sites,true
+pilot-site-001,test-learner-001,learner,,learner@scholesa.dev,Seed Pilot Learner 001,pilot-site-001,true,false,pilot-legacy-link-repair,true
+pilot-site-001,seed_pilot_site_001_parent_001,parent,parent,seed.pilot_site_001.parent@scholesa.local,Seed parent pilot-site-001,pilot-site-001,true,true,seed-core-roles-sites,true
+pilot-site-001,test-parent-001,parent,,parent@scholesa.dev,Seed Pilot Parent 001,pilot-site-001,true,false,pilot-legacy-link-repair,true
+Rr6jCLp4BqYwEq7TE1n3,seed_rr6jclp4bqyweq7te1n3_educator_001,educator,educator,seed.rr6jclp4bqyweq7te1n3.educator@scholesa.local,Seed educator Rr6jCLp4BqYwEq7TE1n3,Rr6jCLp4BqYwEq7TE1n3,true,true,seed-core-roles-sites,true
+Rr6jCLp4BqYwEq7TE1n3,seed_rr6jclp4bqyweq7te1n3_learner_001,learner,learner,seed.rr6jclp4bqyweq7te1n3.learner@scholesa.local,Seed learner Rr6jCLp4BqYwEq7TE1n3,Rr6jCLp4BqYwEq7TE1n3,true,true,seed-core-roles-sites,true
+Rr6jCLp4BqYwEq7TE1n3,seed_rr6jclp4bqyweq7te1n3_parent_001,parent,parent,seed.rr6jclp4bqyweq7te1n3.parent@scholesa.local,Seed parent Rr6jCLp4BqYwEq7TE1n3,Rr6jCLp4BqYwEq7TE1n3,true,true,seed-core-roles-sites,true
+Rr6jCLp4BqYwEq7TE1n3,seed_rr6jclp4bqyweq7te1n3_site_001,site,site,seed.rr6jclp4bqyweq7te1n3.site@scholesa.local,Seed site Rr6jCLp4BqYwEq7TE1n3,Rr6jCLp4BqYwEq7TE1n3,true,true,seed-core-roles-sites,true
+rSYp3MS0wU1IQPtPC59V,seed_rsyp3ms0wu1iqptpc59v_educator_001,educator,educator,seed.rsyp3ms0wu1iqptpc59v.educator@scholesa.local,Seed educator rSYp3MS0wU1IQPtPC59V,rSYp3MS0wU1IQPtPC59V,true,true,seed-core-roles-sites,true
+rSYp3MS0wU1IQPtPC59V,seed_rsyp3ms0wu1iqptpc59v_learner_001,learner,learner,seed.rsyp3ms0wu1iqptpc59v.learner@scholesa.local,Seed learner rSYp3MS0wU1IQPtPC59V,rSYp3MS0wU1IQPtPC59V,true,true,seed-core-roles-sites,true
+rSYp3MS0wU1IQPtPC59V,seed_rsyp3ms0wu1iqptpc59v_parent_001,parent,parent,seed.rsyp3ms0wu1iqptpc59v.parent@scholesa.local,Seed parent rSYp3MS0wU1IQPtPC59V,rSYp3MS0wU1IQPtPC59V,true,true,seed-core-roles-sites,true
+rSYp3MS0wU1IQPtPC59V,seed_rsyp3ms0wu1iqptpc59v_site_001,site,site,seed.rsyp3ms0wu1iqptpc59v.site@scholesa.local,Seed site rSYp3MS0wU1IQPtPC59V,rSYp3MS0wU1IQPtPC59V,true,true,seed-core-roles-sites,true
