@@ -653,16 +653,16 @@ async function applyProposedFixes(db, proposedFixes) {
       );
       pendingWrites += 1;
     } else if (fix.type === 'set') {
+      const payload = {
+        ...(fix.data || {}),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (fix.collection === 'guardianLinks' || fix.collection === 'educatorLearnerLinks') {
+        payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      }
       batch.set(
         ref,
-        {
-          ...(fix.data || {}),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          createdAt:
-            fix.collection === 'guardianLinks' || fix.collection === 'educatorLearnerLinks'
-              ? admin.firestore.FieldValue.serverTimestamp()
-              : undefined,
-        },
+        payload,
         { merge: fix.merge !== false },
       );
       pendingWrites += 1;
