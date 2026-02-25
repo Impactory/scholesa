@@ -11,6 +11,7 @@ const suites = [
   { name: 'voice:role-policy', script: 'scripts/vibe_voice_role_policy.js', report: 'voice-role-policy.json' },
   { name: 'voice:egress-none', script: 'scripts/vibe_voice_egress.js', report: 'voice-egress.json' },
   { name: 'stt:locale-accuracy-smoke', script: 'scripts/vibe_stt_smoke.js', report: 'stt-smoke.json' },
+  { name: 'voice:trace-continuity', script: 'scripts/vibe_voice_trace_continuity.js', report: 'voice-trace-continuity.json' },
   { name: 'tts:pronunciation-regression', script: 'scripts/vibe_tts_pronunciation.js', report: 'tts-pronunciation.json' },
   { name: 'tts:prosody-policy', script: 'scripts/vibe_tts_prosody_policy.js', report: 'tts-prosody-policy.json' },
   { name: 'voice:utf8-integrity', script: 'scripts/vibe_voice_utf8.js', report: 'voice-utf8.json' },
@@ -58,4 +59,3 @@ function main() {
 }
 
 main();
-

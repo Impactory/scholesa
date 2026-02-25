@@ -236,6 +236,14 @@ function checkVoiceBosStaticSupport() {
         bosSource.includes("collection('interventions')") &&
         bosSource.includes("collection('mvlEpisodes')"),
     },
+    {
+      id: 'bos_self_learning_pipeline_declared',
+      pass:
+        bosSource.includes('extractFeatures(') &&
+        bosSource.includes('ekfLiteUpdate(') &&
+        bosSource.includes('computeIntervention(') &&
+        bosSource.includes('scoreMvlEpisode('),
+    },
   ];
 
   return {
