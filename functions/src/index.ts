@@ -82,15 +82,55 @@ function getStripe(): Stripe | null {
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 type TelemetryRole = Role | 'system';
+type CanonicalTelemetryRole = 'student' | 'teacher' | 'admin' | 'system';
 
 interface UserRecord {
   email?: string;
   displayName?: string;
-  role?: Role;
+  role?: string;
   siteIds?: string[];
   activeSiteId?: string;
+  learnerIds?: string[];
+  parentIds?: string[];
+  educatorIds?: string[];
+  teacherIds?: string[];
+  gradeBand?: string;
   isActive?: boolean;
   updatedAt?: FirebaseFirestore.FieldValue | number;
+}
+
+function normalizeRoleValue(rawRole: unknown): Role | null {
+  if (typeof rawRole !== 'string') return null;
+  const normalized = rawRole.trim().toLowerCase();
+  switch (normalized) {
+    case 'learner':
+    case 'student':
+      return 'learner';
+    case 'educator':
+    case 'teacher':
+      return 'educator';
+    case 'parent':
+    case 'guardian':
+      return 'parent';
+    case 'site':
+    case 'sitelead':
+    case 'site_lead':
+      return 'site';
+    case 'partner':
+      return 'partner';
+    case 'hq':
+    case 'admin':
+      return 'hq';
+    default:
+      return null;
+  }
+}
+
+function toCanonicalTelemetryRole(role: TelemetryRole): CanonicalTelemetryRole {
+  if (role === 'learner') return 'student';
+  if (role === 'educator') return 'teacher';
+  if (role === 'system') return 'system';
+  return 'admin';
 }
 
 const USERS_COLLECTION = 'users';
@@ -258,10 +298,16 @@ async function requireHq(authUid: string | undefined) {
   }
   const snap = await admin.firestore().collection(USERS_COLLECTION).doc(authUid).get();
   const data = snap.data() as UserRecord | undefined;
-  if (!data || data.role !== 'hq') {
+  if (!data || normalizeRoleValue(data.role) !== 'hq') {
     throw new HttpsError('permission-denied', 'HQ role required.');
   }
-  return { uid: authUid, user: data };
+  return {
+    uid: authUid,
+    user: {
+      ...data,
+      role: 'hq',
+    },
+  };
 }
 
 async function sendNotification(payload: { channel: string; threadId: string; messageId: string; siteId: string }) {
@@ -964,7 +1010,8 @@ async function requireRoleAndSite(authUid: string | undefined, allowedRoles: Rol
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
   const profile = await getUserProfile(authUid);
-  if (!profile || !profile.role || !allowedRoles.includes(profile.role)) {
+  const canonicalRole = normalizeRoleValue(profile?.role);
+  if (!profile || !canonicalRole || !allowedRoles.includes(canonicalRole)) {
     throw new HttpsError('permission-denied', 'Insufficient role.');
   }
   if (siteId && siteId.trim().length > 0) {
@@ -973,7 +1020,14 @@ async function requireRoleAndSite(authUid: string | undefined, allowedRoles: Rol
       throw new HttpsError('permission-denied', 'Site access denied.');
     }
   }
-  return { uid: authUid, role: profile.role, profile };
+  return {
+    uid: authUid,
+    role: canonicalRole,
+    profile: {
+      ...profile,
+      role: canonicalRole,
+    },
+  };
 }
 
 function normalizeTelemetryKey(key: string): string {
@@ -995,6 +1049,90 @@ function extractTraceIdFromHeader(headerValue: string | undefined): string | und
   if (!headerValue) return undefined;
   const traceId = headerValue.split('/')[0]?.trim();
   return traceId && traceId.length > 0 ? traceId : undefined;
+}
+
+function resolveTelemetryEnv(): 'dev' | 'staging' | 'prod' {
+  const raw = String(process.env.VIBE_ENV || process.env.APP_ENV || process.env.NODE_ENV || '')
+    .trim()
+    .toLowerCase();
+  if (raw === 'production' || raw === 'prod') return 'prod';
+  if (raw === 'staging' || raw === 'stage') return 'staging';
+  return 'dev';
+}
+
+function toCanonicalTelemetryGradeBand(rawValue: unknown): 'k5' | 'ms' | 'hs' {
+  if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+    if (rawValue <= 5) return 'k5';
+    if (rawValue <= 8) return 'ms';
+    return 'hs';
+  }
+  if (typeof rawValue !== 'string') return 'ms';
+  const normalized = rawValue.trim().toLowerCase();
+  if (
+    normalized === 'k5' ||
+    normalized === 'k-5' ||
+    normalized === 'k_5' ||
+    normalized === 'grades_1_3' ||
+    normalized === 'grades_4_6'
+  ) {
+    return 'k5';
+  }
+  if (
+    normalized === 'ms' ||
+    normalized === '6-8' ||
+    normalized === 'g6_8' ||
+    normalized === 'grades_7_9'
+  ) {
+    return 'ms';
+  }
+  if (
+    normalized === 'hs' ||
+    normalized === '9-12' ||
+    normalized === 'g9_12' ||
+    normalized === 'grades_10_12'
+  ) {
+    return 'hs';
+  }
+  return 'ms';
+}
+
+function normalizeTelemetryLocale(rawValue: unknown): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
+  if (typeof rawValue !== 'string') return 'en';
+  const normalized = rawValue.trim();
+  if (normalized === 'en' || normalized === 'zh-CN' || normalized === 'zh-TW' || normalized === 'th') {
+    return normalized;
+  }
+  const lowered = normalized.toLowerCase();
+  if (lowered.startsWith('zh-tw') || lowered.startsWith('zh-hk') || lowered.startsWith('zh-hant')) {
+    return 'zh-TW';
+  }
+  if (lowered.startsWith('zh')) return 'zh-CN';
+  if (lowered.startsWith('th')) return 'th';
+  return 'en';
+}
+
+function resolveTelemetryService(metadata: Record<string, unknown> | undefined): string {
+  const value = metadata?.service;
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim();
+  }
+  return 'scholesa-api';
+}
+
+function resolveTelemetryLocale(metadata: Record<string, unknown> | undefined): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
+  return normalizeTelemetryLocale(metadata?.locale ?? metadata?.targetLocale);
+}
+
+function resolveTelemetryGradeBand(
+  metadata: Record<string, unknown> | undefined,
+  role: TelemetryRole,
+): 'k5' | 'ms' | 'hs' {
+  const raw = metadata?.gradeBand ?? metadata?.grade ?? metadata?.grade_level;
+  if (raw !== undefined) {
+    return toCanonicalTelemetryGradeBand(raw);
+  }
+  if (role === 'learner') return 'ms';
+  return 'hs';
 }
 
 function isTelemetryOriginAllowed(origin: string | undefined): boolean {
@@ -1116,21 +1254,45 @@ async function persistTelemetryEvent(params: {
   const { metadata: sanitizedMetadata, redactedPaths } = sanitizeTelemetryMetadata(metadata);
   const effectiveUserId = userId && userId.trim().length > 0 ? userId : 'system';
   const effectiveSiteId = siteId && siteId.trim().length > 0 ? siteId.trim() : TELEMETRY_UNSCOPED_SITE_ID;
-  const effectiveRole = role && role.trim().length > 0 ? role : 'system';
+  const normalizedRole = role === 'system' ? 'system' : normalizeRoleValue(role);
+  const effectiveRole: TelemetryRole = normalizedRole ?? 'system';
   const effectiveRequestId = requestId ?? `telemetry-${randomUUID()}`;
   const effectiveTraceId = traceId ?? effectiveRequestId;
+  const schemaRole = toCanonicalTelemetryRole(effectiveRole);
+  const telemetryService = resolveTelemetryService(sanitizedMetadata);
+  const telemetryEnv = resolveTelemetryEnv();
+  const locale = resolveTelemetryLocale(sanitizedMetadata);
+  const gradeBand = resolveTelemetryGradeBand(sanitizedMetadata, effectiveRole);
+  const timestampIso = new Date().toISOString();
   return admin.firestore().collection(TELEMETRY_COLLECTION).add({
     event,
+    eventType: event,
     userId: effectiveUserId,
     role: effectiveRole,
+    roleCanonical: schemaRole,
+    actorRole: effectiveRole,
+    service: telemetryService,
+    env: telemetryEnv,
     siteId: effectiveSiteId,
+    gradeBand,
+    locale,
+    traceId: effectiveTraceId,
     metadata: {
       ...sanitizedMetadata,
       requestId: effectiveRequestId,
       traceId: effectiveTraceId,
+      service: telemetryService,
+      env: telemetryEnv,
+      locale,
+      gradeBand,
+      roleCanonical: schemaRole,
+      eventType: event,
+      timestampIso,
       redactionApplied: redactedPaths.length > 0,
       redactedPathCount: redactedPaths.length,
     },
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestampIso,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -1180,6 +1342,10 @@ async function handleTelemetry(request: CallableRequest) {
   if (!userProfile || !userProfile.role) {
     throw new HttpsError('permission-denied', 'User profile missing role.');
   }
+  const role = normalizeRoleValue(userProfile.role);
+  if (!role) {
+    throw new HttpsError('permission-denied', 'User role is not allowed.');
+  }
 
   const siteFromRequest = typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
     ? request.data.siteId.trim()
@@ -1191,7 +1357,6 @@ async function handleTelemetry(request: CallableRequest) {
     }
   }
 
-  const role = userProfile.role;
   const siteId = siteFromRequest ?? userProfile.activeSiteId ?? (userProfile.siteIds?.[0] ?? TELEMETRY_UNSCOPED_SITE_ID);
   if (siteId === TELEMETRY_UNSCOPED_SITE_ID && role !== 'hq') {
     throw new HttpsError('permission-denied', 'No active site context available.');

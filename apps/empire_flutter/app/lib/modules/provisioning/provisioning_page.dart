@@ -28,7 +28,7 @@ class ProvisioningPage extends StatefulWidget {
 class _ProvisioningPageState extends State<ProvisioningPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _initialized = false;
+  String? _lastLoadedSiteId;
 
   @override
   void initState() {
@@ -59,8 +59,9 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      _initialized = true;
+    final String? activeSiteId = context.read<AppState>().activeSiteId;
+    if (activeSiteId != null && activeSiteId != _lastLoadedSiteId) {
+      _lastLoadedSiteId = activeSiteId;
       _loadData();
     }
   }

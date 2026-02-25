@@ -41,6 +41,10 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        await _loadLearnersFromFirestore(siteId);
+        return;
+      }
       final Map<String, dynamic> response =
           await _apiClient.get('/v1/sites/$siteId/learners');
       final List<dynamic> items = response['items'] as List? ?? <dynamic>[];
@@ -71,6 +75,10 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        await _loadParentsFromFirestore(siteId);
+        return;
+      }
       final Map<String, dynamic> response =
           await _apiClient.get('/v1/sites/$siteId/parents');
       final List<dynamic> items = response['items'] as List? ?? <dynamic>[];
@@ -97,6 +105,11 @@ class ProvisioningService extends ChangeNotifier {
   /// Load guardian links for site
   Future<void> loadGuardianLinks(String siteId) async {
     try {
+      if (!_useProvisioningApi) {
+        await _loadGuardianLinksFromFirestore(siteId);
+        notifyListeners();
+        return;
+      }
       final Map<String, dynamic> response = await _apiClient
           .get('/v1/guardian-links', queryParams: <String, String>{
         'siteId': siteId,
@@ -134,6 +147,22 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        final LearnerProfile learner = await _createOrLinkLearnerInFirestore(
+          siteId: siteId,
+          email: email,
+          displayName: displayName,
+          gradeLevel: gradeLevel,
+          dateOfBirth: dateOfBirth,
+          notes: notes,
+        );
+        _learners.removeWhere((LearnerProfile l) => l.id == learner.id);
+        _learners.add(learner);
+        _learners.sort((LearnerProfile a, LearnerProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return learner;
+      }
       final Map<String, dynamic> response = await _apiClient.post(
         '/v1/sites/$siteId/learners',
         body: <String, dynamic>{
@@ -190,6 +219,20 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        final ParentProfile parent = await _createOrLinkParentInFirestore(
+          siteId: siteId,
+          email: email,
+          displayName: displayName,
+          phone: phone,
+        );
+        _parents.removeWhere((ParentProfile p) => p.id == parent.id);
+        _parents.add(parent);
+        _parents.sort((ParentProfile a, ParentProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return parent;
+      }
       final Map<String, dynamic> response = await _apiClient.post(
         '/v1/sites/$siteId/parents',
         body: <String, dynamic>{
@@ -242,6 +285,44 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        final DocumentReference<Map<String, dynamic>> ref =
+            _firestore.collection('guardianLinks').doc();
+        final String createdBy = _auth.currentUser?.uid ?? 'system';
+        await ref.set(<String, dynamic>{
+          'siteId': siteId,
+          'parentId': parentId,
+          'learnerId': learnerId,
+          'relationship': relationship,
+          'isPrimary': isPrimary,
+          'createdAt': FieldValue.serverTimestamp(),
+          'createdBy': createdBy,
+        });
+        await _ensureUserLinkedToSite(userId: parentId, siteId: siteId);
+        await _ensureUserLinkedToSite(userId: learnerId, siteId: siteId);
+        await _syncLearnerParentIds(
+          learnerId: learnerId,
+          parentId: parentId,
+          add: true,
+        );
+        final Map<String, String> displayNames =
+            await _loadDisplayNames(<String>{parentId, learnerId});
+        final GuardianLink link = GuardianLink(
+          id: ref.id,
+          siteId: siteId,
+          parentId: parentId,
+          learnerId: learnerId,
+          relationship: relationship,
+          isPrimary: isPrimary,
+          createdAt: DateTime.now(),
+          createdBy: createdBy,
+          parentName: displayNames[parentId],
+          learnerName: displayNames[learnerId],
+        );
+        _guardianLinks.add(link);
+        notifyListeners();
+        return link;
+      }
       final Map<String, dynamic> response = await _apiClient.post(
         '/v1/guardian-links',
         body: <String, dynamic>{
@@ -317,6 +398,26 @@ class ProvisioningService extends ChangeNotifier {
   /// Delete guardian link
   Future<bool> deleteGuardianLink(String linkId) async {
     try {
+      if (!_useProvisioningApi) {
+        GuardianLink? existing;
+        for (final GuardianLink link in _guardianLinks) {
+          if (link.id == linkId) {
+            existing = link;
+            break;
+          }
+        }
+        await _firestore.collection('guardianLinks').doc(linkId).delete();
+        if (existing != null) {
+          await _syncLearnerParentIds(
+            learnerId: existing.learnerId,
+            parentId: existing.parentId,
+            add: false,
+          );
+        }
+        _guardianLinks.removeWhere((GuardianLink l) => l.id == linkId);
+        notifyListeners();
+        return true;
+      }
       await _apiClient.delete('/v1/guardian-links/$linkId');
       _guardianLinks.removeWhere((GuardianLink l) => l.id == linkId);
       notifyListeners();
