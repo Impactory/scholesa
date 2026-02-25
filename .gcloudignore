@@ -36,3 +36,12 @@ docs/
 
 # Other unnecessary folders
 dataconnect/
+
+# Flutter generated artifacts (large, reproducible, not required for CI gates)
+apps/empire_flutter/app/build/
+apps/empire_flutter/app/.dart_tool/
+apps/empire_flutter/app/android/.gradle/
+apps/empire_flutter/app/ios/Pods/
+apps/empire_flutter/app/macos/Pods/
+apps/empire_flutter/app/windows/flutter/ephemeral/
+apps/empire_flutter/app/linux/flutter/ephemeral/

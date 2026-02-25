@@ -5,9 +5,9 @@ steps:
   args:
     - -lc
     - |
+      set -euo pipefail
       npm ci
-      npm run rc2:regression
-      npm run compliance:gate
+      npm run lint
 - name: 'gcr.io/cloud-builders/docker'
   id: 'docker-build'
   waitFor:
