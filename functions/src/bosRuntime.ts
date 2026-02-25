@@ -23,7 +23,7 @@
 
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
-import { callInternalInferenceJson } from './internalInferenceGateway';
+import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 
 const db = admin.firestore();
 const TELEMETRY_COLLECTION = 'telemetryEvents';
@@ -965,6 +965,9 @@ export const bosGetIntervention = onCall(
         callerService: 'scholesa-ai',
       },
     });
+    if (isInternalInferenceRequired() && !bosInference.ok) {
+      throw new HttpsError('unavailable', 'Internal BOS inference is required but unavailable.');
+    }
 
     const inferenceRoot = bosInference.ok ? asRecord(bosInference.data) : undefined;
     if (inferenceRoot) {
@@ -982,48 +985,55 @@ export const bosGetIntervention = onCall(
         asRecord(inferenceRoot?.recommendation) ??
         inferenceRoot;
       if (candidate) {
-        const typeCandidate = normalizeString(candidate.type)?.toLowerCase();
-        if (
-          typeCandidate === 'nudge' ||
-          typeCandidate === 'scaffold' ||
-          typeCandidate === 'handoff' ||
-          typeCandidate === 'revisit' ||
-          typeCandidate === 'pace'
-        ) {
-          intervention.type = typeCandidate;
-        }
+        const modelConfidence = clamp(toFiniteNumber(
+          candidate.confidence ?? asRecord(candidate.metadata)?.confidence,
+          0.5,
+        ));
+        const allowOverride = modelConfidence >= 0.35;
+        if (allowOverride) {
+          const typeCandidate = normalizeString(candidate.type)?.toLowerCase();
+          if (
+            typeCandidate === 'nudge' ||
+            typeCandidate === 'scaffold' ||
+            typeCandidate === 'handoff' ||
+            typeCandidate === 'revisit' ||
+            typeCandidate === 'pace'
+          ) {
+            intervention.type = typeCandidate;
+          }
 
-        const salienceCandidate = normalizeString(candidate.salience)?.toLowerCase();
-        if (salienceCandidate === 'low' || salienceCandidate === 'medium' || salienceCandidate === 'high') {
-          intervention.salience = salienceCandidate;
-        }
+          const salienceCandidate = normalizeString(candidate.salience)?.toLowerCase();
+          if (salienceCandidate === 'low' || salienceCandidate === 'medium' || salienceCandidate === 'high') {
+            intervention.salience = salienceCandidate;
+          }
 
-        const modeCandidate = normalizeString(candidate.mode)?.toLowerCase();
-        if (
-          modeCandidate === 'hint' ||
-          modeCandidate === 'verify' ||
-          modeCandidate === 'explain' ||
-          modeCandidate === 'debug'
-        ) {
-          intervention.mode = modeCandidate;
-        }
+          const modeCandidate = normalizeString(candidate.mode)?.toLowerCase();
+          if (
+            modeCandidate === 'hint' ||
+            modeCandidate === 'verify' ||
+            modeCandidate === 'explain' ||
+            modeCandidate === 'debug'
+          ) {
+            intervention.mode = modeCandidate;
+          }
 
-        const reasonCodes = Array.isArray(candidate.reasonCodes)
-          ? candidate.reasonCodes
-            .map((reason) => normalizeString(reason))
-            .filter((reason): reason is string => Boolean(reason))
-            .slice(0, 6)
-          : [];
-        if (reasonCodes.length > 0) {
-          intervention.reasonCodes = Array.from(new Set([...intervention.reasonCodes, ...reasonCodes]));
-        }
+          const reasonCodes = Array.isArray(candidate.reasonCodes)
+            ? candidate.reasonCodes
+              .map((reason) => normalizeString(reason))
+              .filter((reason): reason is string => Boolean(reason))
+              .slice(0, 6)
+            : [];
+          if (reasonCodes.length > 0) {
+            intervention.reasonCodes = Array.from(new Set([...intervention.reasonCodes, ...reasonCodes]));
+          }
 
-        if (candidate.triggerMvl === true) {
-          intervention.triggerMvl = true;
-        }
-        const modelMvlReason = normalizeString(candidate.mvlReason);
-        if (modelMvlReason && intervention.triggerMvl) {
-          intervention.mvlReason = modelMvlReason.slice(0, 240);
+          if (candidate.triggerMvl === true) {
+            intervention.triggerMvl = true;
+          }
+          const modelMvlReason = normalizeString(candidate.mvlReason);
+          if (modelMvlReason && intervention.triggerMvl) {
+            intervention.mvlReason = modelMvlReason.slice(0, 240);
+          }
         }
 
         bosInferenceMeta = {
@@ -1032,10 +1042,14 @@ export const bosGetIntervention = onCall(
           authMode: bosInference.meta.authMode,
           statusCode: bosInference.meta.statusCode ?? null,
           errorCode: bosInference.errorCode ?? null,
-          reason: 'policy_override_applied',
+          reason: allowOverride ? 'policy_override_applied' : 'policy_override_skipped_low_confidence',
+          modelConfidence,
           endpoint: bosInference.meta.endpoint ?? null,
         };
       } else {
+        if (isInternalInferenceRequired()) {
+          throw new HttpsError('unavailable', 'Internal BOS policy response did not include an intervention payload.');
+        }
         bosInferenceMeta = {
           service: 'bos',
           route: bosInference.meta.route,
