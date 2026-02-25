@@ -105,6 +105,14 @@ html[data-theme='dark'] body {
   border-color: hsl(var(--border));
 }
 
+.ring-app {
+  --tw-ring-color: hsl(var(--border));
+}
+
+.divide-app > :not([hidden]) ~ :not([hidden]) {
+  border-color: hsl(var(--border));
+}
+
 html[data-theme='dark'] .bg-white,
 html[data-theme='dark'] .bg-gray-50,
 html[data-theme='dark'] .bg-gray-100,

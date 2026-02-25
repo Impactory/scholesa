@@ -68,9 +68,9 @@ export default function HQDashboard() {
   }, [activeSiteId, authLoading]);
 
   const visibleStats = stats.length > 0 ? stats : [
-    { label: 'Active Sites', value: String(sites.length) },
-    { label: 'Total Users', value: '0' },
-    { label: 'Pending', value: '0' },
+    { label: t('role.hq.fallback.activeSites'), value: String(sites.length) },
+    { label: t('role.hq.fallback.totalUsers'), value: '0' },
+    { label: t('role.hq.fallback.pending'), value: '0' },
   ];
   const activeSitesValue =
     visibleStats.find((stat) => stat.label.toLowerCase().includes('site'))?.value ||
@@ -82,16 +82,16 @@ export default function HQDashboard() {
     <RoleRouteGuard allowedRoles={['hq']}>
       {authLoading || loading ? (
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-lg text-gray-600">{t('role.hq.loading')}</div>
+          <div className="text-lg text-app-muted">{t('role.hq.loading')}</div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+        <div className="min-h-screen bg-app-canvas p-4 sm:p-8">
           <div className="mx-auto max-w-7xl">
-            <header className="mb-8 border-b border-gray-200 pb-4">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <header className="mb-8 border-b border-app pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-app-foreground">
                 {t('role.hq.title')}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-app-muted">
                 {t('role.hq.subtitle', {
                   name: profile?.displayName || t('role.hq.defaultName'),
                 })}
@@ -102,7 +102,7 @@ export default function HQDashboard() {
               <div className="space-y-6 lg:col-span-2">
                 <section>
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-medium leading-6 text-gray-900">
+                    <h2 className="text-lg font-medium leading-6 text-app-foreground">
                       {t('role.hq.networkSites')}
                     </h2>
                     <Link
@@ -119,7 +119,7 @@ export default function HQDashboard() {
                   </div>
 
                   {sites.length === 0 ? (
-                    <div className="overflow-hidden rounded-lg bg-white p-6 text-center text-gray-500 shadow">
+                    <div className="overflow-hidden rounded-lg bg-app-surface-raised p-6 text-center text-app-muted shadow">
                       <p>{t('role.hq.noSites')}</p>
                     </div>
                   ) : (
@@ -127,23 +127,23 @@ export default function HQDashboard() {
                       {sites.map((site) => (
                         <div
                           key={site.id}
-                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                          className="overflow-hidden rounded-lg bg-app-surface-raised shadow transition-shadow hover:shadow-md"
                         >
                           <div className="p-5">
-                            <h3 className="text-lg font-medium text-gray-900">{site.name}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="text-lg font-medium text-app-foreground">{site.name}</h3>
+                            <p className="text-sm text-app-muted">
                               {site.location || t('role.hq.locationFallback')}
                             </p>
                             <div className="mt-4 flex items-center justify-between">
                               <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
                                 {t('common.operational')}
                               </span>
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-app-muted">
                                 {t('role.hq.siteIdPrefix')}: {site.id.substring(0, 6)}...
                               </span>
                             </div>
                           </div>
-                          <div className="bg-gray-50 px-5 py-3">
+                          <div className="bg-app-canvas px-5 py-3">
                             <Link
                               href={`/${locale}/hq`}
                               className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
@@ -165,23 +165,23 @@ export default function HQDashboard() {
               </div>
 
               <div className="space-y-6">
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.hq.systemHealth')}
                     </h3>
-                    <div className="mt-4 border-t border-gray-100 pt-4">
-                      <dl className="divide-y divide-gray-100">
+                    <div className="mt-4 border-t border-app pt-4">
+                      <dl className="divide-y divide-app">
                         {visibleStats.map((stat) => (
                           <div key={stat.label} className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">{stat.label}</dt>
-                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                            <dt className="text-app-muted">{stat.label}</dt>
+                            <dd className="font-medium text-app-foreground">{stat.value}</dd>
                           </div>
                         ))}
                         {roster && (
                           <div className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">Active site roster</dt>
-                            <dd className="font-medium text-gray-900">
+                            <dt className="text-app-muted">{t('role.hq.activeSiteRoster')}</dt>
+                            <dd className="font-medium text-app-foreground">
                               {roster.counts.learners + roster.counts.parents + roster.counts.educators}
                             </dd>
                           </div>
@@ -191,9 +191,9 @@ export default function HQDashboard() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.hq.adminActions')}
                     </h3>
                     <div className="mt-4 space-y-3">
@@ -210,7 +210,7 @@ export default function HQDashboard() {
                       </Link>
                       <Link
                         href={`/${locale}/hq`}
-                        className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        className="block w-full rounded-md bg-app-surface-raised px-3 py-2 text-center text-sm font-semibold text-app-foreground shadow-sm ring-1 ring-inset ring-app hover:bg-app-canvas"
                         onClick={() =>
                           trackInteraction('feature_discovered', {
                             cta: 'hq_user_management',
@@ -223,10 +223,10 @@ export default function HQDashboard() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow">
-                  <div className="p-5 text-sm text-gray-600">
-                    <div>Total sites: {activeSitesValue}</div>
-                    <div className="mt-1">Active users: {activeUsersValue}</div>
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
+                  <div className="p-5 text-sm text-app-muted">
+                    <div>{t('role.hq.totalSites')}: {activeSitesValue}</div>
+                    <div className="mt-1">{t('role.hq.activeUsers')}: {activeUsersValue}</div>
                   </div>
                 </div>
               </div>

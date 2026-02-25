@@ -82,25 +82,25 @@ export default function PartnerDashboard() {
   }, [activeSiteId, authLoading, profile]);
 
   const visibleStats = stats.length > 0 ? stats : [
-    { label: 'Associated Sites', value: String(sites.length) },
-    { label: 'Learners Supported', value: String(roster?.counts.learners || 0) },
-    { label: 'Active Programs', value: '0' },
+    { label: t('role.partner.fallback.associatedSites'), value: String(sites.length) },
+    { label: t('role.partner.fallback.learnersSupported'), value: String(roster?.counts.learners || 0) },
+    { label: t('role.partner.fallback.activePrograms'), value: '0' },
   ];
 
   return (
     <RoleRouteGuard allowedRoles={['partner']}>
       {authLoading || loading ? (
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-lg text-gray-600">{t('role.partner.loading')}</div>
+          <div className="text-lg text-app-muted">{t('role.partner.loading')}</div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+        <div className="min-h-screen bg-app-canvas p-4 sm:p-8">
           <div className="mx-auto max-w-7xl">
-            <header className="mb-8 border-b border-gray-200 pb-4">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <header className="mb-8 border-b border-app pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-app-foreground">
                 {t('role.partner.title')}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-app-muted">
                 {t('role.partner.subtitle', {
                   name: profile?.displayName || t('role.partner.defaultName'),
                 })}
@@ -117,11 +117,11 @@ export default function PartnerDashboard() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <section>
-                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-app-foreground">
                     {t('role.partner.associatedSites')}
                   </h2>
                   {sites.length === 0 ? (
-                    <div className="overflow-hidden rounded-lg bg-white p-6 text-center text-gray-500 shadow">
+                    <div className="overflow-hidden rounded-lg bg-app-surface-raised p-6 text-center text-app-muted shadow">
                       <p>{t('role.partner.noSites')}</p>
                     </div>
                   ) : (
@@ -129,11 +129,11 @@ export default function PartnerDashboard() {
                       {sites.map((site) => (
                         <div
                           key={site.id}
-                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                          className="overflow-hidden rounded-lg bg-app-surface-raised shadow transition-shadow hover:shadow-md"
                         >
                           <div className="p-5">
-                            <h3 className="text-lg font-medium text-gray-900">{site.name}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="text-lg font-medium text-app-foreground">{site.name}</h3>
+                            <p className="text-sm text-app-muted">
                               {site.location || t('role.partner.noLocation')}
                             </p>
                             <div className="mt-4">
@@ -142,7 +142,7 @@ export default function PartnerDashboard() {
                               </span>
                             </div>
                           </div>
-                          <div className="bg-gray-50 px-5 py-3">
+                          <div className="bg-app-canvas px-5 py-3">
                             <Link
                               href={`/${locale}/partner`}
                               className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
@@ -164,23 +164,23 @@ export default function PartnerDashboard() {
               </div>
 
               <div className="space-y-6">
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.partner.impactOverview')}
                     </h3>
-                    <div className="mt-4 border-t border-gray-100 pt-4">
-                      <dl className="divide-y divide-gray-100">
+                    <div className="mt-4 border-t border-app pt-4">
+                      <dl className="divide-y divide-app">
                         {visibleStats.map((stat) => (
                           <div key={stat.label} className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">{stat.label}</dt>
-                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                            <dt className="text-app-muted">{stat.label}</dt>
+                            <dd className="font-medium text-app-foreground">{stat.value}</dd>
                           </div>
                         ))}
                         {roster && (
                           <div className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">Selected site parents</dt>
-                            <dd className="font-medium text-gray-900">{roster.counts.parents}</dd>
+                            <dt className="text-app-muted">{t('role.partner.selectedSiteParents')}</dt>
+                            <dd className="font-medium text-app-foreground">{roster.counts.parents}</dd>
                           </div>
                         )}
                       </dl>
@@ -188,9 +188,9 @@ export default function PartnerDashboard() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.partner.resources')}
                     </h3>
                     <div className="mt-4 space-y-2">

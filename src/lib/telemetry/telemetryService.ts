@@ -81,6 +81,10 @@ export type TelemetryEvent =
   | 'ai_explain_back_submitted'
   | 'ai_feedback_positive'
   | 'ai_feedback_negative'
+  // Voice telemetry
+  | 'voice.transcribe'
+  | 'voice.message'
+  | 'voice.tts'
   // Navigation & Discovery
   | 'page_viewed'
   | 'feature_discovered'
@@ -160,6 +164,9 @@ export class TelemetryService {
     'rubric.applied',
     'notification.requested',
     'fdm.state.changed',
+    'voice.transcribe',
+    'voice.message',
+    'voice.tts',
     'mission_viewed',
     'mission_selected',
     'mission_started',

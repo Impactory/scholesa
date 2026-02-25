@@ -66,38 +66,38 @@ export default function ParentDashboard() {
 
   const learnerCards = bundle?.learners || [];
   const visibleStats = stats.length > 0 ? stats : [
-    { label: 'Linked Learners', value: String(bundle?.linkedLearnerCount || 0) },
-    { label: 'Upcoming Sessions', value: '0' },
-    { label: 'Alerts', value: '0' },
+    { label: t('role.parent.fallback.linkedLearners'), value: String(bundle?.linkedLearnerCount || 0) },
+    { label: t('role.parent.fallback.upcomingSessions'), value: '0' },
+    { label: t('role.parent.fallback.alerts'), value: '0' },
   ];
 
   return (
     <RoleRouteGuard allowedRoles={['parent']}>
       {authLoading || loading ? (
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-lg text-gray-600">{t('role.parent.loading')}</div>
+          <div className="text-lg text-app-muted">{t('role.parent.loading')}</div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+        <div className="min-h-screen bg-app-canvas p-4 sm:p-8">
           <div className="mx-auto max-w-7xl">
-            <header className="mb-8 border-b border-gray-200 pb-4">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <header className="mb-8 border-b border-app pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-app-foreground">
                 {t('role.parent.welcome', {
                   name: profile?.displayName || t('role.parent.defaultName'),
                 })}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">{t('role.parent.subtitle')}</p>
+              <p className="mt-2 text-sm text-app-muted">{t('role.parent.subtitle')}</p>
             </header>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <section>
-                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-app-foreground">
                     {t('role.parent.children')}
                   </h2>
                   {learnerCards.length === 0 ? (
-                    <div className="overflow-hidden rounded-lg bg-white p-8 text-center text-gray-500 shadow">
-                      <h3 className="text-xl font-semibold text-gray-900">
+                    <div className="overflow-hidden rounded-lg bg-app-surface-raised p-8 text-center text-app-muted shadow">
+                      <h3 className="text-xl font-semibold text-app-foreground">
                         {t('role.parent.emptyWelcome')}
                       </h3>
                       <p className="mt-2">{t('role.parent.emptyMessage')}</p>
@@ -110,7 +110,7 @@ export default function ParentDashboard() {
                           })
                         }
                       >
-                        Ask site to link learner
+                        {t('role.parent.askSiteLinkLearner')}
                       </Link>
                     </div>
                   ) : (
@@ -118,7 +118,7 @@ export default function ParentDashboard() {
                       {learnerCards.map((learner) => (
                         <div
                           key={learner.learnerId}
-                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                          className="overflow-hidden rounded-lg bg-app-surface-raised shadow transition-shadow hover:shadow-md"
                         >
                           <div className="p-5">
                             <div className="flex items-center space-x-4">
@@ -126,24 +126,27 @@ export default function ParentDashboard() {
                                 {learner.learnerName?.charAt(0) || t('role.parent.defaultLearnerInitial')}
                               </div>
                               <div>
-                                <h3 className="text-lg font-medium text-gray-900">
+                                <h3 className="text-lg font-medium text-app-foreground">
                                   {learner.learnerName}
                                 </h3>
-                                <p className="text-sm text-gray-500">
-                                  Level {learner.currentLevel} • XP {learner.totalXp}
+                                <p className="text-sm text-app-muted">
+                                  {t('role.parent.levelXp', {
+                                    level: learner.currentLevel,
+                                    xp: learner.totalXp,
+                                  })}
                                 </p>
                               </div>
                             </div>
-                            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-gray-600">
-                              <div className="rounded-md bg-gray-50 px-3 py-2">
-                                Missions: {learner.missionsCompleted}
+                            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-app-muted">
+                              <div className="rounded-md bg-app-canvas px-3 py-2">
+                                {t('role.parent.missionsCount', { count: learner.missionsCompleted })}
                               </div>
-                              <div className="rounded-md bg-gray-50 px-3 py-2">
-                                Streak: {learner.currentStreak}
+                              <div className="rounded-md bg-app-canvas px-3 py-2">
+                                {t('role.parent.streakCount', { count: learner.currentStreak })}
                               </div>
                             </div>
                           </div>
-                          <div className="bg-gray-50 px-5 py-3">
+                          <div className="bg-app-canvas px-5 py-3">
                             <Link
                               href={`/${locale}/parent`}
                               className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
@@ -165,15 +168,17 @@ export default function ParentDashboard() {
               </div>
 
               <div className="space-y-6">
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">Live stats</h3>
-                    <div className="mt-4 border-t border-gray-100 pt-4">
-                      <dl className="divide-y divide-gray-100">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
+                      {t('common.liveStats')}
+                    </h3>
+                    <div className="mt-4 border-t border-app pt-4">
+                      <dl className="divide-y divide-app">
                         {visibleStats.map((stat) => (
                           <div key={stat.label} className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">{stat.label}</dt>
-                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                            <dt className="text-app-muted">{stat.label}</dt>
+                            <dd className="font-medium text-app-foreground">{stat.value}</dd>
                           </div>
                         ))}
                       </dl>
@@ -181,9 +186,9 @@ export default function ParentDashboard() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.parent.quickActions')}
                     </h3>
                     <div className="mt-4 space-y-4">
@@ -200,7 +205,7 @@ export default function ParentDashboard() {
                       </Link>
                       <Link
                         href={`/${locale}/parent`}
-                        className="block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        className="block w-full rounded-md bg-app-surface-raised px-3 py-2 text-center text-sm font-semibold text-app-foreground shadow-sm ring-1 ring-inset ring-app hover:bg-app-canvas"
                         onClick={() =>
                           trackInteraction('feature_discovered', {
                             cta: 'parent_view_schedule',

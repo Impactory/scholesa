@@ -22,7 +22,7 @@ import {
   Volume2Icon
 } from 'lucide-react';
 import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/gradeBandPolicy';
-import { useAITracking } from '@/src/hooks/useTelemetry';
+import { useAITracking, useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { AIService } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
@@ -144,8 +144,9 @@ export function AICoachPopup({
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
+  const trackInteraction = useInteractionTracking();
   const { locale, t } = useI18n();
-  const { user } = useAuthContext();
+  const { user, profile } = useAuthContext();
   const modeConfig = buildModeConfig((key) => t(key));
   const hasVoiceInputControl = Boolean(
     recognitionRef.current ||
@@ -248,6 +249,11 @@ export function AICoachPopup({
             setQuestion((prev) => `${prev} ${transcribed.transcript}`.trim());
             if (transcribed.metadata?.traceId) {
               setVoiceInputTraceId(transcribed.metadata.traceId);
+              trackVoiceTelemetry('voice.transcribe', {
+                traceId: transcribed.metadata.traceId,
+                latencyMs: transcribed.metadata.latencyMs,
+                partial: transcribed.metadata.partial,
+              });
             }
           } catch (error) {
             console.error('Voice transcription failed; keeping manual input path.', error);
@@ -280,6 +286,45 @@ export function AICoachPopup({
       recognitionRef.current.stop();
       setIsListening(false);
     }
+  };
+
+  const trackVoiceTelemetry = (
+    event: 'voice.transcribe' | 'voice.message' | 'voice.tts',
+    metadata: Record<string, unknown> = {},
+  ) => {
+    if (!user || !profile) return;
+    void TelemetryService.track({
+      event,
+      category: 'ai_interaction',
+      userId: user.uid,
+      userRole: profile.role as any,
+      siteId,
+      metadata: {
+        locale,
+        surface: 'ai_coach_popup',
+        ...metadata,
+      },
+    });
+  };
+
+  const handleOpenPopup = () => {
+    trackInteraction('help_accessed', {
+      cta: 'ai_assistant_open',
+      surface: 'floating_assistant',
+      locale,
+      siteId,
+    });
+    setIsMinimized(false);
+  };
+
+  const handleMinimizePopup = () => {
+    trackInteraction('feature_discovered', {
+      cta: 'ai_assistant_minimize',
+      surface: 'floating_assistant',
+      locale,
+      siteId,
+    });
+    setIsMinimized(true);
   };
 
   const handleAsk = async () => {
@@ -378,7 +423,20 @@ Guidance: ${
             missionAttemptId: missionId,
           };
 
+          trackVoiceTelemetry('voice.message', {
+            traceId: voiceResponse.metadata.traceId,
+            locale: voiceResponse.metadata.locale,
+            safetyOutcome: voiceResponse.metadata.safetyOutcome,
+            redactionApplied: voiceResponse.metadata.redactionApplied,
+            redactionCount: voiceResponse.metadata.redactionCount,
+            toolsInvokedCount: voiceResponse.metadata.toolsInvoked.length,
+          });
+
           if (voiceResponse.tts.available && voiceResponse.tts.audioUrl) {
+            trackVoiceTelemetry('voice.tts', {
+              traceId: voiceResponse.metadata.traceId,
+              voiceProfile: voiceResponse.tts.voiceProfile || 'default',
+            });
             const audio = new Audio(voiceResponse.tts.audioUrl);
             void audio.play().catch((error) => {
               console.error('Voice playback failed in AI coach popup:', error);
@@ -480,7 +538,7 @@ Guidance: ${
   if (isMinimized) {
     return (
       <button
-        onClick={() => setIsMinimized(false)}
+        onClick={handleOpenPopup}
         className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50 group"
         aria-label={t('aiCoach.openAria')}
       >
@@ -496,7 +554,7 @@ Guidance: ${
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 flex flex-col max-h-[600px]">
+    <div className="fixed bottom-6 right-6 w-96 bg-app-surface-raised rounded-lg shadow-2xl border border-app z-50 flex flex-col max-h-[600px]">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-lg p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
@@ -505,7 +563,7 @@ Guidance: ${
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setIsMinimized(true)}
+            onClick={handleMinimizePopup}
             className="text-white hover:bg-white/20 rounded p-1 transition-colors"
             aria-label={t('aiCoach.minimizeAria')}
           >
@@ -751,8 +809,8 @@ Guidance: ${
       </div>
 
       {/* Footer tip */}
-      <div className="border-t border-gray-200 p-3 bg-gray-50 rounded-b-lg">
-        <p className="text-xs text-gray-600 text-center">
+      <div className="border-t border-app p-3 bg-app-surface-muted rounded-b-lg">
+        <p className="text-xs text-app-muted text-center">
           {t('aiCoach.footerTip')}
         </p>
       </div>

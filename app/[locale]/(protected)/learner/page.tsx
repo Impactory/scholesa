@@ -117,9 +117,9 @@ export default function LearnerDashboard() {
   }, [activeSiteId, authLoading, profile]);
 
   const visibleStats = stats.length > 0 ? stats : [
-    { label: 'Active Sessions', value: '0' },
-    { label: 'Active Missions', value: '0' },
-    { label: 'Unread Messages', value: '0' },
+    { label: t('role.learner.fallback.activeSessions'), value: '0' },
+    { label: t('role.learner.fallback.activeMissions'), value: '0' },
+    { label: t('role.learner.fallback.unreadMessages'), value: '0' },
   ];
 
   const loading = authLoading || sessionsLoading || statsLoading;
@@ -128,28 +128,28 @@ export default function LearnerDashboard() {
     <RoleRouteGuard allowedRoles={['learner']}>
       {loading ? (
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-lg text-gray-600">{t('role.learner.loading')}</div>
+          <div className="text-lg text-app-muted">{t('role.learner.loading')}</div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+        <div className="min-h-screen bg-app-canvas p-4 sm:p-8">
           <div className="mx-auto max-w-7xl">
-            <header className="mb-8 border-b border-gray-200 pb-4">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <header className="mb-8 border-b border-app pb-4">
+              <h1 className="text-3xl font-bold tracking-tight text-app-foreground">
                 {t('role.learner.welcome', {
                   name: profile?.displayName || t('role.learner.defaultName'),
                 })}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">{t('role.learner.subtitle')}</p>
+              <p className="mt-2 text-sm text-app-muted">{t('role.learner.subtitle')}</p>
             </header>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <section>
-                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-app-foreground">
                     {t('role.learner.activeSessions')}
                   </h2>
                   {sessions.length === 0 ? (
-                    <div className="overflow-hidden rounded-lg bg-white p-6 text-center text-gray-500 shadow">
+                    <div className="overflow-hidden rounded-lg bg-app-surface-raised p-6 text-center text-app-muted shadow">
                       {t('role.learner.noSessions')}
                     </div>
                   ) : (
@@ -157,21 +157,21 @@ export default function LearnerDashboard() {
                       {sessions.map((session) => (
                         <div
                           key={session.id}
-                          className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                          className="overflow-hidden rounded-lg bg-app-surface-raised shadow transition-shadow hover:shadow-md"
                         >
                           <div className="p-5">
-                            <h3 className="text-lg font-medium text-gray-900">{session.title}</h3>
-                            <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+                            <h3 className="text-lg font-medium text-app-foreground">{session.title}</h3>
+                            <p className="mt-1 line-clamp-2 text-sm text-app-muted">
                               {session.description}
                             </p>
-                            <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                            <div className="mt-4 flex items-center justify-between text-xs text-app-muted">
                               <span className="rounded-full bg-indigo-50 px-2 py-1 font-medium text-indigo-700">
                                 {session.pillarCodes?.[0] || t('common.general')}
                               </span>
                               <span>{formatSessionDate(session.startDate)}</span>
                             </div>
                           </div>
-                          <div className="bg-gray-50 px-5 py-3">
+                          <div className="bg-app-canvas px-5 py-3">
                             <Link
                               href={`/${locale}/learner`}
                               className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
@@ -182,7 +182,7 @@ export default function LearnerDashboard() {
                                 })
                               }
                             >
-                              View session
+                              {t('role.learner.viewSession')}
                             </Link>
                           </div>
                         </div>
@@ -192,31 +192,34 @@ export default function LearnerDashboard() {
                 </section>
 
                 <section>
-                  <h2 className="mb-4 text-lg font-medium leading-6 text-gray-900">
+                  <h2 className="mb-4 text-lg font-medium leading-6 text-app-foreground">
                     {t('role.learner.recentMissions')}
                   </h2>
-                  <div className="overflow-hidden rounded-lg bg-white shadow">
-                    <div className="p-6 text-sm text-gray-600">
-                      {visibleStats.find((stat) => stat.label.toLowerCase().includes('mission'))
-                        ?.value || '0'}{' '}
-                      active missions this week.
+                  <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
+                    <div className="p-6 text-sm text-app-muted">
+                      {t('role.learner.activeMissionsThisWeek', {
+                        count:
+                          visibleStats.find((stat) =>
+                            stat.label.toLowerCase().includes('mission'),
+                          )?.value || '0',
+                      })}
                     </div>
                   </div>
                 </section>
               </div>
 
               <div className="space-y-6">
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg bg-app-surface-raised shadow">
                   <div className="p-5">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                    <h3 className="text-base font-semibold leading-6 text-app-foreground">
                       {t('role.learner.myStats')}
                     </h3>
-                    <div className="mt-4 border-t border-gray-100 pt-4">
-                      <dl className="divide-y divide-gray-100">
+                    <div className="mt-4 border-t border-app pt-4">
+                      <dl className="divide-y divide-app">
                         {visibleStats.map((stat) => (
                           <div key={stat.label} className="flex justify-between py-2 text-sm">
-                            <dt className="text-gray-500">{stat.label}</dt>
-                            <dd className="font-medium text-gray-900">{stat.value}</dd>
+                            <dt className="text-app-muted">{stat.label}</dt>
+                            <dd className="font-medium text-app-foreground">{stat.value}</dd>
                           </div>
                         ))}
                       </dl>
@@ -230,7 +233,7 @@ export default function LearnerDashboard() {
                         })
                       }
                     >
-                      Open mission board
+                      {t('role.learner.openMissionBoard')}
                     </Link>
                   </div>
                 </div>
