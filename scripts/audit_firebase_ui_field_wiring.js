@@ -562,7 +562,9 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
 
   let telemetryDocs = [];
   let interactionDocs = [];
+  let fdmDocs = [];
   let orchestrationDocs = [];
+  let interventionDocs = [];
   let mvlDocs = [];
 
   try {
@@ -588,6 +590,17 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
   }
 
   try {
+    const fdmSnap = await db
+      .collection('fdmFeatures')
+      .where('siteId', '==', siteId)
+      .limit(120)
+      .get();
+    fdmDocs = fdmSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`fdmFeatures_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
     const orchestrationSnap = await db
       .collection('orchestrationStates')
       .where('siteId', '==', siteId)
@@ -596,6 +609,17 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     orchestrationDocs = orchestrationSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
   } catch (error) {
     queryErrors.push(`orchestrationStates_query_failed:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    const interventionSnap = await db
+      .collection('interventions')
+      .where('siteId', '==', siteId)
+      .limit(120)
+      .get();
+    interventionDocs = interventionSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+  } catch (error) {
+    queryErrors.push(`interventions_query_failed:${error instanceof Error ? error.message : String(error)}`);
   }
 
   try {
@@ -684,6 +708,23 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     }
   }
 
+  for (const doc of fdmDocs) {
+    const data = doc.data;
+    if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
+      bosFailures.push(`fdm_missing_learner:${doc.id}`);
+    }
+    if (typeof data.sessionOccurrenceId !== 'string' || !data.sessionOccurrenceId.trim()) {
+      bosFailures.push(`fdm_missing_session:${doc.id}`);
+    }
+    if (!isObjectRecord(data.features)) {
+      bosFailures.push(`fdm_missing_features:${doc.id}`);
+      continue;
+    }
+    if (!hasFiniteNumber(data.features.cognition)) bosFailures.push(`fdm_bad_cognition:${doc.id}`);
+    if (!hasFiniteNumber(data.features.engagement)) bosFailures.push(`fdm_bad_engagement:${doc.id}`);
+    if (!hasFiniteNumber(data.features.integrity)) bosFailures.push(`fdm_bad_integrity:${doc.id}`);
+  }
+
   for (const doc of orchestrationDocs) {
     const data = doc.data;
     if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
@@ -705,6 +746,28 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     }
   }
 
+  for (const doc of interventionDocs) {
+    const data = doc.data;
+    if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
+      bosFailures.push(`intervention_missing_learner:${doc.id}`);
+    }
+    if (typeof data.sessionOccurrenceId !== 'string' || !data.sessionOccurrenceId.trim()) {
+      bosFailures.push(`intervention_missing_session:${doc.id}`);
+    }
+    if (typeof data.type !== 'string' || !data.type.trim()) {
+      bosFailures.push(`intervention_missing_type:${doc.id}`);
+    }
+    if (typeof data.salience !== 'string' || !data.salience.trim()) {
+      bosFailures.push(`intervention_missing_salience:${doc.id}`);
+    }
+    if (!isObjectRecord(data.policy)) {
+      bosFailures.push(`intervention_missing_policy:${doc.id}`);
+    } else {
+      if (!hasFiniteNumber(data.policy.lambda)) bosFailures.push(`intervention_bad_lambda:${doc.id}`);
+      if (!hasFiniteNumber(data.policy.m_dagger)) bosFailures.push(`intervention_bad_m_dagger:${doc.id}`);
+    }
+  }
+
   for (const doc of mvlDocs) {
     const data = doc.data;
     if (typeof data.learnerId !== 'string' || !data.learnerId.trim()) {
@@ -716,6 +779,63 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     if (!isTimestampLike(data.createdAt) && !isTimestampLike(data.updatedAt)) {
       bosFailures.push(`mvl_missing_timestamps:${doc.id}`);
     }
+  }
+
+  const toLearnerSessionKey = (value) => {
+    const learnerId = typeof value.learnerId === 'string'
+      ? value.learnerId.trim()
+      : typeof value.actorId === 'string'
+      ? value.actorId.trim()
+      : '';
+    const sessionOccurrenceId = typeof value.sessionOccurrenceId === 'string'
+      ? value.sessionOccurrenceId.trim()
+      : '';
+    if (!learnerId || !sessionOccurrenceId) return null;
+    return `${learnerId}::${sessionOccurrenceId}`;
+  };
+
+  const bosFlowKeys = new Set(
+    bosEventDocs
+      .map((doc) => toLearnerSessionKey(doc.data))
+      .filter(Boolean),
+  );
+  const fdmKeys = new Set(
+    fdmDocs
+      .map((doc) => toLearnerSessionKey(doc.data))
+      .filter(Boolean),
+  );
+  const orchestrationKeys = new Set(
+    orchestrationDocs
+      .map((doc) => toLearnerSessionKey(doc.data))
+      .filter(Boolean),
+  );
+  const interventionKeys = new Set(
+    interventionDocs
+      .map((doc) => toLearnerSessionKey(doc.data))
+      .filter(Boolean),
+  );
+
+  const overlap = (a, b) => {
+    if (a.size === 0 || b.size === 0) return [];
+    const shared = [];
+    for (const key of a.values()) {
+      if (b.has(key)) shared.push(key);
+    }
+    return shared;
+  };
+
+  const sharedEventToState = overlap(bosFlowKeys, orchestrationKeys);
+  const sharedStateToIntervention = overlap(orchestrationKeys, interventionKeys);
+  const sharedFeatureToState = overlap(fdmKeys, orchestrationKeys);
+
+  if (bosFlowKeys.size > 0 && orchestrationKeys.size > 0 && sharedEventToState.length === 0) {
+    bosFailures.push('bos_self_learning_no_event_to_state_link');
+  }
+  if (fdmKeys.size > 0 && orchestrationKeys.size > 0 && sharedFeatureToState.length === 0) {
+    bosFailures.push('bos_self_learning_no_feature_to_state_link');
+  }
+  if (orchestrationKeys.size > 0 && interventionKeys.size > 0 && sharedStateToIntervention.length === 0) {
+    bosFailures.push('bos_self_learning_no_state_to_intervention_link');
   }
 
   const staticSupport = checkVoiceBosStaticSupport();
@@ -737,8 +857,24 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
         voiceDocs: voiceDocs.length,
         interactionDocs: interactionDocs.length,
         bosEventDocs: bosEventDocs.length,
+        fdmDocs: fdmDocs.length,
         orchestrationDocs: orchestrationDocs.length,
+        interventionDocs: interventionDocs.length,
         mvlDocs: mvlDocs.length,
+      },
+      selfLearningLinks: {
+        bosFlowKeys: bosFlowKeys.size,
+        fdmKeys: fdmKeys.size,
+        orchestrationKeys: orchestrationKeys.size,
+        interventionKeys: interventionKeys.size,
+        sharedEventToState: sharedEventToState.length,
+        sharedFeatureToState: sharedFeatureToState.length,
+        sharedStateToIntervention: sharedStateToIntervention.length,
+        sampleSharedKeys: [
+          ...sharedEventToState.slice(0, 5),
+          ...sharedFeatureToState.slice(0, 5),
+          ...sharedStateToIntervention.slice(0, 5),
+        ],
       },
       voiceFailureCount: voiceFailures.length,
       bosFailureCount: bosFailures.length,
