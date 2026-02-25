@@ -15,6 +15,7 @@ const STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
 const TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
 const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
 const TELEMETRY_COLLECTION = 'telemetryEvents';
+const BOS_INTERACTION_COLLECTION = 'interactionEvents';
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
 
 type VoiceTelemetryEvent =
@@ -23,6 +24,18 @@ type VoiceTelemetryEvent =
   | 'voice.tts'
   | 'voice.blocked'
   | 'voice.escalated';
+
+type BosCompatibilityTelemetryEvent =
+  | 'ai_help_opened'
+  | 'ai_help_used'
+  | 'ai_coach_response';
+
+type BosInteractionEvent =
+  | 'ai_help_opened'
+  | 'ai_help_used'
+  | 'ai_coach_response';
+
+type SupportedTelemetryEvent = VoiceTelemetryEvent | BosCompatibilityTelemetryEvent;
 
 interface VoiceSettings {
   voiceEnabled: boolean;
@@ -327,6 +340,69 @@ function toCanonicalGradeBand(gradeBand: GradeBand): 'k5' | 'ms' | 'hs' {
   if (gradeBand === '6-8') return 'ms';
   if (gradeBand === '9-12') return 'hs';
   return 'ms';
+}
+
+function toBosGradeBand(gradeBand: GradeBand): 'K_5' | 'G6_8' | 'G9_12' {
+  if (gradeBand === 'K-5') return 'K_5';
+  if (gradeBand === '6-8') return 'G6_8';
+  if (gradeBand === '9-12') return 'G9_12';
+  return 'G6_8';
+}
+
+function toBosActorRole(role: VoiceRole): 'learner' | 'educator' | 'admin' {
+  if (role === 'student') return 'learner';
+  if (role === 'teacher') return 'educator';
+  return 'admin';
+}
+
+type BosContextMode = 'in_class' | 'homework' | 'unknown';
+
+interface BosInteractionContext {
+  actorId: string;
+  actorRole: 'learner' | 'educator' | 'admin';
+  sessionOccurrenceId?: string;
+  missionId?: string;
+  checkpointId?: string;
+  contextMode: BosContextMode;
+  conceptTags: string[];
+}
+
+function normalizeBosContextMode(value: unknown): BosContextMode {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (normalized === 'in_class' || normalized === 'in-class' || normalized === 'class') return 'in_class';
+  if (normalized === 'homework' || normalized === 'home_work' || normalized === 'home-work') return 'homework';
+  return 'unknown';
+}
+
+function resolveBosInteractionContext(
+  body: Record<string, unknown>,
+  authContext: VoiceAuthContext,
+): BosInteractionContext {
+  const context = body.context && typeof body.context === 'object'
+    ? body.context as Record<string, unknown>
+    : undefined;
+
+  const selectedLearnerId = normalizeString(context?.selectedLearnerId);
+  const actorId = authContext.role === 'teacher' && selectedLearnerId
+    ? selectedLearnerId
+    : authContext.uid;
+  const actorRole = authContext.role === 'teacher' && selectedLearnerId
+    ? 'learner'
+    : toBosActorRole(authContext.role);
+
+  const rawTags = normalizeStringArray(
+    (Array.isArray(context?.conceptTags) ? context?.conceptTags : body.conceptTags) as unknown,
+  ).slice(0, 10);
+
+  return {
+    actorId,
+    actorRole,
+    sessionOccurrenceId: normalizeString(body.sessionOccurrenceId) ?? normalizeString(context?.sessionOccurrenceId),
+    missionId: normalizeString(body.missionId) ?? normalizeString(context?.missionId),
+    checkpointId: normalizeString(body.checkpointId) ?? normalizeString(context?.checkpointId),
+    contextMode: normalizeBosContextMode(body.contextMode ?? context?.contextMode),
+    conceptTags: rawTags,
+  };
 }
 
 function resolveRequestId(req: Request): string {
@@ -884,6 +960,19 @@ function parseMultipartForm(req: Request): {
   return { fields, files };
 }
 
+function parseJsonObjectField(rawValue: string | undefined): Record<string, unknown> | undefined {
+  if (!rawValue) return undefined;
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function maybeValidateTeacherLearnerScope(
   context: VoiceAuthContext,
   body: Record<string, unknown>,
@@ -955,7 +1044,7 @@ async function recordVoiceAuditEvent(payload: {
 }
 
 async function recordVoiceTelemetryEvent(payload: {
-  event: VoiceTelemetryEvent;
+  event: SupportedTelemetryEvent;
   endpoint: string;
   requestId: string;
   traceId: string;
@@ -980,12 +1069,21 @@ async function recordVoiceTelemetryEvent(payload: {
     : payload.endpoint === 'tts_speak'
     ? 'scholesa-tts'
     : 'scholesa-ai';
+  const timestampIso = new Date().toISOString();
 
   await admin.firestore().collection(TELEMETRY_COLLECTION).add({
     event: payload.event,
+    eventType: payload.event,
     userId: payload.authContext.uid || 'system',
     role: payload.authContext.role || 'system',
     siteId: payload.authContext.siteId || TELEMETRY_UNSCOPED_SITE_ID,
+    service,
+    env: telemetryEnv,
+    traceId: payload.traceId,
+    gradeBand: canonicalGradeBand,
+    locale: payload.locale,
+    timestampIso,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
     metadata: {
       requestId: payload.requestId,
       traceId: payload.traceId,
@@ -997,7 +1095,8 @@ async function recordVoiceTelemetryEvent(payload: {
       locale: payload.locale,
       eventType: payload.event,
       endpoint: payload.endpoint,
-      timestamp: new Date().toISOString(),
+      timestamp: timestampIso,
+      timestampIso,
       latencyMs: payload.latencyMs,
       safetyOutcome: payload.safetyOutcome ?? 'allowed',
       redactionApplied: payload.redactionApplied ?? false,
@@ -1007,7 +1106,7 @@ async function recordVoiceTelemetryEvent(payload: {
       transcriptProvided: payload.transcriptProvided ?? false,
       transcriptLength: payload.transcriptLength ?? 0,
       partial: payload.partial ?? false,
-      audioBytes: payload.audioBytes ?? 0,
+      audioPresent: (payload.audioBytes ?? 0) > 0,
       textLength: payload.textLength ?? 0,
       modelVersion:
         payload.event === 'voice.transcribe'
@@ -1018,6 +1117,80 @@ async function recordVoiceTelemetryEvent(payload: {
       policyVersion: VOICE_POLICY_VERSION,
       redactedPathCount: 0,
     },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function recordBosInteractionEvent(payload: {
+  eventType: BosInteractionEvent;
+  endpoint: string;
+  requestId: string;
+  traceId: string;
+  authContext: VoiceAuthContext;
+  body: Record<string, unknown>;
+  locale: VoiceLocale;
+  safetyOutcome: SafetyOutcome;
+  latencyMs: number;
+  toolCount?: number;
+  textLength?: number;
+  transcriptLength?: number;
+  audioBytes?: number;
+  ttsAvailable?: boolean;
+}) {
+  const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
+  const telemetryEnv = resolveTelemetryEnv();
+  const service = payload.endpoint === 'voice_transcribe'
+    ? 'scholesa-stt'
+    : payload.endpoint === 'tts_speak'
+    ? 'scholesa-tts'
+    : 'scholesa-ai';
+  const gradeBandCanonical = toCanonicalGradeBand(payload.authContext.gradeBand);
+
+  await admin.firestore().collection(BOS_INTERACTION_COLLECTION).add({
+    event: payload.eventType,
+    eventType: payload.eventType,
+    requestId: payload.requestId,
+    traceId: payload.traceId,
+    service,
+    env: telemetryEnv,
+    siteId: payload.authContext.siteId,
+    actorId: bosContext.actorId,
+    actorRole: bosContext.actorRole,
+    role: payload.authContext.role,
+    gradeBand: toBosGradeBand(payload.authContext.gradeBand),
+    gradeBandCanonical,
+    locale: payload.locale,
+    sessionOccurrenceId: bosContext.sessionOccurrenceId ?? null,
+    missionId: bosContext.missionId ?? null,
+    checkpointId: bosContext.checkpointId ?? null,
+    context: {
+      source: 'voice',
+      endpoint: payload.endpoint,
+      locale: payload.locale,
+      requestId: payload.requestId,
+      traceId: payload.traceId,
+      role: payload.authContext.role,
+      gradeBand: gradeBandCanonical,
+    },
+    payload: {
+      source: 'voice',
+      endpoint: payload.endpoint,
+      requestId: payload.requestId,
+      traceId: payload.traceId,
+      locale: payload.locale,
+      safetyOutcome: payload.safetyOutcome,
+      latencyMs: payload.latencyMs,
+      toolCount: payload.toolCount ?? 0,
+      textLength: payload.textLength ?? 0,
+      transcriptLength: payload.transcriptLength ?? 0,
+      audioPresent: (payload.audioBytes ?? 0) > 0,
+      ttsAvailable: payload.ttsAvailable ?? false,
+      requesterRole: payload.authContext.role,
+      contextMode: bosContext.contextMode,
+      conceptTags: bosContext.conceptTags,
+    },
+    timestampIso: new Date().toISOString(),
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -1166,6 +1339,87 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       }),
     ];
 
+    const compatibilityWrites: Promise<unknown>[] = [
+      recordVoiceTelemetryEvent({
+        event: 'ai_help_opened',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        safetyOutcome: safety.safetyOutcome,
+        toolCount: toolsInvoked.length,
+        textLength: message.length,
+      }),
+      recordVoiceTelemetryEvent({
+        event: 'ai_help_used',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        safetyOutcome: safety.safetyOutcome,
+        toolCount: toolsInvoked.length,
+        textLength: message.length,
+      }),
+      recordVoiceTelemetryEvent({
+        event: 'ai_coach_response',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        safetyOutcome: safety.safetyOutcome,
+        toolCount: toolsInvoked.length,
+        textLength: responseText.length,
+      }),
+      recordBosInteractionEvent({
+        eventType: 'ai_help_opened',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: safety.safetyOutcome,
+        latencyMs,
+        toolCount: toolsInvoked.length,
+        textLength: message.length,
+        ttsAvailable: Boolean(audioUrl),
+      }),
+      recordBosInteractionEvent({
+        eventType: 'ai_help_used',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: safety.safetyOutcome,
+        latencyMs,
+        toolCount: toolsInvoked.length,
+        textLength: message.length,
+        ttsAvailable: Boolean(audioUrl),
+      }),
+      recordBosInteractionEvent({
+        eventType: 'ai_coach_response',
+        endpoint: 'copilot_message',
+        requestId,
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: safety.safetyOutcome,
+        latencyMs,
+        toolCount: toolsInvoked.length,
+        textLength: responseText.length,
+        ttsAvailable: Boolean(audioUrl),
+      }),
+    ];
+
     if (supplementalSafetyEvent) {
       telemetryWrites.push(
         recordVoiceTelemetryEvent({
@@ -1187,6 +1441,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     }
 
     await Promise.all(telemetryWrites);
+    await Promise.allSettled(compatibilityWrites);
 
     res.status(200).json({
       text: responseText,
@@ -1226,20 +1481,33 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
   try {
     const contentType = req.header('content-type') || '';
     const body = contentType.includes('multipart/form-data') ? {} : parseJsonBody(req);
-    const authContext = await resolveAuthContext(req, body);
-    const settings = await loadVoiceSettings(authContext.siteId);
-    await enforceVoiceAccess(authContext, settings);
 
     let transcriptRaw: string | undefined;
     let localeHint: unknown = body.locale;
     let partialHint: unknown = body.partial;
     let uploadedAudioLength = 0;
+    let resolvedBody: Record<string, unknown> = body;
 
     if (contentType.includes('multipart/form-data')) {
       const { fields, files } = parseMultipartForm(req);
       transcriptRaw = normalizeString(fields.transcript);
       localeHint = fields.locale;
       partialHint = fields.partial;
+      const contextFromField = parseJsonObjectField(fields.context);
+      const contextFromHints: Record<string, unknown> = {
+        ...(contextFromField ?? {}),
+      };
+      const voiceTraceId = normalizeString(fields.voiceTraceId);
+      const voiceInputTraceId = normalizeString(fields.voiceInputTraceId);
+      if (voiceTraceId) contextFromHints.voiceTraceId = voiceTraceId;
+      if (voiceInputTraceId) contextFromHints.voiceInputTraceId = voiceInputTraceId;
+      const hasContextHints = Object.keys(contextFromHints).length > 0;
+      resolvedBody = {
+        ...body,
+        ...(normalizeString(fields.siteId) ? { siteId: normalizeString(fields.siteId) } : {}),
+        ...(normalizeString(fields.traceId) ? { traceId: normalizeString(fields.traceId) } : {}),
+        ...(hasContextHints ? { context: contextFromHints } : {}),
+      };
       if (files.audio) {
         uploadedAudioLength = files.audio.data.length;
       }
@@ -1255,6 +1523,10 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
       }
     }
 
+    const authContext = await resolveAuthContext(req, resolvedBody);
+    const settings = await loadVoiceSettings(authContext.siteId);
+    await enforceVoiceAccess(authContext, settings);
+
     if (!transcriptRaw && uploadedAudioLength === 0) {
       throw new VoiceHttpError(400, 'invalid_argument', 'audio or transcript input is required.');
     }
@@ -1266,7 +1538,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
       ? 0.96
       : Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
     const requestId = resolveRequestId(req);
-    const traceId = resolveTraceId(req, body);
+    const traceId = resolveTraceId(req, resolvedBody);
     const latencyMs = Date.now() - startedAt;
     await Promise.all([
       recordVoiceAuditEvent({
@@ -1290,6 +1562,34 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         transcriptProvided: Boolean(transcriptRaw),
         transcriptLength: transcript.length,
         partial,
+        audioBytes: uploadedAudioLength,
+      }),
+    ]);
+    await Promise.allSettled([
+      recordVoiceTelemetryEvent({
+        event: 'ai_help_opened',
+        endpoint: 'voice_transcribe',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        transcriptProvided: Boolean(transcriptRaw),
+        transcriptLength: transcript.length,
+        partial,
+        audioBytes: uploadedAudioLength,
+      }),
+      recordBosInteractionEvent({
+        eventType: 'ai_help_opened',
+        endpoint: 'voice_transcribe',
+        requestId,
+        traceId,
+        authContext,
+        body: resolvedBody,
+        locale,
+        safetyOutcome: 'allowed',
+        latencyMs,
+        transcriptLength: transcript.length,
         audioBytes: uploadedAudioLength,
       }),
     ]);
@@ -1374,6 +1674,34 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
         textLength: speech.speechText.length,
+      }),
+    ]);
+    await Promise.allSettled([
+      recordVoiceTelemetryEvent({
+        event: 'ai_coach_response',
+        endpoint: 'tts_speak',
+        requestId,
+        traceId,
+        authContext,
+        locale,
+        latencyMs,
+        safetyOutcome: 'allowed',
+        redactionApplied: speech.redactionApplied,
+        redactionCount: speech.redactionCount,
+        textLength: speech.speechText.length,
+      }),
+      recordBosInteractionEvent({
+        eventType: 'ai_coach_response',
+        endpoint: 'tts_speak',
+        requestId,
+        traceId,
+        authContext,
+        body,
+        locale,
+        safetyOutcome: 'allowed',
+        latencyMs,
+        textLength: speech.speechText.length,
+        ttsAvailable: true,
       }),
     ]);
 

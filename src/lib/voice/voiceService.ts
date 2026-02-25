@@ -45,6 +45,7 @@ export interface TranscribeVoiceRequest {
   audioBlob: Blob;
   locale?: SupportedLocale | string;
   partial?: boolean;
+  traceId?: string;
 }
 
 export interface TranscribeVoiceResponse {
@@ -61,6 +62,13 @@ export interface TranscribeVoiceResponse {
 }
 
 function createVoiceRequestId(prefix: string): string {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
+    return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function createVoiceTraceId(prefix: string): string {
   if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
     return `${prefix}-${globalThis.crypto.randomUUID()}`;
   }
@@ -144,10 +152,12 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
   if (!baseUrl) throw new Error('Voice API base URL is not configured.');
   const locale = normalizeLocale(req.locale);
   const requestId = createVoiceRequestId('voice-stt');
+  const traceId = req.traceId || createVoiceTraceId('voice-trace');
   const formData = new FormData();
   formData.append('audio', req.audioBlob, 'voice-input.webm');
   formData.append('locale', locale);
   formData.append('partial', req.partial ? 'true' : 'false');
+  formData.append('traceId', traceId);
 
   const response = await withTimeout(
     aiSafeFetch(`${baseUrl}/voice/transcribe`, {
@@ -155,6 +165,7 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
       headers: {
         Authorization: `Bearer ${req.idToken}`,
         'x-request-id': requestId,
+        'x-trace-id': traceId,
         'x-scholesa-locale': locale,
       },
       body: formData,

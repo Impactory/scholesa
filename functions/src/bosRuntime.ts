@@ -25,6 +25,26 @@ import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
 const db = admin.firestore();
+const TELEMETRY_COLLECTION = 'telemetryEvents';
+const INTERACTION_COLLECTION = 'interactionEvents';
+const BOS_PAYLOAD_KEY_BLOCKLIST = new Set([
+  'prompt',
+  'response',
+  'transcript',
+  'text',
+  'content',
+  'message',
+  'question',
+  'audio',
+  'audiobase64',
+  'audiobytes',
+  'rawtext',
+  'rawprompt',
+]);
+const BOS_PAYLOAD_MAX_DEPTH = 4;
+const BOS_PAYLOAD_MAX_COLLECTION_LENGTH = 40;
+const BOS_PAYLOAD_MAX_STRING_LENGTH = 256;
+const SUPPORTED_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
 
 // ──────────────────────────────────────────────────────
 // §4.2  Grade-band thresholds
@@ -36,6 +56,216 @@ const M_DAGGER: Record<string, number> = {
   G7_9: 0.65,
   G10_12: 0.70,
 };
+
+function normalizeString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function normalizeBosActorRole(value: unknown): 'learner' | 'educator' | 'admin' {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (normalized === 'learner' || normalized === 'student') return 'learner';
+  if (normalized === 'educator' || normalized === 'teacher') return 'educator';
+  return 'admin';
+}
+
+function normalizeBosGradeBand(value: unknown): 'K_5' | 'G6_8' | 'G9_12' {
+  const normalized = normalizeString(value)?.toLowerCase() || '';
+  if (
+    normalized === 'k_5' ||
+    normalized === 'k-5' ||
+    normalized === 'k5' ||
+    normalized === 'g1_3' ||
+    normalized === 'g4_6' ||
+    normalized === 'grades_1_3' ||
+    normalized === 'grades_4_6'
+  ) {
+    return 'K_5';
+  }
+  if (normalized === 'g6_8' || normalized === '6-8' || normalized === 'grades_7_9') {
+    return 'G6_8';
+  }
+  if (normalized === 'g9_12' || normalized === '9-12' || normalized === 'grades_10_12') {
+    return 'G9_12';
+  }
+  return 'G6_8';
+}
+
+function toCanonicalTelemetryRole(actorRole: 'learner' | 'educator' | 'admin'): 'student' | 'teacher' | 'admin' {
+  if (actorRole === 'learner') return 'student';
+  if (actorRole === 'educator') return 'teacher';
+  return 'admin';
+}
+
+function toCanonicalTelemetryGradeBand(gradeBand: 'K_5' | 'G6_8' | 'G9_12'): 'k5' | 'ms' | 'hs' {
+  if (gradeBand === 'K_5') return 'k5';
+  if (gradeBand === 'G6_8') return 'ms';
+  return 'hs';
+}
+
+function normalizeLocale(value: unknown): 'en' | 'zh-CN' | 'zh-TW' | 'th' {
+  const normalized = normalizeString(value);
+  if (!normalized) return 'en';
+  if (SUPPORTED_LOCALES.has(normalized)) {
+    return normalized as 'en' | 'zh-CN' | 'zh-TW' | 'th';
+  }
+  const lowered = normalized.toLowerCase();
+  if (lowered.startsWith('zh-tw') || lowered.startsWith('zh-hk') || lowered.startsWith('zh-hant')) {
+    return 'zh-TW';
+  }
+  if (lowered.startsWith('zh')) return 'zh-CN';
+  if (lowered.startsWith('th')) return 'th';
+  return 'en';
+}
+
+function resolveTelemetryEnv(): 'dev' | 'staging' | 'prod' {
+  const raw = String(process.env.VIBE_ENV || process.env.APP_ENV || process.env.NODE_ENV || '')
+    .trim()
+    .toLowerCase();
+  if (raw === 'production' || raw === 'prod') return 'prod';
+  if (raw === 'staging' || raw === 'stage') return 'staging';
+  return 'dev';
+}
+
+function toHeaderString(value: string | string[] | undefined): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    return toHeaderString(value[0]);
+  }
+  return undefined;
+}
+
+function extractTraceIdFromHeader(headerValue: string | undefined): string | undefined {
+  if (!headerValue) return undefined;
+  const traceId = headerValue.split('/')[0]?.trim();
+  return traceId && traceId.length > 0 ? traceId : undefined;
+}
+
+function randomId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function resolveTraceId(request: CallableRequest, data: Record<string, unknown>): string {
+  const payload = data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload)
+    ? data.payload as Record<string, unknown>
+    : {};
+
+  const candidates = [
+    normalizeString(data.traceId),
+    normalizeString(payload.traceId),
+    normalizeString(toHeaderString(request.rawRequest?.headers?.['x-trace-id'] as string | string[] | undefined)),
+    extractTraceIdFromHeader(
+      toHeaderString(request.rawRequest?.headers?.['x-cloud-trace-context'] as string | string[] | undefined),
+    ),
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate) return candidate;
+  }
+  return randomId('bos-trace');
+}
+
+function resolveRequestId(request: CallableRequest, data: Record<string, unknown>): string {
+  const payload = data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload)
+    ? data.payload as Record<string, unknown>
+    : {};
+  return (
+    normalizeString(data.requestId) ||
+    normalizeString(payload.requestId) ||
+    toHeaderString(request.rawRequest?.headers?.['x-request-id'] as string | string[] | undefined) ||
+    randomId('bos-request')
+  );
+}
+
+function shouldRedactBosPayloadKey(pathValue: string): boolean {
+  const leaf = pathValue.split('.').pop() ?? pathValue;
+  const normalized = normalizeKey(leaf.replace(/\[\d+\]/g, ''));
+  return BOS_PAYLOAD_KEY_BLOCKLIST.has(normalized);
+}
+
+function sanitizeBosPayloadValue(
+  value: unknown,
+  pathValue: string,
+  depth: number,
+  redactedPaths: Set<string>,
+): unknown {
+  if (depth > BOS_PAYLOAD_MAX_DEPTH) {
+    redactedPaths.add(`${pathValue}:depth_limit`);
+    return null;
+  }
+
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === 'string') {
+    if (shouldRedactBosPayloadKey(pathValue)) {
+      redactedPaths.add(pathValue);
+      return '[redacted]';
+    }
+    const trimmed = value.trim();
+    if (/^data:audio\//i.test(trimmed) || /audio\/(wav|mpeg|mp3|ogg|webm)/i.test(trimmed)) {
+      redactedPaths.add(`${pathValue}:audio_marker`);
+      return '[redacted_audio]';
+    }
+    if (trimmed.length > 200 && /\s/.test(trimmed)) {
+      redactedPaths.add(`${pathValue}:long_text`);
+      return `[redacted_text_len_${trimmed.length}]`;
+    }
+    return trimmed.length > BOS_PAYLOAD_MAX_STRING_LENGTH
+      ? `${trimmed.slice(0, BOS_PAYLOAD_MAX_STRING_LENGTH)}...`
+      : trimmed;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, BOS_PAYLOAD_MAX_COLLECTION_LENGTH)
+      .map((entry, index) => sanitizeBosPayloadValue(entry, `${pathValue}[${index}]`, depth + 1, redactedPaths));
+  }
+
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    let count = 0;
+    for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      if (count >= BOS_PAYLOAD_MAX_COLLECTION_LENGTH) break;
+      const nestedPath = pathValue ? `${pathValue}.${key}` : key;
+      if (shouldRedactBosPayloadKey(nestedPath)) {
+        redactedPaths.add(nestedPath);
+        continue;
+      }
+      out[key] = sanitizeBosPayloadValue(nestedValue, nestedPath, depth + 1, redactedPaths);
+      count += 1;
+    }
+    return out;
+  }
+
+  return String(value);
+}
+
+function sanitizeBosPayload(payload: unknown): { payload: Record<string, unknown>; redactedPaths: string[] } {
+  const source = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? payload as Record<string, unknown>
+    : {};
+  const redactedPaths = new Set<string>();
+  const sanitized = sanitizeBosPayloadValue(source, 'payload', 0, redactedPaths);
+  if (!sanitized || typeof sanitized !== 'object' || Array.isArray(sanitized)) {
+    return { payload: {}, redactedPaths: Array.from(redactedPaths.values()) };
+  }
+  return {
+    payload: sanitized as Record<string, unknown>,
+    redactedPaths: Array.from(redactedPaths.values()),
+  };
+}
 
 // ──────────────────────────────────────────────────────
 // §2  FDM — Feature Detection Module (stub)
@@ -343,25 +573,105 @@ export const bosIngestEvent = onCall(
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
 
-    const { eventType, siteId, actorRole, gradeBand, sessionOccurrenceId, missionId, checkpointId, payload } = request.data;
-    if (!eventType || !siteId) throw new HttpsError('invalid-argument', 'eventType and siteId required');
+    const data = request.data && typeof request.data === 'object'
+      ? request.data as Record<string, unknown>
+      : {};
 
-    const eventDoc = {
+    const eventType = normalizeString(data.eventType);
+    const siteId = normalizeString(data.siteId);
+    if (!eventType || !siteId) {
+      throw new HttpsError('invalid-argument', 'eventType and siteId required');
+    }
+
+    const actorRole = normalizeBosActorRole(data.actorRole);
+    const gradeBand = normalizeBosGradeBand(data.gradeBand);
+    const locale = normalizeLocale(data.locale ?? (data.payload as Record<string, unknown> | undefined)?.locale);
+    const requestId = resolveRequestId(request, data);
+    const traceId = resolveTraceId(request, data);
+    const telemetryEnv = resolveTelemetryEnv();
+    const timestampIso = new Date().toISOString();
+    const sessionOccurrenceId = normalizeString(data.sessionOccurrenceId) ?? null;
+    const missionId = normalizeString(data.missionId) ?? null;
+    const checkpointId = normalizeString(data.checkpointId) ?? null;
+    const { payload: sanitizedPayload, redactedPaths } = sanitizeBosPayload(data.payload);
+
+    const eventDoc: Record<string, unknown> = {
+      event: eventType,
       eventType,
-      siteId,
+      requestId,
+      traceId,
+      service: 'scholesa-ai',
+      env: telemetryEnv,
+      locale,
+      timestampIso,
       actorId: uid,
-      actorRole: actorRole || 'learner',
-      gradeBand: gradeBand || 'G4_6',
-      sessionOccurrenceId: sessionOccurrenceId || null,
-      missionId: missionId || null,
-      checkpointId: checkpointId || null,
-      payload: payload || {},
+      actorRole,
+      role: toCanonicalTelemetryRole(actorRole),
+      siteId,
+      gradeBand,
+      gradeBandCanonical: toCanonicalTelemetryGradeBand(gradeBand),
+      sessionOccurrenceId,
+      missionId,
+      checkpointId,
+      payload: sanitizedPayload,
+      context: {
+        source: 'bos-runtime',
+        locale,
+        requestId,
+        traceId,
+      },
+      redactionApplied: redactedPaths.length > 0,
+      redactedPathCount: redactedPaths.length,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection('interactionEvents').add(eventDoc);
+    await db.collection(INTERACTION_COLLECTION).add(eventDoc);
 
-    return { ok: true };
+    await db.collection(TELEMETRY_COLLECTION).add({
+      event: eventType,
+      eventType,
+      userId: uid,
+      role: actorRole === 'learner' ? 'learner' : actorRole === 'educator' ? 'educator' : 'site',
+      roleCanonical: toCanonicalTelemetryRole(actorRole),
+      actorRole,
+      service: 'scholesa-ai',
+      env: telemetryEnv,
+      siteId,
+      gradeBand: toCanonicalTelemetryGradeBand(gradeBand),
+      locale,
+      traceId,
+      metadata: {
+        requestId,
+        traceId,
+        service: 'scholesa-ai',
+        env: telemetryEnv,
+        siteId,
+        role: toCanonicalTelemetryRole(actorRole),
+        gradeBand: toCanonicalTelemetryGradeBand(gradeBand),
+        locale,
+        eventType,
+        timestamp: timestampIso,
+        source: 'bos-runtime',
+        sessionOccurrenceId,
+        missionId,
+        checkpointId,
+        redactionApplied: redactedPaths.length > 0,
+        redactedPathCount: redactedPaths.length,
+      },
+      timestampIso,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      ok: true,
+      traceId,
+      requestId,
+      locale,
+      redactionApplied: redactedPaths.length > 0,
+      redactedPathCount: redactedPaths.length,
+    };
   }
 );
 

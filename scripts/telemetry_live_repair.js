@@ -9,6 +9,34 @@ const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestor
 const ROOT = path.resolve(__dirname, '..');
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const UNMAPPED_SITE_ID = 'unscoped';
+const VALID_ENVS = new Set(['dev', 'staging', 'prod']);
+const VALID_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
+const PII_KEY_BLOCKLIST = new Set([
+  'name',
+  'firstname',
+  'lastname',
+  'fullname',
+  'displayname',
+  'email',
+  'phone',
+  'phonenumber',
+  'message',
+  'messagebody',
+  'body',
+  'prompt',
+  'response',
+  'question',
+  'query',
+  'transcript',
+  'audio',
+  'audiobase64',
+  'audiobytes',
+  'rawtext',
+  'rawprompt',
+  'content',
+  'text',
+  'address',
+]);
 
 function usage() {
   return [
@@ -122,11 +150,157 @@ function toSafeString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normalizeKey(key) {
+  return String(key || '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toLowerCase();
+}
+
+function normalizeTelemetryRole(value) {
+  const normalized = toSafeString(value).toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'system') return 'system';
+  if (normalized === 'student' || normalized === 'learner') return 'student';
+  if (normalized === 'teacher' || normalized === 'educator') return 'teacher';
+  if (
+    normalized === 'admin' ||
+    normalized === 'hq' ||
+    normalized === 'site' ||
+    normalized === 'sitelead' ||
+    normalized === 'site_lead' ||
+    normalized === 'partner' ||
+    normalized === 'parent' ||
+    normalized === 'guardian'
+  ) {
+    return 'admin';
+  }
+  return null;
+}
+
+function normalizeTelemetryGradeBand(value, role) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value <= 5) return 'k5';
+    if (value <= 8) return 'ms';
+    if (value <= 12) return 'hs';
+  }
+
+  const normalized = toSafeString(value)
+    .toLowerCase()
+    .replace(/[\s_-]/g, '');
+
+  if (
+    normalized === 'k5' ||
+    normalized === 'k-5' ||
+    normalized === 'gk5' ||
+    normalized === 'grades16' ||
+    normalized === 'grades1to6'
+  ) {
+    return 'k5';
+  }
+  if (
+    normalized === 'ms' ||
+    normalized === '68' ||
+    normalized === 'g68' ||
+    normalized === 'grades79' ||
+    normalized === 'grades7to9'
+  ) {
+    return 'ms';
+  }
+  if (
+    normalized === 'hs' ||
+    normalized === '912' ||
+    normalized === 'g912' ||
+    normalized === 'grades1012' ||
+    normalized === 'grades10to12'
+  ) {
+    return 'hs';
+  }
+  return role === 'student' ? 'ms' : 'hs';
+}
+
+function normalizeTelemetryLocale(value) {
+  const raw = toSafeString(value);
+  if (!raw) return 'en';
+  if (VALID_LOCALES.has(raw)) return raw;
+  const lowered = raw.toLowerCase();
+  if (lowered.startsWith('zh-tw') || lowered.startsWith('zh-hk') || lowered.startsWith('zh-hant')) return 'zh-TW';
+  if (lowered.startsWith('zh')) return 'zh-CN';
+  if (lowered.startsWith('th')) return 'th';
+  return 'en';
+}
+
+function toIsoTimestamp(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'string' && value.trim().length > 0 && !Number.isNaN(Date.parse(value))) {
+    return new Date(value).toISOString();
+  }
+  if (value && typeof value === 'object' && typeof value.toDate === 'function') {
+    try {
+      const date = value.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+    } catch {
+      return '';
+    }
+  }
+  return '';
+}
+
+function resolveIsoTimestamp(...candidates) {
+  for (const candidate of candidates) {
+    const iso = toIsoTimestamp(candidate);
+    if (iso) return iso;
+  }
+  return new Date().toISOString();
+}
+
+function sanitizeMetadata(value, pathPrefix = '', redactedPaths = []) {
+  if (Array.isArray(value)) {
+    return value.map((item, index) =>
+      sanitizeMetadata(item, `${pathPrefix}[${index}]`, redactedPaths),
+    );
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value.toDate === 'function') {
+    const maybeIso = toIsoTimestamp(value);
+    return maybeIso || null;
+  }
+
+  const sanitized = {};
+  for (const [key, nested] of Object.entries(value)) {
+    const keyPath = pathPrefix ? `${pathPrefix}.${key}` : key;
+    if (PII_KEY_BLOCKLIST.has(normalizeKey(key))) {
+      redactedPaths.push(keyPath);
+      continue;
+    }
+    sanitized[key] = sanitizeMetadata(nested, keyPath, redactedPaths);
+  }
+  return sanitized;
+}
+
+function setMetadataValue(target, key, value) {
+  if (target[key] !== value) {
+    target[key] = value;
+    return true;
+  }
+  return false;
+}
+
 function computePatch(row) {
   const patch = {};
   const metadata = asObject(row.metadata);
-  const nextMetadata = { ...metadata };
-  let metadataChanged = false;
+  const redactedPaths = [];
+  const sanitizedMetadata = sanitizeMetadata(metadata, '', redactedPaths);
+  const nextMetadata = { ...asObject(sanitizedMetadata) };
+  let metadataChanged = JSON.stringify(nextMetadata) !== JSON.stringify(metadata) || redactedPaths.length > 0;
 
   const role = toSafeString(row.role);
   if (!role) {
@@ -143,29 +317,80 @@ function computePatch(row) {
     patch.siteId = UNMAPPED_SITE_ID;
   }
 
-  const requestId = toSafeString(metadata.requestId);
-  if (!requestId) {
-    nextMetadata.requestId = `repair-${row.id}`;
-    metadataChanged = true;
+  const canonicalRole =
+    normalizeTelemetryRole(nextMetadata.role) ||
+    normalizeTelemetryRole(role) ||
+    ((toSafeString(row.userId) === 'system' || toSafeString(row.userId) === 'anonymous') ? 'system' : 'admin');
+  const effectiveSiteId = siteId || UNMAPPED_SITE_ID;
+  const requestId = toSafeString(nextMetadata.requestId) || toSafeString(row.requestId) || `repair-${row.id}`;
+  const traceId = toSafeString(nextMetadata.traceId) || toSafeString(row.traceId) || requestId;
+  const eventType = toSafeString(nextMetadata.eventType) || toSafeString(row.eventType) || toSafeString(row.event);
+  const locale = normalizeTelemetryLocale(nextMetadata.locale || nextMetadata.targetLocale || row.locale);
+  const gradeBand = normalizeTelemetryGradeBand(
+    nextMetadata.gradeBand ?? nextMetadata.grade ?? row.gradeBand,
+    canonicalRole,
+  );
+  const envCandidate = toSafeString(nextMetadata.env) || toSafeString(row.env);
+  const env = VALID_ENVS.has(envCandidate) ? envCandidate : 'prod';
+  let service = toSafeString(nextMetadata.service) || toSafeString(row.service);
+  if (!service) {
+    const endpoint = toSafeString(nextMetadata.endpoint) || toSafeString(row.endpoint);
+    if (endpoint === 'voice_transcribe') {
+      service = 'scholesa-stt';
+    } else if (endpoint === 'tts_speak') {
+      service = 'scholesa-tts';
+    } else {
+      service = 'scholesa-api';
+    }
   }
+  const metadataSiteId = toSafeString(nextMetadata.siteId) || effectiveSiteId;
+  const timestampIso = resolveIsoTimestamp(
+    nextMetadata.timestamp,
+    nextMetadata.timestampIso,
+    row.timestampIso,
+    row.createdAt,
+    row.timestamp,
+  );
 
-  const traceId = toSafeString(metadata.traceId);
-  if (!traceId) {
-    nextMetadata.traceId = nextMetadata.requestId || `repair-${row.id}`;
-    metadataChanged = true;
-  }
+  metadataChanged = setMetadataValue(nextMetadata, 'requestId', requestId) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'traceId', traceId) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'siteId', metadataSiteId) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'role', canonicalRole) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'gradeBand', gradeBand) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'locale', locale) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'env', env) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'service', service) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'eventType', eventType) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'timestamp', timestampIso) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'timestampIso', timestampIso) || metadataChanged;
 
-  if (typeof metadata.redactionApplied !== 'boolean') {
-    nextMetadata.redactionApplied = false;
-    metadataChanged = true;
-  }
-  if (!Number.isFinite(metadata.redactedPathCount)) {
-    nextMetadata.redactedPathCount = 0;
-    metadataChanged = true;
-  }
+  const priorRedactedPathCount = Number(nextMetadata.redactedPathCount);
+  const resolvedRedactedPathCount = Number.isFinite(priorRedactedPathCount)
+    ? Math.max(priorRedactedPathCount, redactedPaths.length)
+    : redactedPaths.length;
+  metadataChanged = setMetadataValue(nextMetadata, 'redactionApplied', resolvedRedactedPathCount > 0) || metadataChanged;
+  metadataChanged = setMetadataValue(nextMetadata, 'redactedPathCount', resolvedRedactedPathCount) || metadataChanged;
 
-  if (metadataChanged || metadata !== row.metadata) {
+  if (metadataChanged) {
     patch.metadata = nextMetadata;
+  }
+  if (!toSafeString(row.eventType) && eventType) {
+    patch.eventType = eventType;
+  }
+  if (!toSafeString(row.traceId) && traceId) {
+    patch.traceId = traceId;
+  }
+  if (!toSafeString(row.env)) {
+    patch.env = env;
+  }
+  if (!toSafeString(row.service)) {
+    patch.service = service;
+  }
+  if (!toSafeString(row.locale)) {
+    patch.locale = locale;
+  }
+  if (!toSafeString(row.gradeBand)) {
+    patch.gradeBand = gradeBand;
   }
 
   if (Object.keys(patch).length) {

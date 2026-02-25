@@ -185,11 +185,13 @@ function checkVoiceBosStaticSupport() {
   const voiceSourcePath = path.resolve(process.cwd(), 'functions/src/voiceSystem.ts');
   const bosSourcePath = path.resolve(process.cwd(), 'functions/src/bosRuntime.ts');
   const voiceServicePath = path.resolve(process.cwd(), 'src/lib/voice/voiceService.ts');
+  const telemetrySmokePath = path.resolve(process.cwd(), 'scripts/telemetry_smoke_check.js');
 
   const indexSource = readTextSafe(indexSourcePath);
   const voiceSource = readTextSafe(voiceSourcePath);
   const bosSource = readTextSafe(bosSourcePath);
   const voiceServiceSource = readTextSafe(voiceServicePath);
+  const telemetrySmokeSource = readTextSafe(telemetrySmokePath);
 
   const checks = [
     {
@@ -237,12 +239,33 @@ function checkVoiceBosStaticSupport() {
         bosSource.includes("collection('mvlEpisodes')"),
     },
     {
+      id: 'voice_to_bos_bridge_declared',
+      pass:
+        voiceSource.includes('recordBosInteractionEvent(') &&
+        voiceSource.includes("eventType: 'ai_help_opened'") &&
+        voiceSource.includes("eventType: 'ai_help_used'") &&
+        voiceSource.includes("eventType: 'ai_coach_response'"),
+    },
+    {
       id: 'bos_self_learning_pipeline_declared',
       pass:
         bosSource.includes('extractFeatures(') &&
         bosSource.includes('ekfLiteUpdate(') &&
         bosSource.includes('computeIntervention(') &&
         bosSource.includes('scoreMvlEpisode('),
+    },
+    {
+      id: 'non_core_telemetry_registry_declared',
+      pass:
+        telemetrySmokeSource.includes('const NON_CORE_EVENTS = [') &&
+        telemetrySmokeSource.includes("'lead.submitted'") &&
+        telemetrySmokeSource.includes("'contract.created'") &&
+        telemetrySmokeSource.includes("'contract.approved'") &&
+        telemetrySmokeSource.includes("'deliverable.submitted'") &&
+        telemetrySmokeSource.includes("'deliverable.accepted'") &&
+        telemetrySmokeSource.includes("'payout.approved'") &&
+        telemetrySmokeSource.includes("'aiDraft.requested'") &&
+        telemetrySmokeSource.includes("'aiDraft.reviewed'"),
     },
   ];
 
@@ -254,6 +277,7 @@ function checkVoiceBosStaticSupport() {
       voiceSourcePath: path.relative(process.cwd(), voiceSourcePath),
       bosSourcePath: path.relative(process.cwd(), bosSourcePath),
       voiceServicePath: path.relative(process.cwd(), voiceServicePath),
+      telemetrySmokePath: path.relative(process.cwd(), telemetrySmokePath),
     },
   };
 }
@@ -639,6 +663,10 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     return VOICE_TELEMETRY_EVENTS.has(event || eventType);
   });
 
+  const voiceTranscribeTraceIds = new Set();
+  const voiceMessageTraceIds = new Set();
+  const voiceTtsTraceIds = new Set();
+
   for (const doc of voiceDocs) {
     const metadata = isObjectRecord(doc.data.metadata) ? doc.data.metadata : null;
     if (!metadata) {
@@ -676,12 +704,21 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     if (!metadataRole) {
       voiceFailures.push(`voice_role_missing:${doc.id}`);
     }
+
+    const traceId = typeof metadata.traceId === 'string' ? metadata.traceId.trim() : '';
+    if (traceId) {
+      if (event === 'voice.transcribe') voiceTranscribeTraceIds.add(traceId);
+      if (event === 'voice.message') voiceMessageTraceIds.add(traceId);
+      if (event === 'voice.tts') voiceTtsTraceIds.add(traceId);
+    }
   }
 
   const bosEventDocs = interactionDocs.filter((doc) => {
     const eventType = typeof doc.data.eventType === 'string' ? doc.data.eventType.trim() : '';
     return BOS_EVENT_TYPES.has(eventType);
   });
+
+  const bosTraceIds = new Set();
 
   for (const doc of bosEventDocs) {
     const data = doc.data;
@@ -705,6 +742,38 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
     }
     if (data.payload !== undefined && !isObjectRecord(data.payload)) {
       bosFailures.push(`bos_payload_not_object:${doc.id}`);
+    }
+    const payloadLocale = isObjectRecord(data.payload) && typeof data.payload.locale === 'string'
+      ? data.payload.locale.trim()
+      : '';
+    const eventLocale = typeof data.locale === 'string' ? data.locale.trim() : '';
+    const effectiveLocale = eventLocale || payloadLocale;
+    if (!REQUIRED_VOICE_LOCALES.has(effectiveLocale)) {
+      bosFailures.push(`bos_locale_invalid:${doc.id}:${effectiveLocale || 'missing'}`);
+    }
+    const service = typeof data.service === 'string' ? data.service.trim() : '';
+    if (service && service !== 'scholesa-ai') {
+      bosFailures.push(`bos_service_invalid:${doc.id}:${service}`);
+    }
+    const env = typeof data.env === 'string' ? data.env.trim() : '';
+    if (env && env !== 'dev' && env !== 'staging' && env !== 'prod') {
+      bosFailures.push(`bos_env_invalid:${doc.id}:${env}`);
+    }
+    if (isObjectRecord(data.payload)) {
+      const payloadTrace = typeof data.payload.traceId === 'string' ? data.payload.traceId.trim() : '';
+      const eventTrace = typeof data.traceId === 'string' ? data.traceId.trim() : '';
+      const traceId = payloadTrace || eventTrace;
+      if (!traceId) {
+        bosFailures.push(`bos_trace_missing:${doc.id}`);
+      }
+      if (traceId) bosTraceIds.add(traceId);
+    } else {
+      const eventTrace = typeof data.traceId === 'string' ? data.traceId.trim() : '';
+      if (!eventTrace) {
+        bosFailures.push(`bos_trace_missing:${doc.id}`);
+      } else {
+        bosTraceIds.add(eventTrace);
+      }
     }
   }
 
@@ -827,6 +896,9 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
   const sharedEventToState = overlap(bosFlowKeys, orchestrationKeys);
   const sharedStateToIntervention = overlap(orchestrationKeys, interventionKeys);
   const sharedFeatureToState = overlap(fdmKeys, orchestrationKeys);
+  const sharedSttToMessageTraces = overlap(voiceTranscribeTraceIds, voiceMessageTraceIds);
+  const sharedMessageToBosTraces = overlap(voiceMessageTraceIds, bosTraceIds);
+  const sharedTtsToBosTraces = overlap(voiceTtsTraceIds, bosTraceIds);
 
   if (bosFlowKeys.size > 0 && orchestrationKeys.size > 0 && sharedEventToState.length === 0) {
     bosFailures.push('bos_self_learning_no_event_to_state_link');
@@ -836,6 +908,15 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
   }
   if (orchestrationKeys.size > 0 && interventionKeys.size > 0 && sharedStateToIntervention.length === 0) {
     bosFailures.push('bos_self_learning_no_state_to_intervention_link');
+  }
+  if (voiceTranscribeTraceIds.size > 0 && voiceMessageTraceIds.size > 0 && sharedSttToMessageTraces.length === 0) {
+    bosFailures.push('voice_stt_to_message_trace_gap');
+  }
+  if (voiceMessageTraceIds.size > 0 && bosTraceIds.size > 0 && sharedMessageToBosTraces.length === 0) {
+    bosFailures.push('voice_message_to_bos_trace_gap');
+  }
+  if (voiceTtsTraceIds.size > 0 && bosTraceIds.size > 0 && sharedTtsToBosTraces.length === 0) {
+    bosFailures.push('voice_tts_to_bos_trace_gap');
   }
 
   const staticSupport = checkVoiceBosStaticSupport();
@@ -870,10 +951,20 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
         sharedEventToState: sharedEventToState.length,
         sharedFeatureToState: sharedFeatureToState.length,
         sharedStateToIntervention: sharedStateToIntervention.length,
+        voiceTranscribeTraceIds: voiceTranscribeTraceIds.size,
+        voiceMessageTraceIds: voiceMessageTraceIds.size,
+        voiceTtsTraceIds: voiceTtsTraceIds.size,
+        bosTraceIds: bosTraceIds.size,
+        sharedSttToMessageTraces: sharedSttToMessageTraces.length,
+        sharedMessageToBosTraces: sharedMessageToBosTraces.length,
+        sharedTtsToBosTraces: sharedTtsToBosTraces.length,
         sampleSharedKeys: [
           ...sharedEventToState.slice(0, 5),
           ...sharedFeatureToState.slice(0, 5),
           ...sharedStateToIntervention.slice(0, 5),
+          ...sharedSttToMessageTraces.slice(0, 5),
+          ...sharedMessageToBosTraces.slice(0, 5),
+          ...sharedTtsToBosTraces.slice(0, 5),
         ],
       },
       voiceFailureCount: voiceFailures.length,

@@ -261,6 +261,9 @@ function runLoggingNoRawContent(env) {
         telemetrySource.includes('TELEMETRY_PII_KEY_BLOCKLIST') &&
         telemetrySource.includes("'prompt'") &&
         telemetrySource.includes("'response'") &&
+        telemetrySource.includes("'question'") &&
+        telemetrySource.includes("'transcript'") &&
+        telemetrySource.includes("'audio'") &&
         telemetrySource.includes("'content'") &&
         telemetrySource.includes("'text'"),
       details: {

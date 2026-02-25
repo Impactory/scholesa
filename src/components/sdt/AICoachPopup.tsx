@@ -413,10 +413,12 @@ Guidance: ${
       // Track telemetry
       trackAI('ai_hint_requested', {
         mode,
-        question: question.substring(0, 100), // First 100 chars for privacy
+        questionLength: question.trim().length,
         missionId,
         sessionId: sprintSessionId,
-        modelUsed: aiResponse.modelUsed
+        modelUsed: aiResponse.modelUsed,
+        locale,
+        voiceInputTraceId: voiceInputTraceId || undefined,
       });
     } catch (err) {
       console.error('AI Coach error:', err);

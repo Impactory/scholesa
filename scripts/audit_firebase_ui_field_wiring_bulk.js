@@ -15,6 +15,7 @@ const {
 const SINGLE_AUDIT_SCRIPT = path.resolve(__dirname, 'audit_firebase_ui_field_wiring.js');
 const DEFAULT_SITE_LIMIT = Number(process.env.FIREBASE_UI_FIELD_AUDIT_SITE_LIMIT || 30);
 const DEFAULT_REPORT_NAME = 'firebase-ui-field-wiring-bulk';
+const DEFAULT_EXCLUSIONS_PATH = path.resolve(__dirname, 'config', 'firebase_ui_field_audit_exclusions.json');
 
 const SERVICE_ACCOUNT_PATHS = [
   process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -27,8 +28,11 @@ function parseArgs(argv) {
     env: resolveEnv(process.env.VIBE_ENV || process.env.NODE_ENV || 'prod'),
     strict: false,
     includeInactive: false,
+    includeExcluded: false,
     siteLimit: Number.isFinite(DEFAULT_SITE_LIMIT) && DEFAULT_SITE_LIMIT > 0 ? DEFAULT_SITE_LIMIT : 30,
     siteIds: [],
+    excludeSiteIds: [],
+    exclusionsFile: process.env.FIREBASE_UI_FIELD_AUDIT_EXCLUSIONS_FILE || DEFAULT_EXCLUSIONS_PATH,
     reportName: DEFAULT_REPORT_NAME,
   };
 
@@ -39,6 +43,10 @@ function parseArgs(argv) {
     }
     if (arg === '--include-inactive') {
       args.includeInactive = true;
+      continue;
+    }
+    if (arg === '--include-excluded') {
+      args.includeExcluded = true;
       continue;
     }
     if (!arg.startsWith('--')) continue;
@@ -58,6 +66,16 @@ function parseArgs(argv) {
         .map((value) => value.trim())
         .filter(Boolean);
     }
+    if (rawKey === 'exclude-site-ids' || rawKey === 'excludeSiteIds') {
+      args.excludeSiteIds = rawValue
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+    }
+    if (rawKey === 'exclusions-file' || rawKey === 'exclusionsFile') {
+      const cleaned = rawValue.trim();
+      if (cleaned) args.exclusionsFile = path.resolve(process.cwd(), cleaned);
+    }
     if (rawKey === 'report-name' || rawKey === 'reportName') {
       const cleaned = rawValue.trim();
       if (cleaned) args.reportName = cleaned;
@@ -65,6 +83,35 @@ function parseArgs(argv) {
   }
 
   return args;
+}
+
+function readExclusionConfig(filePath) {
+  if (!filePath) return {};
+  if (!fs.existsSync(filePath)) return {};
+  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return {};
+  }
+  return parsed;
+}
+
+function resolveExcludedSiteIds(args) {
+  const configured = readExclusionConfig(args.exclusionsFile);
+  const envEntry = configured[args.env];
+  const envConfiguredSiteIds = Array.isArray(envEntry?.siteIds)
+    ? envEntry.siteIds.filter((value) => typeof value === 'string').map((value) => value.trim()).filter(Boolean)
+    : [];
+
+  const envVarSiteIds = String(process.env.FIREBASE_UI_FIELD_AUDIT_EXCLUDE_SITE_IDS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([
+    ...envConfiguredSiteIds,
+    ...envVarSiteIds,
+    ...(Array.isArray(args.excludeSiteIds) ? args.excludeSiteIds : []),
+  ]));
 }
 
 function resolveServiceAccount() {
@@ -110,8 +157,19 @@ function extractFailedChecks(report) {
 }
 
 async function discoverSiteIds(db, args) {
+  const excludedSiteIds = resolveExcludedSiteIds(args);
+  const excludedSiteIdSet = new Set(excludedSiteIds);
+
   if (Array.isArray(args.siteIds) && args.siteIds.length > 0) {
-    return Array.from(new Set(args.siteIds));
+    const explicitSiteIds = Array.from(new Set(args.siteIds));
+    const filteredSiteIds = args.includeExcluded
+      ? explicitSiteIds
+      : explicitSiteIds.filter((siteId) => !excludedSiteIdSet.has(siteId));
+    return {
+      siteIds: filteredSiteIds,
+      excludedSiteIds: explicitSiteIds.filter((siteId) => excludedSiteIdSet.has(siteId)),
+      exclusionSource: 'explicit',
+    };
   }
 
   const snapshot = await db.collection('sites').limit(args.siteLimit).get();
@@ -120,9 +178,16 @@ async function discoverSiteIds(db, args) {
     const data = doc.data() || {};
     const status = typeof data.status === 'string' ? data.status.trim().toLowerCase() : 'active';
     if (!args.includeInactive && status === 'inactive') continue;
+    if (!args.includeExcluded && excludedSiteIdSet.has(doc.id)) {
+      continue;
+    }
     siteIds.push(doc.id);
   }
-  return Array.from(new Set(siteIds));
+  return {
+    siteIds: Array.from(new Set(siteIds)),
+    excludedSiteIds,
+    exclusionSource: 'discovered',
+  };
 }
 
 function runSingleAudit(siteId, args) {
@@ -169,7 +234,8 @@ function runSingleAudit(siteId, args) {
 async function run() {
   const args = parseArgs(process.argv.slice(2));
   const { db, credentialPath, projectId } = initializeAdmin();
-  const siteIds = await discoverSiteIds(db, args);
+  const discovery = await discoverSiteIds(db, args);
+  const siteIds = discovery.siteIds;
 
   if (siteIds.length === 0) {
     throw new Error('No siteIds resolved for bulk audit.');
@@ -206,8 +272,11 @@ async function run() {
       includeInactive: args.includeInactive,
       siteLimit: args.siteLimit,
       strict: args.strict,
+      includeExcluded: args.includeExcluded,
       projectId,
       credentialPath,
+      excludedSiteIds: discovery.excludedSiteIds,
+      exclusionSource: discovery.exclusionSource,
       siteResults,
     },
   });
@@ -218,6 +287,7 @@ async function run() {
     env: args.env,
     report: path.relative(process.cwd(), outputPath),
     auditedSites: siteIds.length,
+    excludedSites: discovery.excludedSiteIds,
     failedSites: siteResults.filter((result) => !result.pass).map((result) => result.siteId),
   };
   process.stdout.write(JSON.stringify(output, null, 2) + '\n');
