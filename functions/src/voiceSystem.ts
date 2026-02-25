@@ -146,6 +146,33 @@ interface VoiceLearningSnapshot {
   frustrationSignalCount: number;
 }
 
+interface RoleIntelligenceContext {
+  version: 'role-intel-v1';
+  role: VoiceRole;
+  siteId: string;
+  actorId: string;
+  selectedLearnerId?: string;
+  signalCount: number;
+  learnerProfile?: {
+    linkedEducatorCount: number;
+    linkedParentCount: number;
+    assignedMissionCount: number;
+    recentInteractionCount: number;
+  };
+  educatorProfile?: {
+    rosterCount: number;
+    selectedLearnerLinkedParentCount: number;
+    selectedLearnerMissionCount: number;
+  };
+  adminProfile?: {
+    learnerCount: number;
+    educatorCount: number;
+    parentCount: number;
+    openMvlCount: number;
+    activeMissionCount: number;
+  };
+}
+
 class VoiceHttpError extends Error {
   readonly status: number;
   readonly code: string;
@@ -1217,6 +1244,19 @@ function toFiniteNumber(value: unknown, fallback: number = 0): number {
   return numeric;
 }
 
+async function safeQueryCount(query: FirebaseFirestore.Query): Promise<number | undefined> {
+  try {
+    const snapshot = await (query as unknown as { count: () => { get: () => Promise<{ data: () => { count?: number } }> } })
+      .count()
+      .get();
+    const data = snapshot.data();
+    if (typeof data?.count === 'number') return data.count;
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function extractInternalLlmPayload(data: unknown): {
   text?: string;
   modelVersion?: string;
@@ -1715,6 +1755,8 @@ async function recordVoiceTelemetryEvent(payload: {
   understandingSource?: UnderstandingSource;
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
+  roleIntelligenceSignals?: number;
+  roleIntelligenceRole?: VoiceRole;
 }) {
   const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1786,6 +1828,8 @@ async function recordVoiceTelemetryEvent(payload: {
       understandingSource: payload.understandingSource ?? 'heuristic',
       modelToolHintCount: payload.modelToolHintCount ?? 0,
       personalizationContextUsed: payload.personalizationContextUsed ?? false,
+      roleIntelligenceSignals: payload.roleIntelligenceSignals ?? 0,
+      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
     },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -1811,6 +1855,8 @@ async function recordBosInteractionEvent(payload: {
   understandingSource?: UnderstandingSource;
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
+  roleIntelligenceSignals?: number;
+  roleIntelligenceRole?: VoiceRole;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1879,6 +1925,8 @@ async function recordBosInteractionEvent(payload: {
       understandingSource: payload.understandingSource ?? 'heuristic',
       modelToolHintCount: payload.modelToolHintCount ?? 0,
       personalizationContextUsed: payload.personalizationContextUsed ?? false,
+      roleIntelligenceSignals: payload.roleIntelligenceSignals ?? 0,
+      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
     },
     timestampIso: new Date().toISOString(),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -1899,6 +1947,8 @@ async function upsertBosLearningProfile(payload: {
   understandingSource?: UnderstandingSource;
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
+  roleIntelligenceSignals?: number;
+  roleIntelligenceRole?: VoiceRole;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const profileId = `${payload.authContext.siteId}__${bosContext.actorId}`;
@@ -1935,6 +1985,9 @@ async function upsertBosLearningProfile(payload: {
   }
   if (payload.personalizationContextUsed) {
     metrics.personalizedContextCount = admin.firestore.FieldValue.increment(1);
+  }
+  if ((payload.roleIntelligenceSignals ?? 0) > 0) {
+    metrics.roleIntelligenceSignalCount = admin.firestore.FieldValue.increment(payload.roleIntelligenceSignals ?? 0);
   }
 
   const learning: Record<string, unknown> = {};
@@ -1973,6 +2026,7 @@ async function upsertBosLearningProfile(payload: {
     lastSafetyOutcome: payload.safetyOutcome,
     lastContextMode: bosContext.contextMode,
     lastUnderstandingSource: payload.understandingSource ?? 'heuristic',
+    lastRoleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
     updatedAtIso: nowIso,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     metrics,
@@ -2083,6 +2137,147 @@ async function loadVoiceLearningSnapshot(
   };
 }
 
+function nonZeroSignalCount(values: number[]): number {
+  return values.filter((value) => Number.isFinite(value) && value > 0).length;
+}
+
+async function loadRoleIntelligenceContext(
+  authContext: VoiceAuthContext,
+  body: Record<string, unknown>,
+): Promise<RoleIntelligenceContext> {
+  const bosContext = resolveBosInteractionContext(body, authContext);
+  const selectedLearnerId = authContext.role === 'teacher' && bosContext.actorRole === 'learner'
+    ? bosContext.actorId
+    : undefined;
+  const siteRef = admin.firestore().collection('sites').doc(authContext.siteId);
+  const siteSnap = await siteRef.get().catch(() => null);
+  const siteData = siteSnap?.exists ? (siteSnap.data() as Record<string, unknown>) : {};
+
+  const siteLearnerCount = dedupeStrings([
+    ...normalizeStringArray(siteData?.learnerIds),
+    ...normalizeStringArray(siteData?.studentIds),
+  ]).length;
+  const siteEducatorCount = dedupeStrings([
+    ...normalizeStringArray(siteData?.educatorIds),
+    ...normalizeStringArray(siteData?.teacherIds),
+    ...normalizeStringArray(siteData?.siteLeadIds),
+  ]).length;
+  const siteParentCount = normalizeStringArray(siteData?.parentIds).length;
+
+  const context: RoleIntelligenceContext = {
+    version: 'role-intel-v1',
+    role: authContext.role,
+    siteId: authContext.siteId,
+    actorId: bosContext.actorId,
+    ...(selectedLearnerId ? { selectedLearnerId } : {}),
+    signalCount: 0,
+  };
+
+  if (authContext.role === 'student') {
+    const learnerSnap = await admin.firestore().collection('users').doc(bosContext.actorId).get().catch(() => null);
+    const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
+    const linkedEducatorCount = dedupeStrings([
+      ...normalizeStringArray(learnerData?.educatorIds),
+      ...normalizeStringArray(learnerData?.teacherIds),
+    ]).length;
+    const linkedParentCount = dedupeStrings([
+      ...normalizeStringArray(learnerData?.parentIds),
+      ...normalizeStringArray(learnerData?.guardianIds),
+    ]).length;
+    const assignedMissionFromProfile = dedupeStrings([
+      ...normalizeStringArray(learnerData?.missionIds),
+      ...normalizeStringArray(learnerData?.activeMissionIds),
+    ]).length;
+    const recentInteractionCount = await safeQueryCount(
+      admin.firestore()
+        .collection(BOS_INTERACTION_COLLECTION)
+        .where('siteId', '==', authContext.siteId)
+        .where('actorId', '==', bosContext.actorId)
+        .limit(30),
+    ) ?? 0;
+    context.learnerProfile = {
+      linkedEducatorCount,
+      linkedParentCount,
+      assignedMissionCount: assignedMissionFromProfile,
+      recentInteractionCount,
+    };
+    context.signalCount = nonZeroSignalCount([
+      linkedEducatorCount,
+      linkedParentCount,
+      assignedMissionFromProfile,
+      recentInteractionCount,
+    ]);
+    return context;
+  }
+
+  if (authContext.role === 'teacher') {
+    const educatorSnap = await admin.firestore().collection('users').doc(authContext.uid).get().catch(() => null);
+    const educatorData = educatorSnap?.exists ? (educatorSnap.data() as Record<string, unknown>) : {};
+    const rosterCount = dedupeStrings([
+      ...normalizeStringArray(educatorData?.learnerIds),
+      ...normalizeStringArray(educatorData?.studentIds),
+    ]).length;
+
+    let selectedLearnerLinkedParentCount = 0;
+    let selectedLearnerMissionCount = 0;
+    if (selectedLearnerId) {
+      const learnerSnap = await admin.firestore().collection('users').doc(selectedLearnerId).get().catch(() => null);
+      const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
+      selectedLearnerLinkedParentCount = dedupeStrings([
+        ...normalizeStringArray(learnerData?.parentIds),
+        ...normalizeStringArray(learnerData?.guardianIds),
+      ]).length;
+      selectedLearnerMissionCount = dedupeStrings([
+        ...normalizeStringArray(learnerData?.missionIds),
+        ...normalizeStringArray(learnerData?.activeMissionIds),
+      ]).length;
+    }
+
+    context.educatorProfile = {
+      rosterCount,
+      selectedLearnerLinkedParentCount,
+      selectedLearnerMissionCount,
+    };
+    context.signalCount = nonZeroSignalCount([
+      rosterCount,
+      selectedLearnerLinkedParentCount,
+      selectedLearnerMissionCount,
+    ]);
+    return context;
+  }
+
+  const openMvlCount = await safeQueryCount(
+    admin.firestore()
+      .collection('mvlEpisodes')
+      .where('siteId', '==', authContext.siteId)
+      .where('resolution', '==', null)
+      .limit(100),
+  ) ?? 0;
+  const activeMissionCount = await safeQueryCount(
+    admin.firestore()
+      .collection('missions')
+      .where('siteId', '==', authContext.siteId)
+      .where('status', '==', 'active')
+      .limit(100),
+  ) ?? 0;
+
+  context.adminProfile = {
+    learnerCount: siteLearnerCount,
+    educatorCount: siteEducatorCount,
+    parentCount: siteParentCount,
+    openMvlCount,
+    activeMissionCount,
+  };
+  context.signalCount = nonZeroSignalCount([
+    siteLearnerCount,
+    siteEducatorCount,
+    siteParentCount,
+    openMvlCount,
+    activeMissionCount,
+  ]);
+  return context;
+}
+
 export async function handleCopilotMessage(req: Request, res: Response): Promise<void> {
   const startedAt = Date.now();
   if (req.method !== 'POST') {
@@ -2114,8 +2309,12 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     let understanding = heuristicUnderstanding;
     let understandingSource: UnderstandingSource = 'heuristic';
     let modelToolHints: string[] = [];
-    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, body);
-    const personalizationContextUsed = Boolean(learningSnapshot);
+    const [learningSnapshot, roleIntelligence] = await Promise.all([
+      loadVoiceLearningSnapshot(authContext, body),
+      loadRoleIntelligenceContext(authContext, body),
+    ]);
+    const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
+    const roleIntelligenceSignals = roleIntelligence.signalCount;
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
       ? buildAdaptiveLocalizedResponse(authContext.role, locale, safety.category, understanding)
       : safety.localizedMessage;
@@ -2148,6 +2347,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
             topicTags: heuristicUnderstanding.topicTags,
           },
           learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
+          roleIntelligenceContext: roleIntelligence,
           maxTokens: 220,
         },
         context: buildInferenceContextHeaders({
@@ -2277,6 +2477,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
     ];
 
@@ -2293,6 +2495,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -2311,6 +2515,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_used',
@@ -2329,6 +2535,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -2347,6 +2555,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2366,6 +2576,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_used',
@@ -2385,6 +2597,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2429,6 +2643,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           understandingSource,
           modelToolHintCount,
           personalizationContextUsed,
+          roleIntelligenceSignals,
+          roleIntelligenceRole: roleIntelligence.role,
         }),
       );
     }
@@ -2455,6 +2671,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,
@@ -2551,8 +2769,12 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     const locale = resolveLocale(localeHint, req, settings.allowedLocales);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, resolvedBody);
-    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, resolvedBody);
-    const personalizationContextUsed = Boolean(learningSnapshot);
+    const [learningSnapshot, roleIntelligence] = await Promise.all([
+      loadVoiceLearningSnapshot(authContext, resolvedBody),
+      loadRoleIntelligenceContext(authContext, resolvedBody),
+    ]);
+    const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
+    const roleIntelligenceSignals = roleIntelligence.signalCount;
     const partial = normalizeBoolean(partialHint, false);
     let transcriptCandidate = transcriptRaw;
     let confidence = transcriptRaw ? 0.96 : undefined;
@@ -2573,6 +2795,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
           role: authContext.role,
           gradeBand: authContext.gradeBand,
           learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
+          roleIntelligenceContext: roleIntelligence,
         },
         context: buildInferenceContextHeaders({
           traceId,
@@ -2647,6 +2870,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
     ]);
     await Promise.allSettled([
@@ -2661,6 +2886,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         transcriptLength: transcript.length,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -2680,6 +2907,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2697,6 +2926,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
     ]);
 
@@ -2711,6 +2942,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         partial,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
         modelVersion: sttModelVersion,
         inference: {
           service: inferenceMeta.service,
@@ -2773,8 +3006,12 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
-    const learningSnapshot = await loadVoiceLearningSnapshot(authContext, body);
-    const personalizationContextUsed = Boolean(learningSnapshot);
+    const [learningSnapshot, roleIntelligence] = await Promise.all([
+      loadVoiceLearningSnapshot(authContext, body),
+      loadRoleIntelligenceContext(authContext, body),
+    ]);
+    const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
+    const roleIntelligenceSignals = roleIntelligence.signalCount;
     const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
     const checksum = createHash('sha256')
       .update(`${traceId}|${locale}|${voiceProfile}|${speech.speechText}|${expMs}`)
@@ -2807,6 +3044,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
           role: authContext.role,
         }),
         learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
+        roleIntelligenceContext: roleIntelligence,
       },
       context: buildInferenceContextHeaders({
         traceId,
@@ -2879,6 +3117,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
     ]);
     await Promise.allSettled([
@@ -2893,6 +3133,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         textLength: speech.speechText.length,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -2911,6 +3153,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2928,6 +3172,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         inference: inferenceMeta,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
       }),
     ]);
 
@@ -2946,6 +3192,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         redactionCount: speech.redactionCount,
         understandingSource,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.role,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,

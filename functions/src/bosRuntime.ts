@@ -64,6 +64,24 @@ function normalizeString(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+    .map((entry) => entry.trim());
+}
+
+function dedupeStrings(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    out.push(value);
+  }
+  return out;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   return value as Record<string, unknown>;
@@ -304,6 +322,25 @@ interface BosLearningSnapshot {
   frustrationSignalCount: number;
 }
 
+interface BosRoleIntelligenceContext {
+  version: 'role-intel-v1';
+  actorRole: 'learner' | 'educator' | 'admin';
+  actorId: string;
+  siteId: string;
+  signalCount: number;
+  learnerLinks?: {
+    linkedEducatorCount: number;
+    linkedParentCount: number;
+    assignedMissionCount: number;
+  };
+  siteProfile?: {
+    learnerCount: number;
+    educatorCount: number;
+    parentCount: number;
+    openMvlCount: number;
+  };
+}
+
 function readVoiceUnderstandingObservation(event: FirebaseFirestore.DocumentData): VoiceUnderstandingObservation | null {
   if (!event || typeof event !== 'object') return null;
   const payload = event.payload && typeof event.payload === 'object'
@@ -338,6 +375,93 @@ function toFiniteNumber(value: unknown, fallback: number = 0): number {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric)) return fallback;
   return numeric;
+}
+
+async function safeQueryCount(query: FirebaseFirestore.Query): Promise<number | undefined> {
+  try {
+    const snapshot = await (query as unknown as { count: () => { get: () => Promise<{ data: () => { count?: number } }> } })
+      .count()
+      .get();
+    const data = snapshot.data();
+    if (typeof data?.count === 'number') return data.count;
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function nonZeroSignalCount(values: number[]): number {
+  return values.filter((value) => Number.isFinite(value) && value > 0).length;
+}
+
+async function loadBosRoleIntelligenceContext(input: {
+  siteId: string;
+  learnerId: string;
+  actorRole: 'learner' | 'educator' | 'admin';
+  actorId: string;
+}): Promise<BosRoleIntelligenceContext> {
+  const siteSnap = await db.collection('sites').doc(input.siteId).get().catch(() => null);
+  const siteData = siteSnap?.exists ? (siteSnap.data() as Record<string, unknown>) : {};
+  const learnerCount = dedupeStrings([
+    ...normalizeStringArray(siteData?.learnerIds),
+    ...normalizeStringArray(siteData?.studentIds),
+  ]).length;
+  const educatorCount = dedupeStrings([
+    ...normalizeStringArray(siteData?.educatorIds),
+    ...normalizeStringArray(siteData?.teacherIds),
+    ...normalizeStringArray(siteData?.siteLeadIds),
+  ]).length;
+  const parentCount = normalizeStringArray(siteData?.parentIds).length;
+  const openMvlCount = await safeQueryCount(
+    db.collection('mvlEpisodes')
+      .where('siteId', '==', input.siteId)
+      .where('resolution', '==', null)
+      .limit(100),
+  ) ?? 0;
+
+  const learnerSnap = await db.collection('users').doc(input.learnerId).get().catch(() => null);
+  const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
+  const linkedEducatorCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.educatorIds),
+    ...normalizeStringArray(learnerData?.teacherIds),
+  ]).length;
+  const linkedParentCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.parentIds),
+    ...normalizeStringArray(learnerData?.guardianIds),
+  ]).length;
+  const assignedMissionCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.missionIds),
+    ...normalizeStringArray(learnerData?.activeMissionIds),
+  ]).length;
+
+  const signalCount = nonZeroSignalCount([
+    learnerCount,
+    educatorCount,
+    parentCount,
+    openMvlCount,
+    linkedEducatorCount,
+    linkedParentCount,
+    assignedMissionCount,
+  ]);
+
+  return {
+    version: 'role-intel-v1',
+    actorRole: input.actorRole,
+    actorId: input.actorId,
+    siteId: input.siteId,
+    signalCount,
+    learnerLinks: {
+      linkedEducatorCount,
+      linkedParentCount,
+      assignedMissionCount,
+    },
+    siteProfile: {
+      learnerCount,
+      educatorCount,
+      parentCount,
+      openMvlCount,
+    },
+  };
 }
 
 async function loadBosLearningSnapshot(siteId: string, learnerId: string): Promise<BosLearningSnapshot | null> {

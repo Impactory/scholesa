@@ -1,0 +1,155 @@
+\documentclass[12pt]{article}
+
+% =========================
+% USPTO-SAFE FORMATTING
+% =========================
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% USPTO spacing: 1.5 or double
+\usepackage{setspace}
+\setstretch{1.5}
+
+% Paragraph control
+\usepackage{parskip}
+
+% Math
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+
+% Lists
+\usepackage{enumitem}
+\setlist[itemize]{nosep}
+\setlist[enumerate]{nosep}
+
+% Links (safe breaking)
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl} % allows line breaks in URLs if any appear
+
+% Figures placeholders
+\usepackage{graphicx}
+\usepackage{caption}
+
+% =========================
+% OVERFLOW / LINE-BREAK CONTROL (IMPORTANT)
+% =========================
+\setlength{\emergencystretch}{2em} % gives TeX extra flexibility before overfull boxes
+\sloppy                             % relaxes line breaking (reduces overfull hboxes)
+\microtypesetup{expansion=true,protrusion=true}
+
+% If you ever have long, unbreakable identifiers, these help:
+\hyphenation{meta-cog-ni-tive ge-ne-ra-tive se-man-tic en-tro-py fed-er-at-ed}
+
+% =========================
+% Equation numbering (sequential, global)
+% =========================
+\renewcommand{\theequation}{\arabic{equation}}
+
+% =========================
+% Paragraph numbering [0001], [0002], ...
+% =========================
+\newcounter{para}
+\setcounter{para}{0}
+\newcommand{\p}{%
+  \refstepcounter{para}%
+  \noindent[\ifnum\value{para}<10 000\fi
+            \ifnum\value{para}<100 0\fi
+            \ifnum\value{para}<1000 0\fi
+            \arabic{para}] \ignorespaces}
+
+% =========================
+% Simple macros
+% =========================
+\newcommand{\GenAI}{GenAI}
+\newcommand{\BOS}{BOS}
+\newcommand{\FDM}{FDM}
+\newcommand{\MIA}{MIA}
+\newcommand{\MVL}{MVL}
+\newcommand{\SEP}{SEP}
+\newcommand{\EKF}{EKF}
+
+\begin{document}
+
+\begin{center}
+{\Large \textbf{SPECIFICATION}}\\[4pt]
+\end{center}
+
+\section*{TITLE OF THE INVENTION}
+\p \textbf{Behavioral Orchestration System for Regulating Learner State in Generative AI Learning Environments}
+
+\section*{CROSS-REFERENCE TO RELATED APPLICATIONS}
+\p Not Applicable.
+
+\section*{STATEMENT REGARDING FEDERALLY SPONSORED RESEARCH OR DEVELOPMENT}
+\p Not Applicable.
+
+\section*{BACKGROUND OF THE INVENTION}
+
+\subsection*{Field of the Invention}
+\p The invention relates to educational technology and generative artificial intelligence, and in particular to computer-implemented systems and methods for closed-loop regulation of learner interaction, integrity scaffolding, and orchestration of cognitive, affective, and metacognitive states in AI-mediated learning environments.
+
+\subsection*{Description of Related Art}
+\p Existing intelligent tutoring systems often optimize content sequencing based primarily on cognitive mastery estimates. Conversational generative-AI tutors introduce additional risks including unreliable outputs, cognitive offloading, and reduced learner autonomy. Post-hoc integrity detection can be brittle and does not directly improve the interactive computing loop. There remains a need for a technological solution that improves the functioning and stability of real-time, computer-implemented generative-AI learning systems while preserving privacy and teacher agency.
+
+\section*{BRIEF SUMMARY OF THE INVENTION}
+
+\p \textbf{Behavioral Orchestration System (\BOS).}
+The \BOS\ senses interaction signals, estimates a latent learner state, and applies interventions to regulate a real-time learning interaction loop toward a target region. In embodiments, the \BOS\ comprises a Feature Detection Module (\FDM), a State Estimator (including an \EKF), an Orchestrator (control policy), and a Metacognitive Integrity Architecture (\MIA) that can trigger a Metacognitive Verification Loop (\MVL).
+
+\p \textbf{Technological problem and technological solution.}
+The \BOS\ addresses technical problems of: (i) unstable real-time interactive control in the presence of noisy and sparse signals, (ii) high computational latency and processing cost of uncertainty and integrity estimation for generative-AI outputs, and (iii) privacy and communication inefficiency caused by transmitting raw interaction data. The \BOS\ provides corresponding technical solutions including \EKF-based state estimation for control-loop stability, semantic-entropy probes for computational efficiency, and privacy-by-design via on-device feature extraction and federated learning to improve data security and network efficiency.
+
+\section*{BRIEF DESCRIPTION OF THE SEVERAL VIEWS OF THE DRAWINGS}
+\p The following drawings are described as non-limiting examples:
+\begin{itemize}
+  \item \textbf{FIG. 1} is an overall architecture of the \BOS\ integrated with a generative-AI tutor, local feature extraction, and teacher override.
+  \item \textbf{FIG. 2} illustrates a state-space model of latent learner state, control inputs, and observations.
+  \item \textbf{FIG. 3} illustrates an \EKF\ prediction and measurement update flow with missing-observation handling.
+  \item \textbf{FIG. 4} illustrates an \MVL\ gating flow driven by integrity risk and corroboration constraints.
+  \item \textbf{FIG. 5} illustrates semantic-entropy estimation via sampling and an \SEP\ approximation path from single-generation internal signals.
+  \item \textbf{FIG. 6} illustrates privacy-by-design via on-device feature extraction and federated learning with aggregation.
+  \item \textbf{FIG. 7} illustrates a teacher override/blending mechanism, audit logging, and intervention rate limiting.
+\end{itemize}
+
+\section*{DETAILED DESCRIPTION OF THE INVENTION}
+
+\subsection*{0. Definitions and Notation (Non-Limiting)}
+\p Time is indexed by $t \in \{0,1,2,\dots\}$. A latent learner state vector is denoted $\bm{x}_t \in \mathbb{R}^n$, an observation vector is denoted $\bm{y}_t \in \mathbb{R}^m$, and an intervention/control vector is denoted $\bm{u}_t \in \mathbb{R}^p$.
+
+\p \textbf{Module terminology (structural mitigation).}
+The term ``module'' as used herein refers to specific structure implemented in hardware and/or software, including: one or more processors executing stored instructions from non-transitory memory, an ASIC, an FPGA, and/or a specialized microprocessor or accelerator executing instructions, alone or in combination.
+
+% (… keep the rest of your spec exactly as previously provided …)
+
+\newpage
+\section*{CLAIMS}
+
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=6pt]
+  \item A computer-implemented educational orchestration system comprising:
+  \begin{enumerate}[label=(\alph*), leftmargin=*, itemsep=4pt]
+    \item a feature detection module configured to obtain interaction data associated with a learner interacting with a generative artificial intelligence system and to generate an observation vector from the interaction data;
+    \item a state estimator comprising an extended Kalman filter configured to estimate a latent learner state vector comprising at least a cognitive component, an affective component, and a metacognitive component, based on the observation vector and a state-space model;
+    \item a metacognitive integrity architecture configured to approximate a hallucination risk using a semantic entropy probe derived from internal signals of a single generation to reduce computational latency and processing cost; and
+    \item an orchestrator configured to select an intervention vector to be applied to the learner interaction to regulate the latent learner state vector toward a target state region,
+  \end{enumerate}
+  wherein the orchestrator selects the intervention vector based at least in part on minimizing a cost function that includes an autonomy cost penalizing over-intervention.
+
+  \item A computer-implemented method of regulating learner interaction in a generative artificial intelligence learning environment, the method comprising:
+  \begin{enumerate}[label=(\alph*), leftmargin=*, itemsep=4pt]
+    \item obtaining interaction data from learner interaction with a generative artificial intelligence system;
+    \item generating an observation vector from the interaction data;
+    \item estimating, using a state estimator comprising an extended Kalman filter, a latent learner state vector comprising cognitive, affective, and metacognitive components based on the observation vector and a state-space model;
+    \item approximating, using a metacognitive integrity architecture, a hallucination risk using a semantic entropy probe derived from internal signals of a single generation to reduce computational latency and processing cost;
+    \item selecting an intervention vector based on a control policy minimizing a cost function including an autonomy cost; and
+    \item applying the intervention vector to modify the learner interaction in the learning environment.
+  \end{enumerate}
+\end{enumerate}
+
+\newpage
+\section*{ABSTRACT OF THE DISCLOSURE}
+\noindent
+A computer-implemented system regulates learner interaction in a generative artificial intelligence learning environment using closed-loop control. Interaction signals are transformed into an observation vector and used to estimate a latent learner state comprising cognitive, affective, and metacognitive components using a stochastic state-space model and an extended Kalman filter. A metacognitive integrity architecture approximates hallucination risk using a semantic entropy probe derived from internal signals of a single generation to reduce latency and processing cost, and triggers non-punitive verification actions when integrity risk is detected. An orchestrator selects interventions to maintain the learner state within a target region while minimizing a cost function including an autonomy cost. Privacy-preserving operation may be provided by on-device feature extraction and federated learning that transmits parameter updates rather than raw data, with teacher agency supported via override and blending.
+
+\end{document}
