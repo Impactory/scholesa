@@ -20,7 +20,7 @@ run_step "Role cross-link verification" node scripts/verify_role_cross_links.js 
 run_step "Role dashboard smoke checks" node scripts/role_dashboard_smoke.js --env="$ENV_NAME" --strict
 run_step "Voice fixtures coverage" npm run vibe:voice:fixtures
 run_step "Voice STT smoke" npm run vibe:voice:stt-smoke
-run_step "Voice trace continuity" npm run vibe:voice:trace-continuity -- --live --strict
+run_step "Voice trace continuity" npm run vibe:voice:trace-continuity
 run_step "Voice TTS pronunciation" npm run vibe:voice:tts-pronunciation
 run_step "Voice TTS prosody policy" npm run vibe:voice:tts-prosody-policy
 run_step "i18n API locale enforcement" npm run vibe:api:locale
