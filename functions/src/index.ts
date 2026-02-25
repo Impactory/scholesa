@@ -820,7 +820,7 @@ export const genAiCoach = onCall(async (request) => {
   }
   const userId = request.auth.uid;
   const profile = await getUserProfile(userId);
-  if (!profile || profile.role !== 'learner') {
+  if (!profile || normalizeRoleValue(profile.role) !== 'learner') {
     throw new HttpsError('permission-denied', 'Learner role required for AI coach.');
   }
 
@@ -1462,9 +1462,13 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
   if (!userProfile || !userProfile.role) {
     throw new HttpsError('permission-denied', 'User profile missing role.');
   }
+  const profileRole = normalizeRoleValue(userProfile.role);
+  if (!profileRole) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
 
   const allowedRoles: Role[] = ['hq', 'site', 'educator'];
-  if (!allowedRoles.includes(userProfile.role)) {
+  if (!allowedRoles.includes(profileRole)) {
     throw new HttpsError('permission-denied', 'Insufficient role.');
   }
 
@@ -1472,7 +1476,7 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
   let effectiveSiteId: string | undefined;
 
   if (requestedSiteId.length > 0) {
-    if (userProfile.role === 'hq') {
+    if (profileRole === 'hq') {
       effectiveSiteId = requestedSiteId;
     } else {
       const hasSiteAccess = (userProfile.siteIds ?? []).includes(requestedSiteId) || userProfile.activeSiteId === requestedSiteId;
@@ -1481,7 +1485,7 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
       }
       effectiveSiteId = requestedSiteId;
     }
-  } else if (userProfile.role !== 'hq') {
+  } else if (profileRole !== 'hq') {
     effectiveSiteId = userProfile.activeSiteId ?? userProfile.siteIds?.[0];
     if (!effectiveSiteId) {
       throw new HttpsError('permission-denied', 'No active site context available.');
