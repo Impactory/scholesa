@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { guardedFetch } from './security/egressGuard';
 
 export type InternalInferenceService = 'llm' | 'stt' | 'tts' | 'bos';
-type InternalAuthMode = 'metadata' | 'none' | 'static';
+export type InternalInferenceAuthMode = 'metadata' | 'none' | 'static';
 
 export interface InternalInferenceContextHeaders {
   traceId: string;
@@ -31,7 +31,7 @@ export interface InternalInferenceCallResult<TResponse> {
     route: 'internal' | 'local';
     endpoint?: string;
     audience?: string;
-    authMode: InternalAuthMode;
+    authMode: InternalInferenceAuthMode;
     statusCode?: number;
   };
 }
@@ -88,7 +88,7 @@ export function isInternalInferenceEnabled(service: InternalInferenceService): b
   return Boolean(resolveEndpoint(service));
 }
 
-function resolveAuthMode(): InternalAuthMode {
+function resolveAuthMode(): InternalInferenceAuthMode {
   const explicit = envString('INTERNAL_INFERENCE_AUTH_MODE')?.toLowerCase();
   if (explicit === 'none') return 'none';
   if (explicit === 'static') return 'static';
@@ -142,7 +142,7 @@ async function mintInternalAuthorizationToken(
   service: InternalInferenceService,
   endpoint: string,
   timeoutMs: number,
-): Promise<{ authMode: InternalAuthMode; token?: string; audience?: string }> {
+): Promise<{ authMode: InternalInferenceAuthMode; token?: string; audience?: string }> {
   const authMode = resolveAuthMode();
   if (authMode === 'none') {
     return { authMode };
@@ -196,7 +196,21 @@ export async function callInternalInferenceJson<
     };
   }
 
-  const auth = await mintInternalAuthorizationToken(options.service, endpoint, timeoutMs);
+  let auth: { authMode: InternalInferenceAuthMode; token?: string; audience?: string };
+  try {
+    auth = await mintInternalAuthorizationToken(options.service, endpoint, timeoutMs);
+  } catch (error) {
+    return {
+      ok: false,
+      errorCode: sanitizeErrorCode(error),
+      meta: {
+        service: options.service,
+        route: 'internal',
+        endpoint,
+        authMode: resolveAuthMode(),
+      },
+    };
+  }
   const requestId = options.context.requestId ?? `inference-${options.service}-${randomUUID()}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

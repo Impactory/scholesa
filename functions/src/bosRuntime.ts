@@ -23,6 +23,7 @@
 
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { callInternalInferenceJson } from './internalInferenceGateway';
 
 const db = admin.firestore();
 const TELEMETRY_COLLECTION = 'telemetryEvents';
@@ -61,6 +62,11 @@ function normalizeString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
 }
 
 function normalizeKey(key: string): string {
@@ -287,6 +293,17 @@ interface VoiceUnderstandingObservation {
   confidence: number;
 }
 
+interface BosLearningSnapshot {
+  profileId: string;
+  lastIntent: string;
+  lastResponseMode: string;
+  lastNeedsScaffold: boolean;
+  lastEmotionalState: string;
+  lastUnderstandingConfidence: number;
+  needsScaffoldCount: number;
+  frustrationSignalCount: number;
+}
+
 function readVoiceUnderstandingObservation(event: FirebaseFirestore.DocumentData): VoiceUnderstandingObservation | null {
   if (!event || typeof event !== 'object') return null;
   const payload = event.payload && typeof event.payload === 'object'
@@ -315,6 +332,65 @@ function readVoiceUnderstandingObservation(event: FirebaseFirestore.DocumentData
     needsScaffold,
     confidence,
   };
+}
+
+function toFiniteNumber(value: unknown, fallback: number = 0): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return numeric;
+}
+
+async function loadBosLearningSnapshot(siteId: string, learnerId: string): Promise<BosLearningSnapshot | null> {
+  if (!siteId || !learnerId) return null;
+  const profileId = `${siteId}__${learnerId}`;
+  const snapshot = await db.collection('bosLearningProfiles').doc(profileId).get();
+  if (!snapshot.exists) return null;
+
+  const data = snapshot.data() ?? {};
+  const learning = asRecord(data.learning) ?? {};
+  const metrics = asRecord(data.metrics) ?? {};
+  return {
+    profileId,
+    lastIntent: normalizeString(learning.lastIntent) ?? 'general_support',
+    lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
+    lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
+    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
+    lastUnderstandingConfidence: clamp(toFiniteNumber(learning.lastUnderstandingConfidence, 0)),
+    needsScaffoldCount: Math.max(0, Math.floor(toFiniteNumber(metrics.needsScaffoldCount, 0))),
+    frustrationSignalCount: Math.max(0, Math.floor(toFiniteNumber(metrics.frustrationSignalCount, 0))),
+  };
+}
+
+function applyLearningSnapshotToIntervention(
+  intervention: InterventionDecision,
+  learningSnapshot: BosLearningSnapshot | null,
+): InterventionDecision {
+  if (!learningSnapshot) return intervention;
+  const next: InterventionDecision = {
+    ...intervention,
+    reasonCodes: Array.from(new Set(intervention.reasonCodes)),
+  };
+  const persistentSupportNeed = learningSnapshot.lastNeedsScaffold ||
+    learningSnapshot.lastEmotionalState === 'frustrated' ||
+    learningSnapshot.lastUnderstandingConfidence < 0.58 ||
+    learningSnapshot.frustrationSignalCount > 3;
+  const autonomyReady = !learningSnapshot.lastNeedsScaffold &&
+    learningSnapshot.lastUnderstandingConfidence >= 0.8 &&
+    learningSnapshot.lastResponseMode === 'explain';
+
+  if (persistentSupportNeed) {
+    next.type = 'scaffold';
+    next.mode = 'explain';
+    if (next.salience === 'low') next.salience = 'medium';
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'voice_learning_needs_scaffold']));
+  } else if (autonomyReady) {
+    if (next.type === 'scaffold' && next.mode === 'hint') {
+      next.mode = 'verify';
+    }
+    next.reasonCodes = Array.from(new Set([...next.reasonCodes, 'voice_learning_autonomy_ready']));
+  }
+
+  return next;
 }
 
 /**
@@ -783,7 +859,11 @@ export const bosGetIntervention = onCall(
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
 
-    const { learnerId, sessionOccurrenceId, siteId, gradeBand } = request.data;
+    const requestData = asRecord(request.data) ?? {};
+    const learnerId = normalizeString(requestData.learnerId);
+    const sessionOccurrenceId = normalizeString(requestData.sessionOccurrenceId);
+    const siteId = normalizeString(requestData.siteId);
+    const gradeBand = normalizeString(requestData.gradeBand);
     const targetLearnerId = learnerId || uid;
     if (!sessionOccurrenceId || !siteId) {
       throw new HttpsError('invalid-argument', 'sessionOccurrenceId and siteId required');
@@ -829,7 +909,154 @@ export const bosGetIntervention = onCall(
 
     // Step 3: Compute intervention (Policy)
     const gBand = gradeBand || 'G4_6';
-    const intervention = computeIntervention(newState, gBand);
+    const learningSnapshot = await loadBosLearningSnapshot(siteId, targetLearnerId);
+    let intervention = applyLearningSnapshotToIntervention(
+      computeIntervention(newState, gBand),
+      learningSnapshot,
+    );
+    const traceId = resolveTraceId(request, requestData);
+    const requestId = resolveRequestId(request, requestData);
+    const tokenClaims = asRecord(request.auth?.token);
+    const actorRole = normalizeBosActorRole(tokenClaims?.role ?? requestData.actorRole);
+    const locale = normalizeLocale(requestData.locale ?? tokenClaims?.locale);
+    const canonicalRole = toCanonicalTelemetryRole(actorRole);
+    const canonicalGradeBand = toCanonicalTelemetryGradeBand(normalizeBosGradeBand(gBand));
+    let bosModelVersion = 'bos-policy-local-v1';
+    let bosInferenceMeta: Record<string, unknown> = {
+      service: 'bos',
+      route: 'local',
+      authMode: 'none',
+      reason: 'not_attempted',
+    };
+
+    const bosInference = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+      service: 'bos',
+      body: {
+        learnerId: targetLearnerId,
+        sessionOccurrenceId,
+        siteId,
+        gradeBand: gBand,
+        state: newState,
+        features: {
+          cognition: features.cognition,
+          engagement: features.engagement,
+          integrity: features.integrity,
+          quality: features.quality,
+        },
+        learningSnapshot: learningSnapshot ? {
+          lastIntent: learningSnapshot.lastIntent,
+          lastResponseMode: learningSnapshot.lastResponseMode,
+          lastNeedsScaffold: learningSnapshot.lastNeedsScaffold,
+          lastEmotionalState: learningSnapshot.lastEmotionalState,
+          lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
+          needsScaffoldCount: learningSnapshot.needsScaffoldCount,
+          frustrationSignalCount: learningSnapshot.frustrationSignalCount,
+        } : null,
+        policy: intervention,
+      },
+      context: {
+        traceId,
+        requestId,
+        siteId,
+        role: canonicalRole,
+        gradeBand: canonicalGradeBand,
+        locale,
+        policyVersion: 'bos-policy-2026-02-25',
+        callerService: 'scholesa-ai',
+      },
+    });
+
+    const inferenceRoot = bosInference.ok ? asRecord(bosInference.data) : undefined;
+    if (inferenceRoot) {
+      const inferredVersion = normalizeString(
+        inferenceRoot.modelVersion ?? inferenceRoot.model ?? asRecord(inferenceRoot.metadata)?.modelVersion,
+      );
+      if (inferredVersion) {
+        bosModelVersion = inferredVersion;
+      }
+    }
+
+    if (bosInference.ok) {
+      const candidate = asRecord(inferenceRoot?.intervention) ??
+        asRecord(inferenceRoot?.policy) ??
+        asRecord(inferenceRoot?.recommendation) ??
+        inferenceRoot;
+      if (candidate) {
+        const typeCandidate = normalizeString(candidate.type)?.toLowerCase();
+        if (
+          typeCandidate === 'nudge' ||
+          typeCandidate === 'scaffold' ||
+          typeCandidate === 'handoff' ||
+          typeCandidate === 'revisit' ||
+          typeCandidate === 'pace'
+        ) {
+          intervention.type = typeCandidate;
+        }
+
+        const salienceCandidate = normalizeString(candidate.salience)?.toLowerCase();
+        if (salienceCandidate === 'low' || salienceCandidate === 'medium' || salienceCandidate === 'high') {
+          intervention.salience = salienceCandidate;
+        }
+
+        const modeCandidate = normalizeString(candidate.mode)?.toLowerCase();
+        if (
+          modeCandidate === 'hint' ||
+          modeCandidate === 'verify' ||
+          modeCandidate === 'explain' ||
+          modeCandidate === 'debug'
+        ) {
+          intervention.mode = modeCandidate;
+        }
+
+        const reasonCodes = Array.isArray(candidate.reasonCodes)
+          ? candidate.reasonCodes
+            .map((reason) => normalizeString(reason))
+            .filter((reason): reason is string => Boolean(reason))
+            .slice(0, 6)
+          : [];
+        if (reasonCodes.length > 0) {
+          intervention.reasonCodes = Array.from(new Set([...intervention.reasonCodes, ...reasonCodes]));
+        }
+
+        if (candidate.triggerMvl === true) {
+          intervention.triggerMvl = true;
+        }
+        const modelMvlReason = normalizeString(candidate.mvlReason);
+        if (modelMvlReason && intervention.triggerMvl) {
+          intervention.mvlReason = modelMvlReason.slice(0, 240);
+        }
+
+        bosInferenceMeta = {
+          service: 'bos',
+          route: bosInference.meta.route,
+          authMode: bosInference.meta.authMode,
+          statusCode: bosInference.meta.statusCode ?? null,
+          errorCode: bosInference.errorCode ?? null,
+          reason: 'policy_override_applied',
+          endpoint: bosInference.meta.endpoint ?? null,
+        };
+      } else {
+        bosInferenceMeta = {
+          service: 'bos',
+          route: bosInference.meta.route,
+          authMode: bosInference.meta.authMode,
+          statusCode: bosInference.meta.statusCode ?? null,
+          errorCode: bosInference.errorCode ?? null,
+          reason: 'no_policy_payload',
+          endpoint: bosInference.meta.endpoint ?? null,
+        };
+      }
+    } else {
+      bosInferenceMeta = {
+        service: 'bos',
+        route: bosInference.meta.route,
+        authMode: bosInference.meta.authMode,
+        statusCode: bosInference.meta.statusCode ?? null,
+        errorCode: bosInference.errorCode ?? null,
+        reason: 'internal_call_failed',
+        endpoint: bosInference.meta.endpoint ?? null,
+      };
+    }
 
     // Step 3b: Compute autonomy risk from behavioral signals (Math Contract §7)
     const autonomyRiskResult = computeAutonomyRiskFromEvents(targetLearnerId, sessionOccurrenceId, newState, gBand,
@@ -869,9 +1096,24 @@ export const bosGetIntervention = onCall(
       learnerId: targetLearnerId,
       sessionOccurrenceId,
       gradeBand: gBand,
+      gradeBandCanonical: canonicalGradeBand,
+      roleCanonical: canonicalRole,
+      locale,
+      traceId,
+      requestId,
       ...intervention,
       triggerMvl: shouldTriggerMvl,
       mvlReason,
+      policyModelVersion: bosModelVersion,
+      inference: bosInferenceMeta,
+      learningSignals: learningSnapshot ? {
+        profileId: learningSnapshot.profileId,
+        lastIntent: learningSnapshot.lastIntent,
+        lastResponseMode: learningSnapshot.lastResponseMode,
+        lastNeedsScaffold: learningSnapshot.lastNeedsScaffold,
+        lastEmotionalState: learningSnapshot.lastEmotionalState,
+        lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
+      } : null,
       autonomyRisk: autonomyRiskResult,
       reliabilityRisk: reliabilityRiskResult,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -917,6 +1159,19 @@ export const bosGetIntervention = onCall(
         riskSources,
       },
       mvlEpisodeId,
+      inference: bosInferenceMeta,
+      modelVersion: bosModelVersion,
+      traceId,
+      requestId,
+      locale,
+      learningSignals: learningSnapshot ? {
+        profileId: learningSnapshot.profileId,
+        lastIntent: learningSnapshot.lastIntent,
+        lastResponseMode: learningSnapshot.lastResponseMode,
+        lastNeedsScaffold: learningSnapshot.lastNeedsScaffold,
+        lastEmotionalState: learningSnapshot.lastEmotionalState,
+        lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
+      } : null,
     };
   }
 );

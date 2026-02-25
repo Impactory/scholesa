@@ -2,6 +2,11 @@ import { createHash, createHmac, randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/v2/https';
+import {
+  callInternalInferenceJson,
+  type InternalInferenceAuthMode,
+  type InternalInferenceCallResult,
+} from './internalInferenceGateway';
 
 export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
 export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
@@ -97,6 +102,16 @@ interface VoiceUnderstandingSignal {
   topicTags: string[];
 }
 
+interface PartialVoiceUnderstandingSignal {
+  intent?: VoiceIntent;
+  complexity?: VoiceComplexity;
+  needsScaffold?: boolean;
+  emotionalState?: VoiceEmotionalState;
+  confidence?: number;
+  responseMode?: VoiceResponseMode;
+  topicTags?: string[];
+}
+
 interface AudioTokenPayload {
   traceId: string;
   locale: VoiceLocale;
@@ -104,6 +119,16 @@ interface AudioTokenPayload {
   text: string;
   expMs: number;
   checksum: string;
+}
+
+interface VoiceInferenceMeta {
+  service: 'llm' | 'stt' | 'tts';
+  route: 'internal' | 'local';
+  authMode: InternalInferenceAuthMode;
+  statusCode?: number;
+  errorCode?: string;
+  reason?: string;
+  endpoint?: string;
 }
 
 class VoiceHttpError extends Error {
@@ -936,6 +961,93 @@ function deriveUnderstandingSignal(input: {
   };
 }
 
+function normalizeVoiceIntentValue(value: unknown): VoiceIntent | undefined {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (!normalized) return undefined;
+  if (normalized === 'hint_request' || normalized === 'hint') return 'hint_request';
+  if (normalized === 'explain_request' || normalized === 'explain') return 'explain_request';
+  if (normalized === 'translation_request' || normalized === 'translate') return 'translation_request';
+  if (normalized === 'planning_request' || normalized === 'plan') return 'planning_request';
+  if (normalized === 'reflection' || normalized === 'reflect') return 'reflection';
+  if (normalized === 'safety_support' || normalized === 'safety') return 'safety_support';
+  if (normalized === 'general_support' || normalized === 'general') return 'general_support';
+  return undefined;
+}
+
+function normalizeVoiceComplexityValue(value: unknown): VoiceComplexity | undefined {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') {
+    return normalized;
+  }
+  return undefined;
+}
+
+function normalizeVoiceEmotionalStateValue(value: unknown): VoiceEmotionalState | undefined {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (normalized === 'frustrated' || normalized === 'neutral' || normalized === 'confident') {
+    return normalized;
+  }
+  return undefined;
+}
+
+function normalizeVoiceResponseModeValue(value: unknown): VoiceResponseMode | undefined {
+  const normalized = normalizeString(value)?.toLowerCase();
+  if (
+    normalized === 'hint' ||
+    normalized === 'explain' ||
+    normalized === 'translate' ||
+    normalized === 'plan' ||
+    normalized === 'safety'
+  ) {
+    return normalized;
+  }
+  return undefined;
+}
+
+function parsePartialUnderstanding(input: unknown): PartialVoiceUnderstandingSignal | undefined {
+  const source = asRecord(input);
+  if (!source) return undefined;
+  const intent = normalizeVoiceIntentValue(source.intent ?? source.understandingIntent);
+  const complexity = normalizeVoiceComplexityValue(source.complexity);
+  const emotionalState = normalizeVoiceEmotionalStateValue(source.emotionalState);
+  const responseMode = normalizeVoiceResponseModeValue(source.responseMode);
+  const confidenceRaw = firstNumber(source.confidence, source.understandingConfidence);
+  const confidence = confidenceRaw !== undefined ? clampProbability(confidenceRaw) : undefined;
+  const topicTags = normalizeStringArray(source.topicTags);
+  const needsScaffoldRaw = source.needsScaffold;
+  const needsScaffold = typeof needsScaffoldRaw === 'boolean' ? needsScaffoldRaw : undefined;
+
+  const out: PartialVoiceUnderstandingSignal = {};
+  if (intent) out.intent = intent;
+  if (complexity) out.complexity = complexity;
+  if (emotionalState) out.emotionalState = emotionalState;
+  if (responseMode) out.responseMode = responseMode;
+  if (confidence !== undefined) out.confidence = confidence;
+  if (needsScaffold !== undefined) out.needsScaffold = needsScaffold;
+  if (topicTags.length > 0) out.topicTags = topicTags.slice(0, 6);
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function mergeUnderstandingSignal(
+  base: VoiceUnderstandingSignal,
+  override?: PartialVoiceUnderstandingSignal,
+): VoiceUnderstandingSignal {
+  if (!override) return base;
+  const confidence = override.confidence !== undefined
+    ? clampProbability((base.confidence * 0.55) + (override.confidence * 0.45))
+    : base.confidence;
+  return {
+    intent: override.intent ?? base.intent,
+    complexity: override.complexity ?? base.complexity,
+    needsScaffold: override.needsScaffold ?? base.needsScaffold,
+    emotionalState: override.emotionalState ?? base.emotionalState,
+    responseMode: override.responseMode ?? base.responseMode,
+    confidence,
+    topicTags: dedupeStrings([...(base.topicTags ?? []), ...((override.topicTags ?? []).slice(0, 6))]).slice(0, 6),
+  };
+}
+
 function buildAdaptiveLocalizedResponse(
   role: VoiceRole,
   locale: VoiceLocale,
@@ -972,9 +1084,15 @@ function selectToolCalls(
   category: SafetyDecision['category'],
   safetyOutcome: SafetyOutcome,
   understanding?: VoiceUnderstandingSignal,
+  modelToolHints?: string[],
 ): string[] {
   if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return [];
   const allowedTools = ROLE_ALLOWED_TOOLS[role];
+  const hinted = dedupeStrings((modelToolHints ?? []).map((tool) => tool.trim()).filter(Boolean))
+    .filter((tool) => allowedTools.includes(tool));
+  if (hinted.length > 0) {
+    return hinted.slice(0, 3);
+  }
   if (understanding?.responseMode === 'translate' && allowedTools.includes('translate')) {
     return ['translate'];
   }
@@ -997,6 +1115,201 @@ function detectLanguageCompatibility(text: string, locale: VoiceLocale): boolean
   if (locale === 'zh-TW') return /[\u4e00-\u9fff]/.test(text);
   if (locale === 'th') return /[\u0E00-\u0E7F]/.test(text);
   return false;
+}
+
+function buildInferenceContextHeaders(input: {
+  traceId: string;
+  requestId: string;
+  authContext: VoiceAuthContext;
+  locale: VoiceLocale;
+  callerService: string;
+}): {
+  traceId: string;
+  siteId: string;
+  role: string;
+  gradeBand: string;
+  locale: string;
+  policyVersion: string;
+  requestId: string;
+  callerService: string;
+} {
+  return {
+    traceId: input.traceId,
+    siteId: input.authContext.siteId,
+    role: input.authContext.role,
+    gradeBand: toCanonicalGradeBand(input.authContext.gradeBand),
+    locale: input.locale,
+    policyVersion: VOICE_POLICY_VERSION,
+    requestId: input.requestId,
+    callerService: input.callerService,
+  };
+}
+
+function normalizeInferenceAuthMode(value: unknown): InternalInferenceAuthMode {
+  if (value === 'metadata' || value === 'none' || value === 'static') return value;
+  return 'none';
+}
+
+function buildLocalInferenceMeta(service: VoiceInferenceMeta['service'], reason?: string): VoiceInferenceMeta {
+  return {
+    service,
+    route: 'local',
+    authMode: 'none',
+    ...(reason ? { reason } : {}),
+  };
+}
+
+function buildInferenceMeta(
+  service: VoiceInferenceMeta['service'],
+  result: InternalInferenceCallResult<Record<string, unknown>>,
+  fallbackReason?: string,
+): VoiceInferenceMeta {
+  return {
+    service,
+    route: result.meta.route,
+    authMode: normalizeInferenceAuthMode(result.meta.authMode),
+    ...(result.meta.statusCode ? { statusCode: result.meta.statusCode } : {}),
+    ...(result.meta.endpoint ? { endpoint: result.meta.endpoint } : {}),
+    ...(result.errorCode ? { errorCode: result.errorCode } : {}),
+    ...(fallbackReason ? { reason: fallbackReason } : {}),
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+function firstString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    const normalized = normalizeString(value);
+    if (normalized) return normalized;
+  }
+  return undefined;
+}
+
+function firstNumber(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isFinite(numeric)) return numeric;
+  }
+  return undefined;
+}
+
+function extractInternalLlmPayload(data: unknown): {
+  text?: string;
+  modelVersion?: string;
+  understanding?: PartialVoiceUnderstandingSignal;
+  toolSuggestions: string[];
+} {
+  const root = asRecord(data);
+  const response = asRecord(root?.response);
+  const output = asRecord(root?.output);
+  const choices = Array.isArray(root?.choices) ? root?.choices : [];
+  const firstChoice = asRecord(choices[0]);
+  const firstMessage = asRecord(firstChoice?.message);
+  const text = firstString(
+    root?.text,
+    root?.responseText,
+    root?.outputText,
+    root?.message,
+    response?.text,
+    output?.text,
+    firstChoice?.text,
+    firstMessage?.content,
+  );
+  const toolCandidates = [
+    ...(Array.isArray(root?.toolSuggestions) ? root?.toolSuggestions : []),
+    ...(Array.isArray(root?.tools) ? root?.tools : []),
+    ...(Array.isArray(response?.toolSuggestions) ? response?.toolSuggestions : []),
+    ...(Array.isArray(response?.tools) ? response?.tools : []),
+  ];
+  const toolSuggestions = dedupeStrings(
+    toolCandidates
+      .map((entry) => normalizeString(entry))
+      .filter((entry): entry is string => Boolean(entry)),
+  ).slice(0, 6);
+  const understanding = parsePartialUnderstanding(
+    root?.understanding ??
+      response?.understanding ??
+      output?.understanding ??
+      firstChoice?.understanding ??
+      firstMessage?.understanding,
+  );
+
+  return {
+    text: text ? normalizeSpeechText(text) : undefined,
+    modelVersion: firstString(root?.modelVersion, root?.model, response?.modelVersion, output?.modelVersion),
+    understanding,
+    toolSuggestions,
+  };
+}
+
+function extractInternalSttPayload(data: unknown): {
+  transcript?: string;
+  confidence?: number;
+  modelVersion?: string;
+  understanding?: PartialVoiceUnderstandingSignal;
+} {
+  const root = asRecord(data);
+  const metadata = asRecord(root?.metadata);
+  const result = asRecord(root?.result);
+  const transcript = firstString(
+    root?.transcript,
+    root?.text,
+    result?.transcript,
+    result?.text,
+    metadata?.transcript,
+  );
+  const confidenceRaw = firstNumber(root?.confidence, result?.confidence, metadata?.confidence);
+  const confidence = confidenceRaw !== undefined ? clampProbability(confidenceRaw) : undefined;
+
+  return {
+    transcript,
+    confidence,
+    modelVersion: firstString(root?.modelVersion, root?.model, metadata?.modelVersion, result?.modelVersion),
+    understanding: parsePartialUnderstanding(
+      root?.understanding ??
+        result?.understanding ??
+        metadata?.understanding,
+    ),
+  };
+}
+
+function extractInternalTtsPayload(data: unknown): { audioUrl?: string; voiceProfile?: string; modelVersion?: string } {
+  const root = asRecord(data);
+  const metadata = asRecord(root?.metadata);
+  const result = asRecord(root?.result);
+  const audio = asRecord(root?.audio);
+  const audioUrl = firstString(root?.audioUrl, result?.audioUrl, audio?.url, metadata?.audioUrl);
+
+  return {
+    audioUrl,
+    voiceProfile: firstString(root?.voiceProfile, result?.voiceProfile, metadata?.voiceProfile),
+    modelVersion: firstString(root?.modelVersion, root?.model, result?.modelVersion, metadata?.modelVersion),
+  };
+}
+
+function internalAudioHostAllowlist(): string[] {
+  const defaults = ['scholesa-ai', 'scholesa-tts', 'scholesa-stt', 'cloudfunctions.net', 'a.run.app', 'localhost', '127.0.0.1'];
+  const fromEnv = normalizeString(process.env.INTERNAL_AI_HOST_ALLOWLIST);
+  if (!fromEnv) return defaults;
+  const parsed = fromEnv.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean);
+  return parsed.length > 0 ? parsed : defaults;
+}
+
+function isInternalAudioUrl(urlValue: string): boolean {
+  const trimmed = urlValue.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return true;
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.toLowerCase();
+    return internalAudioHostAllowlist().some((marker) =>
+      host === marker || host.endsWith(`.${marker}`) || host.includes(marker));
+  } catch {
+    return false;
+  }
 }
 
 function chooseVoiceProfile(locale: VoiceLocale, role: VoiceRole, gradeBand: GradeBand): string {
@@ -1335,6 +1648,8 @@ async function recordVoiceTelemetryEvent(payload: {
   audioBytes?: number;
   textLength?: number;
   understanding?: VoiceUnderstandingSignal;
+  modelVersionOverride?: string;
+  inference?: VoiceInferenceMeta;
 }) {
   const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1389,14 +1704,20 @@ async function recordVoiceTelemetryEvent(payload: {
       emotionalState: payload.understanding?.emotionalState ?? 'neutral',
       complexity: payload.understanding?.complexity ?? 'medium',
       topicTags: payload.understanding?.topicTags ?? [],
-      modelVersion:
-        payload.event === 'voice.transcribe'
+      modelVersion: payload.modelVersionOverride ??
+        (payload.event === 'voice.transcribe'
           ? STT_MODEL_VERSION
           : payload.event === 'voice.tts'
           ? TTS_MODEL_VERSION
-          : VOICE_MODEL_VERSION,
+          : VOICE_MODEL_VERSION),
       policyVersion: VOICE_POLICY_VERSION,
       redactedPathCount: 0,
+      inferenceService: payload.inference?.service ?? null,
+      inferenceRoute: payload.inference?.route ?? 'local',
+      inferenceAuthMode: payload.inference?.authMode ?? 'none',
+      inferenceStatusCode: payload.inference?.statusCode ?? null,
+      inferenceErrorCode: payload.inference?.errorCode ?? null,
+      inferenceReason: payload.inference?.reason ?? null,
     },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -1418,6 +1739,7 @@ async function recordBosInteractionEvent(payload: {
   audioBytes?: number;
   ttsAvailable?: boolean;
   understanding?: VoiceUnderstandingSignal;
+  inference?: VoiceInferenceMeta;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1477,6 +1799,12 @@ async function recordBosInteractionEvent(payload: {
       emotionalState: payload.understanding?.emotionalState ?? 'neutral',
       complexity: payload.understanding?.complexity ?? 'medium',
       topicTags: payload.understanding?.topicTags ?? [],
+      inferenceService: payload.inference?.service ?? null,
+      inferenceRoute: payload.inference?.route ?? 'local',
+      inferenceAuthMode: payload.inference?.authMode ?? 'none',
+      inferenceStatusCode: payload.inference?.statusCode ?? null,
+      inferenceErrorCode: payload.inference?.errorCode ?? null,
+      inferenceReason: payload.inference?.reason ?? null,
     },
     timestampIso: new Date().toISOString(),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -1651,16 +1979,91 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
     const safety = evaluateSafetyDecision(message, authContext.role, locale);
-    const understanding = deriveUnderstandingSignal({
+    const heuristicUnderstanding = deriveUnderstandingSignal({
       message,
       role: authContext.role,
       safety,
     });
-    const candidateText = safety.safetyOutcome === 'allowed'
+    let understanding = heuristicUnderstanding;
+    let modelToolHints: string[] = [];
+    const baselineCandidateText = safety.safetyOutcome === 'allowed'
       ? buildAdaptiveLocalizedResponse(authContext.role, locale, safety.category, understanding)
       : safety.localizedMessage;
+    let candidateText = baselineCandidateText;
+    let llmModelVersion = VOICE_MODEL_VERSION;
+    let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
+      'llm',
+      safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
+    );
+    if (safety.safetyOutcome === 'allowed') {
+      const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+        service: 'llm',
+        body: {
+          message,
+          locale,
+          role: authContext.role,
+          gradeBand: authContext.gradeBand,
+          safety: {
+            outcome: safety.safetyOutcome,
+            category: safety.category,
+            reasonCode: safety.safetyReasonCode,
+          },
+          understanding: {
+            intent: heuristicUnderstanding.intent,
+            complexity: heuristicUnderstanding.complexity,
+            needsScaffold: heuristicUnderstanding.needsScaffold,
+            emotionalState: heuristicUnderstanding.emotionalState,
+            confidence: heuristicUnderstanding.confidence,
+            responseMode: heuristicUnderstanding.responseMode,
+            topicTags: heuristicUnderstanding.topicTags,
+          },
+          maxTokens: 220,
+        },
+        context: buildInferenceContextHeaders({
+          traceId,
+          requestId,
+          authContext,
+          locale,
+          callerService: 'scholesa-ai',
+        }),
+      });
 
-    const toolsInvoked = selectToolCalls(authContext.role, safety.category, safety.safetyOutcome, understanding);
+      const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
+      const suggestedText = llmPayload?.text ? normalizeSpeechText(llmPayload.text) : undefined;
+      if (llmPayload?.modelVersion) {
+        llmModelVersion = llmPayload.modelVersion;
+      }
+      if (llmPayload?.understanding) {
+        understanding = mergeUnderstandingSignal(understanding, llmPayload.understanding);
+      }
+      if ((llmPayload?.toolSuggestions?.length ?? 0) > 0) {
+        modelToolHints = llmPayload?.toolSuggestions ?? [];
+      }
+      if (llmResult.ok && suggestedText) {
+        const outputSafety = evaluateSafetyDecision(suggestedText, authContext.role, locale);
+        if (outputSafety.safetyOutcome === 'allowed') {
+          candidateText = suggestedText;
+          inferenceMeta = buildInferenceMeta('llm', llmResult);
+        } else if (outputSafety.safetyOutcome === 'modified') {
+          candidateText = outputSafety.localizedMessage;
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_modified');
+        } else {
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_blocked');
+        }
+      } else if (llmResult.ok) {
+        inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
+      } else {
+        inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
+      }
+    }
+
+    const toolsInvoked = selectToolCalls(
+      authContext.role,
+      safety.category,
+      safety.safetyOutcome,
+      understanding,
+      modelToolHints,
+    );
     const voiceInput = body.voice as Record<string, unknown> | undefined;
     const voiceOutputEnabled = normalizeBoolean(voiceInput?.enabled, true) && normalizeBoolean(voiceInput?.output, true);
     const quietModeActive = isQuietModeActive(settings, new Date());
@@ -1728,6 +2131,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: message.length,
         understanding,
+        modelVersionOverride: llmModelVersion,
+        inference: inferenceMeta,
       }),
     ];
 
@@ -1754,6 +2159,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: message.length,
         understanding,
+        modelVersionOverride: llmModelVersion,
+        inference: inferenceMeta,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_used',
@@ -1767,6 +2174,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: message.length,
         understanding,
+        modelVersionOverride: llmModelVersion,
+        inference: inferenceMeta,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -1780,6 +2189,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         toolCount: toolsInvoked.length,
         textLength: responseText.length,
         understanding,
+        modelVersionOverride: llmModelVersion,
+        inference: inferenceMeta,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -1795,6 +2206,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         textLength: message.length,
         ttsAvailable: Boolean(audioUrl),
         understanding,
+        inference: inferenceMeta,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_used',
@@ -1810,6 +2222,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         textLength: message.length,
         ttsAvailable: Boolean(audioUrl),
         understanding,
+        inference: inferenceMeta,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -1825,6 +2238,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         textLength: responseText.length,
         ttsAvailable: Boolean(audioUrl),
         understanding,
+        inference: inferenceMeta,
       }),
     ];
 
@@ -1845,6 +2259,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           toolCount: toolsInvoked.length,
           textLength: message.length,
           understanding,
+          modelVersionOverride: llmModelVersion,
+          inference: inferenceMeta,
         }),
       );
     }
@@ -1860,7 +2276,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: safety.safetyOutcome,
         safetyReasonCode: safety.safetyReasonCode,
         policyVersion: VOICE_POLICY_VERSION,
-        modelVersion: VOICE_MODEL_VERSION,
+        modelVersion: llmModelVersion,
         locale,
         role: authContext.role,
         gradeBand: authContext.gradeBand,
@@ -1868,6 +2284,15 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         quietModeActive,
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
+        inference: {
+          service: inferenceMeta.service,
+          route: inferenceMeta.route,
+          authMode: inferenceMeta.authMode,
+          statusCode: inferenceMeta.statusCode ?? null,
+          errorCode: inferenceMeta.errorCode ?? null,
+          reason: inferenceMeta.reason ?? null,
+          endpoint: inferenceMeta.endpoint ?? null,
+        },
         understanding: {
           intent: understanding.intent,
           complexity: understanding.complexity,
@@ -1904,6 +2329,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     let localeHint: unknown = body.locale;
     let partialHint: unknown = body.partial;
     let uploadedAudioLength = 0;
+    let uploadedAudioBase64: string | undefined;
     let resolvedBody: Record<string, unknown> = body;
 
     if (contentType.includes('multipart/form-data')) {
@@ -1928,11 +2354,13 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
       };
       if (files.audio) {
         uploadedAudioLength = files.audio.data.length;
+        uploadedAudioBase64 = files.audio.data.toString('base64');
       }
     } else {
       transcriptRaw = normalizeString(body.transcript);
       const audioBase64 = normalizeString(body.audioBase64);
       if (audioBase64) {
+        uploadedAudioBase64 = audioBase64;
         try {
           uploadedAudioLength = Buffer.from(audioBase64, 'base64').length;
         } catch {
@@ -1950,19 +2378,63 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     }
 
     const locale = resolveLocale(localeHint, req, settings.allowedLocales);
-    const transcript = cleanTranscript(transcriptRaw ?? defaultTranscriptByLocale(locale));
+    const requestId = resolveRequestId(req);
+    const traceId = resolveTraceId(req, resolvedBody);
+    const partial = normalizeBoolean(partialHint, false);
+    let transcriptCandidate = transcriptRaw;
+    let confidence = transcriptRaw ? 0.96 : undefined;
+    let sttModelVersion = STT_MODEL_VERSION;
+    let sttModelUnderstanding: PartialVoiceUnderstandingSignal | undefined;
+    let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
+      'stt',
+      transcriptRaw ? 'transcript_supplied' : 'not_attempted',
+    );
+    if (!transcriptCandidate && uploadedAudioBase64) {
+      const sttResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+        service: 'stt',
+        body: {
+          audioBase64: uploadedAudioBase64,
+          locale,
+          partial,
+          role: authContext.role,
+          gradeBand: authContext.gradeBand,
+        },
+        context: buildInferenceContextHeaders({
+          traceId,
+          requestId,
+          authContext,
+          locale,
+          callerService: 'scholesa-stt',
+        }),
+      });
+      const sttPayload = sttResult.ok ? extractInternalSttPayload(sttResult.data) : undefined;
+      if (sttPayload?.modelVersion) {
+        sttModelVersion = sttPayload.modelVersion;
+      }
+      if (sttPayload?.understanding) {
+        sttModelUnderstanding = sttPayload.understanding;
+      }
+      if (sttResult.ok && sttPayload?.transcript) {
+        transcriptCandidate = sttPayload.transcript;
+        inferenceMeta = buildInferenceMeta('stt', sttResult);
+        confidence = sttPayload.confidence ?? confidence;
+      } else if (sttResult.ok) {
+        inferenceMeta = buildInferenceMeta('stt', sttResult, 'empty_transcript');
+      } else {
+        inferenceMeta = buildInferenceMeta('stt', sttResult, 'internal_call_failed');
+      }
+    }
+    const transcript = cleanTranscript(transcriptCandidate ?? defaultTranscriptByLocale(locale));
+    if (confidence === undefined) {
+      confidence = Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
+    }
     const transcribeSafety = evaluateSafetyDecision(transcript, authContext.role, locale);
-    const understanding = deriveUnderstandingSignal({
+    const heuristicUnderstanding = deriveUnderstandingSignal({
       message: transcript,
       role: authContext.role,
       safety: transcribeSafety,
     });
-    const partial = normalizeBoolean(partialHint, false);
-    const confidence = transcriptRaw
-      ? 0.96
-      : Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
-    const requestId = resolveRequestId(req);
-    const traceId = resolveTraceId(req, resolvedBody);
+    const understanding = mergeUnderstandingSignal(heuristicUnderstanding, sttModelUnderstanding);
     const latencyMs = Date.now() - startedAt;
     await Promise.all([
       recordVoiceAuditEvent({
@@ -1989,6 +2461,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         audioBytes: uploadedAudioLength,
         safetyOutcome: transcribeSafety.safetyOutcome,
         understanding,
+        modelVersionOverride: sttModelVersion,
+        inference: inferenceMeta,
       }),
     ]);
     await Promise.allSettled([
@@ -2016,6 +2490,8 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         audioBytes: uploadedAudioLength,
         safetyOutcome: transcribeSafety.safetyOutcome,
         understanding,
+        modelVersionOverride: sttModelVersion,
+        inference: inferenceMeta,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2030,6 +2506,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         transcriptLength: transcript.length,
         audioBytes: uploadedAudioLength,
         understanding,
+        inference: inferenceMeta,
       }),
     ]);
 
@@ -2042,7 +2519,16 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         locale,
         latencyMs,
         partial,
-        modelVersion: STT_MODEL_VERSION,
+        modelVersion: sttModelVersion,
+        inference: {
+          service: inferenceMeta.service,
+          route: inferenceMeta.route,
+          authMode: inferenceMeta.authMode,
+          statusCode: inferenceMeta.statusCode ?? null,
+          errorCode: inferenceMeta.errorCode ?? null,
+          reason: inferenceMeta.reason ?? null,
+          endpoint: inferenceMeta.endpoint ?? null,
+        },
         understanding: {
           intent: understanding.intent,
           complexity: understanding.complexity,
@@ -2106,7 +2592,48 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
       expMs,
       checksum,
     });
-    const audioUrl = buildAudioUrl(req, token);
+    const fallbackAudioUrl = buildAudioUrl(req, token);
+    let audioUrl = fallbackAudioUrl;
+    let effectiveVoiceProfile = voiceProfile;
+    let ttsModelVersion = TTS_MODEL_VERSION;
+    let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta('tts', 'not_attempted');
+    const ttsResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+      service: 'tts',
+      body: {
+        text: speech.speechText,
+        locale,
+        role: authContext.role,
+        gradeBand: effectiveGradeBand,
+        voiceProfile,
+        prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+      },
+      context: buildInferenceContextHeaders({
+        traceId,
+        requestId,
+        authContext,
+        locale,
+        callerService: 'scholesa-tts',
+      }),
+    });
+    const ttsPayload = ttsResult.ok ? extractInternalTtsPayload(ttsResult.data) : undefined;
+    if (ttsPayload?.modelVersion) {
+      ttsModelVersion = ttsPayload.modelVersion;
+    }
+    if (ttsResult.ok && ttsPayload?.audioUrl) {
+      if (isInternalAudioUrl(ttsPayload.audioUrl)) {
+        audioUrl = ttsPayload.audioUrl;
+        if (ttsPayload.voiceProfile) {
+          effectiveVoiceProfile = ttsPayload.voiceProfile;
+        }
+        inferenceMeta = buildInferenceMeta('tts', ttsResult);
+      } else {
+        inferenceMeta = buildInferenceMeta('tts', ttsResult, 'non_internal_audio_url_rejected');
+      }
+    } else if (ttsResult.ok) {
+      inferenceMeta = buildInferenceMeta('tts', ttsResult, 'missing_audio_url');
+    } else {
+      inferenceMeta = buildInferenceMeta('tts', ttsResult, 'internal_call_failed');
+    }
     const latencyMs = Date.now() - startedAt;
     await Promise.all([
       recordVoiceAuditEvent({
@@ -2134,6 +2661,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         redactionCount: speech.redactionCount,
         textLength: speech.speechText.length,
         understanding,
+        modelVersionOverride: ttsModelVersion,
+        inference: inferenceMeta,
       }),
     ]);
     await Promise.allSettled([
@@ -2160,6 +2689,8 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         redactionCount: speech.redactionCount,
         textLength: speech.speechText.length,
         understanding,
+        modelVersionOverride: ttsModelVersion,
+        inference: inferenceMeta,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2174,6 +2705,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         textLength: speech.speechText.length,
         ttsAvailable: true,
         understanding,
+        inference: inferenceMeta,
       }),
     ]);
 
@@ -2182,14 +2714,23 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
       metadata: {
         requestId,
         traceId,
-        modelVersion: TTS_MODEL_VERSION,
+        modelVersion: ttsModelVersion,
         latencyMs,
         locale,
-        voiceProfile,
+        voiceProfile: effectiveVoiceProfile,
         prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
         safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
+        inference: {
+          service: inferenceMeta.service,
+          route: inferenceMeta.route,
+          authMode: inferenceMeta.authMode,
+          statusCode: inferenceMeta.statusCode ?? null,
+          errorCode: inferenceMeta.errorCode ?? null,
+          reason: inferenceMeta.reason ?? null,
+          endpoint: inferenceMeta.endpoint ?? null,
+        },
         understanding: {
           intent: understanding.intent,
           complexity: understanding.complexity,
