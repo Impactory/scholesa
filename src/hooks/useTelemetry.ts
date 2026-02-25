@@ -75,7 +75,7 @@ export function usePageViewTracking(pageName: string, metadata?: Record<string, 
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: 'page_viewed',
+      eventType: 'page_viewed',
       category: 'navigation',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -110,7 +110,7 @@ export function useSessionTracking(sessionId: string) {
     
     // Track session start
     trackMappedTelemetry({
-      event: 'session_started',
+      eventType: 'session_started',
       category: 'engagement',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -123,7 +123,7 @@ export function useSessionTracking(sessionId: string) {
     // Track session end on unmount
     return () => {
       trackMappedTelemetry({
-        event: 'session_completed',
+        eventType: 'session_completed',
         category: 'engagement',
         userId: user.uid,
         userRole: profile.role as UserRole,
@@ -157,7 +157,7 @@ export function useInteractionTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'navigation',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -190,7 +190,7 @@ export function useAutonomyTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'autonomy',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -224,7 +224,7 @@ export function useCompetenceTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'competence',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -257,7 +257,7 @@ export function useBelongingTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'belonging',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -290,7 +290,7 @@ export function useReflectionTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'reflection',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -323,7 +323,7 @@ export function useAITracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'ai_interaction',
       userId: user.uid,
       userRole: profile.role as UserRole,
@@ -359,7 +359,7 @@ export function usePerformanceTracking() {
     const siteId = profile.activeSiteId || profile.siteIds?.[0] || '';
     
     trackMappedTelemetry({
-      event: eventType,
+      eventType: eventType,
       category: 'performance',
       userId: user.uid,
       userRole: profile.role as UserRole,

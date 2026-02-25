@@ -10,12 +10,15 @@
  */
 
 import {
-  serverTimestamp,
-  Timestamp,
-  query,
-  where,
+  collection,
+  doc,
   getDocs,
-  collection
+  increment,
+  query,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
 import { httpsCallable } from 'firebase/functions';
