@@ -3,6 +3,8 @@ import '../bos/bos_engine.dart';
 import '../telemetry/telemetry_models.dart';
 import '../safety/safety_guard.dart';
 
+enum VoiceStatus { idle, listening, processing, speaking }
+
 /// C2) Voice Pipeline
 /// Manages STT streaming, TTS playback, and Barge-in.
 class VoicePipeline {
@@ -12,6 +14,11 @@ class VoicePipeline {
   // Mock streams for hardware interfaces
   final StreamController<String> _sttStream = StreamController();
   bool _isTtsPlaying = false;
+  Timer? _silenceTimer;
+  static const Duration _silenceThreshold = Duration(seconds: 8); // Default for 4-6 grade band
+  
+  final StreamController<VoiceStatus> _statusController = StreamController.broadcast();
+  Stream<VoiceStatus> get statusStream => _statusController.stream;
 
   VoicePipeline(this._bos, this._safetyGuard) {
     // Listen to BOS actions (TTS requests)
@@ -20,9 +27,13 @@ class VoicePipeline {
 
   /// Simulate receiving a final transcript from STT provider
   void onSttResult(String text) {
+    _cancelSilenceTimer();
+
     if (_isTtsPlaying) {
       _handleBargeIn();
     }
+    
+    _statusController.add(VoiceStatus.processing);
 
     // D2) PII Redaction
     final (redactedText, foundPii) = _safetyGuard.redact(text);
@@ -48,6 +59,10 @@ class VoicePipeline {
         'confidence': 0.95, // Mock
       },
     ));
+    
+    _statusController.add(VoiceStatus.idle);
+    // In a real continuous conversation, we might restart listening here
+    // For now, we assume BOS will trigger next action or we wait for wake word
   }
 
   void _handleBosAction(String action) {
@@ -59,6 +74,8 @@ class VoicePipeline {
 
   Future<void> _speak(String text) async {
     if (!_safetyGuard.canProceed('tts')) return;
+    
+    _cancelSilenceTimer();
 
     _bos.handleEvent(BosEvent(
       eventName: BosSignal.ttsRequestStarted,
@@ -69,12 +86,15 @@ class VoicePipeline {
     ));
 
     _isTtsPlaying = true;
+    _statusController.add(VoiceStatus.speaking);
     print('🔊 TTS PLAYING: "$text"');
     
     // Simulate audio duration
     await Future.delayed(Duration(milliseconds: 500)); 
     
     _isTtsPlaying = false;
+    _statusController.add(VoiceStatus.listening); // Assume we listen after speaking
+    _startSilenceTimer();
   }
 
   void _handleBargeIn() {
@@ -87,9 +107,30 @@ class VoicePipeline {
       sessionId: 'session_123',
       learnerIdHash: 'hash_123',
     ));
+    _statusController.add(VoiceStatus.listening);
+    _startSilenceTimer();
+  }
+
+  void _startSilenceTimer() {
+    _cancelSilenceTimer();
+    _silenceTimer = Timer(_silenceThreshold, () {
+      _bos.handleEvent(BosEvent(
+        eventName: BosSignal.silenceDetected,
+        timestampMs: DateTime.now().millisecondsSinceEpoch,
+        sessionId: 'session_123',
+        learnerIdHash: 'hash_123',
+      ));
+    });
+  }
+
+  void _cancelSilenceTimer() {
+    _silenceTimer?.cancel();
+    _silenceTimer = null;
   }
 
   void dispose() {
     _sttStream.close();
+    _statusController.close();
+    _cancelSilenceTimer();
   }
 }

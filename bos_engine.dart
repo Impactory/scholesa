@@ -28,6 +28,7 @@ class BosEngine {
   int _hintCount = 0;
   int _consecutiveErrors = 0;
   DateTime _lastInteraction = DateTime.now();
+  String _currentStrategy = 'direct'; // 'direct' | 'socratic'
 
   // Output stream for Voice/UI to consume
   final StreamController<String> _actionController = StreamController.broadcast();
@@ -76,6 +77,8 @@ class BosEngine {
       _hintCount++;
     } else if (event.eventName == BosSignal.safeModeActivated) {
       _transitionTo(BosState.safeMode);
+    } else if (event.eventName == BosSignal.silenceDetected) {
+      _handleSilence();
     }
   }
 
@@ -89,7 +92,17 @@ class BosEngine {
     // B3.1) Confusion Policy
     if (_confusionScore > 0.7 && _currentState == BosState.instruction) {
       _transitionTo(BosState.coachingRecovery);
-      _actionController.add('TTS: I notice this is tricky. Let\'s break it down.');
+      return;
+    }
+
+    // B3.1.b) Mild Confusion -> Switch Strategy (Stay in Instruction)
+    if (_confusionScore > 0.3 && _confusionScore <= 0.7 && _currentState == BosState.instruction) {
+      if (_currentStrategy == 'direct') {
+        _currentStrategy = 'socratic';
+        _actionController.add('TTS: Let\'s look at this differently. What do you think happens next?');
+        // Reset score slightly to give the new strategy a chance
+        _confusionScore = 0.2; 
+      }
       return;
     }
 
@@ -103,7 +116,20 @@ class BosEngine {
     }
     
     // B3.5) Voice Attention Policy (Silence)
-    // This would typically be triggered by a timer or silence event
+    // Handled via _handleSilence triggered by event
+  }
+
+  void _handleSilence() {
+    // B3.5) Voice Attention Policy Implementation
+    if (_currentState == BosState.onboarding) {
+      _actionController.add('TTS: Are you still there? Say "Ready" to start.');
+    } else if (_currentState == BosState.instruction) {
+      _actionController.add('TTS: Take your time. If you\'re stuck, just say "Help".');
+    } else if (_currentState == BosState.guidedPractice) {
+      // In practice, we might offer a hint
+      _hintCount++; // Treat silence as a struggle signal
+      _actionController.add('TTS: Would you like a hint?');
+    }
   }
 
   void _transitionTo(BosState newState) {
@@ -129,9 +155,17 @@ class BosEngine {
       case BosState.onboarding:
         _actionController.add('TTS: Welcome! I\'m your AI Coach. Ready to start?');
         break;
+      case BosState.instruction:
+        if (_currentStrategy == 'direct') {
+          _actionController.add('TTS: Here is the core concept. [Direct Explanation]');
+        } else {
+          _actionController.add('TTS: Let\'s explore this together. [Socratic Question]');
+        }
+        break;
       case BosState.coachingRecovery:
         // Socratic strategy switch
         _confusionScore = 0.0; // Reset after handling
+        _actionController.add('TTS: I notice this is tricky. Let\'s break it down step by step.');
         break;
       case BosState.safeMode:
         _actionController.add('TTS: I need to pause for a moment. Please ask a teacher for help.');
@@ -156,6 +190,7 @@ class BosEngine {
   // For testing
   BosState get currentState => _currentState;
   double get confusionScore => _confusionScore;
+  String get currentStrategy => _currentStrategy;
   
   void triggerSafetyTripwire() {
     _safetyGuard.triggerSafeMode('Manual Tripwire');
