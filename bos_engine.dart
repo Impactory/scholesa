@@ -1,6 +1,5 @@
 import 'dart:async';
 import '../../services/telemetry_service.dart';
-import '../telemetry/event_types.dart';
 import '../telemetry/telemetry_models.dart';
 import '../safety/safety_guard.dart';
 
@@ -27,11 +26,9 @@ class BosEngine {
   // State Variables (The "x_hat" estimate)
   double _confusionScore = 0.0;
   int _hintCount = 0;
-  bool _safetyFlag = false;
   int _consecutiveErrors = 0;
   DateTime _lastInteraction = DateTime.now();
 
-  BosEngine(this._telemetry);
   // Output stream for Voice/UI to consume
   final StreamController<String> _actionController = StreamController.broadcast();
   Stream<String> get actions => _actionController.stream;
@@ -39,7 +36,6 @@ class BosEngine {
   BosEngine(this._telemetry, this._safetyGuard);
 
   void start() {
-    _subscription = _telemetry.events.listen(_handleEvent);
     // In a real app, TelemetryService would expose a stream of BosEvent
     // _subscription = _telemetry.eventStream.listen(_handleEvent);
     _transitionTo(BosState.onboarding);
@@ -50,7 +46,6 @@ class BosEngine {
     _actionController.close();
   }
 
-  void _handleEvent(TelemetryEvent event) {
   /// Main Control Loop Entry Point
   void handleEvent(BosEvent event) {
     _lastInteraction = DateTime.now();
@@ -62,28 +57,21 @@ class BosEngine {
     _evaluatePolicies();
   }
 
-  void _updateEstimates(TelemetryEvent event) {
-    if (event.eventName == VoiceSignals.sttFinalTranscript) {
-      // Analyze text for confusion (Mock NLP)
   void _updateEstimates(BosEvent event) {
     if (event.eventName == BosSignal.sttFinalTranscript) {
       // B3) Confusion Policy Sensing
       final String text = event.payload['transcript'] ?? '';
-      if (text.contains("don't understand") || text.contains("help")) {
       
       // Simple heuristic for demo; real system uses NLP classifier
       if (text.toLowerCase().contains("don't understand") || 
           text.toLowerCase().contains("help") ||
           text.toLowerCase().contains("stuck")) {
         _confusionScore += 0.3;
-        _telemetry.logEvent(
-          event: LearningSignals.confusionDetected,
         _emitTelemetry(
           BosSignal.confusionDetected,
           metadata: {'score': _confusionScore},
         );
       }
-    } else if (event.eventName == LearningSignals.hintRequested) {
     } else if (event.eventName == BosSignal.hintRequested) {
       _hintCount++;
     } else if (event.eventName == BosSignal.safeModeActivated) {
@@ -92,18 +80,12 @@ class BosEngine {
   }
 
   void _evaluatePolicies() {
-    // Safety Policy (Fail-Closed)
-    if (_safetyFlag) {
-      if (_currentState != BosState.safeMode) {
-        _transitionTo(BosState.safeMode);
-      }
     // D3) Safety Policy (Fail-Closed)
     if (_safetyGuard.isSafeMode && _currentState != BosState.safeMode) {
       _transitionTo(BosState.safeMode);
       return;
     }
 
-    // Confusion Policy
     // B3.1) Confusion Policy
     if (_confusionScore > 0.7 && _currentState == BosState.instruction) {
       _transitionTo(BosState.coachingRecovery);
@@ -111,10 +93,8 @@ class BosEngine {
       return;
     }
 
-    // Hint Dependency Policy
     // B3.2) Hint Dependency Policy
     if (_hintCount > 3 && _currentState != BosState.reflection) {
-      // Force a reflection/check
       // Force a reflection/check (Explain-it-back)
       _transitionTo(BosState.reflection);
       _actionController.add('TTS: You\'ve used a few hints. Can you explain the last step to me?');
@@ -132,8 +112,6 @@ class BosEngine {
     final BosState oldState = _currentState;
     _currentState = newState;
 
-    _telemetry.logEvent(
-      event: 'bos.state_changed',
     _emitTelemetry(
       'bos_state_changed',
       metadata: {
@@ -180,7 +158,6 @@ class BosEngine {
   double get confusionScore => _confusionScore;
   
   void triggerSafetyTripwire() {
-    _safetyFlag = true;
     _safetyGuard.triggerSafeMode('Manual Tripwire');
     _evaluatePolicies();
   }
