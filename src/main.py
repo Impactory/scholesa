@@ -1,4 +1,4 @@
-// src/main.ts
+# ~/main.ts
 import { BosController } from './bos/bos_controller';
 import { TelemetryEmitter } from './telemetry/emitter';
 import { ConsentManager } from './safety/consent_manager';
