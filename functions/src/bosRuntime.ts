@@ -296,7 +296,7 @@ function sanitizeBosPayload(payload: unknown): { payload: Record<string, unknown
 }
 
 // ──────────────────────────────────────────────────────
-// §2  FDM — Feature Detection Module (stub)
+// §2  FDM — Feature Detection Module
 // ──────────────────────────────────────────────────────
 
 interface FeatureVector {

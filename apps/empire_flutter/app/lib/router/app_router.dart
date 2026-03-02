@@ -555,8 +555,7 @@ GoRouter createAppRouter(AppState appState) {
             const NotificationsPage(),
       ),
 
-      // Placeholder routes for disabled features
-      // These will show "not available" when accessed
+      // Disabled feature routes are intentionally omitted here.
     ],
   );
 }

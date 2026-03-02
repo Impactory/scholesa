@@ -11,11 +11,15 @@
  */
 
 import {
+  collection,
   doc,
+  getDocs,
+  query,
   updateDoc,
   increment,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
 import type { AgeBand } from '@/src/types/schema';
@@ -260,10 +264,7 @@ class SDTTelemetry {
    * (This would typically run server-side as a Cloud Function)
    */
   async computeMetrics(learnerId: string, siteId: string): Promise<MotivationMetrics> {
-    // This is a simplified client-side stub
-    // Real implementation would query telemetryEvents collection and compute
-    
-    return {
+    const defaultMetrics: MotivationMetrics = {
       choiceDiversity: 0,
       missionSwitchRate: 0,
       goalAlignmentScore: 0,
@@ -281,6 +282,170 @@ class SDTTelemetry {
       sessionCompletionRate: 0,
       optimalTimeOfDay: 'morning'
     };
+
+    try {
+      const since = Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+      const q = query(
+        collection(db, 'telemetryEvents'),
+        where('userId', '==', learnerId),
+        where('siteId', '==', siteId),
+        where('timestamp', '>=', since),
+      );
+
+      const snap = await getDocs(q);
+      if (snap.empty) return defaultMetrics;
+
+      const missionIds = new Set<string>();
+      let missionSwitches = 0;
+      let goalsSet = 0;
+
+      let evidenceSubmitted = 0;
+      let checkpointAttempts = 0;
+      let checkpointPasses = 0;
+      let skillProven = 0;
+
+      let feedbackGiven = 0;
+      let recognitionReceived = 0;
+      let crewJoined = 0;
+
+      let reflectionCount = 0;
+      const effortRatings: number[] = [];
+      const enjoymentRatings: number[] = [];
+
+      let sessionStarted = 0;
+      let sessionCompleted = 0;
+      const completionDurationsMinutes: number[] = [];
+
+      const hourCounts = new Map<number, number>();
+      const sessionsWithReflection = new Set<string>();
+
+      const parseNumber = (value: unknown): number | null => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value;
+        if (typeof value === 'string') {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : null;
+        }
+        return null;
+      };
+
+      for (const docSnap of snap.docs) {
+        const data = docSnap.data() as Record<string, unknown>;
+        const event = typeof data.event === 'string' ? data.event : '';
+        const missionId = typeof data.missionId === 'string' ? data.missionId : undefined;
+        const sessionId = typeof data.sessionId === 'string' ? data.sessionId : undefined;
+        const metadata = (data.metadata && typeof data.metadata === 'object'
+          ? data.metadata
+          : {}) as Record<string, unknown>;
+
+        const timestampValue = data.timestamp;
+        const ts = timestampValue instanceof Timestamp
+          ? timestampValue
+          : Timestamp.now();
+        const hour = ts.toDate().getHours();
+        hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
+
+        if (missionId) {
+          if (missionIds.size > 0 && !missionIds.has(missionId)) {
+            missionSwitches += 1;
+          }
+          missionIds.add(missionId);
+        }
+
+        switch (event) {
+          case 'mission_selected':
+            break;
+          case 'mission_variant_chosen':
+            missionSwitches += 1;
+            break;
+          case 'goal_set':
+            goalsSet += 1;
+            break;
+          case 'artifact_submitted':
+            evidenceSubmitted += 1;
+            break;
+          case 'checkpoint_attempted':
+          case 'checkpoint_failed':
+            checkpointAttempts += 1;
+            break;
+          case 'checkpoint_passed':
+            checkpointAttempts += 1;
+            checkpointPasses += 1;
+            break;
+          case 'skill_proven':
+            skillProven += 1;
+            break;
+          case 'peer_feedback_given':
+            feedbackGiven += 1;
+            break;
+          case 'recognition_received':
+            recognitionReceived += 1;
+            break;
+          case 'crew_joined':
+            crewJoined += 1;
+            break;
+          case 'reflection_submitted':
+            reflectionCount += 1;
+            if (sessionId) sessionsWithReflection.add(sessionId);
+            break;
+          case 'effort_rated': {
+            const rating = parseNumber(metadata.rating ?? metadata.effortRating);
+            if (rating !== null) effortRatings.push(rating);
+            break;
+          }
+          case 'enjoyment_rated': {
+            const rating = parseNumber(metadata.rating ?? metadata.enjoymentRating);
+            if (rating !== null) enjoymentRatings.push(rating);
+            break;
+          }
+          case 'session_started':
+            sessionStarted += 1;
+            break;
+          case 'session_completed': {
+            sessionCompleted += 1;
+            const durationMin = parseNumber(metadata.durationMinutes ?? metadata.durationMin);
+            if (durationMin !== null && durationMin >= 0) {
+              completionDurationsMinutes.push(durationMin);
+            }
+            break;
+          }
+          default:
+            break;
+        }
+      }
+
+      const avg = (values: number[]): number => {
+        if (values.length === 0) return 0;
+        return values.reduce((sum, current) => sum + current, 0) / values.length;
+      };
+
+      const sortedHours = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1]);
+      const topHour = sortedHours.length > 0 ? sortedHours[0][0] : 9;
+      const optimalTimeOfDay = topHour < 12 ? 'morning' : topHour < 17 ? 'afternoon' : 'evening';
+
+      return {
+        choiceDiversity: Math.min(1, missionIds.size / 5),
+        missionSwitchRate: sessionStarted > 0 ? missionSwitches / sessionStarted : missionSwitches,
+        goalAlignmentScore: missionIds.size > 0 ? Math.min(1, goalsSet / missionIds.size) : 0,
+        proofSubmissionRate: evidenceSubmitted / 4,
+        firstTimeSuccessRate: checkpointAttempts > 0 ? checkpointPasses / checkpointAttempts : 0,
+        revisionPersistence: checkpointPasses > 0
+          ? (checkpointAttempts - checkpointPasses) / checkpointPasses
+          : 0,
+        skillMasteryRate: skillProven / 4,
+        feedbackGivingRate: feedbackGiven / 4,
+        recognitionReceived,
+        crewParticipation: sessionStarted > 0 ? Math.min(1, crewJoined / sessionStarted) : 0,
+        reflectionConsistency: sessionStarted > 0 ? sessionsWithReflection.size / sessionStarted : 0,
+        effortTrend: avg(effortRatings),
+        enjoymentTrend: avg(enjoymentRatings),
+        avgSessionDuration: avg(completionDurationsMinutes),
+        sessionCompletionRate: sessionStarted > 0 ? sessionCompleted / sessionStarted : 0,
+        optimalTimeOfDay,
+      };
+    } catch (error) {
+      console.error('Failed to compute SDT metrics:', error);
+      return defaultMetrics;
+    }
   }
 
   /**
