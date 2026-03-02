@@ -69,6 +69,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _usingUploadStt = false;
   bool _voiceOutputEnabled = true;
   bool _isSpeaking = false;
+  final List<String> _learningGoals = <String>[];
   AiCoachResponse? _lastResponse;
 
   @override
@@ -419,6 +420,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     final String checkpoint = (widget.checkpointId ?? '').trim();
     final String occurrence = (widget.runtime.sessionOccurrenceId ?? '').trim();
     final String tags = widget.conceptTags.join(', ');
+    final String goals = _learningGoals.isEmpty
+      ? 'none yet'
+      : _learningGoals.map((g) => '- $g').join('\n');
 
     return '''
 You are Scholesa AI Coach in a live conversation.
@@ -435,6 +439,9 @@ Context:
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
 
+Session learning goals:
+$goals
+
 Recent conversation:
 $conversation
 
@@ -447,6 +454,56 @@ Response style:
 - Give 1-3 concrete next steps.
 - End with one coaching follow-up question.
 ''';
+  }
+
+  String? _extractLearningGoalCandidate(String input) {
+    final String text = input.trim();
+    if (text.isEmpty) return null;
+
+    const List<String> cues = <String>[
+      'i want to',
+      'i need to',
+      'help me',
+      'i am trying to',
+      'i\'m trying to',
+      'learn',
+      'understand',
+      'debug',
+      'fix',
+      'improve',
+      'build',
+      'explain',
+    ];
+
+    final String lower = text.toLowerCase();
+    final bool hasCue = cues.any(lower.contains);
+    if (!hasCue && text.length < 24) return null;
+
+    final String normalized = text
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'[.!?]+$'), '')
+        .trim();
+    if (normalized.length < 8) return null;
+
+    return normalized.length > 120
+        ? '${normalized.substring(0, 117)}...'
+        : normalized;
+  }
+
+  void _updateLearningGoals(String userInput) {
+    final String? candidate = _extractLearningGoalCandidate(userInput);
+    if (candidate == null) return;
+
+    final String candidateKey = candidate.toLowerCase();
+    final bool exists = _learningGoals
+        .map((g) => g.toLowerCase())
+        .contains(candidateKey);
+    if (exists) return;
+
+    _learningGoals.insert(0, candidate);
+    if (_learningGoals.length > 3) {
+      _learningGoals.removeRange(3, _learningGoals.length);
+    }
   }
 
   String _enrichCoachReply(String text) {
@@ -496,6 +553,7 @@ Response style:
   Future<void> _sendMessage() async {
     final String input = _inputController.text.trim();
     if (_loading || input.isEmpty) return;
+    _updateLearningGoals(input);
     final String conversationalPrompt = _buildConversationalPrompt(input);
 
     TelemetryService.instance.logEvent(
@@ -548,6 +606,7 @@ Response style:
             context: <String, dynamic>{
               'userInput': input,
               'conversationTurns': _recentConversationTurns(),
+              'learningGoals': _learningGoals,
               'learnerId': widget.runtime.learnerId,
               'siteId': widget.runtime.siteId,
               'missionId': widget.missionId,
