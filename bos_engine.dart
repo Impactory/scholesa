@@ -26,8 +26,6 @@ class BosEngine {
   // State Variables (The "x_hat" estimate)
   double _confusionScore = 0.0;
   int _hintCount = 0;
-  int _consecutiveErrors = 0;
-  DateTime _lastInteraction = DateTime.now();
   String _currentStrategy = 'direct'; // 'direct' | 'socratic'
 
   // Output stream for Voice/UI to consume
@@ -49,8 +47,6 @@ class BosEngine {
 
   /// Main Control Loop Entry Point
   void handleEvent(BosEvent event) {
-    _lastInteraction = DateTime.now();
-
     // 1. Sense (Update State Estimate)
     _updateEstimates(event);
 
@@ -183,8 +179,16 @@ class BosEngine {
   }
   
   void _emitTelemetry(String name, {Map<String, dynamic>? metadata}) {
-    // In real implementation, construct full BosEvent
-    // _telemetry.logEvent(...)
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'state': _currentState.toString(),
+      ...?metadata,
+    };
+    unawaited(
+      _telemetry.logEvent(
+        event: name,
+        metadata: payload,
+      ),
+    );
   }
 
   // For testing

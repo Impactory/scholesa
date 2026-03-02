@@ -1,5 +1,3 @@
-import '../telemetry/telemetry_models.dart';
-
 /// D2 & D3) Safety, COPPA, Data Controls
 class SafetyGuard {
   static const List<String> _piiPatterns = [

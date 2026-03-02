@@ -1,8 +1,5 @@
-import 'package:flutter/foundation.dart';
-
 /// A2) Canonical Event Envelope
 /// Immutable, structured event for all system signals.
-@immutable
 class BosEvent {
   final String eventName;
   final String eventVersion;
