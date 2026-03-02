@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _educatorIntegrationsEs = <String, String>{
+  'My Integrations': 'Mis integraciones',
+  'Connected Services': 'Servicios conectados',
+  'Available Integrations': 'Integraciones disponibles',
+  'Connect external tools to sync assignments, grades, and learner progress automatically.':
+      'Conecta herramientas externas para sincronizar tareas, calificaciones y progreso del estudiante automáticamente.',
+  'Last synced 15 min ago': 'Última sincronización hace 15 min',
+  '3 repos connected': '3 repositorios conectados',
+  'Sync': 'Sincronizar',
+  'Sync Now': 'Sincronizar ahora',
+  'Settings': 'Configuración',
+  'Disconnect': 'Desconectar',
+  'Connect': 'Conectar',
+  'Connecting': 'Conectando',
+};
+
+String _tEducatorIntegrations(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorIntegrationsEs[input] ?? input;
+}
+
 /// Educator integrations page for managing external tool connections
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class EducatorIntegrationsPage extends StatelessWidget {
@@ -12,17 +34,17 @@ class EducatorIntegrationsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('My Integrations'),
+        title: Text(_tEducatorIntegrations(context, 'My Integrations')),
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          _buildInfoCard(),
+          _buildInfoCard(context),
           const SizedBox(height: 24),
-          const Text(
-            'Connected Services',
+          Text(
+            _tEducatorIntegrations(context, 'Connected Services'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -36,7 +58,8 @@ class EducatorIntegrationsPage extends StatelessWidget {
             icon: Icons.school_rounded,
             color: Colors.blue,
             isConnected: true,
-            syncStatus: 'Last synced 15 min ago',
+            syncStatus:
+                _tEducatorIntegrations(context, 'Last synced 15 min ago'),
           ),
           const SizedBox(height: 12),
           _buildIntegrationCard(
@@ -45,11 +68,11 @@ class EducatorIntegrationsPage extends StatelessWidget {
             icon: Icons.code_rounded,
             color: Colors.black87,
             isConnected: true,
-            syncStatus: '3 repos connected',
+            syncStatus: _tEducatorIntegrations(context, '3 repos connected'),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Available Integrations',
+          Text(
+            _tEducatorIntegrations(context, 'Available Integrations'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -79,7 +102,7 @@ class EducatorIntegrationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -93,7 +116,8 @@ class EducatorIntegrationsPage extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Connect external tools to sync assignments, grades, and learner progress automatically.',
+              _tEducatorIntegrations(context,
+                  'Connect external tools to sync assignments, grades, and learner progress automatically.'),
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.blue.shade700,
@@ -182,17 +206,25 @@ class EducatorIntegrationsPage extends StatelessWidget {
                         },
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('$value $name')),
+                        SnackBar(
+                          content: Text(
+                            '${_tEducatorIntegrations(context, value)} $name')),
                       );
                     },
                     itemBuilder: (BuildContext context) =>
                         <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(
-                          value: 'Sync', child: Text('Sync Now')),
-                      const PopupMenuItem<String>(
-                          value: 'Settings', child: Text('Settings')),
-                      const PopupMenuItem<String>(
-                          value: 'Disconnect', child: Text('Disconnect')),
+                        PopupMenuItem<String>(
+                          value: 'Sync',
+                          child: Text(
+                            _tEducatorIntegrations(context, 'Sync Now'))),
+                        PopupMenuItem<String>(
+                          value: 'Settings',
+                          child: Text(
+                            _tEducatorIntegrations(context, 'Settings'))),
+                        PopupMenuItem<String>(
+                          value: 'Disconnect',
+                          child: Text(
+                            _tEducatorIntegrations(context, 'Disconnect'))),
                     ],
                   )
                 : ElevatedButton(
@@ -207,14 +239,16 @@ class EducatorIntegrationsPage extends StatelessWidget {
                         },
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Connecting $name...')),
+                        SnackBar(
+                            content: Text(
+                                '${_tEducatorIntegrations(context, 'Connecting')} $name...')),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: color,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Connect'),
+                    child: Text(_tEducatorIntegrations(context, 'Connect')),
                   ),
           ],
         ),

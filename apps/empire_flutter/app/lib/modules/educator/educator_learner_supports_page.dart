@@ -2,6 +2,57 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
+  'Learner Supports': 'Apoyos del estudiante',
+  'Active Support Plans': 'Planes de apoyo activos',
+  'High Priority': 'Alta prioridad',
+  'Active Plans': 'Planes activos',
+  'Reviews Due': 'Revisiones pendientes',
+  'High': 'Alta',
+  'Medium': 'Media',
+  'Low': 'Baja',
+  'Academic': 'Académico',
+  'Social-Emotional': 'Socioemocional',
+  'Behavioral': 'Conductual',
+  'Extended time': 'Tiempo extendido',
+  'Quiet space': 'Espacio tranquilo',
+  'Check-in support': 'Apoyo de seguimiento',
+  'Peer buddy': 'Compañero de apoyo',
+  'Movement breaks': 'Pausas de movimiento',
+  'Clear transitions': 'Transiciones claras',
+  'Responds well to visual aids': 'Responde bien a ayudas visuales',
+  'Building confidence in group settings':
+      'Fortaleciendo la confianza en entornos grupales',
+  'Use positive reinforcement': 'Usar refuerzo positivo',
+  'Note': 'Nota',
+  'Support Plan': 'Plan de apoyo',
+  'Accommodations': 'Adaptaciones',
+  'Notes': 'Notas',
+  'No notes': 'Sin notas',
+  'Close': 'Cerrar',
+  'Edit Plan': 'Editar plan',
+  'Search Learner Supports': 'Buscar apoyos del estudiante',
+  'Enter learner name or support tag':
+      'Ingresa el nombre del estudiante o etiqueta de apoyo',
+  'Cancel': 'Cancelar',
+  'Search': 'Buscar',
+  'Found': 'Se encontraron',
+  'matching support plans': 'planes de apoyo coincidentes',
+  'Log Support Outcome': 'Registrar resultado del apoyo',
+  'Select the outcome from this support action.':
+      'Selecciona el resultado de esta acción de apoyo.',
+  'Partial': 'Parcial',
+  'No Change': 'Sin cambios',
+  'Helped': 'Ayudó',
+  'Support outcome logged': 'Resultado de apoyo registrado',
+};
+
+String _tEducatorLearnerSupports(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorLearnerSupportsEs[input] ?? input;
+}
+
 /// Educator learner supports page for tracking learner wellbeing & accommodations
 /// Based on docs/09_LEARNER_SUPPORT_ACCOMMODATIONS_SPEC.md
 class EducatorLearnerSupportsPage extends StatefulWidget {
@@ -64,7 +115,7 @@ class _EducatorLearnerSupportsPageState
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Learner Supports'),
+        title: Text(_tEducatorLearnerSupports(context, 'Learner Supports')),
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -79,8 +130,8 @@ class _EducatorLearnerSupportsPageState
         children: <Widget>[
           _buildSummaryCards(),
           const SizedBox(height: 24),
-          const Text(
-            'Active Support Plans',
+          Text(
+            _tEducatorLearnerSupports(context, 'Active Support Plans'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -99,7 +150,7 @@ class _EducatorLearnerSupportsPageState
       children: <Widget>[
         Expanded(
           child: _buildSummaryCard(
-            'High Priority',
+            _tEducatorLearnerSupports(context, 'High Priority'),
             _learnerSupports
                 .where((_LearnerSupport s) => s.priority == _Priority.high)
                 .length
@@ -111,7 +162,7 @@ class _EducatorLearnerSupportsPageState
         const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
-            'Active Plans',
+            _tEducatorLearnerSupports(context, 'Active Plans'),
             _learnerSupports.length.toString(),
             Colors.blue,
             Icons.people_rounded,
@@ -120,7 +171,7 @@ class _EducatorLearnerSupportsPageState
         const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
-            'Reviews Due',
+            _tEducatorLearnerSupports(context, 'Reviews Due'),
             '2',
             Colors.orange,
             Icons.schedule_rounded,
@@ -208,7 +259,7 @@ class _EducatorLearnerSupportsPageState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          support.supportType,
+                          _tEducatorLearnerSupports(context, support.supportType),
                           style: const TextStyle(
                             fontSize: 13,
                             color: ScholesaColors.textSecondary,
@@ -225,13 +276,14 @@ class _EducatorLearnerSupportsPageState
                 spacing: 6,
                 runSpacing: 6,
                 children: support.accommodations
-                    .map((String a) => _buildAccommodationChip(a))
+                    .map((String a) => _buildAccommodationChip(
+                        _tEducatorLearnerSupports(context, a)))
                     .toList(),
               ),
               if (support.notes.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 Text(
-                  'Note: ${support.notes}',
+                  '${_tEducatorLearnerSupports(context, 'Note')}: ${_tEducatorLearnerSupports(context, support.notes)}',
                   style: const TextStyle(
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
@@ -252,13 +304,13 @@ class _EducatorLearnerSupportsPageState
     switch (priority) {
       case _Priority.high:
         color = Colors.red;
-        label = 'High';
+        label = _tEducatorLearnerSupports(context, 'High');
       case _Priority.medium:
         color = Colors.orange;
-        label = 'Medium';
+        label = _tEducatorLearnerSupports(context, 'Medium');
       case _Priority.low:
         color = Colors.green;
-        label = 'Low';
+        label = _tEducatorLearnerSupports(context, 'Low');
     }
 
     return Container(
@@ -370,7 +422,7 @@ class _EducatorLearnerSupportsPageState
                         ),
                       ),
                       Text(
-                        'Support Plan • ${support.supportType}',
+                        '${_tEducatorLearnerSupports(context, 'Support Plan')} • ${_tEducatorLearnerSupports(context, support.supportType)}',
                         style: const TextStyle(
                             color: ScholesaColors.textSecondary),
                       ),
@@ -380,8 +432,8 @@ class _EducatorLearnerSupportsPageState
               ],
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Accommodations',
+            Text(
+              _tEducatorLearnerSupports(context, 'Accommodations'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -395,13 +447,13 @@ class _EducatorLearnerSupportsPageState
                       const Icon(Icons.check_circle_rounded,
                           color: Colors.green, size: 20),
                       const SizedBox(width: 8),
-                      Text(a),
+                      Text(_tEducatorLearnerSupports(context, a)),
                     ],
                   ),
                 )),
             const SizedBox(height: 16),
-            const Text(
-              'Notes',
+            Text(
+              _tEducatorLearnerSupports(context, 'Notes'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -409,7 +461,9 @@ class _EducatorLearnerSupportsPageState
             ),
             const SizedBox(height: 8),
             Text(
-              support.notes.isNotEmpty ? support.notes : 'No notes',
+              support.notes.isNotEmpty
+                  ? _tEducatorLearnerSupports(context, support.notes)
+                  : _tEducatorLearnerSupports(context, 'No notes'),
               style: const TextStyle(color: ScholesaColors.textSecondary),
             ),
             const SizedBox(height: 24),
@@ -438,7 +492,7 @@ class _EducatorLearnerSupportsPageState
                       popupCompleted = true;
                       Navigator.pop(context);
                     },
-                    child: const Text('Close'),
+                    child: Text(_tEducatorLearnerSupports(context, 'Close')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -476,7 +530,8 @@ class _EducatorLearnerSupportsPageState
                       Navigator.pop(context);
                       _showOutcomeDialog(support);
                     },
-                    child: const Text('Edit Plan'),
+                    child:
+                        Text(_tEducatorLearnerSupports(context, 'Edit Plan')),
                   ),
                 ),
               ],
@@ -520,11 +575,13 @@ class _EducatorLearnerSupportsPageState
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Search Learner Supports'),
+        title:
+            Text(_tEducatorLearnerSupports(context, 'Search Learner Supports')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter learner name or support tag',
+          decoration: InputDecoration(
+            hintText: _tEducatorLearnerSupports(
+                context, 'Enter learner name or support tag'),
             border: OutlineInputBorder(),
           ),
         ),
@@ -549,7 +606,7 @@ class _EducatorLearnerSupportsPageState
               popupCompleted = true;
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_tEducatorLearnerSupports(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -581,10 +638,11 @@ class _EducatorLearnerSupportsPageState
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text('Found $matches matching support plans')),
+                    content: Text(
+                        '${_tEducatorLearnerSupports(context, 'Found')} $matches ${_tEducatorLearnerSupports(context, 'matching support plans')}')),
               );
             },
-            child: const Text('Search'),
+            child: Text(_tEducatorLearnerSupports(context, 'Search')),
           ),
         ],
       ),
@@ -614,9 +672,10 @@ class _EducatorLearnerSupportsPageState
     final String? outcome = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Log Support Outcome'),
-        content: const Text(
-          'Select the outcome from this support action.',
+        title: Text(_tEducatorLearnerSupports(context, 'Log Support Outcome')),
+        content: Text(
+          _tEducatorLearnerSupports(
+              context, 'Select the outcome from this support action.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -630,19 +689,19 @@ class _EducatorLearnerSupportsPageState
               );
               Navigator.pop(dialogContext, null);
             },
-            child: const Text('Cancel'),
+            child: Text(_tEducatorLearnerSupports(context, 'Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, 'partial'),
-            child: const Text('Partial'),
+            child: Text(_tEducatorLearnerSupports(context, 'Partial')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, 'no_change'),
-            child: const Text('No Change'),
+            child: Text(_tEducatorLearnerSupports(context, 'No Change')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, 'helped'),
-            child: const Text('Helped'),
+            child: Text(_tEducatorLearnerSupports(context, 'Helped')),
           ),
         ],
       ),
@@ -672,7 +731,9 @@ class _EducatorLearnerSupportsPageState
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Support outcome logged: $outcome')),
+      SnackBar(
+          content: Text(
+              '${_tEducatorLearnerSupports(context, 'Support outcome logged')}: $outcome')),
     );
   }
 }
