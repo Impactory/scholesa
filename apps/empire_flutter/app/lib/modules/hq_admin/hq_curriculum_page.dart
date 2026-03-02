@@ -259,7 +259,6 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       color: ScholesaColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('v${curriculum.version}',
                     child: Text('${_tHqCurriculum(context, 'v')}${curriculum.version}',
                         style: const TextStyle(
                             fontSize: 12, color: ScholesaColors.primary)),
