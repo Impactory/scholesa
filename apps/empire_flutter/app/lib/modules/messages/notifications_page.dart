@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'message_models.dart';
+import 'message_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -43,91 +46,47 @@ class NotificationsPage extends StatefulWidget {
   State<NotificationsPage> createState() => _NotificationsPageState();
 }
 
-enum _NotificationType { message, reminder, alert, system }
-
-class _Notification {
-  _Notification({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.type,
-    required this.createdAt,
-    required this.isRead,
-  });
-
-  final String id;
-  final String title;
-  final String body;
-  final _NotificationType type;
-  final DateTime createdAt;
-  bool isRead;
-}
-
 class _NotificationsPageState extends State<NotificationsPage> {
-  final List<_Notification> _notifications = <_Notification>[
-    _Notification(
-      id: '1',
-      title: 'New Mission Available',
-      body: 'Check out the new AI Fundamentals mission for your learners!',
-      type: _NotificationType.alert,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
-      isRead: false,
-    ),
-    _Notification(
-      id: '2',
-      title: 'Session Reminder',
-      body: 'Robotics Club starts in 1 hour at Room 204',
-      type: _NotificationType.reminder,
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      isRead: false,
-    ),
-    _Notification(
-      id: '3',
-      title: 'Message from Ms. Johnson',
-      body: 'Great progress on the coding project! Keep it up.',
-      type: _NotificationType.message,
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: true,
-    ),
-    _Notification(
-      id: '4',
-      title: 'System Update',
-      body:
-          'Scholesa has been updated with new features. Check out what\'s new!',
-      type: _NotificationType.system,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MessageService>().loadMessages();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final int unreadCount =
-        _notifications.where((_Notification n) => !n.isRead).length;
+    return Consumer<MessageService>(
+      builder: (BuildContext context, MessageService service, _) {
+        final List<Message> notifications = service.messages;
+        final int unreadCount = service.unreadCount;
 
-    return Scaffold(
-      backgroundColor: ScholesaColors.background,
-      appBar: AppBar(
-        title: Text(_tNotifications(context, 'Notifications')),
-        backgroundColor: ScholesaColors.primary,
-        foregroundColor: Colors.white,
-        actions: <Widget>[
-          if (unreadCount > 0)
-            TextButton(
-              onPressed: _markAllAsRead,
-              child: Text(_tNotifications(context, 'Mark all read'),
-                  style: const TextStyle(color: Colors.white)),
-            ),
-        ],
-      ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _notifications.length,
-              itemBuilder: (BuildContext context, int index) =>
-                  _buildNotificationCard(_notifications[index]),
-            ),
+        return Scaffold(
+          backgroundColor: ScholesaColors.background,
+          appBar: AppBar(
+            title: Text(_tNotifications(context, 'Notifications')),
+            backgroundColor: ScholesaColors.primary,
+            foregroundColor: Colors.white,
+            actions: <Widget>[
+              if (unreadCount > 0)
+                TextButton(
+                  onPressed: () => _markAllAsRead(service),
+                  child: Text(_tNotifications(context, 'Mark all read'),
+                      style: const TextStyle(color: Colors.white)),
+                ),
+            ],
+          ),
+          body: notifications.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: notifications.length,
+                  itemBuilder: (BuildContext context, int index) =>
+                      _buildNotificationCard(notifications[index], service),
+                ),
+        );
+      },
     );
   }
 
@@ -154,7 +113,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationCard(_Notification notification) {
+  Widget _buildNotificationCard(Message notification, MessageService service) {
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
@@ -177,10 +136,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'surface': 'notifications_list',
           },
         );
-        setState(() {
-          _notifications
-              .removeWhere((_Notification n) => n.id == notification.id);
-        });
+        service.deleteMessage(notification.id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_tNotifications(context, 'Notification dismissed')),
@@ -262,20 +218,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildTypeIcon(_NotificationType type) {
+  Widget _buildTypeIcon(MessageType type) {
     IconData icon;
     Color color;
     switch (type) {
-      case _NotificationType.message:
+      case MessageType.direct:
         icon = Icons.chat_bubble_rounded;
         color = Colors.blue;
-      case _NotificationType.reminder:
+      case MessageType.reminder:
         icon = Icons.schedule_rounded;
         color = Colors.orange;
-      case _NotificationType.alert:
+      case MessageType.alert:
         icon = Icons.notifications_active_rounded;
         color = Colors.green;
-      case _NotificationType.system:
+      case MessageType.announcement:
+        icon = Icons.campaign_rounded;
+        color = Colors.teal;
+      case MessageType.system:
         icon = Icons.settings_rounded;
         color = Colors.purple;
     }
@@ -290,7 +249,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  void _handleNotificationTap(_Notification notification) {
+  void _handleNotificationTap(Message notification, MessageService service) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -299,9 +258,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         'notification_type': notification.type.name,
       },
     );
-    setState(() {
-      notification.isRead = true;
-    });
+    service.markAsRead(notification.id);
     // Navigate based on notification type
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -312,16 +269,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  void _markAllAsRead() {
+  void _markAllAsRead(MessageService service) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'notifications_mark_all_read'},
     );
-    setState(() {
-      for (final _Notification n in _notifications) {
-        n.isRead = true;
-      }
-    });
+    service.markAllAsRead();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content:
