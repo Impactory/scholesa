@@ -21,7 +21,23 @@ const Map<String, String> _parentSummaryEs = <String, String>{
   'Recent Activity': 'Actividad reciente',
   'See all': 'Ver todo',
   'Upcoming': 'Próximamente',
+  'All Recent Activity': 'Toda la actividad reciente',
+  'No learners linked': 'No hay estudiantes vinculados',
+  'Contact your school to link your children':
+      'Contacta a tu escuela para vincular a tus hijos',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'JAN': 'ENE',
+  'APR': 'ABR',
+  'AUG': 'AGO',
+  'DEC': 'DIC',
 };
+
+String _tParentSummary(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _parentSummaryEs[input] ?? input;
+}
 
 /// Parent Summary Page - Safe view for parents to see their children's progress
 class ParentSummaryPage extends StatefulWidget {
@@ -35,9 +51,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   int _selectedLearnerIndex = 0;
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _parentSummaryEs[input] ?? input;
+    return _tParentSummary(context, input);
   }
 
   @override
@@ -489,10 +503,10 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
-                'All Recent Activity',
+                _t('All Recent Activity'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -528,12 +542,12 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No learners linked',
+            _t('No learners linked'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Contact your school to link your children',
+            _t('Contact your school to link your children'),
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
@@ -714,7 +728,7 @@ class _ActivityItem extends StatelessWidget {
             ),
           ),
           Text(
-            _formatTime(activity.timestamp),
+            _formatTime(context, activity.timestamp),
             style: TextStyle(color: Colors.grey[500], fontSize: 11),
           ),
         ],
@@ -722,13 +736,13 @@ class _ActivityItem extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(BuildContext context, DateTime time) {
     final DateTime now = DateTime.now();
     final Duration diff = now.difference(time);
     if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
+      return '${diff.inHours}${_tParentSummary(context, 'h ago')}';
     }
-    return '${diff.inDays}d ago';
+    return '${diff.inDays}${_tParentSummary(context, 'd ago')}';
   }
 }
 
@@ -785,7 +799,7 @@ class _EventCard extends StatelessWidget {
               child: Column(
                 children: <Widget>[
                   Text(
-                    _getMonth(event.dateTime),
+                    _getMonth(context, event.dateTime),
                     style: TextStyle(
                       color: _typeColor,
                       fontSize: 10,
@@ -822,7 +836,7 @@ class _EventCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatTime(event.dateTime),
+                    _formatTime(context, event.dateTime),
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                   if (event.location != null) ...<Widget>[
@@ -849,7 +863,7 @@ class _EventCard extends StatelessWidget {
     );
   }
 
-  String _getMonth(DateTime date) {
+  String _getMonth(BuildContext context, DateTime date) {
     const List<String> months = <String>[
       'JAN',
       'FEB',
@@ -864,10 +878,10 @@ class _EventCard extends StatelessWidget {
       'NOV',
       'DEC'
     ];
-    return months[date.month - 1];
+    return _tParentSummary(context, months[date.month - 1]);
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(BuildContext context, DateTime time) {
     final int hour =
         time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
