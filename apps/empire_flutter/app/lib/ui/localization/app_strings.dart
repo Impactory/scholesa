@@ -54,6 +54,71 @@ class AppStrings {
       'auth.error.generic': 'Authentication failed',
       'auth.error.unexpected': 'An unexpected error occurred',
       'auth.error.resetFailed': 'Failed to send reset email',
+      'app.title': 'Scholesa',
+      'app.bootstrapFailed': 'Failed to start Scholesa',
+      'app.retry': 'Retry',
+      'assistant.tooltip': 'AI Assistant',
+      'assistant.title': 'AI Assistant',
+      'assistant.close': 'Close',
+      'assistant.loading': 'Loading assistant…',
+      'ai.error.unreachable':
+          'Unable to reach AI Coach right now. Try again in a moment.',
+      'ai.voice.transcriptionUnavailable':
+          'Voice transcription unavailable. Please type your question.',
+      'ai.voice.microphonePermissionRequired':
+          'Microphone permission is required for voice input.',
+      'ai.voice.playbackStopped': 'Playback stopped',
+      'ai.voice.stopListening': 'Stop listening',
+      'ai.voice.useInput': 'Use voice input',
+      'ai.voice.disableOutput': 'Disable voice output',
+      'ai.voice.enableOutput': 'Enable voice output',
+      'ai.voice.speaking': 'Speaking…',
+      'ai.voice.tapInterrupt': 'Tap to interrupt',
+      'ai.clearGoals.title': 'Clear current goals?',
+      'ai.clearGoals.body':
+          'This removes the in-session coaching goals memory for this assistant conversation.',
+      'ai.clear': 'Clear',
+      'ai.currentGoals': 'Current goals',
+      'ai.clearGoals.cta': 'Clear goals',
+      'ai.empty.title': 'AI Coach',
+      'ai.empty.subtitle':
+          'Select a mode and ask for help. I\'ll guide your thinking — not give answers.',
+      'ai.banner.verification':
+          'Verification active — show your understanding first.',
+      'ai.chat.verificationRequired': 'Verification required',
+      'ai.chat.helpful': 'Helpful?',
+      'ai.feedback.thanks': 'Thanks for the feedback!',
+      'ai.feedback.noted': 'Noted — we\'ll improve.',
+      'ai.enrich.retryPrompt':
+          'Let\'s try that again. What part feels most confusing right now?',
+      'ai.enrich.hintFollowup': 'What have you tried so far?',
+      'ai.enrich.verifyFollowup': 'Can you show the evidence for your answer?',
+      'ai.enrich.explainFollowup':
+          'How would you explain that in your own words?',
+      'ai.enrich.debugFollowup':
+          'What changed right before the issue started?',
+      'ai.mode.hintPlaceholder': 'Ask for a hint...',
+      'ai.mode.verifyPlaceholder': 'Describe your approach to verify...',
+      'ai.mode.explainPlaceholder': 'What would you like explained?',
+      'ai.mode.debugPlaceholder': 'Describe the issue you\'re seeing...',
+      'ai.mode.hintLabel': 'Hint',
+      'ai.mode.verifyLabel': 'Verify',
+      'ai.mode.explainLabel': 'Explain',
+      'ai.mode.debugLabel': 'Debug',
+      'ai.directive.hint':
+          'Give one focused hint first, then ask a short guiding question.',
+      'ai.directive.verify':
+          'Verify reasoning with evidence checks and ask for one concrete proof step.',
+      'ai.directive.explain':
+          'Explain in simple steps and relate to one practical example.',
+      'ai.directive.debug':
+          'Diagnose likely causes, suggest one small test, and ask what changed recently.',
+      'ai.role.learner':
+          'Speak directly to a learner using supportive, age-appropriate coaching language.',
+      'ai.role.parent':
+          'Coach with parent-friendly phrasing that supports the learner without giving answers.',
+      'ai.role.staff':
+          'Respond as an instructional co-pilot with concise pedagogical suggestions.',
     },
     'es': <String, String>{
       'auth.welcomeBack': 'Bienvenido de nuevo',
@@ -110,6 +175,72 @@ class AppStrings {
       'auth.error.unexpected': 'Ocurrió un error inesperado',
       'auth.error.resetFailed':
           'No se pudo enviar el correo de restablecimiento',
+      'app.title': 'Scholesa',
+      'app.bootstrapFailed': 'No se pudo iniciar Scholesa',
+      'app.retry': 'Reintentar',
+      'assistant.tooltip': 'Asistente de IA',
+      'assistant.title': 'Asistente de IA',
+      'assistant.close': 'Cerrar',
+      'assistant.loading': 'Cargando asistente…',
+      'ai.error.unreachable':
+          'No se puede conectar con el Coach de IA ahora. Inténtalo de nuevo en un momento.',
+      'ai.voice.transcriptionUnavailable':
+          'La transcripción de voz no está disponible. Escribe tu pregunta.',
+      'ai.voice.microphonePermissionRequired':
+          'Se requiere permiso de micrófono para la entrada por voz.',
+      'ai.voice.playbackStopped': 'Reproducción detenida',
+      'ai.voice.stopListening': 'Detener escucha',
+      'ai.voice.useInput': 'Usar entrada por voz',
+      'ai.voice.disableOutput': 'Desactivar salida de voz',
+      'ai.voice.enableOutput': 'Activar salida de voz',
+      'ai.voice.speaking': 'Hablando…',
+      'ai.voice.tapInterrupt': 'Toca para interrumpir',
+      'ai.clearGoals.title': '¿Borrar metas actuales?',
+      'ai.clearGoals.body':
+          'Esto elimina la memoria de metas de coaching en sesión para esta conversación del asistente.',
+      'ai.clear': 'Borrar',
+      'ai.currentGoals': 'Metas actuales',
+      'ai.clearGoals.cta': 'Borrar metas',
+      'ai.empty.title': 'Coach de IA',
+      'ai.empty.subtitle':
+          'Selecciona un modo y pide ayuda. Guiaré tu pensamiento, sin dar respuestas.',
+      'ai.banner.verification':
+          'Verificación activa — muestra primero tu comprensión.',
+      'ai.chat.verificationRequired': 'Verificación requerida',
+      'ai.chat.helpful': '¿Útil?',
+      'ai.feedback.thanks': '¡Gracias por tu comentario!',
+      'ai.feedback.noted': 'Anotado — mejoraremos.',
+      'ai.enrich.retryPrompt':
+          'Intentémoslo de nuevo. ¿Qué parte te resulta más confusa ahora?',
+      'ai.enrich.hintFollowup': '¿Qué has intentado hasta ahora?',
+      'ai.enrich.verifyFollowup':
+          '¿Puedes mostrar la evidencia de tu respuesta?',
+      'ai.enrich.explainFollowup':
+          '¿Cómo lo explicarías con tus propias palabras?',
+      'ai.enrich.debugFollowup':
+          '¿Qué cambió justo antes de que comenzara el problema?',
+      'ai.mode.hintPlaceholder': 'Pide una pista...',
+      'ai.mode.verifyPlaceholder': 'Describe tu enfoque para verificar...',
+      'ai.mode.explainPlaceholder': '¿Qué te gustaría que se explicara?',
+      'ai.mode.debugPlaceholder': 'Describe el problema que estás viendo...',
+      'ai.mode.hintLabel': 'Pista',
+      'ai.mode.verifyLabel': 'Verificar',
+      'ai.mode.explainLabel': 'Explicar',
+      'ai.mode.debugLabel': 'Depurar',
+      'ai.directive.hint':
+          'Da primero una pista enfocada y luego haz una pregunta guía corta.',
+      'ai.directive.verify':
+          'Verifica el razonamiento con evidencia y pide un paso de prueba concreto.',
+      'ai.directive.explain':
+          'Explica en pasos simples y relaciónalo con un ejemplo práctico.',
+      'ai.directive.debug':
+          'Diagnostica causas probables, sugiere una prueba pequeña y pregunta qué cambió recientemente.',
+      'ai.role.learner':
+          'Habla directamente a un estudiante con lenguaje de apoyo y apropiado para su edad.',
+      'ai.role.parent':
+          'Guía con lenguaje apto para familias que apoye al estudiante sin dar respuestas.',
+      'ai.role.staff':
+          'Responde como copiloto instruccional con sugerencias pedagógicas concisas.',
     },
   };
 

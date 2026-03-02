@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +23,7 @@ import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
 import 'runtime/global_ai_assistant_overlay.dart';
 import 'router/app_router.dart';
+import 'ui/localization/app_strings.dart';
 import 'modules/hq_admin/hq_admin.dart';
 import 'modules/checkin/checkin.dart';
 import 'modules/provisioning/provisioning_service.dart';
@@ -73,6 +75,16 @@ class ScholesaApp extends StatefulWidget {
 }
 
 class _ScholesaAppState extends State<ScholesaApp> {
+  static const List<LocalizationsDelegate<dynamic>> _localizationDelegates =
+      <LocalizationsDelegate<dynamic>>[
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+  static const List<Locale> _supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es'),
+  ];
   static const Duration _minNativeSplashDuration = Duration(milliseconds: 1600);
 
   late final AppState _appState;
@@ -165,10 +177,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
   Widget build(BuildContext context) {
     if (_initError != null) {
       return MaterialApp(
+        onGenerateTitle: (BuildContext context) =>
+            AppStrings.of(context, 'app.title'),
         debugShowCheckedModeBanner: false,
         theme: ScholesaTheme.light,
         darkTheme: ScholesaTheme.dark,
         themeMode: _themeService.themeMode,
+        localizationsDelegates: _localizationDelegates,
+        supportedLocales: _supportedLocales,
         home: _ErrorBootstrapScreen(
           error: _initError!,
           onRetry: () {
@@ -184,10 +200,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
 
     if (!_isInitialized) {
       return MaterialApp(
+        onGenerateTitle: (BuildContext context) =>
+            AppStrings.of(context, 'app.title'),
         debugShowCheckedModeBanner: false,
         theme: ScholesaTheme.light,
         darkTheme: ScholesaTheme.dark,
         themeMode: _themeService.themeMode,
+        localizationsDelegates: _localizationDelegates,
+        supportedLocales: _supportedLocales,
         home: const SplashScreen(),
       );
     }
@@ -358,11 +378,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
         builder:
             (BuildContext context, ThemeService themeService, Widget? child) {
           return MaterialApp.router(
-            title: 'Scholesa',
+            onGenerateTitle: (BuildContext context) =>
+                AppStrings.of(context, 'app.title'),
             debugShowCheckedModeBanner: false,
             theme: ScholesaTheme.light,
             darkTheme: ScholesaTheme.dark,
             themeMode: themeService.themeMode,
+            localizationsDelegates: _localizationDelegates,
+            supportedLocales: _supportedLocales,
             builder: (BuildContext context, Widget? child) {
               return Stack(
                 children: <Widget>[
@@ -409,7 +432,7 @@ class _ErrorBootstrapScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Failed to start Scholesa',
+                  AppStrings.of(context, 'app.bootstrapFailed'),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -436,7 +459,7 @@ class _ErrorBootstrapScreen extends StatelessWidget {
                     onRetry();
                   },
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  label: Text(AppStrings.of(context, 'app.retry')),
                 ),
               ],
             ),
