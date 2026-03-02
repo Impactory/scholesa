@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -30,6 +35,9 @@ const Map<String, String> _siteIncidentsEs = <String, String>{
   'submitted': 'enviado',
   'reviewed': 'revisado',
   'closed': 'cerrado',
+  'Loading...': 'Cargando...',
+  'Learner Name (optional)': 'Nombre del estudiante (opcional)',
+  'Unknown': 'Desconocido',
 };
 
 String _tSiteIncidents(BuildContext context, String input) {
@@ -74,6 +82,9 @@ class _Incident {
 class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  List<_Incident> _incidents = <_Incident>[];
+  bool _isLoading = false;
+  String? _siteId;
 
   String _statusLabel(_Status status) {
     switch (status) {
@@ -86,40 +97,13 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     }
   }
 
-  final List<_Incident> _incidents = <_Incident>[
-    _Incident(
-      id: '1',
-      title: 'Minor bump during play',
-      severity: _Severity.minor,
-      status: _Status.closed,
-      reportedBy: 'Ms. Johnson',
-      reportedAt: DateTime.now().subtract(const Duration(days: 2)),
-      learnerName: 'Oliver T.',
-    ),
-    _Incident(
-      id: '2',
-      title: 'Late pickup - 30 minutes',
-      severity: _Severity.minor,
-      status: _Status.reviewed,
-      reportedBy: 'Front Desk',
-      reportedAt: DateTime.now().subtract(const Duration(days: 1)),
-      learnerName: 'Emma S.',
-    ),
-    _Incident(
-      id: '3',
-      title: 'Behavioral concern during class',
-      severity: _Severity.major,
-      status: _Status.submitted,
-      reportedBy: 'Mr. Davis',
-      reportedAt: DateTime.now().subtract(const Duration(hours: 3)),
-      learnerName: 'Liam M.',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIncidents();
+    });
   }
 
   @override
@@ -188,6 +172,15 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   }
 
   Widget _buildIncidentList(_Status statusFilter) {
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tSiteIncidents(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
     final List<_Incident> filtered =
         _incidents.where((_Incident i) => i.status == statusFilter).toList();
 
@@ -404,7 +397,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
                           metadata: <String, dynamic>{
@@ -417,9 +410,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                           },
                         );
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(_tSiteIncidents(context, 'Incident updated'))),
-                        );
+                        await _advanceIncidentStatus(incident);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
@@ -477,71 +468,254 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   }
 
   void _showCreateIncidentDialog() {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController learnerController = TextEditingController();
+    _Severity selectedSeverity = _Severity.minor;
+
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
-        title: Text(_tSiteIncidents(context, 'Report New Incident')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              decoration: InputDecoration(
-                labelText: _tSiteIncidents(context, 'Incident Title'),
-                border: OutlineInputBorder(),
-              ),
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            backgroundColor: ScholesaColors.surface,
+            title: Text(_tSiteIncidents(context, 'Report New Incident')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: _tSiteIncidents(context, 'Incident Title'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: learnerController,
+                  decoration: InputDecoration(
+                    labelText:
+                        _tSiteIncidents(context, 'Learner Name (optional)'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<_Severity>(
+                  initialValue: selectedSeverity,
+                  decoration: InputDecoration(
+                    labelText: _tSiteIncidents(context, 'Severity'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: _Severity.values
+                      .map((_Severity s) => DropdownMenuItem<_Severity>(
+                            value: s,
+                            child: Text(_tSiteIncidents(context,
+                                s.name[0].toUpperCase() + s.name.substring(1))),
+                          ))
+                      .toList(),
+                  onChanged: (_Severity? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedSeverity = value);
+                    }
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<_Severity>(
-              decoration: InputDecoration(
-                labelText: _tSiteIncidents(context, 'Severity'),
-                border: OutlineInputBorder(),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_incidents',
+                      'cta_id': 'cancel_incident_report',
+                      'surface': 'create_incident_dialog',
+                    },
+                  );
+                  Navigator.pop(dialogContext);
+                },
+                child: Text(_tSiteIncidents(context, 'Cancel')),
               ),
-              items: _Severity.values
-                  .map((_Severity s) => DropdownMenuItem<_Severity>(
-                        value: s,
-                        child: Text(_tSiteIncidents(context, s.name[0].toUpperCase() + s.name.substring(1))),
-                      ))
-                  .toList(),
-              onChanged: (_) {},
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'site_incidents',
-                  'cta_id': 'cancel_incident_report',
-                  'surface': 'create_incident_dialog',
+              ElevatedButton(
+                onPressed: () async {
+                  final String title = titleController.text.trim();
+                  if (title.isEmpty) {
+                    Navigator.pop(dialogContext);
+                    return;
+                  }
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_incidents',
+                      'cta_id': 'submit_incident_report',
+                      'surface': 'create_incident_dialog',
+                    },
+                  );
+                  Navigator.pop(dialogContext);
+                  await _createIncident(
+                    title: title,
+                    severity: selectedSeverity,
+                    learnerName: learnerController.text.trim(),
+                  );
                 },
-              );
-              Navigator.pop(context);
-            },
-            child: Text(_tSiteIncidents(context, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'site_incidents',
-                  'cta_id': 'submit_incident_report',
-                  'surface': 'create_incident_dialog',
-                },
-              );
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(_tSiteIncidents(context, 'Incident reported'))),
-              );
-            },
-            child: Text(_tSiteIncidents(context, 'Submit')),
-          ),
-        ],
+                child: Text(_tSiteIncidents(context, 'Submit')),
+              ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _loadIncidents() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String resolvedSiteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    _siteId = resolvedSiteId;
+
+    setState(() => _isLoading = true);
+    try {
+      Query<Map<String, dynamic>> query =
+          firestoreService.firestore.collection('incidents');
+      if (resolvedSiteId.isNotEmpty) {
+        query = query.where('siteId', isEqualTo: resolvedSiteId);
+      }
+
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await query.orderBy('reportedAt', descending: true).get();
+      } catch (_) {
+        snapshot = await query.get();
+      }
+
+      final List<_Incident> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final _Severity severity = _parseSeverity(
+              (data['severity'] as String?) ?? (data['type'] as String?),
+            );
+            final _Status status = _parseStatus(data['status'] as String?);
+            final String learnerName =
+                (data['learnerName'] as String?)?.trim().isNotEmpty == true
+                    ? (data['learnerName'] as String).trim()
+                    : _tSiteIncidents(context, 'Unknown');
+
+            return _Incident(
+              id: doc.id,
+              title: (data['title'] as String?)?.trim().isNotEmpty == true
+                  ? (data['title'] as String).trim()
+                  : (data['description'] as String? ?? 'Incident'),
+              severity: severity,
+              status: status,
+              reportedBy: (data['reportedByName'] as String?) ??
+                  (data['reportedBy'] as String?) ??
+                  _tSiteIncidents(context, 'Unknown'),
+              reportedAt: _parseDateTime(data['reportedAt']) ??
+                  _parseDateTime(data['createdAt']) ??
+                  DateTime.now(),
+              learnerName: learnerName,
+            );
+          })
+          .toList();
+
+      loaded.sort(
+          (_Incident a, _Incident b) => b.reportedAt.compareTo(a.reportedAt));
+      if (!mounted) return;
+      setState(() => _incidents = loaded);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _createIncident({
+    required String title,
+    required _Severity severity,
+    required String learnerName,
+  }) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final User? user = FirebaseAuth.instance.currentUser;
+    final String siteId = _siteId ?? '';
+
+    await firestoreService.firestore.collection('incidents').add(<String, dynamic>{
+      if (siteId.isNotEmpty) 'siteId': siteId,
+      'title': title,
+      'description': title,
+      'severity': severity.name,
+      'type': severity.name,
+      'status': 'submitted',
+      'learnerName': learnerName,
+      'reportedBy': user?.uid,
+      'reportedByName':
+          (user?.displayName?.trim().isNotEmpty ?? false) ? user!.displayName : 'Staff',
+      'reportedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_tSiteIncidents(context, 'Incident reported'))),
+    );
+    await _loadIncidents();
+  }
+
+  Future<void> _advanceIncidentStatus(_Incident incident) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final _Status nextStatus = incident.status == _Status.submitted
+        ? _Status.reviewed
+        : _Status.closed;
+
+    await firestoreService.firestore
+        .collection('incidents')
+        .doc(incident.id)
+        .set(<String, dynamic>{
+      'status': nextStatus.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_tSiteIncidents(context, 'Incident updated'))),
+    );
+    await _loadIncidents();
+  }
+
+  _Severity _parseSeverity(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'critical':
+        return _Severity.critical;
+      case 'major':
+      case 'high':
+        return _Severity.major;
+      default:
+        return _Severity.minor;
+    }
+  }
+
+  _Status _parseStatus(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'closed':
+        return _Status.closed;
+      case 'reviewed':
+      case 'in_review':
+        return _Status.reviewed;
+      default:
+        return _Status.submitted;
+    }
+  }
+
+  DateTime? _parseDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
   }
 
   String _formatDateTime(DateTime dt) {
