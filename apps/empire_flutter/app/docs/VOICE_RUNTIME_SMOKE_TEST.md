@@ -14,6 +14,23 @@ Validate end-to-end wiring for:
 - Cloud Function `voiceApi` is deployed and reachable for current Firebase project.
 - Device has network access.
 
+## Quick Run (5 minutes)
+Use this for daily sanity checks before deeper validation.
+
+1. Open app, confirm lower-right floating AI button appears, open assistant.
+2. Tap mic, record a short question, stop recording.
+3. Confirm transcript appears in input.
+4. Send prompt and confirm response appears.
+5. Confirm speaking state appears and audio starts.
+6. Tap **Tap to interrupt** and verify playback stops + snackbar appears.
+7. Turn voice output off, send another prompt, verify text-only response.
+
+Quick-run pass criteria:
+- No crashes or stuck controls.
+- STT input works (or shows friendly fallback message).
+- AI response arrives via primary path or graceful fallback.
+- Interrupt always restores controls immediately.
+
 ## 1) Floating assistant surface
 1. Launch app and sign in.
 2. Confirm floating AI button appears at lower-right.
@@ -51,8 +68,26 @@ Expected:
 
 Expected:
 - Voice API path should return response in normal network conditions.
-- If voice API fails, BOS callable fallback still returns a coach response.
+- If voice API fails and role is learner, BOS callable fallback should return a coach response.
+- If voice API fails and role is non-learner (educator/parent/site/hq), app should return friendly failure without learner-only BOS permission errors.
 - Chat remains interactive after response.
+
+## 4A) Session occurrence scoping (BOS context)
+1. Open assistant while an educator has an active class in progress.
+2. Send one prompt.
+3. Repeat with no active class but with recent learner mission attempts.
+
+Expected:
+- Assistant initializes without delay-related crashes.
+- Runtime resolves best available `sessionOccurrenceId` and BOS listeners initialize with that context.
+- Behavior still works when no occurrence is found (graceful null-context operation).
+
+## 4B) Telemetry field verification
+Verify in telemetry sink/logs that these fields are present when applicable:
+- `voice.transcribe`: `source`, `traceId`, `latencyMs`, `modelVersion`
+- `voice.message`: `mode`, `traceId`, `safetyOutcome`, `policyVersion`
+- `voice.tts`: `source` (`voice_api_audio`, `flutter_tts`, `user_interrupt`)
+- BOS events (`ai_help_opened`, `ai_help_used`, `ai_coach_response`): includes `mode` and, when available, `sessionOccurrenceId`
 
 ## 5) TTS playback path
 1. With voice output enabled, send a prompt.
@@ -103,7 +138,7 @@ Expected:
 - No stuck `_isSpeaking` / `_isListening` behavior.
 - No duplicate speaking overlays.
 
-## 10) Pass/Fail log template
+## 11) Pass/Fail log template
 Use this format per platform:
 
 - Platform:
