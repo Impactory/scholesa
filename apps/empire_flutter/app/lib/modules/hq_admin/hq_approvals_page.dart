@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqApprovalsEs = <String, String>{
+  'Approvals': 'Aprobaciones',
+  'Pending': 'Pendientes',
+  'Completed': 'Completadas',
+  'No pending approvals': 'No hay aprobaciones pendientes',
+  'No completed approvals': 'No hay aprobaciones completadas',
+  'By': 'Por',
+  'Reject': 'Rechazar',
+  'Approve': 'Aprobar',
+  'Approved': 'Aprobado',
+  'Rejected': 'Rechazado',
+  'Approved:': 'Aprobado:',
+  'Rejected:': 'Rechazado:',
+  'New Partner: TechEd Solutions': 'Nuevo socio: TechEd Solutions',
+  'Payout Request: TechEd Solutions (Q1)':
+      'Solicitud de pago: TechEd Solutions (T1)',
+  'Curriculum: AI Fundamentals v2.0':
+      'Currículo: Fundamentos de IA v2.0',
+  'Role Change: Jane D. → Site Lead':
+      'Cambio de rol: Jane D. → Líder de sede',
+  'Site Lead - Downtown': 'Líder de sede - Centro',
+  'Finance Ops': 'Operaciones financieras',
+  'Curriculum Team': 'Equipo curricular',
+  'HR Admin': 'Admin de RR. HH.',
+};
+
+String _tHqApprovals(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqApprovalsEs[input] ?? input;
+}
+
 /// HQ Approvals page for approving partner contracts, curriculum, etc.
 /// Based on docs/16_PARTNER_CONTRACTING_WORKFLOWS_SPEC.md
 class HqApprovalsPage extends StatefulWidget {
@@ -89,7 +121,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Approvals'),
+        title: Text(_tHqApprovals(context, 'Approvals')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -97,9 +129,9 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const <Widget>[
-            Tab(text: 'Pending'),
-            Tab(text: 'Completed'),
+          tabs: <Widget>[
+            Tab(text: _tHqApprovals(context, 'Pending')),
+            Tab(text: _tHqApprovals(context, 'Completed')),
           ],
         ),
       ),
@@ -126,8 +158,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
             Icon(Icons.check_circle_outline_rounded,
                 size: 64, color: Colors.green.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            const Text(
-              'No pending approvals',
+            Text(
+              _tHqApprovals(context, 'No pending approvals'),
               style:
                   TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
@@ -150,9 +182,9 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         .toList();
 
     if (completed.isEmpty) {
-      return const Center(
-        child: Text('No completed approvals',
-            style: TextStyle(color: ScholesaColors.textSecondary)),
+      return Center(
+        child: Text(_tHqApprovals(context, 'No completed approvals'),
+            style: const TextStyle(color: ScholesaColors.textSecondary)),
       );
     }
 
@@ -183,13 +215,13 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        item.title,
+                        _tHqApprovals(context, item.title),
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'By ${item.submittedBy}',
+                        '${_tHqApprovals(context, 'By')} ${_tHqApprovals(context, item.submittedBy)}',
                         style: const TextStyle(
                             fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
@@ -208,7 +240,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
                       onPressed: () => _handleReject(item),
                       style:
                           OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                      child: const Text('Reject'),
+                      child: Text(_tHqApprovals(context, 'Reject')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -217,7 +249,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
                       onPressed: () => _handleApprove(item),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green),
-                      child: const Text('Approve'),
+                      child: Text(_tHqApprovals(context, 'Approve')),
                     ),
                   ),
                 ],
@@ -281,7 +313,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label,
+      child: Text(_tHqApprovals(context, label),
           style: TextStyle(
               fontSize: 12, fontWeight: FontWeight.w500, color: color)),
     );
@@ -314,7 +346,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text('Approved: ${item.title}'),
+          content:
+              Text('${_tHqApprovals(context, 'Approved:')} ${_tHqApprovals(context, item.title)}'),
           backgroundColor: Colors.green),
     );
   }
@@ -329,7 +362,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text('Rejected: ${item.title}'),
+          content:
+              Text('${_tHqApprovals(context, 'Rejected:')} ${_tHqApprovals(context, item.title)}'),
           backgroundColor: Colors.red),
     );
   }

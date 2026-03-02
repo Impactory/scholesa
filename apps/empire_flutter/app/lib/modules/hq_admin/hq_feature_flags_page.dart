@@ -2,6 +2,34 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqFeatureFlagsEs = <String, String>{
+  'Feature Flags': 'Banderas de funciones',
+  'Opening change history...': 'Abriendo historial de cambios...',
+  'Feature flags control which features are available to users. Changes take effect immediately.':
+    'Las banderas de funciones controlan qué funciones están disponibles para los usuarios. Los cambios surten efecto de inmediato.',
+  'enabled': 'activado',
+  'disabled': 'desactivado',
+  'global': 'global',
+  'site': 'sede',
+  'user': 'usuario',
+  'Enable redesigned dashboard layout with improved metrics':
+    'Habilitar diseño renovado del panel con métricas mejoradas',
+  'Enable AI-powered reflection prompts for learners':
+    'Habilitar sugerencias de reflexión con IA para estudiantes',
+  'Enable GitHub classroom integration for coding missions':
+    'Habilitar integración de aula GitHub para misiones de programación',
+  'Allow parents to view detailed learner portfolios':
+    'Permitir a las familias ver portafolios detallados de estudiantes',
+  'Show beta missions to selected educators':
+    'Mostrar misiones beta a educadores seleccionados',
+};
+
+String _tHqFeatureFlags(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqFeatureFlagsEs[input] ?? input;
+}
+
 /// HQ Feature Flags page for managing feature toggles
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
 class HqFeatureFlagsPage extends StatefulWidget {
@@ -74,7 +102,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Feature Flags'),
+        title: Text(_tHqFeatureFlags(context, 'Feature Flags')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -90,7 +118,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 },
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening change history...')),
+                SnackBar(
+                    content: Text(_tHqFeatureFlags(
+                        context, 'Opening change history...'))),
               );
             },
           ),
@@ -121,7 +151,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Feature flags control which features are available to users. Changes take effect immediately.',
+              _tHqFeatureFlags(context,
+                  'Feature flags control which features are available to users. Changes take effect immediately.'),
               style: TextStyle(fontSize: 13, color: Colors.blue.shade700),
             ),
           ),
@@ -162,7 +193,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        flag.description,
+                        _tHqFeatureFlags(context, flag.description),
                         style: const TextStyle(
                             fontSize: 13, color: ScholesaColors.textSecondary),
                       ),
@@ -187,7 +218,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            '${flag.name} ${value ? "enabled" : "disabled"}'),
+                            '${flag.name} ${value ? _tHqFeatureFlags(context, "enabled") : _tHqFeatureFlags(context, "disabled")}'),
                         backgroundColor: value ? Colors.green : Colors.orange,
                       ),
                     );
@@ -247,7 +278,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         children: <Widget>[
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(scope,
+          Text(_tHqFeatureFlags(context, scope),
               style: TextStyle(
                   fontSize: 10, color: color, fontWeight: FontWeight.w500)),
         ],
