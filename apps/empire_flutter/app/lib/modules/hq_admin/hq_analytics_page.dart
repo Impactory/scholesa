@@ -19,6 +19,7 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Unable to load telemetry metrics:':
     'No se pudieron cargar las métricas de telemetría:',
   'Telemetry KPIs': 'KPIs de telemetría',
+  '7-day': '7 días',
   'Weekly Accountability': 'Responsabilidad semanal',
   'Review SLA': 'SLA de revisión',
   'within SLA': 'dentro del SLA',
@@ -368,7 +369,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   icon: Icons.assignment_turned_in,
                   value: adherenceRate,
                   label: _t('Weekly Accountability'),
-                  trend: '7-day',
+                    trend: _t('7-day'),
                   trendUp: true,
                   color: ScholesaColors.futureSkills,
                 ),
@@ -777,8 +778,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('HQ analytics report prepared for export'),
+                  SnackBar(
+                    content: Text(_t('HQ analytics report prepared for export')),
                   backgroundColor: ScholesaColors.hq,
                 ),
               );

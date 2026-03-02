@@ -45,6 +45,9 @@ const Map<String, String> _checkinEs = <String, String>{
   'Authorized Pickups': 'Recogidas autorizadas',
   'For': 'Para',
   'Primary': 'Principal',
+  'No authorized contacts on file':
+      'No hay contactos autorizados registrados',
+  'Add any notes...': 'Agrega notas...',
 };
 
 String _tCheckin(BuildContext context, String input) {
@@ -1323,12 +1326,13 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                         color: context.schSurfaceMuted,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: <Widget>[
-                          Icon(Icons.warning, color: ScholesaColors.warning),
-                          SizedBox(width: 12),
+                          const Icon(Icons.warning, color: ScholesaColors.warning),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: Text('No authorized contacts on file'),
+                            child: Text(_tCheckin(
+                              context, 'No authorized contacts on file')),
                           ),
                         ],
                       ),
@@ -1354,7 +1358,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                     controller: _notesController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: 'Add any notes...',
+                      hintText: _tCheckin(context, 'Add any notes...'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

@@ -4,6 +4,73 @@ import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
+const Map<String, String> _landingEs = <String, String>{
+  'Features': 'Funciones',
+  'Pillars': 'Pilares',
+  'For Schools': 'Para escuelas',
+  'Mission-based learning, AI coaching, portfolios, analytics, and offline support.':
+    'Aprendizaje basado en misiones, coaching con IA, portafolios, analítica y soporte sin conexión.',
+  'Future Skills, Leadership & Agency, and Impact & Innovation.':
+    'Habilidades del futuro, Liderazgo y agencia, e Impacto e innovación.',
+  'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
+    'Paneles por rol para estudiantes, educadores, familias, equipos de sede y HQ.',
+  'Sign In': 'Iniciar sesión',
+  'Education 2.0 Platform': 'Plataforma Educación 2.0',
+  "Unlock Every\nLearner's Potential":
+    'Desbloquea el\npotencial de cada estudiante',
+  'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.':
+    'Scholesa impulsa estudios de aprendizaje K-9 con educación basada en misiones, coaching de hábitos y portafolios, construido sobre tres pilares que preparan a los estudiantes para el futuro.',
+  'Watch Demo': 'Ver demo',
+  'Scholesa Demo': 'Demo de Scholesa',
+  'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
+    'La demo incluye:\n• Paneles por rol\n• Flujos de acciones CTA\n• Ciclo de vida de misiones y asistencia',
+  'Close': 'Cerrar',
+  'Try Live': 'Probar en vivo',
+  'AI Coaching': 'Coaching con IA',
+  'Achievements': 'Logros',
+  'Missions': 'Misiones',
+  'Community': 'Comunidad',
+  'The Three Pillars': 'Los tres pilares',
+  'Building Future-Ready Learners':
+    'Formando estudiantes listos para el futuro',
+  'Our curriculum is built on three foundational pillars that prepare students for success.':
+    'Nuestro currículo se construye sobre tres pilares fundamentales que preparan a los estudiantes para el éxito.',
+  'Future Skills': 'Habilidades del futuro',
+  "AI, coding, robotics, research, and digital literacy for tomorrow's world.":
+    'IA, programación, robótica, investigación y alfabetización digital para el mundo de mañana.',
+  'Leadership & Agency': 'Liderazgo y agencia',
+  'Self-direction, communication, collaboration, and decision-making skills.':
+    'Habilidades de autodirección, comunicación, colaboración y toma de decisiones.',
+  'Impact & Innovation': 'Impacto e innovación',
+  'Social responsibility, creative problem-solving, and community contribution.':
+    'Responsabilidad social, resolución creativa de problemas y contribución comunitaria.',
+  'PLATFORM FEATURES': 'FUNCIONES DE LA PLATAFORMA',
+  'Everything You Need': 'Todo lo que necesitas',
+  'Mission-Based Learning': 'Aprendizaje basado en misiones',
+  'AI Habit Coaching': 'Coaching de hábitos con IA',
+  'Portfolio Showcase': 'Muestra de portafolio',
+  'Progress Analytics': 'Analítica de progreso',
+  'Parent Portal': 'Portal para familias',
+  'Offline-First': 'Primero sin conexión',
+  'FOR EVERYONE': 'PARA TODOS',
+  'Designed for Your Role': 'Diseñado para tu rol',
+  'Learners': 'Estudiantes',
+  'Educators': 'Educadores',
+  'Parents': 'Familias',
+  'Site Admins': 'Admins de sede',
+  'Ready to Transform Learning?': '¿Listo para transformar el aprendizaje?',
+  'Join hundreds of learning studios already using Scholesa.':
+    'Únete a cientos de estudios de aprendizaje que ya usan Scholesa.',
+  '© 2026 Scholesa. Education 2.0 Platform.':
+    '© 2026 Scholesa. Plataforma Educación 2.0.',
+};
+
+String _tLanding(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _landingEs[input] ?? input;
+}
+
 /// Landing Page - Public welcome page before login
 /// Showcases Scholesa's Education 2.0 platform with the 3 pillars
 class LandingPage extends StatefulWidget {
@@ -183,29 +250,29 @@ class _LandingPageState extends State<LandingPage>
           // Nav links (wide only)
           if (isWide) ...<Widget>[
             _NavLink(
-              label: 'Features',
+              label: _tLanding(context, 'Features'),
               onTap: () => _showSectionPreview(
-                title: 'Features',
-                detail:
-                    'Mission-based learning, AI coaching, portfolios, analytics, and offline support.',
+                title: _tLanding(context, 'Features'),
+                detail: _tLanding(context,
+                    'Mission-based learning, AI coaching, portfolios, analytics, and offline support.'),
               ),
             ),
             const SizedBox(width: 32),
             _NavLink(
-              label: 'Pillars',
+              label: _tLanding(context, 'Pillars'),
               onTap: () => _showSectionPreview(
-                title: 'Pillars',
-                detail:
-                    'Future Skills, Leadership & Agency, and Impact & Innovation.',
+                title: _tLanding(context, 'Pillars'),
+                detail: _tLanding(context,
+                    'Future Skills, Leadership & Agency, and Impact & Innovation.'),
               ),
             ),
             const SizedBox(width: 32),
             _NavLink(
-              label: 'For Schools',
+              label: _tLanding(context, 'For Schools'),
               onTap: () => _showSectionPreview(
-                title: 'For Schools',
-                detail:
-                    'Role-based dashboards for learners, educators, parents, site teams, and HQ.',
+                title: _tLanding(context, 'For Schools'),
+                detail: _tLanding(context,
+                    'Role-based dashboards for learners, educators, parents, site teams, and HQ.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -221,8 +288,8 @@ class _LandingPageState extends State<LandingPage>
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'Sign In',
+            child: Text(
+              _tLanding(context, 'Sign In'),
               style: TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.w500,
@@ -277,14 +344,14 @@ class _LandingPageState extends State<LandingPage>
               color: ScholesaColors.primary.withValues(alpha: 0.3),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(Icons.auto_awesome, size: 16, color: ScholesaColors.primary),
               SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  'Education 2.0 Platform',
+                  _tLanding(context, 'Education 2.0 Platform'),
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ScholesaColors.primary,
@@ -298,8 +365,8 @@ class _LandingPageState extends State<LandingPage>
         ),
         const SizedBox(height: 24),
         // Headline
-        const Text(
-          'Unlock Every\nLearner\'s Potential',
+        Text(
+          _tLanding(context, 'Unlock Every\nLearner\'s Potential'),
           style: TextStyle(
             fontSize: 56,
             fontWeight: FontWeight.bold,
@@ -310,9 +377,8 @@ class _LandingPageState extends State<LandingPage>
         ),
         const SizedBox(height: 24),
         Text(
-          'Scholesa empowers K-9 learning studios with mission-based education, '
-          'habit coaching, and portfolio showcases—built on three pillars that '
-          'prepare students for the future.',
+          _tLanding(context,
+              'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.'),
           style: TextStyle(
             fontSize: 18,
             color: Colors.white.withValues(alpha: 0.7),
@@ -331,7 +397,7 @@ class _LandingPageState extends State<LandingPage>
                 context.go('/login');
               },
               icon: const Icon(Icons.login_rounded),
-              label: const Text('Sign In'),
+              label: Text(_tLanding(context, 'Sign In')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.primary,
                 foregroundColor: Colors.white,
@@ -357,7 +423,7 @@ class _LandingPageState extends State<LandingPage>
                 _showDemoDialog(context);
               },
               icon: const Icon(Icons.play_circle_outline_rounded),
-              label: const Text('Watch Demo'),
+              label: Text(_tLanding(context, 'Watch Demo')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 padding:
@@ -382,13 +448,9 @@ class _LandingPageState extends State<LandingPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Scholesa Demo'),
-        content: const Text(
-          'Demo walkthrough includes:\n'
-          '• Role dashboards\n'
-          '• CTA action flows\n'
-          '• Mission and attendance lifecycle',
-        ),
+        title: Text(_tLanding(context, 'Scholesa Demo')),
+        content: Text(_tLanding(context,
+            'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle')),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -400,7 +462,7 @@ class _LandingPageState extends State<LandingPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tLanding(context, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -408,7 +470,7 @@ class _LandingPageState extends State<LandingPage>
               _trackSignInCTA('landing_try_live');
               context.go('/login');
             },
-            child: const Text('Try Live'),
+            child: Text(_tLanding(context, 'Try Live')),
           ),
         ],
       ),
@@ -433,7 +495,7 @@ class _LandingPageState extends State<LandingPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tLanding(context, 'Close')),
           ),
         ],
       ),
@@ -465,7 +527,7 @@ class _LandingPageState extends State<LandingPage>
             left: 40,
             child: _buildFloatingCard(
               icon: Icons.psychology_rounded,
-              label: 'AI Coaching',
+              label: _tLanding(context, 'AI Coaching'),
               color: ScholesaColors.futureSkills,
             ),
           ),
@@ -474,7 +536,7 @@ class _LandingPageState extends State<LandingPage>
             right: 40,
             child: _buildFloatingCard(
               icon: Icons.emoji_events_rounded,
-              label: 'Achievements',
+              label: _tLanding(context, 'Achievements'),
               color: ScholesaColors.leadership,
             ),
           ),
@@ -483,7 +545,7 @@ class _LandingPageState extends State<LandingPage>
             left: 60,
             child: _buildFloatingCard(
               icon: Icons.rocket_launch_rounded,
-              label: 'Missions',
+              label: _tLanding(context, 'Missions'),
               color: ScholesaColors.impact,
             ),
           ),
@@ -492,7 +554,7 @@ class _LandingPageState extends State<LandingPage>
             right: 60,
             child: _buildFloatingCard(
               icon: Icons.groups_rounded,
-              label: 'Community',
+              label: _tLanding(context, 'Community'),
               color: ScholesaColors.parent,
             ),
           ),
@@ -550,8 +612,8 @@ class _LandingPageState extends State<LandingPage>
       child: Column(
         children: <Widget>[
           // Section header
-          const Text(
-            'The Three Pillars',
+          Text(
+            _tLanding(context, 'The Three Pillars'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -560,8 +622,8 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Building Future-Ready Learners',
+          Text(
+            _tLanding(context, 'Building Future-Ready Learners'),
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
@@ -571,7 +633,8 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Our curriculum is built on three foundational pillars that prepare students for success.',
+            _tLanding(context,
+                'Our curriculum is built on three foundational pillars that prepare students for success.'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.6),
@@ -586,9 +649,9 @@ class _LandingPageState extends State<LandingPage>
                     Expanded(
                         child: _buildPillarCard(
                       icon: Icons.computer_rounded,
-                      title: 'Future Skills',
-                      description:
-                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
+                        title: _tLanding(context, 'Future Skills'),
+                        description: _tLanding(context,
+                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.'),
                       color: ScholesaColors.futureSkills,
                       emoji: '🚀',
                     )),
@@ -596,9 +659,9 @@ class _LandingPageState extends State<LandingPage>
                     Expanded(
                         child: _buildPillarCard(
                       icon: Icons.psychology_rounded,
-                      title: 'Leadership & Agency',
-                      description:
-                          'Self-direction, communication, collaboration, and decision-making skills.',
+                        title: _tLanding(context, 'Leadership & Agency'),
+                        description: _tLanding(context,
+                          'Self-direction, communication, collaboration, and decision-making skills.'),
                       color: ScholesaColors.leadership,
                       emoji: '👑',
                     )),
@@ -606,9 +669,9 @@ class _LandingPageState extends State<LandingPage>
                     Expanded(
                         child: _buildPillarCard(
                       icon: Icons.public_rounded,
-                      title: 'Impact & Innovation',
-                      description:
-                          'Social responsibility, creative problem-solving, and community contribution.',
+                        title: _tLanding(context, 'Impact & Innovation'),
+                        description: _tLanding(context,
+                          'Social responsibility, creative problem-solving, and community contribution.'),
                       color: ScholesaColors.impact,
                       emoji: '🌍',
                     )),
@@ -618,27 +681,27 @@ class _LandingPageState extends State<LandingPage>
                   children: <Widget>[
                     _buildPillarCard(
                       icon: Icons.computer_rounded,
-                      title: 'Future Skills',
-                      description:
-                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.',
+                        title: _tLanding(context, 'Future Skills'),
+                        description: _tLanding(context,
+                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.'),
                       color: ScholesaColors.futureSkills,
                       emoji: '🚀',
                     ),
                     const SizedBox(height: 24),
                     _buildPillarCard(
                       icon: Icons.psychology_rounded,
-                      title: 'Leadership & Agency',
-                      description:
-                          'Self-direction, communication, collaboration, and decision-making skills.',
+                        title: _tLanding(context, 'Leadership & Agency'),
+                        description: _tLanding(context,
+                          'Self-direction, communication, collaboration, and decision-making skills.'),
                       color: ScholesaColors.leadership,
                       emoji: '👑',
                     ),
                     const SizedBox(height: 24),
                     _buildPillarCard(
                       icon: Icons.public_rounded,
-                      title: 'Impact & Innovation',
-                      description:
-                          'Social responsibility, creative problem-solving, and community contribution.',
+                        title: _tLanding(context, 'Impact & Innovation'),
+                        description: _tLanding(context,
+                          'Social responsibility, creative problem-solving, and community contribution.'),
                       color: ScholesaColors.impact,
                       emoji: '🌍',
                     ),
@@ -713,8 +776,8 @@ class _LandingPageState extends State<LandingPage>
       ),
       child: Column(
         children: <Widget>[
-          const Text(
-            'PLATFORM FEATURES',
+          Text(
+            _tLanding(context, 'PLATFORM FEATURES'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -723,8 +786,8 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Everything You Need',
+          Text(
+            _tLanding(context, 'Everything You Need'),
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
@@ -739,13 +802,19 @@ class _LandingPageState extends State<LandingPage>
             alignment: WrapAlignment.center,
             children: <Widget>[
               _buildFeatureItem(
-                  Icons.assignment_turned_in_rounded, 'Mission-Based Learning'),
-              _buildFeatureItem(Icons.psychology_rounded, 'AI Habit Coaching'),
+                  Icons.assignment_turned_in_rounded,
+                  _tLanding(context, 'Mission-Based Learning')),
+                _buildFeatureItem(
+                  Icons.psychology_rounded, _tLanding(context, 'AI Habit Coaching')),
               _buildFeatureItem(
-                  Icons.folder_special_rounded, 'Portfolio Showcase'),
-              _buildFeatureItem(Icons.insights_rounded, 'Progress Analytics'),
-              _buildFeatureItem(Icons.groups_rounded, 'Parent Portal'),
-              _buildFeatureItem(Icons.cloud_off_rounded, 'Offline-First'),
+                  Icons.folder_special_rounded,
+                  _tLanding(context, 'Portfolio Showcase')),
+                _buildFeatureItem(
+                  Icons.insights_rounded, _tLanding(context, 'Progress Analytics')),
+                _buildFeatureItem(
+                  Icons.groups_rounded, _tLanding(context, 'Parent Portal')),
+                _buildFeatureItem(
+                  Icons.cloud_off_rounded, _tLanding(context, 'Offline-First')),
             ],
           ),
         ],
@@ -788,8 +857,8 @@ class _LandingPageState extends State<LandingPage>
       ),
       child: Column(
         children: <Widget>[
-          const Text(
-            'FOR EVERYONE',
+          Text(
+            _tLanding(context, 'FOR EVERYONE'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -798,8 +867,8 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Designed for Your Role',
+          Text(
+            _tLanding(context, 'Designed for Your Role'),
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
@@ -814,13 +883,13 @@ class _LandingPageState extends State<LandingPage>
             alignment: WrapAlignment.center,
             children: <Widget>[
               _buildRoleChip(
-                  'Learners', ScholesaColors.learner, Icons.school_rounded),
+                  _tLanding(context, 'Learners'), ScholesaColors.learner, Icons.school_rounded),
               _buildRoleChip(
-                  'Educators', ScholesaColors.educator, Icons.person_rounded),
-              _buildRoleChip('Parents', ScholesaColors.parent,
+                  _tLanding(context, 'Educators'), ScholesaColors.educator, Icons.person_rounded),
+                _buildRoleChip(_tLanding(context, 'Parents'), ScholesaColors.parent,
                   Icons.family_restroom_rounded),
               _buildRoleChip(
-                  'Site Admins', ScholesaColors.site, Icons.business_rounded),
+                  _tLanding(context, 'Site Admins'), ScholesaColors.site, Icons.business_rounded),
               _buildRoleChip(
                   'HQ', ScholesaColors.hq, Icons.admin_panel_settings_rounded),
             ],
@@ -865,8 +934,8 @@ class _LandingPageState extends State<LandingPage>
       ),
       child: Column(
         children: <Widget>[
-          const Text(
-            'Ready to Transform Learning?',
+          Text(
+            _tLanding(context, 'Ready to Transform Learning?'),
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -876,7 +945,8 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Join hundreds of learning studios already using Scholesa.',
+            _tLanding(context,
+                'Join hundreds of learning studios already using Scholesa.'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.9),
@@ -901,7 +971,7 @@ class _LandingPageState extends State<LandingPage>
                 fontWeight: FontWeight.w600,
               ),
             ),
-            child: const Text('Sign In'),
+            child: Text(_tLanding(context, 'Sign In')),
           ),
         ],
       ),
@@ -930,7 +1000,7 @@ class _LandingPageState extends State<LandingPage>
           ),
           const SizedBox(height: 16),
           Text(
-            '© 2026 Scholesa. Education 2.0 Platform.',
+            _tLanding(context, '© 2026 Scholesa. Education 2.0 Platform.'),
             style: TextStyle(
               fontSize: 14,
               color: Colors.white.withValues(alpha: 0.5),

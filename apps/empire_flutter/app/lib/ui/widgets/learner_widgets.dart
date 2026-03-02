@@ -2,6 +2,33 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../theme/scholesa_theme.dart';
 
+const Map<String, String> _learnerWidgetsEs = <String, String>{
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Not Started': 'No iniciado',
+  'In Progress': 'En progreso',
+  'Submitted': 'Enviado',
+  'Reviewed': 'Revisado',
+  'Progress': 'Progreso',
+  'Start': 'Iniciar',
+  'Continue': 'Continuar',
+  'Due:': 'Vence:',
+  'day streak': 'días seguidos',
+  'Current': 'Actual',
+  'Longest': 'Más largo',
+  'M': 'L',
+  'T': 'M',
+  'W': 'X',
+  'F': 'V',
+};
+
+String _tLearnerWidgets(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _learnerWidgetsEs[input] ?? input;
+}
+
 /// A beautiful mission card for displaying learning missions
 class MissionCard extends StatelessWidget {
   const MissionCard({
@@ -37,14 +64,14 @@ class MissionCard extends StatelessWidget {
     }
   }
 
-  String get pillarLabel {
+  String pillarLabel(BuildContext context) {
     switch (pillar) {
       case 'future_skills':
-        return 'Future Skills';
+        return _tLearnerWidgets(context, 'Future Skills');
       case 'leadership':
-        return 'Leadership';
+        return _tLearnerWidgets(context, 'Leadership');
       case 'impact':
-        return 'Impact';
+        return _tLearnerWidgets(context, 'Impact');
       default:
         return pillar;
     }
@@ -63,16 +90,16 @@ class MissionCard extends StatelessWidget {
     }
   }
 
-  String get statusLabel {
+  String statusLabel(BuildContext context) {
     switch (status) {
       case 'not_started':
-        return 'Not Started';
+        return _tLearnerWidgets(context, 'Not Started');
       case 'in_progress':
-        return 'In Progress';
+        return _tLearnerWidgets(context, 'In Progress');
       case 'submitted':
-        return 'Submitted';
+        return _tLearnerWidgets(context, 'Submitted');
       case 'reviewed':
-        return 'Reviewed';
+        return _tLearnerWidgets(context, 'Reviewed');
       default:
         return status;
     }
@@ -155,7 +182,7 @@ class MissionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            pillarLabel,
+                            pillarLabel(context),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -185,7 +212,7 @@ class MissionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        statusLabel,
+                        statusLabel(context),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -224,8 +251,8 @@ class MissionCard extends StatelessWidget {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
-                                  const Text(
-                                    'Progress',
+                                  Text(
+                                    _tLearnerWidgets(context, 'Progress'),
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: ScholesaColors.textMuted,
@@ -284,7 +311,9 @@ class MissionCard extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              status == 'not_started' ? 'Start' : 'Continue',
+                              status == 'not_started'
+                                  ? _tLearnerWidgets(context, 'Start')
+                                  : _tLearnerWidgets(context, 'Continue'),
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
@@ -303,7 +332,7 @@ class MissionCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Due: $dueDate',
+                            '${_tLearnerWidgets(context, 'Due:')} $dueDate',
                             style: const TextStyle(
                               fontSize: 12,
                               color: ScholesaColors.textMuted,
@@ -504,7 +533,7 @@ class HabitStreakCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '$currentStreak day streak',
+                            '$currentStreak ${_tLearnerWidgets(context, 'day streak')}',
                             style: TextStyle(
                               fontSize: 13,
                               color: color,
@@ -559,7 +588,7 @@ class HabitStreakCard extends StatelessWidget {
                       'M',
                       'T',
                       'W',
-                      'T',
+                      'J',
                       'F',
                       'S',
                       'S'
@@ -571,7 +600,7 @@ class HabitStreakCard extends StatelessWidget {
                     return Column(
                       children: <Widget>[
                         Text(
-                          dayNames[index],
+                          _tLearnerWidgets(context, dayNames[index]),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -609,9 +638,11 @@ class HabitStreakCard extends StatelessWidget {
                 // Stats
                 Row(
                   children: <Widget>[
-                    _buildStat('Current', currentStreak.toString(), color),
+                    _buildStat(_tLearnerWidgets(context, 'Current'),
+                        currentStreak.toString(), color),
                     const SizedBox(width: 24),
-                    _buildStat('Longest', longestStreak.toString(),
+                    _buildStat(_tLearnerWidgets(context, 'Longest'),
+                        longestStreak.toString(),
                         ScholesaColors.textMuted),
                   ],
                 ),
