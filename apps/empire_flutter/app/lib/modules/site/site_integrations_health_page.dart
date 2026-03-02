@@ -2,6 +2,35 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteIntegrationsEs = <String, String>{
+  'Integrations Health': 'Estado de integraciones',
+  'Connected Services': 'Servicios conectados',
+  'Healthy': 'Saludable',
+  'Warning': 'Advertencia',
+  'Issues': 'Incidencias',
+  'Last Sync': 'Última sincronización',
+  'Synced': 'Sincronizado',
+  'Errors': 'Errores',
+  'Never': 'Nunca',
+  'items': 'elementos',
+  'Connect': 'Conectar',
+  'Force Sync': 'Forzar sincronización',
+  'Retry Failed': 'Reintentar fallidos',
+  'Settings': 'Configuración',
+  'Disconnect': 'Desconectar',
+  'Error': 'Error',
+  'Disconnected': 'Desconectado',
+  'Integrations refreshed': 'Integraciones actualizadas',
+  'connected': 'conectado',
+  'synced successfully': 'sincronizado correctamente',
+  'Failed syncs retried successfully':
+      'Sincronizaciones fallidas reintentadas correctamente',
+  'disconnected': 'desconectado',
+  'm ago': 'm atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+};
+
 /// Site integrations health page
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class SiteIntegrationsHealthPage extends StatefulWidget {
@@ -14,6 +43,12 @@ class SiteIntegrationsHealthPage extends StatefulWidget {
 
 class _SiteIntegrationsHealthPageState
     extends State<SiteIntegrationsHealthPage> {
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _siteIntegrationsEs[input] ?? input;
+  }
+
   final List<_Integration> _integrations = <_Integration>[
     _Integration(
       id: '1',
@@ -52,7 +87,7 @@ class _SiteIntegrationsHealthPageState
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Integrations Health'),
+        title: Text(_t('Integrations Health')),
         backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -77,8 +112,8 @@ class _SiteIntegrationsHealthPageState
         children: <Widget>[
           _buildOverallStatus(),
           const SizedBox(height: 24),
-          const Text(
-            'Connected Services',
+          Text(
+            _t('Connected Services'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -118,15 +153,15 @@ class _SiteIntegrationsHealthPageState
         children: <Widget>[
           Expanded(
               child: _buildStatusStat(
-                  'Healthy', healthyCount, Icons.check_circle_rounded)),
+                _t('Healthy'), healthyCount, Icons.check_circle_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
           Expanded(
               child: _buildStatusStat(
-                  'Warning', warningCount, Icons.warning_rounded)),
+                _t('Warning'), warningCount, Icons.warning_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
           Expanded(
               child:
-                  _buildStatusStat('Issues', errorCount, Icons.error_rounded)),
+                _buildStatusStat(_t('Issues'), errorCount, Icons.error_rounded)),
         ],
       ),
     );
@@ -233,12 +268,12 @@ class _SiteIntegrationsHealthPageState
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   _buildMetric(
-                      'Last Sync',
+                      _t('Last Sync'),
                       integration.lastSync != null
                           ? _formatTime(integration.lastSync!)
-                          : 'Never'),
-                  _buildMetric('Synced', '${integration.syncedItems} items'),
-                  _buildMetric('Errors', '${integration.errors}'),
+                          : _t('Never')),
+                  _buildMetric(_t('Synced'), '${integration.syncedItems} ${_t('items')}'),
+                  _buildMetric(_t('Errors'), '${integration.errors}'),
                 ],
               ),
             ],
@@ -260,7 +295,7 @@ class _SiteIntegrationsHealthPageState
                     );
                     _handleConnectIntegration(integration);
                   },
-                  child: const Text('Connect'),
+                  child: Text(_t('Connect')),
                 ),
               ),
             ],
@@ -321,11 +356,11 @@ class _SiteIntegrationsHealthPageState
       case _IntegrationStatus.healthy:
         return 'Healthy';
       case _IntegrationStatus.warning:
-        return 'Warning';
+        return _t('Warning');
       case _IntegrationStatus.error:
-        return 'Error';
+        return _t('Error');
       case _IntegrationStatus.disconnected:
-        return 'Disconnected';
+        return _t('Disconnected');
     }
   }
 
@@ -343,7 +378,7 @@ class _SiteIntegrationsHealthPageState
           children: <Widget>[
             ListTile(
               leading: const Icon(Icons.sync_rounded),
-              title: const Text('Force Sync'),
+              title: Text(_t('Force Sync')),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -360,7 +395,7 @@ class _SiteIntegrationsHealthPageState
             ),
             ListTile(
               leading: const Icon(Icons.refresh_rounded),
-              title: const Text('Retry Failed'),
+              title: Text(_t('Retry Failed')),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -377,7 +412,7 @@ class _SiteIntegrationsHealthPageState
             ),
             ListTile(
               leading: const Icon(Icons.settings_rounded),
-              title: const Text('Settings'),
+              title: Text(_t('Settings')),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -393,8 +428,7 @@ class _SiteIntegrationsHealthPageState
             ),
             ListTile(
               leading: const Icon(Icons.link_off_rounded, color: Colors.red),
-              title:
-                  const Text('Disconnect', style: TextStyle(color: Colors.red)),
+              title: Text(_t('Disconnect'), style: const TextStyle(color: Colors.red)),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -432,7 +466,7 @@ class _SiteIntegrationsHealthPageState
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Integrations refreshed')),
+      SnackBar(content: Text(_t('Integrations refreshed'))),
     );
   }
 
@@ -453,7 +487,7 @@ class _SiteIntegrationsHealthPageState
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} connected')),
+      SnackBar(content: Text('${integration.name} ${_t('connected')}')),
     );
   }
 
@@ -473,7 +507,7 @@ class _SiteIntegrationsHealthPageState
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} synced successfully')),
+      SnackBar(content: Text('${integration.name} ${_t('synced successfully')}')),
     );
   }
 
@@ -491,7 +525,7 @@ class _SiteIntegrationsHealthPageState
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed syncs retried successfully')),
+      SnackBar(content: Text(_t('Failed syncs retried successfully'))),
     );
   }
 
@@ -509,19 +543,19 @@ class _SiteIntegrationsHealthPageState
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} disconnected')),
+      SnackBar(content: Text('${integration.name} ${_t('disconnected')}')),
     );
   }
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m ago';
+      return '${diff.inMinutes}${_t('m ago')}';
     }
     if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
+      return '${diff.inHours}${_t('h ago')}';
     }
-    return '${diff.inDays}d ago';
+    return '${diff.inDays}${_t('d ago')}';
   }
 }
 
