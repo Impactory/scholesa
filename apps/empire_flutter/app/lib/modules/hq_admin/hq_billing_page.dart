@@ -667,19 +667,19 @@ class _InvoiceCard extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text('Invoice ${invoice['id']}'),
+        title: Text('${_tHqBilling(context, 'Invoice')} ${invoice['id']}'),
         content: Text(
-          'Parent: ${invoice['parent']}\n'
-          'Learner: ${invoice['learner']}\n'
-          'Site: ${invoice['site']}\n'
-          'Date: ${invoice['date']}\n'
-          'Amount: \$${(invoice['amount'] as double).toStringAsFixed(2)}\n'
-          'Status: ${(invoice['status'] as String).toUpperCase()}',
+          '${_tHqBilling(context, 'Parent')}: ${invoice['parent']}\n'
+          '${_tHqBilling(context, 'Learner')}: ${invoice['learner']}\n'
+          '${_tHqBilling(context, 'Site')}: ${invoice['site']}\n'
+          '${_tHqBilling(context, 'Date')}: ${invoice['date']}\n'
+          '${_tHqBilling(context, 'Amount')}: \$${(invoice['amount'] as double).toStringAsFixed(2)}\n'
+          '${_tHqBilling(context, 'Status')}: ${_tHqBilling(context, invoice['status'] as String).toUpperCase()}',
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
+            child: Text(_tHqBilling(context, 'Close')),
           ),
         ],
       ),
@@ -698,7 +698,8 @@ class _InvoiceCard extends StatelessWidget {
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Invoice ${invoice['id']} queued for sending'),
+        content: Text(
+            '${_tHqBilling(context, 'Invoice')} ${invoice['id']} ${_tHqBilling(context, 'queued for sending')}'),
         backgroundColor: ScholesaColors.hq,
       ),
     );
@@ -929,7 +930,7 @@ class _SubscriptionCard extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        '${subscription['learners']} learner(s) • ${subscription['plan']} Plan',
+                        '${subscription['learners']} ${_tHqBilling(context, 'learner(s)')} • ${subscription['plan']} ${_tHqBilling(context, 'Plan')}',
                         style: TextStyle(
                             color: context.schTextSecondary, fontSize: 12),
                       ),
@@ -946,7 +947,8 @@ class _SubscriptionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    (subscription['status'] as String).toUpperCase(),
+                    _tHqBilling(context, subscription['status'] as String)
+                        .toUpperCase(),
                     style: TextStyle(
                       color: _statusColor,
                       fontSize: 10,
@@ -964,7 +966,7 @@ class _SubscriptionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'Next billing: ${subscription['nextBilling']}',
+                      '${_tHqBilling(context, 'Next billing')}: ${subscription['nextBilling']}',
                       style: TextStyle(
                           color:
                               context.schTextSecondary.withValues(alpha: 0.88),
@@ -1030,9 +1032,9 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: <Widget>[
-                const Text(
-                  'Create Invoice',
-                  style: TextStyle(
+                Text(
+                  _tHqBilling(context, 'Create Invoice'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1051,8 +1053,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Text(
-                    'Parent',
+                  Text(
+                    _tHqBilling(context, 'Parent'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
@@ -1062,7 +1064,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      hintText: 'Select parent',
+                      hintText: _tHqBilling(context, 'Select parent'),
                     ),
                     items: const <DropdownMenuItem<String>>[
                       DropdownMenuItem<String>(
@@ -1083,8 +1085,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Learner',
+                  Text(
+                    _tHqBilling(context, 'Learner'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
@@ -1094,7 +1096,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      hintText: 'Select learner',
+                      hintText: _tHqBilling(context, 'Select learner'),
                     ),
                     items: const <DropdownMenuItem<String>>[
                       DropdownMenuItem<String>(
@@ -1115,8 +1117,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Amount',
+                  Text(
+                    _tHqBilling(context, 'Amount'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
@@ -1132,8 +1134,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Description',
+                  Text(
+                    _tHqBilling(context, 'Description'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
@@ -1144,7 +1146,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      hintText: 'Invoice description...',
+                      hintText: _tHqBilling(context, 'Invoice description...'),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -1159,8 +1161,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Create Invoice',
+                      child: Text(
+                        _tHqBilling(context, 'Create Invoice'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -1190,8 +1192,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     );
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Invoice created successfully'),
+      SnackBar(
+        content: Text(_tHqBilling(context, 'Invoice created successfully')),
         backgroundColor: ScholesaColors.success,
       ),
     );
