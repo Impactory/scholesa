@@ -169,14 +169,6 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                     _t(context, 'Next billing date'),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const Text(
-                    '',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
                       color: Colors.white,
                     ),
                   ),
