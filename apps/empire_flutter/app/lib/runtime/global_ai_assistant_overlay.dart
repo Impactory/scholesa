@@ -135,6 +135,7 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
       learnerId: widget.learnerId,
       gradeBand: _gradeBandForRole(widget.role),
     );
+    _runtime.startListening();
   }
 
   @override

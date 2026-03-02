@@ -206,7 +206,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         studentInput: input.isNotEmpty ? input : null,
       );
 
-      AiCoachResponse? response;
+      late final AiCoachResponse response;
 
       try {
         response = await VoiceRuntimeService.instance.requestCopilot(
