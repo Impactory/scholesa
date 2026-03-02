@@ -455,11 +455,16 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   Widget _buildSubscriptionInfo(ParentService service) {
     final BillingSummary? billing = service.billingSummary;
+    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
     final String planName =
         (billing?.subscriptionPlan.trim().isNotEmpty ?? false)
             ? billing!.subscriptionPlan.toUpperCase()
             : 'STANDARD PLAN';
     final String learnerLabel = _selectedLearnerName(service);
+    final String paymentMethod =
+      payments.isNotEmpty && payments.first.description.isNotEmpty
+        ? payments.first.description
+        : 'On file';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -582,7 +587,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        'Visa ****4242',
+                        paymentMethod,
                         style: TextStyle(color: Colors.grey),
                       ),
                     ],
