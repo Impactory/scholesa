@@ -2,6 +2,40 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _educatorMissionPlansEs = <String, String>{
+  'Future Skills': 'Habilidades del futuro',
+  'Impact & Innovation': 'Impacto e innovación',
+  'Leadership & Agency': 'Liderazgo y agencia',
+  'Mission Plans': 'Planes de misión',
+  'New Mission': 'Nueva misión',
+  'Grade': 'Grado',
+  'sessions': 'sesiones',
+  'done': 'completadas',
+  'Draft': 'Borrador',
+  'Active': 'Activa',
+  'Archived': 'Archivada',
+  'Filter Missions': 'Filtrar misiones',
+  'All Pillars': 'Todos los pilares',
+  'Close': 'Cerrar',
+  'Edit': 'Editar',
+  'Assigning to sessions...': 'Asignando a sesiones...',
+  'Assign': 'Asignar',
+  'Create New Mission': 'Crear nueva misión',
+  'Mission Title': 'Título de la misión',
+  'Pillar': 'Pilar',
+  'Cancel': 'Cancelar',
+  'Mission title is required': 'El título de la misión es obligatorio',
+  'Mission created and added to list':
+      'Misión creada y agregada a la lista',
+  'Create': 'Crear',
+};
+
+String _tEducatorMissionPlans(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorMissionPlansEs[input] ?? input;
+}
+
 /// Educator mission plans page for planning and managing missions
 /// Based on docs/11_MISSIONS_CHALLENGES_SPEC.md
 
@@ -77,7 +111,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Mission Plans'),
+        title: Text(_tEducatorMissionPlans(context, 'Mission Plans')),
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -91,7 +125,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         onPressed: () => _showCreateMissionDialog(),
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New Mission'),
+        label: Text(_tEducatorMissionPlans(context, 'New Mission')),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -134,7 +168,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          plan.pillar,
+                          _tEducatorMissionPlans(context, plan.pillar),
                           style: TextStyle(
                             fontSize: 12,
                             color: _getPillarColor(plan.pillar),
@@ -153,11 +187,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 children: <Widget>[
                   _buildInfoItem(Icons.timer_outlined, plan.duration),
                   _buildInfoItem(
-                      Icons.school_outlined, 'Grade ${plan.targetGrade}'),
+                      Icons.school_outlined,
+                      '${_tEducatorMissionPlans(context, 'Grade')} ${plan.targetGrade}'),
                   _buildInfoItem(Icons.calendar_today_outlined,
-                      '${plan.assignedSessions} sessions'),
+                      '${plan.assignedSessions} ${_tEducatorMissionPlans(context, 'sessions')}'),
                   _buildInfoItem(
-                      Icons.check_circle_outline, '${plan.completedBy} done'),
+                      Icons.check_circle_outline,
+                      '${plan.completedBy} ${_tEducatorMissionPlans(context, 'done')}'),
                 ],
               ),
             ],
@@ -211,13 +247,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     switch (status) {
       case _PlanStatus.draft:
         color = Colors.grey;
-        label = 'Draft';
+        label = _tEducatorMissionPlans(context, 'Draft');
       case _PlanStatus.active:
         color = Colors.green;
-        label = 'Active';
+        label = _tEducatorMissionPlans(context, 'Active');
       case _PlanStatus.archived:
         color = Colors.orange;
-        label = 'Archived';
+        label = _tEducatorMissionPlans(context, 'Archived');
     }
 
     return Container(
@@ -265,14 +301,14 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         backgroundColor: ScholesaColors.surface,
-        title: const Text('Filter Missions'),
+        title: Text(_tEducatorMissionPlans(context, 'Filter Missions')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _buildFilterOption('All Pillars'),
-            _buildFilterOption('Future Skills'),
-            _buildFilterOption('Leadership & Agency'),
-            _buildFilterOption('Impact & Innovation'),
+            _buildFilterOption(_tEducatorMissionPlans(context, 'All Pillars')),
+            _buildFilterOption(_tEducatorMissionPlans(context, 'Future Skills')),
+            _buildFilterOption(_tEducatorMissionPlans(context, 'Leadership & Agency')),
+            _buildFilterOption(_tEducatorMissionPlans(context, 'Impact & Innovation')),
           ],
         ),
         actions: <Widget>[
@@ -286,7 +322,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               );
               Navigator.pop(context);
             },
-            child: const Text('Close'),
+            child: Text(_tEducatorMissionPlans(context, 'Close')),
           ),
         ],
       ),
@@ -297,7 +333,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     return ListTile(
       title: Text(label),
       leading: RadioGroup<String>(
-        groupValue: 'All Pillars',
+        groupValue: _tEducatorMissionPlans(context, 'All Pillars'),
         onChanged: (_) {},
         child: Radio<String>(
           value: label,
@@ -335,7 +371,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              plan.pillar,
+              _tEducatorMissionPlans(context, plan.pillar),
               style: TextStyle(
                 fontSize: 14,
                 color: _getPillarColor(plan.pillar),
@@ -357,7 +393,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                       );
                       Navigator.pop(context);
                     },
-                    child: const Text('Edit'),
+                    child: Text(_tEducatorMissionPlans(context, 'Edit')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -373,11 +409,12 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Assigning to sessions...')),
+                        SnackBar(
+                            content: Text(_tEducatorMissionPlans(
+                                context, 'Assigning to sessions...'))),
                       );
                     },
-                    child: const Text('Assign'),
+                    child: Text(_tEducatorMissionPlans(context, 'Assign')),
                   ),
                 ),
               ],
@@ -405,34 +442,35 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 void Function(void Function()) setLocalState) =>
             AlertDialog(
           backgroundColor: ScholesaColors.surface,
-          title: const Text('Create New Mission'),
+          title: Text(_tEducatorMissionPlans(context, 'Create New Mission')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mission Title',
+                  decoration: InputDecoration(
+                    labelText: _tEducatorMissionPlans(context, 'Mission Title'),
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedPillar,
-                  decoration: const InputDecoration(
-                    labelText: 'Pillar',
+                  decoration: InputDecoration(
+                    labelText: _tEducatorMissionPlans(context, 'Pillar'),
                     border: OutlineInputBorder(),
                   ),
-                  items: const <DropdownMenuItem<String>>[
+                  items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
-                        value: 'Future Skills', child: Text('Future Skills')),
+                        value: 'Future Skills',
+                        child: Text(_tEducatorMissionPlans(context, 'Future Skills'))),
                     DropdownMenuItem<String>(
                         value: 'Leadership & Agency',
-                        child: Text('Leadership & Agency')),
+                        child: Text(_tEducatorMissionPlans(context, 'Leadership & Agency'))),
                     DropdownMenuItem<String>(
                         value: 'Impact & Innovation',
-                        child: Text('Impact & Innovation')),
+                        child: Text(_tEducatorMissionPlans(context, 'Impact & Innovation'))),
                   ],
                   onChanged: (String? value) {
                     if (value != null) {
@@ -461,14 +499,15 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 );
                 Navigator.pop(dialogContext);
               },
-              child: const Text('Cancel'),
+              child: Text(_tEducatorMissionPlans(context, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () {
                 final String title = titleController.text.trim();
                 if (title.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mission title is required')),
+                    SnackBar(content: Text(_tEducatorMissionPlans(
+                        context, 'Mission title is required'))),
                   );
                   return;
                 }
@@ -499,11 +538,12 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Mission created and added to list')),
+                  SnackBar(
+                      content: Text(_tEducatorMissionPlans(
+                          context, 'Mission created and added to list'))),
                 );
               },
-              child: const Text('Create'),
+              child: Text(_tEducatorMissionPlans(context, 'Create')),
             ),
           ],
         ),
