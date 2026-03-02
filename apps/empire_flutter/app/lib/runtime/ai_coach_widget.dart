@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:record/record.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -11,6 +12,7 @@ import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
 import 'voice_runtime_service.dart';
 import '../services/telemetry_service.dart';
+import '../auth/app_state.dart';
 
 // ──────────────────────────────────────────────────────
 // AI Coach Widget — Control Surface
@@ -31,6 +33,8 @@ import '../services/telemetry_service.dart';
 class AiCoachWidget extends StatefulWidget {
   const AiCoachWidget({
     required this.runtime,
+    required this.actorRole,
+    this.allowBosFallback = true,
     this.missionId,
     this.checkpointId,
     this.conceptTags = const <String>[],
@@ -38,6 +42,8 @@ class AiCoachWidget extends StatefulWidget {
   });
 
   final LearningRuntimeProvider runtime;
+  final UserRole actorRole;
+  final bool allowBosFallback;
   final String? missionId;
   final String? checkpointId;
   final List<String> conceptTags;
@@ -363,6 +369,34 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     );
   }
 
+  Future<void> _interruptSpeaking() async {
+    try {
+      await HapticFeedback.selectionClick();
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {
+      // Best-effort cue only.
+    }
+
+    await _audioPlayer.stop();
+    await _flutterTts.stop();
+    if (!mounted) return;
+    setState(() => _isSpeaking = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Playback stopped'),
+        duration: Duration(milliseconds: 1200),
+      ),
+    );
+    await TelemetryService.instance.logEvent(
+      event: 'voice.tts',
+      metadata: <String, dynamic>{
+        'source': 'user_interrupt',
+        'surface': 'ai_coach_widget',
+        'mode': _selectedMode.name,
+      },
+    );
+  }
+
   Future<void> _sendMessage() async {
     final String input = _inputController.text.trim();
     if (_loading || input.isEmpty) return;
@@ -420,6 +454,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
               'missionId': widget.missionId,
               'checkpointId': widget.checkpointId,
               'mode': _selectedMode.name,
+              'role': widget.actorRole.name,
             },
             voiceEnabled: true,
             voiceOutput: _voiceOutputEnabled,
@@ -436,7 +471,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           },
         );
       } catch (_) {
+        if (!widget.allowBosFallback) {
+          rethrow;
+        }
         response = await BosService.instance.callAiCoach(request);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.message',
+          metadata: <String, dynamic>{
+            'surface': 'ai_coach_widget',
+            'mode': _selectedMode.name,
+            'source': 'bos_fallback',
+            'role': widget.actorRole.name,
+          },
+        );
       }
 
       setState(() {
@@ -685,6 +732,26 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                           'Speaking…',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: _interruptSpeaking,
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Tap to interrupt',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
