@@ -9,6 +9,24 @@ import '../localization/app_strings.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
+const Map<String, String> _loginEs = <String, String>{
+  'Education 2.0\nPlatform': 'Plataforma\nEducación 2.0',
+  'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.':
+      'Impulsando estudios de aprendizaje K-9 con Habilidades del futuro,\nLiderazgo y agencia, e Impacto e innovación.',
+  'Mission-based learning': 'Aprendizaje basado en misiones',
+  'Habit coaching': 'Coaching de hábitos',
+  'Portfolio showcase': 'Muestra de portafolio',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+};
+
+String _tLogin(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _loginEs[input] ?? input;
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -343,8 +361,8 @@ class _LoginPageState extends State<LoginPage>
                         ),
                         const Spacer(),
                         // Hero text
-                        const Text(
-                          'Education 2.0\nPlatform',
+                        Text(
+                          _tLogin(context, 'Education 2.0\nPlatform'),
                           style: TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
@@ -354,7 +372,8 @@ class _LoginPageState extends State<LoginPage>
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.',
+                          _tLogin(context,
+                              'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.9),
@@ -364,24 +383,30 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 48),
                         // Feature highlights
                         _buildFeatureRow(Icons.rocket_launch_rounded,
-                            'Mission-based learning'),
+                          _tLogin(context, 'Mission-based learning')),
                         const SizedBox(height: 16),
                         _buildFeatureRow(
-                            Icons.psychology_rounded, 'Habit coaching'),
+                          Icons.psychology_rounded,
+                          _tLogin(context, 'Habit coaching')),
                         const SizedBox(height: 16),
                         _buildFeatureRow(
-                            Icons.folder_special_rounded, 'Portfolio showcase'),
+                          Icons.folder_special_rounded,
+                          _tLogin(context, 'Portfolio showcase')),
                         const Spacer(),
                         // Bottom pillars
                         Row(
                           children: <Widget>[
                             _buildPillarChip(
-                                'Future Skills', ScholesaColors.futureSkills),
+                                _tLogin(context, 'Future Skills'),
+                                ScholesaColors.futureSkills),
                             const SizedBox(width: 8),
                             _buildPillarChip(
-                                'Leadership', ScholesaColors.leadership),
+                                _tLogin(context, 'Leadership'),
+                                ScholesaColors.leadership),
                             const SizedBox(width: 8),
-                            _buildPillarChip('Impact', ScholesaColors.impact),
+                            _buildPillarChip(
+                                _tLogin(context, 'Impact'),
+                                ScholesaColors.impact),
                           ],
                         ),
                       ],

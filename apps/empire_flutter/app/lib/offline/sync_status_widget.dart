@@ -3,6 +3,20 @@ import 'package:provider/provider.dart';
 import '../services/telemetry_service.dart';
 import 'sync_coordinator.dart';
 
+const Map<String, String> _syncStatusEs = <String, String>{
+  'pending': 'pendientes',
+  'Offline': 'Sin conexión',
+  "You're offline. Changes will sync when you reconnect.":
+      'No tienes conexión. Los cambios se sincronizarán al reconectarte.',
+  'RETRY': 'REINTENTAR',
+};
+
+String _tSyncStatus(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _syncStatusEs[input] ?? input;
+}
+
 /// Sync status indicator widget
 class SyncStatusIndicator extends StatelessWidget {
   const SyncStatusIndicator({super.key});
@@ -38,7 +52,9 @@ class SyncStatusIndicator extends StatelessWidget {
                 ),
               const SizedBox(width: 6),
               Text(
-                sync.isOnline ? '${sync.pendingCount} pending' : 'Offline',
+                sync.isOnline
+                    ? '${sync.pendingCount} ${_tSyncStatus(context, 'pending')}'
+                    : _tSyncStatus(context, 'Offline'),
                 style: TextStyle(
                   fontSize: 12,
                   color: sync.isOnline ? Colors.orange[800] : Colors.grey[700],
@@ -65,8 +81,9 @@ class OfflineBanner extends StatelessWidget {
 
         return MaterialBanner(
           backgroundColor: Colors.grey[800],
-          content: const Text(
-            "You're offline. Changes will sync when you reconnect.",
+          content: Text(
+            _tSyncStatus(
+                context, "You're offline. Changes will sync when you reconnect."),
             style: TextStyle(color: Colors.white),
           ),
           leading: const Icon(Icons.cloud_off, color: Colors.white),
@@ -79,8 +96,8 @@ class OfflineBanner extends StatelessWidget {
                 );
                 sync.retryFailed();
               },
-              child: const Text(
-                'RETRY',
+              child: Text(
+                _tSyncStatus(context, 'RETRY'),
                 style: TextStyle(color: Colors.white),
               ),
             ),

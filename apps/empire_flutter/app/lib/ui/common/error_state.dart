@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 
+const Map<String, String> _errorStateEs = <String, String>{
+  'Error': 'Error',
+  'Retry': 'Reintentar',
+};
+
+String _tErrorState(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _errorStateEs[input] ?? input;
+}
+
 /// Error state widget with retry
 class ErrorState extends StatelessWidget {
   const ErrorState({
@@ -26,7 +37,7 @@ class ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error',
+              _tErrorState(context, 'Error'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.grey[700],
                   ),
@@ -53,7 +64,7 @@ class ErrorState extends StatelessWidget {
                   onRetry!();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(_tErrorState(context, 'Retry')),
               ),
             ],
           ],

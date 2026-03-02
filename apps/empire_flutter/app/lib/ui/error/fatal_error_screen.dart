@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 
+const Map<String, String> _fatalErrorEs = <String, String>{
+  'Something went wrong': 'Algo salió mal',
+  'Try Again': 'Intentar de nuevo',
+};
+
+String _tFatalError(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _fatalErrorEs[input] ?? input;
+}
+
 /// Fatal error screen with retry option
 class FatalErrorScreen extends StatelessWidget {
   const FatalErrorScreen({
@@ -28,7 +39,7 @@ class FatalErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Something went wrong',
+                  _tFatalError(context, 'Something went wrong'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -56,7 +67,7 @@ class FatalErrorScreen extends StatelessWidget {
                       onRetry!();
                     },
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Try Again'),
+                    label: Text(_tFatalError(context, 'Try Again')),
                   ),
               ],
             ),
