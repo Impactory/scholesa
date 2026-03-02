@@ -2,6 +2,65 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteSessionsEs = <String, String>{
+  'New Session': 'Nueva sesión',
+  'Session Schedule': 'Horario de sesiones',
+  'Manage site sessions and rooms': 'Gestiona sesiones y salas del sitio',
+  'Day': 'Día',
+  'Week': 'Semana',
+  'Month': 'Mes',
+  'Filter': 'Filtrar',
+  'Session Filters': 'Filtros de sesión',
+  'Showing': 'Mostrando',
+  'view': 'vista',
+  'Mon': 'Lun',
+  'Tue': 'Mar',
+  'Wed': 'Mié',
+  'Thu': 'Jue',
+  'Fri': 'Vie',
+  'Sat': 'Sáb',
+  'Sun': 'Dom',
+  'January': 'Enero',
+  'February': 'Febrero',
+  'March': 'Marzo',
+  'April': 'Abril',
+  'May': 'Mayo',
+  'June': 'Junio',
+  'July': 'Julio',
+  'August': 'Agosto',
+  'September': 'Septiembre',
+  'October': 'Octubre',
+  'November': 'Noviembre',
+  'December': 'Diciembre',
+  'Conflict detected: room or educator already assigned in this time slot':
+      'Conflicto detectado: sala o educador ya asignado en este horario',
+  'Session created successfully': 'Sesión creada correctamente',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Assign Substitute': 'Asignar sustituto',
+  'Substitute Pool A': 'Grupo de sustitutos A',
+  'Substitute Pool B': 'Grupo de sustitutos B',
+  'Substitute Pool C': 'Grupo de sustitutos C',
+  'assigned as substitute': 'asignado como sustituto',
+  'Create New Session': 'Crear nueva sesión',
+  'Session Title': 'Título de la sesión',
+  'Pillar': 'Pilar',
+  'Time Slot': 'Horario',
+  'Educator': 'Educador',
+  'Learner Count': 'Cantidad de estudiantes',
+  'Room': 'Sala',
+  'Session title is required': 'El título de la sesión es obligatorio',
+  'Unassigned': 'Sin asignar',
+  'Create Session': 'Crear sesión',
+};
+
+String _tSiteSessions(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _siteSessionsEs[input] ?? input;
+}
+
 /// Site Sessions Page - Schedule and manage sessions
 class SiteSessionsPage extends StatefulWidget {
   const SiteSessionsPage({super.key});
@@ -156,7 +215,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         onPressed: _createNewSession,
         backgroundColor: ScholesaColors.site,
         icon: const Icon(Icons.add),
-        label: const Text('New Session'),
+        label: Text(_tSiteSessions(context, 'New Session')),
       ),
     );
   }
@@ -190,14 +249,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Session Schedule',
+                    _tSiteSessions(context, 'Session Schedule'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.site,
                         ),
                   ),
                   Text(
-                    'Manage site sessions and rooms',
+                    _tSiteSessions(context, 'Manage site sessions and rooms'),
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
@@ -223,7 +282,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
           children: <Widget>[
             Expanded(
               child: _ViewToggleButton(
-                label: 'Day',
+                label: _tSiteSessions(context, 'Day'),
                 isSelected: _viewMode == 'day',
                 onTap: () {
                   TelemetryService.instance.logEvent(
@@ -242,7 +301,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             ),
             Expanded(
               child: _ViewToggleButton(
-                label: 'Week',
+                label: _tSiteSessions(context, 'Week'),
                 isSelected: _viewMode == 'week',
                 onTap: () {
                   TelemetryService.instance.logEvent(
@@ -261,7 +320,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             ),
             Expanded(
               child: _ViewToggleButton(
-                label: 'Month',
+                label: _tSiteSessions(context, 'Month'),
                 isSelected: _viewMode == 'month',
                 onTap: () {
                   TelemetryService.instance.logEvent(
@@ -423,7 +482,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               _showFilterSheet();
             },
             icon: const Icon(Icons.filter_list, size: 18),
-            label: const Text('Filter'),
+            label: Text(_tSiteSessions(context, 'Filter')),
           ),
         ],
       ),
@@ -444,8 +503,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'Session Filters',
+              Text(
+                _tSiteSessions(context, 'Session Filters'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -472,7 +531,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content:
-                                  Text('Showing ${mode.toUpperCase()} view'),
+                                  Text('${_tSiteSessions(context, 'Showing')} ${_modeLabel(context, mode)} ${_tSiteSessions(context, 'view')}'),
                               backgroundColor: ScholesaColors.site,
                             ),
                           );
@@ -498,7 +557,20 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       'Sat',
       'Sun'
     ];
-    return days[weekday - 1];
+    return _tSiteSessions(context, days[weekday - 1]);
+  }
+
+  String _modeLabel(BuildContext context, String mode) {
+    switch (mode) {
+      case 'day':
+        return _tSiteSessions(context, 'Day').toUpperCase();
+      case 'week':
+        return _tSiteSessions(context, 'Week').toUpperCase();
+      case 'month':
+        return _tSiteSessions(context, 'Month').toUpperCase();
+      default:
+        return mode.toUpperCase();
+    }
   }
 
   String _formatSelectedDate() {
@@ -516,7 +588,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       'November',
       'December'
     ];
-    return '${months[_selectedDate.month - 1]} ${_selectedDate.day}, ${_selectedDate.year}';
+    final String month = _tSiteSessions(context, months[_selectedDate.month - 1]);
+    return '$month ${_selectedDate.day}, ${_selectedDate.year}';
   }
 
   Future<void> _createNewSession() async {
@@ -552,9 +625,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         },
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Conflict detected: room or educator already assigned in this time slot'),
+        SnackBar(
+          content: Text(_tSiteSessions(context,
+              'Conflict detected: room or educator already assigned in this time slot')),
           backgroundColor: ScholesaColors.warning,
         ),
       );
@@ -579,8 +652,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     _logScheduleViewed(trigger: 'session_created');
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Session created successfully'),
+      SnackBar(
+        content: Text(_tSiteSessions(context, 'Session created successfully')),
         backgroundColor: ScholesaColors.success,
       ),
     );
@@ -743,7 +816,7 @@ class _SessionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    session.pillar,
+                    _tSiteSessions(context, session.pillar),
                     style: TextStyle(
                       color: _pillarColor,
                       fontSize: 10,
@@ -793,7 +866,7 @@ class _SessionCard extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: () => _showAssignSubstituteSheet(context),
                 icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                label: const Text('Assign Substitute'),
+                label: Text(_tSiteSessions(context, 'Assign Substitute')),
               ),
             ),
           ],
@@ -819,15 +892,15 @@ class _SessionCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               const SizedBox(height: 12),
-              const Text(
-                'Assign Substitute',
+              Text(
+                _tSiteSessions(context, 'Assign Substitute'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...substitutePools.map((String pool) {
                 return ListTile(
                   leading: const Icon(Icons.person_outline_rounded),
-                  title: Text(pool),
+                  title: Text(_tSiteSessions(context, pool)),
                   onTap: () {
                     TelemetryService.instance.logEvent(
                       event: 'substitute.assigned',
@@ -842,7 +915,7 @@ class _SessionCard extends StatelessWidget {
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('$pool assigned as substitute'),
+                        content: Text('${_tSiteSessions(context, pool)} ${_tSiteSessions(context, 'assigned as substitute')}'),
                         backgroundColor: ScholesaColors.success,
                       ),
                     );
@@ -909,7 +982,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Create New Session',
+                    _tSiteSessions(context, 'Create New Session'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -918,7 +991,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   TextField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: 'Session Title',
+                      labelText: _tSiteSessions(context, 'Session Title'),
                       filled: true,
                       fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
@@ -928,15 +1001,15 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Pillar',
+                  Text(
+                    _tSiteSessions(context, 'Pillar'),
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: <Widget>[
                       _PillarOption(
-                        label: 'Future Skills',
+                        label: _tSiteSessions(context, 'Future Skills'),
                         color: ScholesaColors.futureSkills,
                         isSelected: _selectedPillar == 'Future Skills',
                         onTap: () {
@@ -952,7 +1025,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                       ),
                       const SizedBox(width: 8),
                       _PillarOption(
-                        label: 'Leadership',
+                        label: _tSiteSessions(context, 'Leadership'),
                         color: ScholesaColors.leadership,
                         isSelected: _selectedPillar == 'Leadership',
                         onTap: () {
@@ -968,7 +1041,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                       ),
                       const SizedBox(width: 8),
                       _PillarOption(
-                        label: 'Impact',
+                        label: _tSiteSessions(context, 'Impact'),
                         color: ScholesaColors.impact,
                         isSelected: _selectedPillar == 'Impact',
                         onTap: () {
@@ -988,7 +1061,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedTime,
                     decoration: InputDecoration(
-                      labelText: 'Time Slot',
+                      labelText: _tSiteSessions(context, 'Time Slot'),
                       filled: true,
                       fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
@@ -1025,7 +1098,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   TextField(
                     controller: _educatorController,
                     decoration: InputDecoration(
-                      labelText: 'Educator',
+                      labelText: _tSiteSessions(context, 'Educator'),
                       filled: true,
                       fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
@@ -1039,7 +1112,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     controller: _learnerCountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Learner Count',
+                      labelText: _tSiteSessions(context, 'Learner Count'),
                       filled: true,
                       fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
@@ -1052,7 +1125,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedRoom,
                     decoration: InputDecoration(
-                      labelText: 'Room',
+                      labelText: _tSiteSessions(context, 'Room'),
                       filled: true,
                       fillColor: context.schSurfaceMuted,
                       border: OutlineInputBorder(
@@ -1088,8 +1161,9 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         final String title = _titleController.text.trim();
                         if (title.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Session title is required'),
+                            SnackBar(
+                              content: Text(_tSiteSessions(context,
+                                  'Session title is required')),
                             ),
                           );
                           return;
@@ -1116,7 +1190,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                             session: _SessionData(
                               title: title,
                               educator: _educatorController.text.trim().isEmpty
-                                  ? 'Unassigned'
+                                  ? _tSiteSessions(context, 'Unassigned')
                                   : _educatorController.text.trim(),
                               room: _selectedRoom,
                               learnerCount: learnerCount,
@@ -1132,7 +1206,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Create Session'),
+                      child: Text(_tSiteSessions(context, 'Create Session')),
                     ),
                   ),
                 ],

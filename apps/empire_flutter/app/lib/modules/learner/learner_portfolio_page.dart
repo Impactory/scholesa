@@ -2,6 +2,71 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _learnerPortfolioEs = <String, String>{
+  'Share': 'Compartir',
+  'My Portfolio': 'Mi portafolio',
+  'Showcase your achievements': 'Muestra tus logros',
+  'Future Innovator • Singapore': 'Innovador del futuro • Singapur',
+  'day streak': 'días de racha',
+  'Level 12': 'Nivel 12',
+  'Rising Explorer': 'Explorador en ascenso',
+  '250 XP to Level 13 - Aspiring Trailblazer':
+    '250 XP para Nivel 13 - Pionero aspirante',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Badges': 'Insignias',
+  'Skills': 'Habilidades',
+  'Projects': 'Proyectos',
+  'First Mission': 'Primera misión',
+  'Completed your first mission': 'Completaste tu primera misión',
+  'Week Warrior': 'Guerrero semanal',
+  '7-day streak achievement': 'Logro de racha de 7 días',
+  'Code Master': 'Maestro del código',
+  'Complete 10 coding missions': 'Completa 10 misiones de programación',
+  'Team Leader': 'Líder de equipo',
+  'Lead a group project': 'Lidera un proyecto grupal',
+  'Eco Champion': 'Campeón ecológico',
+  'Complete 5 sustainability missions':
+    'Completa 5 misiones de sostenibilidad',
+  'Perfect Month': 'Mes perfecto',
+  '30-day streak achievement': 'Logro de racha de 30 días',
+  'Python Programming': 'Programación en Python',
+  'Creative Thinking': 'Pensamiento creativo',
+  'Public Speaking': 'Oratoria',
+  'Environmental Awareness': 'Conciencia ambiental',
+  'Robotics': 'Robótica',
+  'Weather Station App': 'App de estación meteorológica',
+  'Built a Python app to display local weather data':
+    'Creó una app en Python para mostrar datos meteorológicos locales',
+  'School Recycling Campaign': 'Campaña de reciclaje escolar',
+  'Led initiative to increase recycling by 40%':
+    'Lideró una iniciativa para aumentar el reciclaje en 40%',
+  'Team Presentation': 'Presentación en equipo',
+  'Presented AI research to parents and community':
+    'Presentó investigación de IA a padres y comunidad',
+  'Edit Portfolio Profile': 'Editar perfil del portafolio',
+  'Update your portfolio bio, goals, and featured highlights.':
+    'Actualiza tu biografía del portafolio, metas y logros destacados.',
+  'Cancel': 'Cancelar',
+  'Portfolio profile update queued': 'Actualización del perfil en cola',
+  'Save': 'Guardar',
+  'Share Portfolio': 'Compartir portafolio',
+  'Create a secure share link for parents or mentors.':
+    'Crea un enlace seguro para padres o mentores.',
+  'Share link generated': 'Enlace compartible generado',
+  'Generate Link': 'Generar enlace',
+  'missions': 'misiones',
+  'Level': 'Nivel',
+  'to next level': 'para el siguiente nivel',
+};
+
+String _tLearnerPortfolio(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _learnerPortfolioEs[input] ?? input;
+}
+
 /// Learner Portfolio Page - Achievements, badges, and skill showcase
 class LearnerPortfolioPage extends StatefulWidget {
   const LearnerPortfolioPage({super.key});
@@ -13,6 +78,8 @@ class LearnerPortfolioPage extends StatefulWidget {
 class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  String _t(String input) => _tLearnerPortfolio(context, input);
 
   @override
   void initState() {
@@ -95,7 +162,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         },
         backgroundColor: ScholesaColors.learner,
         icon: const Icon(Icons.share),
-        label: const Text('Share'),
+        label: Text(_t('Share')),
       ),
     );
   }
@@ -129,14 +196,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'My Portfolio',
+                    _t('My Portfolio'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.learner,
                         ),
                   ),
                   Text(
-                    'Showcase your achievements',
+                    _t('Showcase your achievements'),
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
@@ -221,20 +288,20 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Future Innovator • Singapore',
+                    _t('Future Innovator • Singapore'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Row(
+                  Row(
                     children: <Widget>[
                       Icon(Icons.local_fire_department,
                           color: Colors.orange, size: 18),
                       SizedBox(width: 4),
                       Text(
-                        '15 day streak',
+                        '15 ${_t('day streak')}',
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                       SizedBox(width: 16),
@@ -284,18 +351,18 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                           color: ScholesaColors.futureSkills, size: 20),
                     ),
                     const SizedBox(width: 12),
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Level 12',
+                          _t('Level 12'),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          'Rising Explorer',
+                          _t('Rising Explorer'),
                           style: TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
@@ -335,7 +402,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             ),
             const SizedBox(height: 8),
             Text(
-              '250 XP to Level 13 - Aspiring Trailblazer',
+              _t('250 XP to Level 13 - Aspiring Trailblazer'),
               style: TextStyle(color: context.schTextSecondary, fontSize: 12),
             ),
           ],
@@ -345,14 +412,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildPillarStats() {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: <Widget>[
           Expanded(
             child: _PillarStatCard(
               icon: Icons.code,
-              label: 'Future Skills',
+              label: _t('Future Skills'),
               missions: 28,
               skills: 12,
               color: ScholesaColors.futureSkills,
@@ -362,7 +429,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           Expanded(
             child: _PillarStatCard(
               icon: Icons.emoji_events,
-              label: 'Leadership',
+              label: _t('Leadership'),
               missions: 18,
               skills: 8,
               color: ScholesaColors.leadership,
@@ -372,7 +439,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           Expanded(
             child: _PillarStatCard(
               icon: Icons.eco,
-              label: 'Impact',
+              label: _t('Impact'),
               missions: 14,
               skills: 6,
               color: ScholesaColors.impact,
@@ -398,10 +465,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           color: ScholesaColors.learner,
           borderRadius: BorderRadius.circular(12),
         ),
-        tabs: const <Widget>[
-          Tab(text: 'Badges'),
-          Tab(text: 'Skills'),
-          Tab(text: 'Projects'),
+        tabs: <Widget>[
+          Tab(text: _t('Badges')),
+          Tab(text: _t('Skills')),
+          Tab(text: _t('Projects')),
         ],
       ),
     );
@@ -410,40 +477,40 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Widget _buildBadgesList() {
     final List<Map<String, dynamic>> badges = <Map<String, dynamic>>[
       <String, dynamic>{
-        'name': 'First Mission',
-        'description': 'Completed your first mission',
+        'name': _t('First Mission'),
+        'description': _t('Completed your first mission'),
         'icon': Icons.rocket_launch,
         'color': ScholesaColors.futureSkills,
         'earned': true,
         'date': 'Oct 15, 2024',
       },
       <String, dynamic>{
-        'name': 'Week Warrior',
-        'description': '7-day streak achievement',
+        'name': _t('Week Warrior'),
+        'description': _t('7-day streak achievement'),
         'icon': Icons.local_fire_department,
         'color': Colors.orange,
         'earned': true,
         'date': 'Nov 22, 2024',
       },
       <String, dynamic>{
-        'name': 'Code Master',
-        'description': 'Complete 10 coding missions',
+        'name': _t('Code Master'),
+        'description': _t('Complete 10 coding missions'),
         'icon': Icons.code,
         'color': ScholesaColors.futureSkills,
         'earned': true,
         'date': 'Dec 5, 2024',
       },
       <String, dynamic>{
-        'name': 'Team Leader',
-        'description': 'Lead a group project',
+        'name': _t('Team Leader'),
+        'description': _t('Lead a group project'),
         'icon': Icons.groups,
         'color': ScholesaColors.leadership,
         'earned': true,
         'date': 'Dec 12, 2024',
       },
       <String, dynamic>{
-        'name': 'Eco Champion',
-        'description': 'Complete 5 sustainability missions',
+        'name': _t('Eco Champion'),
+        'description': _t('Complete 5 sustainability missions'),
         'icon': Icons.eco,
         'color': ScholesaColors.impact,
         'earned': false,
@@ -451,8 +518,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         'total': 5,
       },
       <String, dynamic>{
-        'name': 'Perfect Month',
-        'description': '30-day streak achievement',
+        'name': _t('Perfect Month'),
+        'description': _t('30-day streak achievement'),
         'icon': Icons.calendar_month,
         'color': Colors.amber,
         'earned': false,
@@ -480,40 +547,40 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Widget _buildSkillsList() {
     final List<Map<String, dynamic>> skills = <Map<String, dynamic>>[
       <String, dynamic>{
-        'name': 'Python Programming',
-        'pillar': 'Future Skills',
+        'name': _t('Python Programming'),
+        'pillar': _t('Future Skills'),
         'level': 3,
         'maxLevel': 5,
         'progress': 0.65,
         'color': ScholesaColors.futureSkills,
       },
       <String, dynamic>{
-        'name': 'Creative Thinking',
-        'pillar': 'Leadership',
+        'name': _t('Creative Thinking'),
+        'pillar': _t('Leadership'),
         'level': 4,
         'maxLevel': 5,
         'progress': 0.82,
         'color': ScholesaColors.leadership,
       },
       <String, dynamic>{
-        'name': 'Public Speaking',
-        'pillar': 'Leadership',
+        'name': _t('Public Speaking'),
+        'pillar': _t('Leadership'),
         'level': 2,
         'maxLevel': 5,
         'progress': 0.45,
         'color': ScholesaColors.leadership,
       },
       <String, dynamic>{
-        'name': 'Environmental Awareness',
-        'pillar': 'Impact',
+        'name': _t('Environmental Awareness'),
+        'pillar': _t('Impact'),
         'level': 3,
         'maxLevel': 5,
         'progress': 0.58,
         'color': ScholesaColors.impact,
       },
       <String, dynamic>{
-        'name': 'Robotics',
-        'pillar': 'Future Skills',
+        'name': _t('Robotics'),
+        'pillar': _t('Future Skills'),
         'level': 2,
         'maxLevel': 5,
         'progress': 0.35,
@@ -534,25 +601,25 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Widget _buildProjectsList() {
     final List<Map<String, dynamic>> projects = <Map<String, dynamic>>[
       <String, dynamic>{
-        'title': 'Weather Station App',
-        'description': 'Built a Python app to display local weather data',
-        'pillar': 'Future Skills',
+        'title': _t('Weather Station App'),
+        'description': _t('Built a Python app to display local weather data'),
+        'pillar': _t('Future Skills'),
         'date': 'Dec 10, 2024',
         'image': null,
         'color': ScholesaColors.futureSkills,
       },
       <String, dynamic>{
-        'title': 'School Recycling Campaign',
-        'description': 'Led initiative to increase recycling by 40%',
-        'pillar': 'Impact',
+        'title': _t('School Recycling Campaign'),
+        'description': _t('Led initiative to increase recycling by 40%'),
+        'pillar': _t('Impact'),
         'date': 'Nov 28, 2024',
         'image': null,
         'color': ScholesaColors.impact,
       },
       <String, dynamic>{
-        'title': 'Team Presentation',
-        'description': 'Presented AI research to parents and community',
-        'pillar': 'Leadership',
+        'title': _t('Team Presentation'),
+        'description': _t('Presented AI research to parents and community'),
+        'pillar': _t('Leadership'),
         'date': 'Nov 15, 2024',
         'image': null,
         'color': ScholesaColors.leadership,
@@ -573,9 +640,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Edit Portfolio Profile'),
-        content: const Text(
-            'Update your portfolio bio, goals, and featured highlights.'),
+        title: Text(_t('Edit Portfolio Profile')),
+        content: Text(
+          _t('Update your portfolio bio, goals, and featured highlights.')),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -589,7 +656,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_t('Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -603,13 +670,13 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Portfolio profile update queued'),
+                SnackBar(
+                  content: Text(_t('Portfolio profile update queued')),
                   backgroundColor: ScholesaColors.learner,
                 ),
               );
             },
-            child: const Text('Save'),
+            child: Text(_t('Save')),
           ),
         ],
       ),
@@ -620,9 +687,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Share Portfolio'),
-        content:
-            const Text('Create a secure share link for parents or mentors.'),
+        title: Text(_t('Share Portfolio')),
+        content: Text(_t('Create a secure share link for parents or mentors.')),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -636,7 +702,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_t('Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -650,13 +716,13 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Share link generated'),
+                SnackBar(
+                  content: Text(_t('Share link generated')),
                   backgroundColor: ScholesaColors.learner,
                 ),
               );
             },
-            child: const Text('Generate Link'),
+            child: Text(_t('Generate Link')),
           ),
         ],
       ),
@@ -707,7 +773,7 @@ class _PillarStatCard extends StatelessWidget {
             ),
           ),
           Text(
-            'missions',
+            _tLearnerPortfolio(context, 'missions'),
             style: TextStyle(
                 color: context.schTextSecondary.withValues(alpha: 0.88),
                 fontSize: 10),
@@ -849,7 +915,7 @@ class _SkillCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Level ${skill['level']}/${skill['maxLevel']}',
+                    '${_tLearnerPortfolio(context, 'Level')} ${skill['level']}/${skill['maxLevel']}',
                     style: TextStyle(
                       color: skill['color'] as Color,
                       fontWeight: FontWeight.bold,
@@ -877,7 +943,7 @@ class _SkillCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Text(
-                  '${((skill['progress'] as double) * 100).toInt()}% to next level',
+                  '${((skill['progress'] as double) * 100).toInt()}% ${_tLearnerPortfolio(context, 'to next level')}',
                   style:
                       TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
