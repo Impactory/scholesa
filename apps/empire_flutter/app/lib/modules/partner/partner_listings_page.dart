@@ -21,7 +21,6 @@ const Map<String, String> _partnerListingsEs = <String, String>{
   'Edit': 'Editar',
   'Close': 'Cerrar',
   'Save': 'Guardar',
-  'Create Listing': 'Crear publicación',
   'Title': 'Título',
   'Description': 'Descripción',
   'Category': 'Categoría',
