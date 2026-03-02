@@ -94,6 +94,8 @@ export function AnalyticsDashboard() {
   const periodLabel = timeRange === 'week'
     ? t('analytics.educator.period.week')
     : t('analytics.educator.period.month');
+  const trendPoints = buildTrendPoints(learners, timeRange, locale);
+  const trendMax = Math.max(100, ...trendPoints.map((point) => point.value));
   
   const handleExportCSV = () => {
     trackInteraction('help_accessed', { cta: 'analytics_export_csv', timeRange, siteId });
@@ -304,15 +306,37 @@ export function AnalyticsDashboard() {
         </div>
       </div>
       
-      {/* Weekly Trends Chart - TODO: Add trend data generation */}
-      {/* <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      {/* Weekly / Monthly Trends Chart */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {timeRange === 'week' ? 'Weekly' : 'Monthly'} Engagement Trends
+          {timeRange === 'week' ? t('analytics.educator.thisWeek') : t('analytics.educator.thisMonth')} {t('analytics.educator.table.engagement')}
         </h3>
-        <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-          Trend chart coming soon
-        </div>
-      </div> */}
+        {trendPoints.every((point) => point.value === 0) ? (
+          <div className="h-40 flex items-center justify-center text-sm text-gray-500 border border-gray-200 rounded-lg">
+            {t('analytics.educator.never')}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-2 md:gap-3 items-end h-44 rounded-lg border border-gray-200 p-3">
+            {trendPoints.map((point) => {
+              const heightPercent = Math.max(6, Math.round((point.value / trendMax) * 100));
+              return (
+                <div key={point.key} className="flex flex-col items-center justify-end gap-2 h-full">
+                  <div className="text-[10px] text-gray-500">{Math.round(point.value)}%</div>
+                  <div className="w-full max-w-10 h-full flex items-end">
+                    <div
+                      className="w-full bg-indigo-500 rounded-sm"
+                      style={{ height: `${heightPercent}%` }}
+                      aria-label={`${point.label} ${Math.round(point.value)}%`}
+                      title={`${point.label}: ${Math.round(point.value)}%`}
+                    />
+                  </div>
+                  <div className="text-[10px] text-gray-600 text-center leading-tight">{point.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
       
       {/* AI Insights Panel */}
       <AIInsightsPanel learners={learners} timeRange={timeRange} />
@@ -429,4 +453,65 @@ function formatRelativeTime(
   if (diffDays < 7) return t('analytics.educator.relative.daysAgo', { count: diffDays });
   
   return date.toLocaleDateString(locale);
+}
+
+type TrendPoint = {
+  key: string;
+  label: string;
+  value: number;
+};
+
+function buildTrendPoints(
+  learners: LearnerEngagement[],
+  timeRange: 'week' | 'month',
+  locale: string,
+): TrendPoint[] {
+  const today = new Date();
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const bucketCount = timeRange === 'week' ? 7 : 7;
+  const bucketSizeDays = timeRange === 'week' ? 1 : 4;
+
+  const buckets = Array.from({ length: bucketCount }, (_v, idx) => {
+    const daysAgo = (bucketCount - 1 - idx) * bucketSizeDays;
+    const start = new Date(dayStart);
+    start.setDate(dayStart.getDate() - daysAgo);
+    const end = new Date(start);
+    end.setDate(start.getDate() + bucketSizeDays);
+
+    return {
+      key: `${start.toISOString()}_${idx}`,
+      start,
+      end,
+      total: 0,
+      count: 0,
+    };
+  });
+
+  learners.forEach((learner) => {
+    if (!learner.lastActive) return;
+    const activeTime = learner.lastActive.getTime();
+
+    for (const bucket of buckets) {
+      if (activeTime >= bucket.start.getTime() && activeTime < bucket.end.getTime()) {
+        bucket.total += learner.engagementScore;
+        bucket.count += 1;
+        break;
+      }
+    }
+  });
+
+  const dayLabelFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+
+  return buckets.map((bucket) => {
+    const label = timeRange === 'week'
+      ? dayLabelFmt.format(bucket.start)
+      : `${bucket.start.getMonth() + 1}/${bucket.start.getDate()}`;
+
+    return {
+      key: bucket.key,
+      label,
+      value: bucket.count > 0 ? bucket.total / bucket.count : 0,
+    };
+  });
 }
