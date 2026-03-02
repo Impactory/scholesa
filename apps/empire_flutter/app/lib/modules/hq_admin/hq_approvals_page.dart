@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -26,6 +30,8 @@ const Map<String, String> _hqApprovalsEs = <String, String>{
   'Finance Ops': 'Operaciones financieras',
   'Curriculum Team': 'Equipo curricular',
   'HR Admin': 'Admin de RR. HH.',
+  'Loading...': 'Cargando...',
+  'Approval update failed': 'Error al actualizar aprobación',
 };
 
 String _tHqApprovals(BuildContext context, String input) {
@@ -55,6 +61,7 @@ class _ApprovalItem {
     required this.submittedBy,
     required this.submittedAt,
     required this.status,
+    required this.sourceCollection,
   });
 
   final String id;
@@ -63,13 +70,15 @@ class _ApprovalItem {
   final String submittedBy;
   final DateTime submittedAt;
   final _ApprovalStatus status;
+  final String sourceCollection;
 }
 
 class _HqApprovalsPageState extends State<HqApprovalsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = false;
 
-  final List<_ApprovalItem> _approvals = <_ApprovalItem>[
+  final List<_ApprovalItem> _fallbackApprovals = <_ApprovalItem>[
     _ApprovalItem(
       id: '1',
       title: 'New Partner: TechEd Solutions',
@@ -77,6 +86,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       submittedBy: 'Site Lead - Downtown',
       submittedAt: DateTime.now().subtract(const Duration(hours: 2)),
       status: _ApprovalStatus.pending,
+      sourceCollection: 'partnerContracts',
     ),
     _ApprovalItem(
       id: '2',
@@ -85,6 +95,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       submittedBy: 'Finance Ops',
       submittedAt: DateTime.now().subtract(const Duration(hours: 18)),
       status: _ApprovalStatus.pending,
+      sourceCollection: 'payouts',
     ),
     _ApprovalItem(
       id: '3',
@@ -93,6 +104,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       submittedBy: 'Curriculum Team',
       submittedAt: DateTime.now().subtract(const Duration(days: 1)),
       status: _ApprovalStatus.pending,
+      sourceCollection: 'missions',
     ),
     _ApprovalItem(
       id: '4',
@@ -101,13 +113,18 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       submittedBy: 'HR Admin',
       submittedAt: DateTime.now().subtract(const Duration(days: 2)),
       status: _ApprovalStatus.approved,
+      sourceCollection: 'users',
     ),
   ];
+  List<_ApprovalItem> _approvals = <_ApprovalItem>[];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadApprovals();
+    });
   }
 
   @override
@@ -146,6 +163,15 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   }
 
   Widget _buildApprovalList(_ApprovalStatus statusFilter) {
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tHqApprovals(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
     final List<_ApprovalItem> filtered = _approvals
         .where((_ApprovalItem a) => a.status == statusFilter)
         .toList();
@@ -319,7 +345,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     );
   }
 
-  void _handleApprove(_ApprovalItem item) {
+  Future<void> _handleApprove(_ApprovalItem item) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -344,15 +370,10 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         },
       );
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('${_tHqApprovals(context, 'Approved:')} ${_tHqApprovals(context, item.title)}'),
-          backgroundColor: Colors.green),
-    );
+    await _updateApprovalStatus(item, _ApprovalStatus.approved);
   }
 
-  void _handleReject(_ApprovalItem item) {
+  Future<void> _handleReject(_ApprovalItem item) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -360,11 +381,194 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         'approval_id': item.id
       },
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('${_tHqApprovals(context, 'Rejected:')} ${_tHqApprovals(context, item.title)}'),
-          backgroundColor: Colors.red),
-    );
+    await _updateApprovalStatus(item, _ApprovalStatus.rejected);
+  }
+
+  Future<void> _loadApprovals() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() => _approvals = _fallbackApprovals);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final List<_ApprovalItem> loaded = <_ApprovalItem>[];
+
+      QuerySnapshot<Map<String, dynamic>> contractsSnap;
+      try {
+        contractsSnap = await firestoreService.firestore
+            .collection('partnerContracts')
+            .orderBy('createdAt', descending: true)
+            .limit(100)
+            .get();
+      } catch (_) {
+        contractsSnap = await firestoreService.firestore
+            .collection('partnerContracts')
+            .limit(100)
+            .get();
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in contractsSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final _ApprovalStatus status = _parseStatus(data['status'] as String?);
+        loaded.add(
+          _ApprovalItem(
+            id: doc.id,
+            title: (data['title'] as String?)?.trim().isNotEmpty == true
+                ? (data['title'] as String).trim()
+                : 'Partner Contract',
+            type: _ApprovalType.partnerContract,
+            submittedBy: (data['createdBy'] as String?) ?? 'Partner Ops',
+            submittedAt: _toDateTime(data['createdAt']) ?? DateTime.now(),
+            status: status,
+            sourceCollection: 'partnerContracts',
+          ),
+        );
+      }
+
+      QuerySnapshot<Map<String, dynamic>> payoutsSnap;
+      try {
+        payoutsSnap = await firestoreService.firestore
+            .collection('payouts')
+            .orderBy('createdAt', descending: true)
+            .limit(100)
+            .get();
+      } catch (_) {
+        payoutsSnap = await firestoreService.firestore
+            .collection('payouts')
+            .limit(100)
+            .get();
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in payoutsSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final _ApprovalStatus status = _parseStatus(data['status'] as String?);
+        final String amount = (data['amount'] as String?) ?? '0';
+        final String currency = (data['currency'] as String?) ?? 'USD';
+        loaded.add(
+          _ApprovalItem(
+            id: doc.id,
+            title: 'Payout Request: $amount $currency',
+            type: _ApprovalType.payout,
+            submittedBy: (data['createdBy'] as String?) ?? 'Finance Ops',
+            submittedAt: _toDateTime(data['createdAt']) ?? DateTime.now(),
+            status: status,
+            sourceCollection: 'payouts',
+          ),
+        );
+      }
+
+      loaded.sort((_ApprovalItem a, _ApprovalItem b) =>
+          b.submittedAt.compareTo(a.submittedAt));
+
+      if (!mounted) return;
+      setState(() => _approvals = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _approvals = _fallbackApprovals);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _updateApprovalStatus(
+      _ApprovalItem item, _ApprovalStatus newStatus) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final String statusLabel =
+        newStatus == _ApprovalStatus.approved ? 'approved' : 'rejected';
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _approvals = _approvals
+            .map((_ApprovalItem current) => current.id == item.id
+                ? _ApprovalItem(
+                    id: current.id,
+                    title: current.title,
+                    type: current.type,
+                    submittedBy: current.submittedBy,
+                    submittedAt: current.submittedAt,
+                    status: newStatus,
+                    sourceCollection: current.sourceCollection,
+                  )
+                : current)
+            .toList();
+      });
+      return;
+    }
+
+    try {
+      final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'hq';
+      await firestoreService.firestore
+          .collection(item.sourceCollection)
+          .doc(item.id)
+          .set(<String, dynamic>{
+        'status': statusLabel,
+        if (newStatus == _ApprovalStatus.approved) 'approvedBy': userId,
+        if (newStatus == _ApprovalStatus.approved)
+          'approvedAt': FieldValue.serverTimestamp(),
+        if (newStatus == _ApprovalStatus.rejected) 'rejectedBy': userId,
+        if (newStatus == _ApprovalStatus.rejected)
+          'rejectedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${newStatus == _ApprovalStatus.approved ? _tHqApprovals(context, 'Approved:') : _tHqApprovals(context, 'Rejected:')} ${_tHqApprovals(context, item.title)}',
+          ),
+          backgroundColor:
+              newStatus == _ApprovalStatus.approved ? Colors.green : Colors.red,
+        ),
+      );
+      await _loadApprovals();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqApprovals(context, 'Approval update failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  _ApprovalStatus _parseStatus(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'approved':
+      case 'accepted':
+      case 'published':
+        return _ApprovalStatus.approved;
+      case 'rejected':
+      case 'denied':
+      case 'declined':
+        return _ApprovalStatus.rejected;
+      default:
+        return _ApprovalStatus.pending;
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }

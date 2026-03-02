@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -35,6 +38,8 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'draft': 'borrador',
   'review': 'revisión',
   'published': 'publicado',
+  'Loading...': 'Cargando...',
+  'Create failed': 'Error al crear currículo',
 };
 
 String _tHqCurriculum(BuildContext context, String input) {
@@ -79,8 +84,9 @@ class _Curriculum {
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = false;
 
-  final List<_Curriculum> _curricula = <_Curriculum>[
+  final List<_Curriculum> _fallbackCurricula = <_Curriculum>[
     _Curriculum(
       id: '1',
       title: 'AI Fundamentals',
@@ -114,11 +120,15 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       lastUpdated: DateTime.now().subtract(const Duration(hours: 6)),
     ),
   ];
+  List<_Curriculum> _curricula = <_Curriculum>[];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCurricula();
+    });
   }
 
   @override
@@ -192,6 +202,15 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   Widget _buildCurriculumList(_CurriculumStatus status) {
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tHqCurriculum(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
     final List<_Curriculum> filtered =
         _curricula.where((_Curriculum c) => c.status == status).toList();
 
@@ -460,79 +479,105 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   void _showCreateDialog() {
+    final TextEditingController titleController = TextEditingController();
+    String selectedPillar = 'Future Skills';
+
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
-        title: Text(_tHqCurriculum(context, 'New Curriculum')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-          TextField(
-                decoration: InputDecoration(
-              labelText: _tHqCurriculum(context, 'Title'),
-              border: const OutlineInputBorder())),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: _tHqCurriculum(context, 'Pillar'),
-              border: const OutlineInputBorder()),
-            items: <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(
-              value: 'Future Skills',
-              child: Text(_tHqCurriculum(context, 'Future Skills'))),
-                DropdownMenuItem<String>(
-                    value: 'Leadership & Agency',
-              child:
-                Text(_tHqCurriculum(context, 'Leadership & Agency'))),
-                DropdownMenuItem<String>(
-                    value: 'Impact & Innovation',
-              child:
-                Text(_tHqCurriculum(context, 'Impact & Innovation'))),
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder:
+            (BuildContext context, void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            backgroundColor: ScholesaColors.surface,
+            title: Text(_tHqCurriculum(context, 'New Curriculum')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Title'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedPillar,
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Pillar'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'Future Skills',
+                      child: Text(_tHqCurriculum(context, 'Future Skills')),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Leadership & Agency',
+                      child:
+                          Text(_tHqCurriculum(context, 'Leadership & Agency')),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Impact & Innovation',
+                      child:
+                          Text(_tHqCurriculum(context, 'Impact & Innovation')),
+                    ),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedPillar = value);
+                    }
+                  },
+                ),
               ],
-              onChanged: (_) {},
             ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'module': 'hq_curriculum',
-                  'cta_id': 'cancel_create_curriculum',
-                  'surface': 'create_curriculum_dialog',
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'cta_id': 'cancel_create_curriculum',
+                      'surface': 'create_curriculum_dialog',
+                    },
+                  );
+                  Navigator.pop(dialogContext);
                 },
-              );
-              Navigator.pop(context);
-            },
-            child: Text(_tHqCurriculum(context, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'hq_curriculum',
-                  'cta_id': 'submit_create_curriculum',
-                  'surface': 'create_curriculum_dialog',
+                child: Text(_tHqCurriculum(context, 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final String title = titleController.text.trim();
+                  if (title.isEmpty) {
+                    Navigator.pop(dialogContext);
+                    return;
+                  }
+
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'cta_id': 'submit_create_curriculum',
+                      'surface': 'create_curriculum_dialog',
+                    },
+                  );
+                  TelemetryService.instance.logEvent(
+                    event: 'mission.snapshot.created',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'source': 'create_curriculum_dialog',
+                    },
+                  );
+
+                  Navigator.pop(dialogContext);
+                  await _createCurriculum(title: title, pillar: selectedPillar);
                 },
-              );
-              TelemetryService.instance.logEvent(
-                event: 'mission.snapshot.created',
-                metadata: <String, dynamic>{
-                  'module': 'hq_curriculum',
-                  'source': 'create_curriculum_dialog',
-                },
-              );
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))));
-            },
-            child: Text(_tHqCurriculum(context, 'Create')),
-          ),
-        ],
+                child: Text(_tHqCurriculum(context, 'Create')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -541,5 +586,174 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final Duration diff = DateTime.now().difference(time);
     if (diff.inHours < 24) return '${diff.inHours}${_tHqCurriculum(context, 'h ago')}';
     return '${diff.inDays}${_tHqCurriculum(context, 'd ago')}';
+  }
+
+  Future<void> _loadCurricula() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() => _curricula = _fallbackCurricula);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await firestoreService.firestore
+            .collection('missions')
+            .orderBy('updatedAt', descending: true)
+            .limit(200)
+            .get();
+      } catch (_) {
+        snapshot = await firestoreService.firestore
+            .collection('missions')
+            .limit(200)
+            .get();
+      }
+
+      final List<_Curriculum> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String title = (data['title'] as String?)?.trim().isNotEmpty == true
+            ? (data['title'] as String).trim()
+            : 'Curriculum';
+
+        final DateTime lastUpdated = _toDateTime(data['updatedAt']) ??
+            _toDateTime(data['createdAt']) ??
+            DateTime.now();
+
+        return _Curriculum(
+          id: doc.id,
+          title: title,
+          pillar: _pillarFromData(data),
+          version: (data['version'] as String?) ?? '1.0',
+          status: _parseCurriculumStatus(data['status'] as String?),
+          lastUpdated: lastUpdated,
+        );
+      }).toList();
+
+      loaded.sort((_Curriculum a, _Curriculum b) =>
+          b.lastUpdated.compareTo(a.lastUpdated));
+
+      if (!mounted) return;
+      setState(() => _curricula = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _curricula = _fallbackCurricula);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _createCurriculum({
+    required String title,
+    required String pillar,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))),
+      );
+      return;
+    }
+
+    try {
+      final String pillarCode = _pillarCodeFromLabel(pillar);
+      await firestoreService.firestore.collection('missions').add(<String, dynamic>{
+        'title': title,
+        'description': title,
+        'pillar': pillar,
+        'pillarCode': pillarCode,
+        'pillarCodes': <String>[pillarCode],
+        'status': 'draft',
+        'version': '1.0',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))),
+      );
+      await _loadCurricula();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Create failed'))),
+      );
+    }
+  }
+
+  _CurriculumStatus _parseCurriculumStatus(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'published':
+      case 'active':
+        return _CurriculumStatus.published;
+      case 'review':
+      case 'in_review':
+      case 'pending_review':
+        return _CurriculumStatus.review;
+      default:
+        return _CurriculumStatus.draft;
+    }
+  }
+
+  String _pillarFromData(Map<String, dynamic> data) {
+    final String? direct = data['pillar'] as String?;
+    if (direct != null && direct.trim().isNotEmpty) {
+      return direct.trim();
+    }
+    final String? pillarCode = data['pillarCode'] as String?;
+    if (pillarCode != null && pillarCode.trim().isNotEmpty) {
+      return _pillarLabelFromCode(pillarCode);
+    }
+    final List<dynamic> pillarCodes = (data['pillarCodes'] as List?) ?? <dynamic>[];
+    if (pillarCodes.isNotEmpty) {
+      return _pillarLabelFromCode(pillarCodes.first.toString());
+    }
+    return 'Future Skills';
+  }
+
+  String _pillarLabelFromCode(String raw) {
+    final String code = raw.trim().toUpperCase();
+    switch (code) {
+      case 'LEAD':
+      case 'LEADERSHIP':
+        return 'Leadership & Agency';
+      case 'IMP':
+      case 'IMPACT':
+        return 'Impact & Innovation';
+      default:
+        return 'Future Skills';
+    }
+  }
+
+  String _pillarCodeFromLabel(String label) {
+    final String value = label.trim().toLowerCase();
+    if (value.contains('leadership')) return 'LEAD';
+    if (value.contains('impact')) return 'IMP';
+    return 'FS';
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }
