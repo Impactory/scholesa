@@ -61,6 +61,23 @@ async function handleRequest(req, res) {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+    if (req.method === 'GET' && url.pathname === '/') {
+      sendJson(res, 200, {
+        ok: true,
+        service: 'scholesa-compliance',
+        message: 'Service is running',
+        endpoints: [
+          'GET /',
+          'GET /healthz',
+          'GET /compliance/status',
+          'POST /compliance/run',
+          'GET /compliance/report/:reportId',
+          'POST /compliance/remediate',
+        ],
+      });
+      return;
+    }
+
     if (req.method === 'GET' && url.pathname === '/healthz') {
       sendJson(res, 200, { ok: true, service: 'scholesa-compliance' });
       return;
@@ -130,6 +147,7 @@ async function handleRequest(req, res) {
       error: 'not_found',
       message: 'Unknown endpoint',
       endpoints: [
+        'GET /',
         'GET /healthz',
         'GET /compliance/status',
         'POST /compliance/run',
