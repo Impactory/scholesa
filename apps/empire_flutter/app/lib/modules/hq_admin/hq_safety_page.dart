@@ -72,32 +72,7 @@ class _SafetyIncident {
 }
 
 class _HqSafetyPageState extends State<HqSafetyPage> {
-  final List<_SafetyIncident> _fallbackIncidents = <_SafetyIncident>[
-    _SafetyIncident(
-      id: '1',
-      title: 'Medical emergency - handled',
-      site: 'Downtown Studio',
-      severity: _Severity.critical,
-      reportedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      isEscalated: true,
-    ),
-    _SafetyIncident(
-      id: '2',
-      title: 'Minor bump during play',
-      site: 'Westside Campus',
-      severity: _Severity.minor,
-      reportedAt: DateTime.now().subtract(const Duration(days: 1)),
-      isEscalated: false,
-    ),
-    _SafetyIncident(
-      id: '3',
-      title: 'Behavioral concern',
-      site: 'Downtown Studio',
-      severity: _Severity.major,
-      reportedAt: DateTime.now().subtract(const Duration(days: 2)),
-      isEscalated: true,
-    ),
-  ];
+  final List<_SafetyIncident> _fallbackIncidents = <_SafetyIncident>[];
   List<_SafetyIncident> _incidents = <_SafetyIncident>[];
   bool _isLoading = false;
 

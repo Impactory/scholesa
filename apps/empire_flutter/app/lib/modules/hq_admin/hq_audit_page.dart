@@ -78,41 +78,7 @@ class _AuditLog {
 }
 
 class _HqAuditPageState extends State<HqAuditPage> {
-  final List<_AuditLog> _fallbackAuditLogs = <_AuditLog>[
-    _AuditLog(
-      id: '1',
-      action: 'User Login',
-      category: _AuditCategory.auth,
-      actor: 'admin@scholesa.io',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-      details: 'Successful login from web client',
-      ipAddress: '192.168.1.100',
-    ),
-    _AuditLog(
-      id: '2',
-      action: 'Role Changed',
-      category: _AuditCategory.admin,
-      actor: 'admin@scholesa.io',
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      details: 'Changed user jane@school.edu role from educator to site_lead',
-    ),
-    _AuditLog(
-      id: '3',
-      action: 'Data Export',
-      category: _AuditCategory.data,
-      actor: 'reports@scholesa.io',
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      details: 'Exported learner progress report for Site: Downtown',
-    ),
-    _AuditLog(
-      id: '4',
-      action: 'Config Update',
-      category: _AuditCategory.system,
-      actor: 'system',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      details: 'Feature flag "new_dashboard" enabled globally',
-    ),
-  ];
+  final List<_AuditLog> _fallbackAuditLogs = <_AuditLog>[];
   List<_AuditLog> _auditLogs = <_AuditLog>[];
   bool _isLoading = false;
 

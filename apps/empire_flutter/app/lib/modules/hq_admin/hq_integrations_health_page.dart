@@ -48,56 +48,7 @@ class HqIntegrationsHealthPage extends StatefulWidget {
 }
 
 class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
-  final List<_SiteIntegration> _fallbackSites = <_SiteIntegration>[
-    const _SiteIntegration(
-      siteId: 'site-1',
-      siteName: 'Downtown Studio',
-      integrations: <_Integration>[
-        _Integration(
-            name: 'Google Classroom',
-            providerKey: 'google_classroom',
-          siteId: 'site-1',
-            status: _Status.healthy,
-            lastSyncAt: null),
-        _Integration(
-            name: 'GitHub',
-            providerKey: 'github',
-          siteId: 'site-1',
-            status: _Status.healthy,
-            lastSyncAt: null),
-      ],
-    ),
-    const _SiteIntegration(
-      siteId: 'site-2',
-      siteName: 'Westside Campus',
-      integrations: <_Integration>[
-        _Integration(
-            name: 'Google Classroom',
-            providerKey: 'google_classroom',
-          siteId: 'site-2',
-            status: _Status.warning,
-            lastSyncAt: null),
-        _Integration(
-            name: 'Canvas LMS',
-            providerKey: 'canvas',
-          siteId: 'site-2',
-            status: _Status.healthy,
-            lastSyncAt: null),
-      ],
-    ),
-    const _SiteIntegration(
-      siteId: 'site-3',
-      siteName: 'North Branch',
-      integrations: <_Integration>[
-        _Integration(
-            name: 'Google Classroom',
-            providerKey: 'google_classroom',
-          siteId: 'site-3',
-            status: _Status.error,
-            lastSyncAt: null),
-      ],
-    ),
-  ];
+  final List<_SiteIntegration> _fallbackSites = <_SiteIntegration>[];
   List<_SiteIntegration> _sites = <_SiteIntegration>[];
   bool _isLoading = false;
 

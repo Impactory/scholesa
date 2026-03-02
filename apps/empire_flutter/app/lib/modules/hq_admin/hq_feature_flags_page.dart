@@ -64,44 +64,7 @@ class _FeatureFlag {
 }
 
 class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
-  final List<_FeatureFlag> _fallbackFlags = <_FeatureFlag>[
-    _FeatureFlag(
-      id: '1',
-      name: 'new_dashboard',
-      description: 'Enable redesigned dashboard layout with improved metrics',
-      isEnabled: true,
-      scope: 'global',
-    ),
-    _FeatureFlag(
-      id: '2',
-      name: 'ai_reflections',
-      description: 'Enable AI-powered reflection prompts for learners',
-      isEnabled: true,
-      scope: 'global',
-    ),
-    _FeatureFlag(
-      id: '3',
-      name: 'github_integration',
-      description: 'Enable GitHub classroom integration for coding missions',
-      isEnabled: false,
-      scope: 'site',
-      enabledSites: <String>['Downtown Studio', 'Tech Campus'],
-    ),
-    _FeatureFlag(
-      id: '4',
-      name: 'parent_portfolio_view',
-      description: 'Allow parents to view detailed learner portfolios',
-      isEnabled: true,
-      scope: 'global',
-    ),
-    _FeatureFlag(
-      id: '5',
-      name: 'beta_missions',
-      description: 'Show beta missions to selected educators',
-      isEnabled: false,
-      scope: 'user',
-    ),
-  ];
+  final List<_FeatureFlag> _fallbackFlags = <_FeatureFlag>[];
   List<_FeatureFlag> _flags = <_FeatureFlag>[];
   bool _isLoading = false;
 
