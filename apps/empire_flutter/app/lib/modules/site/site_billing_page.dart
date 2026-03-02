@@ -2,17 +2,46 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteBillingEs = <String, String>{
+  'Site Billing': 'Facturación del sitio',
+  'Pro Plan': 'Plan Pro',
+  'Active': 'Activo',
+  'Next billing date': 'Próxima fecha de cobro',
+  'Manage Plan': 'Gestionar plan',
+  'Current Usage': 'Uso actual',
+  'Active Learners': 'Estudiantes activos',
+  'Educators': 'Educadores',
+  'Storage Used': 'Almacenamiento usado',
+  'Recent Invoices': 'Facturas recientes',
+  'View All': 'Ver todo',
+  'Paid': 'Pagada',
+  'Pending': 'Pendiente',
+  'Manage Site Plan': 'Gestionar plan del sitio',
+  'Review current usage, upgrade limits, or contact HQ billing support.':
+      'Revisa el uso actual, amplía límites o contacta al equipo de facturación HQ.',
+  'Close': 'Cerrar',
+  'Plan management request submitted': 'Solicitud de gestión de plan enviada',
+  'Request Change': 'Solicitar cambio',
+  'All Invoices': 'Todas las facturas',
+};
+
 /// Site billing page
 /// Based on docs/13_PAYMENTS_BILLING_SPEC.md
 class SiteBillingPage extends StatelessWidget {
   const SiteBillingPage({super.key});
+
+  String _t(BuildContext context, String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _siteBillingEs[input] ?? input;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Site Billing'),
+        title: Text(_t(context, 'Site Billing')),
         backgroundColor: ScholesaColors.billingGradient.colors.first,
         foregroundColor: Colors.white,
       ),
@@ -23,7 +52,7 @@ class SiteBillingPage extends StatelessWidget {
           children: <Widget>[
             _buildSubscriptionCard(context),
             const SizedBox(height: 24),
-            _buildUsageSection(),
+            _buildUsageSection(context),
             const SizedBox(height: 24),
             _buildRecentInvoices(context),
           ],
@@ -53,8 +82,8 @@ class SiteBillingPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Text(
-                'Pro Plan',
+              Text(
+                _t(context, 'Pro Plan'),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -68,8 +97,8 @@ class SiteBillingPage extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Active',
+                child: Text(
+                  _t(context, 'Active'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -97,7 +126,7 @@ class SiteBillingPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Next billing date',
+                    _t(context, 'Next billing date'),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.7),
@@ -129,7 +158,7 @@ class SiteBillingPage extends StatelessWidget {
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white54),
                 ),
-                child: const Text('Manage Plan'),
+                child: Text(_t(context, 'Manage Plan')),
               ),
             ],
           ),
@@ -138,12 +167,12 @@ class SiteBillingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildUsageSection() {
+  Widget _buildUsageSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'Current Usage',
+        Text(
+          _t(context, 'Current Usage'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -159,11 +188,11 @@ class SiteBillingPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: <Widget>[
-                _buildUsageRow('Active Learners', 45, 100),
+                _buildUsageRow(_t(context, 'Active Learners'), 45, 100),
                 const SizedBox(height: 16),
-                _buildUsageRow('Educators', 8, 15),
+                _buildUsageRow(_t(context, 'Educators'), 8, 15),
                 const SizedBox(height: 16),
-                _buildUsageRow('Storage Used', 2.5, 10, unit: 'GB'),
+                _buildUsageRow(_t(context, 'Storage Used'), 2.5, 10, unit: 'GB'),
               ],
             ),
           ),
@@ -224,8 +253,8 @@ class SiteBillingPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            const Text(
-              'Recent Invoices',
+            Text(
+              _t(context, 'Recent Invoices'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -244,7 +273,7 @@ class SiteBillingPage extends StatelessWidget {
                 );
                 _showAllInvoices(context);
               },
-              child: const Text('View All'),
+              child: Text(_t(context, 'View All')),
             ),
           ],
         ),
@@ -255,11 +284,11 @@ class SiteBillingPage extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: <Widget>[
-              _buildInvoiceRow('INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
+              _buildInvoiceRow(context, 'INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
               const Divider(height: 1),
-              _buildInvoiceRow('INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
+              _buildInvoiceRow(context, 'INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
               const Divider(height: 1),
-              _buildInvoiceRow('INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
+              _buildInvoiceRow(context, 'INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
             ],
           ),
         ),
@@ -267,7 +296,7 @@ class SiteBillingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInvoiceRow(String id, String date, String amount, bool paid) {
+  Widget _buildInvoiceRow(BuildContext context, String id, String date, String amount, bool paid) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -292,7 +321,7 @@ class SiteBillingPage extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           Text(
-            paid ? 'Paid' : 'Pending',
+            paid ? _t(context, 'Paid') : _t(context, 'Pending'),
             style: TextStyle(
               fontSize: 12,
               color: paid ? Colors.green : Colors.orange,
@@ -307,9 +336,9 @@ class SiteBillingPage extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Manage Site Plan'),
-        content: const Text(
-          'Review current usage, upgrade limits, or contact HQ billing support.',
+        title: Text(_t(context, 'Manage Site Plan')),
+        content: Text(
+          _t(context, 'Review current usage, upgrade limits, or contact HQ billing support.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -324,7 +353,7 @@ class SiteBillingPage extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_t(context, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -338,13 +367,13 @@ class SiteBillingPage extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Plan management request submitted'),
+                SnackBar(
+                  content: Text(_t(context, 'Plan management request submitted')),
                   backgroundColor: ScholesaColors.hq,
                 ),
               );
             },
-            child: const Text('Request Change'),
+            child: Text(_t(context, 'Request Change')),
           ),
         ],
       ),
@@ -371,16 +400,16 @@ class SiteBillingPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           shrinkWrap: true,
           children: <Widget>[
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: Text(
-                'All Invoices',
+                _t(context, 'All Invoices'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            _buildInvoiceRow('INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
-            _buildInvoiceRow('INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
-            _buildInvoiceRow('INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
+            _buildInvoiceRow(context, 'INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
+            _buildInvoiceRow(context, 'INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
+            _buildInvoiceRow(context, 'INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
           ],
         ),
       ),
