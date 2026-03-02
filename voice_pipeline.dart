@@ -1,6 +1,6 @@
 import 'dart:async';
 import './bos_engine.dart';
-import './event_types.dart';
+import './telemetry_models.dart';
 import './safety_guard.dart';
 
 enum VoiceStatus { idle, listening, processing, speaking }

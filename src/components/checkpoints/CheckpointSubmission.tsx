@@ -164,7 +164,7 @@ export function CheckpointSubmission({
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Questions (mock - would be dynamic in real app) */}
+        {/* Questions generated from required skills */}
         {requiredSkills.map((skill, index) => (
           <div key={skill}>
             <label htmlFor={`q${index}`} className="block text-sm font-medium text-gray-700 mb-1">
