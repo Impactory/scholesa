@@ -20,6 +20,8 @@ const Map<String, String> _parentPortfolioEs = <String, String>{
   'Sharing...': 'Compartiendo...',
   'Share': 'Compartir',
   'Download': 'Descargar',
+  'activity': 'actividad',
+  'Completed by': 'Completado por',
 };
 
 /// Parent portfolio page for viewing learner's work and achievements
@@ -378,13 +380,15 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         items.add(
           _PortfolioItem(
             id: '${learner.learnerId}-${activity.id}',
-            title: activity.title.isEmpty ? '${learner.learnerName} activity' : activity.title,
+            title: activity.title.isEmpty
+                ? '${learner.learnerName} ${_t('activity')}'
+                : activity.title,
             pillar: pillar,
             type: itemType,
             completedAt: activity.timestamp,
             imageUrl: null,
             description: activity.description.isEmpty
-                ? 'Completed by ${learner.learnerName}'
+                ? '${_t('Completed by')} ${learner.learnerName}'
                 : activity.description,
           ),
         );
