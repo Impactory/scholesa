@@ -144,13 +144,19 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Provisioning'),
+        title: Text(_tProvisioning(context, 'Provisioning')),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const <Widget>[
-            Tab(icon: Icon(Icons.child_care), text: 'Learners'),
-            Tab(icon: Icon(Icons.family_restroom), text: 'Parents'),
-            Tab(icon: Icon(Icons.link), text: 'Links'),
+          tabs: <Widget>[
+            Tab(
+                icon: const Icon(Icons.child_care),
+                text: _tProvisioning(context, 'Learners')),
+            Tab(
+                icon: const Icon(Icons.family_restroom),
+                text: _tProvisioning(context, 'Parents')),
+            Tab(
+                icon: const Icon(Icons.link),
+                text: _tProvisioning(context, 'Links')),
           ],
         ),
       ),
@@ -259,10 +265,11 @@ class _LearnersTab extends StatelessWidget {
         final List<LearnerProfile> learners = service.learners;
 
         if (learners.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.child_care,
-            title: 'No learners yet',
-            message: 'Add learners to your site to get started.',
+            title: _tProvisioning(context, 'No learners yet'),
+            message: _tProvisioning(
+                context, 'Add learners to your site to get started.'),
           );
         }
 
@@ -296,7 +303,8 @@ class _LearnersTab extends StatelessWidget {
                   ),
                   title: Text(learner.displayName),
                   subtitle: learner.gradeLevel != null
-                      ? Text('Grade ${learner.gradeLevel}')
+                      ? Text(
+                        '${_tProvisioning(context, 'Grade')} ${learner.gradeLevel}')
                       : null,
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
@@ -329,7 +337,7 @@ class _LearnersTab extends StatelessWidget {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('Edit Learner'),
+            title: Text(_tProvisioning(context, 'Edit Learner')),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -349,7 +357,7 @@ class _LearnersTab extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.link),
-            title: const Text('Manage Guardian Links'),
+            title: Text(_tProvisioning(context, 'Manage Guardian Links')),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -388,10 +396,11 @@ class _ParentsTab extends StatelessWidget {
         final List<ParentProfile> parents = service.parents;
 
         if (parents.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.family_restroom,
-            title: 'No parents yet',
-            message: 'Add parent accounts to link with learners.',
+            title: _tProvisioning(context, 'No parents yet'),
+            message: _tProvisioning(
+                context, 'Add parent accounts to link with learners.'),
           );
         }
 
@@ -460,7 +469,7 @@ class _ParentsTab extends StatelessWidget {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('Edit Parent'),
+            title: Text(_tProvisioning(context, 'Edit Parent')),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -480,7 +489,7 @@ class _ParentsTab extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.link),
-            title: const Text('Manage Learner Links'),
+            title: Text(_tProvisioning(context, 'Manage Learner Links')),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -519,10 +528,11 @@ class _LinksTab extends StatelessWidget {
         final List<GuardianLink> links = service.guardianLinks;
 
         if (links.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.link,
-            title: 'No guardian links',
-            message: 'Link parents to learners to enable family access.',
+            title: _tProvisioning(context, 'No guardian links'),
+            message: _tProvisioning(
+                context, 'Link parents to learners to enable family access.'),
           );
         }
 
@@ -565,7 +575,7 @@ class _LinksTab extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Primary',
+                            _tProvisioning(context, 'Primary'),
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.green[800],
