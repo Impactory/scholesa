@@ -86,40 +86,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   late TabController _tabController;
   bool _isLoading = false;
 
-  final List<_Curriculum> _fallbackCurricula = <_Curriculum>[
-    _Curriculum(
-      id: '1',
-      title: 'AI Fundamentals',
-      pillar: 'Future Skills',
-      version: '2.0',
-      status: _CurriculumStatus.published,
-      lastUpdated: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    _Curriculum(
-      id: '2',
-      title: 'Leadership Essentials',
-      pillar: 'Leadership & Agency',
-      version: '1.5',
-      status: _CurriculumStatus.published,
-      lastUpdated: DateTime.now().subtract(const Duration(days: 30)),
-    ),
-    _Curriculum(
-      id: '3',
-      title: 'Community Impact Projects',
-      pillar: 'Impact & Innovation',
-      version: '3.0',
-      status: _CurriculumStatus.review,
-      lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    _Curriculum(
-      id: '4',
-      title: 'Robotics Intro',
-      pillar: 'Future Skills',
-      version: '1.0-beta',
-      status: _CurriculumStatus.draft,
-      lastUpdated: DateTime.now().subtract(const Duration(hours: 6)),
-    ),
-  ];
+  final List<_Curriculum> _fallbackCurricula = <_Curriculum>[];
   List<_Curriculum> _curricula = <_Curriculum>[];
 
   @override

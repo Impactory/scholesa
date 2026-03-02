@@ -78,44 +78,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   late TabController _tabController;
   bool _isLoading = false;
 
-  final List<_ApprovalItem> _fallbackApprovals = <_ApprovalItem>[
-    _ApprovalItem(
-      id: '1',
-      title: 'New Partner: TechEd Solutions',
-      type: _ApprovalType.partnerContract,
-      submittedBy: 'Site Lead - Downtown',
-      submittedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      status: _ApprovalStatus.pending,
-      sourceCollection: 'partnerContracts',
-    ),
-    _ApprovalItem(
-      id: '2',
-      title: 'Payout Request: TechEd Solutions (Q1)',
-      type: _ApprovalType.payout,
-      submittedBy: 'Finance Ops',
-      submittedAt: DateTime.now().subtract(const Duration(hours: 18)),
-      status: _ApprovalStatus.pending,
-      sourceCollection: 'payouts',
-    ),
-    _ApprovalItem(
-      id: '3',
-      title: 'Curriculum: AI Fundamentals v2.0',
-      type: _ApprovalType.curriculum,
-      submittedBy: 'Curriculum Team',
-      submittedAt: DateTime.now().subtract(const Duration(days: 1)),
-      status: _ApprovalStatus.pending,
-      sourceCollection: 'missions',
-    ),
-    _ApprovalItem(
-      id: '4',
-      title: 'Role Change: Jane D. → Site Lead',
-      type: _ApprovalType.userRole,
-      submittedBy: 'HR Admin',
-      submittedAt: DateTime.now().subtract(const Duration(days: 2)),
-      status: _ApprovalStatus.approved,
-      sourceCollection: 'users',
-    ),
-  ];
+  final List<_ApprovalItem> _fallbackApprovals = <_ApprovalItem>[];
   List<_ApprovalItem> _approvals = <_ApprovalItem>[];
 
   @override

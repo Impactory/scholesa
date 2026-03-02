@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -52,6 +56,8 @@ const Map<String, String> _hqBillingEs = <String, String>{
   'active': 'activa',
   'paused': 'pausada',
   'cancelled': 'cancelada',
+  'Loading...': 'Cargando...',
+  'No records found': 'No se encontraron registros',
 };
 
 String _tHqBilling(BuildContext context, String input) {
@@ -73,11 +79,21 @@ class _HqBillingPageState extends State<HqBillingPage>
   late TabController _tabController;
   String _selectedSite = 'all';
   String _selectedPeriod = 'month';
+  bool _isLoading = false;
+  List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
+    const _SiteFilterOption(id: 'all', label: 'All Sites'),
+  ];
+  List<Map<String, dynamic>> _invoices = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _payments = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _subscriptions = <Map<String, dynamic>>[];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBillingData();
+    });
   }
 
   @override
@@ -206,16 +222,14 @@ class _HqBillingPageState extends State<HqBillingPage>
                 value: _selectedSite,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(
-                    value: 'all', child: Text(_tHqBilling(context, 'All Sites'))),
-                  DropdownMenuItem<String>(
-                      value: 'sg', child: Text(_tHqBilling(context, 'Singapore'))),
-                  DropdownMenuItem<String>(
-                      value: 'kl', child: Text(_tHqBilling(context, 'Kuala Lumpur'))),
-                  DropdownMenuItem<String>(
-                      value: 'jkt', child: Text(_tHqBilling(context, 'Jakarta'))),
-                ],
+                items: _siteOptions
+                    .map(
+                      (_SiteFilterOption option) => DropdownMenuItem<String>(
+                        value: option.id,
+                        child: Text(_tHqBilling(context, option.label)),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (String? value) {
                   if (value != null) {
                     TelemetryService.instance.logEvent(
@@ -228,6 +242,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                       },
                     );
                     setState(() => _selectedSite = value);
+                    _loadBillingData();
                   }
                 },
               ),
@@ -266,6 +281,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                       },
                     );
                     setState(() => _selectedPeriod = value);
+                    _loadBillingData();
                   }
                 },
               ),
@@ -277,6 +293,30 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   Widget _buildRevenueOverview() {
+    final double totalRevenue =
+        _invoices.fold<double>(0, (double sum, Map<String, dynamic> invoice) {
+      return sum + ((invoice['amount'] as double?) ?? 0);
+    });
+    final double collected =
+        _invoices.where((Map<String, dynamic> invoice) {
+      final String status = (invoice['status'] as String? ?? '').toLowerCase();
+      return status == 'paid' || status == 'approved' || status == 'completed';
+    }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
+      return sum + ((invoice['amount'] as double?) ?? 0);
+    });
+    final double pending =
+        _invoices.where((Map<String, dynamic> invoice) {
+      return (invoice['status'] as String? ?? '').toLowerCase() == 'pending';
+    }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
+      return sum + ((invoice['amount'] as double?) ?? 0);
+    });
+    final double overdue =
+        _invoices.where((Map<String, dynamic> invoice) {
+      return (invoice['status'] as String? ?? '').toLowerCase() == 'overdue';
+    }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
+      return sum + ((invoice['amount'] as double?) ?? 0);
+    });
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -313,8 +353,8 @@ class _HqBillingPageState extends State<HqBillingPage>
                       style: TextStyle(color: Colors.white70),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      r'$124,580',
+                    Text(
+                      _formatCurrency(totalRevenue),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,
@@ -366,7 +406,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 Expanded(
                   child: _RevenueStatCard(
                     label: _tHqBilling(context, 'Collected'),
-                    value: r'$112,430',
+                    value: _formatCurrency(collected),
                     icon: Icons.check_circle,
                   ),
                 ),
@@ -374,7 +414,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 Expanded(
                   child: _RevenueStatCard(
                     label: _tHqBilling(context, 'Pending'),
-                    value: r'$8,650',
+                    value: _formatCurrency(pending),
                     icon: Icons.pending,
                   ),
                 ),
@@ -382,7 +422,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 Expanded(
                   child: _RevenueStatCard(
                     label: _tHqBilling(context, 'Overdue'),
-                    value: r'$3,500',
+                    value: _formatCurrency(overdue),
                     icon: Icons.warning,
                     isAlert: true,
                   ),
@@ -420,109 +460,81 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   Widget _buildInvoicesList() {
-    final List<Map<String, dynamic>> invoices = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'id': 'INV-2024-001',
-        'parent': 'Sarah Johnson',
-        'learner': 'Emma Johnson',
-        'site': 'Singapore',
-        'amount': 450.00,
-        'status': 'paid',
-        'date': 'Dec 1, 2024',
-      },
-      <String, dynamic>{
-        'id': 'INV-2024-002',
-        'parent': 'Michael Chen',
-        'learner': 'Liam Chen',
-        'site': 'Kuala Lumpur',
-        'amount': 380.00,
-        'status': 'pending',
-        'date': 'Dec 5, 2024',
-      },
-      <String, dynamic>{
-        'id': 'INV-2024-003',
-        'parent': 'Ana Martinez',
-        'learner': 'Sofia Martinez',
-        'site': 'Singapore',
-        'amount': 450.00,
-        'status': 'overdue',
-        'date': 'Nov 15, 2024',
-      },
-    ];
-
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_invoices.isEmpty) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'No records found'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: invoices.length,
+      itemCount: _invoices.length,
       itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> invoice = invoices[index];
+        final Map<String, dynamic> invoice = _invoices[index];
         return _InvoiceCard(invoice: invoice);
       },
     );
   }
 
   Widget _buildPaymentsList() {
-    final List<Map<String, dynamic>> payments = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'id': 'PAY-001',
-        'from': 'Sarah Johnson',
-        'method': 'Credit Card',
-        'amount': 450.00,
-        'date': 'Dec 1, 2024',
-        'invoice': 'INV-2024-001',
-      },
-      <String, dynamic>{
-        'id': 'PAY-002',
-        'from': 'David Lee',
-        'method': 'Bank Transfer',
-        'amount': 380.00,
-        'date': 'Nov 28, 2024',
-        'invoice': 'INV-2024-004',
-      },
-    ];
-
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_payments.isEmpty) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'No records found'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: payments.length,
+      itemCount: _payments.length,
       itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> payment = payments[index];
+        final Map<String, dynamic> payment = _payments[index];
         return _PaymentCard(payment: payment);
       },
     );
   }
 
   Widget _buildSubscriptionsList() {
-    final List<Map<String, dynamic>> subscriptions = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'parent': 'Sarah Johnson',
-        'learners': 2,
-        'plan': 'Premium',
-        'amount': 450.00,
-        'status': 'active',
-        'nextBilling': 'Jan 1, 2025',
-      },
-      <String, dynamic>{
-        'parent': 'Michael Chen',
-        'learners': 1,
-        'plan': 'Standard',
-        'amount': 280.00,
-        'status': 'active',
-        'nextBilling': 'Jan 5, 2025',
-      },
-      <String, dynamic>{
-        'parent': 'Ana Martinez',
-        'learners': 1,
-        'plan': 'Premium',
-        'amount': 350.00,
-        'status': 'paused',
-        'nextBilling': '-',
-      },
-    ];
-
+    if (_isLoading) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_subscriptions.isEmpty) {
+      return Center(
+        child: Text(
+          _tHqBilling(context, 'No records found'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: subscriptions.length,
+      itemCount: _subscriptions.length,
       itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> subscription = subscriptions[index];
+        final Map<String, dynamic> subscription = _subscriptions[index];
         return _SubscriptionCard(subscription: subscription);
       },
     );
@@ -592,6 +604,262 @@ class _HqBillingPageState extends State<HqBillingPage>
       ),
     );
   }
+
+  Future<void> _loadBillingData() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
+          await firestoreService.firestore.collection('sites').limit(500).get();
+
+      final List<_SiteFilterOption> siteOptions = <_SiteFilterOption>[
+        const _SiteFilterOption(id: 'all', label: 'All Sites'),
+        ...sitesSnapshot.docs.map((siteDoc) {
+          final Map<String, dynamic> data = siteDoc.data();
+          return _SiteFilterOption(
+            id: siteDoc.id,
+            label: (data['name'] as String?)?.trim().isNotEmpty == true
+                ? (data['name'] as String).trim()
+                : siteDoc.id,
+          );
+        }),
+      ];
+
+      Query<Map<String, dynamic>> payoutsQuery =
+          firestoreService.firestore.collection('payouts');
+      final DateTime now = DateTime.now();
+      final DateTime periodStart = _periodStart(now, _selectedPeriod);
+      try {
+        payoutsQuery = payoutsQuery.where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
+        );
+      } catch (_) {}
+      QuerySnapshot<Map<String, dynamic>> payoutsSnapshot;
+      try {
+        payoutsSnapshot = await payoutsQuery
+            .orderBy('createdAt', descending: true)
+            .limit(500)
+            .get();
+      } catch (_) {
+        payoutsSnapshot = await payoutsQuery.limit(500).get();
+      }
+
+      final Map<String, String> siteNames = <String, String>{
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnapshot.docs)
+          doc.id: (doc.data()['name'] as String?)?.trim().isNotEmpty == true
+              ? (doc.data()['name'] as String).trim()
+              : doc.id,
+      };
+
+      final List<Map<String, dynamic>> allInvoices = <Map<String, dynamic>>[];
+      final List<Map<String, dynamic>> allPayments = <Map<String, dynamic>>[];
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in payoutsSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String siteId = (data['siteId'] as String?) ?? '';
+        final DateTime createdAt = _toDateTime(data['createdAt']) ?? now;
+        if (!_passesFilters(siteId: siteId, timestamp: createdAt)) {
+          continue;
+        }
+        final String status =
+            ((data['status'] as String?) ?? 'pending').toLowerCase();
+        final String siteName = siteNames[siteId] ?? siteId;
+        final double amount = _asDouble(data['amount']) ?? 0;
+        final String parentName = (data['parentName'] as String?) ??
+            (data['requestedBy'] as String?) ??
+            (data['createdBy'] as String?) ??
+            'Unknown';
+        final String learnerName =
+            (data['learnerName'] as String?) ?? (data['learnerId'] as String?) ?? '-';
+        final String dateLabel = _formatDate(createdAt);
+        final String invoiceId = (data['invoiceId'] as String?) ?? doc.id;
+        final String method = (data['paymentMethod'] as String?) ??
+            (data['method'] as String?) ??
+            'Transfer';
+
+        allInvoices.add(<String, dynamic>{
+          'id': invoiceId,
+          'parent': parentName,
+          'learner': learnerName,
+          'site': siteName.isEmpty ? 'Unknown' : siteName,
+          'amount': amount,
+          'status': _invoiceStatusFromPayoutStatus(status),
+          'date': dateLabel,
+        });
+
+        if (status == 'approved' || status == 'paid' || status == 'completed') {
+          allPayments.add(<String, dynamic>{
+            'id': doc.id,
+            'from': parentName,
+            'method': method,
+            'amount': amount,
+            'date': dateLabel,
+            'invoice': invoiceId,
+          });
+        }
+      }
+
+      final List<Map<String, dynamic>> subscriptions = sitesSnapshot.docs
+          .where((QueryDocumentSnapshot<Map<String, dynamic>> siteDoc) {
+        return _selectedSite == 'all' || siteDoc.id == _selectedSite;
+      }).map((QueryDocumentSnapshot<Map<String, dynamic>> siteDoc) {
+        final Map<String, dynamic> siteData = siteDoc.data();
+        final String siteName = (siteData['name'] as String?)?.trim().isNotEmpty == true
+            ? (siteData['name'] as String).trim()
+            : siteDoc.id;
+        final int learners = _asInt(siteData['learnerCount']) ??
+            ((siteData['learnerIds'] as List?)?.length ?? 0);
+        final String plan =
+            (siteData['billingPlan'] as String?)?.trim().isNotEmpty == true
+                ? (siteData['billingPlan'] as String).trim()
+                : 'Standard';
+        final double amount = _asDouble(siteData['monthlyFee']) ?? 0;
+        final String status =
+            ((siteData['billingStatus'] as String?) ?? 'active').toLowerCase();
+        final DateTime? nextBilling = _toDateTime(siteData['nextBillingDate']);
+
+        return <String, dynamic>{
+          'parent': siteName,
+          'learners': learners,
+          'plan': plan,
+          'amount': amount,
+          'status': _normalizeSubscriptionStatus(status),
+          'nextBilling':
+              nextBilling != null ? _formatDate(nextBilling) : '-',
+        };
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _siteOptions = siteOptions;
+        if (!_siteOptions.any((option) => option.id == _selectedSite)) {
+          _selectedSite = 'all';
+        }
+        _invoices = allInvoices;
+        _payments = allPayments;
+        _subscriptions = subscriptions;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _passesFilters({required String siteId, required DateTime timestamp}) {
+    final AppState? appState = _maybeAppState();
+    final List<String> allowedSiteIds = appState?.siteIds ?? <String>[];
+    if (allowedSiteIds.isNotEmpty && siteId.isNotEmpty &&
+        !allowedSiteIds.contains(siteId)) {
+      return false;
+    }
+
+    if (_selectedSite != 'all' && siteId != _selectedSite) {
+      return false;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime start = _periodStart(now, _selectedPeriod);
+    return !timestamp.isBefore(start) && !timestamp.isAfter(now);
+  }
+
+  DateTime _periodStart(DateTime now, String period) {
+    switch (period) {
+      case 'year':
+        return DateTime(now.year, 1, 1);
+      case 'quarter':
+        final int quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
+        return DateTime(now.year, quarterStartMonth, 1);
+      case 'month':
+      default:
+        return DateTime(now.year, now.month, 1);
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  String _formatDate(DateTime value) {
+    const List<String> months = <String>[
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[value.month - 1]} ${value.day}, ${value.year}';
+  }
+
+  String _formatCurrency(double value) {
+    return '\$${value.toStringAsFixed(2)}';
+  }
+
+  String _invoiceStatusFromPayoutStatus(String status) {
+    if (status == 'approved' || status == 'paid' || status == 'completed') {
+      return 'paid';
+    }
+    if (status == 'overdue') return 'overdue';
+    return 'pending';
+  }
+
+  String _normalizeSubscriptionStatus(String status) {
+    switch (status) {
+      case 'active':
+      case 'paused':
+      case 'cancelled':
+        return status;
+      default:
+        return 'active';
+    }
+  }
+}
+
+class _SiteFilterOption {
+  const _SiteFilterOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
 
 class _RevenueStatCard extends StatelessWidget {
