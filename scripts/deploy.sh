@@ -78,7 +78,7 @@ sync_platform_icons() {
 # ── Functions lint + build ─────────────────────────────────────
 functions_build() {
   log "Installing functions dependencies..."
-  (cd "$FUNCTIONS_DIR" && npm ci)
+  (cd "$FUNCTIONS_DIR" && npm ci --no-audit --no-fund --no-update-notifier --loglevel=error)
 
   log "Building functions..."
   (cd "$FUNCTIONS_DIR" && npm run build) || fail "Functions build failed"

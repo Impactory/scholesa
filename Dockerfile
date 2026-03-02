@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package.json package-lock.json ./
 # If you use a workspace or functions folder, copy package-lock there too as needed
-RUN npm ci --silent
+RUN npm ci --no-audit --no-fund --no-update-notifier --loglevel=error
 
 # Copy the rest of the source
 COPY . ./
