@@ -121,7 +121,7 @@ class _HqBillingPageState extends State<HqBillingPage>
         onPressed: _createInvoice,
         backgroundColor: ScholesaColors.hq,
         icon: const Icon(Icons.add),
-        label: const Text('New Invoice'),
+        label: Text(_tHqBilling(context, 'New Invoice')),
       ),
     );
   }
@@ -155,14 +155,14 @@ class _HqBillingPageState extends State<HqBillingPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Billing Management',
+                    _tHqBilling(context, 'Billing Management'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.hq,
                         ),
                   ),
                   Text(
-                    'Invoices, payments & subscriptions',
+                    _tHqBilling(context, 'Invoices, payments & subscriptions'),
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
@@ -203,9 +203,9 @@ class _HqBillingPageState extends State<HqBillingPage>
                 value: _selectedSite,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: const <DropdownMenuItem<String>>[
+                items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                      value: 'all', child: Text('All Sites')),
+                    value: 'all', child: Text(_tHqBilling(context, 'All Sites'))),
                   DropdownMenuItem<String>(
                       value: 'sg', child: Text('Singapore')),
                   DropdownMenuItem<String>(
@@ -243,13 +243,13 @@ class _HqBillingPageState extends State<HqBillingPage>
                 value: _selectedPeriod,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: const <DropdownMenuItem<String>>[
+                items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                      value: 'month', child: Text('This Month')),
+                    value: 'month', child: Text(_tHqBilling(context, 'This Month'))),
                   DropdownMenuItem<String>(
-                      value: 'quarter', child: Text('This Quarter')),
+                    value: 'quarter', child: Text(_tHqBilling(context, 'This Quarter'))),
                   DropdownMenuItem<String>(
-                      value: 'year', child: Text('This Year')),
+                    value: 'year', child: Text(_tHqBilling(context, 'This Year'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -305,8 +305,8 @@ class _HqBillingPageState extends State<HqBillingPage>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Total Revenue',
+                    Text(
+                      _tHqBilling(context, 'Total Revenue'),
                       style: TextStyle(color: Colors.white70),
                     ),
                     const SizedBox(height: 4),
@@ -328,14 +328,14 @@ class _HqBillingPageState extends State<HqBillingPage>
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Icon(Icons.trending_up,
                               size: 14, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
-                            '+18.2% vs last period',
+                            _tHqBilling(context, '+18.2% vs last period'),
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ],
@@ -358,11 +358,11 @@ class _HqBillingPageState extends State<HqBillingPage>
               ],
             ),
             const SizedBox(height: 20),
-            const Row(
+            Row(
               children: <Widget>[
                 Expanded(
                   child: _RevenueStatCard(
-                    label: 'Collected',
+                    label: _tHqBilling(context, 'Collected'),
                     value: r'$112,430',
                     icon: Icons.check_circle,
                   ),
@@ -370,7 +370,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 SizedBox(width: 12),
                 Expanded(
                   child: _RevenueStatCard(
-                    label: 'Pending',
+                    label: _tHqBilling(context, 'Pending'),
                     value: r'$8,650',
                     icon: Icons.pending,
                   ),
@@ -378,7 +378,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                 SizedBox(width: 12),
                 Expanded(
                   child: _RevenueStatCard(
-                    label: 'Overdue',
+                    label: _tHqBilling(context, 'Overdue'),
                     value: r'$3,500',
                     icon: Icons.warning,
                     isAlert: true,
@@ -407,10 +407,10 @@ class _HqBillingPageState extends State<HqBillingPage>
           color: ScholesaColors.hq,
           borderRadius: BorderRadius.circular(12),
         ),
-        tabs: const <Widget>[
-          Tab(text: 'Invoices'),
-          Tab(text: 'Payments'),
-          Tab(text: 'Subscriptions'),
+        tabs: <Widget>[
+          Tab(text: _tHqBilling(context, 'Invoices')),
+          Tab(text: _tHqBilling(context, 'Payments')),
+          Tab(text: _tHqBilling(context, 'Subscriptions')),
         ],
       ),
     );
@@ -554,14 +554,15 @@ class _HqBillingPageState extends State<HqBillingPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Export Financials'),
-        content: const Text(
-          'Generate a consolidated financial report for invoices, payments, and subscriptions.',
+        title: Text(_tHqBilling(context, 'Export Financials')),
+        content: Text(
+          _tHqBilling(context,
+              'Generate a consolidated financial report for invoices, payments, and subscriptions.'),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(_tHqBilling(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -575,13 +576,14 @@ class _HqBillingPageState extends State<HqBillingPage>
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Financial report prepared for export'),
+                SnackBar(
+                  content: Text(
+                      _tHqBilling(context, 'Financial report prepared for export')),
                   backgroundColor: ScholesaColors.hq,
                 ),
               );
             },
-            child: const Text('Export'),
+            child: Text(_tHqBilling(context, 'Export')),
           ),
         ],
       ),
