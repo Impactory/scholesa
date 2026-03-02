@@ -624,16 +624,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             top: false,
             child: Row(
               children: <Widget>[
-                if (_speechAvailable)
+                if (_speechAvailable || _uploadSttAvailable)
                   IconButton(
-                    onPressed: _loading ? null : _toggleListening,
+                    onPressed: (_loading || _isSpeaking) ? null : _toggleListening,
                     icon: Icon(
                       _isListening ? Icons.mic : Icons.mic_none,
                     ),
                     tooltip: _isListening ? 'Stop listening' : 'Use voice input',
                   ),
                 IconButton(
-                  onPressed: _loading
+                  onPressed: (_loading || _isSpeaking)
                       ? null
                       : () {
                           setState(() => _voiceOutputEnabled = !_voiceOutputEnabled);
@@ -650,8 +650,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                 Expanded(
                   child: TextField(
                     controller: _inputController,
+                    enabled: !_isSpeaking,
                     decoration: InputDecoration(
-                      hintText: _modeHint(_selectedMode),
+                      hintText: _isSpeaking ? 'Speaking…' : _modeHint(_selectedMode),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24)),
                       contentPadding: const EdgeInsets.symmetric(
@@ -665,8 +666,32 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                if (_isSpeaking)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Speaking…',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 IconButton.filled(
-                  onPressed: _loading ? null : _sendMessage,
+                  onPressed: (_loading || _isSpeaking) ? null : _sendMessage,
                   icon: _loading
                       ? const SizedBox(
                           width: 20,
