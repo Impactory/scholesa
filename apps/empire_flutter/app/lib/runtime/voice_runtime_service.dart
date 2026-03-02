@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -57,16 +58,20 @@ class VoiceRuntimeService {
 
   static const Duration _timeout = Duration(seconds: 25);
 
-  Future<AiCoachResponse> requestCopilot(VoiceCopilotRequest request) async {
+  Future<String> _requiredIdToken() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('Authentication required for voice copilot request.');
+      throw Exception('Authentication required for voice runtime request.');
     }
-
     final String? idToken = await user.getIdToken();
     if (idToken == null || idToken.isEmpty) {
-      throw Exception('Unable to resolve auth token for voice copilot request.');
+      throw Exception('Unable to resolve auth token for voice runtime request.');
     }
+    return idToken;
+  }
+
+  Future<AiCoachResponse> requestCopilot(VoiceCopilotRequest request) async {
+    final String idToken = await _requiredIdToken();
     final Uri endpoint = _voiceApiUri('/copilot/message');
 
     final http.Response response = await http
@@ -102,6 +107,56 @@ class VoiceRuntimeService {
     });
   }
 
+  Future<TranscribeVoiceResponse> transcribeAudioFile({
+    required String audioFilePath,
+    required String locale,
+    bool partial = false,
+    String? traceId,
+  }) async {
+    final String idToken = await _requiredIdToken();
+    final Uri endpoint = _voiceApiUri('/voice/transcribe');
+
+    final http.MultipartRequest request = http.MultipartRequest('POST', endpoint)
+      ..headers.addAll(<String, String>{
+        'Authorization': 'Bearer $idToken',
+        'x-scholesa-locale': locale,
+      })
+      ..fields['locale'] = locale
+      ..fields['partial'] = partial ? 'true' : 'false';
+
+    if (traceId != null && traceId.isNotEmpty) {
+      request.fields['traceId'] = traceId;
+      request.headers['x-trace-id'] = traceId;
+    }
+
+    final File file = File(audioFilePath);
+    if (!await file.exists()) {
+      throw Exception('Audio file missing for transcription.');
+    }
+
+    request.files.add(await http.MultipartFile.fromPath('audio', audioFilePath));
+
+    final http.StreamedResponse streamed = await request.send().timeout(_timeout);
+    final http.Response response = await http.Response.fromStream(streamed);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Voice transcribe error (${response.statusCode}): ${response.body}');
+    }
+
+    final Map<String, dynamic> json =
+        jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> metadata =
+        json['metadata'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+
+    return TranscribeVoiceResponse(
+      transcript: (json['transcript'] as String?)?.trim() ?? '',
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      traceId: metadata['traceId'] as String?,
+      latencyMs: (metadata['latencyMs'] as num?)?.toInt(),
+      modelVersion: metadata['modelVersion'] as String?,
+      locale: metadata['locale'] as String?,
+    );
+  }
+
   Uri _voiceApiUri(String path) {
     final String projectId = Firebase.app().options.projectId;
     final String cleanedPath = path.startsWith('/') ? path : '/$path';
@@ -109,4 +164,22 @@ class VoiceRuntimeService {
       'https://us-central1-$projectId.cloudfunctions.net/voiceApi$cleanedPath',
     );
   }
+}
+
+class TranscribeVoiceResponse {
+  const TranscribeVoiceResponse({
+    required this.transcript,
+    required this.confidence,
+    this.traceId,
+    this.latencyMs,
+    this.modelVersion,
+    this.locale,
+  });
+
+  final String transcript;
+  final double confidence;
+  final String? traceId;
+  final int? latencyMs;
+  final String? modelVersion;
+  final String? locale;
 }

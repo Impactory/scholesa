@@ -39,6 +39,8 @@ dependencies:
   # Utils
   uuid: ^4.4.2
   http: ^1.2.2
+  audioplayers: ^6.1.0
+  record: ^6.0.0
   speech_to_text: ^7.3.0
   flutter_tts: ^4.2.3
   shared_preferences: ^2.2.3
