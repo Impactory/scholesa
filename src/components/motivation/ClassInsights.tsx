@@ -56,7 +56,7 @@ export function ClassInsights(_props: ClassInsightsProps) {
 
         if (!isMounted) return;
         setRows(nextRows);
-      } catch (_err) {
+      } catch {
         if (!isMounted) return;
         setError('Unable to load class insights right now.');
       } finally {

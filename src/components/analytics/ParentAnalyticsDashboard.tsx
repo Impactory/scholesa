@@ -113,7 +113,6 @@ export function ParentAnalyticsDashboard() {
             const totalFeedbackGiven = Number(analytics.totalFeedbackGiven || 0);
             const totalRecognitionReceived = Number(analytics.totalRecognitionReceived || 0);
             const totalReflections = Number(analytics.totalReflections || 0);
-            const totalSessionsCompleted = Number(analytics.totalSessionsCompleted || 0);
 
             autonomyScore = clampPercent((totalMissionsSelected + totalReflections) * 8);
             competenceScore = clampPercent((totalEvidenceSubmitted + totalCheckpointsPassed) * 7);

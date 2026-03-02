@@ -49,7 +49,7 @@ export function MotivationNudges(_props: MotivationNudgesProps) {
         if (!isMounted) return;
         setChoices(missionChoices.slice(0, maxNudges));
         setMilestones(dashboard.nextMilestones.slice(0, Math.max(1, maxNudges - 1)));
-      } catch (_err) {
+      } catch {
         if (!isMounted) return;
         setError('Unable to load nudges right now.');
       } finally {

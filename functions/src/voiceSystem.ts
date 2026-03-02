@@ -1280,10 +1280,10 @@ function extractInternalLlmPayload(data: unknown): {
     firstMessage?.content,
   );
   const toolCandidates = [
-    ...(Array.isArray(root?.toolSuggestions) ? root?.toolSuggestions : []),
-    ...(Array.isArray(root?.tools) ? root?.tools : []),
-    ...(Array.isArray(response?.toolSuggestions) ? response?.toolSuggestions : []),
-    ...(Array.isArray(response?.tools) ? response?.tools : []),
+    ...((Array.isArray(root?.toolSuggestions) ? root?.toolSuggestions : []) as unknown[]),
+    ...((Array.isArray(root?.tools) ? root?.tools : []) as unknown[]),
+    ...((Array.isArray(response?.toolSuggestions) ? response?.toolSuggestions : []) as unknown[]),
+    ...((Array.isArray(response?.tools) ? response?.tools : []) as unknown[]),
   ];
   const toolSuggestions = dedupeStrings(
     toolCandidates

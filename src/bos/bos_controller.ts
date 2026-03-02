@@ -15,8 +15,8 @@ export class BosController {
   constructor(
     emitter: TelemetryEmitter,
     gradeBand: '1-3' | '4-6' | '7-9' | '10-12',
-    learnerId: string,
-    deviceId: string
+    _learnerId: string,
+    _deviceId: string
   ) {
     this.emitter = emitter;
     this.stateMachine = new BOSStateMachine();
