@@ -5,6 +5,28 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
+const Map<String, String> _educatorLearnersEs = <String, String>{
+  'My Learners': 'Mis estudiantes',
+  'Track progress and engagement': 'Sigue progreso y compromiso',
+  'Search learners...': 'Buscar estudiantes...',
+  'All Sessions': 'Todas las sesiones',
+  'Total Learners': 'Total de estudiantes',
+  'Active Today': 'Activos hoy',
+  'ACTIVE': 'ACTIVO',
+  'Pillar Progress': 'Progreso por pilar',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Message': 'Mensaje',
+  'Full Profile': 'Perfil completo',
+};
+
+String _tEducatorLearners(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorLearnersEs[input] ?? input;
+}
+
 /// Educator Learners Page - View and manage learner roster
 class EducatorLearnersPage extends StatefulWidget {
   const EducatorLearnersPage({super.key});
@@ -118,14 +140,14 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'My Learners',
+                    _tEducatorLearners(context, 'My Learners'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.educator,
                         ),
                   ),
                   Text(
-                    'Track progress and engagement',
+                    _tEducatorLearners(context, 'Track progress and engagement'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -157,7 +179,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
           setState(() => _searchQuery = value);
         },
         decoration: InputDecoration(
-          hintText: 'Search learners...',
+          hintText: _tEducatorLearners(context, 'Search learners...'),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -199,7 +221,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
         child: Row(
           children: <Widget>[
             _FilterChip(
-              label: 'All Sessions',
+              label: _tEducatorLearners(context, 'All Sessions'),
               isSelected: _selectedSession == 'all',
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -256,7 +278,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             child: _StatCard(
               icon: Icons.people,
               value: totalLearners.toString(),
-              label: 'Total Learners',
+              label: _tEducatorLearners(context, 'Total Learners'),
               color: ScholesaColors.educator,
             ),
           ),
@@ -265,7 +287,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             child: _StatCard(
               icon: Icons.check_circle,
               value: activeToday.toString(),
-              label: 'Active Today',
+              label: _tEducatorLearners(context, 'Active Today'),
               color: ScholesaColors.success,
             ),
           ),
@@ -375,9 +397,9 @@ class _LearnerCard extends StatelessWidget {
                                     .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Text(
-                                'ACTIVE',
-                                style: TextStyle(
+                              child: Text(
+                                _tEducatorLearners(context, 'ACTIVE'),
+                                style: const TextStyle(
                                   color: ScholesaColors.success,
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
@@ -619,25 +641,25 @@ class _LearnerDetailSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Pillar Progress',
+                  Text(
+                    _tEducatorLearners(context, 'Pillar Progress'),
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
                   _ProgressBar(
-                    label: 'Future Skills',
+                    label: _tEducatorLearners(context, 'Future Skills'),
                     progress: learner.futureSkillsProgress,
                     color: ScholesaColors.futureSkills,
                   ),
                   const SizedBox(height: 8),
                   _ProgressBar(
-                    label: 'Leadership',
+                    label: _tEducatorLearners(context, 'Leadership'),
                     progress: learner.leadershipProgress,
                     color: ScholesaColors.leadership,
                   ),
                   const SizedBox(height: 8),
                   _ProgressBar(
-                    label: 'Impact',
+                    label: _tEducatorLearners(context, 'Impact'),
                     progress: learner.impactProgress,
                     color: ScholesaColors.impact,
                   ),
@@ -659,7 +681,7 @@ class _LearnerDetailSheet extends StatelessWidget {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.message),
-                          label: const Text('Message'),
+                          label: Text(_tEducatorLearners(context, 'Message')),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: ScholesaColors.educator,
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -687,7 +709,7 @@ class _LearnerDetailSheet extends StatelessWidget {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.assignment),
-                          label: const Text('Full Profile'),
+                          label: Text(_tEducatorLearners(context, 'Full Profile')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: ScholesaColors.educator,
                             padding: const EdgeInsets.symmetric(vertical: 14),

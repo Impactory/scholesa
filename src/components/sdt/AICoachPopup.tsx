@@ -543,16 +543,12 @@ Guidance: ${
     return (
       <button
         onClick={handleOpenPopup}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50 group"
+        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
         aria-label={t('aiCoach.openAria')}
+        title={t('aiCoach.tooltip')}
       >
         <MessageCircleIcon className="w-8 h-8 text-white" />
         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-        
-        {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-lg bg-black/90 px-3 py-2 text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {t('aiCoach.tooltip')}
-        </div>
       </button>
     );
   }

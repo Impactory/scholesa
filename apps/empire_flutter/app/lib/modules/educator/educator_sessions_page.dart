@@ -5,6 +5,43 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
+const Map<String, String> _educatorSessionsEs = <String, String>{
+  'New Session': 'Nueva sesión',
+  'My Sessions': 'Mis sesiones',
+  'Manage your teaching schedule': 'Gestiona tu horario de enseñanza',
+  'Upcoming': 'Próximas',
+  'Ongoing': 'En curso',
+  'Past': 'Pasadas',
+  'All': 'Todas',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Failed to create session': 'No se pudo crear la sesión',
+  'Session created and added to your list':
+      'Sesión creada y agregada a tu lista',
+  'Create Session': 'Crear sesión',
+  'Session title': 'Título de la sesión',
+  'Title is required': 'El título es obligatorio',
+  'Description (optional)': 'Descripción (opcional)',
+  'Location (optional)': 'Ubicación (opcional)',
+  'Pillar': 'Pilar',
+  'Cancel': 'Cancelar',
+  'Create': 'Crear',
+  'learners enrolled': 'estudiantes inscritos',
+  'Enrolled': 'Inscritos',
+  'Schedule': 'Horario',
+  'Substitute request submitted for approval':
+      'Solicitud de sustituto enviada para aprobación',
+  'Request Substitute': 'Solicitar sustituto',
+  'View Full Details': 'Ver detalles completos',
+};
+
+String _tEducatorSessions(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorSessionsEs[input] ?? input;
+}
+
 /// Educator Sessions Page - Manage and view all sessions
 class EducatorSessionsPage extends StatefulWidget {
   const EducatorSessionsPage({super.key});
@@ -127,7 +164,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         onPressed: _createNewSession,
         backgroundColor: ScholesaColors.educator,
         icon: const Icon(Icons.add),
-        label: const Text('New Session'),
+        label: Text(_tEducatorSessions(context, 'New Session')),
       ),
     );
   }
@@ -161,14 +198,14 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'My Sessions',
+                    _tEducatorSessions(context, 'My Sessions'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.educator,
                         ),
                   ),
                   Text(
-                    'Manage your teaching schedule',
+                    _tEducatorSessions(context, 'Manage your teaching schedule'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -207,10 +244,10 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
           ),
           labelColor: Colors.white,
           unselectedLabelColor: Colors.grey[600],
-          tabs: const <Widget>[
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Ongoing'),
-            Tab(text: 'Past'),
+          tabs: <Widget>[
+            Tab(text: _tEducatorSessions(context, 'Upcoming')),
+            Tab(text: _tEducatorSessions(context, 'Ongoing')),
+            Tab(text: _tEducatorSessions(context, 'Past')),
           ],
         ),
       ),
@@ -225,7 +262,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         child: Row(
           children: <Widget>[
             _FilterChip(
-              label: 'All',
+              label: _tEducatorSessions(context, 'All'),
               isSelected: _filterStatus == 'all',
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -240,7 +277,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Future Skills',
+              label: _tEducatorSessions(context, 'Future Skills'),
               isSelected: _filterStatus == 'future_skills',
               color: ScholesaColors.futureSkills,
               onTap: () {
@@ -256,7 +293,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Leadership',
+              label: _tEducatorSessions(context, 'Leadership'),
               isSelected: _filterStatus == 'leadership',
               color: ScholesaColors.leadership,
               onTap: () {
@@ -272,7 +309,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Impact',
+              label: _tEducatorSessions(context, 'Impact'),
               isSelected: _filterStatus == 'impact',
               color: ScholesaColors.impact,
               onTap: () {
@@ -392,15 +429,15 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
 
     if (created == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to create session')),
+        SnackBar(content: Text(service.error ?? _tEducatorSessions(context, 'Failed to create session'))),
       );
       return;
     }
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Session created and added to your list'),
+      SnackBar(
+        content: Text(_tEducatorSessions(context, 'Session created and added to your list')),
         backgroundColor: ScholesaColors.success,
       ),
     );
@@ -409,7 +446,7 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Create Session'),
+      title: Text(_tEducatorSessions(context, 'Create Session')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -417,40 +454,42 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
           children: <Widget>[
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Session title'),
+              decoration: InputDecoration(labelText: _tEducatorSessions(context, 'Session title')),
               validator: (String? value) =>
                   value == null || value.trim().isEmpty
-                      ? 'Title is required'
+                      ? _tEducatorSessions(context, 'Title is required')
                       : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descriptionController,
-              decoration:
-                  const InputDecoration(labelText: 'Description (optional)'),
+              decoration: InputDecoration(
+                labelText: _tEducatorSessions(context, 'Description (optional)'),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _locationController,
-              decoration:
-                  const InputDecoration(labelText: 'Location (optional)'),
+              decoration: InputDecoration(
+                labelText: _tEducatorSessions(context, 'Location (optional)'),
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _pillar,
-              decoration: const InputDecoration(labelText: 'Pillar'),
-              items: const <DropdownMenuItem<String>>[
+              decoration: InputDecoration(labelText: _tEducatorSessions(context, 'Pillar')),
+              items: <DropdownMenuItem<String>>[
                 DropdownMenuItem<String>(
                   value: 'Future Skills',
-                  child: Text('Future Skills'),
+                  child: Text(_tEducatorSessions(context, 'Future Skills')),
                 ),
                 DropdownMenuItem<String>(
                   value: 'Leadership',
-                  child: Text('Leadership'),
+                  child: Text(_tEducatorSessions(context, 'Leadership')),
                 ),
                 DropdownMenuItem<String>(
                   value: 'Impact',
-                  child: Text('Impact'),
+                  child: Text(_tEducatorSessions(context, 'Impact')),
                 ),
               ],
               onChanged: (String? value) {
@@ -482,7 +521,7 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
                   );
                   Navigator.pop(context);
                 },
-          child: const Text('Cancel'),
+          child: Text(_tEducatorSessions(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -492,7 +531,7 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Create'),
+              : Text(_tEducatorSessions(context, 'Create')),
         ),
       ],
     );
@@ -562,7 +601,7 @@ class _SessionCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${session.learnerCount} learners enrolled',
+                            '${session.learnerCount} ${_tEducatorSessions(context, 'learners enrolled')}',
                             style: TextStyle(
                                 color: Colors.grey[600], fontSize: 13),
                           ),
@@ -606,7 +645,7 @@ class _SessionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        session.pillar,
+                        _tEducatorSessions(context, session.pillar),
                         style: TextStyle(
                           color: _getPillarColor(),
                           fontSize: 10,
@@ -758,21 +797,21 @@ class _SessionDetailSheet extends StatelessWidget {
                   const SizedBox(height: 24),
                   _DetailRow(
                     icon: Icons.people,
-                    label: 'Enrolled',
-                    value: '${session.learnerCount} learners',
+                    label: _tEducatorSessions(context, 'Enrolled'),
+                    value: '${session.learnerCount} ${_tEducatorSessions(context, 'learners enrolled')}',
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     icon: Icons.schedule,
-                    label: 'Schedule',
+                    label: _tEducatorSessions(context, 'Schedule'),
                     value:
                         '${session.dayOfWeek} ${session.startTime} - ${session.endTime}',
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     icon: Icons.category,
-                    label: 'Pillar',
-                    value: session.pillar,
+                    label: _tEducatorSessions(context, 'Pillar'),
+                    value: _tEducatorSessions(context, session.pillar),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -789,15 +828,15 @@ class _SessionDetailSheet extends StatelessWidget {
                           },
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Substitute request submitted for approval'),
+                          SnackBar(
+                            content: Text(_tEducatorSessions(context,
+                                'Substitute request submitted for approval')),
                             backgroundColor: ScholesaColors.info,
                           ),
                         );
                       },
                       icon: const Icon(Icons.swap_horiz_rounded),
-                      label: const Text('Request Substitute'),
+                      label: Text(_tEducatorSessions(context, 'Request Substitute')),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -821,7 +860,7 @@ class _SessionDetailSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('View Full Details'),
+                      child: Text(_tEducatorSessions(context, 'View Full Details')),
                     ),
                   ),
                 ],
