@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -22,6 +25,9 @@ const Map<String, String> _hqSitesEs = <String, String>{
   'Location': 'Ubicación',
   'Site created successfully': 'Sede creada correctamente',
   'Create Site': 'Crear sede',
+  'Loading...': 'Cargando...',
+  'No sites found': 'No se encontraron sedes',
+  'Create site failed': 'Error al crear la sede',
 };
 
 String _tHqSites(BuildContext context, String input) {
@@ -42,6 +48,16 @@ class _HqSitesPageState extends State<HqSitesPage> {
   String _filterStatus = 'all';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  List<_SiteItem> _sites = <_SiteItem>[];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSites();
+    });
+  }
 
   @override
   void dispose() {
@@ -72,78 +88,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             SliverToBoxAdapter(child: _buildStats()),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(<Widget>[
-                  _SiteCard(
-                    name: 'Pilot Studio Singapore',
-                    location: 'Singapore',
-                    learnerCount: 47,
-                    educatorCount: 8,
-                    status: 'active',
-                    healthScore: 94,
-                    onTap: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'hq_sites_open_detail_pilot_sg',
-                        },
-                      );
-                      _openSiteDetail('pilot-sg');
-                    },
-                  ),
-                  _SiteCard(
-                    name: 'Innovation Hub KL',
-                    location: 'Kuala Lumpur',
-                    learnerCount: 62,
-                    educatorCount: 10,
-                    status: 'active',
-                    healthScore: 88,
-                    onTap: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'hq_sites_open_detail_hub_kl',
-                        },
-                      );
-                      _openSiteDetail('hub-kl');
-                    },
-                  ),
-                  _SiteCard(
-                    name: 'Future Academy Jakarta',
-                    location: 'Jakarta',
-                    learnerCount: 38,
-                    educatorCount: 6,
-                    status: 'onboarding',
-                    healthScore: 72,
-                    onTap: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'hq_sites_open_detail_academy_jkt',
-                        },
-                      );
-                      _openSiteDetail('academy-jkt');
-                    },
-                  ),
-                  _SiteCard(
-                    name: 'Tech Lab Manila',
-                    location: 'Manila',
-                    learnerCount: 0,
-                    educatorCount: 0,
-                    status: 'pending',
-                    healthScore: 0,
-                    onTap: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'hq_sites_open_detail_lab_mnl',
-                        },
-                      );
-                      _openSiteDetail('lab-mnl');
-                    },
-                  ),
-                ]),
-              ),
+              sliver: _buildSitesSliver(),
             ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
           ],
@@ -332,6 +277,12 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   Widget _buildStats() {
+    final int totalSites = _sites.length;
+    final int totalLearners = _sites.fold<int>(
+        0, (int total, _SiteItem site) => total + site.learnerCount);
+    final int totalEducators = _sites.fold<int>(
+        0, (int total, _SiteItem site) => total + site.educatorCount);
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -339,7 +290,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
           Expanded(
             child: _StatCard(
               icon: Icons.business,
-              value: '4',
+              value: '$totalSites',
               label: _tHqSites(context, 'Total Sites'),
               color: ScholesaColors.hq,
             ),
@@ -348,7 +299,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
           Expanded(
             child: _StatCard(
               icon: Icons.people,
-              value: '147',
+              value: '$totalLearners',
               label: _tHqSites(context, 'Total Learners'),
               color: ScholesaColors.learner,
             ),
@@ -357,7 +308,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
           Expanded(
             child: _StatCard(
               icon: Icons.school,
-              value: '24',
+              value: '$totalEducators',
               label: _tHqSites(context, 'Educators'),
               color: ScholesaColors.educator,
             ),
@@ -392,9 +343,196 @@ class _HqSitesPageState extends State<HqSitesPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext ctx) => const _CreateSiteSheet(),
+      builder: (BuildContext ctx) => _CreateSiteSheet(
+        onCreated: () {
+          _loadSites();
+        },
+      ),
     );
   }
+
+  SliverList _buildSitesSliver() {
+    if (_isLoading) {
+      return SliverList(
+        delegate: SliverChildListDelegate(
+          <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text(
+                  _tHqSites(context, 'Loading...'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final List<_SiteItem> filtered = _filteredSites();
+    if (filtered.isEmpty) {
+      return SliverList(
+        delegate: SliverChildListDelegate(
+          <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text(
+                  _tHqSites(context, 'No sites found'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          final _SiteItem item = filtered[index];
+          return _SiteCard(
+            name: item.name,
+            location: item.location,
+            learnerCount: item.learnerCount,
+            educatorCount: item.educatorCount,
+            status: item.status,
+            healthScore: item.healthScore,
+            onTap: () => _openSiteDetail(item.id),
+          );
+        },
+        childCount: filtered.length,
+      ),
+    );
+  }
+
+  List<_SiteItem> _filteredSites() {
+    return _sites.where((_SiteItem site) {
+      final bool statusOk =
+          _filterStatus == 'all' || site.status == _filterStatus;
+      if (!statusOk) return false;
+      if (_searchQuery.trim().isEmpty) return true;
+      final String query = _searchQuery.trim().toLowerCase();
+      return site.name.toLowerCase().contains(query) ||
+          site.location.toLowerCase().contains(query) ||
+          site.id.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  Future<void> _loadSites() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _sites = <_SiteItem>[];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await firestoreService.firestore
+            .collection('sites')
+            .orderBy('name')
+            .limit(300)
+            .get();
+      } catch (_) {
+        snapshot = await firestoreService.firestore
+            .collection('sites')
+            .limit(300)
+            .get();
+      }
+
+      final List<_SiteItem> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final List<dynamic> learnerIds = (data['learnerIds'] as List?) ?? <dynamic>[];
+        final List<dynamic> educatorIds = (data['educatorIds'] as List?) ?? <dynamic>[];
+        final String status = ((data['status'] as String?) ?? 'active').trim().toLowerCase();
+        final int healthScore = _asInt(data['healthScore']) ?? _defaultHealth(status);
+
+        return _SiteItem(
+          id: doc.id,
+          name: (data['name'] as String?)?.trim().isNotEmpty == true
+              ? (data['name'] as String).trim()
+              : doc.id,
+          location: (data['location'] as String?)?.trim().isNotEmpty == true
+              ? (data['location'] as String).trim()
+              : '—',
+          learnerCount: _asInt(data['learnerCount']) ?? learnerIds.length,
+          educatorCount: _asInt(data['educatorCount']) ?? educatorIds.length,
+          status: _normalizeStatus(status),
+          healthScore: healthScore,
+        );
+      }).toList()
+        ..sort((_SiteItem a, _SiteItem b) => a.name.compareTo(b.name));
+
+      if (!mounted) return;
+      setState(() => _sites = loaded);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _normalizeStatus(String status) {
+    if (status == 'pending') return 'pending';
+    if (status == 'onboarding' || status == 'provisioning') return 'onboarding';
+    return 'active';
+  }
+
+  int _defaultHealth(String status) {
+    switch (_normalizeStatus(status)) {
+      case 'pending':
+        return 0;
+      case 'onboarding':
+        return 70;
+      default:
+        return 90;
+    }
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class _SiteItem {
+  const _SiteItem({
+    required this.id,
+    required this.name,
+    required this.location,
+    required this.learnerCount,
+    required this.educatorCount,
+    required this.status,
+    required this.healthScore,
+  });
+
+  final String id;
+  final String name;
+  final String location;
+  final int learnerCount;
+  final int educatorCount;
+  final String status;
+  final int healthScore;
 }
 
 class _SiteCard extends StatelessWidget {
@@ -718,7 +856,9 @@ class _StatCard extends StatelessWidget {
 }
 
 class _CreateSiteSheet extends StatefulWidget {
-  const _CreateSiteSheet();
+  const _CreateSiteSheet({required this.onCreated});
+
+  final VoidCallback onCreated;
 
   @override
   State<_CreateSiteSheet> createState() => _CreateSiteSheetState();
@@ -796,7 +936,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
                           metadata: <String, dynamic>{
@@ -806,14 +946,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                                 _locationController.text.trim().isNotEmpty,
                           },
                         );
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text(_tHqSites(context, 'Site created successfully')),
-                            backgroundColor: ScholesaColors.success,
-                          ),
-                        );
+                        await _submitCreateSite();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ScholesaColors.hq,
@@ -832,5 +965,67 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
         ],
       ),
     );
+  }
+
+  Future<void> _submitCreateSite() async {
+    final String name = _nameController.text.trim();
+    final String location = _locationController.text.trim();
+    if (name.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onCreated();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqSites(context, 'Site created successfully')),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await firestoreService.firestore.collection('sites').add(<String, dynamic>{
+        'name': name,
+        'location': location,
+        'status': 'pending',
+        'learnerIds': <String>[],
+        'educatorIds': <String>[],
+        'healthScore': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onCreated();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqSites(context, 'Site created successfully')),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqSites(context, 'Create site failed')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }
