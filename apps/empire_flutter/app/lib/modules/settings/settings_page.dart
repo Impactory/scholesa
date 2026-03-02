@@ -1060,19 +1060,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        final String feedbackRequiredMessage = _tSettings(
+                            context, 'Please enter feedback before sending.');
+                        final String feedbackSentMessage =
+                            _tSettings(context, 'Feedback sent');
                         final String feedback = feedbackController.text.trim();
                         if (feedback.isEmpty) {
-                          _showErrorSnackBar(_tSettings(
-                              context, 'Please enter feedback before sending.'));
+                          _showErrorSnackBar(feedbackRequiredMessage);
                           return;
                         }
                         await TelemetryService.instance.logEvent(
                           event: 'settings.feedback.submitted',
                           metadata: <String, dynamic>{'length': feedback.length},
                         );
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         Navigator.pop(bottomSheetContext);
-                        _showSuccessSnackBar(_tSettings(context, 'Feedback sent'));
+                        _showSuccessSnackBar(feedbackSentMessage);
                       },
                       child: Text(_tSettings(context, 'Send')),
                     ),
@@ -1123,41 +1126,41 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmSignOut() {
+    final AuthService authService = context.read<AuthService>();
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_sign_out_dialog'},
     );
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text(_tSettings(context, 'Sign Out')),
+          title: Text(_tSettings(dialogContext, 'Sign Out')),
           content:
-              Text(_tSettings(context, 'Are you sure you want to sign out?')),
+              Text(_tSettings(dialogContext, 'Are you sure you want to sign out?')),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_tSettings(context, 'Cancel')),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(_tSettings(dialogContext, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
-                final AuthService authService = this.context.read<AuthService>();
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
                     'cta': 'settings_confirm_sign_out'
                   },
                 );
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 await authService.signOut();
-                if (!this.context.mounted) return;
-                this.context.go('/login');
+                if (!mounted) return;
+                context.go('/login');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,
               ),
               child: Text(
-                _tSettings(context, 'Sign Out'),
+                _tSettings(dialogContext, 'Sign Out'),
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -1176,17 +1179,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text(_tSettings(context, 'Delete Account')),
+          title: Text(_tSettings(dialogContext, 'Delete Account')),
           content: Text(
-            _tSettings(context,
+            _tSettings(dialogContext,
                 'This action cannot be undone. All your data will be permanently deleted.'),
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_tSettings(context, 'Cancel')),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(_tSettings(dialogContext, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1196,14 +1199,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     'cta': 'settings_confirm_delete_account'
                   },
                 );
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 await _confirmDeleteAccountWithPassword();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,
               ),
               child: Text(
-                _tSettings(context, 'Delete Account'),
+                _tSettings(dialogContext, 'Delete Account'),
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -1256,6 +1259,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
 
     if (shouldDelete != true) return;
+    if (!mounted) return;
 
     try {
       final AuthService authService = context.read<AuthService>();
