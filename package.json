@@ -74,7 +74,7 @@
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@headlessui/react": "^2.1.2",
     "@heroicons/react": "^2.1.5",
-    "@stripe/stripe-js": "^8.6.1",
+    "@stripe/stripe-js": "^8.9.0",
     "@types/express": "^5.0.6",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
