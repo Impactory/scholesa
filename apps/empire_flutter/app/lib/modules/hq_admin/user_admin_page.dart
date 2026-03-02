@@ -7,6 +7,32 @@ import '../../ui/widgets/cards.dart';
 import 'user_models.dart';
 import 'user_admin_service.dart';
 
+const Map<String, String> _userAdminEs = <String, String>{
+  'User Administration': 'Administración de usuarios',
+  'Manage all platform users': 'Gestiona todos los usuarios de la plataforma',
+  'Refresh': 'Actualizar',
+  'Change Role': 'Cambiar rol',
+  'Role changed to': 'Rol cambiado a',
+  'Edit User Profile': 'Editar perfil de usuario',
+  'Display Name': 'Nombre visible',
+  'Cancel': 'Cancelar',
+  'Save': 'Guardar',
+  'Profile update requested for': 'Actualización de perfil solicitada para',
+  'Create New User': 'Crear nuevo usuario',
+  'Email': 'Correo electrónico',
+  'Invalid email': 'Correo electrónico inválido',
+  'Required': 'Obligatorio',
+  'Role': 'Rol',
+  'Sites': 'Sedes',
+  'Create': 'Crear',
+};
+
+String _tUserAdmin(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _userAdminEs[input] ?? input;
+}
+
 /// HQ User Administration Page
 /// Beautiful colorful UI for managing all platform users
 class UserAdminPage extends StatefulWidget {
@@ -110,14 +136,14 @@ class _UserAdminPageState extends State<UserAdminPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'User Administration',
+                _tUserAdmin(context, 'User Administration'),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: ScholesaColors.hq,
                     ),
               ),
               Text(
-                'Manage all platform users',
+                _tUserAdmin(context, 'Manage all platform users'),
                 style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
@@ -132,7 +158,7 @@ class _UserAdminPageState extends State<UserAdminPage>
               await context.read<UserAdminService>().loadUsers();
             },
             icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
-            tooltip: 'Refresh',
+            tooltip: _tUserAdmin(context, 'Refresh'),
           ),
         ],
       ),
@@ -1283,7 +1309,7 @@ class _UserDetailsSheet extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Change Role'),
+        title: Text(_tUserAdmin(context, 'Change Role')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: UserRole.values
@@ -1310,7 +1336,8 @@ class _UserDetailsSheet extends StatelessWidget {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Role changed to ${role.label}'),
+                          content: Text(
+                              '${_tUserAdmin(context, 'Role changed to')} ${role.label}'),
                           backgroundColor: ScholesaColors.success,
                         ),
                       );
@@ -1335,11 +1362,11 @@ class _UserDetailsSheet extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Edit User Profile'),
+        title: Text(_tUserAdmin(context, 'Edit User Profile')),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Display Name',
+          decoration: InputDecoration(
+            labelText: _tUserAdmin(context, 'Display Name'),
             border: OutlineInputBorder(),
           ),
         ),
@@ -1355,7 +1382,7 @@ class _UserDetailsSheet extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_tUserAdmin(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1372,10 +1399,10 @@ class _UserDetailsSheet extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
-                        'Profile update requested for ${nameController.text.trim()}')),
+                        '${_tUserAdmin(context, 'Profile update requested for')} ${nameController.text.trim()}')),
               );
             },
-            child: const Text('Save'),
+            child: Text(_tUserAdmin(context, 'Save')),
           ),
         ],
       ),
@@ -1572,7 +1599,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
             child: const Icon(Icons.person_add, color: ScholesaColors.hq),
           ),
           const SizedBox(width: 12),
-          const Text('Create New User'),
+          Text(_tUserAdmin(context, 'Create New User')),
         ],
       ),
       content: SizedBox(
@@ -1586,30 +1613,30 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: _tUserAdmin(context, 'Email'),
                   prefixIcon: const Icon(Icons.email),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 validator: (String? v) =>
-                    v?.contains('@') ?? false ? null : 'Invalid email',
+                    v?.contains('@') ?? false ? null : _tUserAdmin(context, 'Invalid email'),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: 'Display Name',
+                  labelText: _tUserAdmin(context, 'Display Name'),
                   prefixIcon: const Icon(Icons.person),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 validator: (String? v) =>
-                    v?.isNotEmpty ?? false ? null : 'Required',
+                    v?.isNotEmpty ?? false ? null : _tUserAdmin(context, 'Required'),
               ),
               const SizedBox(height: 16),
-              Text('Role',
+              Text(_tUserAdmin(context, 'Role'),
                   style: TextStyle(
                       color: Colors.grey[700], fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
@@ -1642,7 +1669,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              Text('Sites',
+                Text(_tUserAdmin(context, 'Sites'),
                   style: TextStyle(
                       color: Colors.grey[700], fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
@@ -1689,7 +1716,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
             );
             Navigator.pop(context);
           },
-          child: const Text('Cancel'),
+          child: Text(_tUserAdmin(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _createUser,
@@ -1706,7 +1733,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   height: 20,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
-              : const Text('Create'),
+              : Text(_tUserAdmin(context, 'Create')),
         ),
       ],
     );

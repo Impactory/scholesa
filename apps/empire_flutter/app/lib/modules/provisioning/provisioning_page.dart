@@ -42,6 +42,19 @@ const Map<String, String> _provisioningEs = <String, String>{
   'Failed to create parent': 'No se pudo crear el padre',
   'Add Parent': 'Agregar padre',
   'Phone (optional)': 'Teléfono (opcional)',
+  'Link removed': 'Vínculo eliminado',
+  'Failed to remove link': 'No se pudo eliminar el vínculo',
+  'Guardian link created successfully': 'Vínculo de tutor creado correctamente',
+  'Failed to create link': 'No se pudo crear el vínculo',
+  'Learner updated': 'Estudiante actualizado',
+  'Failed to update learner': 'No se pudo actualizar el estudiante',
+  'Parent updated': 'Padre actualizado',
+  'Failed to update parent': 'No se pudo actualizar el padre',
+  'Father': 'Padre',
+  'Mother': 'Madre',
+  'Guardian': 'Tutor',
+  'Grandparent': 'Abuelo/Abuela',
+  'Other': 'Otro',
   'Create Guardian Link': 'Crear vínculo de tutor',
   'Parent': 'Padre',
   'No parents available': 'No hay padres disponibles',
@@ -613,9 +626,11 @@ class _LinksTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Delete Link'),
+        title: Text(_tProvisioning(context, 'Delete Link')),
         content: Text(
-          'Remove the guardian link between ${link.parentName ?? link.parentId} and ${link.learnerName ?? link.learnerId}?',
+          Localizations.localeOf(context).languageCode == 'es'
+              ? '¿Eliminar el vínculo de tutor entre ${link.parentName ?? link.parentId} y ${link.learnerName ?? link.learnerId}?'
+              : 'Remove the guardian link between ${link.parentName ?? link.parentId} and ${link.learnerName ?? link.learnerId}?',
         ),
         actions: <Widget>[
           TextButton(
@@ -630,7 +645,7 @@ class _LinksTab extends StatelessWidget {
               );
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: Text(_tProvisioning(context, 'Cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -648,13 +663,15 @@ class _LinksTab extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        success ? 'Link removed' : 'Failed to remove link'),
+                        success
+                            ? _tProvisioning(context, 'Link removed')
+                            : _tProvisioning(context, 'Failed to remove link')),
                   ),
                 );
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(_tProvisioning(context, 'Delete')),
           ),
         ],
       ),
@@ -700,7 +717,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
     final siteId = appState.activeSiteId;
     if (siteId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No site selected')),
+        SnackBar(content: Text(_tProvisioning(context, 'No site selected'))),
       );
       return;
     }
@@ -719,11 +736,15 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
     if (result != null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Learner created successfully')),
+        SnackBar(
+            content:
+                Text(_tProvisioning(context, 'Learner created successfully'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to create learner')),
+        SnackBar(
+            content: Text(service.error ??
+                _tProvisioning(context, 'Failed to create learner'))),
       );
     }
   }
@@ -731,7 +752,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Learner'),
+      title: Text(_tProvisioning(context, 'Add Learner')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -739,37 +760,40 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
           children: <Widget>[
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+              validator: (String? v) =>
+                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Email'),
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? true) return 'Required';
-                if (!v!.contains('@')) return 'Invalid email';
+                if (v?.isEmpty ?? true) return _tProvisioning(context, 'Required');
+                if (!v!.contains('@')) {
+                  return _tProvisioning(context, 'Invalid email');
+                }
                 return null;
               },
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
               initialValue: _selectedGrade,
-              decoration: const InputDecoration(
-                labelText: 'Grade Level',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Grade Level'),
                 prefixIcon: Icon(Icons.school),
               ),
               items: List.generate(9, (int i) => i + 1)
                   .map((int g) => DropdownMenuItem(
                         value: g,
-                        child: Text('Grade $g'),
+                        child: Text('${_tProvisioning(context, 'Grade')} $g'),
                       ))
                   .toList(),
               onChanged: (int? v) => setState(() => _selectedGrade = v),
@@ -785,7 +809,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                   _logProvisioningCta('cancel_create_learner');
                   Navigator.pop(context);
                 },
-          child: const Text('Cancel'),
+          child: Text(_tProvisioning(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -795,7 +819,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Create'),
+              : Text(_tProvisioning(context, 'Create')),
         ),
       ],
     );
@@ -841,7 +865,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
     final siteId = appState.activeSiteId;
     if (siteId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No site selected')),
+        SnackBar(content: Text(_tProvisioning(context, 'No site selected'))),
       );
       return;
     }
@@ -861,11 +885,14 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
     if (result != null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Parent created successfully')),
+        SnackBar(
+            content: Text(_tProvisioning(context, 'Parent created successfully'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to create parent')),
+        SnackBar(
+            content: Text(service.error ??
+                _tProvisioning(context, 'Failed to create parent'))),
       );
     }
   }
@@ -873,7 +900,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Parent'),
+      title: Text(_tProvisioning(context, 'Add Parent')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -881,23 +908,26 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
           children: <Widget>[
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+              validator: (String? v) =>
+                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Email'),
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? true) return 'Required';
-                if (!v!.contains('@')) return 'Invalid email';
+                if (v?.isEmpty ?? true) return _tProvisioning(context, 'Required');
+                if (!v!.contains('@')) {
+                  return _tProvisioning(context, 'Invalid email');
+                }
                 return null;
               },
             ),
@@ -905,8 +935,8 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone (optional)',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Phone (optional)'),
                 prefixIcon: Icon(Icons.phone),
               ),
             ),
@@ -921,7 +951,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                   _logProvisioningCta('cancel_create_parent');
                   Navigator.pop(context);
                 },
-          child: const Text('Cancel'),
+          child: Text(_tProvisioning(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -931,7 +961,7 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Create'),
+              : Text(_tProvisioning(context, 'Create')),
         ),
       ],
     );
@@ -980,7 +1010,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
     final siteId = appState.activeSiteId;
     if (siteId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No site selected')),
+        SnackBar(content: Text(_tProvisioning(context, 'No site selected'))),
       );
       return;
     }
@@ -1000,11 +1030,15 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
     if (result != null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Guardian link created successfully')),
+        SnackBar(
+            content: Text(
+                _tProvisioning(context, 'Guardian link created successfully'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to create link')),
+        SnackBar(
+            content: Text(
+                service.error ?? _tProvisioning(context, 'Failed to create link'))),
       );
     }
   }
@@ -1018,21 +1052,22 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
         final List<LearnerProfile> learners = service.learners;
 
         return AlertDialog(
-          title: const Text('Create Guardian Link'),
+          title: Text(_tProvisioning(context, 'Create Guardian Link')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               DropdownButtonFormField<String>(
                 initialValue: _selectedParentId,
-                decoration: const InputDecoration(
-                  labelText: 'Parent',
+                decoration: InputDecoration(
+                  labelText: _tProvisioning(context, 'Parent'),
                   prefixIcon: Icon(Icons.family_restroom),
                 ),
                 items: parents.isEmpty
                     ? <DropdownMenuItem<String>>[
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           enabled: false,
-                          child: Text('No parents available'),
+                          child:
+                              Text(_tProvisioning(context, 'No parents available')),
                         ),
                       ]
                     : parents
@@ -1046,15 +1081,16 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _selectedLearnerId,
-                decoration: const InputDecoration(
-                  labelText: 'Learner',
+                decoration: InputDecoration(
+                  labelText: _tProvisioning(context, 'Learner'),
                   prefixIcon: Icon(Icons.child_care),
                 ),
                 items: learners.isEmpty
                     ? <DropdownMenuItem<String>>[
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           enabled: false,
-                          child: Text('No learners available'),
+                          child:
+                              Text(_tProvisioning(context, 'No learners available')),
                         ),
                       ]
                     : learners
@@ -1069,21 +1105,22 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _relationship,
-                decoration: const InputDecoration(
-                  labelText: 'Relationship',
+                decoration: InputDecoration(
+                  labelText: _tProvisioning(context, 'Relationship'),
                   prefixIcon: Icon(Icons.people),
                 ),
                 items: _relationships
-                    .map((String r) =>
-                        DropdownMenuItem(value: r, child: Text(r)))
+                    .map((String r) => DropdownMenuItem<String>(
+                        value: r, child: Text(_tProvisioning(context, r))))
                     .toList(),
                 onChanged: (String? v) =>
                     setState(() => _relationship = v ?? 'Parent'),
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Primary guardian'),
-                subtitle: const Text('Receives all notifications'),
+                title: Text(_tProvisioning(context, 'Primary guardian')),
+                subtitle:
+                    Text(_tProvisioning(context, 'Receives all notifications')),
                 value: _isPrimary,
                 onChanged: (bool v) => setState(() => _isPrimary = v),
               ),
@@ -1097,7 +1134,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                       _logProvisioningCta('cancel_create_guardian_link');
                       Navigator.pop(context);
                     },
-              child: const Text('Cancel'),
+              child: Text(_tProvisioning(context, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: _isSubmitting ||
@@ -1111,7 +1148,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Create Link'),
+                  : Text(_tProvisioning(context, 'Create Link')),
             ),
           ],
         );
@@ -1179,11 +1216,13 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
     if (result != null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Learner updated')),
+        SnackBar(content: Text(_tProvisioning(context, 'Learner updated'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to update learner')),
+        SnackBar(
+            content: Text(service.error ??
+                _tProvisioning(context, 'Failed to update learner'))),
       );
     }
   }
@@ -1191,7 +1230,7 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Learner'),
+      title: Text(_tProvisioning(context, 'Edit Learner')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -1199,22 +1238,24 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
           children: <Widget>[
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+              validator: (String? v) =>
+                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
               initialValue: _selectedGrade,
-              decoration: const InputDecoration(
-                labelText: 'Grade Level',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Grade Level'),
                 prefixIcon: Icon(Icons.school),
               ),
               items: List.generate(9, (int i) => i + 1)
-                  .map((int g) =>
-                      DropdownMenuItem(value: g, child: Text('Grade $g')))
+                  .map((int g) => DropdownMenuItem(
+                      value: g,
+                      child: Text('${_tProvisioning(context, 'Grade')} $g')))
                   .toList(),
               onChanged: (int? v) => setState(() => _selectedGrade = v),
             ),
@@ -1234,7 +1275,7 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
                   );
                   Navigator.pop(context);
                 },
-          child: const Text('Cancel'),
+          child: Text(_tProvisioning(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -1244,7 +1285,7 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(_tProvisioning(context, 'Save')),
         ),
       ],
     );
@@ -1317,11 +1358,13 @@ class _EditParentDialogState extends State<_EditParentDialog> {
     if (result != null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Parent updated')),
+        SnackBar(content: Text(_tProvisioning(context, 'Parent updated'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? 'Failed to update parent')),
+        SnackBar(
+            content: Text(service.error ??
+                _tProvisioning(context, 'Failed to update parent'))),
       );
     }
   }
@@ -1329,7 +1372,7 @@ class _EditParentDialogState extends State<_EditParentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Parent'),
+      title: Text(_tProvisioning(context, 'Edit Parent')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -1337,18 +1380,19 @@ class _EditParentDialogState extends State<_EditParentDialog> {
           children: <Widget>[
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) => v?.isEmpty ?? true ? 'Required' : null,
+              validator: (String? v) =>
+                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Email'),
                 prefixIcon: Icon(Icons.email),
               ),
             ),
@@ -1356,8 +1400,8 @@ class _EditParentDialogState extends State<_EditParentDialog> {
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone',
+              decoration: InputDecoration(
+                labelText: _tProvisioning(context, 'Phone'),
                 prefixIcon: Icon(Icons.phone),
               ),
             ),
@@ -1375,7 +1419,7 @@ class _EditParentDialogState extends State<_EditParentDialog> {
                   );
                   Navigator.pop(context);
                 },
-          child: const Text('Cancel'),
+          child: Text(_tProvisioning(context, 'Cancel')),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -1385,7 +1429,7 @@ class _EditParentDialogState extends State<_EditParentDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(_tProvisioning(context, 'Save')),
         ),
       ],
     );
