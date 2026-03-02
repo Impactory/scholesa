@@ -2,6 +2,29 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteIdentityEs = <String, String>{
+  'Identity Resolution': 'Resolución de identidad',
+  'Review and confirm matches between local accounts and external provider accounts.':
+      'Revisa y confirma coincidencias entre cuentas locales y cuentas de proveedores externos.',
+  'All Identities Resolved': 'Todas las identidades resueltas',
+  'No pending identity matches to review':
+      'No hay coincidencias de identidad pendientes por revisar',
+  'Match confidence:': 'Confianza de coincidencia:',
+  'Local Account': 'Cuenta local',
+  'External Account': 'Cuenta externa',
+  'Ignore': 'Ignorar',
+  'Approve Match': 'Aprobar coincidencia',
+  'Matched': 'Emparejado',
+  'with': 'con',
+  'Match ignored': 'Coincidencia ignorada',
+};
+
+String _tSiteIdentity(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _siteIdentityEs[input] ?? input;
+}
+
 /// Site identity resolution page
 /// Based on docs/46_IDENTITY_MATCHING_RESOLUTION_SPEC.md
 class SiteIdentityPage extends StatefulWidget {
@@ -44,7 +67,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Identity Resolution'),
+        title: Text(_tSiteIdentity(context, 'Identity Resolution')),
         backgroundColor: const Color(0xFF64748B),
         foregroundColor: Colors.white,
       ),
@@ -70,14 +93,15 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         border:
             Border.all(color: const Color(0xFF64748B).withValues(alpha: 0.3)),
       ),
-      child: const Row(
+      child: Row(
         children: <Widget>[
-          Icon(Icons.info_outline_rounded, color: Color(0xFF64748B)),
-          SizedBox(width: 12),
+          const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B)),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Review and confirm matches between local accounts and external provider accounts.',
-              style: TextStyle(
+              _tSiteIdentity(context,
+                  'Review and confirm matches between local accounts and external provider accounts.'),
+              style: const TextStyle(
                 fontSize: 13,
                 color: ScholesaColors.textSecondary,
               ),
@@ -106,18 +130,18 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'All Identities Resolved',
-            style: TextStyle(
+          Text(
+            _tSiteIdentity(context, 'All Identities Resolved'),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: ScholesaColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'No pending identity matches to review',
-            style: TextStyle(
+          Text(
+            _tSiteIdentity(context, 'No pending identity matches to review'),
+            style: const TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
             ),
@@ -155,7 +179,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Match confidence: ${(match.confidence * 100).toInt()}%',
+                        '${_tSiteIdentity(context, 'Match confidence:')} ${(match.confidence * 100).toInt()}%',
                         style: TextStyle(
                           fontSize: 12,
                           color: _getConfidenceColor(match.confidence),
@@ -172,8 +196,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: _buildIdentityColumn(
-                      'Local Account', match.localName, Icons.person_rounded),
+                  child: _buildIdentityColumn(_tSiteIdentity(context, 'Local Account'),
+                      match.localName, Icons.person_rounded),
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -185,8 +209,10 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                       size: 20, color: Color(0xFF64748B)),
                 ),
                 Expanded(
-                  child: _buildIdentityColumn('External Account',
-                      match.externalName, Icons.cloud_rounded),
+                  child: _buildIdentityColumn(
+                      _tSiteIdentity(context, 'External Account'),
+                      match.externalName,
+                      Icons.cloud_rounded),
                 ),
               ],
             ),
@@ -199,7 +225,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.grey,
                     ),
-                    child: const Text('Ignore'),
+                    child: Text(_tSiteIdentity(context, 'Ignore')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -210,7 +236,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Approve Match'),
+                    child: Text(_tSiteIdentity(context, 'Approve Match')),
                   ),
                 ),
               ],
@@ -320,7 +346,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Matched ${match.localName} with ${match.externalName}'),
+        content: Text(
+            '${_tSiteIdentity(context, 'Matched')} ${match.localName} ${_tSiteIdentity(context, 'with')} ${match.externalName}'),
         backgroundColor: Colors.green,
       ),
     );
@@ -341,8 +368,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Match ignored'),
+      SnackBar(
+        content: Text(_tSiteIdentity(context, 'Match ignored')),
         backgroundColor: Colors.grey,
       ),
     );

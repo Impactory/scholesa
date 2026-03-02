@@ -2,6 +2,42 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteIncidentsEs = <String, String>{
+  'Safety & Incidents': 'Seguridad e incidentes',
+  'Open': 'Abiertos',
+  'Reviewed': 'Revisados',
+  'Closed': 'Cerrados',
+  'Report Incident': 'Reportar incidente',
+  'No incidents': 'Sin incidentes',
+  'Reported by': 'Reportado por',
+  'Minor': 'Menor',
+  'Major': 'Mayor',
+  'Critical': 'Crítico',
+  'Learner': 'Estudiante',
+  'Reported By': 'Reportado por',
+  'Date': 'Fecha',
+  'Status': 'Estado',
+  'Close': 'Cerrar',
+  'Incident updated': 'Incidente actualizado',
+  'Review': 'Revisar',
+  'Close Incident': 'Cerrar incidente',
+  'Report New Incident': 'Reportar nuevo incidente',
+  'Incident Title': 'Título del incidente',
+  'Severity': 'Severidad',
+  'Cancel': 'Cancelar',
+  'Incident reported': 'Incidente reportado',
+  'Submit': 'Enviar',
+  'submitted': 'enviado',
+  'reviewed': 'revisado',
+  'closed': 'cerrado',
+};
+
+String _tSiteIncidents(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _siteIncidentsEs[input] ?? input;
+}
+
 /// Site incidents management page
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class SiteIncidentsPage extends StatefulWidget {
@@ -38,6 +74,17 @@ class _Incident {
 class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  String _statusLabel(_Status status) {
+    switch (status) {
+      case _Status.submitted:
+        return _tSiteIncidents(context, 'Open');
+      case _Status.reviewed:
+        return _tSiteIncidents(context, 'Reviewed');
+      case _Status.closed:
+        return _tSiteIncidents(context, 'Closed');
+    }
+  }
 
   final List<_Incident> _incidents = <_Incident>[
     _Incident(
@@ -86,7 +133,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Safety & Incidents'),
+        title: Text(_tSiteIncidents(context, 'Safety & Incidents')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -106,10 +153,10 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const <Widget>[
-            Tab(text: 'Open'),
-            Tab(text: 'Reviewed'),
-            Tab(text: 'Closed'),
+          tabs: <Widget>[
+            Tab(text: _tSiteIncidents(context, 'Open')),
+            Tab(text: _tSiteIncidents(context, 'Reviewed')),
+            Tab(text: _tSiteIncidents(context, 'Closed')),
           ],
         ),
       ),
@@ -127,7 +174,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
         },
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Report Incident'),
+        label: Text(_tSiteIncidents(context, 'Report Incident')),
       ),
       body: TabBarView(
         controller: _tabController,
@@ -156,7 +203,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
             ),
             const SizedBox(height: 16),
             Text(
-              'No ${statusFilter.name} incidents',
+              '${_tSiteIncidents(context, 'No incidents')} ${_tSiteIncidents(context, statusFilter.name)}',
               style: const TextStyle(
                 fontSize: 16,
                 color: ScholesaColors.textSecondary,
@@ -244,7 +291,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
               ),
               const SizedBox(height: 8),
               Text(
-                'Reported by ${incident.reportedBy}',
+                '${_tSiteIncidents(context, 'Reported by')} ${incident.reportedBy}',
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
@@ -263,13 +310,13 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     switch (severity) {
       case _Severity.minor:
         color = Colors.orange;
-        label = 'Minor';
+        label = _tSiteIncidents(context, 'Minor');
       case _Severity.major:
         color = Colors.deepOrange;
-        label = 'Major';
+        label = _tSiteIncidents(context, 'Major');
       case _Severity.critical:
         color = Colors.red;
-        label = 'Critical';
+        label = _tSiteIncidents(context, 'Critical');
     }
 
     return Container(
@@ -329,10 +376,10 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
               ],
             ),
             const SizedBox(height: 16),
-            _buildInfoRow('Learner', incident.learnerName),
-            _buildInfoRow('Reported By', incident.reportedBy),
-            _buildInfoRow('Date', _formatDateTime(incident.reportedAt)),
-            _buildInfoRow('Status', incident.status.name.toUpperCase()),
+            _buildInfoRow(_tSiteIncidents(context, 'Learner'), incident.learnerName),
+            _buildInfoRow(_tSiteIncidents(context, 'Reported By'), incident.reportedBy),
+            _buildInfoRow(_tSiteIncidents(context, 'Date'), _formatDateTime(incident.reportedAt)),
+            _buildInfoRow(_tSiteIncidents(context, 'Status'), _statusLabel(incident.status).toUpperCase()),
             const SizedBox(height: 24),
             if (incident.status != _Status.closed)
               Row(
@@ -351,7 +398,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                         );
                         Navigator.pop(context);
                       },
-                      child: const Text('Close'),
+                      child: Text(_tSiteIncidents(context, 'Close')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -371,7 +418,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                         );
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Incident updated')),
+                          SnackBar(content: Text(_tSiteIncidents(context, 'Incident updated'))),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -379,8 +426,8 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                             ScholesaColors.safetyGradient.colors.first,
                       ),
                       child: Text(incident.status == _Status.submitted
-                          ? 'Review'
-                          : 'Close Incident'),
+                          ? _tSiteIncidents(context, 'Review')
+                          : _tSiteIncidents(context, 'Close Incident')),
                     ),
                   ),
                 ],
@@ -401,7 +448,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                     );
                     Navigator.pop(context);
                   },
-                  child: const Text('Close'),
+                  child: Text(_tSiteIncidents(context, 'Close')),
                 ),
               ),
           ],
@@ -434,26 +481,26 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
       context: context,
       builder: (BuildContext context) => AlertDialog(
         backgroundColor: ScholesaColors.surface,
-        title: const Text('Report New Incident'),
+        title: Text(_tSiteIncidents(context, 'Report New Incident')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const TextField(
+            TextField(
               decoration: InputDecoration(
-                labelText: 'Incident Title',
+                labelText: _tSiteIncidents(context, 'Incident Title'),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<_Severity>(
-              decoration: const InputDecoration(
-                labelText: 'Severity',
+              decoration: InputDecoration(
+                labelText: _tSiteIncidents(context, 'Severity'),
                 border: OutlineInputBorder(),
               ),
               items: _Severity.values
                   .map((_Severity s) => DropdownMenuItem<_Severity>(
                         value: s,
-                        child: Text(s.name.toUpperCase()),
+                        child: Text(_tSiteIncidents(context, s.name[0].toUpperCase() + s.name.substring(1))),
                       ))
                   .toList(),
               onChanged: (_) {},
@@ -473,7 +520,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
               );
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: Text(_tSiteIncidents(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -487,10 +534,10 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
               );
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Incident reported')),
+                SnackBar(content: Text(_tSiteIncidents(context, 'Incident reported'))),
               );
             },
-            child: const Text('Submit'),
+            child: Text(_tSiteIncidents(context, 'Submit')),
           ),
         ],
       ),
