@@ -1,6 +1,6 @@
 import 'dart:async';
 import '../bos/bos_engine.dart';
-import '../telemetry/telemetry_models.dart';
+import './event_types.dart';
 import '../safety/safety_guard.dart';
 
 enum VoiceStatus { idle, listening, processing, speaking }
@@ -10,8 +10,9 @@ enum VoiceStatus { idle, listening, processing, speaking }
 class VoicePipeline {
   final BosEngine _bos;
   final SafetyGuard _safetyGuard;
+  final String _sessionId;
+  final String _learnerIdHash;
   
-  // Mock streams for hardware interfaces
   final StreamController<String> _sttStream = StreamController();
   bool _isTtsPlaying = false;
   Timer? _silenceTimer;
@@ -20,9 +21,23 @@ class VoicePipeline {
   final StreamController<VoiceStatus> _statusController = StreamController.broadcast();
   Stream<VoiceStatus> get statusStream => _statusController.stream;
 
-  VoicePipeline(this._bos, this._safetyGuard) {
+  VoicePipeline(
+    this._bos,
+    this._safetyGuard, {
+    String sessionId = 'session_local',
+    String learnerIdHash = 'learner_local',
+  }) : _sessionId = sessionId,
+       _learnerIdHash = learnerIdHash {
     // Listen to BOS actions (TTS requests)
     _bos.actions.listen(_handleBosAction);
+  }
+
+  double _estimateTranscriptConfidence(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    if (trimmed.length < 12) return 0.62;
+    if (trimmed.length < 30) return 0.78;
+    return 0.9;
   }
 
   /// Simulate receiving a final transcript from STT provider
@@ -42,8 +57,8 @@ class VoicePipeline {
       _bos.handleEvent(BosEvent(
         eventName: BosSignal.piiDetected,
         timestampMs: DateTime.now().millisecondsSinceEpoch,
-        sessionId: 'session_123',
-        learnerIdHash: 'hash_123',
+        sessionId: _sessionId,
+        learnerIdHash: _learnerIdHash,
         payload: {'original_length': text.length},
       ));
     }
@@ -52,11 +67,11 @@ class VoicePipeline {
     _bos.handleEvent(BosEvent(
       eventName: BosSignal.sttFinalTranscript,
       timestampMs: DateTime.now().millisecondsSinceEpoch,
-      sessionId: 'session_123',
-      learnerIdHash: 'hash_123',
+        sessionId: _sessionId,
+        learnerIdHash: _learnerIdHash,
       payload: {
         'transcript': redactedText,
-        'confidence': 0.95, // Mock
+          'confidence': _estimateTranscriptConfidence(redactedText),
       },
     ));
     
@@ -80,8 +95,8 @@ class VoicePipeline {
     _bos.handleEvent(BosEvent(
       eventName: BosSignal.ttsRequestStarted,
       timestampMs: DateTime.now().millisecondsSinceEpoch,
-      sessionId: 'session_123',
-      learnerIdHash: 'hash_123',
+      sessionId: _sessionId,
+      learnerIdHash: _learnerIdHash,
       payload: {'text_length': text.length},
     ));
 
@@ -104,8 +119,8 @@ class VoicePipeline {
     _bos.handleEvent(BosEvent(
       eventName: BosSignal.bargeInDetected,
       timestampMs: DateTime.now().millisecondsSinceEpoch,
-      sessionId: 'session_123',
-      learnerIdHash: 'hash_123',
+      sessionId: _sessionId,
+      learnerIdHash: _learnerIdHash,
     ));
     _statusController.add(VoiceStatus.listening);
     _startSilenceTimer();
@@ -117,8 +132,8 @@ class VoicePipeline {
       _bos.handleEvent(BosEvent(
         eventName: BosSignal.silenceDetected,
         timestampMs: DateTime.now().millisecondsSinceEpoch,
-        sessionId: 'session_123',
-        learnerIdHash: 'hash_123',
+        sessionId: _sessionId,
+        learnerIdHash: _learnerIdHash,
       ));
     });
   }

@@ -25,6 +25,7 @@ export function SessionManager() {
 
     const formData = new FormData(e.currentTarget);
     const programId = formData.get('programId') as string;
+    const roomIdInput = (formData.get('roomId') as string | null)?.trim() || '';
     const siteId = profile.studioId || 'default-site'; // Fallback or select from UI
     
     // Parse date/time (simplified for demo)
@@ -36,7 +37,7 @@ export function SessionManager() {
       siteId,
       programId,
       educatorId: user.uid,
-      roomId: 'room-1', // Hardcoded for MVP
+      roomId: roomIdInput || `room-${new Date(startStr).getDay() || 1}`,
       startTime,
       endTime,
       dayOfWeek: new Date(startStr).getDay(),
@@ -78,6 +79,14 @@ export function SessionManager() {
               type="datetime-local" 
               name="startTime" 
               required 
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700">Room ID (optional)</label>
+            <input 
+              name="roomId"
+              placeholder="e.g. room-2"
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>

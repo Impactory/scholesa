@@ -14,7 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import {
   UserIcon,
   AwardIcon,
@@ -70,6 +70,11 @@ export function ParentAnalyticsDashboard() {
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
   const parentId = profile?.uid || '';
 
+  const clampPercent = (value: number): number => {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(100, Math.round(value)));
+  };
+
   useEffect(() => {
     if (!parentId || !siteId) return;
     
@@ -93,14 +98,28 @@ export function ParentAnalyticsDashboard() {
           const childId = userDoc.id;
           const childName = userData.displayName || userData.email || 'Learner';
           
-          // SDT scores will be fetched in real-time when child is selected
-          // For list view, use cached engagement or fetch once
-          const engagementScore = 0; // Placeholder, will update when selected
-          
-          // Initialize SDT scores as 0 for list view
-          const autonomyScore = 0;
-          const competenceScore = 0;
-          const belongingScore = 0;
+          // Load aggregate SDT metrics for this learner
+          let autonomyScore = 0;
+          let competenceScore = 0;
+          let belongingScore = 0;
+          let engagementScore = 0;
+
+          const analyticsSnap = await getDoc(doc(db, 'motivationAnalytics', `${siteId}_${childId}`));
+          if (analyticsSnap.exists()) {
+            const analytics = analyticsSnap.data() as Record<string, unknown>;
+            const totalMissionsSelected = Number(analytics.totalMissionsSelected || 0);
+            const totalEvidenceSubmitted = Number(analytics.totalEvidenceSubmitted || 0);
+            const totalCheckpointsPassed = Number(analytics.totalCheckpointsPassed || 0);
+            const totalFeedbackGiven = Number(analytics.totalFeedbackGiven || 0);
+            const totalRecognitionReceived = Number(analytics.totalRecognitionReceived || 0);
+            const totalReflections = Number(analytics.totalReflections || 0);
+            const totalSessionsCompleted = Number(analytics.totalSessionsCompleted || 0);
+
+            autonomyScore = clampPercent((totalMissionsSelected + totalReflections) * 8);
+            competenceScore = clampPercent((totalEvidenceSubmitted + totalCheckpointsPassed) * 7);
+            belongingScore = clampPercent((totalFeedbackGiven + totalRecognitionReceived) * 10);
+            engagementScore = clampPercent((autonomyScore + competenceScore + belongingScore) / 3);
+          }
           
           // Fetch recent activities (now using real-time when selected)
           const eventsQuery = query(
@@ -120,6 +139,11 @@ export function ParentAnalyticsDashboard() {
               timestamp: data.timestamp.toDate()
             };
           });
+
+          if (engagementScore === 0 && recentActivities.length > 0) {
+            const eventBoost = Math.min(100, recentActivities.length * 8);
+            engagementScore = clampPercent(eventBoost);
+          }
           
           // Fetch upcoming goals
           const goalsQuery = query(

@@ -3,40 +3,55 @@
 import React, { useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
-import { query, where, doc, setDoc, Timestamp } from 'firebase/firestore';
-import { sessionOccurrencesCollection, enrolmentsCollection, attendanceCollection, usersCollection } from '@/src/firebase/firestore/collections';
+import { query, where, doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { sessionOccurrencesCollection, enrolmentsCollection, attendanceCollection, usersCollection, sessionsCollection } from '@/src/firebase/firestore/collections';
 import { Attendance, Enrolment } from '@/src/types/schema';
 
 export function AttendanceTaker() {
   const { user } = useAuthContext();
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>('');
   const [programIdForEnrolment, setProgramIdForEnrolment] = useState<string>('');
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
 
   // 1. Fetch Occurrences for this educator
   const [occurrencesSnap] = useCollection(
     user ? query(sessionOccurrencesCollection, where('educatorId', '==', user.uid)) : null
   );
 
-  // 2. Fetch Enrollments when an occurrence is selected
-  // Note: In a real app, we'd fetch the Session first to get the programId. 
-  // For this MVP, we assume we passed programId or fetch it. 
-  // To keep it simple, let's assume we just query enrollments for the site or we'd need to join data.
-  // IMPROVEMENT: Store programId on SessionOccurrence to avoid double-fetch.
-  // For now, let's just list occurrences and placeholder logic for enrollments.
-  
-  // Mocking enrollment fetch based on a hypothetical program ID from the selected occurrence context
-  // In production, you would fetch the parent Session of the Occurrence to get the programId.
+  // 2. Fetch Enrollments for selected occurrence parent session program
   const [enrolmentsSnap] = useCollection(
     programIdForEnrolment 
       ? query(enrolmentsCollection, where('programId', '==', programIdForEnrolment))
       : null
   );
 
-  const handleOccurrenceSelect = (occId: string, /* progId: string */) => {
+  const handleOccurrenceSelect = async (occId: string) => {
     setSelectedOccurrenceId(occId);
-    // In a real implementation, we'd look up the session's programId here.
-    // For demo purposes, we'll set a dummy or require the user to pick.
-    setProgramIdForEnrolment('prog_math_101'); // Hardcoded for MVP flow
+
+    try {
+      const occurrenceDoc = occurrencesSnap?.docs.find((entry) => entry.id === occId);
+      const occurrence = occurrenceDoc?.data();
+      if (!occurrence?.sessionId) {
+        setProgramIdForEnrolment('');
+        setSelectedSiteId(occurrence?.siteId || '');
+        return;
+      }
+
+      const sessionSnap = await getDoc(doc(sessionsCollection, occurrence.sessionId));
+      if (!sessionSnap.exists()) {
+        setProgramIdForEnrolment('');
+        setSelectedSiteId(occurrence?.siteId || '');
+        return;
+      }
+
+      const sessionData = sessionSnap.data();
+      setProgramIdForEnrolment(sessionData.programId || '');
+      setSelectedSiteId(occurrence?.siteId || sessionData.siteId || '');
+    } catch (err) {
+      console.error('Failed to resolve occurrence session context', err);
+      setProgramIdForEnrolment('');
+      setSelectedSiteId('');
+    }
   };
 
   const markAttendance = async (learnerId: string, status: 'present' | 'absent' | 'late') => {
@@ -48,7 +63,7 @@ export function AttendanceTaker() {
       userId: learnerId,
       learnerId: learnerId,
       sessionOccurrenceId: selectedOccurrenceId,
-      studioId: 'default-site', // Should come from context
+      studioId: selectedSiteId || 'default-site',
       date: Timestamp.now(),
       status,
       recordedBy: user.uid,
@@ -73,7 +88,9 @@ export function AttendanceTaker() {
             return (
               <button
                 key={doc.id}
-                onClick={() => handleOccurrenceSelect(doc.id)}
+                onClick={() => {
+                  void handleOccurrenceSelect(doc.id);
+                }}
                 className={`rounded px-3 py-2 text-left text-sm transition-colors ${
                   isSelected ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'
                 }`}

@@ -1,6 +1,6 @@
 import 'dart:async';
 import '../../services/telemetry_service.dart';
-import '../telemetry/event_types.dart';
+import './event_types.dart';
 
 enum VoiceStatus { idle, listening, processing, speaking }
 
@@ -15,6 +15,14 @@ class VoiceManager {
   final Duration _silenceThreshold = const Duration(seconds: 5); // Grade 1-3 default
 
   VoiceManager(this._telemetry);
+
+  double _estimateTranscriptConfidence(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    if (trimmed.length < 10) return 0.6;
+    if (trimmed.length < 24) return 0.75;
+    return 0.9;
+  }
 
   /// Start Listening (STT)
   void startListening() {
@@ -35,7 +43,7 @@ class VoiceManager {
         event: VoiceSignals.sttFinalTranscript,
         metadata: {
           'transcript': _redactPii(text), // Redact before emit
-          'confidence': 0.95, // Mock confidence
+          'confidence': _estimateTranscriptConfidence(text),
         },
       );
     }
@@ -43,7 +51,7 @@ class VoiceManager {
 
   /// Speak (TTS) with Barge-In support
   void speak(String text) {
-    // 1. Safety Check (Mock)
+    // 1. Safety check
     if (_containsUnsafeContent(text)) {
       _telemetry.logEvent(
         event: 'safety.unsafe_content_detected', 
@@ -98,6 +106,15 @@ class VoiceManager {
   }
 
   bool _containsUnsafeContent(String text) {
-    return false; // Mock
+    final lower = text.toLowerCase();
+    const blockedPatterns = <String>[
+      'kill',
+      'self harm',
+      'suicide',
+      'hate',
+      'abuse',
+      'violence',
+    ];
+    return blockedPatterns.any(lower.contains);
   }
 }
