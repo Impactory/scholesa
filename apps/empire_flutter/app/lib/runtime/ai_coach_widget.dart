@@ -53,6 +53,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   final FlutterTts _flutterTts = FlutterTts();
   final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioRecorder _audioRecorder = AudioRecorder();
+  StreamSubscription<void>? _playerCompleteSub;
+  StreamSubscription<PlayerState>? _playerStateSub;
   AiCoachMode _selectedMode = AiCoachMode.hint;
   bool _loading = false;
   bool _isListening = false;
@@ -60,6 +62,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _uploadSttAvailable = false;
   bool _usingUploadStt = false;
   bool _voiceOutputEnabled = true;
+  bool _isSpeaking = false;
   AiCoachResponse? _lastResponse;
 
   @override
@@ -85,6 +88,60 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       await _flutterTts.setSpeechRate(0.45);
       await _flutterTts.setVolume(1.0);
       await _flutterTts.setPitch(1.0);
+      await _flutterTts.awaitSpeakCompletion(true);
+
+      if (Platform.isIOS || Platform.isMacOS) {
+        await _flutterTts.setSharedInstance(true);
+        await _flutterTts.autoStopSharedSession(false);
+      }
+
+      if (Platform.isIOS) {
+        await _flutterTts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playback,
+          <IosTextToSpeechAudioCategoryOptions>[
+            IosTextToSpeechAudioCategoryOptions.duckOthers,
+            IosTextToSpeechAudioCategoryOptions.allowAirPlay,
+            IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          ],
+          IosTextToSpeechAudioMode.spokenAudio,
+        );
+      }
+
+      await _audioPlayer.setAudioContext(
+        AudioContextConfig(
+          route: AudioContextConfigRoute.system,
+          focus: AudioContextConfigFocus.duckOthers,
+          respectSilence: false,
+        ).build(),
+      );
+
+      _playerCompleteSub?.cancel();
+      _playerCompleteSub = _audioPlayer.onPlayerComplete.listen((_) {
+        if (!mounted) return;
+        setState(() => _isSpeaking = false);
+      });
+
+      _playerStateSub?.cancel();
+      _playerStateSub = _audioPlayer.onPlayerStateChanged.listen((state) {
+        if (!mounted) return;
+        if (state == PlayerState.stopped || state == PlayerState.completed) {
+          setState(() => _isSpeaking = false);
+        }
+      });
+
+      _flutterTts.setStartHandler(() {
+        if (!mounted) return;
+        setState(() => _isSpeaking = true);
+      });
+      _flutterTts.setCompletionHandler(() {
+        if (!mounted) return;
+        setState(() => _isSpeaking = false);
+      });
+      _flutterTts.setErrorHandler((_) {
+        if (!mounted) return;
+        setState(() => _isSpeaking = false);
+      });
+
       final bool uploadReady = await _audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
@@ -107,11 +164,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     unawaited(_audioPlayer.stop());
     unawaited(_audioPlayer.dispose());
     unawaited(_audioRecorder.dispose());
+    _playerCompleteSub?.cancel();
+    _playerStateSub?.cancel();
     _inputController.dispose();
     super.dispose();
   }
 
   Future<void> _startUploadRecording() async {
+    if (_isSpeaking) {
+      await _audioPlayer.stop();
+      await _flutterTts.stop();
+      if (mounted) setState(() => _isSpeaking = false);
+    }
+
     final String path =
         '${Directory.systemTemp.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _audioRecorder.start(
@@ -185,7 +250,23 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   Future<void> _toggleListening() async {
-    if (_loading || (!_speechAvailable && !_uploadSttAvailable)) return;
+    if (_loading) return;
+
+    if (!_speechAvailable && !_uploadSttAvailable) {
+      final bool uploadReady = await _audioRecorder.hasPermission();
+      if (!mounted) return;
+      if (uploadReady) {
+        setState(() => _uploadSttAvailable = true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Microphone permission is required for voice input.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+    }
 
     if (_isListening) {
       if (_usingUploadStt) {
@@ -239,12 +320,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   Future<void> _speakResponse(AiCoachResponse response) async {
     if (!_voiceOutputEnabled) return;
 
+    if (_isSpeaking) {
+      await _audioPlayer.stop();
+      await _flutterTts.stop();
+      if (mounted) setState(() => _isSpeaking = false);
+    }
+
     if (response.voiceAvailable &&
         response.voiceAudioUrl != null &&
         response.voiceAudioUrl!.isNotEmpty) {
       try {
         await _flutterTts.stop();
         await _audioPlayer.stop();
+        if (mounted) setState(() => _isSpeaking = true);
         await _audioPlayer.play(UrlSource(response.voiceAudioUrl!));
         await TelemetryService.instance.logEvent(
           event: 'voice.tts',
@@ -262,6 +350,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
 
     await _flutterTts.stop();
+    if (mounted) setState(() => _isSpeaking = true);
     await _flutterTts.speak(response.message);
     await TelemetryService.instance.logEvent(
       event: 'voice.tts',
