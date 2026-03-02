@@ -32,6 +32,10 @@ This document serves as the single source of truth for the minimum and target ve
 | intl | ^0.20.2 | 0.20.x only in RC2. |
 | google_fonts | ^8.0.2 | 8.x only in RC2. |
 | file_picker | ^10.3.10 | 10.x only in RC2. |
+| speech_to_text | ^7.3.0 | 7.x only; used for on-device speech recognition fallback. |
+| flutter_tts | ^4.2.3 | 4.x only; used for local TTS fallback and spoken response. |
+| audioplayers | ^6.1.0 | 6.x only; used to play voice API `tts.audioUrl` assets. |
+| record | ^6.0.0 | 6.x only; used for upload-based STT capture path. |
 | flutter_lints | ^6.0.0 | Keep analyzer policy consistent across app modules. |
 
 ## UI Components & Design System
