@@ -506,6 +506,60 @@ Response style:
     }
   }
 
+  bool get _canClearGoals {
+    return widget.actorRole == UserRole.educator || widget.actorRole == UserRole.hq;
+  }
+
+  Future<void> _clearLearningGoals() async {
+    if (_learningGoals.isEmpty) return;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Clear current goals?'),
+          content: const Text(
+            'This removes the in-session coaching goals memory for this assistant conversation.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      await TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'ai_coach_widget',
+          'cta_id': 'clear_learning_goals_cancel',
+          'surface': 'current_goals_dialog',
+          'role': widget.actorRole.name,
+        },
+      );
+      return;
+    }
+
+    setState(() => _learningGoals.clear());
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'ai_coach_widget',
+        'cta_id': 'clear_learning_goals_confirm',
+        'surface': 'current_goals_dialog',
+        'role': widget.actorRole.name,
+      },
+    );
+  }
+
   String _enrichCoachReply(String text) {
     final String trimmed = text.trim();
     if (trimmed.isEmpty) return 'Let\'s try that again. What part feels most confusing right now?';
@@ -773,6 +827,74 @@ Response style:
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: Colors.amber.shade900),
                   ),
+                ),
+              ],
+            ),
+          ),
+
+        if (_learningGoals.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Text(
+                      'Current goals',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_canClearGoals)
+                      TextButton(
+                        onPressed: _clearLearningGoals,
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        child: Text(
+                          'Clear goals',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _learningGoals
+                      .map(
+                        (goal) => Chip(
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          label: Text(
+                            goal,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),
