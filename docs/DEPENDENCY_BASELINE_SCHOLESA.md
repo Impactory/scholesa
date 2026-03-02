@@ -69,7 +69,7 @@ Last audit run: 2026-03-02 (`npm outdated` + `flutter pub outdated` + `npm run r
 - Applied safe in-major npm upgrades in this pass: `firebase-admin`, `@eslint/eslintrc`, `autoprefixer`, `postcss`, `globals`, `@types/node`.
 - Applied safe in-major Flutter lockfile upgrades in this pass: `firebase_core 4.5.0`, `firebase_auth 6.2.0`, `cloud_firestore 6.1.3`, `firebase_storage 13.1.0`, `cloud_functions 6.0.7`, `uuid 4.5.3`.
 - TypeScript ESLint toolchain drift resolved: `typescript-eslint`, `@typescript-eslint/eslint-plugin`, and `@typescript-eslint/parser` aligned to `8.56.1`.
-- Remaining web in-major drift includes `@stripe/stripe-js` minor (`8.8.0 -> 8.9.0`).
+- Remaining web drift is major-policy deferred upgrades (Next/React/Tailwind/Zod/Jest/Firebase majors).
 - Flutter build toolchain has discontinued transitive packages (`build_resolvers`, `build_runner_core`); defer changes to a dedicated build-runner migration PR.
 - `flutter pub outdated` now reports direct dependencies up-to-date, with 5 lockfile-upgradable transitive packages and toolchain deprecation warnings; no blocker on current RC3 gate.
 
