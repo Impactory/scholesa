@@ -10,6 +10,40 @@ import '../../ui/common/error_state.dart';
 import 'attendance_models.dart';
 import 'attendance_service.dart';
 
+const Map<String, String> _attendanceEs = <String, String>{
+  'Take Attendance': 'Tomar asistencia',
+  'Attendance service not available': 'Servicio de asistencia no disponible',
+  'No classes today': 'No hay clases hoy',
+  'You have no scheduled classes for today.':
+      'No tienes clases programadas para hoy.',
+  'Refresh': 'Actualizar',
+  'students': 'estudiantes',
+  'Class Roster': 'Lista de clase',
+  'Service not available': 'Servicio no disponible',
+  'No roster found': 'No se encontró lista',
+  'Could not load the class roster.':
+      'No se pudo cargar la lista de clase.',
+  'All Present': 'Todos presentes',
+  'All Absent': 'Todos ausentes',
+  'No learners enrolled': 'No hay estudiantes inscritos',
+  'There are no learners enrolled in this class.':
+      'No hay estudiantes inscritos en esta clase.',
+  'Save Attendance': 'Guardar asistencia',
+  'Attendance saved successfully': 'Asistencia guardada correctamente',
+  'Pending sync': 'Sincronización pendiente',
+  'Present': 'Presente',
+  'Late': 'Tarde',
+  'Absent': 'Ausente',
+  'Excused': 'Justificado',
+  'Add a note (optional)': 'Agregar una nota (opcional)',
+};
+
+String _tAttendance(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _attendanceEs[input] ?? input;
+}
+
 /// Attendance taking page
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -38,7 +72,7 @@ class _AttendancePageState extends State<AttendancePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Take Attendance'),
+        title: Text(_tAttendance(context, 'Take Attendance')),
         actions: const <Widget>[
           SyncStatusIndicator(),
           SizedBox(width: 8),
@@ -59,8 +93,8 @@ class _AttendancePageState extends State<AttendancePage> {
     final AttendanceService? service = context.watch<AttendanceService?>();
 
     if (service == null) {
-      return const Center(
-        child: Text('Attendance service not available'),
+      return Center(
+        child: Text(_tAttendance(context, 'Attendance service not available')),
       );
     }
 
@@ -106,8 +140,9 @@ class _OccurrenceSelector extends StatelessWidget {
     if (occurrences.isEmpty) {
       return EmptyState(
         icon: Icons.event_busy,
-        title: 'No classes today',
-        message: 'You have no scheduled classes for today.',
+        title: _tAttendance(context, 'No classes today'),
+        message:
+            _tAttendance(context, 'You have no scheduled classes for today.'),
         action: TextButton.icon(
           onPressed: () async {
             TelemetryService.instance.logEvent(
@@ -120,7 +155,7 @@ class _OccurrenceSelector extends StatelessWidget {
             await onRefresh();
           },
           icon: const Icon(Icons.refresh),
-          label: const Text('Refresh'),
+          label: Text(_tAttendance(context, 'Refresh')),
         ),
       );
     }
@@ -158,7 +193,7 @@ class _OccurrenceSelector extends StatelessWidget {
                   '$timeStr$endTimeStr${occ.roomName != null ? ' • ${occ.roomName}' : ''}'),
               trailing: Chip(
                 label:
-                    Text('${occ.learnerCount ?? occ.roster.length} students'),
+                  Text('${occ.learnerCount ?? occ.roster.length} ${_tAttendance(context, 'students')}'),
               ),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -239,21 +274,21 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
 
     if (service == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Class Roster')),
-        body: const Center(child: Text('Service not available')),
+        appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
+        body: Center(child: Text(_tAttendance(context, 'Service not available'))),
       );
     }
 
     if (service.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Class Roster')),
+        appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
         body: const LoadingWidget(),
       );
     }
 
     if (service.error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Class Roster')),
+        appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
         body: ErrorState(
           message: service.error!,
           onRetry: () async {
@@ -273,11 +308,11 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     final SessionOccurrence? occurrence = service.currentOccurrence;
     if (occurrence == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Class Roster')),
-        body: const EmptyState(
+        appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
+        body: EmptyState(
           icon: Icons.person_off,
-          title: 'No roster found',
-          message: 'Could not load the class roster.',
+          title: _tAttendance(context, 'No roster found'),
+          message: _tAttendance(context, 'Could not load the class roster.'),
         ),
       );
     }
@@ -304,7 +339,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.check_circle, color: Colors.green),
-                    label: const Text('All Present'),
+                    label: Text(_tAttendance(context, 'All Present')),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -320,7 +355,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.cancel, color: Colors.red),
-                    label: const Text('All Absent'),
+                    label: Text(_tAttendance(context, 'All Absent')),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -338,10 +373,11 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
           // Roster list
           Expanded(
             child: roster.isEmpty
-                ? const EmptyState(
+                ? EmptyState(
                     icon: Icons.people_outline,
-                    title: 'No learners enrolled',
-                    message: 'There are no learners enrolled in this class.',
+                    title: _tAttendance(context, 'No learners enrolled'),
+                    message: _tAttendance(
+                        context, 'There are no learners enrolled in this class.'),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(8),
@@ -376,7 +412,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.save),
                   label: Text(
-                      'Save Attendance (${_attendance.length}/${roster.length})'),
+                    '${_tAttendance(context, 'Save Attendance')} (${_attendance.length}/${roster.length})'),
                   onPressed: _attendance.length == roster.length
                       ? () => _saveAttendance(service, appState)
                       : null,
@@ -445,8 +481,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Attendance saved successfully'),
+        SnackBar(
+          content: Text(_tAttendance(context, 'Attendance saved successfully')),
           backgroundColor: Colors.green,
         ),
       );
@@ -503,7 +539,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                       ),
                       if (learner.currentAttendance?.isOffline == true)
                         Text(
-                          'Pending sync',
+                          _tAttendance(context, 'Pending sync'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.orange[700],
@@ -519,7 +555,7 @@ class _StudentAttendanceCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 _StatusButton(
-                  label: 'Present',
+                  label: _tAttendance(context, 'Present'),
                   icon: Icons.check_circle,
                   color: Colors.green,
                   isSelected: status == AttendanceStatus.present,
@@ -527,7 +563,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _StatusButton(
-                  label: 'Late',
+                  label: _tAttendance(context, 'Late'),
                   icon: Icons.schedule,
                   color: Colors.orange,
                   isSelected: status == AttendanceStatus.late,
@@ -535,7 +571,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _StatusButton(
-                  label: 'Absent',
+                  label: _tAttendance(context, 'Absent'),
                   icon: Icons.cancel,
                   color: Colors.red,
                   isSelected: status == AttendanceStatus.absent,
@@ -543,7 +579,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _StatusButton(
-                  label: 'Excused',
+                  label: _tAttendance(context, 'Excused'),
                   icon: Icons.medical_services,
                   color: Colors.blue,
                   isSelected: status == AttendanceStatus.excused,
@@ -556,8 +592,8 @@ class _StudentAttendanceCard extends StatelessWidget {
                 status != AttendanceStatus.present) ...<Widget>[
               const SizedBox(height: 8),
               TextField(
-                decoration: const InputDecoration(
-                  hintText: 'Add a note (optional)',
+                decoration: InputDecoration(
+                  hintText: _tAttendance(context, 'Add a note (optional)'),
                   isDense: true,
                   border: OutlineInputBorder(),
                 ),
