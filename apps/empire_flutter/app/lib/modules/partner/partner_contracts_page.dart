@@ -5,6 +5,33 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
+const Map<String, String> _partnerContractsEs = <String, String>{
+  'My Contracts': 'Mis contratos',
+  'No Contracts Yet': 'Aún no hay contratos',
+  'Your contracts will appear here': 'Tus contratos aparecerán aquí',
+  'Site:': 'Sede:',
+  'Total Value': 'Valor total',
+  'Deliverables': 'Entregables',
+  'Draft': 'Borrador',
+  'Submitted': 'Enviado',
+  'Negotiation': 'Negociación',
+  'Approved': 'Aprobado',
+  'Active': 'Activo',
+  'Completed': 'Completado',
+  'Terminated': 'Terminado',
+  'Site ID': 'ID de sede',
+  'Start Date': 'Fecha de inicio',
+  'End Date': 'Fecha de fin',
+  'No deliverables defined': 'No hay entregables definidos',
+  'Close': 'Cerrar',
+};
+
+String _tPartnerContracts(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _partnerContractsEs[input] ?? input;
+}
+
 /// Partner contracts management page
 /// Based on docs/16_PARTNER_CONTRACTING_WORKFLOWS_SPEC.md
 class PartnerContractsPage extends StatefulWidget {
@@ -28,7 +55,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('My Contracts'),
+        title: Text(_tPartnerContracts(context, 'My Contracts')),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
       ),
@@ -85,8 +112,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'No Contracts Yet',
+          Text(
+            _tPartnerContracts(context, 'No Contracts Yet'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -94,8 +121,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Your contracts will appear here',
+          Text(
+            _tPartnerContracts(context, 'Your contracts will appear here'),
             style: TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
@@ -147,7 +174,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Site: ${contract.siteId}',
+                          '${_tPartnerContracts(context, 'Site:')} ${contract.siteId}',
                           style: const TextStyle(
                             fontSize: 13,
                             color: ScholesaColors.textSecondary,
@@ -168,8 +195,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Text(
-                        'Total Value',
+                      Text(
+                        _tPartnerContracts(context, 'Total Value'),
                         style: TextStyle(
                           fontSize: 12,
                           color: ScholesaColors.textSecondary,
@@ -188,8 +215,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
-                      const Text(
-                        'Deliverables',
+                      Text(
+                        _tPartnerContracts(context, 'Deliverables'),
                         style: TextStyle(
                           fontSize: 12,
                           color: ScholesaColors.textSecondary,
@@ -220,25 +247,25 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
     switch (status) {
       case ContractStatus.draft:
         color = Colors.grey;
-        label = 'Draft';
+        label = _tPartnerContracts(context, 'Draft');
       case ContractStatus.submitted:
         color = Colors.orange;
-        label = 'Submitted';
+        label = _tPartnerContracts(context, 'Submitted');
       case ContractStatus.negotiation:
         color = Colors.blue;
-        label = 'Negotiation';
+        label = _tPartnerContracts(context, 'Negotiation');
       case ContractStatus.approved:
         color = Colors.teal;
-        label = 'Approved';
+        label = _tPartnerContracts(context, 'Approved');
       case ContractStatus.active:
         color = Colors.green;
-        label = 'Active';
+        label = _tPartnerContracts(context, 'Active');
       case ContractStatus.completed:
         color = Colors.purple;
-        label = 'Completed';
+        label = _tPartnerContracts(context, 'Completed');
       case ContractStatus.terminated:
         color = Colors.red;
-        label = 'Terminated';
+        label = _tPartnerContracts(context, 'Terminated');
     }
 
     return Container(
@@ -303,15 +330,18 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
               ),
               const SizedBox(height: 16),
               _buildInfoRow(
-                  'Total Value', '\$${contract.totalValue.toStringAsFixed(2)}'),
-              _buildInfoRow('Site ID', contract.siteId),
+                  _tPartnerContracts(context, 'Total Value'),
+                  '\$${contract.totalValue.toStringAsFixed(2)}'),
+              _buildInfoRow(_tPartnerContracts(context, 'Site ID'), contract.siteId),
               if (contract.startDate != null)
-                _buildInfoRow('Start Date', _formatDate(contract.startDate!)),
+                _buildInfoRow(_tPartnerContracts(context, 'Start Date'),
+                    _formatDate(contract.startDate!)),
               if (contract.endDate != null)
-                _buildInfoRow('End Date', _formatDate(contract.endDate!)),
+                _buildInfoRow(_tPartnerContracts(context, 'End Date'),
+                    _formatDate(contract.endDate!)),
               const SizedBox(height: 24),
-              const Text(
-                'Deliverables',
+              Text(
+                _tPartnerContracts(context, 'Deliverables'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -319,8 +349,8 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
               ),
               const SizedBox(height: 12),
               if (contract.deliverables.isEmpty)
-                const Text(
-                  'No deliverables defined',
+                Text(
+                  _tPartnerContracts(context, 'No deliverables defined'),
                   style: TextStyle(color: ScholesaColors.textSecondary),
                 )
               else
@@ -351,7 +381,7 @@ class _PartnerContractsPageState extends State<PartnerContractsPage> {
                   );
                   Navigator.pop(context);
                 },
-                child: const Text('Close'),
+                child: Text(_tPartnerContracts(context, 'Close')),
               ),
             ],
           ),

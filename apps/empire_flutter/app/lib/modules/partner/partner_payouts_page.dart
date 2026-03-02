@@ -5,6 +5,27 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
+const Map<String, String> _partnerPayoutsEs = <String, String>{
+  'Payouts': 'Pagos',
+  'Total Paid': 'Total pagado',
+  'Pending': 'Pendiente',
+  'No Payouts Yet': 'Aún no hay pagos',
+  'Your payout history will appear here':
+      'Tu historial de pagos aparecerá aquí',
+  'Contract:': 'Contrato:',
+  'General payout': 'Pago general',
+  'Paid': 'Pagado',
+  'Requested': 'Solicitado',
+  'Approved': 'Aprobado',
+  'Failed': 'Fallido',
+};
+
+String _tPartnerPayouts(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _partnerPayoutsEs[input] ?? input;
+}
+
 /// Partner payouts management page
 /// Based on docs/16_PARTNER_CONTRACTING_WORKFLOWS_SPEC.md
 class PartnerPayoutsPage extends StatefulWidget {
@@ -28,7 +49,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Payouts'),
+        title: Text(_tPartnerPayouts(context, 'Payouts')),
         backgroundColor: ScholesaColors.billingGradient.colors.first,
         foregroundColor: Colors.white,
       ),
@@ -106,7 +127,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Total Paid',
+                  _tPartnerPayouts(context, 'Total Paid'),
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.white.withValues(alpha: 0.8),
@@ -136,7 +157,7 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Pending',
+                    _tPartnerPayouts(context, 'Pending'),
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -179,8 +200,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'No Payouts Yet',
+          Text(
+            _tPartnerPayouts(context, 'No Payouts Yet'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -188,8 +209,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Your payout history will appear here',
+          Text(
+            _tPartnerPayouts(context, 'Your payout history will appear here'),
             style: TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
@@ -237,8 +258,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
                   const SizedBox(height: 4),
                   Text(
                     payout.contractId != null
-                        ? 'Contract: ${payout.contractId}'
-                        : 'General payout',
+                        ? '${_tPartnerPayouts(context, 'Contract:')} ${payout.contractId}'
+                        : _tPartnerPayouts(context, 'General payout'),
                     style: const TextStyle(
                       fontSize: 13,
                       color: ScholesaColors.textSecondary,
@@ -249,8 +270,8 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         payout.paidAt != null
-                            ? 'Paid ${_formatDate(payout.paidAt!)}'
-                            : 'Requested ${_formatDate(payout.requestedAt!)}',
+                            ? '${_tPartnerPayouts(context, 'Paid')} ${_formatDate(payout.paidAt!)}'
+                            : '${_tPartnerPayouts(context, 'Requested')} ${_formatDate(payout.requestedAt!)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: ScholesaColors.textSecondary,
@@ -272,13 +293,13 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
     String label;
     switch (status) {
       case PayoutStatus.pending:
-        label = 'Pending';
+        label = _tPartnerPayouts(context, 'Pending');
       case PayoutStatus.approved:
-        label = 'Approved';
+        label = _tPartnerPayouts(context, 'Approved');
       case PayoutStatus.paid:
-        label = 'Paid';
+        label = _tPartnerPayouts(context, 'Paid');
       case PayoutStatus.failed:
-        label = 'Failed';
+        label = _tPartnerPayouts(context, 'Failed');
     }
 
     return Container(
