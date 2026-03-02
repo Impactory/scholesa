@@ -12,7 +12,7 @@ Last audit run: 2026-03-02 (`npm outdated` + `flutter pub outdated`).
 | Node.js | 24.x | `engines.node: 24.x` | 24.x only for CI/CD and deploy. |
 | Next.js | 14.2.35 | `^14.2.35` | 14.x only; do not move to 15/16 without migration plan. |
 | React / ReactDOM | 18.3.1 / 18.3.1 | `^18` / `^18` | 18.x only; keep in lockstep majors. |
-| TypeScript | 5.9.x line | `^5.5.3` | 5.x only. |
+| TypeScript | 5.9.3 | `^5.5.3` | 5.x only. |
 | Firebase Web SDK | 11.10.0 | `^11.1.0` | 11.x only on this release line. |
 | Firebase Admin SDK | 13.6.1 | `^13.6.0` | 13.x only. |
 | Tailwind CSS | 3.4.19 | `^3.4.6` | 3.x only; no Tailwind 4 migration in this branch. |
@@ -31,8 +31,8 @@ Last audit run: 2026-03-02 (`npm outdated` + `flutter pub outdated`).
 
 | Dependency | Current (resolved) | Declared in manifest | Supported Range & Notes |
 |---|---|---|---|
-| @headlessui/react | 2.2.x line | `^2.1.2` | 2.x only. |
-| @heroicons/react | 2.2.x line | `^2.1.5` | 2.x only. |
+| @headlessui/react | 2.2.9 | `^2.1.2` | 2.x only. |
+| @heroicons/react | 2.2.0 | `^2.1.5` | 2.x only. |
 | lucide-react | 0.560.0 | `^0.560.0` | 0.x line pinned for icon consistency. |
 | class-variance-authority | 0.7.0 | `^0.7.0` | 0.7.x only. |
 | clsx | 2.1.1 | `^2.1.1` | 2.x only. |
