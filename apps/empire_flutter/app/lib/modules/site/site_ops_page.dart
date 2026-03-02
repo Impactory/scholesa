@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -28,6 +33,9 @@ const Map<String, String> _siteOpsEs = <String, String>{
   'Oliver T. checked in': 'Oliver T. registró entrada',
   'Minor incident reported': 'Incidente menor reportado',
   'Sophia M. picked up': 'Sophia M. fue recogida',
+  'Loading...': 'Cargando...',
+  'No recent activity yet': 'Aún no hay actividad reciente',
+  'Action failed': 'Acción fallida',
 };
 
 String _tSiteOps(BuildContext context, String input) {
@@ -46,20 +54,21 @@ class SiteOpsPage extends StatefulWidget {
 }
 
 class _SiteOpsPageState extends State<SiteOpsPage> {
-  bool _isDayOpen = true;
-  int _presentCount = 24;
-  int _pendingPickups = 5;
-  int _openIncidents = 2;
-  final List<_ActivityEntry> _recentActivity = <_ActivityEntry>[
-    const _ActivityEntry(
-        'Emma S. checked in', '9:02 AM', Icons.login_rounded, Colors.green),
-    const _ActivityEntry(
-        'Oliver T. checked in', '9:05 AM', Icons.login_rounded, Colors.green),
-    const _ActivityEntry('Minor incident reported', '9:15 AM',
-        Icons.warning_rounded, Colors.orange),
-    const _ActivityEntry(
-        'Sophia M. picked up', '3:30 PM', Icons.logout_rounded, Colors.blue),
-  ];
+  bool _isDayOpen = false;
+  int _presentCount = 0;
+  int _pendingPickups = 0;
+  int _openIncidents = 0;
+  bool _isLoading = false;
+  String? _siteId;
+  List<_ActivityEntry> _recentActivity = <_ActivityEntry>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOpsData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -328,11 +337,33 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           color: ScholesaColors.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: <Widget>[
-              ..._buildRecentActivityRows(),
-            ],
-          ),
+          child: _isLoading
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(
+                      _tSiteOps(context, 'Loading...'),
+                      style:
+                          const TextStyle(color: ScholesaColors.textSecondary),
+                    ),
+                  ),
+                )
+              : _recentActivity.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: Text(
+                          _tSiteOps(context, 'No recent activity yet'),
+                          style: const TextStyle(
+                              color: ScholesaColors.textSecondary),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: <Widget>[
+                        ..._buildRecentActivityRows(),
+                      ],
+                    ),
         ),
       ],
     );
@@ -351,50 +382,253 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     return rows;
   }
 
-  void _handleQuickAction(String label) {
-    setState(() {
-      switch (label) {
-        case 'Check-in':
-          _presentCount += 1;
-          _addRecentActivity(
-              _tSiteOps(context, 'Manual check-in recorded'), Icons.login_rounded, Colors.green);
-          break;
-        case 'Check-out':
-          if (_presentCount > 0) _presentCount -= 1;
-          if (_pendingPickups > 0) _pendingPickups -= 1;
-          _addRecentActivity(
-              _tSiteOps(context, 'Manual check-out recorded'), Icons.logout_rounded, Colors.blue);
-          break;
-        case 'New Incident':
-          _openIncidents += 1;
-          _addRecentActivity(
-              _tSiteOps(context, 'New incident created'), Icons.warning_rounded, Colors.orange);
-          break;
-        case 'View Roster':
-          _addRecentActivity(
-              _tSiteOps(context, 'Roster viewed'), Icons.list_alt_rounded, ScholesaColors.primary);
-          break;
+  Future<void> _handleQuickAction(String label) async {
+    if (label == 'New Incident') {
+      if (!mounted) return;
+      Navigator.of(context).pushNamed('/site/incidents');
+      return;
+    }
+
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final String siteId = _siteId ?? '';
+      if (siteId.isNotEmpty) {
+        await firestoreService.firestore.collection('siteOpsEvents').add(
+          <String, dynamic>{
+            'siteId': siteId,
+            'action': label,
+            'createdBy': FirebaseAuth.instance.currentUser?.uid,
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+        );
       }
-    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label ${_tSiteOps(context, 'completed')}')),
-    );
-  }
-
-  void _addRecentActivity(String title, IconData icon, Color color) {
-    _recentActivity.insert(0, _ActivityEntry(title, _nowLabel(), icon, color));
-    if (_recentActivity.length > 8) {
-      _recentActivity.removeLast();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label ${_tSiteOps(context, 'completed')}')),
+      );
+      await _loadOpsData();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+      );
     }
   }
 
-  String _nowLabel() {
-    final DateTime now = DateTime.now();
-    final int hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-    final String minute = now.minute.toString().padLeft(2, '0');
-    final String period = now.hour >= 12 ? 'PM' : 'AM';
+  Future<void> _loadOpsData() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String resolvedSiteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    _siteId = resolvedSiteId;
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      if (resolvedSiteId.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _presentCount = 0;
+          _pendingPickups = 0;
+          _openIncidents = 0;
+          _isDayOpen = false;
+          _recentActivity = <_ActivityEntry>[];
+        });
+        return;
+      }
+
+      final DateTime now = DateTime.now();
+      final DateTime dayStart = DateTime(now.year, now.month, now.day);
+      final List<_TimedActivity> activities = <_TimedActivity>[];
+
+      final QuerySnapshot<Map<String, dynamic>> presenceSnap =
+          await firestoreService.firestore
+              .collection('presenceRecords')
+              .where('siteId', isEqualTo: resolvedSiteId)
+              .limit(250)
+              .get();
+
+      final Set<String> presentLearners = <String>{};
+      int pickupSignals = 0;
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in presenceSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? eventAt = _toDateTime(data['timestamp']);
+        if (eventAt == null || eventAt.isBefore(dayStart)) continue;
+
+        final String learnerId = (data['learnerId'] as String?) ?? '';
+        final String type =
+            ((data['type'] as String?) ?? '').trim().toLowerCase();
+        if (type == 'checkin' && learnerId.isNotEmpty) {
+          presentLearners.add(learnerId);
+          activities.add(
+            _TimedActivity(
+              title: _tSiteOps(context, 'Manual check-in recorded'),
+              at: eventAt,
+              icon: Icons.login_rounded,
+              color: Colors.green,
+            ),
+          );
+        } else if (type == 'checkout' && learnerId.isNotEmpty) {
+          presentLearners.remove(learnerId);
+          pickupSignals += 1;
+          activities.add(
+            _TimedActivity(
+              title: _tSiteOps(context, 'Manual check-out recorded'),
+              at: eventAt,
+              icon: Icons.logout_rounded,
+              color: Colors.blue,
+            ),
+          );
+        }
+      }
+
+      QuerySnapshot<Map<String, dynamic>> incidentsSnap;
+      try {
+        incidentsSnap = await firestoreService.firestore
+            .collection('incidents')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .orderBy('reportedAt', descending: true)
+            .limit(100)
+            .get();
+      } catch (_) {
+        incidentsSnap = await firestoreService.firestore
+            .collection('incidents')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .limit(100)
+            .get();
+      }
+
+      int openIncidents = 0;
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in incidentsSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String status =
+            ((data['status'] as String?) ?? '').trim().toLowerCase();
+        if (status != 'closed') {
+          openIncidents += 1;
+        }
+        final DateTime? incidentAt =
+            _toDateTime(data['reportedAt']) ?? _toDateTime(data['createdAt']);
+        if (incidentAt == null || incidentAt.isBefore(dayStart)) continue;
+
+        activities.add(
+          _TimedActivity(
+            title: _tSiteOps(context, 'New incident created'),
+            at: incidentAt,
+            icon: Icons.warning_rounded,
+            color: Colors.orange,
+          ),
+        );
+      }
+
+      QuerySnapshot<Map<String, dynamic>> opsEventSnap;
+      try {
+        opsEventSnap = await firestoreService.firestore
+            .collection('siteOpsEvents')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .orderBy('createdAt', descending: true)
+            .limit(100)
+            .get();
+      } catch (_) {
+        opsEventSnap = await firestoreService.firestore
+            .collection('siteOpsEvents')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .limit(100)
+            .get();
+      }
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in opsEventSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? at = _toDateTime(data['createdAt']);
+        if (at == null || at.isBefore(dayStart)) continue;
+        final String action = (data['action'] as String?) ?? '';
+        final ({String title, IconData icon, Color color}) mapped =
+            _mapActionToDisplay(action);
+        activities.add(
+          _TimedActivity(
+            title: mapped.title,
+            at: at,
+            icon: mapped.icon,
+            color: mapped.color,
+          ),
+        );
+      }
+
+      activities.sort((_TimedActivity a, _TimedActivity b) => b.at.compareTo(a.at));
+      final List<_ActivityEntry> recent = activities
+          .take(8)
+          .map(
+            (_TimedActivity item) => _ActivityEntry(
+              item.title,
+              _formatTime(item.at),
+              item.icon,
+              item.color,
+            ),
+          )
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _presentCount = presentLearners.length;
+        _pendingPickups = pickupSignals;
+        _openIncidents = openIncidents;
+        _isDayOpen = _presentCount > 0;
+        _recentActivity = recent;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
+    final String period = dateTime.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minute $period';
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
+  }
+
+  ({String title, IconData icon, Color color}) _mapActionToDisplay(
+      String action) {
+    switch (action) {
+      case 'Check-in':
+        return (
+          title: _tSiteOps(context, 'Manual check-in recorded'),
+          icon: Icons.login_rounded,
+          color: Colors.green,
+        );
+      case 'Check-out':
+        return (
+          title: _tSiteOps(context, 'Manual check-out recorded'),
+          icon: Icons.logout_rounded,
+          color: Colors.blue,
+        );
+      case 'View Roster':
+        return (
+          title: _tSiteOps(context, 'Roster viewed'),
+          icon: Icons.list_alt_rounded,
+          color: ScholesaColors.primary,
+        );
+      default:
+        return (
+          title: action,
+          icon: Icons.info_outline,
+          color: ScholesaColors.textSecondary,
+        );
+    }
   }
 
   Widget _buildActivityItem(
@@ -425,6 +659,20 @@ class _ActivityEntry {
 
   final String title;
   final String time;
+  final IconData icon;
+  final Color color;
+}
+
+class _TimedActivity {
+  const _TimedActivity({
+    required this.title,
+    required this.at,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final DateTime at;
   final IconData icon;
   final Color color;
 }
