@@ -49,6 +49,13 @@ const Map<String, String> _parentBillingEs = <String, String>{
   'DUE': 'PENDIENTE',
   'View': 'Ver',
   'Pay Now': 'Pagar ahora',
+  'Loading...': 'Cargando...',
+  'No invoices yet': 'Aún no hay facturas',
+  'No payments yet': 'Aún no hay pagos',
+  'STANDARD PLAN': 'PLAN ESTÁNDAR',
+  'On file': 'En archivo',
+  'Billed monthly': 'Facturación mensual',
+  'month': 'mes',
 };
 
 String _tParentBilling(BuildContext context, String input) {
@@ -411,7 +418,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     if (invoices.isEmpty) {
       return Center(
         child: Text(
-          service.isLoading ? 'Loading...' : 'No invoices yet',
+          service.isLoading
+              ? _tParentBilling(context, 'Loading...')
+              : _tParentBilling(context, 'No invoices yet'),
           style: TextStyle(color: Colors.grey[600]),
         ),
       );
@@ -437,7 +446,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     if (payments.isEmpty) {
       return Center(
         child: Text(
-          service.isLoading ? 'Loading...' : 'No payments yet',
+          service.isLoading
+              ? _tParentBilling(context, 'Loading...')
+              : _tParentBilling(context, 'No payments yet'),
           style: TextStyle(color: Colors.grey[600]),
         ),
       );
@@ -459,12 +470,12 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     final String planName =
         (billing?.subscriptionPlan.trim().isNotEmpty ?? false)
             ? billing!.subscriptionPlan.toUpperCase()
-            : 'STANDARD PLAN';
+        : _tParentBilling(context, 'STANDARD PLAN');
     final String learnerLabel = _selectedLearnerName(service);
     final String paymentMethod =
       payments.isNotEmpty && payments.first.description.isNotEmpty
         ? payments.first.description
-        : 'On file';
+        : _tParentBilling(context, 'On file');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -517,14 +528,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '${_formatCurrency(billing?.nextPaymentAmount ?? 0)}/month',
+                  '${_formatCurrency(billing?.nextPaymentAmount ?? 0)}/${_tParentBilling(context, 'month')}',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '$learnerLabel • Billed monthly',
+                  '$learnerLabel • ${_tParentBilling(context, 'Billed monthly')}',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 20),
@@ -629,7 +640,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         'id': payment.id,
         'amount': payment.amount,
         'date': _formatDate(payment.date),
-        'method': payment.description.isNotEmpty ? payment.description : 'On file',
+        'method': payment.description.isNotEmpty
+            ? payment.description
+            : _tParentBilling(context, 'On file'),
         'invoice': payment.id,
       };
     }).toList();
