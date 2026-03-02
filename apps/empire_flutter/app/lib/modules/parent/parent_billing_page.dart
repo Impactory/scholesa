@@ -616,6 +616,91 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     );
   }
 
+  List<Map<String, dynamic>> _buildPaymentRows(ParentService service) {
+    final BillingSummary? billing = service.billingSummary;
+    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    return payments.map((PaymentHistory payment) {
+      return <String, dynamic>{
+        'id': payment.id,
+        'amount': payment.amount,
+        'date': _formatDate(payment.date),
+        'method': payment.description.isNotEmpty ? payment.description : 'On file',
+        'invoice': payment.id,
+      };
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _buildInvoiceRows(ParentService service) {
+    final BillingSummary? billing = service.billingSummary;
+    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    final String learnerLabel = _selectedLearnerName(service);
+
+    final List<Map<String, dynamic>> rows = payments.map((PaymentHistory payment) {
+      return <String, dynamic>{
+        'id': payment.id,
+        'learner': learnerLabel,
+        'period': _formatMonthYear(payment.date),
+        'amount': payment.amount,
+        'status': payment.status.toLowerCase() == 'paid' ? 'paid' : 'due',
+      };
+    }).toList();
+
+    if ((billing?.nextPaymentAmount ?? 0) > 0) {
+      rows.insert(
+        0,
+        <String, dynamic>{
+          'id': 'NEXT-DUE',
+          'learner': learnerLabel,
+          'period': _formatMonthYear(billing?.nextPaymentDate),
+          'amount': billing?.nextPaymentAmount ?? 0.0,
+          'status': 'due',
+        },
+      );
+    }
+
+    return rows;
+  }
+
+  String _selectedLearnerName(ParentService service) {
+    if (_selectedLearner == 'all') {
+      return _tParentBilling(context, 'All Learners');
+    }
+    final LearnerSummary? selected = service.learnerSummaries
+        .where((LearnerSummary learner) => learner.learnerId == _selectedLearner)
+        .firstOrNull;
+    return selected?.learnerName ?? _tParentBilling(context, 'All Learners');
+  }
+
+  String _formatCurrency(double amount) {
+    return '\$${amount.toStringAsFixed(2)}';
+  }
+
+  String _formatDate(DateTime? value) {
+    if (value == null) return '--';
+    final String day = value.day.toString().padLeft(2, '0');
+    final String month = value.month.toString().padLeft(2, '0');
+    return '$day/$month/${value.year}';
+  }
+
+  String _formatMonthYear(DateTime? value) {
+    if (value == null) return '--';
+    const List<String> months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[value.month - 1]} ${value.year}';
+  }
+
   void _downloadStatements() {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
