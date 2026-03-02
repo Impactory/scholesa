@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -28,6 +30,11 @@ const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Mission created and added to list':
       'Misión creada y agregada a la lista',
   'Create': 'Crear',
+  'No missions yet': 'Aún no hay misiones',
+  'Loading...': 'Cargando...',
+  'Apply': 'Aplicar',
+  'Failed to load missions': 'No se pudieron cargar las misiones',
+  'Failed to create mission': 'No se pudo crear la misión',
 };
 
 String _tEducatorMissionPlans(BuildContext context, String input) {
@@ -72,39 +79,25 @@ class EducatorMissionPlansPage extends StatefulWidget {
 }
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
-  final List<_MissionPlan> _missionPlans = <_MissionPlan>[
-    const _MissionPlan(
-      id: '1',
-      title: 'AI Image Generator',
-      pillar: 'Future Skills',
-      duration: '4 weeks',
-      targetGrade: '6-8',
-      status: _PlanStatus.active,
-      assignedSessions: 3,
-      completedBy: 12,
-    ),
-    const _MissionPlan(
-      id: '2',
-      title: 'Community Clean-up Project',
-      pillar: 'Impact & Innovation',
-      duration: '2 weeks',
-      targetGrade: '4-6',
-      status: _PlanStatus.active,
-      assignedSessions: 2,
-      completedBy: 8,
-    ),
-    const _MissionPlan(
-      id: '3',
-      title: 'Student Council Campaign',
-      pillar: 'Leadership & Agency',
-      duration: '3 weeks',
-      targetGrade: '7-9',
-      status: _PlanStatus.draft,
-      assignedSessions: 0,
-      completedBy: 0,
-    ),
-  ];
-  int _nextMissionId = 4;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<_MissionPlan> _missionPlans = <_MissionPlan>[];
+  bool _isLoading = false;
+  String _pillarFilter = 'All Pillars';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMissionPlans();
+  }
+
+  List<_MissionPlan> get _filteredMissionPlans {
+    if (_pillarFilter == 'All Pillars') {
+      return _missionPlans;
+    }
+    return _missionPlans
+        .where((_MissionPlan mission) => mission.pillar == _pillarFilter)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,13 +120,27 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         icon: const Icon(Icons.add_rounded),
         label: Text(_tEducatorMissionPlans(context, 'New Mission')),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _missionPlans.length,
-        itemBuilder: (BuildContext context, int index) {
-          return _buildMissionPlanCard(_missionPlans[index]);
-        },
-      ),
+      body: _isLoading
+          ? Center(
+              child: Text(
+                _tEducatorMissionPlans(context, 'Loading...'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            )
+          : _filteredMissionPlans.isEmpty
+              ? Center(
+                  child: Text(
+                    _tEducatorMissionPlans(context, 'No missions yet'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _filteredMissionPlans.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return _buildMissionPlanCard(_filteredMissionPlans[index]);
+                  },
+                ),
     );
   }
 
@@ -299,46 +306,89 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     );
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
-        title: Text(_tEducatorMissionPlans(context, 'Filter Missions')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _buildFilterOption(_tEducatorMissionPlans(context, 'All Pillars')),
-            _buildFilterOption(_tEducatorMissionPlans(context, 'Future Skills')),
-            _buildFilterOption(_tEducatorMissionPlans(context, 'Leadership & Agency')),
-            _buildFilterOption(_tEducatorMissionPlans(context, 'Impact & Innovation')),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'educator_mission_plans_close_filter'
-                },
-              );
-              Navigator.pop(context);
-            },
-            child: Text(_tEducatorMissionPlans(context, 'Close')),
-          ),
-        ],
-      ),
+      builder: (BuildContext context) {
+        String selected = _pillarFilter;
+        return StatefulBuilder(
+          builder: (BuildContext context,
+              void Function(void Function()) setLocalState) {
+            return AlertDialog(
+              backgroundColor: ScholesaColors.surface,
+              title: Text(_tEducatorMissionPlans(context, 'Filter Missions')),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  _buildFilterOption(
+                    label: _tEducatorMissionPlans(context, 'All Pillars'),
+                    selected: selected,
+                    onChanged: (String value) {
+                      setLocalState(() => selected = value);
+                    },
+                  ),
+                  _buildFilterOption(
+                    label: _tEducatorMissionPlans(context, 'Future Skills'),
+                    selected: selected,
+                    onChanged: (String value) {
+                      setLocalState(() => selected = value);
+                    },
+                  ),
+                  _buildFilterOption(
+                    label:
+                        _tEducatorMissionPlans(context, 'Leadership & Agency'),
+                    selected: selected,
+                    onChanged: (String value) {
+                      setLocalState(() => selected = value);
+                    },
+                  ),
+                  _buildFilterOption(
+                    label:
+                        _tEducatorMissionPlans(context, 'Impact & Innovation'),
+                    selected: selected,
+                    onChanged: (String value) {
+                      setLocalState(() => selected = value);
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: const <String, dynamic>{
+                        'cta': 'educator_mission_plans_close_filter'
+                      },
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Text(_tEducatorMissionPlans(context, 'Close')),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() => _pillarFilter = selected);
+                    Navigator.pop(context);
+                  },
+                  child: Text(_tEducatorMissionPlans(context, 'Apply')),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildFilterOption(String label) {
-    return ListTile(
+  Widget _buildFilterOption({
+    required String label,
+    required String selected,
+    required ValueChanged<String> onChanged,
+  }) {
+    return RadioListTile<String>(
+      value: label,
+      groupValue: selected,
+      onChanged: (String? value) {
+        if (value != null) onChanged(value);
+      },
       title: Text(label),
-      leading: RadioGroup<String>(
-        groupValue: _tEducatorMissionPlans(context, 'All Pillars'),
-        onChanged: (_) {},
-        child: Radio<String>(
-          value: label,
-        ),
-      ),
     );
   }
 
@@ -502,7 +552,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               child: Text(_tEducatorMissionPlans(context, 'Cancel')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final String title = titleController.text.trim();
                 if (title.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -520,27 +570,22 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   },
                 );
 
-                setState(() {
-                  _missionPlans.insert(
-                    0,
-                    _MissionPlan(
-                      id: (_nextMissionId++).toString(),
-                      title: title,
-                      pillar: selectedPillar,
-                      duration: '4 weeks',
-                      targetGrade: '6-8',
-                      status: _PlanStatus.draft,
-                      assignedSessions: 0,
-                      completedBy: 0,
-                    ),
-                  );
-                });
-
+                final bool created = await _createMission(
+                  title: title,
+                  pillar: selectedPillar,
+                );
+                if (!mounted) return;
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(_tEducatorMissionPlans(
-                          context, 'Mission created and added to list'))),
+                    content: Text(
+                      created
+                          ? _tEducatorMissionPlans(
+                              context, 'Mission created and added to list')
+                          : _tEducatorMissionPlans(
+                              context, 'Failed to create mission'),
+                    ),
+                  ),
                 );
               },
               child: Text(_tEducatorMissionPlans(context, 'Create')),
@@ -549,5 +594,146 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _loadMissionPlans() async {
+    setState(() => _isLoading = true);
+    try {
+      Query<Map<String, dynamic>> query =
+          _firestore.collection('missions').limit(100);
+      try {
+        query = query.orderBy('createdAt', descending: true);
+      } catch (_) {}
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+      final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+      final List<_MissionPlan> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final String pillar = _canonicalPillar(
+              data['pillar'] as String? ?? data['pillarCode'] as String?,
+            );
+            return _MissionPlan(
+              id: doc.id,
+              title: (data['title'] as String? ?? '').trim().isEmpty
+                  ? 'Mission'
+                  : (data['title'] as String).trim(),
+              pillar: pillar,
+              duration: (data['duration'] as String? ?? '4 weeks'),
+              targetGrade:
+                  (data['targetGrade'] as String? ?? data['gradeBand'] as String? ?? '6-8'),
+              status: _parsePlanStatus(data['status'] as String?),
+              assignedSessions: _asInt(data['assignedSessions']) ??
+                  ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
+              completedBy: _asInt(data['completedBy']) ??
+                  _asInt(data['completedCount']) ??
+                  0,
+            );
+          })
+          .where((_MissionPlan plan) {
+            if (currentUserId == null || currentUserId.isEmpty) return true;
+            final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
+                snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
+            final Map<String, dynamic>? data = sourceDoc?.data();
+            if (data == null) return true;
+            final String? ownerId =
+                (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
+            if (ownerId == null || ownerId.trim().isEmpty) return true;
+            return ownerId.trim() == currentUserId;
+          })
+          .toList();
+
+      setState(() {
+        _missionPlans = loaded;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorMissionPlans(context, 'Failed to load missions'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<bool> _createMission({
+    required String title,
+    required String pillar,
+  }) async {
+    try {
+      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+      await _firestore.collection('missions').add(<String, dynamic>{
+        'title': title,
+        'pillar': pillar,
+        'pillarCode': _pillarCodeFromLabel(pillar),
+        'duration': '4 weeks',
+        'targetGrade': '6-8',
+        'status': 'draft',
+        'assignedSessions': 0,
+        'completedBy': 0,
+        if (userId != null && userId.isNotEmpty) 'educatorId': userId,
+        if (userId != null && userId.isNotEmpty) 'createdBy': userId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      await _loadMissionPlans();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  _PlanStatus _parsePlanStatus(String? status) {
+    switch ((status ?? '').trim().toLowerCase()) {
+      case 'active':
+      case 'in_progress':
+        return _PlanStatus.active;
+      case 'archived':
+      case 'completed':
+        return _PlanStatus.archived;
+      default:
+        return _PlanStatus.draft;
+    }
+  }
+
+  String _canonicalPillar(String? pillar) {
+    switch ((pillar ?? '').trim().toLowerCase()) {
+      case 'future skills':
+      case 'future_skills':
+        return 'Future Skills';
+      case 'leadership & agency':
+      case 'leadership':
+        return 'Leadership & Agency';
+      case 'impact & innovation':
+      case 'impact':
+        return 'Impact & Innovation';
+      default:
+        return 'Future Skills';
+    }
+  }
+
+  String _pillarCodeFromLabel(String pillar) {
+    switch (pillar) {
+      case 'Leadership & Agency':
+        return 'leadership';
+      case 'Impact & Innovation':
+        return 'impact';
+      default:
+        return 'future_skills';
+    }
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
   }
 }
