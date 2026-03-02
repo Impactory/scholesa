@@ -26,6 +26,9 @@ Last audit run: 2026-03-02 (`npm outdated` + `flutter pub outdated` + `npm run r
 | @jest/globals | 29.7.0 | `^29.7.0` | Keep same major as Jest. |
 | @types/jest | 29.5.14 | `^29.5.14` | Keep same major as Jest. |
 | @firebase/rules-unit-testing | 4.0.1 | `^4.0.1` | 4.x only until Firebase test harness migration. |
+| typescript-eslint | 8.56.1 | `^8.56.1` | Keep parser/plugin on exact same patch line. |
+| @typescript-eslint/eslint-plugin | 8.56.1 | `^8.56.1` | Keep aligned with `typescript-eslint` and parser. |
+| @typescript-eslint/parser | 8.56.1 | `^8.56.1` | Keep aligned with `typescript-eslint` and plugin. |
 
 ## UI / Design System Baseline
 
@@ -65,7 +68,8 @@ Last audit run: 2026-03-02 (`npm outdated` + `flutter pub outdated` + `npm run r
 - Web major upgrades available but intentionally deferred by policy: Next 16, React 19, Tailwind 4, Zod 4, Jest 30.
 - Applied safe in-major npm upgrades in this pass: `firebase-admin`, `@eslint/eslintrc`, `autoprefixer`, `postcss`, `globals`, `@types/node`.
 - Applied safe in-major Flutter lockfile upgrades in this pass: `firebase_core 4.5.0`, `firebase_auth 6.2.0`, `cloud_firestore 6.1.3`, `firebase_storage 13.1.0`, `cloud_functions 6.0.7`, `uuid 4.5.3`.
-- Remaining web in-major drift includes `@typescript-eslint/*` + `typescript-eslint` (peer-resolution conflict), plus `@stripe/stripe-js` minor (`8.8.0 -> 8.9.0`).
+- TypeScript ESLint toolchain drift resolved: `typescript-eslint`, `@typescript-eslint/eslint-plugin`, and `@typescript-eslint/parser` aligned to `8.56.1`.
+- Remaining web in-major drift includes `@stripe/stripe-js` minor (`8.8.0 -> 8.9.0`).
 - Flutter build toolchain has discontinued transitive packages (`build_resolvers`, `build_runner_core`); defer changes to a dedicated build-runner migration PR.
 - `flutter pub outdated` now reports direct dependencies up-to-date, with 5 lockfile-upgradable transitive packages and toolchain deprecation warnings; no blocker on current RC3 gate.
 
