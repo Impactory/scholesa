@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -17,6 +22,10 @@ const Map<String, String> _siteIdentityEs = <String, String>{
   'Matched': 'Emparejado',
   'with': 'con',
   'Match ignored': 'Coincidencia ignorada',
+  'Loading...': 'Cargando...',
+  'Unknown local account': 'Cuenta local desconocida',
+  'Unknown external account': 'Cuenta externa desconocida',
+  'Match update failed': 'Error al actualizar coincidencia',
 };
 
 String _tSiteIdentity(BuildContext context, String input) {
@@ -35,32 +44,16 @@ class SiteIdentityPage extends StatefulWidget {
 }
 
 class _SiteIdentityPageState extends State<SiteIdentityPage> {
-  final List<_IdentityMatch> _pendingMatches = <_IdentityMatch>[
-    const _IdentityMatch(
-      id: '1',
-      localName: 'Oliver Thompson',
-      externalName: 'O. Thompson',
-      provider: 'Google Classroom',
-      confidence: 0.92,
-      status: _MatchStatus.pending,
-    ),
-    const _IdentityMatch(
-      id: '2',
-      localName: 'Emma Smith',
-      externalName: 'Emma S.',
-      provider: 'GitHub',
-      confidence: 0.85,
-      status: _MatchStatus.pending,
-    ),
-    const _IdentityMatch(
-      id: '3',
-      localName: 'Liam Martinez',
-      externalName: 'liamm_student',
-      provider: 'GitHub',
-      confidence: 0.65,
-      status: _MatchStatus.pending,
-    ),
-  ];
+  List<_IdentityMatch> _pendingMatches = <_IdentityMatch>[];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPendingMatches();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +64,14 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         backgroundColor: const Color(0xFF64748B),
         foregroundColor: Colors.white,
       ),
-      body: _pendingMatches.isEmpty
+      body: _isLoading
+          ? Center(
+              child: Text(
+                _tSiteIdentity(context, 'Loading...'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            )
+          : _pendingMatches.isEmpty
           ? _buildEmptyState()
           : ListView(
               padding: const EdgeInsets.all(16),
@@ -330,7 +330,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     return Colors.red;
   }
 
-  void _handleApprove(_IdentityMatch match) {
+  Future<void> _handleApprove(_IdentityMatch match) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -341,19 +341,42 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         'provider': match.provider,
       },
     );
-    setState(() {
-      _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            '${_tSiteIdentity(context, 'Matched')} ${match.localName} ${_tSiteIdentity(context, 'with')} ${match.externalName}'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      await firestoreService.firestore
+          .collection('externalIdentityLinks')
+          .doc(match.id)
+          .set(<String, dynamic>{
+        'status': 'linked',
+        if ((match.suggestedUserId ?? '').isNotEmpty)
+          'scholesaUserId': match.suggestedUserId,
+        'approvedBy': FirebaseAuth.instance.currentUser?.uid,
+        'approvedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (!mounted) return;
+      setState(() {
+        _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${_tSiteIdentity(context, 'Matched')} ${match.localName} ${_tSiteIdentity(context, 'with')} ${match.externalName}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tSiteIdentity(context, 'Match update failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  void _handleIgnore(_IdentityMatch match) {
+  Future<void> _handleIgnore(_IdentityMatch match) async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -364,15 +387,116 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         'provider': match.provider,
       },
     );
-    setState(() {
-      _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_tSiteIdentity(context, 'Match ignored')),
-        backgroundColor: Colors.grey,
-      ),
-    );
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      await firestoreService.firestore
+          .collection('externalIdentityLinks')
+          .doc(match.id)
+          .set(<String, dynamic>{
+        'status': 'ignored',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (!mounted) return;
+      setState(() {
+        _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tSiteIdentity(context, 'Match ignored')),
+          backgroundColor: Colors.grey,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tSiteIdentity(context, 'Match update failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadPendingMatches() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      if (siteId.isEmpty) {
+        if (!mounted) return;
+        setState(() => _pendingMatches = <_IdentityMatch>[]);
+        return;
+      }
+
+      Query<Map<String, dynamic>> query = firestoreService.firestore
+          .collection('externalIdentityLinks')
+          .where('siteId', isEqualTo: siteId)
+          .where('status', isEqualTo: 'unmatched');
+
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await query.orderBy('createdAt', descending: true).limit(50).get();
+      } catch (_) {
+        snapshot = await query.limit(50).get();
+      }
+
+      final List<_IdentityMatch> loaded =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final List<dynamic> suggestedRaw = (data['suggestedMatches'] as List?) ?? <dynamic>[];
+        final Map<String, dynamic>? firstSuggestion = suggestedRaw.isNotEmpty
+            ? Map<String, dynamic>.from(suggestedRaw.first as Map)
+            : null;
+
+        final String localName =
+            (firstSuggestion?['displayName'] as String?)?.trim().isNotEmpty == true
+                ? (firstSuggestion!['displayName'] as String).trim()
+                : (firstSuggestion?['name'] as String?)?.trim().isNotEmpty == true
+                    ? (firstSuggestion!['name'] as String).trim()
+                    : _tSiteIdentity(context, 'Unknown local account');
+
+        final String externalName =
+            (data['providerUserId'] as String?)?.trim().isNotEmpty == true
+                ? (data['providerUserId'] as String).trim()
+                : _tSiteIdentity(context, 'Unknown external account');
+
+        final dynamic rawConfidence = firstSuggestion?['confidence'] ?? firstSuggestion?['score'];
+        final double confidence = rawConfidence is num
+            ? rawConfidence.toDouble().clamp(0.0, 1.0)
+            : 0.5;
+
+        return _IdentityMatch(
+          id: doc.id,
+          localName: localName,
+          externalName: externalName,
+          provider: _providerLabel((data['provider'] as String?) ?? 'google_classroom'),
+          confidence: confidence,
+          status: _MatchStatus.pending,
+          suggestedUserId: (firstSuggestion?['scholesaUserId'] as String?) ??
+              (firstSuggestion?['userId'] as String?),
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() => _pendingMatches = loaded);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _providerLabel(String rawProvider) {
+    final String provider = rawProvider.trim().toLowerCase();
+    if (provider.contains('github')) return 'GitHub';
+    if (provider.contains('canvas')) return 'Canvas LMS';
+    return 'Google Classroom';
   }
 }
 
@@ -387,6 +511,7 @@ class _IdentityMatch {
     required this.provider,
     required this.confidence,
     required this.status,
+    this.suggestedUserId,
   });
 
   final String id;
@@ -395,4 +520,5 @@ class _IdentityMatch {
   final String provider;
   final double confidence;
   final _MatchStatus status;
+  final String? suggestedUserId;
 }
