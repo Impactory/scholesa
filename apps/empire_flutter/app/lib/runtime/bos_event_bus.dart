@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'bos_models.dart';
 
 // ──────────────────────────────────────────────────────
@@ -90,7 +91,15 @@ class BosEventBus {
     String? lessonId,
     Map<String, dynamic> payload = const <String, dynamic>{},
   }) {
-    final User? user = FirebaseAuth.instance.currentUser;
+    if (Firebase.apps.isEmpty) return;
+
+    User? user;
+    try {
+      user = FirebaseAuth.instance.currentUser;
+    } on FirebaseException {
+      return;
+    }
+
     if (user == null) return;
 
     emit(BosEvent(
