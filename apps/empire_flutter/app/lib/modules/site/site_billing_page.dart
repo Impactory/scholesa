@@ -42,15 +42,15 @@ class SiteBillingPage extends StatefulWidget {
 
 class _SiteBillingPageState extends State<SiteBillingPage> {
   bool _isLoading = false;
-  String _planName = 'Pro Plan';
+  String _planName = 'Standard';
   String _planStatus = 'Active';
-  String _monthlyAmount = '\$299/month';
-  String _nextBillingDate = 'Feb 1, 2026';
-  double _activeLearnersUsed = 45;
+  String _monthlyAmount = '\$0/month';
+  String _nextBillingDate = '-';
+  double _activeLearnersUsed = 0;
   double _activeLearnersTotal = 100;
-  double _educatorsUsed = 8;
+  double _educatorsUsed = 0;
   double _educatorsTotal = 15;
-  double _storageUsedGb = 2.5;
+  double _storageUsedGb = 0;
   double _storageTotalGb = 10;
   List<_InvoiceItem> _invoices = <_InvoiceItem>[];
 

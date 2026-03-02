@@ -58,6 +58,10 @@ const Map<String, String> _hqBillingEs = <String, String>{
   'cancelled': 'cancelada',
   'Loading...': 'Cargando...',
   'No records found': 'No se encontraron registros',
+  'Please complete all fields': 'Por favor completa todos los campos',
+  'Invoice creation failed': 'Error al crear la factura',
+  'No users found': 'No se encontraron usuarios',
+  'invoices in period': 'facturas en el período',
 };
 
 String _tHqBilling(BuildContext context, String input) {
@@ -378,7 +382,7 @@ class _HqBillingPageState extends State<HqBillingPage>
                               size: 14, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
-                            _tHqBilling(context, '+18.2% vs last period'),
+                            '${_invoices.length} ${_tHqBilling(context, 'invoices in period')}',
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ],
@@ -540,7 +544,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     );
   }
 
-  void _createInvoice() {
+  Future<void> _createInvoice() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -549,12 +553,15 @@ class _HqBillingPageState extends State<HqBillingPage>
         'surface': 'floating_action_button',
       },
     );
-    showModalBottomSheet<void>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _CreateInvoiceSheet(),
+      builder: (BuildContext context) => _CreateInvoiceSheet(
+        selectedSiteId: _selectedSite == 'all' ? null : _selectedSite,
+      ),
     );
+    await _loadBillingData();
   }
 
   void _exportFinancials() {
@@ -1263,6 +1270,10 @@ class _SubscriptionCard extends StatelessWidget {
 }
 
 class _CreateInvoiceSheet extends StatefulWidget {
+  const _CreateInvoiceSheet({this.selectedSiteId});
+
+  final String? selectedSiteId;
+
   @override
   State<_CreateInvoiceSheet> createState() => _CreateInvoiceSheetState();
 }
@@ -1272,6 +1283,17 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   String? _selectedLearner;
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  bool _isLoadingUsers = false;
+  List<_UserOption> _parentOptions = <_UserOption>[];
+  List<_UserOption> _learnerOptions = <_UserOption>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserOptions();
+    });
+  }
 
   @override
   void dispose() {
@@ -1337,20 +1359,14 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       ),
                       hintText: _tHqBilling(context, 'Select parent'),
                     ),
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(
-                        value: 'p1',
-                        child: Text('Sarah Johnson'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'p2',
-                        child: Text('Michael Chen'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'p3',
-                        child: Text('Ana Martinez'),
-                      ),
-                    ],
+                    items: _parentOptions
+                        .map(
+                          (_UserOption option) => DropdownMenuItem<String>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (String? value) {
                       setState(() => _selectedParent = value);
                     },
@@ -1369,24 +1385,36 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       ),
                       hintText: _tHqBilling(context, 'Select learner'),
                     ),
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(
-                        value: 'l1',
-                        child: Text('Emma Johnson'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'l2',
-                        child: Text('Liam Chen'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'l3',
-                        child: Text('Sofia Martinez'),
-                      ),
-                    ],
+                    items: _learnerOptions
+                        .map(
+                          (_UserOption option) => DropdownMenuItem<String>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (String? value) {
                       setState(() => _selectedLearner = value);
                     },
                   ),
+                  if (_isLoadingUsers)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        _tHqBilling(context, 'Loading...'),
+                        style: TextStyle(
+                            fontSize: 12, color: context.schTextSecondary),
+                      ),
+                    )
+                  else if (_parentOptions.isEmpty && _learnerOptions.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        _tHqBilling(context, 'No users found'),
+                        style: TextStyle(
+                            fontSize: 12, color: context.schTextSecondary),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   Text(
                     _tHqBilling(context, 'Amount'),
@@ -1450,7 +1478,32 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     );
   }
 
-  void _createInvoice() {
+  Future<void> _createInvoice() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    final double? amount = double.tryParse(_amountController.text.trim());
+    if (_selectedParent == null ||
+        _selectedLearner == null ||
+        amount == null ||
+        amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqBilling(context, 'Please complete all fields')),
+          backgroundColor: ScholesaColors.warning,
+        ),
+      );
+      return;
+    }
+
+    final _UserOption? parent = _parentOptions
+        .where((_UserOption option) => option.id == _selectedParent)
+        .cast<_UserOption?>()
+        .firstOrNull;
+    final _UserOption? learner = _learnerOptions
+        .where((_UserOption option) => option.id == _selectedLearner)
+        .cast<_UserOption?>()
+        .firstOrNull;
+
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -1461,6 +1514,46 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
         'learner_id': _selectedLearner,
       },
     );
+
+    if (firestoreService != null) {
+      try {
+        final String? selectedSiteId = widget.selectedSiteId;
+        final String? activeSiteId = appState?.activeSiteId;
+        final String siteId = (selectedSiteId != null && selectedSiteId.isNotEmpty)
+            ? selectedSiteId
+            : ((activeSiteId != null && activeSiteId.isNotEmpty)
+                ? activeSiteId
+                : ((appState?.siteIds.isNotEmpty ?? false)
+                    ? appState!.siteIds.first
+                    : ''));
+        await firestoreService.firestore.collection('payouts').add(
+          <String, dynamic>{
+            'type': 'invoice',
+            'status': 'pending',
+            'amount': amount,
+            'parentId': _selectedParent,
+            'parentName': parent?.label ?? _selectedParent,
+            'learnerId': _selectedLearner,
+            'learnerName': learner?.label ?? _selectedLearner,
+            'description': _descriptionController.text.trim(),
+            if (siteId.isNotEmpty) 'siteId': siteId,
+            'createdAt': FieldValue.serverTimestamp(),
+            'createdBy': appState?.userId,
+          },
+        );
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tHqBilling(context, 'Invoice creation failed')),
+            backgroundColor: ScholesaColors.error,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (!mounted) return;
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1469,4 +1562,115 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       ),
     );
   }
+
+  Future<void> _loadUserOptions() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) return;
+
+    if (!mounted) return;
+    setState(() => _isLoadingUsers = true);
+    try {
+      final AppState? appState = _maybeAppState();
+      final String? selectedSiteId = widget.selectedSiteId;
+      final String? activeSiteId = appState?.activeSiteId;
+      final String siteScopeId = (selectedSiteId != null && selectedSiteId.isNotEmpty)
+          ? selectedSiteId
+          : ((activeSiteId != null && activeSiteId.isNotEmpty)
+              ? activeSiteId
+              : '');
+
+      QuerySnapshot<Map<String, dynamic>> usersSnapshot;
+      try {
+        usersSnapshot = await firestoreService.firestore
+            .collection('users')
+            .where('role', whereIn: <String>['parent', 'learner'])
+            .limit(500)
+            .get();
+      } catch (_) {
+        usersSnapshot = await firestoreService.firestore
+            .collection('users')
+            .limit(500)
+            .get();
+      }
+
+      final List<_UserOption> parents = <_UserOption>[];
+      final List<_UserOption> learners = <_UserOption>[];
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in usersSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String role = ((data['role'] as String?) ?? '').toLowerCase().trim();
+        if (role != 'parent' && role != 'learner') continue;
+
+        if (siteScopeId.isNotEmpty) {
+          final List<String> siteIds =
+              (data['siteIds'] as List?)?.map((dynamic e) => e.toString()).toList() ??
+                  <String>[];
+          final String activeSite = (data['activeSiteId'] as String?) ?? '';
+          if (siteIds.isNotEmpty && !siteIds.contains(siteScopeId) && activeSite != siteScopeId) {
+            continue;
+          }
+        }
+
+        final String label = _displayNameFromUserDoc(data, doc.id);
+        final _UserOption option = _UserOption(id: doc.id, label: label);
+        if (role == 'parent') {
+          parents.add(option);
+        } else {
+          learners.add(option);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _parentOptions = parents;
+        _learnerOptions = learners;
+        if (_selectedParent != null &&
+            !_parentOptions.any((option) => option.id == _selectedParent)) {
+          _selectedParent = null;
+        }
+        if (_selectedLearner != null &&
+            !_learnerOptions.any((option) => option.id == _selectedLearner)) {
+          _selectedLearner = null;
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingUsers = false);
+      }
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _displayNameFromUserDoc(Map<String, dynamic> data, String fallbackId) {
+    final String displayName = ((data['displayName'] as String?) ?? '').trim();
+    if (displayName.isNotEmpty) return displayName;
+    final String name = ((data['name'] as String?) ?? '').trim();
+    if (name.isNotEmpty) return name;
+    final String email = ((data['email'] as String?) ?? '').trim();
+    if (email.isNotEmpty) return email;
+    return fallbackId;
+  }
+}
+
+class _UserOption {
+  const _UserOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
