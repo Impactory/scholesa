@@ -8,6 +8,122 @@ import '../services/telemetry_service.dart';
 import '../ui/theme/scholesa_theme.dart';
 import '../ui/widgets/cards.dart';
 
+const Map<String, String> _roleDashboardEs = <String, String>{
+  'Today': 'Hoy',
+  'Your schedule for today': 'Tu horario de hoy',
+  'My Missions': 'Mis misiones',
+  'Start and continue missions': 'Inicia y continúa misiones',
+  '3 Active': '3 activas',
+  'Habit Coach': 'Coach de hábitos',
+  'Build great habits daily': 'Construye hábitos diarios',
+  'Portfolio': 'Portafolio',
+  'Your achievements & work': 'Tus logros y trabajo',
+  "Today's Classes": 'Clases de hoy',
+  'View roster and plans': 'Ver lista y planes',
+  '4 Classes': '4 clases',
+  'Take Attendance': 'Tomar asistencia',
+  'Mark student attendance': 'Marcar asistencia de estudiantes',
+  'Plan Missions': 'Planificar misiones',
+  'Create and edit lesson plans': 'Crear y editar planes de clase',
+  'Review Queue': 'Cola de revisión',
+  'Review student submissions': 'Revisar entregas de estudiantes',
+  '12 Pending': '12 pendientes',
+  'Learner Supports': 'Apoyos al estudiante',
+  'Track interventions': 'Seguimiento de intervenciones',
+  'Integrations': 'Integraciones',
+  'Classroom & GitHub': 'Classroom y GitHub',
+  'Child Summary': 'Resumen del estudiante',
+  'Weekly progress overview': 'Resumen semanal de progreso',
+  'Schedule': 'Horario',
+  'Upcoming classes': 'Próximas clases',
+  'Portfolio Highlights': 'Destacados del portafolio',
+  'Shared achievements': 'Logros compartidos',
+  'Billing': 'Facturación',
+  'Invoices and payments': 'Facturas y pagos',
+  'Today Operations': 'Operaciones de hoy',
+  'Daily overview': 'Resumen diario',
+  'Check-in / Check-out': 'Entrada / salida',
+  'Manage arrivals and pickups': 'Gestionar llegadas y retiros',
+  'Provisioning': 'Aprovisionamiento',
+  'Manage users and links': 'Gestionar usuarios y vínculos',
+  'Safety & Incidents': 'Seguridad e incidentes',
+  'Review and manage incidents': 'Revisar y gestionar incidentes',
+  '2 Open': '2 abiertos',
+  'Identity Resolution': 'Resolución de identidad',
+  'Match external accounts': 'Vincular cuentas externas',
+  'Integrations Health': 'Estado de integraciones',
+  'Sync status': 'Estado de sincronización',
+  'Site Billing': 'Facturación del sitio',
+  'Subscription management': 'Gestión de suscripciones',
+  'Listings': 'Publicaciones',
+  'Manage marketplace listings': 'Gestionar publicaciones del marketplace',
+  'Contracts': 'Contratos',
+  'View and manage contracts': 'Ver y gestionar contratos',
+  'Payouts': 'Pagos',
+  'Payment history': 'Historial de pagos',
+  'User Administration': 'Administración de usuarios',
+  'Manage all users': 'Gestionar todos los usuarios',
+  'Approvals Queue': 'Cola de aprobaciones',
+  'Review submissions': 'Revisar envíos',
+  '5 Pending': '5 pendientes',
+  'Audit & Logs': 'Auditoría y registros',
+  'System audit trail': 'Rastro de auditoría del sistema',
+  'Safety Oversight': 'Supervisión de seguridad',
+  'Critical incidents': 'Incidentes críticos',
+  'Billing Admin': 'Administración de facturación',
+  'Platform billing': 'Facturación de la plataforma',
+  'Global sync status': 'Estado global de sincronización',
+  'Site Management': 'Gestión de sedes',
+  'All sites overview': 'Resumen de todas las sedes',
+  'Platform Analytics': 'Analítica de la plataforma',
+  'Global metrics & insights': 'Métricas e insights globales',
+  'Role Impersonation': 'Suplantación de rol',
+  'Test other role views': 'Probar vistas de otros roles',
+  'Curriculum Builder': 'Constructor curricular',
+  'Pillars, skills, missions': 'Pilares, habilidades, misiones',
+  'Feature Flags': 'Feature flags',
+  'Toggle platform features': 'Activar/desactivar funciones',
+  'Messages': 'Mensajes',
+  'Conversations': 'Conversaciones',
+  'Notifications': 'Notificaciones',
+  'Recent alerts': 'Alertas recientes',
+  '5 New': '5 nuevas',
+  'Welcome back,': 'Bienvenido de nuevo,',
+  'User': 'Usuario',
+  'Dashboard': 'Panel',
+  'Switch site': 'Cambiar sede',
+  'Settings': 'Configuración',
+  'Sign out': 'Cerrar sesión',
+  'Quick Actions': 'Acciones rápidas',
+  'View All': 'Ver todo',
+  'All Quick Actions': 'Todas las acciones rápidas',
+  'This action is not available for your current role or site setup. You can review your access in Settings.':
+      'Esta acción no está disponible para tu rol actual o configuración de sede. Puedes revisar tu acceso en Configuración.',
+  'Close': 'Cerrar',
+  'Open Settings': 'Abrir configuración',
+  'Switch Site': 'Cambiar sede',
+  'Students Today': 'Estudiantes hoy',
+  'Attendance': 'Asistencia',
+  'To Review': 'Por revisar',
+  'On Site': 'En sede',
+  'Checked In': 'Registrados',
+  'Open Incidents': 'Incidentes abiertos',
+  'Active Sites': 'Sedes activas',
+  'Total Users': 'Usuarios totales',
+  'Pending': 'Pendiente',
+  '7-day': '7 días',
+  'within SLA': 'dentro de SLA',
+  'hours': 'horas',
+  'Sign Out': 'Cerrar sesión',
+  'Are you sure you want to sign out?': '¿Seguro que quieres cerrar sesión?',
+  'learner': 'Estudiante',
+  'educator': 'Educador',
+  'parent': 'Familia',
+  'site': 'Sede',
+  'partner': 'Aliado',
+  'hq': 'HQ',
+};
+
 /// Dashboard card definition from docs/47_ROLE_DASHBOARD_CARD_REGISTRY.md
 class DashboardCard {
   const DashboardCard({
@@ -466,6 +582,17 @@ final List<DashboardCard> _sharedCards = <DashboardCard>[
 class RoleDashboard extends StatelessWidget {
   const RoleDashboard({super.key});
 
+  String _t(BuildContext context, String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _roleDashboardEs[input] ?? input;
+  }
+
+  String _roleLabel(BuildContext context, UserRole role) {
+    final String localizedRole = _t(context, role.name);
+    return '$localizedRole ${_t(context, 'Dashboard')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
@@ -524,7 +651,7 @@ class RoleDashboard extends StatelessWidget {
                               Row(
                                 children: <Widget>[
                                   UserAvatar(
-                                    name: appState.displayName ?? 'User',
+                                    name: appState.displayName ?? _t(context, 'User'),
                                     size: 50,
                                     backgroundColor:
                                         Colors.white.withValues(alpha: 0.25),
@@ -536,7 +663,7 @@ class RoleDashboard extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: <Widget>[
                                         Text(
-                                          'Welcome back,',
+                                          _t(context, 'Welcome back,'),
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.white.withValues(
@@ -545,7 +672,7 @@ class RoleDashboard extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          appState.displayName ?? 'User',
+                                          appState.displayName ?? _t(context, 'User'),
                                           style: const TextStyle(
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
@@ -578,7 +705,7 @@ class RoleDashboard extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      '${role.name[0].toUpperCase()}${role.name.substring(1)} Dashboard',
+                                      _roleLabel(context, role),
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
@@ -599,7 +726,7 @@ class RoleDashboard extends StatelessWidget {
                   if (appState.siteIds.length > 1)
                     IconButton(
                       icon: const Icon(Icons.swap_horiz, color: Colors.white),
-                      tooltip: 'Switch site',
+                      tooltip: _t(context, 'Switch site'),
                       onPressed: () {
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
@@ -614,7 +741,7 @@ class RoleDashboard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.settings_outlined,
                         color: Colors.white),
-                    tooltip: 'Settings',
+                    tooltip: _t(context, 'Settings'),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -628,7 +755,7 @@ class RoleDashboard extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.logout, color: Colors.white),
-                    tooltip: 'Sign out',
+                    tooltip: _t(context, 'Sign out'),
                     onPressed: () => _showLogoutDialog(context),
                   ),
                   const SizedBox(width: 8),
@@ -653,7 +780,7 @@ class RoleDashboard extends StatelessWidget {
                   child: Row(
                     children: <Widget>[
                       Text(
-                        'Quick Actions',
+                        _t(context, 'Quick Actions'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -663,7 +790,7 @@ class RoleDashboard extends StatelessWidget {
                       const Spacer(),
                       TextButton(
                         onPressed: () => _showAllActionsSheet(context, cards),
-                        child: const Text('View All'),
+                        child: Text(_t(context, 'View All')),
                       ),
                     ],
                   ),
@@ -680,12 +807,16 @@ class RoleDashboard extends StatelessWidget {
                       final bool isEnabled = isRouteEnabled(card.route);
 
                       return GradientCard(
-                        title: card.title,
-                        subtitle: card.subtitle,
+                        title: _t(context, card.title),
+                        subtitle: card.subtitle == null
+                            ? null
+                            : _t(context, card.subtitle!),
                         icon: card.icon,
                         gradient: card.gradient,
                         isEnabled: isEnabled,
-                        badgeText: isEnabled ? card.badgeText : null,
+                        badgeText: isEnabled && card.badgeText != null
+                            ? _t(context, card.badgeText!)
+                            : null,
                         onTap: () => _handleCardTap(context, card, isEnabled),
                       );
                     },
@@ -726,11 +857,13 @@ class RoleDashboard extends StatelessWidget {
               return SizedBox(
                 width: 140,
                 child: StatCard(
-                  label: stat['label'] as String,
+                  label: _t(context, stat['label'] as String),
                   value: stat['value'] as String,
                   icon: stat['icon'] as IconData,
                   color: stat['color'] as Color,
-                  trend: stat['trend'] as String?,
+                  trend: (stat['trend'] as String?) == null
+                      ? null
+                      : _t(context, stat['trend'] as String),
                   isPositive: stat['positive'] as bool? ?? true,
                 ),
               );
@@ -959,7 +1092,7 @@ class RoleDashboard extends StatelessWidget {
               return Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'All Quick Actions',
+                  _t(sheetContext, 'All Quick Actions'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -976,8 +1109,9 @@ class RoleDashboard extends StatelessWidget {
                   color: enabled
                       ? null
                       : Theme.of(sheetContext).colorScheme.onSurfaceVariant),
-              title: Text(card.title),
-              subtitle: Text(card.subtitle ?? ''),
+                title: Text(_t(sheetContext, card.title)),
+                subtitle:
+                  Text(card.subtitle == null ? '' : _t(sheetContext, card.subtitle!)),
               trailing: Icon(
                 enabled ? Icons.arrow_forward_ios : Icons.lock_outline,
                 size: 16,
@@ -997,9 +1131,12 @@ class RoleDashboard extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(card.title),
-        content: const Text(
-          'This action is not available for your current role or site setup. You can review your access in Settings.',
+        title: Text(_t(dialogContext, card.title)),
+        content: Text(
+          _t(
+            dialogContext,
+            'This action is not available for your current role or site setup. You can review your access in Settings.',
+          ),
         ),
         actions: <Widget>[
           TextButton(
@@ -1013,7 +1150,7 @@ class RoleDashboard extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_t(dialogContext, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1027,7 +1164,7 @@ class RoleDashboard extends StatelessWidget {
               Navigator.pop(dialogContext);
               context.push('/settings');
             },
-            child: const Text('Open Settings'),
+            child: Text(_t(dialogContext, 'Open Settings')),
           ),
         ],
       ),
@@ -1046,10 +1183,10 @@ class RoleDashboard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(20),
               child: Text(
-                'Switch Site',
+                _t(context, 'Switch Site'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -1107,14 +1244,14 @@ class RoleDashboard extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: <Widget>[
-            Icon(Icons.logout, color: ScholesaColors.error),
-            SizedBox(width: 12),
-            Text('Sign Out'),
+            const Icon(Icons.logout, color: ScholesaColors.error),
+            const SizedBox(width: 12),
+            Text(_t(dialogContext, 'Sign Out')),
           ],
         ),
-        content: const Text('Are you sure you want to sign out?'),
+        content: Text(_t(dialogContext, 'Are you sure you want to sign out?')),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -1127,7 +1264,7 @@ class RoleDashboard extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_t(dialogContext, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1148,7 +1285,7 @@ class RoleDashboard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: ScholesaColors.error,
             ),
-            child: const Text('Sign Out'),
+            child: Text(_t(dialogContext, 'Sign Out')),
           ),
         ],
       ),

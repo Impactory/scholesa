@@ -5,6 +5,50 @@ import '../../services/analytics_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqAnalyticsEs = <String, String>{
+  'Platform Analytics': 'Analítica de la plataforma',
+  'Comprehensive performance insights': 'Insights integrales de desempeño',
+  'All Sites': 'Todas las sedes',
+  'Singapore': 'Singapur',
+  'Kuala Lumpur': 'Kuala Lumpur',
+  'Jakarta': 'Yakarta',
+  'This Week': 'Esta semana',
+  'This Month': 'Este mes',
+  'This Quarter': 'Este trimestre',
+  'This Year': 'Este año',
+  'Unable to load telemetry metrics:':
+    'No se pudieron cargar las métricas de telemetría:',
+  'Telemetry KPIs': 'KPIs de telemetría',
+  'Weekly Accountability': 'Responsabilidad semanal',
+  'Review SLA': 'SLA de revisión',
+  'within SLA': 'dentro del SLA',
+  'Avg Review Turnaround': 'Promedio de revisión',
+  'hours': 'horas',
+  'Interventions Helped': 'Intervenciones efectivas',
+  'outcomes': 'resultados',
+  'Attendance Trend': 'Tendencia de asistencia',
+  'Attendance data unavailable': 'Datos de asistencia no disponibles',
+  'No attendance telemetry for this period':
+    'No hay telemetría de asistencia para este periodo',
+  'Latest attendance:': 'Asistencia más reciente:',
+  'Capture attendance records to render this trend.':
+    'Registra asistencias para mostrar esta tendencia.',
+  'Pillar Performance': 'Desempeño por pilar',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Site Comparison': 'Comparación de sedes',
+  'Top Performers': 'Mejor desempeño',
+  'View All': 'Ver todo',
+  'Export HQ Analytics': 'Exportar analítica HQ',
+  'Generate and export the current HQ analytics summary for cross-site review.':
+    'Genera y exporta el resumen actual de analítica HQ para revisión entre sedes.',
+  'Cancel': 'Cancelar',
+  'HQ analytics report prepared for export':
+    'Reporte de analítica HQ preparado para exportar',
+  'Export': 'Exportar',
+};
+
 /// HQ Analytics Page - Platform-wide analytics and insights
 class HqAnalyticsPage extends StatefulWidget {
   const HqAnalyticsPage({super.key});
@@ -20,6 +64,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   TelemetryDashboardMetrics? _metrics;
   bool _isLoadingMetrics = true;
   String? _metricsError;
+
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _hqAnalyticsEs[input] ?? input;
+  }
 
   @override
   void initState() {
@@ -139,14 +189,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Platform Analytics',
+                    _t('Platform Analytics'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.hq,
                         ),
                   ),
                   Text(
-                    'Comprehensive performance insights',
+                    _t('Comprehensive performance insights'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -186,15 +236,15 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 value: _selectedSite,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: const <DropdownMenuItem<String>>[
+                items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                      value: 'all', child: Text('All Sites')),
+                    value: 'all', child: Text(_t('All Sites'))),
                   DropdownMenuItem<String>(
-                      value: 'sg', child: Text('Singapore')),
+                    value: 'sg', child: Text(_t('Singapore'))),
                   DropdownMenuItem<String>(
-                      value: 'kl', child: Text('Kuala Lumpur')),
+                    value: 'kl', child: Text(_t('Kuala Lumpur'))),
                   DropdownMenuItem<String>(
-                      value: 'jkt', child: Text('Jakarta')),
+                    value: 'jkt', child: Text(_t('Jakarta'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -225,15 +275,15 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 value: _selectedPeriod,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: const <DropdownMenuItem<String>>[
+                items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                      value: 'week', child: Text('This Week')),
+                    value: 'week', child: Text(_t('This Week'))),
                   DropdownMenuItem<String>(
-                      value: 'month', child: Text('This Month')),
+                    value: 'month', child: Text(_t('This Month'))),
                   DropdownMenuItem<String>(
-                      value: 'quarter', child: Text('This Quarter')),
+                    value: 'quarter', child: Text(_t('This Quarter'))),
                   DropdownMenuItem<String>(
-                      value: 'year', child: Text('This Year')),
+                    value: 'year', child: Text(_t('This Year'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -276,7 +326,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            'Unable to load telemetry metrics: $_metricsError',
+            '${_t('Unable to load telemetry metrics:')} $_metricsError',
             style: const TextStyle(color: ScholesaColors.error),
           ),
         ),
@@ -306,8 +356,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Telemetry KPIs',
+          Text(
+            _t('Telemetry KPIs'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
@@ -317,7 +367,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 child: _MetricCard(
                   icon: Icons.assignment_turned_in,
                   value: adherenceRate,
-                  label: 'Weekly Accountability',
+                  label: _t('Weekly Accountability'),
                   trend: '7-day',
                   trendUp: true,
                   color: ScholesaColors.futureSkills,
@@ -328,8 +378,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 child: _MetricCard(
                   icon: Icons.timer,
                   value: reviewSlaRate,
-                  label: 'Review SLA (${metrics.educatorReviewSlaHours}h)',
-                  trend: 'within SLA',
+                  label: '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
+                  trend: _t('within SLA'),
                   trendUp: true,
                   color: ScholesaColors.warning,
                 ),
@@ -343,8 +393,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 child: _MetricCard(
                   icon: Icons.rate_review,
                   value: reviewTurnaround,
-                  label: 'Avg Review Turnaround',
-                  trend: 'hours',
+                  label: _t('Avg Review Turnaround'),
+                  trend: _t('hours'),
                   trendUp: true,
                   color: ScholesaColors.hq,
                 ),
@@ -354,8 +404,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 child: _MetricCard(
                   icon: Icons.health_and_safety,
                   value: interventionHelped,
-                  label: 'Interventions Helped',
-                  trend: '${metrics.interventionTotal} outcomes',
+                  label: _t('Interventions Helped'),
+                  trend: '${metrics.interventionTotal} ${_t('outcomes')}',
                   trendUp: true,
                   color: ScholesaColors.success,
                 ),
@@ -396,8 +446,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                const Text(
-                  'Attendance Trend',
+                Text(
+                  _t('Attendance Trend'),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Container(
@@ -448,7 +498,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 height: 150,
                 child: Center(
                   child: Text(
-                    'Attendance data unavailable',
+                    _t('Attendance data unavailable'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -458,7 +508,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 height: 150,
                 child: Center(
                   child: Text(
-                    'No attendance telemetry for this period',
+                    _t('No attendance telemetry for this period'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -485,7 +535,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 trend.isNotEmpty) ...<Widget>[
               const SizedBox(height: 8),
               Text(
-                'Latest attendance: ${latestRate.toStringAsFixed(1)}%',
+                '${_t('Latest attendance:')} ${latestRate.toStringAsFixed(1)}%',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,
@@ -494,7 +544,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ],
             if (!_isLoadingMetrics && _metricsError == null && trend.isEmpty)
               Text(
-                'Capture attendance records to render this trend.',
+                _t('Capture attendance records to render this trend.'),
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 12,
@@ -530,35 +580,35 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.shade200),
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Pillar Performance',
+              _t('Pillar Performance'),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _PillarAnalyticsRow(
               icon: Icons.code,
-              label: 'Future Skills',
+              label: _t('Future Skills'),
               progress: 0.72,
               learners: 98,
               missions: 234,
               color: ScholesaColors.futureSkills,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _PillarAnalyticsRow(
               icon: Icons.emoji_events,
-              label: 'Leadership',
+              label: _t('Leadership'),
               progress: 0.65,
               learners: 85,
               missions: 156,
               color: ScholesaColors.leadership,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _PillarAnalyticsRow(
               icon: Icons.eco,
-              label: 'Impact',
+              label: _t('Impact'),
               progress: 0.58,
               learners: 72,
               missions: 112,
@@ -576,8 +626,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Site Comparison',
+          Text(
+            _t('Site Comparison'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
@@ -588,24 +638,24 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: const Column(
+            child: Column(
               children: <Widget>[
                 _SiteComparisonRow(
-                  name: 'Singapore',
+                      name: _t('Singapore'),
                   learners: 47,
                   attendance: 94,
                   engagement: 82,
                 ),
-                Divider(),
+                    const Divider(),
                 _SiteComparisonRow(
-                  name: 'Kuala Lumpur',
+                      name: _t('Kuala Lumpur'),
                   learners: 62,
                   attendance: 88,
                   engagement: 76,
                 ),
-                Divider(),
+                    const Divider(),
                 _SiteComparisonRow(
-                  name: 'Jakarta',
+                      name: _t('Jakarta'),
                   learners: 38,
                   attendance: 85,
                   engagement: 71,
@@ -627,13 +677,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Text(
-                'Top Performers',
+              Text(
+                _t('Top Performers'),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               TextButton(
                 onPressed: _showAllTopPerformers,
-                child: const Text('View All'),
+                child: Text(_t('View All')),
               ),
             ],
           ),
@@ -683,9 +733,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Export HQ Analytics'),
-        content: const Text(
-          'Generate and export the current HQ analytics summary for cross-site review.',
+        title: Text(_t('Export HQ Analytics')),
+        content: Text(
+          _t('Generate and export the current HQ analytics summary for cross-site review.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -706,7 +756,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_t('Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -733,7 +783,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 ),
               );
             },
-            child: const Text('Export'),
+            child: Text(_t('Export')),
           ),
         ],
       ),
@@ -767,7 +817,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (BuildContext sheetContext) => const SafeArea(
+      builder: (BuildContext sheetContext) => SafeArea(
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -775,7 +825,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Top Performers',
+                _t('Top Performers'),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 12),

@@ -5,6 +5,58 @@ import '../../services/analytics_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _siteDashboardEs = <String, String>{
+  'New enrollment': 'Nueva inscripción',
+  'Emma Johnson joined AI Explorers':
+    'Emma Johnson se unió a Exploradores de IA',
+  'Mission completed': 'Misión completada',
+  'Liam Chen completed "Build a Robot"':
+    'Liam Chen completó "Construye un robot"',
+  'Achievement unlocked': 'Logro desbloqueado',
+  'Sofia Martinez earned "Code Master" badge':
+    'Sofia Martinez obtuvo la insignia "Maestro de código"',
+  '2 hours ago': 'Hace 2 horas',
+  '4 hours ago': 'Hace 4 horas',
+  '6 hours ago': 'Hace 6 horas',
+  'Site Dashboard': 'Panel de sede',
+  'Pilot Studio Overview': 'Resumen del estudio piloto',
+  'Today': 'Hoy',
+  'This Week': 'Esta semana',
+  'This Month': 'Este mes',
+  'Term': 'Periodo',
+  'Unable to load telemetry metrics:':
+    'No se pudieron cargar las métricas de telemetría:',
+  'Telemetry KPIs': 'KPIs de telemetría',
+  'Weekly Accountability': 'Responsabilidad semanal',
+  'within SLA': 'dentro del SLA',
+  'Avg Review Turnaround': 'Promedio de revisión',
+  'Review SLA': 'SLA de revisión',
+  'Interventions Helped': 'Intervenciones efectivas',
+  'outcomes': 'resultados',
+  'Attendance Trend': 'Tendencia de asistencia',
+  'Attendance data unavailable': 'Datos de asistencia no disponibles',
+  'No attendance telemetry for this period':
+    'No hay telemetría de asistencia para este periodo',
+  'Latest attendance:': 'Asistencia más reciente:',
+  'Pillar Progress (Site Average)': 'Progreso por pilar (promedio del sitio)',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership': 'Liderazgo',
+  'Impact': 'Impacto',
+  'Recent Activity': 'Actividad reciente',
+  'View All': 'Ver todo',
+  'Export Site Report': 'Exportar reporte del sitio',
+  'Generate a': 'Generar un',
+  'summary report for this site dashboard.':
+    'reporte resumido para este panel del sitio.',
+  'Cancel': 'Cancelar',
+  'Report generated': 'Reporte generado',
+  'report ready for download': 'reporte listo para descargar',
+  'just now': 'justo ahora',
+  'report prepared for download': 'reporte preparado para descargar',
+  'Generate': 'Generar',
+  'All Recent Activity': 'Toda la actividad reciente',
+};
+
 /// Site Dashboard Page - Analytics and overview for site administrators
 class SiteDashboardPage extends StatefulWidget {
   const SiteDashboardPage({super.key});
@@ -42,6 +94,12 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       color: ScholesaColors.warning,
     ),
   ];
+
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _siteDashboardEs[input] ?? input;
+  }
 
   @override
   void initState() {
@@ -155,14 +213,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Site Dashboard',
+                    _t('Site Dashboard'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.site,
                         ),
                   ),
                   Text(
-                    'Pilot Studio Overview',
+                    _t('Pilot Studio Overview'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -191,7 +249,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       child: Row(
         children: <Widget>[
           _PeriodChip(
-            label: 'Today',
+            label: _t('Today'),
             isSelected: _selectedPeriod == 'today',
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -206,7 +264,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
           const SizedBox(width: 8),
           _PeriodChip(
-            label: 'This Week',
+            label: _t('This Week'),
             isSelected: _selectedPeriod == 'week',
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -221,7 +279,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
           const SizedBox(width: 8),
           _PeriodChip(
-            label: 'This Month',
+            label: _t('This Month'),
             isSelected: _selectedPeriod == 'month',
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -236,7 +294,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
           const SizedBox(width: 8),
           _PeriodChip(
-            label: 'Term',
+            label: _t('Term'),
             isSelected: _selectedPeriod == 'term',
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -274,7 +332,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            'Unable to load telemetry metrics: $_metricsError',
+            '${_t('Unable to load telemetry metrics:')} $_metricsError',
             style: const TextStyle(color: ScholesaColors.error),
           ),
         ),
@@ -304,8 +362,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Telemetry KPIs',
+          Text(
+            _t('Telemetry KPIs'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
@@ -315,7 +373,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: _MetricCard(
                   icon: Icons.assignment_turned_in,
                   value: adherenceRate,
-                  label: 'Weekly Accountability',
+                  label: _t('Weekly Accountability'),
                   trend: '7-day',
                   trendUp: true,
                   color: ScholesaColors.futureSkills,
@@ -326,8 +384,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: _MetricCard(
                   icon: Icons.timer,
                   value: reviewSlaRate,
-                  label: 'Review SLA (${metrics.educatorReviewSlaHours}h)',
-                  trend: 'within SLA',
+                  label: '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
+                  trend: _t('within SLA'),
                   trendUp: true,
                   color: ScholesaColors.warning,
                 ),
@@ -341,8 +399,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: _MetricCard(
                   icon: Icons.rate_review,
                   value: reviewTurnaround,
-                  label: 'Avg Review Turnaround',
-                  trend: 'hours',
+                  label: _t('Avg Review Turnaround'),
+                  trend: _t('hours'),
                   trendUp: true,
                   color: ScholesaColors.site,
                 ),
@@ -352,8 +410,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: _MetricCard(
                   icon: Icons.health_and_safety,
                   value: interventionHelped,
-                  label: 'Interventions Helped',
-                  trend: '${metrics.interventionTotal} outcomes',
+                  label: _t('Interventions Helped'),
+                  trend: '${metrics.interventionTotal} ${_t('outcomes')}',
                   trendUp: true,
                   color: ScholesaColors.success,
                 ),
@@ -394,8 +452,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                const Text(
-                  'Attendance Trend',
+                Text(
+                  _t('Attendance Trend'),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Container(
@@ -446,7 +504,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 height: 120,
                 child: Center(
                   child: Text(
-                    'Attendance data unavailable',
+                    _t('Attendance data unavailable'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -456,7 +514,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 height: 120,
                 child: Center(
                   child: Text(
-                    'No attendance telemetry for this period',
+                    _t('No attendance telemetry for this period'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -481,7 +539,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Latest attendance: ${latestRate.toStringAsFixed(1)}%',
+                  '${_t('Latest attendance:')} ${latestRate.toStringAsFixed(1)}%',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -504,31 +562,31 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.shade200),
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Pillar Progress (Site Average)',
+              _t('Pillar Progress (Site Average)'),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _PillarProgressRow(
               icon: Icons.code,
-              label: 'Future Skills',
+              label: _t('Future Skills'),
               progress: 0.72,
               color: ScholesaColors.futureSkills,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _PillarProgressRow(
               icon: Icons.emoji_events,
-              label: 'Leadership',
+              label: _t('Leadership'),
               progress: 0.65,
               color: ScholesaColors.leadership,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _PillarProgressRow(
               icon: Icons.eco,
-              label: 'Impact',
+              label: _t('Impact'),
               progress: 0.58,
               color: ScholesaColors.impact,
             ),
@@ -547,13 +605,13 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Text(
-                'Recent Activity',
+              Text(
+                _t('Recent Activity'),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               TextButton(
                 onPressed: _showAllRecentActivity,
-                child: const Text('View All'),
+                child: Text(_t('View All')),
               ),
             ],
           ),
@@ -561,9 +619,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ..._activities.map(
             (_SiteActivity activity) => _ActivityItem(
               icon: activity.icon,
-              title: activity.title,
-              subtitle: activity.subtitle,
-              time: activity.time,
+              title: _t(activity.title),
+              subtitle: _t(activity.subtitle),
+              time: _t(activity.time),
               color: activity.color,
             ),
           ),
@@ -597,9 +655,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Export Site Report'),
+        title: Text(_t('Export Site Report')),
         content: Text(
-          'Generate a $_selectedPeriod summary report for this site dashboard.',
+          '${_t('Generate a')} $_selectedPeriod ${_t('summary report for this site dashboard.')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -620,7 +678,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               popupCompleted = true;
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_t('Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -646,10 +704,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   0,
                   _SiteActivity(
                     icon: Icons.download_done,
-                    title: 'Report generated',
+                    title: _t('Report generated'),
                     subtitle:
-                        '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} report ready for download',
-                    time: 'just now',
+                        '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}',
+                    time: _t('just now'),
                     color: ScholesaColors.site,
                   ),
                 );
@@ -661,12 +719,12 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content:
-                      Text('$_selectedPeriod report prepared for download'),
+                      Text('$_selectedPeriod ${_t('report prepared for download')}'),
                   backgroundColor: ScholesaColors.site,
                 ),
               );
             },
-            child: const Text('Generate'),
+            child: Text(_t('Generate')),
           ),
         ],
       ),
@@ -709,19 +767,19 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: Text(
-                'All Recent Activity',
+                _t('All Recent Activity'),
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             ..._activities.map(
               (_SiteActivity activity) => _ActivityItem(
                 icon: activity.icon,
-                title: activity.title,
-                subtitle: activity.subtitle,
-                time: activity.time,
+                title: _t(activity.title),
+                subtitle: _t(activity.subtitle),
+                time: _t(activity.time),
                 color: activity.color,
               ),
             ),

@@ -5,6 +5,24 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
+const Map<String, String> _parentSummaryEs = <String, String>{
+  'Family Dashboard': 'Panel familiar',
+  'learner': 'estudiante',
+  'learners': 'estudiantes',
+  'Level': 'Nivel',
+  'XP earned': 'XP obtenidos',
+  'Missions': 'Misiones',
+  'Day Streak': 'Racha de días',
+  'Attendance': 'Asistencia',
+  'Learning Pillars': 'Pilares de aprendizaje',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership & Agency': 'Liderazgo y agencia',
+  'Impact & Innovation': 'Impacto e innovación',
+  'Recent Activity': 'Actividad reciente',
+  'See all': 'Ver todo',
+  'Upcoming': 'Próximamente',
+};
+
 /// Parent Summary Page - Safe view for parents to see their children's progress
 class ParentSummaryPage extends StatefulWidget {
   const ParentSummaryPage({super.key});
@@ -15,6 +33,12 @@ class ParentSummaryPage extends StatefulWidget {
 
 class _ParentSummaryPageState extends State<ParentSummaryPage> {
   int _selectedLearnerIndex = 0;
+
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _parentSummaryEs[input] ?? input;
+  }
 
   @override
   void initState() {
@@ -105,14 +129,14 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Family Dashboard',
+                  _t('Family Dashboard'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: ScholesaColors.parent,
                       ),
                 ),
                 Text(
-                  '${service.learnerSummaries.length} learner${service.learnerSummaries.length > 1 ? 's' : ''}',
+                  '${service.learnerSummaries.length} ${service.learnerSummaries.length > 1 ? _t('learners') : _t('learner')}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
@@ -224,7 +248,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                         ),
                       ),
                       Text(
-                        'Level ${learner.currentLevel}',
+                        '${_t('Level')} ${learner.currentLevel}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isSelected ? Colors.white70 : Colors.grey[500],
@@ -312,7 +336,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${learner.totalXp} XP earned',
+                      '${learner.totalXp} ${_t('XP earned')}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
@@ -330,17 +354,17 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               _ProgressStat(
                 icon: Icons.rocket_launch,
                 value: '${learner.missionsCompleted}',
-                label: 'Missions',
+                label: _t('Missions'),
               ),
               _ProgressStat(
                 icon: Icons.local_fire_department,
                 value: '${learner.currentStreak}',
-                label: 'Day Streak',
+                label: _t('Day Streak'),
               ),
               _ProgressStat(
                 icon: Icons.check_circle,
                 value: '${(learner.attendanceRate * 100).toInt()}%',
-                label: 'Attendance',
+                label: _t('Attendance'),
               ),
             ],
           ),
@@ -355,8 +379,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Learning Pillars',
+          Text(
+            _t('Learning Pillars'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -365,21 +389,21 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '🚀',
-            label: 'Future Skills',
+            label: _t('Future Skills'),
             progress: learner.pillarProgress['futureSkills'] ?? 0,
             color: const Color(0xFF3B82F6),
           ),
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '👑',
-            label: 'Leadership & Agency',
+            label: _t('Leadership & Agency'),
             progress: learner.pillarProgress['leadership'] ?? 0,
             color: const Color(0xFF8B5CF6),
           ),
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '💡',
-            label: 'Impact & Innovation',
+            label: _t('Impact & Innovation'),
             progress: learner.pillarProgress['impact'] ?? 0,
             color: const Color(0xFF10B981),
           ),
@@ -399,8 +423,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Text(
-                'Recent Activity',
+              Text(
+                _t('Recent Activity'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -408,8 +432,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               ),
               TextButton(
                 onPressed: () => _showAllActivities(learner),
-                child: const Text(
-                  'See all',
+                child: Text(
+                  _t('See all'),
                   style: TextStyle(color: ScholesaColors.parent),
                 ),
               ),
@@ -431,8 +455,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Upcoming',
+          Text(
+            _t('Upcoming'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
