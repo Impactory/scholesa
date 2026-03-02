@@ -1,66 +1,33 @@
-// src/ai_floating_widget/floating_ai_widget.dart
-import 'package:flutter/material.dart';
-import 'package:voice_manager.dart';
-import 'package:bos_controller.dart';
+import '../../voice_manager.dart';
 
-class FloatingAIWidget extends StatefulWidget {
+abstract class BosController {
+  void onFloatingAssistantToggled({required bool listening});
+}
+
+class FloatingAIWidget {
   final BosController bosController;
   final VoiceManager voiceManager;
 
-  const FloatingAIWidget({
-    Key? key,
-    required this.bosController,
-    required this.voiceManager,
-  }) : super(key: key);
-
-  @override
-  _FloatingAIWidgetState createState() => _FloatingAIWidgetState();
-}
-
-class _FloatingAIWidgetState extends State<FloatingAIWidget> {
   bool _isVisible = true;
   bool _isListening = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return Visibility(
-      visible: _isVisible,
-      child: Positioned(
-        bottom: 20,
-        right: 20,
-        child: GestureDetector(
-          onTap: () {
-            setState(() {
-              _isListening = !_isListening;
-              if (_isListening) {
-                widget.voiceManager.startListening();
-              } else {
-                widget.voiceManager.stopListening();
-              }
-            });
-          },
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isListening ? Colors.blue : Colors.grey,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Icon(
-              _isListening ? Icons.mic : Icons.mic_none,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
-        ),
-      ),
-    );
+  FloatingAIWidget({
+    required this.bosController,
+    required this.voiceManager,
+  });
+
+  bool get isVisible => _isVisible;
+  bool get isListening => _isListening;
+
+  void setVisible(bool visible) {
+    _isVisible = visible;
+  }
+
+  void toggleListening() {
+    _isListening = !_isListening;
+    if (_isListening) {
+      voiceManager.startListening();
+    }
+    bosController.onFloatingAssistantToggled(listening: _isListening);
   }
 }
