@@ -6,6 +6,90 @@ import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _settingsEs = <String, String>{
+  'Settings': 'Configuración',
+  'Customize your experience': 'Personaliza tu experiencia',
+  'Account': 'Cuenta',
+  'Profile': 'Perfil',
+  'Edit your profile information': 'Edita la información de tu perfil',
+  'Change Password': 'Cambiar contraseña',
+  'Update your password': 'Actualiza tu contraseña',
+  'Email': 'Correo electrónico',
+  'Phone Number': 'Número de teléfono',
+  'Notifications': 'Notificaciones',
+  'Enable Notifications': 'Activar notificaciones',
+  'Receive app notifications': 'Recibir notificaciones de la app',
+  'Email Notifications': 'Notificaciones por correo',
+  'Receive updates via email': 'Recibir actualizaciones por correo',
+  'Push Notifications': 'Notificaciones push',
+  'Receive push notifications': 'Recibir notificaciones push',
+  'Notification Preferences': 'Preferencias de notificación',
+  'Choose what to be notified about':
+      'Elige sobre qué quieres recibir notificaciones',
+  'Appearance': 'Apariencia',
+  'Theme Preference': 'Preferencia de tema',
+  'Dark Mode': 'Modo oscuro',
+  'Use dark theme': 'Usar tema oscuro',
+  'Follow System Theme': 'Seguir tema del sistema',
+  'Match your device appearance': 'Coincidir con la apariencia del dispositivo',
+  'Language': 'Idioma',
+  'Time Zone': 'Zona horaria',
+  'Automatic': 'Automática',
+  'Privacy & Security': 'Privacidad y seguridad',
+  'Biometric Login': 'Inicio biométrico',
+  'Use fingerprint or face to login':
+      'Usa huella o rostro para iniciar sesión',
+  'Privacy Policy': 'Política de privacidad',
+  'Read our privacy policy': 'Lee nuestra política de privacidad',
+  'Terms of Service': 'Términos del servicio',
+  'Read our terms of service': 'Lee nuestros términos del servicio',
+  'Download My Data': 'Descargar mis datos',
+  'Get a copy of your data': 'Obtén una copia de tus datos',
+  'About': 'Acerca de',
+  'App Version': 'Versión de la app',
+  'Help & Support': 'Ayuda y soporte',
+  'Get help or contact us': 'Obtén ayuda o contáctanos',
+  'Send Feedback': 'Enviar comentarios',
+  'Help us improve the app': 'Ayúdanos a mejorar la app',
+  'Rate the App': 'Calificar la app',
+  'Love Scholesa? Rate us!': '¿Te encanta Scholesa? ¡Califícanos!',
+  'Danger Zone': 'Zona de peligro',
+  'Sign Out': 'Cerrar sesión',
+  'Sign out of your account': 'Cerrar sesión de tu cuenta',
+  'Delete Account': 'Eliminar cuenta',
+  'Permanently delete your account': 'Eliminar tu cuenta de forma permanente',
+    'English': 'Inglés',
+    'Change Email': 'Cambiar correo',
+    'Change Phone': 'Cambiar teléfono',
+    'System': 'Sistema',
+    'Light': 'Claro',
+    'Dark': 'Oscuro',
+    'Select Language': 'Seleccionar idioma',
+    'Time Zone Selection': 'Selección de zona horaria',
+    'Data download request submitted':
+      'Solicitud de descarga de datos enviada',
+    'Help Center': 'Centro de ayuda',
+    'Feedback': 'Comentarios',
+    'App Rating': 'Calificación de la app',
+    'Scholesa version 1.0.0 (Build 1).': 'Scholesa versión 1.0.0 (Build 1).',
+    'Close': 'Cerrar',
+    'Are you sure you want to sign out?':
+      '¿Seguro que quieres cerrar sesión?',
+    'Cancel': 'Cancelar',
+    'This action cannot be undone. All your data will be permanently deleted.':
+      'Esta acción no se puede deshacer. Todos tus datos se eliminarán permanentemente.',
+    'Submit': 'Enviar',
+    'is available by request. Submit this request now?':
+        'está disponible bajo solicitud. ¿Enviar esta solicitud ahora?',
+    'request submitted': 'solicitud enviada',
+};
+
+String _tSettings(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _settingsEs[input] ?? input;
+}
+
 /// Settings Page - App settings and preferences
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -85,13 +169,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Settings',
+                    _tSettings(context, 'Settings'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   Text(
-                    'Customize your experience',
+                    _tSettings(context, 'Customize your experience'),
                     style: TextStyle(
                         color: colorScheme.onSurfaceVariant, fontSize: 14),
                   ),
@@ -106,29 +190,29 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildAccountSection() {
     return _SettingsSection(
-      title: 'Account',
+      title: _tSettings(context, 'Account'),
       children: <Widget>[
         _SettingsTile(
           icon: Icons.person,
-          title: 'Profile',
-          subtitle: 'Edit your profile information',
+          title: _tSettings(context, 'Profile'),
+          subtitle: _tSettings(context, 'Edit your profile information'),
           onTap: () => _navigateTo('profile'),
         ),
         _SettingsTile(
           icon: Icons.lock,
-          title: 'Change Password',
-          subtitle: 'Update your password',
+          title: _tSettings(context, 'Change Password'),
+          subtitle: _tSettings(context, 'Update your password'),
           onTap: () => _showChangePasswordSheet(),
         ),
         _SettingsTile(
           icon: Icons.email,
-          title: 'Email',
+          title: _tSettings(context, 'Email'),
           subtitle: 'emma@example.com',
           onTap: () => _showChangeEmailSheet(),
         ),
         _SettingsTile(
           icon: Icons.phone,
-          title: 'Phone Number',
+          title: _tSettings(context, 'Phone Number'),
           subtitle: '+1 234 567 8900',
           onTap: () => _showChangePhoneSheet(),
         ),
@@ -138,12 +222,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildNotificationsSection() {
     return _SettingsSection(
-      title: 'Notifications',
+      title: _tSettings(context, 'Notifications'),
       children: <Widget>[
         _SettingsToggle(
           icon: Icons.notifications,
-          title: 'Enable Notifications',
-          subtitle: 'Receive app notifications',
+          title: _tSettings(context, 'Enable Notifications'),
+          subtitle: _tSettings(context, 'Receive app notifications'),
           value: _notificationsEnabled,
           onChanged: (bool value) {
             setState(() => _notificationsEnabled = value);
@@ -152,8 +236,8 @@ class _SettingsPageState extends State<SettingsPage> {
         if (_notificationsEnabled) ...<Widget>[
           _SettingsToggle(
             icon: Icons.email_outlined,
-            title: 'Email Notifications',
-            subtitle: 'Receive updates via email',
+            title: _tSettings(context, 'Email Notifications'),
+            subtitle: _tSettings(context, 'Receive updates via email'),
             value: _emailNotifications,
             onChanged: (bool value) {
               setState(() => _emailNotifications = value);
@@ -161,8 +245,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           _SettingsToggle(
             icon: Icons.phone_android,
-            title: 'Push Notifications',
-            subtitle: 'Receive push notifications',
+            title: _tSettings(context, 'Push Notifications'),
+            subtitle: _tSettings(context, 'Receive push notifications'),
             value: _pushNotifications,
             onChanged: (bool value) {
               setState(() => _pushNotifications = value);
@@ -171,8 +255,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
         _SettingsTile(
           icon: Icons.tune,
-          title: 'Notification Preferences',
-          subtitle: 'Choose what to be notified about',
+          title: _tSettings(context, 'Notification Preferences'),
+          subtitle:
+              _tSettings(context, 'Choose what to be notified about'),
           onTap: () => _showNotificationPreferences(),
         ),
       ],
@@ -182,25 +267,25 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildAppearanceSection() {
     final ThemeService themeService = context.watch<ThemeService>();
     return _SettingsSection(
-      title: 'Appearance',
+      title: _tSettings(context, 'Appearance'),
       children: <Widget>[
         _SettingsTile(
           icon: Icons.palette_outlined,
-          title: 'Theme Preference',
+          title: _tSettings(context, 'Theme Preference'),
           subtitle: themeService.modeLabel(),
           onTap: () => _showThemeSelector(themeService),
         ),
         _SettingsToggle(
           icon: Icons.dark_mode,
-          title: 'Dark Mode',
-          subtitle: 'Use dark theme',
+          title: _tSettings(context, 'Dark Mode'),
+          subtitle: _tSettings(context, 'Use dark theme'),
           value: themeService.themeMode == ThemeMode.dark,
           onChanged: (bool value) => _applyDarkMode(themeService, value),
         ),
         _SettingsToggle(
           icon: Icons.brightness_auto,
-          title: 'Follow System Theme',
-          subtitle: 'Match your device appearance',
+          title: _tSettings(context, 'Follow System Theme'),
+          subtitle: _tSettings(context, 'Match your device appearance'),
           value: themeService.followSystem,
           onChanged: (bool value) {
             themeService
@@ -209,14 +294,16 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         _SettingsTile(
           icon: Icons.language,
-          title: 'Language',
+          title: _tSettings(context, 'Language'),
           subtitle: _getLanguageName(_language),
           onTap: () => _showLanguageSelector(),
         ),
         _SettingsTile(
           icon: Icons.schedule,
-          title: 'Time Zone',
-          subtitle: _timeZone == 'auto' ? 'Automatic' : _timeZone,
+          title: _tSettings(context, 'Time Zone'),
+          subtitle: _timeZone == 'auto'
+              ? _tSettings(context, 'Automatic')
+              : _timeZone,
           onTap: () => _showTimeZoneSelector(),
         ),
       ],
@@ -225,12 +312,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildPrivacySection() {
     return _SettingsSection(
-      title: 'Privacy & Security',
+      title: _tSettings(context, 'Privacy & Security'),
       children: <Widget>[
         _SettingsToggle(
           icon: Icons.fingerprint,
-          title: 'Biometric Login',
-          subtitle: 'Use fingerprint or face to login',
+          title: _tSettings(context, 'Biometric Login'),
+          subtitle: _tSettings(context, 'Use fingerprint or face to login'),
           value: _biometricEnabled,
           onChanged: (bool value) {
             setState(() => _biometricEnabled = value);
@@ -238,20 +325,20 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         _SettingsTile(
           icon: Icons.shield,
-          title: 'Privacy Policy',
-          subtitle: 'Read our privacy policy',
+          title: _tSettings(context, 'Privacy Policy'),
+          subtitle: _tSettings(context, 'Read our privacy policy'),
           onTap: () => _openPrivacyPolicy(),
         ),
         _SettingsTile(
           icon: Icons.description,
-          title: 'Terms of Service',
-          subtitle: 'Read our terms of service',
+          title: _tSettings(context, 'Terms of Service'),
+          subtitle: _tSettings(context, 'Read our terms of service'),
           onTap: () => _openTermsOfService(),
         ),
         _SettingsTile(
           icon: Icons.download,
-          title: 'Download My Data',
-          subtitle: 'Get a copy of your data',
+          title: _tSettings(context, 'Download My Data'),
+          subtitle: _tSettings(context, 'Get a copy of your data'),
           onTap: () => _requestDataDownload(),
         ),
       ],
@@ -260,30 +347,30 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildAboutSection() {
     return _SettingsSection(
-      title: 'About',
+      title: _tSettings(context, 'About'),
       children: <Widget>[
         _SettingsTile(
           icon: Icons.info,
-          title: 'App Version',
+          title: _tSettings(context, 'App Version'),
           subtitle: '1.0.0 (Build 1)',
           onTap: () => _showAppVersionDetails(),
         ),
         _SettingsTile(
           icon: Icons.help,
-          title: 'Help & Support',
-          subtitle: 'Get help or contact us',
+          title: _tSettings(context, 'Help & Support'),
+          subtitle: _tSettings(context, 'Get help or contact us'),
           onTap: () => _openHelpCenter(),
         ),
         _SettingsTile(
           icon: Icons.feedback,
-          title: 'Send Feedback',
-          subtitle: 'Help us improve the app',
+          title: _tSettings(context, 'Send Feedback'),
+          subtitle: _tSettings(context, 'Help us improve the app'),
           onTap: () => _showFeedbackSheet(),
         ),
         _SettingsTile(
           icon: Icons.star,
-          title: 'Rate the App',
-          subtitle: 'Love Scholesa? Rate us!',
+          title: _tSettings(context, 'Rate the App'),
+          subtitle: _tSettings(context, 'Love Scholesa? Rate us!'),
           onTap: () => _rateApp(),
         ),
       ],
@@ -298,7 +385,7 @@ class _SettingsPageState extends State<SettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Danger Zone',
+            _tSettings(context, 'Danger Zone'),
             style: TextStyle(
               color: colorScheme.error,
               fontWeight: FontWeight.bold,
@@ -317,16 +404,17 @@ class _SettingsPageState extends State<SettingsPage> {
               children: <Widget>[
                 _SettingsTile(
                   icon: Icons.logout,
-                  title: 'Sign Out',
-                  subtitle: 'Sign out of your account',
+                  title: _tSettings(context, 'Sign Out'),
+                  subtitle: _tSettings(context, 'Sign out of your account'),
                   iconColor: ScholesaColors.error,
                   onTap: () => _confirmSignOut(),
                 ),
                 Divider(height: 1, color: colorScheme.outlineVariant),
                 _SettingsTile(
                   icon: Icons.delete_forever,
-                  title: 'Delete Account',
-                  subtitle: 'Permanently delete your account',
+                  title: _tSettings(context, 'Delete Account'),
+                  subtitle:
+                      _tSettings(context, 'Permanently delete your account'),
                   iconColor: ScholesaColors.error,
                   onTap: () => _confirmDeleteAccount(),
                 ),
@@ -345,7 +433,7 @@ class _SettingsPageState extends State<SettingsPage> {
       'zh': '中文',
       'ms': 'Bahasa Melayu',
     };
-    return languages[code] ?? 'English';
+    return languages[code] ?? _tSettings(context, 'English');
   }
 
   void _navigateTo(String route) {
@@ -361,7 +449,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_password'},
     );
-    _showComingSoon('Change Password');
+    _showComingSoon(_tSettings(context, 'Change Password'));
   }
 
   void _showChangeEmailSheet() {
@@ -369,7 +457,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_email'},
     );
-    _showComingSoon('Change Email');
+    _showComingSoon(_tSettings(context, 'Change Email'));
   }
 
   void _showChangePhoneSheet() {
@@ -377,7 +465,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_phone'},
     );
-    _showComingSoon('Change Phone');
+    _showComingSoon(_tSettings(context, 'Change Phone'));
   }
 
   void _showNotificationPreferences() {
@@ -387,7 +475,7 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_notification_preferences'
       },
     );
-    _showComingSoon('Notification Preferences');
+    _showComingSoon(_tSettings(context, 'Notification Preferences'));
   }
 
   void _applyDarkMode(ThemeService themeService, bool enabled) {
@@ -403,9 +491,9 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         final List<(ThemeMode, String)> options = <(ThemeMode, String)>[
-          (ThemeMode.system, 'System'),
-          (ThemeMode.light, 'Light'),
-          (ThemeMode.dark, 'Dark'),
+          (ThemeMode.system, _tSettings(context, 'System')),
+          (ThemeMode.light, _tSettings(context, 'Light')),
+          (ThemeMode.dark, _tSettings(context, 'Dark')),
         ];
         return Container(
           padding: const EdgeInsets.all(20),
@@ -413,8 +501,8 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'Theme Preference',
+              Text(
+                _tSettings(context, 'Theme Preference'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -465,8 +553,8 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'Select Language',
+              Text(
+                _tSettings(context, 'Select Language'),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -507,7 +595,7 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_open_timezone_selector'
       },
     );
-    _showComingSoon('Time Zone Selection');
+    _showComingSoon(_tSettings(context, 'Time Zone Selection'));
   }
 
   void _openPrivacyPolicy() {
@@ -515,7 +603,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_privacy_policy'},
     );
-    _showComingSoon('Privacy Policy');
+    _showComingSoon(_tSettings(context, 'Privacy Policy'));
   }
 
   void _openTermsOfService() {
@@ -525,7 +613,7 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_open_terms_of_service'
       },
     );
-    _showComingSoon('Terms of Service');
+    _showComingSoon(_tSettings(context, 'Terms of Service'));
   }
 
   void _requestDataDownload() {
@@ -535,7 +623,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Data download request submitted'),
+        content: Text(_tSettings(context, 'Data download request submitted')),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -546,7 +634,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_help_center'},
     );
-    _showComingSoon('Help Center');
+    _showComingSoon(_tSettings(context, 'Help Center'));
   }
 
   void _showFeedbackSheet() {
@@ -554,7 +642,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_feedback'},
     );
-    _showComingSoon('Feedback');
+    _showComingSoon(_tSettings(context, 'Feedback'));
   }
 
   void _rateApp() {
@@ -562,7 +650,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_rate_app'},
     );
-    _showComingSoon('App Rating');
+    _showComingSoon(_tSettings(context, 'App Rating'));
   }
 
   void _showAppVersionDetails() {
@@ -573,8 +661,8 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('App Version'),
-        content: const Text('Scholesa version 1.0.0 (Build 1).'),
+        title: Text(_tSettings(context, 'App Version')),
+        content: Text(_tSettings(context, 'Scholesa version 1.0.0 (Build 1).')),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -586,7 +674,7 @@ class _SettingsPageState extends State<SettingsPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tSettings(context, 'Close')),
           ),
         ],
       ),
@@ -602,12 +690,13 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Sign Out'),
-          content: const Text('Are you sure you want to sign out?'),
+          title: Text(_tSettings(context, 'Sign Out')),
+          content:
+              Text(_tSettings(context, 'Are you sure you want to sign out?')),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_tSettings(context, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -627,8 +716,8 @@ class _SettingsPageState extends State<SettingsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,
               ),
-              child: const Text(
-                'Sign Out',
+              child: Text(
+                _tSettings(context, 'Sign Out'),
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -649,14 +738,15 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Account'),
-          content: const Text(
-            'This action cannot be undone. All your data will be permanently deleted.',
+          title: Text(_tSettings(context, 'Delete Account')),
+          content: Text(
+            _tSettings(context,
+                'This action cannot be undone. All your data will be permanently deleted.'),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_tSettings(context, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -672,8 +762,8 @@ class _SettingsPageState extends State<SettingsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,
               ),
-              child: const Text(
-                'Delete Account',
+              child: Text(
+                _tSettings(context, 'Delete Account'),
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -689,7 +779,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(feature),
         content: Text(
-          '$feature is available by request. Submit this request now?',
+          '$feature ${_tSettings(context, 'is available by request. Submit this request now?')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -703,7 +793,7 @@ class _SettingsPageState extends State<SettingsPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_tSettings(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -717,12 +807,13 @@ class _SettingsPageState extends State<SettingsPage> {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('$feature request submitted'),
+                  content:
+                      Text('$feature ${_tSettings(context, 'request submitted')}'),
                   backgroundColor: Theme.of(context).colorScheme.inverseSurface,
                 ),
               );
             },
-            child: const Text('Submit'),
+            child: Text(_tSettings(context, 'Submit')),
           ),
         ],
       ),
