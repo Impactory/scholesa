@@ -2,6 +2,34 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqSitesEs = <String, String>{
+  'Add Site': 'Agregar sede',
+  'Sites Management': 'Gestión de sedes',
+  'Manage all platform sites': 'Gestiona todas las sedes de la plataforma',
+  'Search sites...': 'Buscar sedes...',
+  'All Sites': 'Todas las sedes',
+  'Active': 'Activas',
+  'Onboarding': 'En incorporación',
+  'Pending': 'Pendientes',
+  'Total Sites': 'Total de sedes',
+  'Total Learners': 'Total de estudiantes',
+  'Educators': 'Educadores',
+  'Opening site': 'Abriendo sede',
+  'Learners': 'Estudiantes',
+  'Health': 'Salud',
+  'Add New Site': 'Agregar nueva sede',
+  'Site Name': 'Nombre de la sede',
+  'Location': 'Ubicación',
+  'Site created successfully': 'Sede creada correctamente',
+  'Create Site': 'Crear sede',
+};
+
+String _tHqSites(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqSitesEs[input] ?? input;
+}
+
 /// HQ Sites Page - Manage all sites across the platform
 class HqSitesPage extends StatefulWidget {
   const HqSitesPage({super.key});
@@ -125,7 +153,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
         onPressed: _createNewSite,
         backgroundColor: ScholesaColors.hq,
         icon: const Icon(Icons.add),
-        label: const Text('Add Site'),
+        label: Text(_tHqSites(context, 'Add Site')),
       ),
     );
   }
@@ -158,14 +186,14 @@ class _HqSitesPageState extends State<HqSitesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Sites Management',
+                    _tHqSites(context, 'Sites Management'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.hq,
                         ),
                   ),
                   Text(
-                    'Manage all platform sites',
+                    _tHqSites(context, 'Manage all platform sites'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -195,7 +223,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
           setState(() => _searchQuery = value);
         },
         decoration: InputDecoration(
-          hintText: 'Search sites...',
+          hintText: _tHqSites(context, 'Search sites...'),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -236,7 +264,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
         child: Row(
           children: <Widget>[
             _FilterChip(
-              label: 'All Sites',
+              label: _tHqSites(context, 'All Sites'),
               isSelected: _filterStatus == 'all',
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -251,7 +279,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Active',
+              label: _tHqSites(context, 'Active'),
               isSelected: _filterStatus == 'active',
               color: ScholesaColors.success,
               onTap: () {
@@ -267,7 +295,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Onboarding',
+              label: _tHqSites(context, 'Onboarding'),
               isSelected: _filterStatus == 'onboarding',
               color: ScholesaColors.warning,
               onTap: () {
@@ -283,7 +311,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             ),
             const SizedBox(width: 8),
             _FilterChip(
-              label: 'Pending',
+              label: _tHqSites(context, 'Pending'),
               isSelected: _filterStatus == 'pending',
               color: Colors.grey,
               onTap: () {
@@ -304,7 +332,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
   }
 
   Widget _buildStats() {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: <Widget>[
@@ -312,7 +340,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             child: _StatCard(
               icon: Icons.business,
               value: '4',
-              label: 'Total Sites',
+              label: _tHqSites(context, 'Total Sites'),
               color: ScholesaColors.hq,
             ),
           ),
@@ -321,7 +349,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             child: _StatCard(
               icon: Icons.people,
               value: '147',
-              label: 'Total Learners',
+              label: _tHqSites(context, 'Total Learners'),
               color: ScholesaColors.learner,
             ),
           ),
@@ -330,7 +358,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
             child: _StatCard(
               icon: Icons.school,
               value: '24',
-              label: 'Educators',
+              label: _tHqSites(context, 'Educators'),
               color: ScholesaColors.educator,
             ),
           ),
@@ -349,7 +377,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Opening site: $siteId'),
+        content: Text('${_tHqSites(context, 'Opening site')}: $siteId'),
         backgroundColor: ScholesaColors.hq,
       ),
     );
@@ -494,14 +522,14 @@ class _SiteCard extends StatelessWidget {
                       child: _SiteMetric(
                         icon: Icons.people,
                         value: learnerCount.toString(),
-                        label: 'Learners',
+                        label: _tHqSites(context, 'Learners'),
                       ),
                     ),
                     Expanded(
                       child: _SiteMetric(
                         icon: Icons.school,
                         value: educatorCount.toString(),
-                        label: 'Educators',
+                        label: _tHqSites(context, 'Educators'),
                       ),
                     ),
                     Expanded(
@@ -592,7 +620,7 @@ class _HealthScore extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          'Health',
+          _tHqSites(context, 'Health'),
           style: TextStyle(color: Colors.grey[500], fontSize: 10),
         ),
       ],
@@ -733,7 +761,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Add New Site',
+                    _tHqSites(context, 'Add New Site'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -742,7 +770,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                   TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: 'Site Name',
+                      labelText: _tHqSites(context, 'Site Name'),
                       filled: true,
                       fillColor: Colors.grey[50],
                       border: OutlineInputBorder(
@@ -755,7 +783,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                   TextField(
                     controller: _locationController,
                     decoration: InputDecoration(
-                      labelText: 'Location',
+                      labelText: _tHqSites(context, 'Location'),
                       filled: true,
                       fillColor: Colors.grey[50],
                       border: OutlineInputBorder(
@@ -780,8 +808,9 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                         );
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Site created successfully'),
+                          SnackBar(
+                            content:
+                                Text(_tHqSites(context, 'Site created successfully')),
                             backgroundColor: ScholesaColors.success,
                           ),
                         );
@@ -793,7 +822,7 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Create Site'),
+                      child: Text(_tHqSites(context, 'Create Site')),
                     ),
                   ),
                 ],

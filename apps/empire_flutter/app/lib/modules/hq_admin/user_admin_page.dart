@@ -25,6 +25,39 @@ const Map<String, String> _userAdminEs = <String, String>{
   'Role': 'Rol',
   'Sites': 'Sedes',
   'Create': 'Crear',
+  'Total Users': 'Usuarios totales',
+  'Active': 'Activo',
+  'Learners': 'Estudiantes',
+  'Educators': 'Educadores',
+  'Search users by name or email...':
+      'Buscar usuarios por nombre o correo electrónico...',
+  'All Roles': 'Todos los roles',
+  'All Status': 'Todos los estados',
+  'All Users': 'Todos los usuarios',
+  'Audit Log': 'Registro de auditoría',
+  'No users found': 'No se encontraron usuarios',
+  'Try adjusting your filters': 'Intenta ajustar tus filtros',
+  'No sites available': 'No hay sedes disponibles',
+  'Sites will appear here': 'Las sedes aparecerán aquí',
+  'Add User': 'Agregar usuario',
+  'Users': 'Usuarios',
+  'by': 'por',
+  'No Name': 'Sin nombre',
+  'Quick Actions': 'Acciones rápidas',
+  'Edit': 'Editar',
+  'Activate': 'Activar',
+  'Suspend': 'Suspender',
+  'Account Details': 'Detalles de la cuenta',
+  'User ID': 'ID de usuario',
+  'Created': 'Creado',
+  'Last Login': 'Último acceso',
+  'Site Access': 'Acceso a sedes',
+  'No sites assigned': 'Sin sedes asignadas',
+  'User': 'Usuario',
+  'created': 'creado',
+  'm ago': 'm atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
 };
 
 String _tUserAdmin(BuildContext context, String input) {
@@ -176,7 +209,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                 child: _StatMiniCard(
                   icon: Icons.people,
                   value: service.totalUsers.toString(),
-                  label: 'Total Users',
+                  label: _tUserAdmin(context, 'Total Users'),
                   color: ScholesaColors.hq,
                 ),
               ),
@@ -185,7 +218,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                 child: _StatMiniCard(
                   icon: Icons.check_circle,
                   value: service.activeUsers.toString(),
-                  label: 'Active',
+                  label: _tUserAdmin(context, 'Active'),
                   color: ScholesaColors.success,
                 ),
               ),
@@ -194,7 +227,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                 child: _StatMiniCard(
                   icon: Icons.school,
                   value: service.learnerCount.toString(),
-                  label: 'Learners',
+                  label: _tUserAdmin(context, 'Learners'),
                   color: ScholesaColors.learner,
                 ),
               ),
@@ -203,7 +236,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                 child: _StatMiniCard(
                   icon: Icons.person,
                   value: service.educatorCount.toString(),
-                  label: 'Educators',
+                  label: _tUserAdmin(context, 'Educators'),
                   color: ScholesaColors.educator,
                 ),
               ),
@@ -249,7 +282,8 @@ class _UserAdminPageState extends State<UserAdminPage>
                     service.setSearchQuery(value);
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search users by name or email...',
+                    hintText: _tUserAdmin(
+                        context, 'Search users by name or email...'),
                     prefixIcon:
                         const Icon(Icons.search, color: ScholesaColors.hq),
                     suffixIcon: _searchController.text.isNotEmpty
@@ -280,7 +314,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                 child: Row(
                   children: <Widget>[
                     _FilterChip(
-                      label: 'All Roles',
+                      label: _tUserAdmin(context, 'All Roles'),
                       selected: service.roleFilter == null,
                       onTap: () => service.setRoleFilter(null),
                     ),
@@ -294,7 +328,7 @@ class _UserAdminPageState extends State<UserAdminPage>
                     Container(width: 1, height: 24, color: Colors.grey[300]),
                     const SizedBox(width: 16),
                     _FilterChip(
-                      label: 'All Status',
+                      label: _tUserAdmin(context, 'All Status'),
                       selected: service.statusFilter == null,
                       onTap: () => service.setStatusFilter(null),
                     ),
@@ -331,10 +365,10 @@ class _UserAdminPageState extends State<UserAdminPage>
         ),
         labelColor: Colors.white,
         unselectedLabelColor: context.schTextSecondary,
-        tabs: const <Widget>[
-          Tab(text: 'All Users'),
-          Tab(text: 'Sites'),
-          Tab(text: 'Audit Log'),
+        tabs: <Widget>[
+          Tab(text: _tUserAdmin(context, 'All Users')),
+          Tab(text: _tUserAdmin(context, 'Sites')),
+          Tab(text: _tUserAdmin(context, 'Audit Log')),
         ],
       ),
     );
@@ -363,8 +397,8 @@ class _UserAdminPageState extends State<UserAdminPage>
         if (service.users.isEmpty) {
           return _buildEmptyState(
             icon: Icons.people_outline,
-            title: 'No users found',
-            subtitle: 'Try adjusting your filters',
+            title: _tUserAdmin(context, 'No users found'),
+            subtitle: _tUserAdmin(context, 'Try adjusting your filters'),
           );
         }
 
@@ -390,8 +424,8 @@ class _UserAdminPageState extends State<UserAdminPage>
         if (service.sites.isEmpty) {
           return _buildEmptyState(
             icon: Icons.location_city_outlined,
-            title: 'No sites available',
-            subtitle: 'Sites will appear here',
+            title: _tUserAdmin(context, 'No sites available'),
+            subtitle: _tUserAdmin(context, 'Sites will appear here'),
           );
         }
 
@@ -463,7 +497,7 @@ class _UserAdminPageState extends State<UserAdminPage>
       onPressed: () => _showCreateUserDialog(),
       backgroundColor: ScholesaColors.hq,
       icon: const Icon(Icons.person_add),
-      label: const Text('Add User'),
+      label: Text(_tUserAdmin(context, 'Add User')),
     );
   }
 
@@ -888,13 +922,13 @@ class _SiteCard extends StatelessWidget {
                       _SiteStatChip(
                         icon: Icons.people,
                         value: site.userCount.toString(),
-                        label: 'Users',
+                        label: _tUserAdmin(context, 'Users'),
                       ),
                       const SizedBox(width: 12),
                       _SiteStatChip(
                         icon: Icons.school,
                         value: site.learnerCount.toString(),
-                        label: 'Learners',
+                        label: _tUserAdmin(context, 'Learners'),
                       ),
                     ],
                   ),
@@ -992,7 +1026,7 @@ class _AuditLogCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    'by ${log.actorEmail}',
+                    '${_tUserAdmin(context, 'by')} ${log.actorEmail}',
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 12),
                   ),
@@ -1022,9 +1056,15 @@ class _AuditLogCard extends StatelessWidget {
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    final bool es = WidgetsBinding.instance.platformDispatcher.locale.languageCode ==
+        'es';
+    if (diff.inMinutes < 60) {
+      return es ? '${diff.inMinutes}${_userAdminEs['m ago']}' : '${diff.inMinutes}m ago';
+    }
+    if (diff.inHours < 24) {
+      return es ? '${diff.inHours}${_userAdminEs['h ago']}' : '${diff.inHours}h ago';
+    }
+    return es ? '${diff.inDays}${_userAdminEs['d ago']}' : '${diff.inDays}d ago';
   }
 }
 
@@ -1116,7 +1156,7 @@ class _UserDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              user.displayName ?? 'No Name',
+                              user.displayName ?? _tUserAdmin(context, 'No Name'),
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -1160,7 +1200,7 @@ class _UserDetailsSheet extends StatelessWidget {
 
                   // Quick Actions
                   Text(
-                    'Quick Actions',
+                    _tUserAdmin(context, 'Quick Actions'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.grey[800],
@@ -1171,7 +1211,7 @@ class _UserDetailsSheet extends StatelessWidget {
                     children: <Widget>[
                       _ActionButton(
                         icon: Icons.edit,
-                        label: 'Edit',
+                        label: _tUserAdmin(context, 'Edit'),
                         color: ScholesaColors.hq,
                         onTap: () => _showEditUserDialog(context),
                       ),
@@ -1181,8 +1221,8 @@ class _UserDetailsSheet extends StatelessWidget {
                             ? Icons.check_circle
                             : Icons.block,
                         label: user.status == UserStatus.suspended
-                            ? 'Activate'
-                            : 'Suspend',
+                          ? _tUserAdmin(context, 'Activate')
+                          : _tUserAdmin(context, 'Suspend'),
                         color: user.status == UserStatus.suspended
                             ? ScholesaColors.success
                             : ScholesaColors.error,
@@ -1191,7 +1231,7 @@ class _UserDetailsSheet extends StatelessWidget {
                       const SizedBox(width: 12),
                       _ActionButton(
                         icon: Icons.swap_horiz,
-                        label: 'Change Role',
+                        label: _tUserAdmin(context, 'Change Role'),
                         color: ScholesaColors.educator,
                         onTap: () => _showRoleChangeDialog(context),
                       ),
@@ -1201,33 +1241,33 @@ class _UserDetailsSheet extends StatelessWidget {
 
                   // Info sections
                   _InfoSection(
-                    title: 'Account Details',
+                    title: _tUserAdmin(context, 'Account Details'),
                     items: <_InfoItem>[
                       _InfoItem(
                           icon: Icons.fingerprint,
-                          label: 'User ID',
+                          label: _tUserAdmin(context, 'User ID'),
                           value: user.uid),
                       _InfoItem(
                         icon: Icons.calendar_today,
-                        label: 'Created',
+                        label: _tUserAdmin(context, 'Created'),
                         value: _formatDate(user.createdAt),
                       ),
                       if (user.lastLoginAt != null)
                         _InfoItem(
                           icon: Icons.login,
-                          label: 'Last Login',
+                          label: _tUserAdmin(context, 'Last Login'),
                           value: _formatDate(user.lastLoginAt!),
                         ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   _InfoSection(
-                    title: 'Site Access',
+                    title: _tUserAdmin(context, 'Site Access'),
                     items: user.siteIds.isEmpty
                         ? <_InfoItem>[
-                            const _InfoItem(
+                            _InfoItem(
                                 icon: Icons.location_off,
-                                label: 'No sites assigned',
+                                label: _tUserAdmin(context, 'No sites assigned'),
                                 value: '')
                           ]
                         : user.siteIds
@@ -1783,7 +1823,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('User ${result.displayName} created'),
+          content: Text(
+              '${_tUserAdmin(context, 'User')} ${result.displayName} ${_tUserAdmin(context, 'created')}'),
           backgroundColor: ScholesaColors.success,
         ),
       );
