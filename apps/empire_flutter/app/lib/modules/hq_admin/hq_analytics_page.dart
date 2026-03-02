@@ -74,6 +74,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
     const _SiteFilterOption(id: 'all', name: 'All Sites'),
   ];
+  List<_PillarAnalyticsData> _pillarAnalyticsData = <_PillarAnalyticsData>[];
   List<_SiteComparisonData> _siteComparisonData = <_SiteComparisonData>[];
   List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
 
@@ -584,6 +585,30 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Widget _buildPillarAnalytics() {
+    final List<_PillarAnalyticsData> data = _pillarAnalyticsData;
+    final List<_PillarAnalyticsData> fallback = <_PillarAnalyticsData>[
+      const _PillarAnalyticsData(
+        pillar: 'Future Skills',
+        progress: 0,
+        learners: 0,
+        missions: 0,
+      ),
+      const _PillarAnalyticsData(
+        pillar: 'Leadership',
+        progress: 0,
+        learners: 0,
+        missions: 0,
+      ),
+      const _PillarAnalyticsData(
+        pillar: 'Impact',
+        progress: 0,
+        learners: 0,
+        missions: 0,
+      ),
+    ];
+    final List<_PillarAnalyticsData> rows =
+        data.isEmpty ? fallback : data;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -601,32 +626,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 20),
-            _PillarAnalyticsRow(
-              icon: Icons.code,
-              label: _t('Future Skills'),
-              progress: 0.72,
-              learners: 98,
-              missions: 234,
-              color: ScholesaColors.futureSkills,
-            ),
-            const SizedBox(height: 16),
-            _PillarAnalyticsRow(
-              icon: Icons.emoji_events,
-              label: _t('Leadership'),
-              progress: 0.65,
-              learners: 85,
-              missions: 156,
-              color: ScholesaColors.leadership,
-            ),
-            const SizedBox(height: 16),
-            _PillarAnalyticsRow(
-              icon: Icons.eco,
-              label: _t('Impact'),
-              progress: 0.58,
-              learners: 72,
-              missions: 112,
-              color: ScholesaColors.impact,
-            ),
+            for (int index = 0; index < rows.length; index++) ...<Widget>[
+              _PillarAnalyticsRow(
+                icon: _pillarIcon(rows[index].pillar),
+                label: _t(rows[index].pillar),
+                progress: rows[index].progress,
+                learners: rows[index].learners,
+                missions: rows[index].missions,
+                color: _pillarColor(rows[index].pillar),
+              ),
+              if (index < rows.length - 1) const SizedBox(height: 16),
+            ],
           ],
         ),
       ),
@@ -897,6 +907,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       setState(() {
         _isLoadingSupplemental = false;
         _siteOptions = <_SiteFilterOption>[const _SiteFilterOption(id: 'all', name: 'All Sites')];
+        _pillarAnalyticsData = <_PillarAnalyticsData>[];
         _siteComparisonData = <_SiteComparisonData>[];
         _topPerformersData = <_TopPerformerData>[];
       });
@@ -915,6 +926,27 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final List<_SiteFilterOption> options = <_SiteFilterOption>[
         const _SiteFilterOption(id: 'all', name: 'All Sites'),
       ];
+
+      final QuerySnapshot<Map<String, dynamic>> missionsSnapshot =
+          await firestoreService.firestore.collection('missions').limit(500).get();
+
+      final Map<String, String> missionPillarById = <String, String>{};
+      final Map<String, int> missionsByPillar = <String, int>{
+        'Future Skills': 0,
+        'Leadership': 0,
+        'Impact': 0,
+      };
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in missionsSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (_selectedSite != 'all' && siteId.isNotEmpty && siteId != _selectedSite) {
+          continue;
+        }
+        final String pillar = _pillarLabelFromData(data);
+        missionPillarById[doc.id] = pillar;
+        missionsByPillar[pillar] = (missionsByPillar[pillar] ?? 0) + 1;
+      }
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
@@ -961,6 +993,21 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final Map<String, int> attemptsByLearner = <String, int>{};
       final Map<String, String> learnerSite = <String, String>{};
       final Map<String, Set<String>> learnerDays = <String, Set<String>>{};
+      final Map<String, int> attemptsByPillar = <String, int>{
+        'Future Skills': 0,
+        'Leadership': 0,
+        'Impact': 0,
+      };
+      final Map<String, int> completedByPillar = <String, int>{
+        'Future Skills': 0,
+        'Leadership': 0,
+        'Impact': 0,
+      };
+      final Map<String, Set<String>> learnersByPillar = <String, Set<String>>{
+        'Future Skills': <String>{},
+        'Leadership': <String>{},
+        'Impact': <String>{},
+      };
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attemptsSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
@@ -976,7 +1023,44 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           final String dayKey = '${createdAt.year}-${createdAt.month}-${createdAt.day}';
           learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
         }
+
+        final String missionId = ((data['missionId'] as String?) ?? '').trim();
+        final String pillar = _pillarLabelFromAttempt(data, missionPillarById[missionId]);
+        attemptsByPillar[pillar] = (attemptsByPillar[pillar] ?? 0) + 1;
+        learnersByPillar.putIfAbsent(pillar, () => <String>{}).add(learnerId);
+        final String status = ((data['status'] as String?) ?? '').toLowerCase();
+        final bool completed = status == 'completed' ||
+            status == 'passed' ||
+            status == 'mastered' ||
+            status == 'done';
+        if (completed) {
+          completedByPillar[pillar] = (completedByPillar[pillar] ?? 0) + 1;
+        }
       }
+
+      final List<_PillarAnalyticsData> pillarData = <_PillarAnalyticsData>[
+        _buildPillarData(
+          pillar: 'Future Skills',
+          missionsByPillar: missionsByPillar,
+          attemptsByPillar: attemptsByPillar,
+          completedByPillar: completedByPillar,
+          learnersByPillar: learnersByPillar,
+        ),
+        _buildPillarData(
+          pillar: 'Leadership',
+          missionsByPillar: missionsByPillar,
+          attemptsByPillar: attemptsByPillar,
+          completedByPillar: completedByPillar,
+          learnersByPillar: learnersByPillar,
+        ),
+        _buildPillarData(
+          pillar: 'Impact',
+          missionsByPillar: missionsByPillar,
+          attemptsByPillar: attemptsByPillar,
+          completedByPillar: completedByPillar,
+          learnersByPillar: learnersByPillar,
+        ),
+      ];
 
       final List<MapEntry<String, int>> ranked = attemptsByLearner.entries.toList()
         ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
@@ -1008,12 +1092,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         if (!_siteOptions.any((_SiteFilterOption option) => option.id == _selectedSite)) {
           _selectedSite = 'all';
         }
+        _pillarAnalyticsData = pillarData;
         _siteComparisonData = comparisonTop;
         _topPerformersData = performers;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
+        _pillarAnalyticsData = <_PillarAnalyticsData>[];
         _siteComparisonData = <_SiteComparisonData>[];
         _topPerformersData = <_TopPerformerData>[];
       });
@@ -1087,6 +1173,89 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (value is String) return int.tryParse(value);
     return null;
   }
+
+  _PillarAnalyticsData _buildPillarData({
+    required String pillar,
+    required Map<String, int> missionsByPillar,
+    required Map<String, int> attemptsByPillar,
+    required Map<String, int> completedByPillar,
+    required Map<String, Set<String>> learnersByPillar,
+  }) {
+    final int missions = missionsByPillar[pillar] ?? 0;
+    final int attempts = attemptsByPillar[pillar] ?? 0;
+    final int completed = completedByPillar[pillar] ?? 0;
+    final int learners = learnersByPillar[pillar]?.length ?? 0;
+    final double progress = attempts == 0 ? 0 : (completed / attempts).clamp(0, 1);
+    return _PillarAnalyticsData(
+      pillar: pillar,
+      progress: progress,
+      learners: learners,
+      missions: missions,
+    );
+  }
+
+  String _pillarLabelFromData(Map<String, dynamic> data) {
+    final String direct = ((data['pillar'] as String?) ?? '').trim();
+    if (direct.isNotEmpty) {
+      return _normalizePillarLabel(direct);
+    }
+    final String code = ((data['pillarCode'] as String?) ?? '').trim();
+    if (code.isNotEmpty) {
+      return _normalizePillarLabel(code);
+    }
+    final List<dynamic> pillarCodes = (data['pillarCodes'] as List?) ?? <dynamic>[];
+    if (pillarCodes.isNotEmpty) {
+      return _normalizePillarLabel(pillarCodes.first.toString());
+    }
+    return 'Future Skills';
+  }
+
+  String _pillarLabelFromAttempt(Map<String, dynamic> data, String? fallback) {
+    final String direct = ((data['pillar'] as String?) ?? '').trim();
+    if (direct.isNotEmpty) {
+      return _normalizePillarLabel(direct);
+    }
+    final String code = ((data['pillarCode'] as String?) ?? '').trim();
+    if (code.isNotEmpty) {
+      return _normalizePillarLabel(code);
+    }
+    if (fallback != null && fallback.trim().isNotEmpty) {
+      return _normalizePillarLabel(fallback);
+    }
+    return 'Future Skills';
+  }
+
+  String _normalizePillarLabel(String raw) {
+    final String normalized = raw.trim().toLowerCase();
+    if (normalized.contains('future')) return 'Future Skills';
+    if (normalized.contains('leadership')) return 'Leadership';
+    if (normalized.contains('impact')) return 'Impact';
+    return 'Future Skills';
+  }
+
+  IconData _pillarIcon(String pillar) {
+    switch (_normalizePillarLabel(pillar)) {
+      case 'Leadership':
+        return Icons.emoji_events;
+      case 'Impact':
+        return Icons.eco;
+      case 'Future Skills':
+      default:
+        return Icons.code;
+    }
+  }
+
+  Color _pillarColor(String pillar) {
+    switch (_normalizePillarLabel(pillar)) {
+      case 'Leadership':
+        return ScholesaColors.leadership;
+      case 'Impact':
+        return ScholesaColors.impact;
+      case 'Future Skills':
+      default:
+        return ScholesaColors.futureSkills;
+    }
+  }
 }
 
 class _SiteFilterOption {
@@ -1125,6 +1294,20 @@ class _TopPerformerData {
   final String site;
   final int missionsCompleted;
   final int streak;
+}
+
+class _PillarAnalyticsData {
+  const _PillarAnalyticsData({
+    required this.pillar,
+    required this.progress,
+    required this.learners,
+    required this.missions,
+  });
+
+  final String pillar;
+  final double progress;
+  final int learners;
+  final int missions;
 }
 
 class _MetricCard extends StatelessWidget {

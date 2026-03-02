@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -53,6 +57,8 @@ const Map<String, String> _siteSessionsEs = <String, String>{
   'Session title is required': 'El título de la sesión es obligatorio',
   'Unassigned': 'Sin asignar',
   'Create Session': 'Crear sesión',
+  'Loading...': 'Cargando...',
+  'No sessions scheduled': 'No hay sesiones programadas',
 };
 
 String _tSiteSessions(BuildContext context, String input) {
@@ -73,57 +79,15 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week';
   final Map<String, List<_SessionData>> _sessionsByTime =
-      <String, List<_SessionData>>{
-    '9:00 AM': <_SessionData>[
-      const _SessionData(
-        title: 'AI Explorers - Level 1',
-        educator: 'Ms. Sarah Chen',
-        room: 'Lab A',
-        learnerCount: 12,
-        pillar: 'Future Skills',
-      ),
-    ],
-    '10:30 AM': <_SessionData>[
-      const _SessionData(
-        title: 'Leadership Workshop',
-        educator: 'Mr. James Wilson',
-        room: 'Main Hall',
-        learnerCount: 15,
-        pillar: 'Leadership',
-      ),
-      const _SessionData(
-        title: 'Coding Fundamentals',
-        educator: 'Ms. Emily Park',
-        room: 'Lab B',
-        learnerCount: 10,
-        pillar: 'Future Skills',
-      ),
-    ],
-    '1:00 PM': <_SessionData>[
-      const _SessionData(
-        title: 'Community Project',
-        educator: 'Dr. Michael Brown',
-        room: 'Garden Area',
-        learnerCount: 18,
-        pillar: 'Impact',
-      ),
-    ],
-    '2:30 PM': <_SessionData>[
-      const _SessionData(
-        title: 'Robotics Club',
-        educator: 'Ms. Sarah Chen',
-        room: 'Lab A',
-        learnerCount: 8,
-        pillar: 'Future Skills',
-      ),
-    ],
-  };
+      <String, List<_SessionData>>{};
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _logScheduleViewed(trigger: 'page_open');
+      _loadSessions();
     });
   }
 
@@ -166,6 +130,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   Widget build(BuildContext context) {
     final List<MapEntry<String, List<_SessionData>>> timeSlots =
         _sessionsByTime.entries.toList(growable: false);
+    timeSlots.sort((MapEntry<String, List<_SessionData>> a,
+        MapEntry<String, List<_SessionData>> b) {
+      return _timeSortKey(a.key).compareTo(_timeSortKey(b.key));
+    });
 
     return Scaffold(
       body: Container(
@@ -187,6 +155,26 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             SliverToBoxAdapter(child: _buildViewToggle()),
             SliverToBoxAdapter(child: _buildCalendarStrip()),
             SliverToBoxAdapter(child: _buildSessionsHeader()),
+            if (_isLoading)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    _tSiteSessions(context, 'Loading...'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                ),
+              ),
+            if (!_isLoading && timeSlots.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    _tSiteSessions(context, 'No sessions scheduled'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                ),
+              ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
@@ -634,6 +622,11 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       return;
     }
 
+    final bool persisted = await _persistSession(result);
+    if (!persisted && !mounted) {
+      return;
+    }
+
     setState(() {
       _sessionsByTime.putIfAbsent(result.time, () => <_SessionData>[]);
       _sessionsByTime[result.time]!.add(result.session);
@@ -657,6 +650,242 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         backgroundColor: ScholesaColors.success,
       ),
     );
+
+    await _loadSessions();
+  }
+
+  Future<void> _loadSessions() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null || appState == null) {
+      return;
+    }
+
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    if (siteId.isEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      Query<Map<String, dynamic>> query =
+          firestoreService.firestore.collection('sessions');
+      try {
+        query = query.where('siteId', isEqualTo: siteId);
+      } catch (_) {}
+
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await query.orderBy('startTime').limit(300).get();
+      } catch (_) {
+        try {
+          snapshot = await query.orderBy('createdAt', descending: true).limit(300).get();
+        } catch (_) {
+          snapshot = await query.limit(300).get();
+        }
+      }
+
+      final Map<String, List<_SessionData>> grouped = <String, List<_SessionData>>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String slot = _sessionTimeSlot(data);
+        final _SessionData session = _SessionData(
+          title: _sessionTitle(data, doc.id),
+          educator: _sessionEducator(data),
+          room: _sessionRoom(data),
+          learnerCount: _sessionLearnerCount(data),
+          pillar: _sessionPillar(data),
+        );
+        grouped.putIfAbsent(slot, () => <_SessionData>[]).add(session);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _sessionsByTime
+          ..clear()
+          ..addAll(grouped);
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<bool> _persistSession(_NewSessionResult result) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null || appState == null) {
+      return false;
+    }
+
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    if (siteId.isEmpty) {
+      return false;
+    }
+
+    try {
+      final DateTime? startTime = _dateWithTimeLabel(_selectedDate, result.time);
+      await firestoreService.firestore.collection('sessions').add(<String, dynamic>{
+        'siteId': siteId,
+        'title': result.session.title,
+        'educatorName': result.session.educator,
+        'room': result.session.room,
+        'learnerCount': result.session.learnerCount,
+        'pillar': result.session.pillar,
+        'pillarCode': _pillarCode(result.session.pillar),
+        'timeSlot': result.time,
+        if (startTime != null) 'startTime': Timestamp.fromDate(startTime),
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': appState.userId,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _sessionTimeSlot(Map<String, dynamic> data) {
+    final String? label = (data['timeSlot'] as String?)?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    final DateTime? startTime = _toDateTime(data['startTime']) ??
+        _toDateTime(data['startDate']) ??
+        _toDateTime(data['date']);
+    if (startTime != null) {
+      return _timeLabel(startTime);
+    }
+    return 'TBD';
+  }
+
+  String _sessionTitle(Map<String, dynamic> data, String fallback) {
+    final String title = ((data['title'] as String?) ??
+            (data['name'] as String?) ??
+            '')
+        .trim();
+    return title.isNotEmpty ? title : fallback;
+  }
+
+  String _sessionEducator(Map<String, dynamic> data) {
+    final String educator = ((data['educatorName'] as String?) ??
+            (data['educatorDisplayName'] as String?) ??
+            (data['educatorId'] as String?) ??
+            '')
+        .trim();
+    return educator.isNotEmpty ? educator : _tSiteSessions(context, 'Unassigned');
+  }
+
+  String _sessionRoom(Map<String, dynamic> data) {
+    final String room = ((data['room'] as String?) ??
+            (data['roomName'] as String?) ??
+            (data['location'] as String?) ??
+            '')
+        .trim();
+    return room.isNotEmpty ? room : 'TBD';
+  }
+
+  int _sessionLearnerCount(Map<String, dynamic> data) {
+    final dynamic raw = data['learnerCount'] ?? data['enrollmentCount'];
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw) ?? 0;
+    return 0;
+  }
+
+  String _sessionPillar(Map<String, dynamic> data) {
+    final String direct = ((data['pillar'] as String?) ?? '').trim();
+    if (direct.isNotEmpty) return direct;
+    final String code = ((data['pillarCode'] as String?) ?? '').trim().toLowerCase();
+    switch (code) {
+      case 'future_skills':
+      case 'future-skills':
+      case 'future skills':
+        return 'Future Skills';
+      case 'leadership_agency':
+      case 'leadership-agency':
+      case 'leadership':
+      case 'leadership & agency':
+        return 'Leadership';
+      case 'impact_innovation':
+      case 'impact-innovation':
+      case 'impact':
+      case 'impact & innovation':
+        return 'Impact';
+      default:
+        return 'Future Skills';
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  int _timeSortKey(String label) {
+    final DateTime? parsed = _dateWithTimeLabel(DateTime.now(), label);
+    if (parsed == null) return 24 * 60;
+    return parsed.hour * 60 + parsed.minute;
+  }
+
+  DateTime? _dateWithTimeLabel(DateTime baseDate, String label) {
+    final RegExp regex = RegExp(r'^(\d{1,2}):(\d{2})\s*([AP]M)$', caseSensitive: false);
+    final Match? match = regex.firstMatch(label.trim());
+    if (match == null) return null;
+    int hour = int.tryParse(match.group(1) ?? '') ?? 0;
+    final int minute = int.tryParse(match.group(2) ?? '') ?? 0;
+    final String meridiem = (match.group(3) ?? '').toUpperCase();
+    if (hour < 1 || hour > 12 || minute > 59) return null;
+    if (meridiem == 'PM' && hour != 12) hour += 12;
+    if (meridiem == 'AM' && hour == 12) hour = 0;
+    return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
+  }
+
+  String _timeLabel(DateTime value) {
+    int hour = value.hour;
+    final String meridiem = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour == 0) hour = 12;
+    final String minute = value.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $meridiem';
+  }
+
+  String _pillarCode(String pillar) {
+    switch (pillar.toLowerCase()) {
+      case 'leadership':
+      case 'leadership & agency':
+        return 'leadership_agency';
+      case 'impact':
+      case 'impact & innovation':
+        return 'impact_innovation';
+      case 'future skills':
+      default:
+        return 'future_skills';
+    }
   }
 }
 
@@ -940,18 +1169,27 @@ class _CreateSessionSheet extends StatefulWidget {
 
 class _CreateSessionSheetState extends State<_CreateSessionSheet> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _educatorController =
-      TextEditingController(text: 'Ms. Sarah Chen');
   final TextEditingController _learnerCountController =
-      TextEditingController(text: '12');
+      TextEditingController();
   String _selectedPillar = 'Future Skills';
-  String _selectedRoom = 'Lab A';
+  String? _selectedEducatorId;
+  String? _selectedRoom;
   String _selectedTime = '4:00 PM';
+  bool _isLoadingOptions = false;
+  List<_SheetOption> _educatorOptions = <_SheetOption>[];
+  List<_SheetOption> _roomOptions = <_SheetOption>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOptions();
+    });
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _educatorController.dispose();
     _learnerCountController.dispose();
     super.dispose();
   }
@@ -1095,8 +1333,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: _educatorController,
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedEducatorId,
                     decoration: InputDecoration(
                       labelText: _tSiteSessions(context, 'Educator'),
                       filled: true,
@@ -1106,6 +1344,17 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         borderSide: BorderSide.none,
                       ),
                     ),
+                    items: _educatorOptions
+                        .map(
+                          (_SheetOption option) => DropdownMenuItem<String>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (String? value) {
+                      setState(() => _selectedEducatorId = value);
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -1133,13 +1382,14 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items:
-                        <String>['Lab A', 'Lab B', 'Main Hall', 'Garden Area']
-                            .map((String room) => DropdownMenuItem<String>(
-                                  value: room,
-                                  child: Text(room),
-                                ))
-                            .toList(),
+                    items: _roomOptions
+                        .map(
+                          (_SheetOption option) => DropdownMenuItem<String>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (String? value) {
                       if (value != null) {
                         TelemetryService.instance.logEvent(
@@ -1153,6 +1403,15 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                       }
                     },
                   ),
+                  if (_isLoadingOptions)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        _tSiteSessions(context, 'Loading...'),
+                        style: TextStyle(
+                            fontSize: 12, color: context.schTextSecondary),
+                      ),
+                    ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -1172,6 +1431,28 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         final int learnerCount =
                             int.tryParse(_learnerCountController.text.trim()) ??
                                 0;
+                        final String educatorName = _educatorOptions
+                                .firstWhere(
+                                  (_SheetOption option) =>
+                                      option.id == _selectedEducatorId,
+                                  orElse: () => const _SheetOption(
+                                    id: '',
+                                    label: '',
+                                  ),
+                                )
+                                .label
+                                .trim();
+                        final String roomName = _roomOptions
+                                .firstWhere(
+                                  (_SheetOption option) =>
+                                      option.id == _selectedRoom,
+                                  orElse: () => const _SheetOption(
+                                    id: '',
+                                    label: '',
+                                  ),
+                                )
+                                .label
+                                .trim();
 
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
@@ -1189,10 +1470,10 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                             time: _selectedTime,
                             session: _SessionData(
                               title: title,
-                              educator: _educatorController.text.trim().isEmpty
+                              educator: educatorName.isEmpty
                                   ? _tSiteSessions(context, 'Unassigned')
-                                  : _educatorController.text.trim(),
-                              room: _selectedRoom,
+                                  : educatorName,
+                              room: roomName.isEmpty ? 'TBD' : roomName,
                               learnerCount: learnerCount,
                               pillar: _selectedPillar,
                             ),
@@ -1217,6 +1498,116 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
       ),
     );
   }
+
+  Future<void> _loadOptions() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null || appState == null) {
+      return;
+    }
+
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    if (siteId.isEmpty) return;
+
+    if (!mounted) return;
+    setState(() => _isLoadingOptions = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> usersSnapshot;
+      try {
+        usersSnapshot = await firestoreService.firestore
+            .collection('users')
+            .where('role', isEqualTo: 'educator')
+            .limit(300)
+            .get();
+      } catch (_) {
+        usersSnapshot = await firestoreService.firestore
+            .collection('users')
+            .limit(300)
+            .get();
+      }
+
+      final List<_SheetOption> educators = <_SheetOption>[];
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in usersSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String role = ((data['role'] as String?) ?? '').toLowerCase();
+        if (role != 'educator') continue;
+        final List<String> siteIds =
+            (data['siteIds'] as List?)?.map((dynamic e) => e.toString()).toList() ??
+                <String>[];
+        final String activeSiteId = (data['activeSiteId'] as String?) ?? '';
+        if (siteIds.isNotEmpty && !siteIds.contains(siteId) && activeSiteId != siteId) {
+          continue;
+        }
+        final String label =
+            ((data['displayName'] as String?) ?? (data['email'] as String?) ?? doc.id)
+                .trim();
+        if (label.isEmpty) continue;
+        educators.add(_SheetOption(id: doc.id, label: label));
+      }
+
+      QuerySnapshot<Map<String, dynamic>> roomsSnapshot;
+      try {
+        roomsSnapshot = await firestoreService.firestore
+            .collection('rooms')
+            .where('siteId', isEqualTo: siteId)
+            .limit(200)
+            .get();
+      } catch (_) {
+        roomsSnapshot = await firestoreService.firestore
+            .collection('rooms')
+            .limit(200)
+            .get();
+      }
+
+      final List<_SheetOption> rooms = roomsSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String label = ((data['name'] as String?) ??
+                (data['roomName'] as String?) ??
+                doc.id)
+            .trim();
+        return _SheetOption(id: doc.id, label: label.isEmpty ? doc.id : label);
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _educatorOptions = educators;
+        _roomOptions = rooms;
+        _selectedEducatorId =
+            _educatorOptions.isNotEmpty ? _educatorOptions.first.id : null;
+        _selectedRoom = _roomOptions.isNotEmpty ? _roomOptions.first.id : null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingOptions = false);
+      }
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class _SheetOption {
+  const _SheetOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
 
 class _PillarOption extends StatelessWidget {
