@@ -6,7 +6,7 @@ steps:
     - -lc
     - |
       set -euo pipefail
-      npm ci
+      npm ci --no-audit --no-fund --no-update-notifier
       npm run lint
 - name: 'gcr.io/cloud-builders/docker'
   id: 'docker-build'
