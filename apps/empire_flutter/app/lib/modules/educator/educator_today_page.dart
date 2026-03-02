@@ -6,6 +6,55 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
+const Map<String, String> _educatorTodayEs = <String, String>{
+  'Good morning': 'Buenos días',
+  'Good afternoon': 'Buenas tardes',
+  'Good evening': 'Buenas noches',
+  "Today's Schedule": 'Horario de hoy',
+  'Classes': 'Clases',
+  'Attendance': 'Asistencia',
+  'To Review': 'Por revisar',
+  'Take Attendance': 'Tomar asistencia',
+  'Review Missions': 'Revisar misiones',
+  'Messages': 'Mensajes',
+  'NOW': 'AHORA',
+  'No location': 'Sin ubicación',
+  'present': 'presentes',
+  'Manage Attendance': 'Gestionar asistencia',
+  'Full Schedule': 'Horario completo',
+  'Week View': 'Vista semanal',
+  'Week View Summary': 'Resumen de vista semanal',
+  'This week:': 'Esta semana:',
+  'classes loaded from your current schedule.':
+      'clases cargadas desde tu horario actual.',
+  'Close': 'Cerrar',
+  'Mission Review Queue': 'Cola de revisión de misiones',
+  'You have': 'Tienes',
+  'missions pending review today.': 'misiones pendientes de revisión hoy.',
+  'Mission review queue opened': 'Cola de revisión de misiones abierta',
+  'Open Queue': 'Abrir cola',
+  'Mon': 'Lun',
+  'Tue': 'Mar',
+  'Wed': 'Mié',
+  'Thu': 'Jue',
+  'Fri': 'Vie',
+  'Sat': 'Sáb',
+  'Sun': 'Dom',
+  'Jan': 'Ene',
+  'Apr': 'Abr',
+  'Aug': 'Ago',
+  'Dec': 'Dic',
+  'TBD': 'Por definir',
+  'Enrolled Learners': 'Estudiantes inscritos',
+  'Not recorded': 'No registrado',
+};
+
+String _tEducatorToday(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _educatorTodayEs[input] ?? input;
+}
+
 /// Educator Today Page - Daily schedule and quick actions
 class EducatorTodayPage extends StatefulWidget {
   const EducatorTodayPage({super.key});
@@ -108,12 +157,12 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    greeting,
+                    _tEducatorToday(context, greeting),
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
                   Text(
-                    "Today's Schedule",
+                    _tEducatorToday(context, "Today's Schedule"),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.educator,
@@ -155,7 +204,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             child: _StatCard(
               icon: Icons.school,
               value: '${stats.completedClasses}/${stats.totalClasses}',
-              label: 'Classes',
+              label: _tEducatorToday(context, 'Classes'),
               color: ScholesaColors.educator,
             ),
           ),
@@ -164,7 +213,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             child: _StatCard(
               icon: Icons.people,
               value: '${(stats.attendanceRate * 100).toInt()}%',
-              label: 'Attendance',
+              label: _tEducatorToday(context, 'Attendance'),
               color: const Color(0xFF10B981),
             ),
           ),
@@ -173,7 +222,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             child: _StatCard(
               icon: Icons.assignment,
               value: '${stats.missionsToReview}',
-              label: 'To Review',
+              label: _tEducatorToday(context, 'To Review'),
               color: ScholesaColors.warning,
             ),
           ),
@@ -190,7 +239,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           Expanded(
             child: _QuickActionButton(
               icon: Icons.how_to_reg,
-              label: 'Take Attendance',
+              label: _tEducatorToday(context, 'Take Attendance'),
               color: ScholesaColors.educator,
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -207,7 +256,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           Expanded(
             child: _QuickActionButton(
               icon: Icons.rate_review,
-              label: 'Review Missions',
+              label: _tEducatorToday(context, 'Review Missions'),
               color: const Color(0xFF8B5CF6),
               onTap: _showReviewMissionsDialog,
             ),
@@ -216,7 +265,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           Expanded(
             child: _QuickActionButton(
               icon: Icons.message,
-              label: 'Messages',
+              label: _tEducatorToday(context, 'Messages'),
               color: const Color(0xFF3B82F6),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -280,8 +329,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      'NOW',
+                    Text(
+                      _tEducatorToday(context, 'NOW'),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -317,7 +366,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
-                currentClass.location ?? 'No location',
+                currentClass.location ?? _tEducatorToday(context, 'No location'),
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(width: 16),
@@ -325,7 +374,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
-                '${currentClass.presentCount}/${currentClass.enrolledCount} present',
+                '${currentClass.presentCount}/${currentClass.enrolledCount} ${_tEducatorToday(context, 'present')}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
             ],
@@ -352,14 +401,14 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Icon(Icons.how_to_reg, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.how_to_reg, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'Manage Attendance',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    _tEducatorToday(context, 'Manage Attendance'),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -376,8 +425,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          const Text(
-            'Full Schedule',
+          Text(
+            _tEducatorToday(context, 'Full Schedule'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -386,7 +435,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           TextButton.icon(
             onPressed: _showWeekViewSummary,
             icon: const Icon(Icons.calendar_month, size: 18),
-            label: const Text('Week View'),
+            label: Text(_tEducatorToday(context, 'Week View')),
             style: TextButton.styleFrom(
               foregroundColor: ScholesaColors.educator,
             ),
@@ -421,9 +470,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Week View Summary'),
+        title: Text(_tEducatorToday(context, 'Week View Summary')),
         content: Text(
-          'This week: ${context.read<EducatorService>().todayClasses.length} classes loaded from your current schedule.',
+          '${_tEducatorToday(context, 'This week:')} ${context.read<EducatorService>().todayClasses.length} ${_tEducatorToday(context, 'classes loaded from your current schedule.')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -436,7 +485,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tEducatorToday(context, 'Close')),
           ),
         ],
       ),
@@ -456,8 +505,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Mission Review Queue'),
-        content: Text('You have $count missions pending review today.'),
+        title: Text(_tEducatorToday(context, 'Mission Review Queue')),
+        content: Text('${_tEducatorToday(context, 'You have')} $count ${_tEducatorToday(context, 'missions pending review today.')}'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -469,7 +518,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tEducatorToday(context, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -481,10 +530,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Mission review queue opened')),
+                SnackBar(content: Text(_tEducatorToday(context, 'Mission review queue opened'))),
               );
             },
-            child: const Text('Open Queue'),
+            child: Text(_tEducatorToday(context, 'Open Queue')),
           ),
         ],
       ),
@@ -515,7 +564,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       'Nov',
       'Dec'
     ];
-    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
+    final String day = _tEducatorToday(context, days[date.weekday - 1]);
+    final String month = _tEducatorToday(context, months[date.month - 1]);
+    return '$day, $month ${date.day}';
   }
 
   String _formatTime(DateTime time) {
@@ -723,7 +774,7 @@ class _ClassCard extends StatelessWidget {
                                 .withValues(alpha: 0.74)),
                         const SizedBox(width: 4),
                         Text(
-                          todayClass.location ?? 'TBD',
+                          todayClass.location ?? _tEducatorToday(context, 'TBD'),
                           style: TextStyle(
                               color: context.schTextSecondary
                                   .withValues(alpha: 0.88),
@@ -837,8 +888,8 @@ class _ClassDetailSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Enrolled Learners',
+                Text(
+                  _tEducatorToday(context, 'Enrolled Learners'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -896,7 +947,7 @@ class _ClassDetailSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Take Attendance'),
+                    child: Text(_tEducatorToday(context, 'Take Attendance')),
                   ),
                 ),
               ],
@@ -916,7 +967,7 @@ class _ClassDetailSheet extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          'Not recorded',
+          _tEducatorToday(context, 'Not recorded'),
           style: TextStyle(fontSize: 11, color: context.schTextSecondary),
         ),
       );

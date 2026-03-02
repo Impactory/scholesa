@@ -5,6 +5,54 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'checkin_models.dart';
 import 'checkin_service.dart';
 
+const Map<String, String> _checkinEs = <String, String>{
+  'Check-in / Check-out': 'Registro de entrada / salida',
+  'Manage arrivals and pickups': 'Gestiona llegadas y recogidas',
+  'Refresh': 'Actualizar',
+  'Total': 'Total',
+  'Present': 'Presentes',
+  'Left': 'Se fueron',
+  'Absent': 'Ausentes',
+  'Search learners...': 'Buscar estudiantes...',
+  'All': 'Todos',
+  'Late': 'Tarde',
+  'Checked Out': 'Salida registrada',
+  'Learners': 'Estudiantes',
+  "Today's Log": 'Registro de hoy',
+  'No learners found': 'No se encontraron estudiantes',
+  'Try adjusting your search': 'Prueba ajustando tu búsqueda',
+  'No records today': 'No hay registros hoy',
+  'Check-in/out activity will appear here':
+      'La actividad de entrada/salida aparecerá aquí',
+  'Scan QR': 'Escanear QR',
+  'Late pickup flagged for': 'Recogida tardía marcada para',
+  'Use camera scanner or enter pickup code manually.':
+      'Usa el escáner de cámara o ingresa el código manualmente.',
+  'Close': 'Cerrar',
+  'Camera scanner started': 'Escáner de cámara iniciado',
+  'Use Camera': 'Usar cámara',
+  'Manual pickup code entry opened':
+      'Entrada manual de código de recogida abierta',
+  'Enter Code': 'Ingresar código',
+  'Not arrived': 'Sin llegada',
+  'In:': 'Entrada:',
+  'Out:': 'Salida:',
+  'by': 'por',
+  'Check In': 'Registrar entrada',
+  'Check Out': 'Registrar salida',
+  'Flag late pickup': 'Marcar recogida tardía',
+  'Authorized pickups': 'Recogidas autorizadas',
+  'Authorized Pickups': 'Recogidas autorizadas',
+  'For': 'Para',
+  'Primary': 'Principal',
+};
+
+String _tCheckin(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _checkinEs[input] ?? input;
+}
+
 /// Site Check-in / Check-out Page
 /// Beautiful colorful UI for managing learner arrivals and departures
 class CheckinPage extends StatefulWidget {
@@ -95,14 +143,14 @@ class _CheckinPageState extends State<CheckinPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Check-in / Check-out',
+                _tCheckin(context, 'Check-in / Check-out'),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF3B82F6),
                     ),
               ),
               Text(
-                'Manage arrivals and pickups',
+                _tCheckin(context, 'Manage arrivals and pickups'),
                 style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
@@ -117,7 +165,7 @@ class _CheckinPageState extends State<CheckinPage>
               await context.read<CheckinService>().loadTodayData();
             },
             icon: const Icon(Icons.refresh, color: Color(0xFF3B82F6)),
-            tooltip: 'Refresh',
+            tooltip: _tCheckin(context, 'Refresh'),
           ),
         ],
       ),
@@ -135,7 +183,7 @@ class _CheckinPageState extends State<CheckinPage>
                 child: _StatMiniCard(
                   icon: Icons.people,
                   value: service.totalLearners.toString(),
-                  label: 'Total',
+                  label: _tCheckin(context, 'Total'),
                   color: ScholesaColors.site,
                 ),
               ),
@@ -144,7 +192,7 @@ class _CheckinPageState extends State<CheckinPage>
                 child: _StatMiniCard(
                   icon: Icons.check_circle,
                   value: service.presentCount.toString(),
-                  label: 'Present',
+                  label: _tCheckin(context, 'Present'),
                   color: ScholesaColors.success,
                 ),
               ),
@@ -153,7 +201,7 @@ class _CheckinPageState extends State<CheckinPage>
                 child: _StatMiniCard(
                   icon: Icons.exit_to_app,
                   value: service.checkedOutCount.toString(),
-                  label: 'Left',
+                  label: _tCheckin(context, 'Left'),
                   color: ScholesaColors.warning,
                 ),
               ),
@@ -162,7 +210,7 @@ class _CheckinPageState extends State<CheckinPage>
                 child: _StatMiniCard(
                   icon: Icons.schedule,
                   value: service.absentCount.toString(),
-                  label: 'Absent',
+                  label: _tCheckin(context, 'Absent'),
                   color: ScholesaColors.error,
                 ),
               ),
@@ -208,7 +256,7 @@ class _CheckinPageState extends State<CheckinPage>
                     service.setSearchQuery(value);
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search learners...',
+                    hintText: _tCheckin(context, 'Search learners...'),
                     prefixIcon:
                         const Icon(Icons.search, color: Color(0xFF3B82F6)),
                     suffixIcon: _searchController.text.isNotEmpty
@@ -239,7 +287,7 @@ class _CheckinPageState extends State<CheckinPage>
                 child: Row(
                   children: <Widget>[
                     _FilterChip(
-                      label: 'All',
+                      label: _tCheckin(context, 'All'),
                       selected: service.statusFilter == null,
                       onTap: () {
                         TelemetryService.instance.logEvent(
@@ -252,7 +300,7 @@ class _CheckinPageState extends State<CheckinPage>
                       },
                     ),
                     _FilterChip(
-                      label: 'Present',
+                      label: _tCheckin(context, 'Present'),
                       selected: service.statusFilter == CheckStatus.checkedIn,
                       onTap: () {
                         TelemetryService.instance.logEvent(
@@ -266,7 +314,7 @@ class _CheckinPageState extends State<CheckinPage>
                       color: ScholesaColors.success,
                     ),
                     _FilterChip(
-                      label: 'Late',
+                      label: _tCheckin(context, 'Late'),
                       selected: service.statusFilter == CheckStatus.late,
                       onTap: () {
                         TelemetryService.instance.logEvent(
@@ -280,7 +328,7 @@ class _CheckinPageState extends State<CheckinPage>
                       color: ScholesaColors.warning,
                     ),
                     _FilterChip(
-                      label: 'Checked Out',
+                      label: _tCheckin(context, 'Checked Out'),
                       selected: service.statusFilter == CheckStatus.checkedOut,
                       onTap: () {
                         TelemetryService.instance.logEvent(
@@ -328,9 +376,9 @@ class _CheckinPageState extends State<CheckinPage>
         ),
         labelColor: Colors.white,
         unselectedLabelColor: context.schTextSecondary,
-        tabs: const <Widget>[
-          Tab(text: 'Learners'),
-          Tab(text: "Today's Log"),
+        tabs: <Widget>[
+          Tab(text: _tCheckin(context, 'Learners')),
+          Tab(text: _tCheckin(context, "Today's Log")),
         ],
       ),
     );
@@ -358,8 +406,8 @@ class _CheckinPageState extends State<CheckinPage>
         if (service.learnerSummaries.isEmpty) {
           return _buildEmptyState(
             icon: Icons.people_outline,
-            title: 'No learners found',
-            subtitle: 'Try adjusting your search',
+            title: _tCheckin(context, 'No learners found'),
+            subtitle: _tCheckin(context, 'Try adjusting your search'),
           );
         }
 
@@ -386,8 +434,8 @@ class _CheckinPageState extends State<CheckinPage>
         if (service.todayRecords.isEmpty) {
           return _buildEmptyState(
             icon: Icons.history,
-            title: 'No records today',
-            subtitle: 'Check-in/out activity will appear here',
+            title: _tCheckin(context, 'No records today'),
+            subtitle: _tCheckin(context, 'Check-in/out activity will appear here'),
           );
         }
 
@@ -440,7 +488,7 @@ class _CheckinPageState extends State<CheckinPage>
       },
       backgroundColor: const Color(0xFF3B82F6),
       icon: const Icon(Icons.qr_code_scanner),
-      label: const Text('Scan QR'),
+      label: Text(_tCheckin(context, 'Scan QR')),
     );
   }
 
@@ -505,7 +553,7 @@ class _CheckinPageState extends State<CheckinPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Late pickup flagged for ${summary.learnerName}'),
+        content: Text('${_tCheckin(context, 'Late pickup flagged for')} ${summary.learnerName}'),
         backgroundColor: ScholesaColors.warning,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -521,9 +569,9 @@ class _CheckinPageState extends State<CheckinPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Scan QR'),
-        content: const Text(
-          'Use camera scanner or enter pickup code manually.',
+        title: Text(_tCheckin(context, 'Scan QR')),
+        content: Text(
+          _tCheckin(context, 'Use camera scanner or enter pickup code manually.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -536,7 +584,7 @@ class _CheckinPageState extends State<CheckinPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tCheckin(context, 'Close')),
           ),
           OutlinedButton.icon(
             onPressed: () {
@@ -549,7 +597,7 @@ class _CheckinPageState extends State<CheckinPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Camera scanner started'),
+                  content: Text(_tCheckin(context, 'Camera scanner started')),
                   backgroundColor: const Color(0xFF3B82F6),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -559,7 +607,7 @@ class _CheckinPageState extends State<CheckinPage>
               );
             },
             icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text('Use Camera'),
+            label: Text(_tCheckin(context, 'Use Camera')),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -572,7 +620,7 @@ class _CheckinPageState extends State<CheckinPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Manual pickup code entry opened'),
+                  content: Text(_tCheckin(context, 'Manual pickup code entry opened')),
                   backgroundColor: const Color(0xFF3B82F6),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -582,7 +630,7 @@ class _CheckinPageState extends State<CheckinPage>
               );
             },
             icon: const Icon(Icons.keyboard_alt_outlined),
-            label: const Text('Enter Code'),
+            label: Text(_tCheckin(context, 'Enter Code')),
           ),
         ],
       ),
@@ -799,7 +847,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _statusText,
+                                  _tCheckin(context, _statusText),
                                   style: TextStyle(
                                     color: _statusColor,
                                     fontSize: 11,
@@ -814,14 +862,14 @@ class _LearnerCheckinCard extends StatelessWidget {
                       if (summary.checkedInAt != null) ...<Widget>[
                         const SizedBox(height: 4),
                         Text(
-                          'In: ${_formatTime(summary.checkedInAt!)}${summary.checkedInBy != null ? ' by ${summary.checkedInBy}' : ''}',
+                          '${_tCheckin(context, 'In:')} ${_formatTime(summary.checkedInAt!)}${summary.checkedInBy != null ? ' ${_tCheckin(context, 'by')} ${summary.checkedInBy}' : ''}',
                           style: TextStyle(
                               color: context.schTextSecondary, fontSize: 12),
                         ),
                       ],
                       if (summary.checkedOutAt != null) ...<Widget>[
                         Text(
-                          'Out: ${_formatTime(summary.checkedOutAt!)}${summary.checkedOutBy != null ? ' by ${summary.checkedOutBy}' : ''}',
+                          '${_tCheckin(context, 'Out:')} ${_formatTime(summary.checkedOutAt!)}${summary.checkedOutBy != null ? ' ${_tCheckin(context, 'by')} ${summary.checkedOutBy}' : ''}',
                           style: TextStyle(
                               color: context.schTextSecondary, fontSize: 12),
                         ),
@@ -840,7 +888,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                   Expanded(
                     child: _ActionButton(
                       icon: Icons.login,
-                      label: 'Check In',
+                      label: _tCheckin(context, 'Check In'),
                       color: ScholesaColors.success,
                       onTap: onCheckIn,
                     ),
@@ -849,7 +897,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                   Expanded(
                     child: _ActionButton(
                       icon: Icons.logout,
-                      label: 'Check Out',
+                      label: _tCheckin(context, 'Check Out'),
                       color: const Color(0xFF3B82F6),
                       onTap: onCheckOut,
                     ),
@@ -861,7 +909,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                       Icons.warning_amber_rounded,
                       color: ScholesaColors.warning,
                     ),
-                    tooltip: 'Flag late pickup',
+                    tooltip: _tCheckin(context, 'Flag late pickup'),
                   ),
                 ],
                 if (summary.authorizedPickups.isNotEmpty) ...<Widget>[
@@ -878,7 +926,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                       _showAuthorizedPickups(context);
                     },
                     icon: const Icon(Icons.people, color: Colors.grey),
-                    tooltip: 'Authorized pickups',
+                    tooltip: _tCheckin(context, 'Authorized pickups'),
                   ),
                 ],
               ],
@@ -916,14 +964,14 @@ class _LearnerCheckinCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Authorized Pickups',
+              _tCheckin(context, 'Authorized Pickups'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
-              'For ${summary.learnerName}',
+              '${_tCheckin(context, 'For')} ${summary.learnerName}',
               style: TextStyle(color: context.schTextSecondary),
             ),
             const SizedBox(height: 16),
@@ -953,9 +1001,9 @@ class _LearnerCheckinCard extends StatelessWidget {
                                     .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
-                                'Primary',
-                                style: TextStyle(
+                              child: Text(
+                                _tCheckin(context, 'Primary'),
+                                style: const TextStyle(
                                   color: ScholesaColors.success,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
