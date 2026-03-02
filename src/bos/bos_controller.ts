@@ -1,6 +1,6 @@
 // src/bos/bos_controller.ts
 import { TelemetryEmitter } from '../telemetry/emitter';
-import { BOSStateMachine } from './state_machine';
+import { BOSStateMachine, BOSState } from './state_machine';
 import { ConsentManager } from '../safety/consent_manager';
 import { SafeModeHandler } from '../safety/safe_mode_handler';
 import { VoiceManager } from '../voice/voice_manager';
@@ -63,7 +63,7 @@ export class BosController {
   // Transition to next state
   transitionToNextState(): void {
     const currentState = this.stateMachine.getState();
-    let nextState: BOSStateMachine['state'] = currentState.state;
+    let nextState: BOSState['state'] = currentState.state;
 
     switch (currentState.state) {
       case 'ONBOARDING':
@@ -111,12 +111,12 @@ export class BosController {
   }
 
   // Get current state
-  getCurrentState(): BOSStateMachine['state'] {
+  getCurrentState(): BOSState['state'] {
     return this.stateMachine.getState().state;
   }
 
   // Get state metrics
-  getStateMetrics(): BOSStateMachine['metrics'] {
+  getStateMetrics(): BOSState['metrics'] {
     return this.stateMachine.getState().metrics;
   }
 

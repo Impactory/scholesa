@@ -103,8 +103,8 @@ export function ClassInsights(_props: ClassInsightsProps) {
 }
 
 export function ClassInsightsCompact({
-  siteId: _siteId,
-  onViewFull: _onViewFull,
+  siteId,
+  onViewFull,
 }: {
   siteId: string;
   onViewFull?: () => void;
