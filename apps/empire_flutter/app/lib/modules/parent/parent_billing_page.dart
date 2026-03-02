@@ -2,6 +2,58 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _parentBillingEs = <String, String>{
+  'Billing & Payments': 'Facturación y pagos',
+  'Manage your payments': 'Administra tus pagos',
+  'All Learners': 'Todos los estudiantes',
+  'Current Balance': 'Saldo actual',
+  'All paid': 'Todo pagado',
+  'This Month': 'Este mes',
+  'Next Due': 'Próximo vencimiento',
+  'Total Paid': 'Total pagado',
+  'Invoices': 'Facturas',
+  'Payments': 'Pagos',
+  'Plan': 'Plan',
+  'PREMIUM PLAN': 'PLAN PREMIUM',
+  'Active': 'Activo',
+  'For Emma Johnson • Billed monthly': 'Para Emma Johnson • Facturación mensual',
+  'Plan Includes:': 'El plan incluye:',
+  'Unlimited session access': 'Acceso ilimitado a sesiones',
+  'All 3 pillars curriculum': 'Currículo de los 3 pilares',
+  '1-on-1 educator support': 'Apoyo 1 a 1 con educador',
+  'Real-time progress reports': 'Reportes de progreso en tiempo real',
+  'Certificates & badges': 'Certificados e insignias',
+  'Payment Method': 'Método de pago',
+  'Update': 'Actualizar',
+  'Manage Plan': 'Gestionar plan',
+  'Downloading statements...': 'Descargando estados de cuenta...',
+  'Paying invoice': 'Pagando factura',
+  'Viewing invoice': 'Viendo factura',
+  'Update Payment Method': 'Actualizar método de pago',
+  'Select your preferred payment method update action.':
+      'Selecciona la acción para actualizar tu método de pago.',
+  'Cancel': 'Cancelar',
+  'Continue': 'Continuar',
+  'Payment method update request submitted':
+      'Solicitud de actualización del método de pago enviada',
+  'You can review your current subscription and request plan changes.':
+      'Puedes revisar tu suscripción actual y solicitar cambios de plan.',
+  'Close': 'Cerrar',
+  'Request Change': 'Solicitar cambio',
+  'Plan review request sent to billing team':
+      'Solicitud de revisión del plan enviada al equipo de facturación',
+  'PAID': 'PAGADO',
+  'DUE': 'PENDIENTE',
+  'View': 'Ver',
+  'Pay Now': 'Pagar ahora',
+};
+
+String _tParentBilling(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _parentBillingEs[input] ?? input;
+}
+
 /// Parent Billing Page - View payment history and invoices
 class ParentBillingPage extends StatefulWidget {
   const ParentBillingPage({super.key});
@@ -93,14 +145,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Billing & Payments',
+                    _tParentBilling(context, 'Billing & Payments'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ScholesaColors.parent,
                         ),
                   ),
                   Text(
-                    'Manage your payments',
+                    _tParentBilling(context, 'Manage your payments'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -138,8 +190,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
           isExpanded: true,
           underline: const SizedBox(),
           icon: const Icon(Icons.keyboard_arrow_down),
-          items: const <DropdownMenuItem<String>>[
-            DropdownMenuItem<String>(value: 'all', child: Text('All Learners')),
+          items: <DropdownMenuItem<String>>[
+            DropdownMenuItem<String>(
+                value: 'all',
+                child: Text(_tParentBilling(context, 'All Learners'))),
             DropdownMenuItem<String>(
                 value: 'emma', child: Text('Emma Johnson')),
             DropdownMenuItem<String>(
@@ -194,8 +248,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Current Balance',
+                    Text(
+                      _tParentBilling(context, 'Current Balance'),
                       style: TextStyle(color: Colors.white70),
                     ),
                     const SizedBox(height: 4),
@@ -217,14 +271,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Icon(Icons.check_circle,
                               size: 14, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
-                            'All paid',
+                            _tParentBilling(context, 'All paid'),
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ],
@@ -247,11 +301,11 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               ],
             ),
             const SizedBox(height: 20),
-            const Row(
+            Row(
               children: <Widget>[
                 Expanded(
                   child: _BalanceStatCard(
-                    label: 'This Month',
+                    label: _tParentBilling(context, 'This Month'),
                     value: '\$450',
                     icon: Icons.calendar_today,
                   ),
@@ -259,7 +313,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 SizedBox(width: 12),
                 Expanded(
                   child: _BalanceStatCard(
-                    label: 'Next Due',
+                    label: _tParentBilling(context, 'Next Due'),
                     value: 'Jan 1',
                     icon: Icons.event,
                   ),
@@ -267,7 +321,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 SizedBox(width: 12),
                 Expanded(
                   child: _BalanceStatCard(
-                    label: 'Total Paid',
+                    label: _tParentBilling(context, 'Total Paid'),
                     value: '\$2,700',
                     icon: Icons.check_circle_outline,
                   ),
@@ -305,10 +359,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
           color: ScholesaColors.parent,
           borderRadius: BorderRadius.circular(12),
         ),
-        tabs: const <Widget>[
-          Tab(text: 'Invoices'),
-          Tab(text: 'Payments'),
-          Tab(text: 'Plan'),
+        tabs: <Widget>[
+          Tab(text: _tParentBilling(context, 'Invoices')),
+          Tab(text: _tParentBilling(context, 'Payments')),
+          Tab(text: _tParentBilling(context, 'Plan')),
         ],
       ),
     );
@@ -419,8 +473,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         color: ScholesaColors.parent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'PREMIUM PLAN',
+                      child: Text(
+                        _tParentBilling(context, 'PREMIUM PLAN'),
                         style: TextStyle(
                           color: ScholesaColors.parent,
                           fontWeight: FontWeight.bold,
@@ -432,8 +486,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     const Icon(Icons.check_circle,
                         color: ScholesaColors.success),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Active',
+                    Text(
+                      _tParentBilling(context, 'Active'),
                       style: TextStyle(
                         color: ScholesaColors.success,
                         fontWeight: FontWeight.w600,
@@ -450,36 +504,36 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   ),
                 ),
                 Text(
-                  'For Emma Johnson • Billed monthly',
+                  _tParentBilling(context, 'For Emma Johnson • Billed monthly'),
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 12),
-                const Text(
-                  'Plan Includes:',
+                Text(
+                  _tParentBilling(context, 'Plan Includes:'),
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                const _PlanFeature(
+                _PlanFeature(
                   icon: Icons.school,
-                  text: 'Unlimited session access',
+                  text: _tParentBilling(context, 'Unlimited session access'),
                 ),
-                const _PlanFeature(
+                _PlanFeature(
                   icon: Icons.rocket_launch,
-                  text: 'All 3 pillars curriculum',
+                  text: _tParentBilling(context, 'All 3 pillars curriculum'),
                 ),
-                const _PlanFeature(
+                _PlanFeature(
                   icon: Icons.person,
-                  text: '1-on-1 educator support',
+                  text: _tParentBilling(context, '1-on-1 educator support'),
                 ),
-                const _PlanFeature(
+                _PlanFeature(
                   icon: Icons.insights,
-                  text: 'Real-time progress reports',
+                  text: _tParentBilling(context, 'Real-time progress reports'),
                 ),
-                const _PlanFeature(
+                _PlanFeature(
                   icon: Icons.workspace_premium,
-                  text: 'Certificates & badges',
+                  text: _tParentBilling(context, 'Certificates & badges'),
                 ),
               ],
             ),
@@ -504,12 +558,12 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       color: ScholesaColors.parent),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'Payment Method',
+                        _tParentBilling(context, 'Payment Method'),
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
@@ -521,7 +575,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 ),
                 TextButton(
                   onPressed: _updatePaymentMethod,
-                  child: const Text('Update'),
+                  child: Text(_tParentBilling(context, 'Update')),
                 ),
               ],
             ),
@@ -539,7 +593,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Manage Plan'),
+              child: Text(_tParentBilling(context, 'Manage Plan')),
             ),
           ),
         ],
@@ -555,8 +609,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       },
     );
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Downloading statements...'),
+      SnackBar(
+        content: Text(_tParentBilling(context, 'Downloading statements...')),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -572,7 +626,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Paying invoice ${invoice['id']}...'),
+        content: Text(
+            '${_tParentBilling(context, 'Paying invoice')} ${invoice['id']}...'),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -588,7 +643,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Viewing invoice ${invoice['id']}...'),
+        content: Text(
+            '${_tParentBilling(context, 'Viewing invoice')} ${invoice['id']}...'),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -604,9 +660,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Update Payment Method'),
-        content: const Text(
-          'Select your preferred payment method update action.',
+        title: Text(_tParentBilling(context, 'Update Payment Method')),
+        content: Text(
+          _tParentBilling(
+              context, 'Select your preferred payment method update action.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -619,7 +676,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_tParentBilling(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -631,13 +688,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Payment method update request submitted'),
+                SnackBar(
+                  content: Text(_tParentBilling(
+                      context, 'Payment method update request submitted')),
                   backgroundColor: ScholesaColors.parent,
                 ),
               );
             },
-            child: const Text('Continue'),
+            child: Text(_tParentBilling(context, 'Continue')),
           ),
         ],
       ),
@@ -652,9 +710,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Manage Plan'),
-        content: const Text(
-          'You can review your current subscription and request plan changes.',
+        title: Text(_tParentBilling(context, 'Manage Plan')),
+        content: Text(
+          _tParentBilling(
+              context, 'You can review your current subscription and request plan changes.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -667,7 +726,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tParentBilling(context, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -679,13 +738,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Plan review request sent to billing team'),
+                SnackBar(
+                  content: Text(_tParentBilling(
+                      context, 'Plan review request sent to billing team')),
                   backgroundColor: ScholesaColors.parent,
                 ),
               );
             },
-            child: const Text('Request Change'),
+            child: Text(_tParentBilling(context, 'Request Change')),
           ),
         ],
       ),
@@ -821,7 +881,9 @@ class _InvoiceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _isPaid ? 'PAID' : 'DUE',
+                        _isPaid
+                            ? _tParentBilling(context, 'PAID')
+                            : _tParentBilling(context, 'DUE'),
                         style: TextStyle(
                           color: _isPaid
                               ? ScholesaColors.success
@@ -854,7 +916,7 @@ class _InvoiceCard extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: ScholesaColors.parent,
                       ),
-                      child: const Text('View'),
+                      child: Text(_tParentBilling(context, 'View')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -873,8 +935,8 @@ class _InvoiceCard extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ScholesaColors.parent,
                       ),
-                      child: const Text(
-                        'Pay Now',
+                      child: Text(
+                        _tParentBilling(context, 'Pay Now'),
                         style: TextStyle(color: Colors.white),
                       ),
                     ),

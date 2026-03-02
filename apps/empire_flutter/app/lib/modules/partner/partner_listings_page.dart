@@ -5,6 +5,46 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
+const Map<String, String> _partnerListingsEs = <String, String>{
+  'My Listings': 'Mis publicaciones',
+  'No Listings Yet': 'Aún no hay publicaciones',
+  'Create your first marketplace listing':
+      'Crea tu primera publicación del marketplace',
+  'Create Listing': 'Crear publicación',
+  'Draft': 'Borrador',
+  'Submitted': 'Enviada',
+  'Approved': 'Aprobada',
+  'Published': 'Publicada',
+  'Rejected': 'Rechazada',
+  'Archived': 'Archivada',
+  'Create': 'Crear',
+  'Edit': 'Editar',
+  'Close': 'Cerrar',
+  'Save': 'Guardar',
+  'Create Listing': 'Crear publicación',
+  'Title': 'Título',
+  'Description': 'Descripción',
+  'Category': 'Categoría',
+  'Programs': 'Programas',
+  'Workshops': 'Talleres',
+  'Resources': 'Recursos',
+  'General': 'General',
+  'Price (optional)': 'Precio (opcional)',
+  'Cancel': 'Cancelar',
+  'Title and description are required':
+      'El título y la descripción son obligatorios',
+  'Failed to create listing': 'No se pudo crear la publicación',
+  'Listing created and added to list': 'Publicación creada y agregada a la lista',
+  'Edit Listing': 'Editar publicación',
+  'Listing updated': 'Publicación actualizada',
+};
+
+String _tPartnerListings(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _partnerListingsEs[input] ?? input;
+}
+
 /// Partner listings management page
 /// Based on docs/15_LMS_MARKETPLACE_SPEC.md
 class PartnerListingsPage extends StatefulWidget {
@@ -28,7 +68,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('My Listings'),
+        title: Text(_tPartnerListings(context, 'My Listings')),
         backgroundColor: ScholesaColors.partnerGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -102,8 +142,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'No Listings Yet',
+          Text(
+            _tPartnerListings(context, 'No Listings Yet'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -111,8 +151,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Create your first marketplace listing',
+          Text(
+            _tPartnerListings(context, 'Create your first marketplace listing'),
             style: TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
@@ -132,7 +172,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
               _showCreateListingDialog(context);
             },
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Create Listing'),
+            label: Text(_tPartnerListings(context, 'Create Listing')),
             style: ElevatedButton.styleFrom(
               backgroundColor: ScholesaColors.partnerGradient.colors.first,
               foregroundColor: Colors.white,
@@ -221,22 +261,22 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     switch (status) {
       case ListingStatus.draft:
         color = Colors.grey;
-        label = 'Draft';
+        label = _tPartnerListings(context, 'Draft');
       case ListingStatus.submitted:
         color = Colors.orange;
-        label = 'Submitted';
+        label = _tPartnerListings(context, 'Submitted');
       case ListingStatus.approved:
         color = Colors.blue;
-        label = 'Approved';
+        label = _tPartnerListings(context, 'Approved');
       case ListingStatus.published:
         color = Colors.green;
-        label = 'Published';
+        label = _tPartnerListings(context, 'Published');
       case ListingStatus.rejected:
         color = Colors.red;
-        label = 'Rejected';
+        label = _tPartnerListings(context, 'Rejected');
       case ListingStatus.archived:
         color = Colors.grey;
-        label = 'Archived';
+        label = _tPartnerListings(context, 'Archived');
     }
 
     return Container(
@@ -278,15 +318,15 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 void Function(void Function()) setLocalState) =>
             AlertDialog(
           backgroundColor: ScholesaColors.surface,
-          title: const Text('Create Listing'),
+          title: Text(_tPartnerListings(context, 'Create Listing')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
+                  decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Title'),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -294,34 +334,34 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 TextField(
                   controller: descriptionController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
+                  decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Description'),
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
+                  decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Category'),
                     border: OutlineInputBorder(),
                   ),
-                  items: const <DropdownMenuItem<String>>[
+                  items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
                       value: 'Programs',
-                      child: Text('Programs'),
+                      child: Text(_tPartnerListings(context, 'Programs')),
                     ),
                     DropdownMenuItem<String>(
                       value: 'Workshops',
-                      child: Text('Workshops'),
+                      child: Text(_tPartnerListings(context, 'Workshops')),
                     ),
                     DropdownMenuItem<String>(
                       value: 'Resources',
-                      child: Text('Resources'),
+                      child: Text(_tPartnerListings(context, 'Resources')),
                     ),
                     DropdownMenuItem<String>(
                       value: 'General',
-                      child: Text('General'),
+                      child: Text(_tPartnerListings(context, 'General')),
                     ),
                   ],
                   onChanged: (String? value) {
@@ -335,8 +375,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   controller: priceController,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Price (optional)',
+                  decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Price (optional)'),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -353,7 +393,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       priceController.dispose();
                       Navigator.pop(dialogContext);
                     },
-              child: const Text('Cancel'),
+              child: Text(_tPartnerListings(context, 'Cancel')),
             ),
             ElevatedButton(
               onPressed: isSubmitting
@@ -364,8 +404,9 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                           descriptionController.text.trim();
                       if (title.isEmpty || description.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Title and description are required'),
+                          SnackBar(
+                            content: Text(_tPartnerListings(
+                                context, 'Title and description are required')),
                           ),
                         );
                         return;
@@ -394,7 +435,9 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              service.error ?? 'Failed to create listing',
+                              service.error ??
+                                  _tPartnerListings(
+                                      context, 'Failed to create listing'),
                             ),
                           ),
                         );
@@ -416,8 +459,9 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       );
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Listing created and added to list'),
+                        SnackBar(
+                          content: Text(_tPartnerListings(
+                              context, 'Listing created and added to list')),
                         ),
                       );
                     },
@@ -427,7 +471,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Create'),
+                  : Text(_tPartnerListings(context, 'Create')),
             ),
           ],
         ),
@@ -488,7 +532,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
+                    child: Text(_tPartnerListings(context, 'Close')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -507,7 +551,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       Navigator.pop(context);
                       _showEditListingDialog(context, listing);
                     },
-                    child: const Text('Edit'),
+                    child: Text(_tPartnerListings(context, 'Edit')),
                   ),
                 ),
               ],
@@ -528,26 +572,28 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Edit Listing'),
+        title: Text(_tPartnerListings(context, 'Edit Listing')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration:
+                  InputDecoration(labelText: _tPartnerListings(context, 'Title')),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: descriptionController,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: InputDecoration(
+                  labelText: _tPartnerListings(context, 'Description')),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(_tPartnerListings(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -563,12 +609,12 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text('Listing updated: ${titleController.text.trim()}'),
+                  content: Text(
+                      '${_tPartnerListings(context, 'Listing updated')}: ${titleController.text.trim()}'),
                 ),
               );
             },
-            child: const Text('Save'),
+            child: Text(_tPartnerListings(context, 'Save')),
           ),
         ],
       ),
