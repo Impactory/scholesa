@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import 'parent_models.dart';
+import 'parent_service.dart';
 
 const Map<String, String> _parentPortfolioEs = <String, String>{
   'Portfolio': 'Portafolio',
@@ -38,40 +41,13 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     return _parentPortfolioEs[input] ?? input;
   }
 
-  final List<_PortfolioItem> _portfolioItems = <_PortfolioItem>[
-    _PortfolioItem(
-      id: '1',
-      title: 'AI Chatbot Project',
-      pillar: 'Future Skills',
-      type: _ItemType.project,
-      completedAt: DateTime.now().subtract(const Duration(days: 5)),
-      imageUrl: null,
-      description: 'Built a chatbot that can answer questions about our school',
-    ),
-    _PortfolioItem(
-      id: '2',
-      title: 'Team Leadership Award',
-      pillar: 'Leadership & Agency',
-      type: _ItemType.badge,
-      completedAt: DateTime.now().subtract(const Duration(days: 10)),
-      imageUrl: null,
-      description: 'Led a team of 4 to complete the robotics challenge',
-    ),
-    _PortfolioItem(
-      id: '3',
-      title: 'Community Garden Project',
-      pillar: 'Impact & Innovation',
-      type: _ItemType.project,
-      completedAt: DateTime.now().subtract(const Duration(days: 15)),
-      imageUrl: null,
-      description: 'Designed and helped build a community garden at school',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ParentService>().loadParentData();
+    });
   }
 
   @override
@@ -100,21 +76,27 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: <Widget>[
-          _buildPortfolioGrid(null),
-          _buildPortfolioGrid(_ItemType.project),
-          _buildPortfolioGrid(_ItemType.badge),
-        ],
+      body: Consumer<ParentService>(
+        builder: (BuildContext context, ParentService service, _) {
+          final List<_PortfolioItem> portfolioItems =
+              _portfolioItemsFromService(service);
+          return TabBarView(
+            controller: _tabController,
+            children: <Widget>[
+              _buildPortfolioGrid(portfolioItems, null),
+              _buildPortfolioGrid(portfolioItems, _ItemType.project),
+              _buildPortfolioGrid(portfolioItems, _ItemType.badge),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildPortfolioGrid(_ItemType? typeFilter) {
+  Widget _buildPortfolioGrid(List<_PortfolioItem> portfolioItems, _ItemType? typeFilter) {
     final List<_PortfolioItem> filtered = typeFilter == null
-        ? _portfolioItems
-        : _portfolioItems
+        ? portfolioItems
+        : portfolioItems
             .where((_PortfolioItem i) => i.type == typeFilter)
             .toList();
 
@@ -384,6 +366,53 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
 
   String _formatDate(DateTime date) {
     return '${date.month}/${date.day}/${date.year}';
+  }
+
+  List<_PortfolioItem> _portfolioItemsFromService(ParentService service) {
+    final List<_PortfolioItem> items = <_PortfolioItem>[];
+
+    for (final LearnerSummary learner in service.learnerSummaries) {
+      for (final RecentActivity activity in learner.recentActivities) {
+        final _ItemType itemType = _mapActivityType(activity.type);
+        final String pillar = _pillarFromActivity(activity.type);
+        items.add(
+          _PortfolioItem(
+            id: '${learner.learnerId}-${activity.id}',
+            title: activity.title.isEmpty ? '${learner.learnerName} activity' : activity.title,
+            pillar: pillar,
+            type: itemType,
+            completedAt: activity.timestamp,
+            imageUrl: null,
+            description: activity.description.isEmpty
+                ? 'Completed by ${learner.learnerName}'
+                : activity.description,
+          ),
+        );
+      }
+    }
+
+    items.sort((_PortfolioItem a, _PortfolioItem b) =>
+        b.completedAt.compareTo(a.completedAt));
+    return items;
+  }
+
+  _ItemType _mapActivityType(String rawType) {
+    final String type = rawType.trim().toLowerCase();
+    if (type == 'achievement' || type == 'badge') {
+      return _ItemType.badge;
+    }
+    return _ItemType.project;
+  }
+
+  String _pillarFromActivity(String rawType) {
+    final String type = rawType.trim().toLowerCase();
+    if (type == 'habit') {
+      return 'Leadership & Agency';
+    }
+    if (type == 'attendance') {
+      return 'Impact & Innovation';
+    }
+    return 'Future Skills';
   }
 }
 
