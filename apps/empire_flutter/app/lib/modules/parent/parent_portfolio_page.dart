@@ -2,6 +2,23 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _parentPortfolioEs = <String, String>{
+  'Portfolio': 'Portafolio',
+  'All': 'Todo',
+  'Projects': 'Proyectos',
+  'Badges': 'Insignias',
+  'No items yet': 'Aún no hay elementos',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership & Agency': 'Liderazgo y agencia',
+  'Impact & Innovation': 'Impacto e innovación',
+  'Badge': 'Insignia',
+  'Project': 'Proyecto',
+  'Completed': 'Completado',
+  'Sharing...': 'Compartiendo...',
+  'Share': 'Compartir',
+  'Download': 'Descargar',
+};
+
 /// Parent portfolio page for viewing learner's work and achievements
 /// Based on docs/01_SUPREME_SPEC_EMPIRE_PLATFORM.md - Portfolio features
 class ParentPortfolioPage extends StatefulWidget {
@@ -14,6 +31,12 @@ class ParentPortfolioPage extends StatefulWidget {
 class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _parentPortfolioEs[input] ?? input;
+  }
 
   final List<_PortfolioItem> _portfolioItems = <_PortfolioItem>[
     _PortfolioItem(
@@ -62,7 +85,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Portfolio'),
+        title: Text(_t('Portfolio')),
         backgroundColor: ScholesaColors.parentGradient.colors.first,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -70,10 +93,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const <Widget>[
-            Tab(text: 'All'),
-            Tab(text: 'Projects'),
-            Tab(text: 'Badges'),
+          tabs: <Widget>[
+            Tab(text: _t('All')),
+            Tab(text: _t('Projects')),
+            Tab(text: _t('Badges')),
           ],
         ),
       ),
@@ -104,8 +127,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                 size: 64,
                 color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            const Text(
-              'No items yet',
+            Text(
+              _t('No items yet'),
               style:
                   TextStyle(fontSize: 16, color: ScholesaColors.textSecondary),
             ),
@@ -178,7 +201,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          item.pillar,
+                            _t(item.pillar),
                           style: const TextStyle(
                               fontSize: 11,
                               color: ScholesaColors.textSecondary),
@@ -276,7 +299,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    item.pillar,
+                    _t(item.pillar),
                     style: TextStyle(
                         fontSize: 12,
                         color: _getPillarColor(item.pillar),
@@ -292,7 +315,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    item.type == _ItemType.badge ? 'Badge' : 'Project',
+                    item.type == _ItemType.badge
+                        ? _t('Badge')
+                        : _t('Project'),
                     style: const TextStyle(
                         fontSize: 12, color: ScholesaColors.textSecondary),
                   ),
@@ -305,7 +330,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
-              'Completed ${_formatDate(item.completedAt)}',
+              '${_t('Completed')} ${_formatDate(item.completedAt)}',
               style: const TextStyle(color: ScholesaColors.textSecondary),
             ),
             const SizedBox(height: 16),
@@ -325,11 +350,11 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sharing...')),
+                        SnackBar(content: Text(_t('Sharing...'))),
                       );
                     },
                     icon: const Icon(Icons.share_rounded),
-                    label: const Text('Share'),
+                    label: Text(_t('Share')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -346,7 +371,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.download_rounded),
-                    label: const Text('Download'),
+                    label: Text(_t('Download')),
                   ),
                 ),
               ],
