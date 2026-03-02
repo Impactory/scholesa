@@ -2,6 +2,45 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqAuditEs = <String, String>{
+  'Audit Logs': 'Registros de auditoría',
+  'Exporting audit logs...': 'Exportando registros de auditoría...',
+  'Total': 'Total',
+  'Auth': 'Auth',
+  'Admin': 'Admin',
+  'System': 'Sistema',
+  'Filter by Category': 'Filtrar por categoría',
+  'All': 'Todas',
+  'Data': 'Datos',
+  'Category': 'Categoría',
+  'Actor': 'Actor',
+  'Time': 'Hora',
+  'IP Address': 'Dirección IP',
+  'Details': 'Detalles',
+  'Close': 'Cerrar',
+  'm ago': 'min atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'User Login': 'Inicio de sesión de usuario',
+  'Role Changed': 'Rol modificado',
+  'Data Export': 'Exportación de datos',
+  'Config Update': 'Actualización de configuración',
+  'Successful login from web client':
+    'Inicio de sesión exitoso desde cliente web',
+  'Changed user jane@school.edu role from educator to site_lead':
+    'Rol del usuario jane@school.edu cambiado de educador a site_lead',
+  'Exported learner progress report for Site: Downtown':
+    'Se exportó el informe de progreso de estudiantes para la sede: Centro',
+  'Feature flag "new_dashboard" enabled globally':
+    'Bandera de función "new_dashboard" habilitada globalmente',
+};
+
+String _tHqAudit(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqAuditEs[input] ?? input;
+}
+
 /// HQ Audit page for viewing audit logs and compliance reports
 /// Based on docs/43_EXPORT_RETENTION_BACKUP_SPEC.md
 class HqAuditPage extends StatefulWidget {
@@ -77,7 +116,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Audit Logs'),
+        title: Text(_tHqAudit(context, 'Audit Logs')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -107,7 +146,9 @@ class _HqAuditPageState extends State<HqAuditPage> {
                 },
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Exporting audit logs...')),
+                SnackBar(
+                    content:
+                        Text(_tHqAudit(context, 'Exporting audit logs...'))),
               );
             },
           ),
@@ -130,10 +171,12 @@ class _HqAuditPageState extends State<HqAuditPage> {
         children: <Widget>[
           Expanded(
               child: _buildSummaryStat(
-                  'Total', _auditLogs.length.toString(), Colors.blue)),
+                _tHqAudit(context, 'Total'),
+                _auditLogs.length.toString(),
+                Colors.blue)),
           Expanded(
               child: _buildSummaryStat(
-                  'Auth',
+                _tHqAudit(context, 'Auth'),
                   _auditLogs
                       .where((_AuditLog l) => l.category == _AuditCategory.auth)
                       .length
@@ -141,7 +184,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   Colors.green)),
           Expanded(
               child: _buildSummaryStat(
-                  'Admin',
+                _tHqAudit(context, 'Admin'),
                   _auditLogs
                       .where(
                           (_AuditLog l) => l.category == _AuditCategory.admin)
@@ -150,7 +193,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   Colors.orange)),
           Expanded(
               child: _buildSummaryStat(
-                  'System',
+                _tHqAudit(context, 'System'),
                   _auditLogs
                       .where(
                           (_AuditLog l) => l.category == _AuditCategory.system)
@@ -197,12 +240,12 @@ class _HqAuditPageState extends State<HqAuditPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: _buildCategoryIcon(log.category),
-        title: Text(log.action,
+        title: Text(_tHqAudit(context, log.action),
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(log.details,
+          Text(_tHqAudit(context, log.details),
                 style: const TextStyle(
                     fontSize: 12, color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
@@ -252,15 +295,17 @@ class _HqAuditPageState extends State<HqAuditPage> {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         backgroundColor: ScholesaColors.surface,
-        title: const Text('Filter by Category'),
+        title: Text(_tHqAudit(context, 'Filter by Category')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _buildFilterOption('All', null),
-            _buildFilterOption('Auth', _AuditCategory.auth),
-            _buildFilterOption('Data', _AuditCategory.data),
-            _buildFilterOption('Admin', _AuditCategory.admin),
-            _buildFilterOption('System', _AuditCategory.system),
+            _buildFilterOption(_tHqAudit(context, 'All'), null),
+            _buildFilterOption(_tHqAudit(context, 'Auth'), _AuditCategory.auth),
+            _buildFilterOption(_tHqAudit(context, 'Data'), _AuditCategory.data),
+            _buildFilterOption(
+                _tHqAudit(context, 'Admin'), _AuditCategory.admin),
+            _buildFilterOption(
+                _tHqAudit(context, 'System'), _AuditCategory.system),
           ],
         ),
       ),
@@ -327,22 +372,24 @@ class _HqAuditPageState extends State<HqAuditPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(log.action,
+            Text(_tHqAudit(context, log.action),
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildDetailRow('Category', log.category.name.toUpperCase()),
-            _buildDetailRow('Actor', log.actor),
-            _buildDetailRow('Time', _formatTime(log.timestamp)),
+            _buildDetailRow(
+                _tHqAudit(context, 'Category'), log.category.name.toUpperCase()),
+            _buildDetailRow(_tHqAudit(context, 'Actor'), log.actor),
+            _buildDetailRow(
+                _tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
             if (log.ipAddress != null)
-              _buildDetailRow('IP Address', log.ipAddress!),
+              _buildDetailRow(_tHqAudit(context, 'IP Address'), log.ipAddress!),
             const SizedBox(height: 8),
-            const Text('Details',
+            Text(_tHqAudit(context, 'Details'),
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
-            Text(log.details),
+            Text(_tHqAudit(context, log.details)),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -359,7 +406,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   );
                   Navigator.pop(context);
                 },
-                child: const Text('Close'),
+                child: Text(_tHqAudit(context, 'Close')),
               ),
             ),
           ],
@@ -384,8 +431,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}${_tHqAudit(context, 'm ago')}';
+    }
+    if (diff.inHours < 24) return '${diff.inHours}${_tHqAudit(context, 'h ago')}';
+    return '${diff.inDays}${_tHqAudit(context, 'd ago')}';
   }
 }
