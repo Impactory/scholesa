@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -22,6 +25,9 @@ const Map<String, String> _hqFeatureFlagsEs = <String, String>{
     'Permitir a las familias ver portafolios detallados de estudiantes',
   'Show beta missions to selected educators':
     'Mostrar misiones beta a educadores seleccionados',
+  'Loading...': 'Cargando...',
+  'Feature flag update failed': 'Error al actualizar bandera',
+  'No feature flags found': 'No se encontraron banderas',
 };
 
 String _tHqFeatureFlags(BuildContext context, String input) {
@@ -58,7 +64,7 @@ class _FeatureFlag {
 }
 
 class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
-  final List<_FeatureFlag> _flags = <_FeatureFlag>[
+  final List<_FeatureFlag> _fallbackFlags = <_FeatureFlag>[
     _FeatureFlag(
       id: '1',
       name: 'new_dashboard',
@@ -96,6 +102,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       scope: 'user',
     ),
   ];
+  List<_FeatureFlag> _flags = <_FeatureFlag>[];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFlags();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +147,26 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         children: <Widget>[
           _buildInfoCard(),
           const SizedBox(height: 24),
+          if (_isLoading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _tHqFeatureFlags(context, 'Loading...'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
+          if (!_isLoading && _flags.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _tHqFeatureFlags(context, 'No feature flags found'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
           ..._flags.map((flag) => _buildFlagCard(flag)),
         ],
       ),
@@ -202,7 +238,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
                 Switch(
                   value: flag.isEnabled,
-                  onChanged: (bool value) {
+                  onChanged: (bool value) async {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
                       metadata: <String, dynamic>{
@@ -214,14 +250,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         'enabled': value,
                       },
                     );
-                    setState(() => flag.isEnabled = value);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            '${flag.name} ${value ? _tHqFeatureFlags(context, "enabled") : _tHqFeatureFlags(context, "disabled")}'),
-                        backgroundColor: value ? Colors.green : Colors.orange,
-                      ),
-                    );
+                    await _toggleFlag(flag, value);
                   },
                   activeThumbColor: Colors.green,
                 ),
@@ -284,5 +313,108 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _loadFlags() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() => _flags = _fallbackFlags);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await firestoreService.firestore
+            .collection('featureFlags')
+            .orderBy('name')
+            .limit(200)
+            .get();
+      } catch (_) {
+        snapshot = await firestoreService.firestore
+            .collection('featureFlags')
+            .limit(200)
+            .get();
+      }
+
+      final List<_FeatureFlag> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final List<String>? enabledSites =
+            (data['enabledSites'] as List?)?.map((dynamic e) => e.toString()).toList();
+        return _FeatureFlag(
+          id: doc.id,
+          name: (data['name'] as String?) ?? doc.id,
+          description: (data['description'] as String?) ?? '',
+          isEnabled: (data['isEnabled'] as bool?) ?? false,
+          scope: (data['scope'] as String?) ?? 'global',
+          enabledSites: enabledSites,
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _flags = loaded;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _flags = _fallbackFlags);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _toggleFlag(_FeatureFlag flag, bool enabled) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() => flag.isEnabled = enabled);
+      return;
+    }
+
+    try {
+      await firestoreService.firestore.collection('featureFlags').doc(flag.id).set(
+        <String, dynamic>{
+          'name': flag.name,
+          'description': flag.description,
+          'scope': flag.scope,
+          'isEnabled': enabled,
+          if (flag.enabledSites != null) 'enabledSites': flag.enabledSites,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      if (!mounted) return;
+      setState(() => flag.isEnabled = enabled);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${flag.name} ${enabled ? _tHqFeatureFlags(context, 'enabled') : _tHqFeatureFlags(context, 'disabled')}'),
+          backgroundColor: enabled ? Colors.green : Colors.orange,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqFeatureFlags(context, 'Feature flag update failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }

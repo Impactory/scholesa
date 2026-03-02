@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -23,6 +26,9 @@ const Map<String, String> _hqIntegrationsEs = <String, String>{
   '2 hrs ago': '2 h atrás',
   '30 min ago': '30 min atrás',
   'Failed': 'Falló',
+  'Loading...': 'Cargando...',
+  'No integration telemetry available': 'No hay telemetría de integración disponible',
+  'Unknown Site': 'Sede desconocida',
 };
 
 String _tHqIntegrations(BuildContext context, String input) {
@@ -42,41 +48,66 @@ class HqIntegrationsHealthPage extends StatefulWidget {
 }
 
 class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
-  final List<_SiteIntegration> _sites = <_SiteIntegration>[
+  final List<_SiteIntegration> _fallbackSites = <_SiteIntegration>[
     const _SiteIntegration(
+      siteId: 'site-1',
       siteName: 'Downtown Studio',
       integrations: <_Integration>[
         _Integration(
             name: 'Google Classroom',
+            providerKey: 'google_classroom',
+          siteId: 'site-1',
             status: _Status.healthy,
-            lastSync: '5 min ago'),
+            lastSyncAt: null),
         _Integration(
-            name: 'GitHub', status: _Status.healthy, lastSync: '15 min ago'),
+            name: 'GitHub',
+            providerKey: 'github',
+          siteId: 'site-1',
+            status: _Status.healthy,
+            lastSyncAt: null),
       ],
     ),
     const _SiteIntegration(
+      siteId: 'site-2',
       siteName: 'Westside Campus',
       integrations: <_Integration>[
         _Integration(
             name: 'Google Classroom',
+            providerKey: 'google_classroom',
+          siteId: 'site-2',
             status: _Status.warning,
-            lastSync: '2 hrs ago'),
+            lastSyncAt: null),
         _Integration(
             name: 'Canvas LMS',
+            providerKey: 'canvas',
+          siteId: 'site-2',
             status: _Status.healthy,
-            lastSync: '30 min ago'),
+            lastSyncAt: null),
       ],
     ),
     const _SiteIntegration(
+      siteId: 'site-3',
       siteName: 'North Branch',
       integrations: <_Integration>[
         _Integration(
             name: 'Google Classroom',
+            providerKey: 'google_classroom',
+          siteId: 'site-3',
             status: _Status.error,
-            lastSync: 'Failed'),
+            lastSyncAt: null),
       ],
     ),
   ];
+  List<_SiteIntegration> _sites = <_SiteIntegration>[];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIntegrationsHealth();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +139,26 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         children: <Widget>[
           _buildOverallHealth(context),
           const SizedBox(height: 24),
+          if (_isLoading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _tHqIntegrations(context, 'Loading...'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
+          if (!_isLoading && _sites.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _tHqIntegrations(context, 'No integration telemetry available'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
           _buildSiteIntegrations(context, _sites),
         ],
       ),
@@ -265,7 +316,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       ),
       title: Text(integration.name),
         subtitle: Text(
-          '${_tHqIntegrations(context, 'Last sync:')} ${_tHqIntegrations(context, integration.lastSync)}'),
+          '${_tHqIntegrations(context, 'Last sync:')} ${_formatLastSync(integration)}'),
       trailing: integration.status == _Status.error
           ? TextButton(
               onPressed: () {
@@ -275,10 +326,11 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
                     'module': 'hq_integrations_health',
                     'cta_id': 'retry_integration',
                     'surface': 'integration_row',
+                    'site_id': integration.siteId,
                     'integration_name': integration.name,
                   },
                 );
-                _retryIntegration(integration.name);
+                _retryIntegration(integration);
               },
               child: Text(_tHqIntegrations(context, 'Retry')),
             )
@@ -287,55 +339,208 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   void _refreshAllIntegrations() {
-    setState(() {
-      for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
-        final _SiteIntegration site = _sites[siteIndex];
-        final List<_Integration> refreshedIntegrations =
-            site.integrations.map((_Integration integration) {
-          if (integration.status == _Status.error) {
-            return integration.copyWith(
-                status: _Status.warning,
-                lastSync: _tHqIntegrations(context, 'just now'));
-          }
-          if (integration.status == _Status.warning) {
-            return integration.copyWith(
-                status: _Status.healthy,
-                lastSync: _tHqIntegrations(context, 'just now'));
-          }
-          return integration.copyWith(
-              lastSync: _tHqIntegrations(context, 'just now'));
-        }).toList();
-        _sites[siteIndex] = site.copyWith(integrations: refreshedIntegrations);
-      }
+    _loadIntegrationsHealth().then((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                _tHqIntegrations(context, 'Integrations health refreshed'))),
+      );
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              _tHqIntegrations(context, 'Integrations health refreshed'))),
-    );
   }
 
-  void _retryIntegration(String integrationName) {
-    setState(() {
-      for (var siteIndex = 0; siteIndex < _sites.length; siteIndex++) {
-        final _SiteIntegration site = _sites[siteIndex];
-        final List<_Integration> updated =
-            site.integrations.map((_Integration integration) {
-          if (integration.name != integrationName) return integration;
-          return integration.copyWith(
-              status: _Status.healthy,
-              lastSync: _tHqIntegrations(context, 'just now'));
-        }).toList();
-        _sites[siteIndex] = site.copyWith(integrations: updated);
-      }
-    });
+  Future<void> _retryIntegration(_Integration integration) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              '$integrationName ${_tHqIntegrations(context, 'recovered successfully')}')),
-    );
+    try {
+      await firestoreService.firestore.collection('syncJobs').add(<String, dynamic>{
+        'type': '${integration.providerKey}_manual_retry',
+        'status': 'queued',
+        'siteId': integration.siteId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                '${integration.name} ${_tHqIntegrations(context, 'recovered successfully')}')),
+      );
+      await _loadIntegrationsHealth();
+    } catch (_) {}
+  }
+
+  Future<void> _loadIntegrationsHealth() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _sites = _fallbackSites;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> sitesSnap;
+      try {
+        sitesSnap = await firestoreService.firestore
+            .collection('sites')
+            .orderBy('name')
+            .limit(200)
+            .get();
+      } catch (_) {
+        sitesSnap = await firestoreService.firestore
+            .collection('sites')
+            .limit(200)
+            .get();
+      }
+
+      final Map<String, String> siteNames = <String, String>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        siteNames[doc.id] =
+            (data['name'] as String?)?.trim().isNotEmpty == true
+                ? (data['name'] as String).trim()
+                : doc.id;
+      }
+
+      QuerySnapshot<Map<String, dynamic>> syncSnap;
+      try {
+        syncSnap = await firestoreService.firestore
+            .collection('syncJobs')
+            .orderBy('createdAt', descending: true)
+            .limit(400)
+            .get();
+      } catch (_) {
+        syncSnap = await firestoreService.firestore
+            .collection('syncJobs')
+            .limit(400)
+            .get();
+      }
+
+      final Map<String, Map<String, _Integration>> grouped =
+          <String, Map<String, _Integration>>{};
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in syncSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (siteId.isEmpty) continue;
+
+        final String providerKey = _providerKeyFromType(
+            ((data['type'] as String?) ?? '').trim().toLowerCase());
+        if (providerKey.isEmpty) continue;
+
+        final String statusRaw =
+            ((data['status'] as String?) ?? '').trim().toLowerCase();
+        final _Status status = _statusFromRaw(statusRaw);
+        final DateTime? createdAt = _toDateTime(data['createdAt']);
+
+        final Map<String, _Integration> byProvider =
+            grouped.putIfAbsent(siteId, () => <String, _Integration>{});
+        final _Integration? existing = byProvider[providerKey];
+        if (existing == null ||
+            ((createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+                .isAfter(existing.lastSyncAt ?? DateTime.fromMillisecondsSinceEpoch(0)))) {
+          byProvider[providerKey] = _Integration(
+            name: _providerName(providerKey),
+            providerKey: providerKey,
+            siteId: siteId,
+            status: status,
+            lastSyncAt: createdAt,
+          );
+        }
+      }
+
+      final List<_SiteIntegration> loaded = grouped.entries
+          .map((entry) => _SiteIntegration(
+                siteId: entry.key,
+                siteName: siteNames[entry.key] ?? _tHqIntegrations(context, 'Unknown Site'),
+                integrations: entry.value.values.toList()
+                  ..sort((_Integration a, _Integration b) =>
+                      a.name.compareTo(b.name)),
+              ))
+          .toList()
+        ..sort((_SiteIntegration a, _SiteIntegration b) =>
+            a.siteName.compareTo(b.siteName));
+
+      if (!mounted) return;
+      setState(() {
+        _sites = loaded;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _sites = _fallbackSites;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _providerKeyFromType(String type) {
+    if (type.contains('github')) return 'github';
+    if (type.contains('canvas')) return 'canvas';
+    if (type.contains('google') || type.contains('classroom')) {
+      return 'google_classroom';
+    }
+    return '';
+  }
+
+  String _providerName(String providerKey) {
+    switch (providerKey) {
+      case 'github':
+        return 'GitHub';
+      case 'canvas':
+        return 'Canvas LMS';
+      default:
+        return 'Google Classroom';
+    }
+  }
+
+  _Status _statusFromRaw(String raw) {
+    if (raw == 'failed' || raw == 'error') return _Status.error;
+    if (raw == 'queued' || raw == 'running' || raw == 'in_progress') {
+      return _Status.warning;
+    }
+    return _Status.healthy;
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  String _formatLastSync(_Integration integration) {
+    final DateTime? value = integration.lastSyncAt;
+    if (value == null) return _tHqIntegrations(context, 'Failed');
+    final Duration diff = DateTime.now().difference(value);
+    if (diff.inMinutes < 1) return _tHqIntegrations(context, 'just now');
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hrs ago';
+    return '${diff.inDays}d ago';
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -343,34 +548,51 @@ enum _Status { healthy, warning, error }
 
 class _Integration {
   const _Integration(
-      {required this.name, required this.status, required this.lastSync});
+      {required this.name,
+      required this.providerKey,
+      required this.siteId,
+      required this.status,
+      required this.lastSyncAt});
   final String name;
+  final String providerKey;
+  final String siteId;
   final _Status status;
-  final String lastSync;
+  final DateTime? lastSyncAt;
 
   _Integration copyWith({
     String? name,
+    String? providerKey,
+    String? siteId,
     _Status? status,
-    String? lastSync,
+    DateTime? lastSyncAt,
   }) {
     return _Integration(
       name: name ?? this.name,
+      providerKey: providerKey ?? this.providerKey,
+      siteId: siteId ?? this.siteId,
       status: status ?? this.status,
-      lastSync: lastSync ?? this.lastSync,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
     );
   }
 }
 
 class _SiteIntegration {
-  const _SiteIntegration({required this.siteName, required this.integrations});
+  const _SiteIntegration({
+    required this.siteId,
+    required this.siteName,
+    required this.integrations,
+  });
+  final String siteId;
   final String siteName;
   final List<_Integration> integrations;
 
   _SiteIntegration copyWith({
+    String? siteId,
     String? siteName,
     List<_Integration>? integrations,
   }) {
     return _SiteIntegration(
+      siteId: siteId ?? this.siteId,
       siteName: siteName ?? this.siteName,
       integrations: integrations ?? this.integrations,
     );
