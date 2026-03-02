@@ -63,6 +63,7 @@
     "compliance:serve": "node services/scholesa-compliance/src/server.js",
     "vibe:all": "node scripts/vibe_all.js",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",
+    "rc3:preflight": "bash ./scripts/rc3_preflight.sh",
     "audit:coppa:no-ads": "bash ./scripts/coppa_no_ad_audit.sh",
     "test:cta-report": "python3 -m unittest scripts/test_cta_report_policy.py",
     "test:cta-report:generate": "npm run test:cta-report && python3 scripts/generate_cta_report.py",
