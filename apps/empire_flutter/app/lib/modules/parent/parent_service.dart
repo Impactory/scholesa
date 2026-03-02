@@ -218,12 +218,22 @@ class ParentService extends ChangeNotifier {
       },
     ).toList();
 
-    final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot = await _firestore
-        .collection('attendanceRecords')
-        .where('learnerId', isEqualTo: learnerId)
-        .orderBy('timestamp', descending: true)
-        .limit(30)
-        .get();
+    QuerySnapshot<Map<String, dynamic>> attendanceSnapshot;
+    try {
+      attendanceSnapshot = await _firestore
+          .collection('attendanceRecords')
+          .where('learnerId', isEqualTo: learnerId)
+          .orderBy('recordedAt', descending: true)
+          .limit(30)
+          .get();
+    } catch (_) {
+      attendanceSnapshot = await _firestore
+          .collection('attendanceRecords')
+          .where('learnerId', isEqualTo: learnerId)
+          .orderBy('timestamp', descending: true)
+          .limit(30)
+          .get();
+    }
 
     int presentCount = 0;
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc

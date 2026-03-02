@@ -160,6 +160,7 @@ class FirestoreService {
       'status': status,
       'notes': notes,
       'recordedBy': _auth.currentUser?.uid,
+      'timestamp': FieldValue.serverTimestamp(),
       'recordedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
     });

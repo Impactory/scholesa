@@ -243,7 +243,30 @@ class EducatorService extends ChangeNotifier {
           _todayClasses.indexWhere((TodayClass c) => c.id == classId);
       if (index == -1) return false;
 
-      // In real implementation, would update server
+      await _firestore
+          .collection('sessionOccurrences')
+          .doc(classId)
+          .set(<String, dynamic>{
+        'status': 'in_progress',
+        'startedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      final TodayClass existing = _todayClasses[index];
+      _todayClasses[index] = TodayClass(
+        id: existing.id,
+        sessionId: existing.sessionId,
+        title: existing.title,
+        description: existing.description,
+        startTime: existing.startTime,
+        endTime: existing.endTime,
+        location: existing.location,
+        enrolledCount: existing.enrolledCount,
+        presentCount: existing.presentCount,
+        status: 'in_progress',
+        learners: existing.learners,
+      );
+      _dayStats = _calculateStats();
       notifyListeners();
       return true;
     } catch (e) {
@@ -262,6 +285,7 @@ class EducatorService extends ChangeNotifier {
         'learnerId': learnerId,
         'status': status,
         'recordedBy': educatorId,
+        'timestamp': FieldValue.serverTimestamp(),
         'recordedAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
