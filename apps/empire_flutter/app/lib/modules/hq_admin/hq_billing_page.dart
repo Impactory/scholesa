@@ -15,6 +15,9 @@ const Map<String, String> _hqBillingEs = <String, String>{
   'Collected': 'Recaudado',
   'Pending': 'Pendiente',
   'Overdue': 'Vencido',
+  'Singapore': 'Singapur',
+  'Kuala Lumpur': 'Kuala Lumpur',
+  'Jakarta': 'Yakarta',
   'Invoices': 'Facturas',
   'Payments': 'Pagos',
   'Subscriptions': 'Suscripciones',
@@ -207,11 +210,11 @@ class _HqBillingPageState extends State<HqBillingPage>
                   DropdownMenuItem<String>(
                     value: 'all', child: Text(_tHqBilling(context, 'All Sites'))),
                   DropdownMenuItem<String>(
-                      value: 'sg', child: Text('Singapore')),
+                      value: 'sg', child: Text(_tHqBilling(context, 'Singapore'))),
                   DropdownMenuItem<String>(
-                      value: 'kl', child: Text('Kuala Lumpur')),
+                      value: 'kl', child: Text(_tHqBilling(context, 'Kuala Lumpur'))),
                   DropdownMenuItem<String>(
-                      value: 'jkt', child: Text('Jakarta')),
+                      value: 'jkt', child: Text(_tHqBilling(context, 'Jakarta'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {

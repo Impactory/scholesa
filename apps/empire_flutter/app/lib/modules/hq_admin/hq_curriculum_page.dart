@@ -29,6 +29,7 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Cancel': 'Cancelar',
   'Curriculum created': 'Currículo creado',
   'Create': 'Crear',
+  'v': 'v',
   'h ago': 'h atrás',
   'd ago': 'd atrás',
   'draft': 'borrador',
@@ -259,6 +260,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text('v${curriculum.version}',
+                    child: Text('${_tHqCurriculum(context, 'v')}${curriculum.version}',
                         style: const TextStyle(
                             fontSize: 12, color: ScholesaColors.primary)),
                   ),
