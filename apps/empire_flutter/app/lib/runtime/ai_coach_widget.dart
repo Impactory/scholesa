@@ -125,9 +125,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           );
         }
       },
-      listenMode: ListenMode.confirmation,
-      cancelOnError: true,
-      partialResults: true,
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.confirmation,
+        cancelOnError: true,
+        partialResults: true,
+      ),
     );
 
     if (!mounted) return;
@@ -145,9 +147,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'source': 'voice_api_audio',
           'surface': 'ai_coach_widget',
           'traceId': response.traceId,
+          'audioUrlAvailable': true,
         },
       );
-      return;
     }
 
     await _flutterTts.stop();
@@ -212,7 +214,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         response = await VoiceRuntimeService.instance.requestCopilot(
           VoiceCopilotRequest(
             message: input,
-            locale: 'en',
+            locale: Localizations.localeOf(context).toLanguageTag(),
             gradeBand: widget.runtime.gradeBand,
             context: <String, dynamic>{
               'learnerId': widget.runtime.learnerId,
