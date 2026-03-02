@@ -88,6 +88,9 @@ Verify in telemetry sink/logs that these fields are present when applicable:
 - `voice.message`: `mode`, `traceId`, `safetyOutcome`, `policyVersion`
 - `voice.tts`: `source` (`voice_api_audio`, `flutter_tts`, `user_interrupt`)
 - BOS events (`ai_help_opened`, `ai_help_used`, `ai_coach_response`): includes `mode` and, when available, `sessionOccurrenceId`
+- Goal reset actions:
+  - `cta.clicked` + `cta_id=clear_learning_goals_cancel`
+  - `cta.clicked` + `cta_id=clear_learning_goals_confirm`
 
 ## 4C) Conversational intelligence checks
 1. Send a first question in `hint` mode.
@@ -99,6 +102,19 @@ Expected:
 - Responses include actionable next steps, not just generic text.
 - Responses end with a coaching follow-up question (or equivalent conversational prompt).
 - Mode behavior shifts correctly (`hint` vs `verify` vs `debug`).
+
+## 4D) Goals memory controls (educator/HQ)
+1. Open assistant as `educator` or `hq`.
+2. Confirm **Current goals** row is visible after a few learner turns.
+3. Tap **Clear goals**.
+4. In dialog, tap **Cancel**.
+5. Tap **Clear goals** again, then tap **Clear**.
+
+Expected:
+- Confirmation dialog appears before goals are cleared.
+- Cancel keeps goals intact.
+- Confirm clears all goals immediately.
+- Learner/parent roles do not see **Clear goals** action.
 
 ## 5) TTS playback path
 1. With voice output enabled, send a prompt.
