@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
+import '../modules/educator/educator_service.dart';
 import '../services/telemetry_service.dart';
 import 'ai_coach_widget.dart';
 import 'bos_models.dart';
@@ -125,22 +127,99 @@ class _GlobalAiAssistantSheet extends StatefulWidget {
 }
 
 class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
-  late final LearningRuntimeProvider _runtime;
+  LearningRuntimeProvider? _runtime;
+  bool _runtimeReady = false;
+  String? _sessionOccurrenceId;
 
   @override
   void initState() {
     super.initState();
-    _runtime = LearningRuntimeProvider(
+    unawaited(_initializeRuntime());
+  }
+
+  Future<void> _initializeRuntime() async {
+    final String? resolvedSessionOccurrenceId =
+        await _resolveSessionOccurrenceId();
+    final LearningRuntimeProvider runtime = LearningRuntimeProvider(
       siteId: widget.siteId,
       learnerId: widget.learnerId,
       gradeBand: _gradeBandForRole(widget.role),
+      sessionOccurrenceId: resolvedSessionOccurrenceId,
     );
-    _runtime.startListening();
+    runtime.startListening();
+    if (!mounted) {
+      runtime.dispose();
+      return;
+    }
+    setState(() {
+      _runtime = runtime;
+      _sessionOccurrenceId = resolvedSessionOccurrenceId;
+      _runtimeReady = true;
+    });
+  }
+
+  Future<String?> _resolveSessionOccurrenceId() async {
+    if (widget.role == UserRole.educator ||
+        widget.role == UserRole.site ||
+        widget.role == UserRole.hq) {
+      final EducatorService? educatorService =
+          context.read<EducatorService?>();
+      final String? currentClassId = educatorService?.currentClass?.id;
+      if (currentClassId != null && currentClassId.trim().isNotEmpty) {
+        return currentClassId.trim();
+      }
+      if (educatorService != null && educatorService.todayClasses.isNotEmpty) {
+        return educatorService.todayClasses.first.id.trim();
+      }
+    }
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> attempts = await FirebaseFirestore
+          .instance
+          .collection('missionAttempts')
+          .where('learnerId', isEqualTo: widget.learnerId)
+          .where('siteId', isEqualTo: widget.siteId)
+          .orderBy('updatedAt', descending: true)
+          .limit(10)
+          .get();
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attempts.docs) {
+        final String value = (doc.data()['sessionOccurrenceId'] as String? ?? '').trim();
+        if (value.isNotEmpty) return value;
+      }
+    } catch (_) {
+      // Best-effort only; continue to interaction event fallback.
+    }
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> interactions = await FirebaseFirestore
+          .instance
+          .collection('interactionEvents')
+          .where('actorId', isEqualTo: widget.learnerId)
+          .where('siteId', isEqualTo: widget.siteId)
+          .where('eventType', isEqualTo: 'session_joined')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+
+      if (interactions.docs.isNotEmpty) {
+        final Map<String, dynamic> data = interactions.docs.first.data();
+        final String topLevel = (data['sessionOccurrenceId'] as String? ?? '').trim();
+        if (topLevel.isNotEmpty) return topLevel;
+        final Map<String, dynamic>? payload = data['payload'] as Map<String, dynamic>?;
+        final String fromPayload = (payload?['sessionOccurrenceId'] as String? ?? '').trim();
+        if (fromPayload.isNotEmpty) return fromPayload;
+      }
+    } catch (_) {
+      // Keep null when unavailable.
+    }
+
+    return null;
   }
 
   @override
   void dispose() {
-    _runtime.dispose();
+    _runtime?.dispose();
     super.dispose();
   }
 
@@ -176,10 +255,25 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
           ),
           Divider(color: scheme.outlineVariant, height: 1),
           Expanded(
-            child: AiCoachWidget(
-              runtime: _runtime,
-              conceptTags: <String>['global-assistant', widget.role.name],
-            ),
+            child: _runtimeReady && _runtime != null
+                ? AiCoachWidget(
+                    runtime: _runtime!,
+                    actorRole: widget.role,
+                    allowBosFallback: widget.role == UserRole.learner,
+                    conceptTags: <String>[
+                      'global-assistant',
+                      widget.role.name,
+                      if ((_sessionOccurrenceId ?? '').isNotEmpty)
+                        'occurrence:${_sessionOccurrenceId!}',
+                    ],
+                  )
+                : const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
           ),
         ],
       ),
