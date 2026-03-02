@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -23,12 +27,40 @@ const Map<String, String> _siteBillingEs = <String, String>{
   'Plan management request submitted': 'Solicitud de gestión de plan enviada',
   'Request Change': 'Solicitar cambio',
   'All Invoices': 'Todas las facturas',
+  'Loading...': 'Cargando...',
+  'No invoices yet': 'Aún no hay facturas',
 };
 
 /// Site billing page
 /// Based on docs/13_PAYMENTS_BILLING_SPEC.md
-class SiteBillingPage extends StatelessWidget {
+class SiteBillingPage extends StatefulWidget {
   const SiteBillingPage({super.key});
+
+  @override
+  State<SiteBillingPage> createState() => _SiteBillingPageState();
+}
+
+class _SiteBillingPageState extends State<SiteBillingPage> {
+  bool _isLoading = false;
+  String _planName = 'Pro Plan';
+  String _planStatus = 'Active';
+  String _monthlyAmount = '\$299/month';
+  String _nextBillingDate = 'Feb 1, 2026';
+  double _activeLearnersUsed = 45;
+  double _activeLearnersTotal = 100;
+  double _educatorsUsed = 8;
+  double _educatorsTotal = 15;
+  double _storageUsedGb = 2.5;
+  double _storageTotalGb = 10;
+  List<_InvoiceItem> _invoices = <_InvoiceItem>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBillingData();
+    });
+  }
 
   String _t(BuildContext context, String input) {
     final String locale = Localizations.localeOf(context).languageCode;
@@ -50,6 +82,14 @@ class SiteBillingPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            if (_isLoading)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  _t(context, 'Loading...'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
             _buildSubscriptionCard(context),
             const SizedBox(height: 24),
             _buildUsageSection(context),
@@ -83,7 +123,7 @@ class SiteBillingPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                _t(context, 'Pro Plan'),
+                _t(context, _planName),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -98,7 +138,7 @@ class SiteBillingPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _t(context, 'Active'),
+                  _t(context, _planStatus),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -110,7 +150,7 @@ class SiteBillingPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '\$299/month',
+            _monthlyAmount,
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.9),
@@ -133,8 +173,16 @@ class SiteBillingPage extends StatelessWidget {
                     ),
                   ),
                   const Text(
-                    'Feb 1, 2026',
+                    '',
                     style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    _nextBillingDate,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -188,11 +236,15 @@ class SiteBillingPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: <Widget>[
-                _buildUsageRow(_t(context, 'Active Learners'), 45, 100),
+                _buildUsageRow(_t(context, 'Active Learners'),
+                    _activeLearnersUsed, _activeLearnersTotal),
                 const SizedBox(height: 16),
-                _buildUsageRow(_t(context, 'Educators'), 8, 15),
+                _buildUsageRow(
+                    _t(context, 'Educators'), _educatorsUsed, _educatorsTotal),
                 const SizedBox(height: 16),
-                _buildUsageRow(_t(context, 'Storage Used'), 2.5, 10, unit: 'GB'),
+                _buildUsageRow(_t(context, 'Storage Used'), _storageUsedGb,
+                    _storageTotalGb,
+                    unit: 'GB'),
               ],
             ),
           ),
@@ -282,15 +334,32 @@ class SiteBillingPage extends StatelessWidget {
           color: ScholesaColors.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Column(
-            children: <Widget>[
-              _buildInvoiceRow(context, 'INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
-              const Divider(height: 1),
-              _buildInvoiceRow(context, 'INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
-              const Divider(height: 1),
-              _buildInvoiceRow(context, 'INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
-            ],
-          ),
+          child: _invoices.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    _t(context, 'No invoices yet'),
+                    style:
+                        const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                )
+              : Column(
+                  children: <Widget>[
+                    for (int index = 0;
+                        index < (_invoices.length > 3 ? 3 : _invoices.length);
+                        index++) ...<Widget>[
+                      _buildInvoiceRow(
+                        context,
+                        _invoices[index].id,
+                        _invoices[index].dateLabel,
+                        _invoices[index].amountLabel,
+                        _invoices[index].paid,
+                      ),
+                      if (index < ((_invoices.length > 3 ? 3 : _invoices.length) - 1))
+                        const Divider(height: 1),
+                    ],
+                  ],
+                ),
         ),
       ],
     );
@@ -407,12 +476,200 @@ class SiteBillingPage extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            _buildInvoiceRow(context, 'INV-2026-001', 'Jan 1, 2026', '\$299.00', true),
-            _buildInvoiceRow(context, 'INV-2025-012', 'Dec 1, 2025', '\$299.00', true),
-            _buildInvoiceRow(context, 'INV-2025-011', 'Nov 1, 2025', '\$299.00', true),
+            if (_invoices.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _t(context, 'No invoices yet'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ..._invoices.map(
+              (_InvoiceItem invoice) => _buildInvoiceRow(
+                context,
+                invoice.id,
+                invoice.dateLabel,
+                invoice.amountLabel,
+                invoice.paid,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  Future<void> _loadBillingData() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null || appState == null) {
+      return;
+    }
+
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    if (siteId.isEmpty) return;
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> siteDoc =
+          await firestoreService.firestore.collection('sites').doc(siteId).get();
+      if (siteDoc.exists) {
+        final Map<String, dynamic>? data = siteDoc.data();
+        final String plan = (data?['billingPlan'] as String?)?.trim() ?? 'Pro Plan';
+        final String status = (data?['billingStatus'] as String?)?.trim() ?? 'Active';
+        final num? monthlyFee = data?['monthlyFee'] as num?;
+        final String currency = ((data?['currency'] as String?) ?? 'USD').toUpperCase();
+        final DateTime? nextBilling = _toDateTime(data?['nextBillingDate']);
+        final int learnerCount = _asInt(data?['learnerCount']) ??
+            ((data?['learnerIds'] as List?)?.length ?? 0);
+        final int educatorCount = _asInt(data?['educatorCount']) ??
+            ((data?['educatorIds'] as List?)?.length ?? 0);
+        final int learnerCap = _asInt(data?['learnerCap']) ??
+            _asInt(data?['billingLearnerLimit']) ??
+            100;
+        final int educatorCap = _asInt(data?['educatorCap']) ??
+            _asInt(data?['billingEducatorLimit']) ??
+            15;
+        final double storageUsed = _asDouble(data?['storageUsedGb']) ??
+            _asDouble(data?['storageUsed']) ??
+            0;
+        final double storageCap = _asDouble(data?['storageCapGb']) ??
+            _asDouble(data?['storageLimitGb']) ??
+            10;
+
+        _planName = plan;
+        _planStatus = status;
+        _monthlyAmount = monthlyFee != null
+            ? '${_currencySymbol(currency)}${monthlyFee.toStringAsFixed(0)}/month'
+            : '\$299/month';
+        _nextBillingDate = nextBilling != null
+            ? _formatDate(nextBilling)
+            : _nextBillingDate;
+        _activeLearnersUsed = learnerCount.toDouble();
+        _activeLearnersTotal = learnerCap.toDouble();
+        _educatorsUsed = educatorCount.toDouble();
+        _educatorsTotal = educatorCap.toDouble();
+        _storageUsedGb = storageUsed;
+        _storageTotalGb = storageCap;
+      }
+
+      Query<Map<String, dynamic>> invoicesQuery =
+          firestoreService.firestore.collection('payouts');
+      try {
+        invoicesQuery = invoicesQuery.where('siteId', isEqualTo: siteId);
+      } catch (_) {}
+      QuerySnapshot<Map<String, dynamic>> invoicesSnapshot;
+      try {
+        invoicesSnapshot = await invoicesQuery
+            .orderBy('createdAt', descending: true)
+            .limit(50)
+            .get();
+      } catch (_) {
+        invoicesSnapshot = await invoicesQuery.limit(50).get();
+      }
+
+      final List<_InvoiceItem> invoices = invoicesSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String status = ((data['status'] as String?) ?? '').toLowerCase();
+        final bool paid = status == 'approved' || status == 'paid' || status == 'completed';
+        final String amountRaw = (data['amount'] as String?) ??
+            ((data['amount'] as num?)?.toString() ?? '0');
+        final String currency = ((data['currency'] as String?) ?? 'USD').toUpperCase();
+        final DateTime date = _toDateTime(data['approvedAt']) ??
+            _toDateTime(data['createdAt']) ??
+            DateTime.now();
+
+        return _InvoiceItem(
+          id: doc.id,
+          dateLabel: _formatDate(date),
+          amountLabel: '${_currencySymbol(currency)}$amountRaw',
+          paid: paid,
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _invoices = invoices;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  String _formatDate(DateTime value) {
+    const List<String> months = <String>[
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[value.month - 1]} ${value.day}, ${value.year}';
+  }
+
+  String _currencySymbol(String currency) {
+    switch (currency) {
+      case 'SGD':
+      case 'USD':
+      default:
+        return '\$';
+    }
+  }
+}
+
+class _InvoiceItem {
+  const _InvoiceItem({
+    required this.id,
+    required this.dateLabel,
+    required this.amountLabel,
+    required this.paid,
+  });
+
+  final String id;
+  final String dateLabel;
+  final String amountLabel;
+  final bool paid;
 }

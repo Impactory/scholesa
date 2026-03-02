@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -44,6 +46,9 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Export HQ Analytics': 'Exportar analítica HQ',
   'Generate and export the current HQ analytics summary for cross-site review.':
     'Genera y exporta el resumen actual de analítica HQ para revisión entre sedes.',
+  'Loading...': 'Cargando...',
+  'No comparison data available': 'No hay datos de comparación disponibles',
+  'No top performers available': 'No hay mejores desempeños disponibles',
   'Cancel': 'Cancelar',
   'HQ analytics report prepared for export':
     'Reporte de analítica HQ preparado para exportar',
@@ -64,7 +69,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   final AnalyticsService _analyticsService = AnalyticsService.instance;
   TelemetryDashboardMetrics? _metrics;
   bool _isLoadingMetrics = true;
+  bool _isLoadingSupplemental = true;
   String? _metricsError;
+  List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
+    const _SiteFilterOption(id: 'all', name: 'All Sites'),
+  ];
+  List<_SiteComparisonData> _siteComparisonData = <_SiteComparisonData>[];
+  List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
 
   String _t(String input) {
     final String locale = Localizations.localeOf(context).languageCode;
@@ -83,6 +94,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       },
     );
     _loadMetrics();
+    _loadSupplementalData();
   }
 
   Future<void> _loadMetrics() async {
@@ -238,14 +250,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(
-                    value: 'all', child: Text(_t('All Sites'))),
-                  DropdownMenuItem<String>(
-                    value: 'sg', child: Text(_t('Singapore'))),
-                  DropdownMenuItem<String>(
-                    value: 'kl', child: Text(_t('Kuala Lumpur'))),
-                  DropdownMenuItem<String>(
-                    value: 'jkt', child: Text(_t('Jakarta'))),
+                  ..._siteOptions.map(
+                    (_SiteFilterOption option) => DropdownMenuItem<String>(
+                      value: option.id,
+                      child: Text(option.id == 'all' ? _t('All Sites') : option.name),
+                    ),
+                  ),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -258,6 +268,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     );
                     setState(() => _selectedSite = value);
                     _loadMetrics();
+                    _loadSupplementalData();
                   }
                 },
               ),
@@ -297,6 +308,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     );
                     setState(() => _selectedPeriod = value);
                     _loadMetrics();
+                    _loadSupplementalData();
                   }
                 },
               ),
@@ -622,6 +634,30 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Widget _buildSiteComparison() {
+    if (_isLoadingSupplemental) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text(
+            _t('Loading...'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    if (_siteComparisonData.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text(
+            _t('No comparison data available'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -641,26 +677,15 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ),
             child: Column(
               children: <Widget>[
-                _SiteComparisonRow(
-                      name: _t('Singapore'),
-                  learners: 47,
-                  attendance: 94,
-                  engagement: 82,
-                ),
-                    const Divider(),
-                _SiteComparisonRow(
-                      name: _t('Kuala Lumpur'),
-                  learners: 62,
-                  attendance: 88,
-                  engagement: 76,
-                ),
-                    const Divider(),
-                _SiteComparisonRow(
-                      name: _t('Jakarta'),
-                  learners: 38,
-                  attendance: 85,
-                  engagement: 71,
-                ),
+                for (int index = 0; index < _siteComparisonData.length; index++) ...<Widget>[
+                  _SiteComparisonRow(
+                    name: _siteComparisonData[index].name,
+                    learners: _siteComparisonData[index].learners,
+                    attendance: _siteComparisonData[index].attendance,
+                    engagement: _siteComparisonData[index].engagement,
+                  ),
+                  if (index < _siteComparisonData.length - 1) const Divider(),
+                ],
               ],
             ),
           ),
@@ -670,6 +695,30 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Widget _buildTopPerformers() {
+    if (_isLoadingSupplemental) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text(
+            _t('Loading...'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    if (_topPerformersData.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text(
+            _t('No top performers available'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -689,26 +738,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ],
           ),
           const SizedBox(height: 8),
-          const _TopPerformerCard(
-            rank: 1,
-            name: 'Emma Johnson',
-            site: 'Singapore',
-            missionsCompleted: 28,
-            streak: 15,
-          ),
-          const _TopPerformerCard(
-            rank: 2,
-            name: 'Liam Chen',
-            site: 'Kuala Lumpur',
-            missionsCompleted: 24,
-            streak: 12,
-          ),
-          const _TopPerformerCard(
-            rank: 3,
-            name: 'Sofia Martinez',
-            site: 'Singapore',
-            missionsCompleted: 22,
-            streak: 18,
+          ..._topPerformersData.map(
+            (_TopPerformerData performer) => _TopPerformerCard(
+              rank: performer.rank,
+              name: performer.name,
+              site: performer.site,
+              missionsCompleted: performer.missionsCompleted,
+              streak: performer.streak,
+            ),
           ),
         ],
       ),
@@ -830,26 +867,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 12),
-              _TopPerformerCard(
-                rank: 1,
-                name: 'Emma Johnson',
-                site: 'Singapore',
-                missionsCompleted: 28,
-                streak: 15,
-              ),
-              _TopPerformerCard(
-                rank: 2,
-                name: 'Liam Chen',
-                site: 'Kuala Lumpur',
-                missionsCompleted: 24,
-                streak: 12,
-              ),
-              _TopPerformerCard(
-                rank: 3,
-                name: 'Sofia Martinez',
-                site: 'Singapore',
-                missionsCompleted: 22,
-                streak: 18,
+              ..._topPerformersData.map(
+                (_TopPerformerData performer) => _TopPerformerCard(
+                  rank: performer.rank,
+                  name: performer.name,
+                  site: performer.site,
+                  missionsCompleted: performer.missionsCompleted,
+                  streak: performer.streak,
+                ),
               ),
             ],
           ),
@@ -864,6 +889,242 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       },
     );
   }
+
+  Future<void> _loadSupplementalData() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSupplemental = false;
+        _siteOptions = <_SiteFilterOption>[const _SiteFilterOption(id: 'all', name: 'All Sites')];
+        _siteComparisonData = <_SiteComparisonData>[];
+        _topPerformersData = <_TopPerformerData>[];
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoadingSupplemental = true);
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
+          await firestoreService.firestore.collection('sites').limit(300).get();
+
+      final Map<String, String> siteNames = <String, String>{};
+      final List<_SiteComparisonData> comparison = <_SiteComparisonData>[];
+      final List<_SiteFilterOption> options = <_SiteFilterOption>[
+        const _SiteFilterOption(id: 'all', name: 'All Sites'),
+      ];
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String name =
+            (data['name'] as String?)?.trim().isNotEmpty == true
+                ? (data['name'] as String).trim()
+                : doc.id;
+        siteNames[doc.id] = name;
+        options.add(_SiteFilterOption(id: doc.id, name: name));
+
+        final int learners = _asInt(data['learnerCount']) ??
+            ((data['learnerIds'] as List?)?.length ?? 0);
+        final int educators = _asInt(data['educatorCount']) ??
+            ((data['educatorIds'] as List?)?.length ?? 0);
+        final int health = _asInt(data['healthScore']) ?? 75;
+        final int attendance = health.clamp(0, 100);
+        final int engagement =
+            (learners == 0 ? 0 : ((educators * 100) ~/ (learners == 0 ? 1 : learners)) * 5)
+                .clamp(0, 100);
+
+        comparison.add(
+          _SiteComparisonData(
+            siteId: doc.id,
+            name: name,
+            learners: learners,
+            attendance: attendance,
+            engagement: engagement,
+          ),
+        );
+      }
+
+      comparison.sort((_SiteComparisonData a, _SiteComparisonData b) =>
+          b.attendance.compareTo(a.attendance));
+      final List<_SiteComparisonData> comparisonTop = comparison.take(3).toList();
+
+      Query<Map<String, dynamic>> attemptsQuery =
+          firestoreService.firestore.collection('missionAttempts');
+      if (_selectedSite != 'all') {
+        attemptsQuery = attemptsQuery.where('siteId', isEqualTo: _selectedSite);
+      }
+      final QuerySnapshot<Map<String, dynamic>> attemptsSnapshot =
+          await attemptsQuery.limit(500).get();
+
+      final Map<String, int> attemptsByLearner = <String, int>{};
+      final Map<String, String> learnerSite = <String, String>{};
+      final Map<String, Set<String>> learnerDays = <String, Set<String>>{};
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attemptsSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String learnerId = ((data['learnerId'] as String?) ?? '').trim();
+        if (learnerId.isEmpty) continue;
+
+        attemptsByLearner[learnerId] = (attemptsByLearner[learnerId] ?? 0) + 1;
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (siteId.isNotEmpty) learnerSite[learnerId] = siteId;
+
+        final DateTime? createdAt = _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
+        if (createdAt != null) {
+          final String dayKey = '${createdAt.year}-${createdAt.month}-${createdAt.day}';
+          learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
+        }
+      }
+
+      final List<MapEntry<String, int>> ranked = attemptsByLearner.entries.toList()
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
+      final List<String> topLearnerIds = ranked.take(10).map((MapEntry<String, int> entry) => entry.key).toList();
+      final Map<String, String> learnerNames = await _loadUserNames(firestoreService, topLearnerIds);
+
+      final List<_TopPerformerData> performers = <_TopPerformerData>[];
+      final int topCount = ranked.length < 3 ? ranked.length : 3;
+      for (int index = 0; index < topCount; index++) {
+        final String learnerId = ranked[index].key;
+        final String? siteId = learnerSite[learnerId];
+        final int streak = learnerDays[learnerId]?.length ?? 0;
+        performers.add(
+          _TopPerformerData(
+            rank: index + 1,
+            name: learnerNames[learnerId] ?? learnerId,
+            site: siteId != null && siteNames.containsKey(siteId)
+                ? siteNames[siteId]!
+                : _t('All Sites'),
+            missionsCompleted: ranked[index].value,
+            streak: streak,
+          ),
+        );
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _siteOptions = options;
+        if (!_siteOptions.any((_SiteFilterOption option) => option.id == _selectedSite)) {
+          _selectedSite = 'all';
+        }
+        _siteComparisonData = comparisonTop;
+        _topPerformersData = performers;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _siteComparisonData = <_SiteComparisonData>[];
+        _topPerformersData = <_TopPerformerData>[];
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSupplemental = false);
+      }
+    }
+  }
+
+  Future<Map<String, String>> _loadUserNames(
+    FirestoreService firestoreService,
+    List<String> learnerIds,
+  ) async {
+    final Map<String, String> names = <String, String>{};
+    for (int i = 0; i < learnerIds.length; i += 10) {
+      final List<String> chunk = learnerIds.sublist(
+          i, (i + 10 > learnerIds.length) ? learnerIds.length : i + 10);
+
+      final QuerySnapshot<Map<String, dynamic>> usersByUid = await firestoreService
+          .firestore
+          .collection('users')
+          .where('uid', whereIn: chunk)
+          .get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in usersByUid.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String uid = ((data['uid'] as String?) ?? '').trim();
+        final String displayName = ((data['displayName'] as String?) ?? '').trim();
+        if (uid.isNotEmpty && displayName.isNotEmpty) {
+          names[uid] = displayName;
+        }
+      }
+
+      for (final String learnerId in chunk) {
+        if (names.containsKey(learnerId)) continue;
+        final DocumentSnapshot<Map<String, dynamic>> userDoc =
+            await firestoreService.firestore.collection('users').doc(learnerId).get();
+        if (userDoc.exists) {
+          final Map<String, dynamic>? data = userDoc.data();
+          final String displayName = ((data?['displayName'] as String?) ?? '').trim();
+          if (displayName.isNotEmpty) {
+            names[learnerId] = displayName;
+          }
+        }
+      }
+    }
+    return names;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+}
+
+class _SiteFilterOption {
+  const _SiteFilterOption({required this.id, required this.name});
+  final String id;
+  final String name;
+}
+
+class _SiteComparisonData {
+  const _SiteComparisonData({
+    required this.siteId,
+    required this.name,
+    required this.learners,
+    required this.attendance,
+    required this.engagement,
+  });
+
+  final String siteId;
+  final String name;
+  final int learners;
+  final int attendance;
+  final int engagement;
+}
+
+class _TopPerformerData {
+  const _TopPerformerData({
+    required this.rank,
+    required this.name,
+    required this.site,
+    required this.missionsCompleted,
+    required this.streak,
+  });
+
+  final int rank;
+  final String name;
+  final String site;
+  final int missionsCompleted;
+  final int streak;
 }
 
 class _MetricCard extends StatelessWidget {
