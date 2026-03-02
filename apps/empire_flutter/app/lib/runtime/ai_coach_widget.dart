@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:record/record.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
@@ -48,10 +51,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final SpeechToText _speechToText = SpeechToText();
   final FlutterTts _flutterTts = FlutterTts();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioRecorder _audioRecorder = AudioRecorder();
   AiCoachMode _selectedMode = AiCoachMode.hint;
   bool _loading = false;
   bool _isListening = false;
   bool _speechAvailable = false;
+  bool _uploadSttAvailable = false;
+  bool _usingUploadStt = false;
   bool _voiceOutputEnabled = true;
   AiCoachResponse? _lastResponse;
 
@@ -78,11 +85,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       await _flutterTts.setSpeechRate(0.45);
       await _flutterTts.setVolume(1.0);
       await _flutterTts.setPitch(1.0);
+      final bool uploadReady = await _audioRecorder.hasPermission();
       if (!mounted) return;
-      setState(() => _speechAvailable = speechReady);
+      setState(() {
+        _speechAvailable = speechReady;
+        _uploadSttAvailable = uploadReady;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _speechAvailable = false);
+      setState(() {
+        _speechAvailable = false;
+        _uploadSttAvailable = false;
+      });
     }
   }
 
@@ -90,16 +104,102 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   void dispose() {
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
+    unawaited(_audioPlayer.stop());
+    unawaited(_audioPlayer.dispose());
+    unawaited(_audioRecorder.dispose());
     _inputController.dispose();
     super.dispose();
   }
 
+  Future<void> _startUploadRecording() async {
+    final String path =
+        '${Directory.systemTemp.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _audioRecorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        bitRate: 64000,
+        sampleRate: 16000,
+      ),
+      path: path,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isListening = true;
+      _usingUploadStt = true;
+    });
+  }
+
+  Future<void> _stopUploadRecordingAndTranscribe() async {
+    final String? path = await _audioRecorder.stop();
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+      _usingUploadStt = false;
+    });
+    if (path == null || path.isEmpty) return;
+
+    try {
+      final TranscribeVoiceResponse transcribed =
+          await VoiceRuntimeService.instance.transcribeAudioFile(
+        audioFilePath: path,
+        locale: Localizations.localeOf(context).toLanguageTag(),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _inputController.text = transcribed.transcript;
+        _inputController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _inputController.text.length),
+        );
+      });
+
+      await TelemetryService.instance.logEvent(
+        event: 'voice.transcribe',
+        metadata: <String, dynamic>{
+          'source': 'voice_api_upload',
+          'surface': 'ai_coach_widget',
+          'chars': transcribed.transcript.length,
+          'confidence': transcribed.confidence,
+          'traceId': transcribed.traceId,
+          'latencyMs': transcribed.latencyMs,
+          'modelVersion': transcribed.modelVersion,
+          'mode': _selectedMode.name,
+        },
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Voice transcription unavailable. Please type your question.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      try {
+        final File file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {}
+    }
+  }
+
   Future<void> _toggleListening() async {
-    if (_loading || !_speechAvailable) return;
+    if (_loading || (!_speechAvailable && !_uploadSttAvailable)) return;
+
     if (_isListening) {
+      if (_usingUploadStt) {
+        await _stopUploadRecordingAndTranscribe();
+        return;
+      }
       await _speechToText.stop();
       if (!mounted) return;
       setState(() => _isListening = false);
+      return;
+    }
+
+    if (_uploadSttAvailable) {
+      await _startUploadRecording();
       return;
     }
 
@@ -138,18 +238,27 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   Future<void> _speakResponse(AiCoachResponse response) async {
     if (!_voiceOutputEnabled) return;
+
     if (response.voiceAvailable &&
         response.voiceAudioUrl != null &&
         response.voiceAudioUrl!.isNotEmpty) {
-      TelemetryService.instance.logEvent(
-        event: 'voice.tts',
-        metadata: <String, dynamic>{
-          'source': 'voice_api_audio',
-          'surface': 'ai_coach_widget',
-          'traceId': response.traceId,
-          'audioUrlAvailable': true,
-        },
-      );
+      try {
+        await _flutterTts.stop();
+        await _audioPlayer.stop();
+        await _audioPlayer.play(UrlSource(response.voiceAudioUrl!));
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': 'voice_api_audio',
+            'surface': 'ai_coach_widget',
+            'traceId': response.traceId,
+            'audioUrlAvailable': true,
+          },
+        );
+        return;
+      } catch (_) {
+        // Fall through to local TTS fallback.
+      }
     }
 
     await _flutterTts.stop();
