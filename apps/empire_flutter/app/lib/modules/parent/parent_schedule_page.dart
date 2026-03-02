@@ -275,9 +275,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           underline: const SizedBox(),
           icon: const Icon(Icons.keyboard_arrow_down),
           items: <DropdownMenuItem<String>>[
-            const DropdownMenuItem<String>(
+            DropdownMenuItem<String>(
               value: 'all',
-              child: Text('All Learners'),
+              child: Text(_t('All Learners')),
             ),
             ...service.learnerSummaries.map(
               (LearnerSummary learner) => DropdownMenuItem<String>(
@@ -571,8 +571,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Session reminder set'),
+                SnackBar(
+                  content: Text(_t('Session reminder set')),
                   backgroundColor: ScholesaColors.parent,
                 ),
               );
