@@ -81,3 +81,6 @@
 
 Required operational step before release promotion:
 - Execute on-device smoke checklist in `docs/VOICE_RUNTIME_SMOKE_TEST.md` across Android + iOS (and macOS if desktop release is included).
+
+Sign-off artifact:
+- Complete `docs/vibe/RC3_SIGNOFF_CHECKLIST.md` with Engineering, QA, Product, and Release approvals.
