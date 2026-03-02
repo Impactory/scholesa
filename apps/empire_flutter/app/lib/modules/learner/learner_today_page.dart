@@ -6,6 +6,26 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
 
+const Map<String, String> _learnerTodayEs = <String, String>{
+  'Today': 'Hoy',
+  '🌟 Keep Going!': '🌟 ¡Sigue así!',
+  "You're making amazing progress. Complete today's habits to maintain your streak!":
+      'Estás avanzando increíblemente. Completa los hábitos de hoy para mantener tu racha.',
+  'day streak': 'días de racha',
+  'Habits': 'Hábitos',
+  'Missions': 'Misiones',
+  'Messages': 'Mensajes',
+  'active': 'activas',
+  "Today's Habits": 'Hábitos de hoy',
+  'See all': 'Ver todo',
+  'Active Missions': 'Misiones activas',
+  'Good morning': 'Buenos días',
+  'Good afternoon': 'Buenas tardes',
+  'Good evening': 'Buenas noches',
+  'done': 'hecho',
+  'Start': 'Iniciar',
+};
+
 /// Learner Today Page - Daily summary for learners
 class LearnerTodayPage extends StatefulWidget {
   const LearnerTodayPage({super.key});
@@ -15,6 +35,12 @@ class LearnerTodayPage extends StatefulWidget {
 }
 
 class _LearnerTodayPageState extends State<LearnerTodayPage> {
+  String _t(String input) {
+    final String locale = Localizations.localeOf(context).languageCode;
+    if (locale != 'es') return input;
+    return _learnerTodayEs[input] ?? input;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +121,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                   ),
                 ),
                 Text(
-                  'Today',
+                  _t('Today'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: scheme.onSurface,
@@ -181,8 +207,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      '🌟 Keep Going!',
+                    Text(
+                      _t('🌟 Keep Going!'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -191,7 +217,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "You're making amazing progress. Complete today's habits to maintain your streak!",
+                      _t(
+                        "You're making amazing progress. Complete today's habits to maintain your streak!",
+                      ),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.96),
                         fontSize: 14,
@@ -227,7 +255,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                           ),
                         ),
                         Text(
-                          'day streak',
+                          _t('day streak'),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.88),
                             fontSize: 11,
@@ -254,7 +282,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             child: Consumer<HabitService>(
               builder: (BuildContext context, HabitService service, _) {
                 return _ProgressCard(
-                  title: 'Habits',
+                  title: _t('Habits'),
                   completed: service.completedTodayCount,
                   total: service.totalTodayCount,
                   icon: Icons.check_circle,
@@ -269,12 +297,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               builder: (BuildContext context, MissionService service, _) {
                 final int active = service.activeMissions.length;
                 return _ProgressCard(
-                  title: 'Missions',
+                  title: _t('Missions'),
                   completed: active,
                   total: active,
                   icon: Icons.rocket_launch,
                   color: const Color(0xFFF59E0B),
-                  label: 'active',
+                  label: _t('active'),
                 );
               },
             ),
@@ -292,7 +320,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           Expanded(
             child: _QuickActionCard(
               icon: Icons.trending_up,
-              label: 'Habits',
+              label: _t('Habits'),
               color: const Color(0xFF8B5CF6),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -309,7 +337,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           Expanded(
             child: _QuickActionCard(
               icon: Icons.rocket_launch,
-              label: 'Missions',
+              label: _t('Missions'),
               color: const Color(0xFFF59E0B),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -326,7 +354,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           Expanded(
             child: _QuickActionCard(
               icon: Icons.message,
-              label: 'Messages',
+              label: _t('Messages'),
               color: const Color(0xFF6366F1),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -358,8 +386,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  const Text(
-                    "Today's Habits",
+                  Text(
+                    _t("Today's Habits"),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -375,8 +403,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       );
                       context.push('/learner/habits');
                     },
-                    child: const Text(
-                      'See all',
+                    child: Text(
+                      _t('See all'),
                       style: TextStyle(color: ScholesaColors.learner),
                     ),
                   ),
@@ -405,8 +433,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  const Text(
-                    'Active Missions',
+                  Text(
+                    _t('Active Missions'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -422,8 +450,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       );
                       context.push('/learner/missions');
                     },
-                    child: const Text(
-                      'See all',
+                    child: Text(
+                      _t('See all'),
                       style: TextStyle(color: ScholesaColors.learner),
                     ),
                   ),
@@ -441,9 +469,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 
   String _getGreeting() {
     final int hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return _t('Good morning');
+    if (hour < 17) return _t('Good afternoon');
+    return _t('Good evening');
   }
 }
 
@@ -465,6 +493,11 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String t(String input) {
+      final String locale = Localizations.localeOf(context).languageCode;
+      if (locale != 'es') return input;
+      return _learnerTodayEs[input] ?? input;
+    }
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final double progress = total > 0 ? completed / total : 0.0;
 
@@ -518,7 +551,7 @@ class _ProgressCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                label ?? 'done',
+                t(label ?? 'done'),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                   fontSize: 12,
@@ -600,6 +633,11 @@ class _HabitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String t(String input) {
+      final String locale = Localizations.localeOf(context).languageCode;
+      if (locale != 'es') return input;
+      return _learnerTodayEs[input] ?? input;
+    }
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -651,8 +689,8 @@ class _HabitTile extends StatelessWidget {
                 color: ScholesaColors.learner,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'Start',
+              child: Text(
+                t('Start'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
