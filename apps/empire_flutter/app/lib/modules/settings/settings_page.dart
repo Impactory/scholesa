@@ -555,6 +555,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        final AuthService authService = context.read<AuthService>();
+                        final String validationMessage = _tSettings(
+                            context, 'Enter a new password (min 8 characters)');
+                        final String successMessage =
+                            _tSettings(context, 'Password Updated');
                         final String currentPassword =
                             currentPasswordController.text.trim();
                         final String newPassword =
@@ -564,24 +569,20 @@ class _SettingsPageState extends State<SettingsPage> {
 
                         if (newPassword.length < 8 ||
                             newPassword != confirmPassword) {
-                          _showErrorSnackBar(_tSettings(
-                              context, 'Enter a new password (min 8 characters)'));
+                          _showErrorSnackBar(validationMessage);
                           return;
                         }
 
                         try {
-                          final AuthService authService =
-                              this.context.read<AuthService>();
                           await authService.updatePassword(
                             currentPassword: currentPassword,
                             newPassword: newPassword,
                           );
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
-                          _showSuccessSnackBar(
-                              _tSettings(context, 'Password Updated'));
+                          _showSuccessSnackBar(successMessage);
                         } catch (error) {
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           _showErrorSnackBar(_mapActionError(error));
                         }
                       },
@@ -649,29 +650,32 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        final AuthService authService = context.read<AuthService>();
+                        final String invalidEmailMessage =
+                            _tSettings(context, 'Enter new email');
+                        final String emailRequestedMessage =
+                            _tSettings(context, 'Email Update Requested');
+                        final String verifyInboxMessage = _tSettings(
+                            context, 'Check your inbox to verify your new email.');
                         final String newEmail = emailController.text.trim();
                         final String currentPassword =
                             passwordController.text.trim();
                         if (newEmail.isEmpty || !newEmail.contains('@')) {
-                          _showErrorSnackBar(_tSettings(context, 'Enter new email'));
+                          _showErrorSnackBar(invalidEmailMessage);
                           return;
                         }
 
                         try {
-                          final AuthService authService =
-                              this.context.read<AuthService>();
                           await authService.updateEmail(
                             currentPassword: currentPassword,
                             newEmail: newEmail,
                           );
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
-                          _showSuccessSnackBar(
-                              _tSettings(context, 'Email Update Requested'));
-                          _showSuccessSnackBar(_tSettings(
-                              context, 'Check your inbox to verify your new email.'));
+                          _showSuccessSnackBar(emailRequestedMessage);
+                          _showSuccessSnackBar(verifyInboxMessage);
                         } catch (error) {
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           _showErrorSnackBar(_mapActionError(error));
                         }
                       },
@@ -729,23 +733,24 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        final AuthService authService = context.read<AuthService>();
+                        final String phoneRequiredMessage =
+                            _tSettings(context, 'Enter phone number');
+                        final String phoneUpdatedMessage =
+                            _tSettings(context, 'Phone Number Updated');
                         final String phoneNumber = phoneController.text.trim();
                         if (phoneNumber.isEmpty) {
-                          _showErrorSnackBar(
-                              _tSettings(context, 'Enter phone number'));
+                          _showErrorSnackBar(phoneRequiredMessage);
                           return;
                         }
                         try {
-                          final AuthService authService =
-                              this.context.read<AuthService>();
                           await authService.updatePhoneNumberInProfile(
                               phoneNumber);
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
-                          _showSuccessSnackBar(
-                              _tSettings(context, 'Phone Number Updated'));
+                          _showSuccessSnackBar(phoneUpdatedMessage);
                         } catch (error) {
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           _showErrorSnackBar(_mapActionError(error));
                         }
                       },
@@ -1136,6 +1141,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             ElevatedButton(
               onPressed: () async {
+                final AuthService authService = this.context.read<AuthService>();
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
@@ -1143,10 +1149,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 );
                 Navigator.pop(context);
-                final AuthService authService =
-                    this.context.read<AuthService>();
                 await authService.signOut();
-                if (!mounted) return;
+                if (!this.context.mounted) return;
                 this.context.go('/login');
               },
               style: ElevatedButton.styleFrom(
