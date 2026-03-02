@@ -25,6 +25,7 @@ import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/g
 import { useAITracking, useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { AIService } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
+import { recordAIFeedback } from '@/src/lib/ai/interactionLogger';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
@@ -504,10 +505,13 @@ Guidance: ${
     if (!explainBack.trim()) return;
 
     // Record helpful feedback to analytics-only interaction log
-    // TODO: Re-implement feedback recording when AI service is updated
-    // if (currentLogId && currentLogId !== 'error') {
-    //   await recordAIFeedback(currentLogId, true, 'Student completed explain-back');
-    // }
+    if (currentLogId && currentLogId !== 'error') {
+      try {
+        await recordAIFeedback(currentLogId, true, 'Student completed explain-back');
+      } catch (err) {
+        console.warn('Failed to store explain-back feedback', err);
+      }
+    }
 
     // Track explain-back telemetry
     trackAI('ai_critique_requested', {
@@ -733,8 +737,11 @@ Guidance: ${
                 <span className="text-app-muted">{t('aiCoach.wasHelpful')}</span>
                 <button
                   onClick={async () => {
-                    // TODO: Re-implement feedback recording
-                    // await recordAIFeedback(currentLogId, true, 'Student marked helpful');
+                    try {
+                      await recordAIFeedback(currentLogId, true, 'Student marked helpful');
+                    } catch (err) {
+                      console.warn('Failed to store helpful feedback', err);
+                    }
                     alert(t('aiCoach.feedbackThanks'));
                   }}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
@@ -743,8 +750,11 @@ Guidance: ${
                 </button>
                 <button
                   onClick={async () => {
-                    // TODO: Re-implement feedback recording
-                    // await recordAIFeedback(currentLogId, false, 'Student marked not helpful');
+                    try {
+                      await recordAIFeedback(currentLogId, false, 'Student marked not helpful');
+                    } catch (err) {
+                      console.warn('Failed to store not-helpful feedback', err);
+                    }
                     alert(t('aiCoach.feedbackTryDifferent'));
                   }}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"

@@ -1,5 +1,4 @@
 // src/telemetry/collector.ts
-import { TelemetryEmitter } from './emitter';
 import type { CanonicalEvent } from './schemas';
 import { isValidEvent } from './validator';
 
