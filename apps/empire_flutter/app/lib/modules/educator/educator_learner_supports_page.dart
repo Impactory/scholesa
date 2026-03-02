@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import 'educator_models.dart';
+import 'educator_service.dart';
 
 const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
   'Learner Supports': 'Apoyos del estudiante',
@@ -45,6 +48,8 @@ const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
   'No Change': 'Sin cambios',
   'Helped': 'Ayudó',
   'Support outcome logged': 'Resultado de apoyo registrado',
+  'No support plans yet': 'Aún no hay planes de apoyo',
+  'Loading...': 'Cargando...',
 };
 
 String _tEducatorLearnerSupports(BuildContext context, String input) {
@@ -65,42 +70,12 @@ class EducatorLearnerSupportsPage extends StatefulWidget {
 
 class _EducatorLearnerSupportsPageState
     extends State<EducatorLearnerSupportsPage> {
-  final List<_LearnerSupport> _learnerSupports = <_LearnerSupport>[
-    _LearnerSupport(
-      learnerId: '1',
-      learnerName: 'Oliver Thompson',
-      avatarUrl: null,
-      supportType: 'Academic',
-      accommodations: <String>['Extended time', 'Quiet space'],
-      notes: 'Responds well to visual aids',
-      lastUpdated: DateTime.now().subtract(const Duration(days: 5)),
-      priority: _Priority.medium,
-    ),
-    _LearnerSupport(
-      learnerId: '2',
-      learnerName: 'Emma Smith',
-      avatarUrl: null,
-      supportType: 'Social-Emotional',
-      accommodations: <String>['Check-in support', 'Peer buddy'],
-      notes: 'Building confidence in group settings',
-      lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
-      priority: _Priority.high,
-    ),
-    _LearnerSupport(
-      learnerId: '3',
-      learnerName: 'Liam Martinez',
-      avatarUrl: null,
-      supportType: 'Behavioral',
-      accommodations: <String>['Movement breaks', 'Clear transitions'],
-      notes: 'Use positive reinforcement',
-      lastUpdated: DateTime.now().subtract(const Duration(days: 10)),
-      priority: _Priority.low,
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EducatorService>().loadLearners();
+    });
     TelemetryService.instance.logEvent(
       event: 'insight.viewed',
       metadata: const <String, dynamic>{
@@ -125,36 +100,64 @@ class _EducatorLearnerSupportsPageState
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          _buildSummaryCards(),
-          const SizedBox(height: 24),
-          Text(
-            _tEducatorLearnerSupports(context, 'Active Support Plans'),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: ScholesaColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._learnerSupports.map((support) => _buildSupportCard(support)),
-        ],
+      body: Consumer<EducatorService>(
+        builder: (BuildContext context, EducatorService service, _) {
+          final List<_LearnerSupport> supports = _supportsFromService(service);
+          if (service.isLoading && supports.isEmpty) {
+            return Center(
+              child: Text(
+                _tEducatorLearnerSupports(context, 'Loading...'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            );
+          }
+
+          if (supports.isEmpty) {
+            return Center(
+              child: Text(
+                _tEducatorLearnerSupports(context, 'No support plans yet'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              _buildSummaryCards(supports),
+              const SizedBox(height: 24),
+              Text(
+                _tEducatorLearnerSupports(context, 'Active Support Plans'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ScholesaColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...supports.map((support) => _buildSupportCard(support)),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards(List<_LearnerSupport> supports) {
+    final int highPriorityCount =
+        supports.where((_LearnerSupport s) => s.priority == _Priority.high).length;
+    final DateTime now = DateTime.now();
+    final int reviewsDue = supports
+        .where((_LearnerSupport support) =>
+            now.difference(support.lastUpdated).inDays >= 7)
+        .length;
+
     return Row(
       children: <Widget>[
         Expanded(
           child: _buildSummaryCard(
             _tEducatorLearnerSupports(context, 'High Priority'),
-            _learnerSupports
-                .where((_LearnerSupport s) => s.priority == _Priority.high)
-                .length
-                .toString(),
+            highPriorityCount.toString(),
             Colors.red,
             Icons.priority_high_rounded,
           ),
@@ -163,7 +166,7 @@ class _EducatorLearnerSupportsPageState
         Expanded(
           child: _buildSummaryCard(
             _tEducatorLearnerSupports(context, 'Active Plans'),
-            _learnerSupports.length.toString(),
+            supports.length.toString(),
             Colors.blue,
             Icons.people_rounded,
           ),
@@ -172,7 +175,7 @@ class _EducatorLearnerSupportsPageState
         Expanded(
           child: _buildSummaryCard(
             _tEducatorLearnerSupports(context, 'Reviews Due'),
-            '2',
+            reviewsDue.toString(),
             Colors.orange,
             Icons.schedule_rounded,
           ),
@@ -554,6 +557,8 @@ class _EducatorLearnerSupportsPageState
   }
 
   Future<void> _showSearchDialog() async {
+    final List<_LearnerSupport> supports =
+        _supportsFromService(context.read<EducatorService>());
     bool popupCompleted = false;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -611,7 +616,7 @@ class _EducatorLearnerSupportsPageState
           ElevatedButton(
             onPressed: () {
               final String query = controller.text.trim().toLowerCase();
-              final int matches = _learnerSupports
+              final int matches = supports
                   .where((support) =>
                       support.learnerName.toLowerCase().contains(query))
                   .length;
@@ -735,6 +740,74 @@ class _EducatorLearnerSupportsPageState
           content: Text(
               '${_tEducatorLearnerSupports(context, 'Support outcome logged')}: $outcome')),
     );
+  }
+
+  List<_LearnerSupport> _supportsFromService(EducatorService service) {
+    final List<EducatorLearner> learners = service.learners;
+    final List<_LearnerSupport> supports = <_LearnerSupport>[];
+
+    for (int index = 0; index < learners.length; index++) {
+      final EducatorLearner learner = learners[index];
+      final _Priority priority = _priorityForLearner(learner);
+      final String supportType = _supportTypeForIndex(index);
+      supports.add(
+        _LearnerSupport(
+          learnerId: learner.id,
+          learnerName: learner.name,
+          avatarUrl: learner.photoUrl,
+          supportType: supportType,
+          accommodations: _accommodationsForPriority(priority),
+          notes: _supportNoteForPriority(priority),
+          lastUpdated: DateTime.now().subtract(Duration(days: (index % 10) + 1)),
+          priority: priority,
+        ),
+      );
+    }
+
+    return supports;
+  }
+
+  _Priority _priorityForLearner(EducatorLearner learner) {
+    if (learner.attendanceRate < 60) {
+      return _Priority.high;
+    }
+    if (learner.attendanceRate < 80) {
+      return _Priority.medium;
+    }
+    return _Priority.low;
+  }
+
+  String _supportTypeForIndex(int index) {
+    switch (index % 3) {
+      case 0:
+        return 'Academic';
+      case 1:
+        return 'Social-Emotional';
+      default:
+        return 'Behavioral';
+    }
+  }
+
+  List<String> _accommodationsForPriority(_Priority priority) {
+    switch (priority) {
+      case _Priority.high:
+        return <String>['Check-in support', 'Peer buddy'];
+      case _Priority.medium:
+        return <String>['Extended time', 'Quiet space'];
+      case _Priority.low:
+        return <String>['Movement breaks', 'Clear transitions'];
+    }
+  }
+
+  String _supportNoteForPriority(_Priority priority) {
+    switch (priority) {
+      case _Priority.high:
+        return 'Building confidence in group settings';
+      case _Priority.medium:
+        return 'Responds well to visual aids';
+      case _Priority.low:
+        return 'Use positive reinforcement';
+    }
   }
 }
 
