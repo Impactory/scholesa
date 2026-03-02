@@ -5,6 +5,57 @@ import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqRoleSwitcherEs = <String, String>{
+  'Role Impersonation': 'Suplantación de rol',
+  'Test the platform as different user roles':
+    'Prueba la plataforma como diferentes roles de usuario',
+  'Your actual role': 'Tu rol real',
+  'HQ': 'HQ',
+  'Viewing as': 'Viendo como',
+  'Exit impersonation': 'Salir de la suplantación',
+  'Learner': 'Estudiante',
+  'View missions, habits, and portfolio':
+    'Ver misiones, hábitos y portafolio',
+  "Today's schedule": 'Horario de hoy',
+  'Mission progress': 'Progreso de misiones',
+  'Habit tracking': 'Seguimiento de hábitos',
+  'Portfolio showcase': 'Muestra de portafolio',
+  'Educator': 'Educador',
+  'Manage classes and review submissions':
+    'Gestionar clases y revisar entregas',
+  'Class rosters': 'Listas de clase',
+  'Attendance': 'Asistencia',
+  'Mission planning': 'Planificación de misiones',
+  'Student reviews': 'Revisiones de estudiantes',
+  'Parent': 'Familia',
+  'Monitor child progress and billing':
+    'Monitorear progreso del niño y facturación',
+  'Child summary': 'Resumen del niño',
+  'Schedule view': 'Vista de horario',
+  'Portfolio highlights': 'Aspectos destacados del portafolio',
+  'Billing & invoices': 'Facturación y facturas',
+  'Site Admin': 'Admin de sede',
+  'Manage site operations': 'Gestionar operaciones de la sede',
+  'Check-in/out': 'Registro entrada/salida',
+  'Provisioning': 'Aprovisionamiento',
+  'Incidents': 'Incidentes',
+  'Site billing': 'Facturación de sede',
+  'Partner': 'Socio',
+  'Marketplace and contracts': 'Marketplace y contratos',
+  'Listings': 'Publicaciones',
+  'Contracts': 'Contratos',
+  'Payouts': 'Pagos',
+  'Impersonation is logged for audit purposes. Any actions taken will be attributed to your HQ account.':
+    'La suplantación se registra para fines de auditoría. Cualquier acción realizada se atribuirá a tu cuenta HQ.',
+  'Active': 'Activo',
+};
+
+String _tHqRoleSwitcher(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqRoleSwitcherEs[input] ?? input;
+}
+
 /// HQ Role Switcher Page
 /// Allows HQ users to impersonate other roles for testing/support
 class HqRoleSwitcherPage extends StatelessWidget {
@@ -31,7 +82,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
               _buildHeader(context),
               _buildCurrentRoleInfo(context),
               Expanded(child: _buildRoleGrid(context)),
-              _buildFooterNote(),
+              _buildFooterNote(context),
             ],
           ),
         ),
@@ -90,14 +141,15 @@ class HqRoleSwitcherPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Role Impersonation',
+                  _tHqRoleSwitcher(context, 'Role Impersonation'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: ScholesaColors.hq,
                       ),
                 ),
                 Text(
-                  'Test the platform as different user roles',
+                  _tHqRoleSwitcher(
+                      context, 'Test the platform as different user roles'),
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
@@ -140,12 +192,13 @@ class HqRoleSwitcherPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Your actual role',
+                    Text(
+                      _tHqRoleSwitcher(context, 'Your actual role'),
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     Text(
-                      currentRole?.name.toUpperCase() ?? 'HQ',
+                      currentRole?.name.toUpperCase() ??
+                          _tHqRoleSwitcher(context, 'HQ'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: currentRole?.name.roleColor ?? ScholesaColors.hq,
@@ -177,7 +230,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Viewing as ${viewingAs.name}',
+                        '${_tHqRoleSwitcher(context, 'Viewing as')} ${viewingAs.name}',
                         style: TextStyle(
                           color: viewingAs.name.roleColor,
                           fontWeight: FontWeight.w600,
@@ -201,7 +254,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
                     );
                     appState.clearImpersonation();
                   },
-                  tooltip: 'Exit impersonation',
+                  tooltip: _tHqRoleSwitcher(context, 'Exit impersonation'),
                 ),
               ],
             ],
@@ -283,7 +336,7 @@ class HqRoleSwitcherPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFooterNote() {
+  Widget _buildFooterNote(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(20),
@@ -300,8 +353,8 @@ class HqRoleSwitcherPage extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Impersonation is logged for audit purposes. '
-              'Any actions taken will be attributed to your HQ account.',
+              _tHqRoleSwitcher(context,
+                  'Impersonation is logged for audit purposes. Any actions taken will be attributed to your HQ account.'),
               style: TextStyle(
                 fontSize: 13,
                 color: ScholesaColors.warning.withValues(alpha: 0.8),
@@ -421,7 +474,7 @@ class _RoleCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
-                                option.title,
+                                _tHqRoleSwitcher(context, option.title),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -429,7 +482,7 @@ class _RoleCard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                option.description,
+                                _tHqRoleSwitcher(context, option.description),
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -448,7 +501,7 @@ class _RoleCard extends StatelessWidget {
                               color: roleColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
                                 Icon(
@@ -458,7 +511,7 @@ class _RoleCard extends StatelessWidget {
                                 ),
                                 SizedBox(width: 4),
                                 Text(
-                                  'Active',
+                                  _tHqRoleSwitcher(context, 'Active'),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -491,7 +544,7 @@ class _RoleCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            feature,
+                            _tHqRoleSwitcher(context, feature),
                             style: TextStyle(
                               fontSize: 12,
                               color: roleColor,

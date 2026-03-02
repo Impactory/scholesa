@@ -2,6 +2,46 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqCurriculumEs = <String, String>{
+  'Curriculum Manager': 'Gestor curricular',
+  'Published': 'Publicado',
+  'In Review': 'En revisión',
+  'Drafts': 'Borradores',
+  'New Curriculum': 'Nuevo currículo',
+  'No': 'No',
+  'curricula': 'currículos',
+  'Updated': 'Actualizado',
+  'Version': 'Versión',
+  'Status': 'Estado',
+  'Close': 'Cerrar',
+  'Opening curriculum editor...': 'Abriendo editor curricular...',
+  'Edit': 'Editar',
+  'Rubric applied to this curriculum':
+      'Rúbrica aplicada a este currículo',
+  'Apply Rubric': 'Aplicar rúbrica',
+  'Parent summary shared': 'Resumen para familias compartido',
+  'Share Parent Summary': 'Compartir resumen para familias',
+  'Title': 'Título',
+  'Pillar': 'Pilar',
+  'Future Skills': 'Habilidades del futuro',
+  'Leadership & Agency': 'Liderazgo y agencia',
+  'Impact & Innovation': 'Impacto e innovación',
+  'Cancel': 'Cancelar',
+  'Curriculum created': 'Currículo creado',
+  'Create': 'Crear',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'draft': 'borrador',
+  'review': 'revisión',
+  'published': 'publicado',
+};
+
+String _tHqCurriculum(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqCurriculumEs[input] ?? input;
+}
+
 /// HQ Curriculum page for managing curriculum versions and rubrics
 /// Based on docs/45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md
 class HqCurriculumPage extends StatefulWidget {
@@ -91,7 +131,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Curriculum Manager'),
+        title: Text(_tHqCurriculum(context, 'Curriculum Manager')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -116,10 +156,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const <Widget>[
-            Tab(text: 'Published'),
-            Tab(text: 'In Review'),
-            Tab(text: 'Drafts'),
+          tabs: <Widget>[
+            Tab(text: _tHqCurriculum(context, 'Published')),
+            Tab(text: _tHqCurriculum(context, 'In Review')),
+            Tab(text: _tHqCurriculum(context, 'Drafts')),
           ],
         ),
       ),
@@ -137,7 +177,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         },
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New Curriculum'),
+        label: Text(_tHqCurriculum(context, 'New Curriculum')),
       ),
       body: TabBarView(
         controller: _tabController,
@@ -163,7 +203,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 size: 64,
                 color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('No ${status.name} curricula',
+            Text(
+              '${_tHqCurriculum(context, 'No')} ${_tHqCurriculum(context, status.name)} ${_tHqCurriculum(context, 'curricula')}',
                 style: const TextStyle(color: ScholesaColors.textSecondary)),
           ],
         ),
@@ -203,7 +244,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        Text(curriculum.pillar,
+                        Text(_tHqCurriculum(context, curriculum.pillar),
                             style: TextStyle(
                                 fontSize: 12,
                                 color: _getPillarColor(curriculum.pillar))),
@@ -225,7 +266,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'Updated ${_formatTime(curriculum.lastUpdated)}',
+                '${_tHqCurriculum(context, 'Updated')} ${_formatTime(curriculum.lastUpdated)}',
                 style: const TextStyle(
                     fontSize: 12, color: ScholesaColors.textSecondary),
               ),
@@ -298,12 +339,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(curriculum.pillar,
+            Text(_tHqCurriculum(context, curriculum.pillar),
                 style: TextStyle(color: _getPillarColor(curriculum.pillar))),
             const SizedBox(height: 16),
-            _buildDetailRow('Version', curriculum.version),
-            _buildDetailRow('Status', curriculum.status.name.toUpperCase()),
-            _buildDetailRow('Updated', _formatTime(curriculum.lastUpdated)),
+            _buildDetailRow(_tHqCurriculum(context, 'Version'), curriculum.version),
+            _buildDetailRow(_tHqCurriculum(context, 'Status'),
+              _tHqCurriculum(context, curriculum.status.name).toUpperCase()),
+            _buildDetailRow(
+              _tHqCurriculum(context, 'Updated'), _formatTime(curriculum.lastUpdated)),
             const SizedBox(height: 24),
             Row(
               children: <Widget>[
@@ -321,7 +364,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       );
                       Navigator.pop(context);
                     },
-                    child: const Text('Close'),
+                    child: Text(_tHqCurriculum(context, 'Close')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -339,11 +382,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Opening curriculum editor...')),
+                        SnackBar(
+                            content: Text(_tHqCurriculum(
+                                context, 'Opening curriculum editor...'))),
                       );
                     },
-                    child: const Text('Edit'),
+                    child: Text(_tHqCurriculum(context, 'Edit')),
                   ),
                 ),
               ],
@@ -362,12 +406,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     },
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Rubric applied to this curriculum')),
+                    SnackBar(
+                        content: Text(_tHqCurriculum(
+                            context, 'Rubric applied to this curriculum'))),
                   );
                 },
                 icon: const Icon(Icons.rule_rounded),
-                label: const Text('Apply Rubric'),
+                label: Text(_tHqCurriculum(context, 'Apply Rubric')),
               ),
             ),
             const SizedBox(height: 8),
@@ -384,11 +429,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     },
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Parent summary shared')),
+                    SnackBar(
+                        content:
+                            Text(_tHqCurriculum(context, 'Parent summary shared'))),
                   );
                 },
                 icon: const Icon(Icons.share_rounded),
-                label: const Text('Share Parent Summary'),
+                label: Text(_tHqCurriculum(context, 'Share Parent Summary')),
               ),
             ),
           ],
@@ -416,26 +463,31 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       context: context,
       builder: (BuildContext context) => AlertDialog(
         backgroundColor: ScholesaColors.surface,
-        title: const Text('New Curriculum'),
+        title: Text(_tHqCurriculum(context, 'New Curriculum')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const TextField(
+          TextField(
                 decoration: InputDecoration(
-                    labelText: 'Title', border: OutlineInputBorder())),
+              labelText: _tHqCurriculum(context, 'Title'),
+              border: const OutlineInputBorder())),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                  labelText: 'Pillar', border: OutlineInputBorder()),
-              items: const <DropdownMenuItem<String>>[
+            decoration: InputDecoration(
+              labelText: _tHqCurriculum(context, 'Pillar'),
+              border: const OutlineInputBorder()),
+            items: <DropdownMenuItem<String>>[
                 DropdownMenuItem<String>(
-                    value: 'Future Skills', child: Text('Future Skills')),
+              value: 'Future Skills',
+              child: Text(_tHqCurriculum(context, 'Future Skills'))),
                 DropdownMenuItem<String>(
                     value: 'Leadership & Agency',
-                    child: Text('Leadership & Agency')),
+              child:
+                Text(_tHqCurriculum(context, 'Leadership & Agency'))),
                 DropdownMenuItem<String>(
                     value: 'Impact & Innovation',
-                    child: Text('Impact & Innovation')),
+              child:
+                Text(_tHqCurriculum(context, 'Impact & Innovation'))),
               ],
               onChanged: (_) {},
             ),
@@ -454,7 +506,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               );
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: Text(_tHqCurriculum(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -475,9 +527,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               );
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Curriculum created')));
+                  SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))));
             },
-            child: const Text('Create'),
+            child: Text(_tHqCurriculum(context, 'Create')),
           ),
         ],
       ),
@@ -486,7 +538,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inHours < 24) return '${diff.inHours}${_tHqCurriculum(context, 'h ago')}';
+    return '${diff.inDays}${_tHqCurriculum(context, 'd ago')}';
   }
 }

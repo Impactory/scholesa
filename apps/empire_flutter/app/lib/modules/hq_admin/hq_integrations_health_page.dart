@@ -2,6 +2,35 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqIntegrationsEs = <String, String>{
+  'Integrations Health': 'Estado de integraciones',
+  'Attention Needed': 'Se requiere atención',
+  'All Systems Operational': 'Todos los sistemas operativos',
+  'healthy': 'saludables',
+  'warning': 'advertencia',
+  'errors': 'errores',
+  'total': 'total',
+  'Sites': 'Sedes',
+  'integrations': 'integraciones',
+  'Last sync:': 'Última sincronización:',
+  'Retry': 'Reintentar',
+  'just now': 'justo ahora',
+  'Integrations health refreshed':
+      'Estado de integraciones actualizado',
+  'recovered successfully': 'recuperada correctamente',
+  '5 min ago': '5 min atrás',
+  '15 min ago': '15 min atrás',
+  '2 hrs ago': '2 h atrás',
+  '30 min ago': '30 min atrás',
+  'Failed': 'Falló',
+};
+
+String _tHqIntegrations(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqIntegrationsEs[input] ?? input;
+}
+
 /// HQ Integrations Health page for monitoring all site integrations
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class HqIntegrationsHealthPage extends StatefulWidget {
@@ -54,7 +83,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Integrations Health'),
+        title: Text(_tHqIntegrations(context, 'Integrations Health')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
@@ -123,13 +152,15 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            hasIssues ? 'Attention Needed' : 'All Systems Operational',
+            hasIssues
+                ? _tHqIntegrations(context, 'Attention Needed')
+                : _tHqIntegrations(context, 'All Systems Operational'),
             style: TextStyle(
                 fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(
-            '$healthyCount healthy · $warningCount warning · $errorCount errors ($totalCount total)',
+            '$healthyCount ${_tHqIntegrations(context, 'healthy')} · $warningCount ${_tHqIntegrations(context, 'warning')} · $errorCount ${_tHqIntegrations(context, 'errors')} ($totalCount ${_tHqIntegrations(context, 'total')})',
             style: TextStyle(
                 fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
           ),
@@ -143,8 +174,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'Sites',
+        Text(
+          _tHqIntegrations(context, 'Sites'),
           style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -177,7 +208,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         },
         title: Text(site.siteName,
             style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('${site.integrations.length} integrations'),
+        subtitle: Text(
+          '${site.integrations.length} ${_tHqIntegrations(context, 'integrations')}'),
         leading: _buildSiteStatusIcon(site),
         children: site.integrations
             .map((integration) => _buildIntegrationTile(context, integration))
@@ -232,7 +264,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
       ),
       title: Text(integration.name),
-      subtitle: Text('Last sync: ${integration.lastSync}'),
+        subtitle: Text(
+          '${_tHqIntegrations(context, 'Last sync:')} ${_tHqIntegrations(context, integration.lastSync)}'),
       trailing: integration.status == _Status.error
           ? TextButton(
               onPressed: () {
@@ -247,7 +280,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
                 );
                 _retryIntegration(integration.name);
               },
-              child: const Text('Retry'),
+              child: Text(_tHqIntegrations(context, 'Retry')),
             )
           : null,
     );
@@ -261,20 +294,25 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
             site.integrations.map((_Integration integration) {
           if (integration.status == _Status.error) {
             return integration.copyWith(
-                status: _Status.warning, lastSync: 'just now');
+                status: _Status.warning,
+                lastSync: _tHqIntegrations(context, 'just now'));
           }
           if (integration.status == _Status.warning) {
             return integration.copyWith(
-                status: _Status.healthy, lastSync: 'just now');
+                status: _Status.healthy,
+                lastSync: _tHqIntegrations(context, 'just now'));
           }
-          return integration.copyWith(lastSync: 'just now');
+          return integration.copyWith(
+              lastSync: _tHqIntegrations(context, 'just now'));
         }).toList();
         _sites[siteIndex] = site.copyWith(integrations: refreshedIntegrations);
       }
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Integrations health refreshed')),
+      SnackBar(
+          content: Text(
+              _tHqIntegrations(context, 'Integrations health refreshed'))),
     );
   }
 
@@ -286,14 +324,17 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
             site.integrations.map((_Integration integration) {
           if (integration.name != integrationName) return integration;
           return integration.copyWith(
-              status: _Status.healthy, lastSync: 'just now');
+              status: _Status.healthy,
+              lastSync: _tHqIntegrations(context, 'just now'));
         }).toList();
         _sites[siteIndex] = site.copyWith(integrations: updated);
       }
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$integrationName recovered successfully')),
+      SnackBar(
+          content: Text(
+              '$integrationName ${_tHqIntegrations(context, 'recovered successfully')}')),
     );
   }
 }
