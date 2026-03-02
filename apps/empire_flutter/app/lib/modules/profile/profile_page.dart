@@ -5,6 +5,63 @@ import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _profileEs = <String, String>{
+  'Profile': 'Perfil',
+  'User': 'Usuario',
+  'Settings': 'Configuración',
+  'Notifications': 'Notificaciones',
+  'Manage notification preferences': 'Gestiona las preferencias de notificación',
+  'Privacy & Security': 'Privacidad y seguridad',
+  'Password, two-factor auth': 'Contraseña, autenticación en dos pasos',
+  'Language': 'Idioma',
+  'English': 'Español',
+  'Appearance': 'Apariencia',
+  'Light mode': 'Modo claro',
+  'Sync & Data': 'Sincronización y datos',
+  'Last synced: Just now': 'Última sincronización: ahora mismo',
+  'About': 'Acerca de',
+  'Help & Support': 'Ayuda y soporte',
+  'Terms of Service': 'Términos del servicio',
+  'Privacy Policy': 'Política de privacidad',
+  'Version': 'Versión',
+  'Sign Out': 'Cerrar sesión',
+  'Are you sure you want to sign out?':
+    '¿Seguro que deseas cerrar sesión?',
+  'Cancel': 'Cancelar',
+  'Edit Profile': 'Editar perfil',
+  'Display Name': 'Nombre visible',
+  'Save': 'Guardar',
+  'No profile changes applied': 'No se aplicaron cambios al perfil',
+  'Profile update request saved for':
+    'Solicitud de actualización del perfil guardada para',
+  'Close': 'Cerrar',
+  'Open': 'Abrir',
+  'opened': 'abierto',
+  'Open notification preferences and delivery channels.':
+    'Abre preferencias de notificación y canales de entrega.',
+  'Review password, MFA, and device session settings.':
+    'Revisa contraseña, MFA y configuración de sesiones del dispositivo.',
+  'Choose your preferred language for the app.':
+    'Elige tu idioma preferido para la app.',
+  'Switch between light and dark display modes.':
+    'Cambia entre modos de visualización claro y oscuro.',
+  'Manage sync cadence and data usage options.':
+    'Gestiona la frecuencia de sincronización y opciones de uso de datos.',
+  'Open help docs and contact support.':
+    'Abre documentos de ayuda y contacta soporte.',
+  'Review terms and platform usage rules.':
+    'Revisa términos y reglas de uso de la plataforma.',
+  'Review data handling and privacy commitments.':
+    'Revisa el manejo de datos y compromisos de privacidad.',
+  'App version 1.0.0 (Build 1).': 'Versión de la app 1.0.0 (Build 1).',
+};
+
+String _tProfile(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _profileEs[input] ?? input;
+}
+
 /// Profile Page - User profile and settings
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -68,7 +125,7 @@ class ProfilePage extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Profile',
+              _tProfile(context, 'Profile'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: roleColor,
@@ -186,10 +243,10 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Text(
-              'Settings',
+              _tProfile(context, 'Settings'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -198,8 +255,8 @@ class ProfilePage extends StatelessWidget {
           ),
           _SettingsTile(
             icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            subtitle: 'Manage notification preferences',
+            title: _tProfile(context, 'Notifications'),
+            subtitle: _tProfile(context, 'Manage notification preferences'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -209,15 +266,16 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Notifications',
-                message: 'Open notification preferences and delivery channels.',
+                title: _tProfile(context, 'Notifications'),
+                message: _tProfile(
+                    context, 'Open notification preferences and delivery channels.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: 'Privacy & Security',
-            subtitle: 'Password, two-factor auth',
+            title: _tProfile(context, 'Privacy & Security'),
+            subtitle: _tProfile(context, 'Password, two-factor auth'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -227,15 +285,16 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Privacy & Security',
-                message: 'Review password, MFA, and device session settings.',
+                title: _tProfile(context, 'Privacy & Security'),
+                message: _tProfile(
+                    context, 'Review password, MFA, and device session settings.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.language,
-            title: 'Language',
-            subtitle: 'English',
+            title: _tProfile(context, 'Language'),
+            subtitle: _tProfile(context, 'English'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -245,15 +304,16 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Language',
-                message: 'Choose your preferred language for the app.',
+                title: _tProfile(context, 'Language'),
+                message:
+                    _tProfile(context, 'Choose your preferred language for the app.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.dark_mode_outlined,
-            title: 'Appearance',
-            subtitle: 'Light mode',
+            title: _tProfile(context, 'Appearance'),
+            subtitle: _tProfile(context, 'Light mode'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -263,15 +323,16 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Appearance',
-                message: 'Switch between light and dark display modes.',
+                title: _tProfile(context, 'Appearance'),
+                message:
+                    _tProfile(context, 'Switch between light and dark display modes.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.cloud_sync_outlined,
-            title: 'Sync & Data',
-            subtitle: 'Last synced: Just now',
+            title: _tProfile(context, 'Sync & Data'),
+            subtitle: _tProfile(context, 'Last synced: Just now'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -281,8 +342,9 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Sync & Data',
-                message: 'Manage sync cadence and data usage options.',
+                title: _tProfile(context, 'Sync & Data'),
+                message:
+                    _tProfile(context, 'Manage sync cadence and data usage options.'),
               );
             },
           ),
@@ -297,10 +359,10 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Text(
-              'About',
+              _tProfile(context, 'About'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -309,7 +371,7 @@ class ProfilePage extends StatelessWidget {
           ),
           _SettingsTile(
             icon: Icons.help_outline,
-            title: 'Help & Support',
+            title: _tProfile(context, 'Help & Support'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -319,14 +381,14 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Help & Support',
-                message: 'Open help docs and contact support.',
+                title: _tProfile(context, 'Help & Support'),
+                message: _tProfile(context, 'Open help docs and contact support.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.description_outlined,
-            title: 'Terms of Service',
+            title: _tProfile(context, 'Terms of Service'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -334,14 +396,15 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Terms of Service',
-                message: 'Review terms and platform usage rules.',
+                title: _tProfile(context, 'Terms of Service'),
+                message:
+                    _tProfile(context, 'Review terms and platform usage rules.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
-            title: 'Privacy Policy',
+            title: _tProfile(context, 'Privacy Policy'),
             onTap: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -351,14 +414,15 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Privacy Policy',
-                message: 'Review data handling and privacy commitments.',
+                title: _tProfile(context, 'Privacy Policy'),
+                message: _tProfile(
+                    context, 'Review data handling and privacy commitments.'),
               );
             },
           ),
           _SettingsTile(
             icon: Icons.info_outline,
-            title: 'Version',
+            title: _tProfile(context, 'Version'),
             subtitle: '1.0.0 (Build 1)',
             onTap: () {
               TelemetryService.instance.logEvent(
@@ -369,8 +433,8 @@ class ProfilePage extends StatelessWidget {
               );
               _showFeatureDialog(
                 context,
-                title: 'Version',
-                message: 'App version 1.0.0 (Build 1).',
+                title: _tProfile(context, 'Version'),
+                message: _tProfile(context, 'App version 1.0.0 (Build 1).'),
               );
             },
           ),
@@ -389,8 +453,9 @@ class ProfilePage extends StatelessWidget {
             final bool? confirmed = await showDialog<bool>(
               context: context,
               builder: (BuildContext context) => AlertDialog(
-                title: const Text('Sign Out'),
-                content: const Text('Are you sure you want to sign out?'),
+                title: Text(_tProfile(context, 'Sign Out')),
+                content: Text(
+                    _tProfile(context, 'Are you sure you want to sign out?')),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
@@ -402,7 +467,7 @@ class ProfilePage extends StatelessWidget {
                       );
                       Navigator.pop(context, false);
                     },
-                    child: const Text('Cancel'),
+                    child: Text(_tProfile(context, 'Cancel')),
                   ),
                   TextButton(
                     onPressed: () {
@@ -417,7 +482,7 @@ class ProfilePage extends StatelessWidget {
                     style: TextButton.styleFrom(
                       foregroundColor: ScholesaColors.error,
                     ),
-                    child: const Text('Sign Out'),
+                    child: Text(_tProfile(context, 'Sign Out')),
                   ),
                 ],
               ),
@@ -437,7 +502,7 @@ class ProfilePage extends StatelessWidget {
             }
           },
           icon: const Icon(Icons.logout),
-          label: const Text('Sign Out'),
+          label: Text(_tProfile(context, 'Sign Out')),
           style: OutlinedButton.styleFrom(
             foregroundColor: ScholesaColors.error,
             side:
@@ -471,11 +536,11 @@ class ProfilePage extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Edit Profile'),
+        title: Text(_tProfile(context, 'Edit Profile')),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Display Name',
+          decoration: InputDecoration(
+            labelText: _tProfile(context, 'Display Name'),
             border: OutlineInputBorder(),
           ),
         ),
@@ -488,7 +553,7 @@ class ProfilePage extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Cancel'),
+            child: Text(_tProfile(context, 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -504,13 +569,13 @@ class ProfilePage extends StatelessWidget {
                 SnackBar(
                   content: Text(
                     nameController.text.trim().isEmpty
-                        ? 'No profile changes applied'
-                        : 'Profile update request saved for ${nameController.text.trim()}',
+                        ? _tProfile(context, 'No profile changes applied')
+                        : '${_tProfile(context, 'Profile update request saved for')} ${nameController.text.trim()}',
                   ),
                 ),
               );
             },
-            child: const Text('Save'),
+            child: Text(_tProfile(context, 'Save')),
           ),
         ],
       ),
@@ -539,7 +604,7 @@ class ProfilePage extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
             },
-            child: const Text('Close'),
+            child: Text(_tProfile(context, 'Close')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -552,10 +617,11 @@ class ProfilePage extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$title opened')),
+                SnackBar(
+                    content: Text('$title ${_tProfile(context, 'opened')}')),
               );
             },
-            child: const Text('Open'),
+            child: Text(_tProfile(context, 'Open')),
           ),
         ],
       ),
