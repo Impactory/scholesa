@@ -743,6 +743,11 @@ class AiCoachRequest {
         'mode': mode.name,
         if (sessionOccurrenceId != null)
           'sessionOccurrenceId': sessionOccurrenceId,
+        if (missionId != null) 'missionId': missionId,
+        if (checkpointId != null) 'checkpointId': checkpointId,
+        'conceptTags': conceptTags,
+        if (learnerState != null) 'learnerState': learnerState!.toMap(),
+        'recentEventsRef': recentEventsRef,
         'context': <String, dynamic>{
           if (missionId != null) 'missionId': missionId,
           if (checkpointId != null) 'checkpointId': checkpointId,
@@ -772,6 +777,13 @@ class AiCoachResponse {
     this.mvlReason,
     this.version = '1.0.0',
     this.aiHelpOpenedEventId,
+    this.traceId,
+    this.policyVersion,
+    this.safetyOutcome,
+    this.safetyReasonCode,
+    this.modelVersion,
+    this.voiceAudioUrl,
+    this.voiceAvailable = false,
   });
 
   final String message;
@@ -786,11 +798,20 @@ class AiCoachResponse {
   final String? mvlReason;
   final String version;
   final String? aiHelpOpenedEventId;
+  final String? traceId;
+  final String? policyVersion;
+  final String? safetyOutcome;
+  final String? safetyReasonCode;
+  final String? modelVersion;
+  final String? voiceAudioUrl;
+  final bool voiceAvailable;
 
   factory AiCoachResponse.fromMap(Map<String, dynamic> m) {
     final Map<String, dynamic>? risk = m['risk'] as Map<String, dynamic>?;
     final Map<String, dynamic>? mvl = m['mvl'] as Map<String, dynamic>?;
     final Map<String, dynamic>? meta = m['meta'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? metadata = m['metadata'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? tts = m['tts'] as Map<String, dynamic>?;
 
     return AiCoachResponse(
       message: m['message'] as String? ?? '',
@@ -816,6 +837,13 @@ class AiCoachResponse {
       mvlReason: mvl?['reason'] as String?,
       version: meta?['version'] as String? ?? '1.0.0',
       aiHelpOpenedEventId: meta?['aiHelpOpenedEventId'] as String?,
+      traceId: (metadata?['traceId'] ?? meta?['traceId']) as String?,
+      policyVersion: metadata?['policyVersion'] as String?,
+      safetyOutcome: metadata?['safetyOutcome'] as String?,
+      safetyReasonCode: metadata?['safetyReasonCode'] as String?,
+      modelVersion: metadata?['modelVersion'] as String?,
+      voiceAudioUrl: tts?['audioUrl'] as String?,
+      voiceAvailable: tts?['available'] as bool? ?? false,
     );
   }
 }

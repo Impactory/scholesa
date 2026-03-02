@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
+import 'voice_runtime_service.dart';
 import '../services/telemetry_service.dart';
 
 // ──────────────────────────────────────────────────────
@@ -41,19 +46,126 @@ class AiCoachWidget extends StatefulWidget {
 class _AiCoachWidgetState extends State<AiCoachWidget> {
   final TextEditingController _inputController = TextEditingController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
+  final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
   AiCoachMode _selectedMode = AiCoachMode.hint;
   bool _loading = false;
+  bool _isListening = false;
+  bool _speechAvailable = false;
+  bool _voiceOutputEnabled = true;
   AiCoachResponse? _lastResponse;
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_initializeVoiceStack());
+  }
+
+  Future<void> _initializeVoiceStack() async {
+    try {
+      final bool speechReady = await _speechToText.initialize(
+        onError: (_) {
+          if (!mounted) return;
+          setState(() => _isListening = false);
+        },
+        onStatus: (String status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => _isListening = false);
+          }
+        },
+      );
+      await _flutterTts.setSpeechRate(0.45);
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.setPitch(1.0);
+      if (!mounted) return;
+      setState(() => _speechAvailable = speechReady);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _speechAvailable = false);
+    }
+  }
+
+  @override
   void dispose() {
+    unawaited(_speechToText.stop());
+    unawaited(_flutterTts.stop());
     _inputController.dispose();
     super.dispose();
   }
 
+  Future<void> _toggleListening() async {
+    if (_loading || !_speechAvailable) return;
+    if (_isListening) {
+      await _speechToText.stop();
+      if (!mounted) return;
+      setState(() => _isListening = false);
+      return;
+    }
+
+    final bool started = await _speechToText.listen(
+      onResult: (result) {
+        if (!mounted) return;
+        setState(() {
+          _inputController.text = result.recognizedWords;
+          _inputController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _inputController.text.length),
+          );
+        });
+
+        if (result.finalResult) {
+          TelemetryService.instance.logEvent(
+            event: 'voice.transcribe',
+            metadata: <String, dynamic>{
+              'source': 'speech_to_text',
+              'surface': 'ai_coach_widget',
+              'chars': result.recognizedWords.length,
+              'mode': _selectedMode.name,
+            },
+          );
+        }
+      },
+      listenMode: ListenMode.confirmation,
+      cancelOnError: true,
+      partialResults: true,
+    );
+
+    if (!mounted) return;
+    setState(() => _isListening = started);
+  }
+
+  Future<void> _speakResponse(AiCoachResponse response) async {
+    if (!_voiceOutputEnabled) return;
+    if (response.voiceAvailable &&
+        response.voiceAudioUrl != null &&
+        response.voiceAudioUrl!.isNotEmpty) {
+      TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        metadata: <String, dynamic>{
+          'source': 'voice_api_audio',
+          'surface': 'ai_coach_widget',
+          'traceId': response.traceId,
+        },
+      );
+      return;
+    }
+
+    await _flutterTts.stop();
+    await _flutterTts.speak(response.message);
+    await TelemetryService.instance.logEvent(
+      event: 'voice.tts',
+      metadata: <String, dynamic>{
+        'source': 'flutter_tts',
+        'surface': 'ai_coach_widget',
+        'chars': response.message.length,
+        'traceId': response.traceId,
+      },
+    );
+  }
+
   Future<void> _sendMessage() async {
     final String input = _inputController.text.trim();
-    if (_loading) return;
+    if (_loading || input.isEmpty) return;
 
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -67,9 +179,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     );
 
     setState(() {
-      if (input.isNotEmpty) {
-        _messages.add(_ChatMessage(text: input, isUser: true));
-      }
+      _messages.add(_ChatMessage(text: input, isUser: true));
       _loading = true;
       _inputController.clear();
     });
@@ -96,8 +206,38 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         studentInput: input.isNotEmpty ? input : null,
       );
 
-      final AiCoachResponse response =
-          await BosService.instance.callAiCoach(request);
+      AiCoachResponse? response;
+
+      try {
+        response = await VoiceRuntimeService.instance.requestCopilot(
+          VoiceCopilotRequest(
+            message: input,
+            locale: 'en',
+            gradeBand: widget.runtime.gradeBand,
+            context: <String, dynamic>{
+              'learnerId': widget.runtime.learnerId,
+              'siteId': widget.runtime.siteId,
+              'missionId': widget.missionId,
+              'checkpointId': widget.checkpointId,
+              'mode': _selectedMode.name,
+            },
+            voiceEnabled: true,
+            voiceOutput: _voiceOutputEnabled,
+          ),
+        );
+        await TelemetryService.instance.logEvent(
+          event: 'voice.message',
+          metadata: <String, dynamic>{
+            'surface': 'ai_coach_widget',
+            'mode': _selectedMode.name,
+            'traceId': response.traceId,
+            'safetyOutcome': response.safetyOutcome,
+            'policyVersion': response.policyVersion,
+          },
+        );
+      } catch (_) {
+        response = await BosService.instance.callAiCoach(request);
+      }
 
       setState(() {
         _lastResponse = response;
@@ -109,6 +249,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         _loading = false;
       });
 
+      await _speakResponse(response);
+
       // Emit ai_help_used (client-side tracking)
       widget.runtime.trackEvent(
         'ai_help_used',
@@ -118,6 +260,21 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'mode': _selectedMode.name,
           'mvlGateActive': response.mvlGateActive,
           'requiresExplainBack': response.requiresExplainBack,
+          'traceId': response.traceId,
+          'source': response.policyVersion == null ? 'bos_callable' : 'voice_api',
+        },
+      );
+
+      widget.runtime.trackEvent(
+        'ai_coach_response',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'mode': _selectedMode.name,
+          'traceId': response.traceId,
+          'policyVersion': response.policyVersion,
+          'safetyOutcome': response.safetyOutcome,
+          'mvlGateActive': response.mvlGateActive,
         },
       );
     } catch (e) {
@@ -267,6 +424,29 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             top: false,
             child: Row(
               children: <Widget>[
+                if (_speechAvailable)
+                  IconButton(
+                    onPressed: _loading ? null : _toggleListening,
+                    icon: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                    ),
+                    tooltip: _isListening ? 'Stop listening' : 'Use voice input',
+                  ),
+                IconButton(
+                  onPressed: _loading
+                      ? null
+                      : () {
+                          setState(() => _voiceOutputEnabled = !_voiceOutputEnabled);
+                        },
+                  icon: Icon(
+                    _voiceOutputEnabled
+                        ? Icons.volume_up_outlined
+                        : Icons.volume_off_outlined,
+                  ),
+                  tooltip: _voiceOutputEnabled
+                      ? 'Disable voice output'
+                      : 'Enable voice output',
+                ),
                 Expanded(
                   child: TextField(
                     controller: _inputController,
