@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../services/telemetry_service.dart';
+import './apps/empire_flutter/app/lib/services/telemetry_service.dart';
 import './event_types.dart';
 
 enum VoiceStatus { idle, listening, processing, speaking }

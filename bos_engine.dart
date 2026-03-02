@@ -1,7 +1,7 @@
 import 'dart:async';
-import '../../services/telemetry_service.dart';
-import '../telemetry/telemetry_models.dart';
-import '../safety/safety_guard.dart';
+import './apps/empire_flutter/app/lib/services/telemetry_service.dart';
+import './telemetry_models.dart';
+import './safety_guard.dart';
 
 /// B2) BOS States
 enum BosState {
