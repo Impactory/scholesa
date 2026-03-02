@@ -75,7 +75,7 @@ class ScholesaApp extends StatefulWidget {
 }
 
 class _ScholesaAppState extends State<ScholesaApp> {
-  static const List<LocalizationsDelegate<dynamic>> _localizationDelegates =
+    static final List<LocalizationsDelegate<dynamic>> _localizationDelegates =
       <LocalizationsDelegate<dynamic>>[
     GlobalMaterialLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,

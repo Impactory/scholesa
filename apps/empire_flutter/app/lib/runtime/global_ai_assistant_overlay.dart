@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import '../modules/educator/educator_service.dart';
 import '../services/telemetry_service.dart';
+import '../ui/localization/app_strings.dart';
 import 'ai_coach_widget.dart';
 import 'bos_models.dart';
 import 'learning_runtime_provider.dart';
@@ -36,7 +37,7 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
               padding: const EdgeInsets.only(right: 16, bottom: 16),
               child: FloatingActionButton(
                 heroTag: 'global_ai_assistant_fab',
-                tooltip: 'AI Assistant',
+                tooltip: AppStrings.of(context, 'assistant.tooltip'),
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
                 onPressed: () => _openAssistantSheet(
@@ -238,7 +239,7 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'AI Assistant',
+                    AppStrings.of(context, 'assistant.title'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: scheme.onSurface,
@@ -247,7 +248,7 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  tooltip: 'Close',
+                  tooltip: AppStrings.of(context, 'assistant.close'),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -267,11 +268,20 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                         'occurrence:${_sessionOccurrenceId!}',
                     ],
                   )
-                : const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                : Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          AppStrings.of(context, 'assistant.loading'),
+                        ),
+                      ],
                     ),
                   ),
           ),

@@ -13,6 +13,7 @@ import 'learning_runtime_provider.dart';
 import 'voice_runtime_service.dart';
 import '../services/telemetry_service.dart';
 import '../auth/app_state.dart';
+import '../ui/localization/app_strings.dart';
 
 // ──────────────────────────────────────────────────────
 // AI Coach Widget — Control Surface
@@ -71,6 +72,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _isSpeaking = false;
   final List<String> _learningGoals = <String>[];
   AiCoachResponse? _lastResponse;
+
+  String _t(String key) => AppStrings.of(context, key);
 
   @override
   void initState() {
@@ -241,8 +244,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Voice transcription unavailable. Please type your question.'),
+        SnackBar(
+          content: Text(_t('ai.voice.transcriptionUnavailable')),
           duration: Duration(seconds: 2),
         ),
       );
@@ -266,8 +269,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         setState(() => _uploadSttAvailable = true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission is required for voice input.'),
+          SnackBar(
+            content: Text(_t('ai.voice.microphonePermissionRequired')),
             duration: Duration(seconds: 2),
           ),
         );
@@ -373,13 +376,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   String _coachDirectiveForMode(AiCoachMode mode) {
     switch (mode) {
       case AiCoachMode.hint:
-        return 'Give one focused hint first, then ask a short guiding question.';
+        return _t('ai.directive.hint');
       case AiCoachMode.verify:
-        return 'Verify reasoning with evidence checks and ask for one concrete proof step.';
+        return _t('ai.directive.verify');
       case AiCoachMode.explain:
-        return 'Explain in simple steps and relate to one practical example.';
+        return _t('ai.directive.explain');
       case AiCoachMode.debug:
-        return 'Diagnose likely causes, suggest one small test, and ask what changed recently.';
+        return _t('ai.directive.debug');
     }
   }
 
@@ -394,14 +397,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   String _roleInstruction(UserRole role) {
     switch (role) {
       case UserRole.learner:
-        return 'Speak directly to a learner using supportive, age-appropriate coaching language.';
+        return _t('ai.role.learner');
       case UserRole.parent:
-        return 'Coach with parent-friendly phrasing that supports the learner without giving answers.';
+        return _t('ai.role.parent');
       case UserRole.educator:
       case UserRole.site:
       case UserRole.partner:
       case UserRole.hq:
-        return 'Respond as an instructional co-pilot with concise pedagogical suggestions.';
+        return _t('ai.role.staff');
     }
   }
 
@@ -517,18 +520,16 @@ Response style:
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Clear current goals?'),
-          content: const Text(
-            'This removes the in-session coaching goals memory for this assistant conversation.',
-          ),
+          title: Text(_t('ai.clearGoals.title')),
+          content: Text(_t('ai.clearGoals.body')),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(AppStrings.of(dialogContext, 'auth.cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Clear'),
+              child: Text(_t('ai.clear')),
             ),
           ],
         );
@@ -562,17 +563,17 @@ Response style:
 
   String _enrichCoachReply(String text) {
     final String trimmed = text.trim();
-    if (trimmed.isEmpty) return 'Let\'s try that again. What part feels most confusing right now?';
+    if (trimmed.isEmpty) return _t('ai.enrich.retryPrompt');
     if (trimmed.contains('?')) return trimmed;
     switch (_selectedMode) {
       case AiCoachMode.hint:
-        return '$trimmed\n\nWhat have you tried so far?';
+        return '$trimmed\n\n${_t('ai.enrich.hintFollowup')}';
       case AiCoachMode.verify:
-        return '$trimmed\n\nCan you show the evidence for your answer?';
+        return '$trimmed\n\n${_t('ai.enrich.verifyFollowup')}';
       case AiCoachMode.explain:
-        return '$trimmed\n\nHow would you explain that in your own words?';
+        return '$trimmed\n\n${_t('ai.enrich.explainFollowup')}';
       case AiCoachMode.debug:
-        return '$trimmed\n\nWhat changed right before the issue started?';
+        return '$trimmed\n\n${_t('ai.enrich.debugFollowup')}';
     }
   }
 
@@ -589,8 +590,8 @@ Response style:
     if (!mounted) return;
     setState(() => _isSpeaking = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Playback stopped'),
+      SnackBar(
+        content: Text(_t('ai.voice.playbackStopped')),
         duration: Duration(milliseconds: 1200),
       ),
     );
@@ -744,7 +745,7 @@ Response style:
     } catch (e) {
       setState(() {
         _messages.add(_ChatMessage(
-          text: 'Unable to reach AI Coach right now. Try again in a moment.',
+          text: _t('ai.error.unreachable'),
           isUser: false,
           isError: true,
         ));
@@ -777,7 +778,7 @@ Response style:
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            helpful ? 'Thanks for the feedback!' : 'Noted — we\'ll improve.'),
+            helpful ? _t('ai.feedback.thanks') : _t('ai.feedback.noted')),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -812,20 +813,20 @@ Response style:
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.amber.shade50,
+              color: theme.colorScheme.tertiaryContainer,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade300),
+              border: Border.all(color: theme.colorScheme.tertiary),
             ),
             child: Row(
               children: <Widget>[
                 Icon(Icons.verified_user,
-                    color: Colors.amber.shade700, size: 20),
+                    color: theme.colorScheme.onTertiaryContainer, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Verification active — show your understanding first.',
+                    _t('ai.banner.verification'),
                     style: theme.textTheme.bodySmall
-                        ?.copyWith(color: Colors.amber.shade900),
+                        ?.copyWith(color: theme.colorScheme.onTertiaryContainer),
                   ),
                 ),
               ],
@@ -847,7 +848,7 @@ Response style:
                 Row(
                   children: <Widget>[
                     Text(
-                      'Current goals',
+                      _t('ai.currentGoals'),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -867,7 +868,7 @@ Response style:
                           ),
                         ),
                         child: Text(
-                          'Clear goals',
+                          _t('ai.clearGoals.cta'),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -914,13 +915,13 @@ Response style:
                             color: theme.colorScheme.primary.withAlpha(128)),
                         const SizedBox(height: 12),
                         Text(
-                          'AI Coach',
+                          _t('ai.empty.title'),
                           style: theme.textTheme.titleMedium
                               ?.copyWith(color: theme.colorScheme.primary),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Select a mode and ask for help.\nI\'ll guide your thinking — not give answers.',
+                          _t('ai.empty.subtitle'),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant),
@@ -962,7 +963,9 @@ Response style:
                     icon: Icon(
                       _isListening ? Icons.mic : Icons.mic_none,
                     ),
-                    tooltip: _isListening ? 'Stop listening' : 'Use voice input',
+                    tooltip: _isListening
+                        ? _t('ai.voice.stopListening')
+                        : _t('ai.voice.useInput'),
                   ),
                 IconButton(
                   onPressed: (_loading || _isSpeaking)
@@ -976,15 +979,15 @@ Response style:
                         : Icons.volume_off_outlined,
                   ),
                   tooltip: _voiceOutputEnabled
-                      ? 'Disable voice output'
-                      : 'Enable voice output',
+                      ? _t('ai.voice.disableOutput')
+                      : _t('ai.voice.enableOutput'),
                 ),
                 Expanded(
                   child: TextField(
                     controller: _inputController,
                     enabled: !_isSpeaking,
                     decoration: InputDecoration(
-                      hintText: _isSpeaking ? 'Speaking…' : _modeHint(_selectedMode),
+                      hintText: _isSpeaking ? _t('ai.voice.speaking') : _modeHint(_selectedMode),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24)),
                       contentPadding: const EdgeInsets.symmetric(
@@ -1014,7 +1017,7 @@ Response style:
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Speaking…',
+                          _t('ai.voice.speaking'),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -1032,7 +1035,7 @@ Response style:
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: Text(
-                            'Tap to interrupt',
+                            _t('ai.voice.tapInterrupt'),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.w600,
@@ -1062,13 +1065,13 @@ Response style:
   String _modeHint(AiCoachMode mode) {
     switch (mode) {
       case AiCoachMode.hint:
-        return 'Ask for a hint...';
+        return _t('ai.mode.hintPlaceholder');
       case AiCoachMode.verify:
-        return 'Describe your approach to verify...';
+        return _t('ai.mode.verifyPlaceholder');
       case AiCoachMode.explain:
-        return 'What would you like explained?';
+        return _t('ai.mode.explainPlaceholder');
       case AiCoachMode.debug:
-        return 'Describe the issue you\'re seeing...';
+        return _t('ai.mode.debugPlaceholder');
     }
   }
 }
@@ -1091,7 +1094,7 @@ class _ModeSelector extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ChoiceChip(
-              label: Text(_modeLabel(mode)),
+              label: Text(_modeLabel(context, mode)),
               selected: isSelected,
               onSelected: (_) => onChanged(mode),
               avatar: Icon(_modeIcon(mode), size: 16),
@@ -1103,16 +1106,16 @@ class _ModeSelector extends StatelessWidget {
     );
   }
 
-  String _modeLabel(AiCoachMode mode) {
+  String _modeLabel(BuildContext context, AiCoachMode mode) {
     switch (mode) {
       case AiCoachMode.hint:
-        return 'Hint';
+        return AppStrings.of(context, 'ai.mode.hintLabel');
       case AiCoachMode.verify:
-        return 'Verify';
+        return AppStrings.of(context, 'ai.mode.verifyLabel');
       case AiCoachMode.explain:
-        return 'Explain';
+        return AppStrings.of(context, 'ai.mode.explainLabel');
       case AiCoachMode.debug:
-        return 'Debug';
+        return AppStrings.of(context, 'ai.mode.debugLabel');
     }
   }
 
@@ -1170,7 +1173,7 @@ class _ChatBubble extends StatelessWidget {
           color: isUser
               ? theme.colorScheme.primary
               : message.isError
-                  ? Colors.red.shade50
+                  ? theme.colorScheme.errorContainer
                   : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1194,12 +1197,12 @@ class _ChatBubble extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Icon(Icons.verified_user,
-                        size: 14, color: Colors.amber.shade700),
+                        size: 14, color: theme.colorScheme.tertiary),
                     const SizedBox(width: 4),
                     Text(
-                      'Verification required',
+                      AppStrings.of(context, 'ai.chat.verificationRequired'),
                       style: theme.textTheme.labelSmall
-                          ?.copyWith(color: Colors.amber.shade700),
+                          ?.copyWith(color: theme.colorScheme.tertiary),
                     ),
                   ],
                 ),
@@ -1244,7 +1247,10 @@ class _ChatBubble extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text('Helpful?', style: theme.textTheme.labelSmall),
+                    Text(
+                      AppStrings.of(context, 'ai.chat.helpful'),
+                      style: theme.textTheme.labelSmall,
+                    ),
                     const SizedBox(width: 8),
                     InkWell(
                       onTap: () => onFeedback!(true),
