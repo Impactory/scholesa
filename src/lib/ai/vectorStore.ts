@@ -8,7 +8,7 @@
  * - **Firestore Vector Search** (primary choice - no extra service)
  * - Pinecone / Weaviate (alternatives if Firestore doesn't meet needs)
  * 
- * Implementation Status: STUB - Ready for Phase 2
+ * Implementation Status: Active internal vector retrieval and indexing service
  */
 
 import { collection, addDoc, query, where, getDocs, Timestamp, doc, deleteDoc, updateDoc, limit } from 'firebase/firestore';
