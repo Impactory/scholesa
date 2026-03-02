@@ -5,6 +5,46 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'mission_models.dart';
 import 'mission_service.dart';
 
+const Map<String, String> _missionsEs = <String, String>{
+  'My Missions': 'Mis misiones',
+  'Learn, grow, and level up!': '¡Aprende, crece y sube de nivel!',
+  'to next level': 'para el siguiente nivel',
+  'Completed': 'Completadas',
+  'Day Streak': 'Racha de días',
+  'Active': 'Activas',
+  'All': 'Todas',
+  'Available': 'Disponibles',
+  'In Progress': 'En progreso',
+  'No missions available': 'No hay misiones disponibles',
+  'Check back soon for new challenges!':
+      '¡Vuelve pronto para nuevos desafíos!',
+  'No active missions': 'No hay misiones activas',
+  'Start a mission to begin your journey!':
+      '¡Inicia una misión para comenzar tu camino!',
+  'No completed missions yet': 'Aún no hay misiones completadas',
+  'Complete missions to see them here!':
+      '¡Completa misiones para verlas aquí!',
+  'No missions': 'Sin misiones',
+  'steps': 'pasos',
+  'Steps': 'Pasos',
+  'Description': 'Descripción',
+  "Skills You'll Learn": 'Habilidades que aprenderás',
+  'Mission Steps': 'Pasos de la misión',
+  'Educator Feedback': 'Comentarios del educador',
+  'Started': 'Iniciada',
+  'Start Mission': 'Iniciar misión',
+  'Unable to submit mission right now':
+      'No se puede enviar la misión en este momento',
+  'Submitted': 'Enviada',
+  'Submit for Review': 'Enviar para revisión',
+};
+
+String _tMissions(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _missionsEs[input] ?? input;
+}
+
 /// Learner Missions Page
 /// Beautiful colorful UI for learners to discover and complete missions
 class MissionsPage extends StatefulWidget {
@@ -109,14 +149,14 @@ class _MissionsPageState extends State<MissionsPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'My Missions',
+                _tMissions(context, 'My Missions'),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFFF59E0B),
                     ),
               ),
               Text(
-                'Learn, grow, and level up!',
+                _tMissions(context, 'Learn, grow, and level up!'),
                 style: TextStyle(color: context.schTextSecondary, fontSize: 14),
               ),
             ],
@@ -190,7 +230,7 @@ class _MissionsPageState extends State<MissionsPage>
                               ),
                             ),
                             Text(
-                              '${progress.xpToNextLevel} to next level',
+                              '${progress.xpToNextLevel} ${_tMissions(context, 'to next level')}',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 12,
@@ -221,17 +261,17 @@ class _MissionsPageState extends State<MissionsPage>
                   _ProgressStat(
                     icon: Icons.check_circle,
                     value: '${progress.missionsCompleted}',
-                    label: 'Completed',
+                    label: _tMissions(context, 'Completed'),
                   ),
                   _ProgressStat(
                     icon: Icons.local_fire_department,
                     value: '${progress.currentStreak}',
-                    label: 'Day Streak',
+                    label: _tMissions(context, 'Day Streak'),
                   ),
                   _ProgressStat(
                     icon: Icons.play_circle,
                     value: '${service.activeMissions.length}',
-                    label: 'Active',
+                    label: _tMissions(context, 'Active'),
                   ),
                 ],
               ),
@@ -252,7 +292,7 @@ class _MissionsPageState extends State<MissionsPage>
             child: Row(
               children: <Widget>[
                 _PillarChip(
-                  label: 'All',
+                  label: _tMissions(context, 'All'),
                   emoji: '🎯',
                   selected: service.pillarFilter == null,
                   onTap: () {
@@ -306,10 +346,10 @@ class _MissionsPageState extends State<MissionsPage>
         ),
         labelColor: Colors.white,
         unselectedLabelColor: context.schTextSecondary,
-        tabs: const <Widget>[
-          Tab(text: 'Available'),
-          Tab(text: 'In Progress'),
-          Tab(text: 'Completed'),
+        tabs: <Widget>[
+          Tab(text: _tMissions(context, 'Available')),
+          Tab(text: _tMissions(context, 'In Progress')),
+          Tab(text: _tMissions(context, 'Completed')),
         ],
       ),
     );
@@ -370,19 +410,19 @@ class _MissionsPageState extends State<MissionsPage>
 
     switch (status) {
       case MissionStatus.notStarted:
-        title = 'No missions available';
-        subtitle = 'Check back soon for new challenges!';
+        title = _tMissions(context, 'No missions available');
+        subtitle = _tMissions(context, 'Check back soon for new challenges!');
         icon = Icons.search;
       case MissionStatus.inProgress:
-        title = 'No active missions';
-        subtitle = 'Start a mission to begin your journey!';
+        title = _tMissions(context, 'No active missions');
+        subtitle = _tMissions(context, 'Start a mission to begin your journey!');
         icon = Icons.play_circle_outline;
       case MissionStatus.completed:
-        title = 'No completed missions yet';
-        subtitle = 'Complete missions to see them here!';
+        title = _tMissions(context, 'No completed missions yet');
+        subtitle = _tMissions(context, 'Complete missions to see them here!');
         icon = Icons.emoji_events_outlined;
       default:
-        title = 'No missions';
+        title = _tMissions(context, 'No missions');
         subtitle = '';
         icon = Icons.rocket_launch;
     }
@@ -705,7 +745,7 @@ class _MissionCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${mission.completedStepsCount}/${mission.totalStepsCount} steps',
+                    '${mission.completedStepsCount}/${mission.totalStepsCount} ${_tMissions(context, 'steps')}',
                     style: TextStyle(
                         color: context.schTextSecondary.withValues(alpha: 0.88),
                         fontSize: 12),
@@ -857,7 +897,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                       const SizedBox(width: 8),
                       _StatChip(
                         icon: Icons.checklist,
-                        value: '${mission.steps.length} Steps',
+                        value: '${mission.steps.length} ${_tMissions(context, 'Steps')}',
                         color: _pillarColor,
                       ),
                     ],
@@ -866,7 +906,7 @@ class _MissionDetailsSheet extends StatelessWidget {
 
                   // Description
                   Text(
-                    'Description',
+                    _tMissions(context, 'Description'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.grey[800],
@@ -883,7 +923,7 @@ class _MissionDetailsSheet extends StatelessWidget {
                   // Skills
                   if (mission.skills.isNotEmpty) ...<Widget>[
                     Text(
-                      "Skills You'll Learn",
+                      _tMissions(context, "Skills You'll Learn"),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Colors.grey[800],
@@ -916,7 +956,7 @@ class _MissionDetailsSheet extends StatelessWidget {
 
                   // Steps
                   Text(
-                    'Mission Steps',
+                    _tMissions(context, 'Mission Steps'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.grey[800],
@@ -941,13 +981,13 @@ class _MissionDetailsSheet extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Row(
+                          Row(
                             children: <Widget>[
                               Icon(Icons.comment,
                                   color: ScholesaColors.success, size: 20),
                               SizedBox(width: 8),
                               Text(
-                                'Educator Feedback',
+                                _tMissions(context, 'Educator Feedback'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: ScholesaColors.success,
@@ -986,7 +1026,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Started: ${mission.title}'),
+                              content: Text(
+                                  '${_tMissions(context, 'Started')}: ${mission.title}'),
                               backgroundColor: ScholesaColors.success,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
@@ -1003,13 +1044,13 @@ class _MissionDetailsSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
                             Icon(Icons.rocket_launch),
                             SizedBox(width: 8),
                             Text(
-                              'Start Mission',
+                              _tMissions(context, 'Start Mission'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -1040,9 +1081,9 @@ class _MissionDetailsSheet extends StatelessWidget {
                           if (submissionId == null) {
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Unable to submit mission right now'),
+                              SnackBar(
+                                content: Text(_tMissions(
+                                    context, 'Unable to submit mission right now')),
                                 backgroundColor: ScholesaColors.error,
                               ),
                             );
@@ -1062,7 +1103,8 @@ class _MissionDetailsSheet extends StatelessWidget {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Submitted: ${mission.title}'),
+                              content: Text(
+                                  '${_tMissions(context, 'Submitted')}: ${mission.title}'),
                               backgroundColor: ScholesaColors.success,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
@@ -1079,13 +1121,13 @@ class _MissionDetailsSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
                             Icon(Icons.send),
                             SizedBox(width: 8),
                             Text(
-                              'Submit for Review',
+                              _tMissions(context, 'Submit for Review'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,

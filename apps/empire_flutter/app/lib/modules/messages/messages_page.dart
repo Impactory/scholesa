@@ -5,6 +5,51 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'message_models.dart';
 import 'message_service.dart';
 
+const Map<String, String> _messagesEs = <String, String>{
+  'Messages': 'Mensajes',
+  'unread': 'sin leer',
+  'Mark all read': 'Marcar todo como leído',
+  'Notifications': 'Notificaciones',
+  'Conversations': 'Conversaciones',
+  'No notifications': 'Sin notificaciones',
+  'You\'re all caught up!': '¡Ya estás al día!',
+  'All': 'Todas',
+  'No conversations': 'Sin conversaciones',
+  'Start a conversation with your educators':
+      'Inicia una conversación con tus educadores',
+  'Unknown': 'Desconocido',
+  'From:': 'De:',
+  'View Details': 'Ver detalles',
+  'm ago': 'min atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'Mon': 'Lun',
+  'Tue': 'Mar',
+  'Wed': 'Mié',
+  'Thu': 'Jue',
+  'Fri': 'Vie',
+  'Sat': 'Sáb',
+  'Sun': 'Dom',
+  'January': 'Enero',
+  'February': 'Febrero',
+  'March': 'Marzo',
+  'April': 'Abril',
+  'May': 'Mayo',
+  'June': 'Junio',
+  'July': 'Julio',
+  'August': 'Agosto',
+  'September': 'Septiembre',
+  'October': 'Octubre',
+  'November': 'Noviembre',
+  'December': 'Diciembre',
+};
+
+String _tMessages(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _messagesEs[input] ?? input;
+}
+
 /// Messages and Notifications Page
 class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
@@ -89,14 +134,14 @@ class _MessagesPageState extends State<MessagesPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Messages',
+                    _tMessages(context, 'Messages'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF6366F1),
                         ),
                   ),
                   Text(
-                    '${service.unreadCount} unread',
+                    '${service.unreadCount} ${_tMessages(context, 'unread')}',
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
@@ -115,7 +160,7 @@ class _MessagesPageState extends State<MessagesPage>
                     service.markAllAsRead();
                   },
                   icon: const Icon(Icons.done_all, size: 18),
-                  label: const Text('Mark all read'),
+                  label: Text(_tMessages(context, 'Mark all read')),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF6366F1),
                   ),
@@ -142,9 +187,9 @@ class _MessagesPageState extends State<MessagesPage>
         ),
         labelColor: Colors.white,
         unselectedLabelColor: context.schTextSecondary,
-        tabs: const <Widget>[
-          Tab(text: 'Notifications'),
-          Tab(text: 'Conversations'),
+        tabs: <Widget>[
+          Tab(text: _tMessages(context, 'Notifications')),
+          Tab(text: _tMessages(context, 'Conversations')),
         ],
       ),
     );
@@ -176,8 +221,8 @@ class _MessagesPageState extends State<MessagesPage>
         if (notifications.isEmpty) {
           return _buildEmptyState(
             icon: Icons.notifications_none,
-            title: 'No notifications',
-            subtitle: "You're all caught up!",
+            title: _tMessages(context, 'No notifications'),
+            subtitle: _tMessages(context, "You're all caught up!"),
           );
         }
 
@@ -222,7 +267,7 @@ class _MessagesPageState extends State<MessagesPage>
         child: Row(
           children: <Widget>[
             _FilterChip(
-              label: 'All',
+              label: _tMessages(context, 'All'),
               selected: service.typeFilter == null,
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -266,8 +311,9 @@ class _MessagesPageState extends State<MessagesPage>
         if (service.conversations.isEmpty) {
           return _buildEmptyState(
             icon: Icons.chat_bubble_outline,
-            title: 'No conversations',
-            subtitle: 'Start a conversation with your educators',
+            title: _tMessages(context, 'No conversations'),
+            subtitle:
+                _tMessages(context, 'Start a conversation with your educators'),
           );
         }
 
@@ -531,7 +577,7 @@ class _NotificationCard extends StatelessWidget {
                                   .withValues(alpha: 0.74)),
                           const SizedBox(width: 4),
                           Text(
-                            _formatTime(message.createdAt),
+                            _formatTime(context, message.createdAt),
                             style: TextStyle(
                                 color: context.schTextSecondary
                                     .withValues(alpha: 0.88),
@@ -579,16 +625,16 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(BuildContext context, DateTime time) {
     final DateTime now = DateTime.now();
     final Duration diff = now.difference(time);
 
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m ago';
+      return '${diff.inMinutes}${_tMessages(context, 'm ago')}';
     } else if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
+      return '${diff.inHours}${_tMessages(context, 'h ago')}';
     } else if (diff.inDays < 7) {
-      return '${diff.inDays}d ago';
+      return '${diff.inDays}${_tMessages(context, 'd ago')}';
     } else {
       return '${time.month}/${time.day}';
     }
@@ -603,7 +649,7 @@ class _ConversationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final String otherParticipant = conversation.participantNames.length > 1
         ? conversation.participantNames[1]
-        : 'Unknown';
+        : _tMessages(context, 'Unknown');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -669,7 +715,7 @@ class _ConversationCard extends StatelessWidget {
               )
             : null,
         trailing: Text(
-          _formatTime(conversation.updatedAt),
+          _formatTime(context, conversation.updatedAt),
           style: TextStyle(
               color: context.schTextSecondary.withValues(alpha: 0.88),
               fontSize: 12),
@@ -686,7 +732,7 @@ class _ConversationCard extends StatelessWidget {
     return name.substring(0, 2).toUpperCase();
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(BuildContext context, DateTime time) {
     final DateTime now = DateTime.now();
     final Duration diff = now.difference(time);
 
@@ -704,7 +750,7 @@ class _ConversationCard extends StatelessWidget {
         'Sat',
         'Sun'
       ];
-      return days[time.weekday - 1];
+      return _tMessages(context, days[time.weekday - 1]);
     } else {
       return '${time.month}/${time.day}';
     }
@@ -789,7 +835,7 @@ class _MessageDetailSheet extends StatelessWidget {
                       size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
-                    'From: ${message.senderName}',
+                    '${_tMessages(context, 'From:')} ${message.senderName}',
                     style: TextStyle(color: context.schTextSecondary),
                   ),
                 ],
@@ -801,7 +847,7 @@ class _MessageDetailSheet extends StatelessWidget {
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
                 Text(
-                  _formatFullDate(message.createdAt),
+                  _formatFullDate(context, message.createdAt),
                   style: TextStyle(color: context.schTextSecondary),
                 ),
               ],
@@ -837,7 +883,7 @@ class _MessageDetailSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('View Details'),
+                  child: Text(_tMessages(context, 'View Details')),
                 ),
               ),
             ],
@@ -863,7 +909,7 @@ class _MessageDetailSheet extends StatelessWidget {
     }
   }
 
-  String _formatFullDate(DateTime time) {
+  String _formatFullDate(BuildContext context, DateTime time) {
     const List<String> months = <String>[
       'January',
       'February',
@@ -881,6 +927,6 @@ class _MessageDetailSheet extends StatelessWidget {
     final int hour =
         time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
     final String period = time.hour >= 12 ? 'PM' : 'AM';
-    return '${months[time.month - 1]} ${time.day}, ${time.year} at $hour:${time.minute.toString().padLeft(2, '0')} $period';
+    return '${_tMessages(context, months[time.month - 1])} ${time.day}, ${time.year} at $hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
 }

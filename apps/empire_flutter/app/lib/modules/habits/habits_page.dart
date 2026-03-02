@@ -5,6 +5,48 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'habit_models.dart';
 import 'habit_service.dart';
 
+const Map<String, String> _habitsEs = <String, String>{
+  'Habit Coach': 'Entrenador de hábitos',
+  'Build powerful daily routines': 'Crea rutinas diarias poderosas',
+  'Today': 'Hoy',
+  'Weekly Progress': 'Progreso semanal',
+  'completions': 'completaciones',
+  'Rate': 'Tasa',
+  'All': 'Todas',
+  'No': 'No',
+  'habits yet': 'hábitos aún',
+  'Start building your habits!': '¡Comienza a construir tus hábitos!',
+  'Tap + to create your first habit': 'Pulsa + para crear tu primer hábito',
+  'min': 'min',
+  'completed!': '¡completado!',
+  'New Habit': 'Nuevo hábito',
+  'Current Streak': 'Racha actual',
+  'Best Streak': 'Mejor racha',
+  'Total Done': 'Total completado',
+  'Target Time': 'Tiempo objetivo',
+  'Settings': 'Configuración',
+  'Frequency': 'Frecuencia',
+  'Preferred Time': 'Horario preferido',
+  'Started': 'Iniciado',
+  'Create Habit': 'Crear hábito',
+  'Choose an emoji': 'Elige un emoji',
+  'Habit name': 'Nombre del hábito',
+  'e.g., Morning Reading': 'ej., Lectura matutina',
+  'Description (optional)': 'Descripción (opcional)',
+  'What does this habit involve?': '¿En qué consiste este hábito?',
+  'Category': 'Categoría',
+  'Target time': 'Tiempo objetivo',
+  'minutes': 'minutos',
+  'Please enter a habit name': 'Ingresa un nombre de hábito',
+  'created!': '¡creado!',
+};
+
+String _tHabits(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _habitsEs[input] ?? input;
+}
+
 /// Beautiful habit tracking page for learners
 class HabitsPage extends StatefulWidget {
   const HabitsPage({super.key});
@@ -120,8 +162,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Text(
-                            'Habit Coach',
+                          Text(
+                            _tHabits(context, 'Habit Coach'),
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -130,7 +172,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Build powerful daily routines',
+                            _tHabits(context, 'Build powerful daily routines'),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.white.withValues(alpha: 0.9),
@@ -201,7 +243,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Today',
+                _tHabits(context, 'Today'),
                 style: TextStyle(
                   fontSize: 10,
                   color: context.schTextSecondary,
@@ -263,15 +305,15 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            const Text(
-                              'Weekly Progress',
+                            Text(
+                              _tHabits(context, 'Weekly Progress'),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
                               ),
                             ),
                             Text(
-                              '${summary?.totalCompletions ?? 0} completions',
+                              '${summary?.totalCompletions ?? 0} ${_tHabits(context, 'completions')}',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -303,8 +345,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                         color: Colors.white,
                       ),
                     ),
-                    const Text(
-                      'Rate',
+                    Text(
+                      _tHabits(context, 'Rate'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
@@ -374,7 +416,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: <Widget>[
-              _buildCategoryChip(null, 'All', '✨'),
+              _buildCategoryChip(null, _tHabits(context, 'All'), '✨'),
               ...HabitCategory.values
                   .map((HabitCategory cat) => _buildCategoryChip(
                         cat,
@@ -449,8 +491,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
               const SizedBox(height: 16),
               Text(
                 _selectedCategory != null
-                    ? 'No ${_selectedCategory!.label.toLowerCase()} habits yet'
-                    : 'Start building your habits!',
+                    ? '${_tHabits(context, 'No')} ${_selectedCategory!.label.toLowerCase()} ${_tHabits(context, 'habits yet')}'
+                    : _tHabits(context, 'Start building your habits!'),
                 style: TextStyle(
                   fontSize: 18,
                   color: context.schTextSecondary,
@@ -458,7 +500,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tap + to create your first habit',
+                _tHabits(context, 'Tap + to create your first habit'),
                 style: TextStyle(
                   fontSize: 14,
                   color: context.schTextSecondary.withValues(alpha: 0.74),
@@ -611,7 +653,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${habit.targetMinutes} min',
+                          '${habit.targetMinutes} ${_tHabits(context, 'min')}',
                           style: TextStyle(
                             fontSize: 12,
                             color: context.schTextSecondary
@@ -654,7 +696,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                     content: Row(
                       children: <Widget>[
                         const Text('🎉 ', style: TextStyle(fontSize: 20)),
-                        Text('${habit.title} completed!'),
+                        Text('${habit.title} ${_tHabits(context, 'completed!')}'),
                       ],
                     ),
                     backgroundColor: Colors.green,
@@ -711,7 +753,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
       },
       backgroundColor: ScholesaColors.learner,
       icon: const Icon(Icons.add),
-      label: const Text('New Habit'),
+      label: Text(_tHabits(context, 'New Habit')),
     );
   }
 
@@ -942,7 +984,7 @@ class _HabitDetailSheet extends StatelessWidget {
                     context,
                     '🔥',
                     '${habit.currentStreak}',
-                    'Current Streak',
+                    _tHabits(context, 'Current Streak'),
                     Colors.orange,
                   ),
                 ),
@@ -952,7 +994,7 @@ class _HabitDetailSheet extends StatelessWidget {
                     context,
                     '🏆',
                     '${habit.longestStreak}',
-                    'Best Streak',
+                    _tHabits(context, 'Best Streak'),
                     Colors.amber,
                   ),
                 ),
@@ -966,7 +1008,7 @@ class _HabitDetailSheet extends StatelessWidget {
                     context,
                     '✅',
                     '${habit.totalCompletions}',
-                    'Total Done',
+                    _tHabits(context, 'Total Done'),
                     Colors.green,
                   ),
                 ),
@@ -976,7 +1018,7 @@ class _HabitDetailSheet extends StatelessWidget {
                     context,
                     '⏱️',
                     '${habit.targetMinutes}m',
-                    'Target Time',
+                    _tHabits(context, 'Target Time'),
                     Colors.blue,
                   ),
                 ),
@@ -984,8 +1026,8 @@ class _HabitDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             // Settings
-            const Text(
-              'Settings',
+            Text(
+              _tHabits(context, 'Settings'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -995,19 +1037,19 @@ class _HabitDetailSheet extends StatelessWidget {
             _buildSettingRow(
               context,
               Icons.repeat,
-              'Frequency',
+              _tHabits(context, 'Frequency'),
               habit.frequency.name.toUpperCase(),
             ),
             _buildSettingRow(
               context,
               Icons.schedule,
-              'Preferred Time',
+              _tHabits(context, 'Preferred Time'),
               habit.preferredTime.label,
             ),
             _buildSettingRow(
               context,
               Icons.calendar_today,
-              'Started',
+              _tHabits(context, 'Started'),
               _formatDate(habit.createdAt),
             ),
             const SizedBox(height: 16),
@@ -1174,8 +1216,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                const Text(
-                  'Create Habit',
+                Text(
+                  _tHabits(context, 'Create Habit'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -1206,8 +1248,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
             ),
             const SizedBox(height: 20),
             // Emoji picker
-            const Text(
-              'Choose an emoji',
+            Text(
+              _tHabits(context, 'Choose an emoji'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -1257,8 +1299,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
-                labelText: 'Habit name',
-                hintText: 'e.g., Morning Reading',
+                labelText: _tHabits(context, 'Habit name'),
+                hintText: _tHabits(context, 'e.g., Morning Reading'),
                 filled: true,
                 fillColor: context.schSurfaceMuted,
                 border: OutlineInputBorder(
@@ -1273,8 +1315,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
               controller: _descriptionController,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Description (optional)',
-                hintText: 'What does this habit involve?',
+                labelText: _tHabits(context, 'Description (optional)'),
+                hintText: _tHabits(context, 'What does this habit involve?'),
                 filled: true,
                 fillColor: context.schSurfaceMuted,
                 border: OutlineInputBorder(
@@ -1285,8 +1327,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
             ),
             const SizedBox(height: 20),
             // Category
-            const Text(
-              'Category',
+            Text(
+              _tHabits(context, 'Category'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -1317,8 +1359,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
             ),
             const SizedBox(height: 20),
             // Frequency
-            const Text(
-              'Frequency',
+            Text(
+              _tHabits(context, 'Frequency'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -1351,8 +1393,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
             // Target minutes
             Row(
               children: <Widget>[
-                const Text(
-                  'Target time',
+                Text(
+                  _tHabits(context, 'Target time'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -1360,7 +1402,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                 ),
                 const Spacer(),
                 Text(
-                  '$_targetMinutes minutes',
+                  '$_targetMinutes ${_tHabits(context, 'minutes')}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: ScholesaColors.learner,
@@ -1392,8 +1434,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  'Create Habit',
+                child: Text(
+                  _tHabits(context, 'Create Habit'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1410,7 +1452,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
   void _createHabit() {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a habit name')),
+        SnackBar(content: Text(_tHabits(context, 'Please enter a habit name'))),
       );
       return;
     }
@@ -1453,7 +1495,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
         content: Row(
           children: <Widget>[
             const Text('🌱 ', style: TextStyle(fontSize: 20)),
-            Text('${_titleController.text} created!'),
+            Text('${_titleController.text} ${_tHabits(context, 'created!')}'),
           ],
         ),
         backgroundColor: Colors.green,

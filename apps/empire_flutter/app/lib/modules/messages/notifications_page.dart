@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _notificationsEs = <String, String>{
+  'Notifications': 'Notificaciones',
+  'Mark all read': 'Marcar todo como leído',
+  'No notifications': 'Sin notificaciones',
+  'You\'re all caught up!': '¡Ya estás al día!',
+  'Notification dismissed': 'Notificación descartada',
+  'Opening:': 'Abriendo:',
+  'All notifications marked as read':
+    'Todas las notificaciones se marcaron como leídas',
+  'm ago': 'min atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'New Mission Available': 'Nueva misión disponible',
+  'Check out the new AI Fundamentals mission for your learners!':
+    '¡Revisa la nueva misión de Fundamentos de IA para tus estudiantes!',
+  'Session Reminder': 'Recordatorio de sesión',
+  'Robotics Club starts in 1 hour at Room 204':
+    'El Club de Robótica comienza en 1 hora en el Aula 204',
+  'Message from Ms. Johnson': 'Mensaje de la profesora Johnson',
+  'Great progress on the coding project! Keep it up.':
+    '¡Gran progreso en el proyecto de programación! Sigue así.',
+  'System Update': 'Actualización del sistema',
+  'Scholesa has been updated with new features. Check out what\'s new!':
+    'Scholesa se actualizó con nuevas funciones. ¡Mira qué hay de nuevo!',
+};
+
+String _tNotifications(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _notificationsEs[input] ?? input;
+}
+
 /// Notifications page for all user roles
 /// Based on docs/17_MESSAGING_NOTIFICATIONS_SPEC.md
 class NotificationsPage extends StatefulWidget {
@@ -76,15 +108,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(_tNotifications(context, 'Notifications')),
         backgroundColor: ScholesaColors.primary,
         foregroundColor: Colors.white,
         actions: <Widget>[
           if (unreadCount > 0)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text('Mark all read',
-                  style: TextStyle(color: Colors.white)),
+              child: Text(_tNotifications(context, 'Mark all read'),
+                  style: const TextStyle(color: Colors.white)),
             ),
         ],
       ),
@@ -108,13 +140,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
               size: 64,
               color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          const Text(
-            'No notifications',
+          Text(
+            _tNotifications(context, 'No notifications'),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'You\'re all caught up!',
+          Text(
+            _tNotifications(context, 'You\'re all caught up!'),
             style: TextStyle(color: ScholesaColors.textSecondary),
           ),
         ],
@@ -150,7 +182,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
               .removeWhere((_Notification n) => n.id == notification.id);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Notification dismissed')),
+          SnackBar(
+            content: Text(_tNotifications(context, 'Notification dismissed')),
+          ),
         );
       },
       child: Card(
@@ -183,7 +217,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              notification.title,
+                              _tNotifications(context, notification.title),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: notification.isRead
@@ -205,7 +239,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        notification.body,
+                        _tNotifications(context, notification.body),
                         style: const TextStyle(
                             fontSize: 13, color: ScholesaColors.textSecondary),
                         maxLines: 2,
@@ -270,7 +304,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
     // Navigate based on notification type
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening: ${notification.title}')),
+      SnackBar(
+        content: Text(
+          '${_tNotifications(context, 'Opening:')} ${_tNotifications(context, notification.title)}',
+        ),
+      ),
     );
   }
 
@@ -285,14 +323,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('All notifications marked as read')),
+      SnackBar(
+        content:
+            Text(_tNotifications(context, 'All notifications marked as read')),
+      ),
     );
   }
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}${_tNotifications(context, 'm ago')}';
+    }
+    if (diff.inHours < 24) {
+      return '${diff.inHours}${_tNotifications(context, 'h ago')}';
+    }
+    return '${diff.inDays}${_tNotifications(context, 'd ago')}';
   }
 }
