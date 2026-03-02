@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../auth/auth_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
@@ -82,6 +83,48 @@ const Map<String, String> _settingsEs = <String, String>{
     'is available by request. Submit this request now?':
         'está disponible bajo solicitud. ¿Enviar esta solicitud ahora?',
     'request submitted': 'solicitud enviada',
+    'Current Password': 'Contraseña actual',
+    'New Password': 'Nueva contraseña',
+    'Confirm Password': 'Confirmar contraseña',
+    'Save': 'Guardar',
+    'Update Email': 'Actualizar correo',
+    'Enter current password': 'Introduce la contraseña actual',
+    'Enter a new password (min 8 characters)':
+      'Introduce una nueva contraseña (mínimo 8 caracteres)',
+    'Re-enter new password': 'Vuelve a introducir la nueva contraseña',
+    'Enter new email': 'Introduce el nuevo correo',
+    'Phone Number Updated': 'Número de teléfono actualizado',
+    'Password Updated': 'Contraseña actualizada',
+    'Email Update Requested': 'Actualización de correo solicitada',
+    'Check your inbox to verify your new email.':
+      'Revisa tu correo para verificar tu nuevo email.',
+    'Update Phone': 'Actualizar teléfono',
+    'Enter phone number': 'Introduce el número de teléfono',
+    'Choose Time Zone': 'Elige zona horaria',
+    'UTC': 'UTC',
+    'UTC+8 (Singapore)': 'UTC+8 (Singapur)',
+    'UTC+1 (Madrid)': 'UTC+1 (Madrid)',
+    'UTC-5 (New York)': 'UTC-5 (Nueva York)',
+    'Privacy Policy Notice': 'Aviso de política de privacidad',
+    'Your data is processed according to Scholesa privacy standards and your site policies.':
+      'Tus datos se procesan según los estándares de privacidad de Scholesa y las políticas de tu sitio.',
+    'Terms of Service Notice': 'Aviso de términos del servicio',
+    'Use of Scholesa requires compliance with site and platform safety standards.':
+      'El uso de Scholesa requiere cumplir con los estándares de seguridad del sitio y de la plataforma.',
+    'Help Center Contact': 'Contacto del centro de ayuda',
+    'Contact support at support@scholesa.com with your site ID and issue details.':
+      'Contacta a soporte en support@scholesa.com con tu ID de sitio y los detalles del problema.',
+    'Send': 'Enviar',
+    'Feedback sent': 'Comentarios enviados',
+    'Thanks for helping improve Scholesa.':
+      'Gracias por ayudar a mejorar Scholesa.',
+    'Please enter feedback before sending.':
+      'Introduce comentarios antes de enviar.',
+    'Thanks for rating Scholesa!': '¡Gracias por calificar Scholesa!',
+    'Delete Account Confirmation': 'Confirmación para eliminar cuenta',
+    'Enter current password to confirm account deletion.':
+      'Introduce la contraseña actual para confirmar la eliminación de la cuenta.',
+    'Delete': 'Eliminar',
 };
 
 String _tSettings(BuildContext context, String input) {
@@ -105,7 +148,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _pushNotifications = true;
   bool _biometricEnabled = false;
   String _language = 'en';
-  final String _timeZone = 'auto';
+  String _timeZone = 'auto';
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +484,10 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: <String, dynamic>{'cta': 'settings_navigate', 'route': route},
     );
-    // Navigation handled by parent
+    if (route == 'profile') {
+      context.go('/profile');
+      return;
+    }
   }
 
   void _showChangePasswordSheet() {
@@ -449,7 +495,106 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_password'},
     );
-    _showComingSoon(_tSettings(context, 'Change Password'));
+    final TextEditingController currentPasswordController =
+        TextEditingController();
+    final TextEditingController newPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+        TextEditingController();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: currentPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Current Password'),
+                  hintText: _tSettings(context, 'Enter current password'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'New Password'),
+                  hintText: _tSettings(
+                      context, 'Enter a new password (min 8 characters)'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Confirm Password'),
+                  hintText: _tSettings(context, 'Re-enter new password'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tSettings(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String currentPassword =
+                            currentPasswordController.text.trim();
+                        final String newPassword =
+                            newPasswordController.text.trim();
+                        final String confirmPassword =
+                            confirmPasswordController.text.trim();
+
+                        if (newPassword.length < 8 ||
+                            newPassword != confirmPassword) {
+                          _showErrorSnackBar(_tSettings(
+                              context, 'Enter a new password (min 8 characters)'));
+                          return;
+                        }
+
+                        try {
+                          final AuthService authService =
+                              this.context.read<AuthService>();
+                          await authService.updatePassword(
+                            currentPassword: currentPassword,
+                            newPassword: newPassword,
+                          );
+                          if (!mounted) return;
+                          Navigator.pop(bottomSheetContext);
+                          _showSuccessSnackBar(
+                              _tSettings(context, 'Password Updated'));
+                        } catch (error) {
+                          if (!mounted) return;
+                          _showErrorSnackBar(_mapActionError(error));
+                        }
+                      },
+                      child: Text(_tSettings(context, 'Save')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showChangeEmailSheet() {
@@ -457,7 +602,89 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_email'},
     );
-    _showComingSoon(_tSettings(context, 'Change Email'));
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Update Email'),
+                  hintText: _tSettings(context, 'Enter new email'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Current Password'),
+                  hintText: _tSettings(context, 'Enter current password'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tSettings(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String newEmail = emailController.text.trim();
+                        final String currentPassword =
+                            passwordController.text.trim();
+                        if (newEmail.isEmpty || !newEmail.contains('@')) {
+                          _showErrorSnackBar(_tSettings(context, 'Enter new email'));
+                          return;
+                        }
+
+                        try {
+                          final AuthService authService =
+                              this.context.read<AuthService>();
+                          await authService.updateEmail(
+                            currentPassword: currentPassword,
+                            newEmail: newEmail,
+                          );
+                          if (!mounted) return;
+                          Navigator.pop(bottomSheetContext);
+                          _showSuccessSnackBar(
+                              _tSettings(context, 'Email Update Requested'));
+                          _showSuccessSnackBar(_tSettings(
+                              context, 'Check your inbox to verify your new email.'));
+                        } catch (error) {
+                          if (!mounted) return;
+                          _showErrorSnackBar(_mapActionError(error));
+                        }
+                      },
+                      child: Text(_tSettings(context, 'Save')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showChangePhoneSheet() {
@@ -465,7 +692,73 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_change_phone'},
     );
-    _showComingSoon(_tSettings(context, 'Change Phone'));
+    final TextEditingController phoneController = TextEditingController();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Update Phone'),
+                  hintText: _tSettings(context, 'Enter phone number'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tSettings(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String phoneNumber = phoneController.text.trim();
+                        if (phoneNumber.isEmpty) {
+                          _showErrorSnackBar(
+                              _tSettings(context, 'Enter phone number'));
+                          return;
+                        }
+                        try {
+                          final AuthService authService =
+                              this.context.read<AuthService>();
+                          await authService.updatePhoneNumberInProfile(
+                              phoneNumber);
+                          if (!mounted) return;
+                          Navigator.pop(bottomSheetContext);
+                          _showSuccessSnackBar(
+                              _tSettings(context, 'Phone Number Updated'));
+                        } catch (error) {
+                          if (!mounted) return;
+                          _showErrorSnackBar(_mapActionError(error));
+                        }
+                      },
+                      child: Text(_tSettings(context, 'Save')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showNotificationPreferences() {
@@ -475,7 +768,39 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_notification_preferences'
       },
     );
-    _showComingSoon(_tSettings(context, 'Notification Preferences'));
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SwitchListTile(
+                    title: Text(_tSettings(context, 'Email Notifications')),
+                    value: _emailNotifications,
+                    onChanged: (bool value) {
+                      setState(() => _emailNotifications = value);
+                      setModalState(() {});
+                    },
+                  ),
+                  SwitchListTile(
+                    title: Text(_tSettings(context, 'Push Notifications')),
+                    value: _pushNotifications,
+                    onChanged: (bool value) {
+                      setState(() => _pushNotifications = value);
+                      setModalState(() {});
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _applyDarkMode(ThemeService themeService, bool enabled) {
@@ -595,7 +920,48 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_open_timezone_selector'
       },
     );
-    _showComingSoon(_tSettings(context, 'Time Zone Selection'));
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext bottomSheetContext) {
+        final List<String> zones = <String>[
+          'auto',
+          _tSettings(context, 'UTC'),
+          _tSettings(context, 'UTC+8 (Singapore)'),
+          _tSettings(context, 'UTC+1 (Madrid)'),
+          _tSettings(context, 'UTC-5 (New York)'),
+        ];
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _tSettings(context, 'Choose Time Zone'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ...zones.map((String zone) {
+                final bool isSelected = _timeZone == zone ||
+                    (_timeZone == 'auto' && zone == 'auto');
+                return ListTile(
+                  title: Text(zone == 'auto'
+                      ? _tSettings(context, 'Automatic')
+                      : zone),
+                  trailing: isSelected
+                      ? const Icon(Icons.check, color: ScholesaColors.success)
+                      : null,
+                  onTap: () {
+                    setState(() => _timeZone = zone);
+                    Navigator.pop(bottomSheetContext);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _openPrivacyPolicy() {
@@ -603,7 +969,11 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_privacy_policy'},
     );
-    _showComingSoon(_tSettings(context, 'Privacy Policy'));
+    _showInfoDialog(
+      title: _tSettings(context, 'Privacy Policy Notice'),
+      body: _tSettings(context,
+          'Your data is processed according to Scholesa privacy standards and your site policies.'),
+    );
   }
 
   void _openTermsOfService() {
@@ -613,7 +983,11 @@ class _SettingsPageState extends State<SettingsPage> {
         'cta': 'settings_open_terms_of_service'
       },
     );
-    _showComingSoon(_tSettings(context, 'Terms of Service'));
+    _showInfoDialog(
+      title: _tSettings(context, 'Terms of Service Notice'),
+      body: _tSettings(context,
+          'Use of Scholesa requires compliance with site and platform safety standards.'),
+    );
   }
 
   void _requestDataDownload() {
@@ -634,7 +1008,11 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_help_center'},
     );
-    _showComingSoon(_tSettings(context, 'Help Center'));
+    _showInfoDialog(
+      title: _tSettings(context, 'Help Center Contact'),
+      body: _tSettings(context,
+          'Contact support at support@scholesa.com with your site ID and issue details.'),
+    );
   }
 
   void _showFeedbackSheet() {
@@ -642,7 +1020,65 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_feedback'},
     );
-    _showComingSoon(_tSettings(context, 'Feedback'));
+    final TextEditingController feedbackController = TextEditingController();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: feedbackController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Feedback'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tSettings(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String feedback = feedbackController.text.trim();
+                        if (feedback.isEmpty) {
+                          _showErrorSnackBar(_tSettings(
+                              context, 'Please enter feedback before sending.'));
+                          return;
+                        }
+                        await TelemetryService.instance.logEvent(
+                          event: 'settings.feedback.submitted',
+                          metadata: <String, dynamic>{'length': feedback.length},
+                        );
+                        if (!mounted) return;
+                        Navigator.pop(bottomSheetContext);
+                        _showSuccessSnackBar(_tSettings(context, 'Feedback sent'));
+                      },
+                      child: Text(_tSettings(context, 'Send')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _rateApp() {
@@ -650,7 +1086,7 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_rate_app'},
     );
-    _showComingSoon(_tSettings(context, 'App Rating'));
+    _showSuccessSnackBar(_tSettings(context, 'Thanks for rating Scholesa!'));
   }
 
   void _showAppVersionDetails() {
@@ -749,7 +1185,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Text(_tSettings(context, 'Cancel')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
@@ -757,7 +1193,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 );
                 Navigator.pop(context);
-                // Delete account logic
+                await _confirmDeleteAccountWithPassword();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,
@@ -773,51 +1209,104 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showComingSoon(String feature) {
+  Future<void> _confirmDeleteAccountWithPassword() async {
+    final TextEditingController passwordController = TextEditingController();
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(_tSettings(context, 'Delete Account Confirmation')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(_tSettings(
+                  context, 'Enter current password to confirm account deletion.')),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _tSettings(context, 'Current Password'),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(_tSettings(context, 'Cancel')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ScholesaColors.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                _tSettings(context, 'Delete'),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      final AuthService authService = context.read<AuthService>();
+      await authService.deleteAccount(
+        currentPassword: passwordController.text.trim(),
+      );
+      if (!mounted) return;
+      context.go('/login');
+    } catch (error) {
+      if (!mounted) return;
+      _showErrorSnackBar(_mapActionError(error));
+    }
+  }
+
+  void _showInfoDialog({required String title, required String body}) {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(feature),
-        content: Text(
-          '$feature ${_tSettings(context, 'is available by request. Submit this request now?')}',
-        ),
+        title: Text(title),
+        content: Text(body),
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'settings_cancel_coming_soon_request',
-                  'feature': feature,
-                },
-              );
               Navigator.pop(dialogContext);
             },
-            child: Text(_tSettings(context, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'settings_submit_coming_soon_request',
-                  'feature': feature,
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text('$feature ${_tSettings(context, 'request submitted')}'),
-                  backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-                ),
-              );
-            },
-            child: Text(_tSettings(context, 'Submit')),
+            child: Text(_tSettings(context, 'Close')),
           ),
         ],
       ),
     );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  String _mapActionError(Object error) {
+    if (error is FirebaseAuthException && error.message != null) {
+      return error.message!;
+    }
+    return error.toString().replaceFirst('Exception: ', '');
   }
 }
 

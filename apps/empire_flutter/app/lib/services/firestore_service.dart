@@ -93,6 +93,14 @@ class FirestoreService {
     });
   }
 
+  /// Delete current user's profile from Firestore
+  Future<void> deleteCurrentUserProfile() async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+
+    await _firestore.collection('users').doc(user.uid).delete();
+  }
+
   // ==================== SITE OPERATIONS ====================
 
   /// Get sites for current user

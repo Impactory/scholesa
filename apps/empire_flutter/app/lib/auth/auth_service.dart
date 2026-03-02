@@ -215,6 +215,90 @@ class AuthService {
     await _bootstrapSession();
   }
 
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+    if (user.email == null || user.email!.isEmpty) {
+      throw Exception('Password update is not available for this account');
+    }
+
+    try {
+      final AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    }
+  }
+
+  Future<void> updateEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+    if (user.email == null || user.email!.isEmpty) {
+      throw Exception('Email update is not available for this account');
+    }
+
+    try {
+      final AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.verifyBeforeUpdateEmail(newEmail);
+      await _firestoreService.updateUserProfile(<String, dynamic>{
+        'email': newEmail,
+      });
+      await refreshSession();
+    } on FirebaseAuthException catch (e) {
+      _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    }
+  }
+
+  Future<void> updatePhoneNumberInProfile(String phoneNumber) async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+    await _firestoreService.updateUserProfile(<String, dynamic>{
+      'phoneNumber': phoneNumber,
+    });
+    await refreshSession();
+  }
+
+  Future<void> deleteAccount({String? currentPassword}) async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('Not authenticated');
+
+    try {
+      if (currentPassword != null &&
+          currentPassword.isNotEmpty &&
+          user.email != null &&
+          user.email!.isNotEmpty) {
+        final AuthCredential credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: currentPassword,
+        );
+        await user.reauthenticateWithCredential(credential);
+      }
+
+      await _firestoreService.deleteCurrentUserProfile();
+      await user.delete();
+      _appState.clear();
+    } on FirebaseAuthException catch (e) {
+      _appState.setError(_mapAuthError(e.code));
+      rethrow;
+    }
+  }
+
   /// Map Firebase auth error codes to user-friendly messages
   String _mapAuthError(String code) {
     switch (code) {
@@ -235,6 +319,8 @@ class AuthService {
         return 'This account has been disabled';
       case 'too-many-requests':
         return 'Too many attempts. Please try again later';
+      case 'requires-recent-login':
+        return 'Please sign in again to continue this action';
       case 'network-request-failed':
         return 'Network error. Check your connection and try again';
       case 'operation-not-allowed':
