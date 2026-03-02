@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -28,6 +31,9 @@ const Map<String, String> _hqSafetyEs = <String, String>{
   'minor': 'leve',
   'major': 'grave',
   'critical': 'crítico',
+  'Loading...': 'Cargando...',
+  'No incidents found': 'No se encontraron incidentes',
+  'Unknown Site': 'Sede desconocida',
 };
 
 String _tHqSafety(BuildContext context, String input) {
@@ -66,7 +72,7 @@ class _SafetyIncident {
 }
 
 class _HqSafetyPageState extends State<HqSafetyPage> {
-  final List<_SafetyIncident> _incidents = <_SafetyIncident>[
+  final List<_SafetyIncident> _fallbackIncidents = <_SafetyIncident>[
     _SafetyIncident(
       id: '1',
       title: 'Medical emergency - handled',
@@ -92,6 +98,16 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       isEscalated: true,
     ),
   ];
+  List<_SafetyIncident> _incidents = <_SafetyIncident>[];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIncidents();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +212,30 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
   }
 
   Widget _buildRecentIncidents() {
+    if (_isLoading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Text(
+            _tHqSafety(context, 'Loading...'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    if (_incidents.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Text(
+            _tHqSafety(context, 'No incidents found'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -376,5 +416,102 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     if (diff.inMinutes < 60) return '${diff.inMinutes}${_tHqSafety(context, 'm ago')}';
     if (diff.inHours < 24) return '${diff.inHours}${_tHqSafety(context, 'h ago')}';
     return '${diff.inDays}${_tHqSafety(context, 'd ago')}';
+  }
+
+  Future<void> _loadIncidents() async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() => _incidents = _fallbackIncidents);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await firestoreService.firestore
+            .collection('incidents')
+            .orderBy('reportedAt', descending: true)
+            .limit(150)
+            .get();
+      } catch (_) {
+        snapshot = await firestoreService.firestore
+            .collection('incidents')
+            .limit(150)
+            .get();
+      }
+
+      final List<_SafetyIncident> loaded = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime reportedAt = _toDateTime(data['reportedAt']) ??
+            _toDateTime(data['createdAt']) ??
+            DateTime.now();
+        final _Severity severity =
+            _parseSeverity((data['severity'] as String?) ?? (data['type'] as String?));
+        final String title = (data['title'] as String?)?.trim().isNotEmpty == true
+            ? (data['title'] as String).trim()
+            : (data['description'] as String?) ?? 'Incident';
+        final String siteLabel = (data['siteName'] as String?)?.trim().isNotEmpty == true
+            ? (data['siteName'] as String).trim()
+            : (data['siteId'] as String?)?.trim().isNotEmpty == true
+                ? (data['siteId'] as String).trim()
+                : _tHqSafety(context, 'Unknown Site');
+        final String status = ((data['status'] as String?) ?? '').toLowerCase();
+        final bool escalated = (data['isEscalated'] as bool?) ??
+            severity == _Severity.critical ||
+            status == 'reviewed' ||
+            status == 'escalated';
+
+        return _SafetyIncident(
+          id: doc.id,
+          title: title,
+          site: siteLabel,
+          severity: severity,
+          reportedAt: reportedAt,
+          isEscalated: escalated,
+        );
+      }).toList();
+
+      loaded.sort((_SafetyIncident a, _SafetyIncident b) =>
+          b.reportedAt.compareTo(a.reportedAt));
+
+      if (!mounted) return;
+      setState(() => _incidents = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _incidents = _fallbackIncidents);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  _Severity _parseSeverity(String? raw) {
+    final String value = (raw ?? '').trim().toLowerCase();
+    if (value == 'critical') return _Severity.critical;
+    if (value == 'major' || value == 'high') return _Severity.major;
+    return _Severity.minor;
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
   }
 }
