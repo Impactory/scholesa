@@ -12,6 +12,8 @@
 
 import type { ContextBlock } from './modelAdapter';
 import type { AgeBand } from '@/src/types/schema';
+import { EmbeddingService, VectorStore, type VectorDocument } from './vectorStore';
+import { Timestamp } from 'firebase/firestore';
 
 // ==================== TYPES ====================
 
@@ -58,69 +60,78 @@ export class RetrievalService {
    * For now, simplified with keyword matching
    */
   static async retrieve(query: RetrievalQuery): Promise<ContextBlock[]> {
-    // TODO: Integrate with vector store
-    // For now, return mock data structure
-    
-    const contextBlocks: ContextBlock[] = [];
-    
-    // 1. Retrieve rubric criteria (if mission provided)
-    if (query.missionId) {
-      const rubric = await this.getRubricForMission(query.missionId, query.gradeBand);
-      if (rubric) {
-        contextBlocks.push({
-          type: 'rubric',
-          content: rubric.content,
-          id: rubric.id,
-          relevance: 0.9 // High relevance - always include rubric
-        });
-      }
-    }
-    
-    // 2. Retrieve exemplars (good examples)
-    const exemplars = await this.getExemplars(query);
-    contextBlocks.push(...exemplars);
-    
-    // 3. Retrieve common misconceptions
-    const misconceptions = await this.getMisconceptions(query);
-    contextBlocks.push(...misconceptions);
-    
-    // 4. Retrieve student's past work (if learner provided)
-    if (query.learnerId) {
-      const pastWork = await this.getStudentPastWork(query.learnerId, query.missionId);
-      contextBlocks.push(...pastWork);
-    }
-    
-    // 5. Retrieve teacher feedback patterns
-    const feedbackPatterns = await this.getTeacherFeedback(query);
-    contextBlocks.push(...feedbackPatterns);
-    
-    // Filter by relevance threshold
-    const filtered = contextBlocks.filter(
-      block => !query.filters?.minRelevance || (block.relevance || 0) >= query.filters.minRelevance
-    );
-    
-    // Sort by relevance, take top-K
     const topK = query.topK || 5;
-    return filtered
-      .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
-      .slice(0, topK);
+    const minRelevance = query.filters?.minRelevance ?? 0;
+    const allowedTypes = query.filters?.types;
+
+    try {
+      const queryEmbedding = await EmbeddingService.generateEmbedding(query.query);
+      const vectorTypes = this.resolveVectorTypes(allowedTypes);
+
+      const searches = vectorTypes.map((type) =>
+        VectorStore.search(queryEmbedding, topK * 2, {
+          type,
+          missionId: query.missionId,
+          gradeBand: query.gradeBand,
+        })
+      );
+
+      const resultsByType = await Promise.all(searches);
+
+      const contextBlocks = resultsByType
+        .flat()
+        .map((result) => this.mapSearchResultToContext(result.document, result.score))
+        .filter((block): block is ContextBlock => Boolean(block))
+        .filter((block) => {
+          if (allowedTypes && !allowedTypes.includes(block.type)) return false;
+          return (block.relevance ?? 0) >= minRelevance;
+        })
+        .sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+
+      const deduped: ContextBlock[] = [];
+      const seen = new Set<string>();
+      for (const block of contextBlocks) {
+        const key = block.id || `${block.type}:${block.content.slice(0, 64)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(block);
+        if (deduped.length >= topK) break;
+      }
+
+      return deduped;
+    } catch (error) {
+      console.error('Retrieval failed:', error);
+      return [];
+    }
   }
   
   /**
    * Store a document for future retrieval
    */
   static async store(document: StoredDocument): Promise<void> {
-    // TODO: Store in vector DB
-    // For now, just log
-    console.log('Storing document:', document.id, document.type);
+    const embedding = document.embedding ?? await EmbeddingService.generateEmbedding(document.content);
+
+    await VectorStore.store({
+      content: document.content,
+      embedding,
+      metadata: {
+        type: this.mapStoredToVectorType(document.type),
+        gradeBand: document.metadata.gradeBand,
+        missionId: document.metadata.missionId,
+        learnerId: document.metadata.learnerId,
+        skillIds: document.metadata.skillId ? [document.metadata.skillId] : undefined,
+        createdAt: Timestamp.fromMillis(document.metadata.createdAt),
+        updatedAt: Timestamp.now(),
+      },
+    });
   }
   
   /**
    * Update embeddings for a document (when content changes)
    */
   static async updateEmbedding(documentId: string, content: string): Promise<void> {
-    // TODO: Generate embedding and update
-    console.log('Updating embedding for:', documentId);
+    const embedding = await EmbeddingService.generateEmbedding(content);
+    await VectorStore.updateEmbedding(documentId, content, embedding);
   }
   
   // ===== PRIVATE RETRIEVAL METHODS =====
@@ -129,79 +140,129 @@ export class RetrievalService {
     missionId: string,
     gradeBand: AgeBand
   ): Promise<ContextBlock | null> {
-    // Fetch from YOUR Firestore (rubrics collection)
-    // Age-appropriate language already stored
-    
-    // Mock for now
-    return {
+    const seed = await EmbeddingService.generateEmbedding(`rubric ${missionId}`);
+    const [best] = await VectorStore.search(seed, 1, {
       type: 'rubric',
-      content: `Success criteria for this mission:
-- Shows understanding of core concept
-- Code/artifact runs without errors
-- Includes clear explanation of approach
-- Demonstrates debugging skills`,
-      id: `rubric_${missionId}`,
-      relevance: 0.9
-    };
+      missionId,
+      gradeBand,
+    });
+    if (!best) return null;
+    return this.mapSearchResultToContext(best.document, best.score);
   }
   
   private static async getExemplars(query: RetrievalQuery): Promise<ContextBlock[]> {
-    // Fetch exemplar artifacts from YOUR collection
-    // Already filtered by grade band
-    
-    // Mock for now
-    if (query.missionId) {
-      return [{
-        type: 'exemplar',
-        content: 'Example of proficient work: [student showed clear variable naming, step-by-step logic, tested edge cases]',
-        id: `exemplar_${query.missionId}_1`,
-        relevance: 0.7
-      }];
-    }
-    
-    return [];
+    const seed = await EmbeddingService.generateEmbedding(query.query || `exemplar ${query.missionId || ''}`);
+    const results = await VectorStore.search(seed, query.topK || 5, {
+      type: 'exemplar',
+      missionId: query.missionId,
+      gradeBand: query.gradeBand,
+    });
+    return results
+      .map((result) => this.mapSearchResultToContext(result.document, result.score))
+      .filter((block): block is ContextBlock => Boolean(block));
   }
   
   private static async getMisconceptions(query: RetrievalQuery): Promise<ContextBlock[]> {
-    // Fetch from YOUR misconceptions library
-    // Curated by educators, tagged by skill/grade
-    
-    // Mock for now
-    return [{
+    const seed = await EmbeddingService.generateEmbedding(query.query || 'common misconception');
+    const results = await VectorStore.search(seed, query.topK || 5, {
       type: 'misconception',
-      content: 'Common mistake: Students often forget to initialize variables before using them in loops.',
-      id: 'misconception_loop_init',
-      relevance: 0.6
-    }];
+      gradeBand: query.gradeBand,
+    });
+    return results
+      .map((result) => this.mapSearchResultToContext(result.document, result.score))
+      .filter((block): block is ContextBlock => Boolean(block));
   }
   
   private static async getStudentPastWork(
     learnerId: string,
     missionId?: string
   ): Promise<ContextBlock[]> {
-    // Fetch student's previous artifacts, reflections
-    // Helps AI understand their level and patterns
-    
-    // Mock for now
-    return [{
-      type: 'artifact',
-      content: 'Student previously completed similar mission with Bronze level. Showed strong effort but needed hints on debugging.',
-      id: `past_work_${learnerId}`,
-      relevance: 0.5
-    }];
+    const seed = await EmbeddingService.generateEmbedding(`student work ${learnerId} ${missionId || ''}`);
+    const results = await VectorStore.search(seed, 3, {
+      type: 'student_work',
+      missionId,
+    });
+
+    return results
+      .filter((result) => result.document.metadata.learnerId === learnerId)
+      .map((result) => this.mapSearchResultToContext(result.document, result.score))
+      .filter((block): block is ContextBlock => Boolean(block));
   }
   
   private static async getTeacherFeedback(query: RetrievalQuery): Promise<ContextBlock[]> {
-    // Fetch teacher feedback patterns for similar questions
-    // "What worked" from YOUR educator feedback vault
-    
-    // Mock for now
-    return [{
-      type: 'feedback',
-      content: 'Teachers found success by asking students to explain their code line-by-line before debugging.',
-      id: 'feedback_pattern_debug',
-      relevance: 0.6
-    }];
+    const seed = await EmbeddingService.generateEmbedding(query.query || 'teacher feedback pattern');
+    const results = await VectorStore.search(seed, query.topK || 5, {
+      type: 'feedback_pattern',
+      missionId: query.missionId,
+      gradeBand: query.gradeBand,
+    });
+    return results
+      .map((result) => this.mapSearchResultToContext(result.document, result.score))
+      .filter((block): block is ContextBlock => Boolean(block));
+  }
+
+  private static resolveVectorTypes(types?: ContextBlock['type'][]): VectorDocument['metadata']['type'][] {
+    if (!types || types.length === 0) {
+      return ['rubric', 'exemplar', 'misconception', 'student_work', 'feedback_pattern'];
+    }
+
+    const mapped = types.map((type) => this.mapContextToVectorType(type)).filter((type): type is VectorDocument['metadata']['type'] => Boolean(type));
+    return mapped.length > 0 ? Array.from(new Set(mapped)) : ['rubric', 'exemplar', 'misconception', 'student_work', 'feedback_pattern'];
+  }
+
+  private static mapSearchResultToContext(document: VectorDocument, score: number): ContextBlock | null {
+    const typeMap: Record<VectorDocument['metadata']['type'], ContextBlock['type']> = {
+      rubric: 'rubric',
+      exemplar: 'exemplar',
+      misconception: 'misconception',
+      student_work: 'artifact',
+      feedback_pattern: 'feedback',
+    };
+
+    const type = typeMap[document.metadata.type];
+    if (!type) return null;
+
+    return {
+      type,
+      content: document.content,
+      id: document.id,
+      relevance: score,
+      metadata: {
+        ...document.metadata,
+      },
+    };
+  }
+
+  private static mapStoredToVectorType(type: StoredDocument['type']): VectorDocument['metadata']['type'] {
+    switch (type) {
+      case 'artifact':
+        return 'student_work';
+      case 'feedback':
+        return 'feedback_pattern';
+      case 'rubric':
+      case 'exemplar':
+      case 'misconception':
+        return type;
+      default:
+        return 'feedback_pattern';
+    }
+  }
+
+  private static mapContextToVectorType(type: ContextBlock['type']): VectorDocument['metadata']['type'] | null {
+    switch (type) {
+      case 'artifact':
+        return 'student_work';
+      case 'feedback':
+        return 'feedback_pattern';
+      case 'rubric':
+      case 'exemplar':
+      case 'misconception':
+        return type;
+      case 'mission_goal':
+        return null;
+      default:
+        return null;
+    }
   }
 }
 

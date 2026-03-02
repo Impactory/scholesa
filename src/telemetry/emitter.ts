@@ -1,5 +1,6 @@
 import { CanonicalEvent, createEvent, EventActor, EventContext, EventPrivacy } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
+import { isValidEvent } from './validator';
 
 export class TelemetryEmitter {
   private sessionId: string;
@@ -41,18 +42,39 @@ export class TelemetryEmitter {
 
     event.metrics = metrics;
 
+    if (!isValidEvent(event)) {
+      console.warn(`[Telemetry] Validation failed for event: ${eventName}`);
+      return;
+    }
+
     try {
-      // In a real implementation, this would be an HTTP POST
-      // console.log(`[Telemetry] Emitting event: ${eventName}`, JSON.stringify(event, null, 2));
-      // await axios.post(this.collectorUrl, event);
-      this.mockSend(event);
+      await this.send(event);
     } catch (error) {
       console.error(`[Telemetry] Failed to emit event: ${eventName}`, error);
       // Fail-closed logic or retry queue would go here
     }
   }
 
-  private mockSend(event: CanonicalEvent) {
-    // console.log(`[MockTransport] Sent ${event.event_name}`);
+  private async send(event: CanonicalEvent): Promise<void> {
+    if (!this.collectorUrl) {
+      this.logLocalFallback(event);
+      return;
+    }
+
+    const response = await fetch(this.collectorUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(event),
+    });
+
+    if (!response.ok) {
+      throw new Error(`collector responded ${response.status}`);
+    }
+  }
+
+  private logLocalFallback(event: CanonicalEvent) {
+    console.log(`[TelemetryLocal] ${event.event_name}`);
   }
 }
