@@ -173,6 +173,7 @@ class ScholesaTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      splashFactory: InkRipple.splashFactory,
       scaffoldBackgroundColor: scheme.surfaceContainerLowest,
       canvasColor: scheme.surface,
       fontFamily: 'Inter',
@@ -260,6 +261,7 @@ class ScholesaTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      splashFactory: InkRipple.splashFactory,
       scaffoldBackgroundColor: scheme.surfaceContainerLowest,
       canvasColor: scheme.surface,
       fontFamily: 'Inter',

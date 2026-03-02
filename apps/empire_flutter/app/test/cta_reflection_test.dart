@@ -3,6 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/modules/educator/educator_mission_plans_page.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 void main() {
   group('CTA reflection regressions', () {
     testWidgets('site sessions create reflects immediately in list',
@@ -10,7 +15,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1200, 1600));
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          theme: _testTheme,
           home: SiteSessionsPage(),
         ),
       );
@@ -39,7 +45,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1200, 1600));
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          theme: _testTheme,
           home: EducatorMissionPlansPage(),
         ),
       );

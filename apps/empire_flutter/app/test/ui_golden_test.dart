@@ -11,6 +11,11 @@ import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
 import 'package:scholesa_app/ui/landing/landing_page.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 Future<void> _pumpSized(
   WidgetTester tester, {
   required Size size,
@@ -24,6 +29,7 @@ Future<void> _pumpSized(
 
   await tester.pumpWidget(
     MaterialApp(
+      theme: _testTheme,
       home: child,
     ),
   );
@@ -115,7 +121,10 @@ void main() {
       await tester.pumpWidget(
         Provider<AuthService>.value(
           value: pendingAuthService,
-          child: const MaterialApp(home: LoginPage()),
+          child: MaterialApp(
+            theme: _testTheme,
+            home: const LoginPage(),
+          ),
         ),
       );
 

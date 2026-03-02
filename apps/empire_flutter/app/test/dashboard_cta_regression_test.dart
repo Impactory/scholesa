@@ -5,6 +5,11 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
 import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 void main() {
   group('Dashboard CTA regressions', () {
     testWidgets('role dashboard View All opens quick actions sheet',
@@ -24,7 +29,8 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider<AppState>.value(
           value: appState,
-          child: const MaterialApp(
+          child: MaterialApp(
+            theme: _testTheme,
             home: RoleDashboard(),
           ),
         ),
@@ -42,7 +48,8 @@ void main() {
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          theme: _testTheme,
           home: SiteDashboardPage(),
         ),
       );
@@ -65,7 +72,8 @@ void main() {
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          theme: _testTheme,
           home: SiteDashboardPage(),
         ),
       );

@@ -6,6 +6,11 @@ import 'package:scholesa_app/runtime/ai_coach_widget.dart';
 import 'package:scholesa_app/runtime/bos_models.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 void main() {
   group('AiCoachWidget conversational goals regressions', () {
     late LearningRuntimeProvider runtime;
@@ -28,6 +33,7 @@ void main() {
     }) async {
       await tester.pumpWidget(
         MaterialApp(
+          theme: _testTheme,
           home: Scaffold(
             body: AiCoachWidget(
               runtime: runtime,
