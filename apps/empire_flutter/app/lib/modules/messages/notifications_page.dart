@@ -156,7 +156,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   color: ScholesaColors.primary.withValues(alpha: 0.2)),
         ),
         child: InkWell(
-          onTap: () => _handleNotificationTap(notification),
+          onTap: () => _handleNotificationTap(notification, service),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
