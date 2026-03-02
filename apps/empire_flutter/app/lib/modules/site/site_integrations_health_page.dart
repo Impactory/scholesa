@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -29,6 +34,8 @@ const Map<String, String> _siteIntegrationsEs = <String, String>{
   'm ago': 'm atrás',
   'h ago': 'h atrás',
   'd ago': 'd atrás',
+  'Loading...': 'Cargando...',
+  'No connected integrations found': 'No se encontraron integraciones conectadas',
 };
 
 /// Site integrations health page
@@ -49,38 +56,17 @@ class _SiteIntegrationsHealthPageState
     return _siteIntegrationsEs[input] ?? input;
   }
 
-  final List<_Integration> _integrations = <_Integration>[
-    _Integration(
-      id: '1',
-      name: 'Google Classroom',
-      icon: Icons.school_rounded,
-      color: Colors.blue,
-      status: _IntegrationStatus.healthy,
-      lastSync: DateTime.now().subtract(const Duration(minutes: 15)),
-      syncedItems: 45,
-      errors: 0,
-    ),
-    _Integration(
-      id: '2',
-      name: 'GitHub',
-      icon: Icons.code_rounded,
-      color: Colors.black87,
-      status: _IntegrationStatus.warning,
-      lastSync: DateTime.now().subtract(const Duration(hours: 2)),
-      syncedItems: 23,
-      errors: 3,
-    ),
-    const _Integration(
-      id: '3',
-      name: 'Canvas LMS',
-      icon: Icons.dashboard_rounded,
-      color: Colors.red,
-      status: _IntegrationStatus.disconnected,
-      lastSync: null,
-      syncedItems: 0,
-      errors: 0,
-    ),
-  ];
+  List<_Integration> _integrations = <_Integration>[];
+  bool _isLoading = false;
+  String? _siteId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIntegrations();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +107,26 @@ class _SiteIntegrationsHealthPageState
             ),
           ),
           const SizedBox(height: 12),
+          if (_isLoading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _t('Loading...'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
+          if (!_isLoading && _integrations.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  _t('No connected integrations found'),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              ),
+            ),
           ..._integrations
               .map((integration) => _buildIntegrationCard(integration)),
         ],
@@ -450,98 +456,85 @@ class _SiteIntegrationsHealthPageState
   }
 
   void _handleRefreshIntegrations() {
-    final DateTime now = DateTime.now();
-    setState(() {
-      for (var index = 0; index < _integrations.length; index++) {
-        final _Integration integration = _integrations[index];
-        if (integration.status == _IntegrationStatus.disconnected) continue;
-
-        _integrations[index] = integration.copyWith(
-          lastSync: now,
-          errors: integration.errors > 0 ? integration.errors - 1 : 0,
-          status: integration.errors <= 1
-              ? _IntegrationStatus.healthy
-              : _IntegrationStatus.warning,
-        );
-      }
+    _loadIntegrations().then((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('Integrations refreshed'))),
+      );
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_t('Integrations refreshed'))),
-    );
   }
 
-  void _handleConnectIntegration(_Integration integration) {
-    final DateTime now = DateTime.now();
-    setState(() {
-      for (var index = 0; index < _integrations.length; index++) {
-        if (_integrations[index].id != integration.id) continue;
-        _integrations[index] = _integrations[index].copyWith(
-          status: _IntegrationStatus.healthy,
-          lastSync: now,
-          syncedItems: _integrations[index].syncedItems > 0
-              ? _integrations[index].syncedItems
-              : 1,
-          errors: 0,
-        );
-        break;
-      }
-    });
+  Future<void> _handleConnectIntegration(_Integration integration) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    await firestoreService.firestore
+        .collection('integrationConnections')
+        .doc(integration.id)
+        .set(<String, dynamic>{
+      'status': 'active',
+      'lastError': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _loadIntegrations();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${integration.name} ${_t('connected')}')),
     );
   }
 
-  void _handleForceSyncIntegration(_Integration integration) {
-    final DateTime now = DateTime.now();
-    setState(() {
-      for (var index = 0; index < _integrations.length; index++) {
-        if (_integrations[index].id != integration.id) continue;
-        final _Integration current = _integrations[index];
-        _integrations[index] = current.copyWith(
-          status: _IntegrationStatus.healthy,
-          lastSync: now,
-          syncedItems: current.syncedItems + 1,
-          errors: 0,
-        );
-        break;
-      }
+  Future<void> _handleForceSyncIntegration(_Integration integration) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    await firestoreService.firestore.collection('syncJobs').add(<String, dynamic>{
+      'type': '${integration.providerKey}_manual_sync',
+      'requestedBy': FirebaseAuth.instance.currentUser?.uid,
+      'status': 'queued',
+      if ((_siteId ?? '').isNotEmpty) 'siteId': _siteId,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _loadIntegrations();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${integration.name} ${_t('synced successfully')}')),
     );
   }
 
-  void _handleRetryFailedSyncs(_Integration integration) {
-    setState(() {
-      for (var index = 0; index < _integrations.length; index++) {
-        if (_integrations[index].id != integration.id) continue;
-        final _Integration current = _integrations[index];
-        _integrations[index] = current.copyWith(
-          errors: 0,
-          status: _IntegrationStatus.healthy,
-          lastSync: DateTime.now(),
-        );
-        break;
-      }
-    });
+  Future<void> _handleRetryFailedSyncs(_Integration integration) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    Query<Map<String, dynamic>> query =
+        firestoreService.firestore.collection('syncJobs');
+    if ((_siteId ?? '').isNotEmpty) {
+      query = query.where('siteId', isEqualTo: _siteId);
+    }
+    query = query.where('status', isEqualTo: 'failed').limit(25);
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+    final WriteBatch batch = firestoreService.firestore.batch();
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+      final String type = ((doc.data()['type'] as String?) ?? '').toLowerCase();
+      if (!_typeMatchesProvider(type, integration.providerKey)) continue;
+      batch.set(doc.reference, <String, dynamic>{
+        'status': 'queued',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+    await batch.commit();
+    await _loadIntegrations();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(_t('Failed syncs retried successfully'))),
     );
   }
 
-  void _handleDisconnectIntegration(_Integration integration) {
-    setState(() {
-      for (var index = 0; index < _integrations.length; index++) {
-        if (_integrations[index].id != integration.id) continue;
-        _integrations[index] = _integrations[index].copyWith(
-          status: _IntegrationStatus.disconnected,
-          clearLastSync: true,
-          syncedItems: 0,
-          errors: 0,
-        );
-        break;
-      }
-    });
+  Future<void> _handleDisconnectIntegration(_Integration integration) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    await firestoreService.firestore
+        .collection('integrationConnections')
+        .doc(integration.id)
+        .set(<String, dynamic>{
+      'status': 'disconnected',
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _loadIntegrations();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${integration.name} ${_t('disconnected')}')),
     );
@@ -557,6 +550,163 @@ class _SiteIntegrationsHealthPageState
     }
     return '${diff.inDays}${_t('d ago')}';
   }
+
+  Future<void> _loadIntegrations() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    _siteId = siteId;
+    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      Query<Map<String, dynamic>> connectionsQuery =
+          firestoreService.firestore.collection('integrationConnections');
+      if (uid.isNotEmpty) {
+        connectionsQuery = connectionsQuery.where('ownerUserId', isEqualTo: uid);
+      }
+
+      QuerySnapshot<Map<String, dynamic>> connectionsSnap;
+      try {
+        connectionsSnap =
+            await connectionsQuery.orderBy('createdAt', descending: true).get();
+      } catch (_) {
+        connectionsSnap = await connectionsQuery.get();
+      }
+
+      Query<Map<String, dynamic>> syncQuery =
+          firestoreService.firestore.collection('syncJobs');
+      if (siteId.isNotEmpty) {
+        syncQuery = syncQuery.where('siteId', isEqualTo: siteId);
+      }
+
+      QuerySnapshot<Map<String, dynamic>> syncSnap;
+      try {
+        syncSnap = await syncQuery.orderBy('createdAt', descending: true).limit(200).get();
+      } catch (_) {
+        syncSnap = await syncQuery.limit(200).get();
+      }
+
+      final List<Map<String, dynamic>> syncRows =
+          syncSnap.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        return <String, dynamic>{'id': doc.id, ...doc.data()};
+      }).toList();
+
+      final List<_Integration> loaded = connectionsSnap.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String providerKey =
+            ((data['provider'] as String?) ?? 'google_classroom').toLowerCase();
+        final List<Map<String, dynamic>> providerJobs = syncRows
+            .where((Map<String, dynamic> row) =>
+                _typeMatchesProvider(
+                    ((row['type'] as String?) ?? '').toLowerCase(), providerKey))
+            .toList();
+
+        DateTime? lastSync;
+        int synced = 0;
+        int errors = 0;
+        for (final Map<String, dynamic> row in providerJobs) {
+          final String status = ((row['status'] as String?) ?? '').toLowerCase();
+          final DateTime? created = _toDateTime(row['createdAt']);
+          if (created != null && (lastSync == null || created.isAfter(lastSync))) {
+            lastSync = created;
+          }
+          if (status == 'completed' || status == 'success' || status == 'done') {
+            synced += 1;
+          }
+          if (status == 'failed' || status == 'error') {
+            errors += 1;
+          }
+        }
+
+        final String connectionStatus =
+            ((data['status'] as String?) ?? 'active').toLowerCase();
+        final String? lastError = data['lastError'] as String?;
+        final _IntegrationStatus status = connectionStatus == 'disconnected' ||
+                connectionStatus == 'revoked' ||
+                connectionStatus == 'inactive'
+            ? _IntegrationStatus.disconnected
+            : (errors > 0 || (lastError?.trim().isNotEmpty ?? false))
+                ? _IntegrationStatus.warning
+                : _IntegrationStatus.healthy;
+
+        final ({String name, IconData icon, Color color}) visual =
+            _providerVisual(providerKey);
+
+        return _Integration(
+          id: doc.id,
+          providerKey: providerKey,
+          name: visual.name,
+          icon: visual.icon,
+          color: visual.color,
+          status: status,
+          lastSync: lastSync,
+          syncedItems: synced,
+          errors: errors,
+        );
+      }).toList();
+
+      loaded.sort((_Integration a, _Integration b) => a.name.compareTo(b.name));
+
+      if (!mounted) return;
+      setState(() => _integrations = loaded);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  bool _typeMatchesProvider(String type, String providerKey) {
+    if (providerKey.contains('google')) {
+      return type.contains('google') || type.contains('classroom');
+    }
+    if (providerKey.contains('github')) {
+      return type.contains('github');
+    }
+    if (providerKey.contains('canvas')) {
+      return type.contains('canvas');
+    }
+    return type.contains(providerKey);
+  }
+
+  ({String name, IconData icon, Color color}) _providerVisual(
+      String providerKey) {
+    if (providerKey.contains('github')) {
+      return (
+        name: 'GitHub',
+        icon: Icons.code_rounded,
+        color: Colors.black87,
+      );
+    }
+    if (providerKey.contains('canvas')) {
+      return (
+        name: 'Canvas LMS',
+        icon: Icons.dashboard_rounded,
+        color: Colors.red,
+      );
+    }
+    return (
+      name: 'Google Classroom',
+      icon: Icons.school_rounded,
+      color: Colors.blue,
+    );
+  }
 }
 
 enum _IntegrationStatus { healthy, warning, error, disconnected }
@@ -564,6 +714,7 @@ enum _IntegrationStatus { healthy, warning, error, disconnected }
 class _Integration {
   const _Integration({
     required this.id,
+    required this.providerKey,
     required this.name,
     required this.icon,
     required this.color,
@@ -574,6 +725,7 @@ class _Integration {
   });
 
   final String id;
+  final String providerKey;
   final String name;
   final IconData icon;
   final Color color;
@@ -584,6 +736,7 @@ class _Integration {
 
   _Integration copyWith({
     String? id,
+    String? providerKey,
     String? name,
     IconData? icon,
     Color? color,
@@ -595,6 +748,7 @@ class _Integration {
   }) {
     return _Integration(
       id: id ?? this.id,
+      providerKey: providerKey ?? this.providerKey,
       name: name ?? this.name,
       icon: icon ?? this.icon,
       color: color ?? this.color,

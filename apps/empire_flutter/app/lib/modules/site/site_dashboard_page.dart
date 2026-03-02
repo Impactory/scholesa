@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -55,6 +57,10 @@ const Map<String, String> _siteDashboardEs = <String, String>{
   'report prepared for download': 'reporte preparado para descargar',
   'Generate': 'Generar',
   'All Recent Activity': 'Toda la actividad reciente',
+  'Loading...': 'Cargando...',
+  'No recent activity yet': 'Aún no hay actividad reciente',
+  'Incident reported': 'Incidente reportado',
+  'Site operation event': 'Evento de operación del sitio',
 };
 
 /// Site Dashboard Page - Analytics and overview for site administrators
@@ -70,30 +76,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   final AnalyticsService _analyticsService = AnalyticsService.instance;
   TelemetryDashboardMetrics? _metrics;
   bool _isLoadingMetrics = true;
+  bool _isLoadingActivities = true;
   String? _metricsError;
-  final List<_SiteActivity> _activities = <_SiteActivity>[
-    _SiteActivity(
-      icon: Icons.person_add,
-      title: 'New enrollment',
-      subtitle: 'Emma Johnson joined AI Explorers',
-      time: '2 hours ago',
-      color: ScholesaColors.learner,
-    ),
-    _SiteActivity(
-      icon: Icons.check_circle,
-      title: 'Mission completed',
-      subtitle: 'Liam Chen completed "Build a Robot"',
-      time: '4 hours ago',
-      color: ScholesaColors.success,
-    ),
-    _SiteActivity(
-      icon: Icons.star,
-      title: 'Achievement unlocked',
-      subtitle: 'Sofia Martinez earned "Code Master" badge',
-      time: '6 hours ago',
-      color: ScholesaColors.warning,
-    ),
-  ];
+  List<_SiteActivity> _activities = <_SiteActivity>[];
 
   String _t(String input) {
     final String locale = Localizations.localeOf(context).languageCode;
@@ -112,6 +97,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       },
     );
     _loadMetrics();
+    _loadRecentActivity();
   }
 
   Future<void> _loadMetrics() async {
@@ -616,6 +602,26 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             ],
           ),
           const SizedBox(height: 8),
+          if (_isLoadingActivities)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  _t('Loading...'),
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+            ),
+          if (!_isLoadingActivities && _activities.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  _t('No recent activity yet'),
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+            ),
           ..._activities.map(
             (_SiteActivity activity) => _ActivityItem(
               icon: activity.icon,
@@ -699,30 +705,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 },
               );
               popupCompleted = true;
-              setState(() {
-                _activities.insert(
-                  0,
-                  _SiteActivity(
-                    icon: Icons.download_done,
-                    title: _t('Report generated'),
-                    subtitle:
-                        '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}',
-                    time: _t('just now'),
-                    color: ScholesaColors.site,
-                  ),
-                );
-                if (_activities.length > 8) {
-                  _activities.removeLast();
-                }
-              });
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text('$_selectedPeriod ${_t('report prepared for download')}'),
-                  backgroundColor: ScholesaColors.site,
-                ),
-              );
+              _persistReportGeneratedEvent();
             },
             child: Text(_t('Generate')),
           ),
@@ -796,6 +780,195 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       },
     );
   }
+
+  Future<void> _persistReportGeneratedEvent() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+
+    if (siteId.isNotEmpty) {
+      await firestoreService.firestore.collection('siteOpsEvents').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'action': 'Export Site Report',
+          'period': _selectedPeriod,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      );
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$_selectedPeriod ${_t('report prepared for download')}'),
+        backgroundColor: ScholesaColors.site,
+      ),
+    );
+    await _loadRecentActivity();
+  }
+
+  Future<void> _loadRecentActivity() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+
+    if (!mounted) return;
+    setState(() => _isLoadingActivities = true);
+
+    try {
+      if (siteId.isEmpty) {
+        if (!mounted) return;
+        setState(() => _activities = <_SiteActivity>[]);
+        return;
+      }
+
+      final List<_TimedSiteActivity> feed = <_TimedSiteActivity>[];
+
+      QuerySnapshot<Map<String, dynamic>> incidentsSnap;
+      try {
+        incidentsSnap = await firestoreService.firestore
+            .collection('incidents')
+            .where('siteId', isEqualTo: siteId)
+            .orderBy('reportedAt', descending: true)
+            .limit(20)
+            .get();
+      } catch (_) {
+        incidentsSnap = await firestoreService.firestore
+            .collection('incidents')
+            .where('siteId', isEqualTo: siteId)
+            .limit(20)
+            .get();
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in incidentsSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? at = _toDateTime(data['reportedAt']) ??
+            _toDateTime(data['createdAt']) ??
+            _toDateTime(data['updatedAt']);
+        if (at == null) continue;
+        final String summary = (data['title'] as String?)?.trim().isNotEmpty == true
+            ? (data['title'] as String).trim()
+            : (data['description'] as String?) ?? _t('Incident reported');
+        feed.add(
+          _TimedSiteActivity(
+            at: at,
+            icon: Icons.warning_rounded,
+            title: _t('Incident reported'),
+            subtitle: summary,
+            color: ScholesaColors.warning,
+          ),
+        );
+      }
+
+      QuerySnapshot<Map<String, dynamic>> opsEventSnap;
+      try {
+        opsEventSnap = await firestoreService.firestore
+            .collection('siteOpsEvents')
+            .where('siteId', isEqualTo: siteId)
+            .orderBy('createdAt', descending: true)
+            .limit(30)
+            .get();
+      } catch (_) {
+        opsEventSnap = await firestoreService.firestore
+            .collection('siteOpsEvents')
+            .where('siteId', isEqualTo: siteId)
+            .limit(30)
+            .get();
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in opsEventSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? at = _toDateTime(data['createdAt']);
+        if (at == null) continue;
+        final String action = (data['action'] as String?)?.trim() ?? _t('Site operation event');
+        final ({IconData icon, Color color}) visual = _mapActivityVisual(action);
+        final String subtitle = action == 'Export Site Report'
+            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}'
+            : _t('Site operation event');
+        feed.add(
+          _TimedSiteActivity(
+            at: at,
+            icon: visual.icon,
+            title: action,
+            subtitle: subtitle,
+            color: visual.color,
+          ),
+        );
+      }
+
+      feed.sort((_TimedSiteActivity a, _TimedSiteActivity b) => b.at.compareTo(a.at));
+      final List<_SiteActivity> activities = feed
+          .take(8)
+          .map(
+            (_TimedSiteActivity item) => _SiteActivity(
+              icon: item.icon,
+              title: item.title,
+              subtitle: item.subtitle,
+              time: _relativeTimeLabel(item.at),
+              color: item.color,
+            ),
+          )
+          .toList();
+
+      if (!mounted) return;
+      setState(() => _activities = activities);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingActivities = false);
+      }
+    }
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
+  }
+
+  String _relativeTimeLabel(DateTime value) {
+    final Duration diff = DateTime.now().difference(value);
+    if (diff.inMinutes < 1) return _t('just now');
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  ({IconData icon, Color color}) _mapActivityVisual(String action) {
+    switch (action) {
+      case 'Check-in':
+        return (icon: Icons.login_rounded, color: ScholesaColors.success);
+      case 'Check-out':
+        return (icon: Icons.logout_rounded, color: ScholesaColors.site);
+      case 'Export Site Report':
+        return (icon: Icons.download_done, color: ScholesaColors.site);
+      default:
+        return (icon: Icons.bolt_rounded, color: ScholesaColors.futureSkills);
+    }
+  }
+}
+
+class _TimedSiteActivity {
+  const _TimedSiteActivity({
+    required this.at,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
+
+  final DateTime at;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
 }
 
 class _SiteActivity {
