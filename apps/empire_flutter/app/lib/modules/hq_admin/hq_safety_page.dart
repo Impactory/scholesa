@@ -2,6 +2,40 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqSafetyEs = <String, String>{
+  'Safety Overview': 'Resumen de seguridad',
+  'Open': 'Abiertos',
+  'Escalated': 'Escalados',
+  'Critical': 'Críticos',
+  'Escalated to HQ': 'Escalado a HQ',
+  'All Recent Incidents': 'Todos los incidentes recientes',
+  'Site': 'Sede',
+  'Severity': 'Severidad',
+  'Reported': 'Reportado',
+  'Yes': 'Sí',
+  'No': 'No',
+  'Close': 'Cerrar',
+  'Opening full incident report...': 'Abriendo informe completo del incidente...',
+  'View Full Report': 'Ver informe completo',
+  'm ago': 'min atrás',
+  'h ago': 'h atrás',
+  'd ago': 'd atrás',
+  'Medical emergency - handled': 'Emergencia médica - atendida',
+  'Minor bump during play': 'Golpe leve durante el juego',
+  'Behavioral concern': 'Preocupación conductual',
+  'Downtown Studio': 'Estudio Centro',
+  'Westside Campus': 'Campus Oeste',
+  'minor': 'leve',
+  'major': 'grave',
+  'critical': 'crítico',
+};
+
+String _tHqSafety(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqSafetyEs[input] ?? input;
+}
+
 /// HQ Safety page for monitoring safety incidents across all sites
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class HqSafetyPage extends StatefulWidget {
@@ -64,7 +98,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
-        title: const Text('Safety Overview'),
+        title: Text(_tHqSafety(context, 'Safety Overview')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
       ),
@@ -92,16 +126,18 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           _buildMetric(
-              'Open', _incidents.length.toString(), Icons.warning_rounded),
+            _tHqSafety(context, 'Open'),
+            _incidents.length.toString(),
+            Icons.warning_rounded),
           _buildMetric(
-              'Escalated',
+            _tHqSafety(context, 'Escalated'),
               _incidents
                   .where((_SafetyIncident i) => i.isEscalated)
                   .length
                   .toString(),
               Icons.priority_high_rounded),
           _buildMetric(
-              'Critical',
+            _tHqSafety(context, 'Critical'),
               _incidents
                   .where(
                       (_SafetyIncident i) => i.severity == _Severity.critical)
@@ -144,7 +180,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                 color: Colors.red.shade700, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Escalated to HQ',
+              _tHqSafety(context, 'Escalated to HQ'),
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -163,8 +199,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'All Recent Incidents',
+        Text(
+          _tHqSafety(context, 'All Recent Incidents'),
           style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -189,10 +225,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       ),
       child: ListTile(
         leading: _buildSeverityIcon(incident.severity),
-        title: Text(incident.title,
+        title: Text(_tHqSafety(context, incident.title),
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle:
-            Text('${incident.site} • ${_formatTime(incident.reportedAt)}'),
+          Text('${_tHqSafety(context, incident.site)} • ${_formatTime(incident.reportedAt)}'),
         trailing: IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
           onPressed: () {
@@ -255,14 +291,21 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(incident.title,
+            Text(_tHqSafety(context, incident.title),
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildDetailRow('Site', incident.site),
-            _buildDetailRow('Severity', incident.severity.name.toUpperCase()),
-            _buildDetailRow('Reported', _formatTime(incident.reportedAt)),
-            _buildDetailRow('Escalated', incident.isEscalated ? 'Yes' : 'No'),
+            _buildDetailRow(_tHqSafety(context, 'Site'),
+              _tHqSafety(context, incident.site)),
+            _buildDetailRow(
+              _tHqSafety(context, 'Severity'),
+              _tHqSafety(context, incident.severity.name).toUpperCase()),
+            _buildDetailRow(
+              _tHqSafety(context, 'Reported'), _formatTime(incident.reportedAt)),
+            _buildDetailRow(_tHqSafety(context, 'Escalated'),
+              incident.isEscalated
+                ? _tHqSafety(context, 'Yes')
+                : _tHqSafety(context, 'No')),
             const SizedBox(height: 24),
             Row(
               children: <Widget>[
@@ -280,7 +323,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                       );
                       Navigator.pop(context);
                     },
-                    child: const Text('Close'),
+                    child: Text(_tHqSafety(context, 'Close')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -298,11 +341,12 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Opening full incident report...')),
+                        SnackBar(
+                            content: Text(_tHqSafety(
+                                context, 'Opening full incident report...'))),
                       );
                     },
-                    child: const Text('View Full Report'),
+                    child: Text(_tHqSafety(context, 'View Full Report')),
                   ),
                 ),
               ],
@@ -329,8 +373,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}${_tHqSafety(context, 'm ago')}';
+    if (diff.inHours < 24) return '${diff.inHours}${_tHqSafety(context, 'h ago')}';
+    return '${diff.inDays}${_tHqSafety(context, 'd ago')}';
   }
 }

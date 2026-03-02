@@ -3,6 +3,23 @@ import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import '../services/telemetry_service.dart';
 
+const Map<String, String> _roleGateEs = <String, String>{
+  'Access Denied': 'Acceso denegado',
+  "You don't have permission to access this page.":
+      'No tienes permiso para acceder a esta página.',
+  'Your current role:': 'Tu rol actual:',
+  'Go Back': 'Volver',
+  'This feature requires an upgrade': 'Esta función requiere una mejora',
+  'Contact your administrator for access.':
+      'Contacta a tu administrador para obtener acceso.',
+};
+
+String _tRoleGate(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _roleGateEs[input] ?? input;
+}
+
 /// Gate that restricts access to routes based on user role
 class RoleGate extends StatelessWidget {
   const RoleGate({
@@ -45,7 +62,7 @@ class _AccessDeniedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Access Denied'),
+        title: Text(_tRoleGate(context, 'Access Denied')),
       ),
       body: Center(
         child: Padding(
@@ -60,13 +77,14 @@ class _AccessDeniedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                "You don't have permission to access this page.",
+                _tRoleGate(
+                    context, "You don't have permission to access this page."),
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Your current role: ${role.name}',
+                '${_tRoleGate(context, 'Your current role:')} ${role.name}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[600],
                     ),
@@ -83,7 +101,7 @@ class _AccessDeniedScreen extends StatelessWidget {
                   );
                   Navigator.of(context).pop();
                 },
-                child: const Text('Go Back'),
+                child: Text(_tRoleGate(context, 'Go Back')),
               ),
             ],
           ),
@@ -138,12 +156,12 @@ class _LockedFeatureCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'This feature requires an upgrade',
+              _tRoleGate(context, 'This feature requires an upgrade'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Contact your administrator for access.',
+              _tRoleGate(context, 'Contact your administrator for access.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey[600],
                   ),

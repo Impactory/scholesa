@@ -3,6 +3,44 @@ import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
 
+const Map<String, String> _mvlGateEs = <String, String>{
+  "Great work! You've demonstrated your understanding. Keep going!":
+    '¡Excelente trabajo! Has demostrado tu comprensión. ¡Sigue adelante!',
+  'Almost there — can you provide one more piece of evidence?':
+    'Casi lo logras: ¿puedes aportar una evidencia más?',
+  'Good start! Share one more insight to complete the verification.':
+    '¡Buen comienzo! Comparte una idea más para completar la verificación.',
+  'Something went wrong. Please try again.':
+    'Algo salió mal. Inténtalo de nuevo.',
+  'Learner disagrees with verification requirement':
+    'El estudiante no está de acuerdo con el requisito de verificación',
+  'Your feedback has been sent to your educator for review.':
+    'Tu comentario se envió a tu educador para revisión.',
+  'Unable to send feedback right now.':
+    'No se puede enviar el comentario en este momento.',
+  'Show Your Understanding': 'Muestra tu comprensión',
+  "Take a moment to demonstrate what you've learned.":
+    'Tómate un momento para demostrar lo que has aprendido.',
+  'Explain in your own words:': 'Explica con tus propias palabras:',
+  'What have you learned? How would you explain this concept to a friend?':
+    '¿Qué has aprendido? ¿Cómo le explicarías este concepto a un amigo?',
+  ' evidence item': ' evidencia',
+  's': 's',
+  ' submitted': ' enviada',
+  ' — scoring...': ' — evaluando...',
+  ' — 1 more needed': ' — falta 1 más',
+  'Submitting...': 'Enviando...',
+  'Submit Evidence': 'Enviar evidencia',
+  "I think this check isn't needed":
+    'Creo que esta verificación no es necesaria',
+};
+
+String _tMvlGate(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _mvlGateEs[input] ?? input;
+}
+
 // ──────────────────────────────────────────────────────
 // MVL Gate Widget — Metacognitive Verification Loop
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §8, Math Contract §8
@@ -132,13 +170,15 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
 
           setState(() {
             _feedback = resolution == 'passed'
-                ? 'Great work! You\'ve demonstrated your understanding. Keep going!'
-                : 'Almost there — can you provide one more piece of evidence?';
+                ? _tMvlGate(context,
+                    'Great work! You\'ve demonstrated your understanding. Keep going!')
+                : _tMvlGate(context,
+                    'Almost there — can you provide one more piece of evidence?');
           });
         } else {
           setState(() {
-            _feedback =
-                'Good start! Share one more insight to complete the verification.';
+            _feedback = _tMvlGate(context,
+                'Good start! Share one more insight to complete the verification.');
           });
         }
       }
@@ -146,7 +186,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
       _explainController.clear();
     } catch (e) {
       setState(() {
-        _feedback = 'Something went wrong. Please try again.';
+        _feedback =
+            _tMvlGate(context, 'Something went wrong. Please try again.');
       });
     } finally {
       setState(() => _submitting = false);
@@ -166,20 +207,23 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
     try {
       await BosService.instance.requestContestability(
         episodeId: _episode!.id,
-        reason: 'Learner disagrees with verification requirement',
+        reason:
+            _tMvlGate(context, 'Learner disagrees with verification requirement'),
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Your feedback has been sent to your educator for review.'),
+        SnackBar(
+          content: Text(_tMvlGate(
+              context, 'Your feedback has been sent to your educator for review.')),
         ),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to send feedback right now.')),
+        SnackBar(
+            content:
+                Text(_tMvlGate(context, 'Unable to send feedback right now.'))),
       );
     }
   }
@@ -219,13 +263,14 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Show Your Understanding',
+                            _tMvlGate(context, 'Show Your Understanding'),
                             style: theme.textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Take a moment to demonstrate what you\'ve learned.',
+                            _tMvlGate(context,
+                                'Take a moment to demonstrate what you\'ve learned.'),
                             style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant),
                           ),
@@ -239,15 +284,15 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
 
                 // Explanation prompt
                 Text(
-                  'Explain in your own words:',
+                  _tMvlGate(context, 'Explain in your own words:'),
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _explainController,
                   decoration: InputDecoration(
-                    hintText:
-                        'What have you learned? How would you explain this concept to a friend?',
+                    hintText: _tMvlGate(context,
+                      'What have you learned? How would you explain this concept to a friend?'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                     filled: true,
@@ -269,8 +314,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                             size: 16, color: Colors.green.shade600),
                         const SizedBox(width: 6),
                         Text(
-                          '${_submittedEvidenceIds.length} evidence item${_submittedEvidenceIds.length != 1 ? "s" : ""} submitted'
-                          '${_submittedEvidenceIds.length >= 2 ? " — scoring..." : " — 1 more needed"}',
+                          '${_submittedEvidenceIds.length}${_tMvlGate(context, ' evidence item')}${_submittedEvidenceIds.length != 1 ? _tMvlGate(context, 's') : ''}${_tMvlGate(context, ' submitted')}'
+                          '${_submittedEvidenceIds.length >= 2 ? _tMvlGate(context, ' — scoring...') : _tMvlGate(context, ' — 1 more needed')}',
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: Colors.green.shade700),
                         ),
@@ -314,8 +359,9 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                                 strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.send),
-                    label:
-                        Text(_submitting ? 'Submitting...' : 'Submit Evidence'),
+                      label: Text(_submitting
+                        ? _tMvlGate(context, 'Submitting...')
+                        : _tMvlGate(context, 'Submit Evidence')),
                   ),
                 ),
 
@@ -326,7 +372,8 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
                   child: TextButton.icon(
                     onPressed: _requestContestability,
                     icon: const Icon(Icons.feedback_outlined, size: 16),
-                    label: const Text('I think this check isn\'t needed'),
+                    label: Text(
+                        _tMvlGate(context, 'I think this check isn\'t needed')),
                     style: TextButton.styleFrom(
                       textStyle: theme.textTheme.bodySmall,
                       foregroundColor: theme.colorScheme.onSurfaceVariant,
