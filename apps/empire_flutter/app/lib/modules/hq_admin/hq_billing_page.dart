@@ -2,6 +2,61 @@ import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
+const Map<String, String> _hqBillingEs = <String, String>{
+  'New Invoice': 'Nueva factura',
+  'Billing Management': 'Gestión de facturación',
+  'Invoices, payments & subscriptions': 'Facturas, pagos y suscripciones',
+  'All Sites': 'Todas las sedes',
+  'This Month': 'Este mes',
+  'This Quarter': 'Este trimestre',
+  'This Year': 'Este año',
+  'Total Revenue': 'Ingresos totales',
+  '+18.2% vs last period': '+18.2% vs período anterior',
+  'Collected': 'Recaudado',
+  'Pending': 'Pendiente',
+  'Overdue': 'Vencido',
+  'Invoices': 'Facturas',
+  'Payments': 'Pagos',
+  'Subscriptions': 'Suscripciones',
+  'Export Financials': 'Exportar finanzas',
+  'Generate a consolidated financial report for invoices, payments, and subscriptions.':
+      'Genera un informe financiero consolidado de facturas, pagos y suscripciones.',
+  'Cancel': 'Cancelar',
+  'Export': 'Exportar',
+  'Financial report prepared for export':
+      'Informe financiero preparado para exportación',
+  'Invoice': 'Factura',
+  'Parent': 'Padre',
+  'Learner': 'Estudiante',
+  'Site': 'Sede',
+  'Date': 'Fecha',
+  'Amount': 'Monto',
+  'Status': 'Estado',
+  'Close': 'Cerrar',
+  'queued for sending': 'programada para envío',
+  'learner(s)': 'estudiante(s)',
+  'Plan': 'Plan',
+  'Next billing': 'Próxima facturación',
+  'Create Invoice': 'Crear factura',
+  'Select parent': 'Seleccionar padre',
+  'Select learner': 'Seleccionar estudiante',
+  'Description': 'Descripción',
+  'Invoice description...': 'Descripción de la factura...',
+  'Invoice created successfully': 'Factura creada correctamente',
+  'paid': 'pagada',
+  'pending': 'pendiente',
+  'overdue': 'vencida',
+  'active': 'activa',
+  'paused': 'pausada',
+  'cancelled': 'cancelada',
+};
+
+String _tHqBilling(BuildContext context, String input) {
+  final String locale = Localizations.localeOf(context).languageCode;
+  if (locale != 'es') return input;
+  return _hqBillingEs[input] ?? input;
+}
+
 /// HQ Billing Page - Platform-wide billing and revenue management
 class HqBillingPage extends StatefulWidget {
   const HqBillingPage({super.key});
