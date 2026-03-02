@@ -89,6 +89,17 @@ Verify in telemetry sink/logs that these fields are present when applicable:
 - `voice.tts`: `source` (`voice_api_audio`, `flutter_tts`, `user_interrupt`)
 - BOS events (`ai_help_opened`, `ai_help_used`, `ai_coach_response`): includes `mode` and, when available, `sessionOccurrenceId`
 
+## 4C) Conversational intelligence checks
+1. Send a first question in `hint` mode.
+2. Send a second follow-up question referencing the prior answer.
+3. Repeat in `verify` and `debug` modes.
+
+Expected:
+- Assistant answers reference current context and remain coherent across turns.
+- Responses include actionable next steps, not just generic text.
+- Responses end with a coaching follow-up question (or equivalent conversational prompt).
+- Mode behavior shifts correctly (`hint` vs `verify` vs `debug`).
+
 ## 5) TTS playback path
 1. With voice output enabled, send a prompt.
 2. Verify speaking state appears.

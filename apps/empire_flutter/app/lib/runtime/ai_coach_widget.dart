@@ -323,7 +323,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     setState(() => _isListening = started);
   }
 
-  Future<void> _speakResponse(AiCoachResponse response) async {
+  Future<void> _speakText(String text, {String? traceId}) async {
     if (!_voiceOutputEnabled) return;
 
     if (_isSpeaking) {
@@ -332,20 +332,20 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (mounted) setState(() => _isSpeaking = false);
     }
 
-    if (response.voiceAvailable &&
-        response.voiceAudioUrl != null &&
-        response.voiceAudioUrl!.isNotEmpty) {
+    if (_lastResponse?.voiceAvailable == true &&
+        _lastResponse?.voiceAudioUrl != null &&
+        _lastResponse!.voiceAudioUrl!.isNotEmpty) {
       try {
         await _flutterTts.stop();
         await _audioPlayer.stop();
         if (mounted) setState(() => _isSpeaking = true);
-        await _audioPlayer.play(UrlSource(response.voiceAudioUrl!));
+        await _audioPlayer.play(UrlSource(_lastResponse!.voiceAudioUrl!));
         await TelemetryService.instance.logEvent(
           event: 'voice.tts',
           metadata: <String, dynamic>{
             'source': 'voice_api_audio',
             'surface': 'ai_coach_widget',
-            'traceId': response.traceId,
+            'traceId': traceId,
             'audioUrlAvailable': true,
           },
         );
@@ -357,16 +357,112 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     await _flutterTts.stop();
     if (mounted) setState(() => _isSpeaking = true);
-    await _flutterTts.speak(response.message);
+    await _flutterTts.speak(text);
     await TelemetryService.instance.logEvent(
       event: 'voice.tts',
       metadata: <String, dynamic>{
         'source': 'flutter_tts',
         'surface': 'ai_coach_widget',
-        'chars': response.message.length,
-        'traceId': response.traceId,
+        'chars': text.length,
+        'traceId': traceId,
       },
     );
+  }
+
+  String _coachDirectiveForMode(AiCoachMode mode) {
+    switch (mode) {
+      case AiCoachMode.hint:
+        return 'Give one focused hint first, then ask a short guiding question.';
+      case AiCoachMode.verify:
+        return 'Verify reasoning with evidence checks and ask for one concrete proof step.';
+      case AiCoachMode.explain:
+        return 'Explain in simple steps and relate to one practical example.';
+      case AiCoachMode.debug:
+        return 'Diagnose likely causes, suggest one small test, and ask what changed recently.';
+    }
+  }
+
+  List<String> _recentConversationTurns({int limit = 6}) {
+    if (_messages.isEmpty) return const <String>[];
+    final Iterable<_ChatMessage> window = _messages.reversed.take(limit).toList().reversed;
+    return window
+        .map((m) => '${m.isUser ? 'Learner' : 'Coach'}: ${m.text.replaceAll('\n', ' ').trim()}')
+        .toList();
+  }
+
+  String _roleInstruction(UserRole role) {
+    switch (role) {
+      case UserRole.learner:
+        return 'Speak directly to a learner using supportive, age-appropriate coaching language.';
+      case UserRole.parent:
+        return 'Coach with parent-friendly phrasing that supports the learner without giving answers.';
+      case UserRole.educator:
+      case UserRole.site:
+      case UserRole.partner:
+      case UserRole.hq:
+        return 'Respond as an instructional co-pilot with concise pedagogical suggestions.';
+    }
+  }
+
+  String _stateSnapshot() {
+    final XHat? state = widget.runtime.state?.xHat;
+    if (state == null) return 'unknown';
+    return 'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
+  }
+
+  String _buildConversationalPrompt(String userInput) {
+    final List<String> turns = _recentConversationTurns();
+    final String conversation = turns.isEmpty
+        ? 'No prior turns.'
+        : turns.join('\n');
+    final String mission = (widget.missionId ?? '').trim();
+    final String checkpoint = (widget.checkpointId ?? '').trim();
+    final String occurrence = (widget.runtime.sessionOccurrenceId ?? '').trim();
+    final String tags = widget.conceptTags.join(', ');
+
+    return '''
+You are Scholesa AI Coach in a live conversation.
+${_roleInstruction(widget.actorRole)}
+Mode: ${_selectedMode.name}. ${_coachDirectiveForMode(_selectedMode)}
+Safety: Do not provide final graded answers; scaffold thinking.
+
+Context:
+- siteId: ${widget.runtime.siteId}
+- learnerId: ${widget.runtime.learnerId}
+- sessionOccurrenceId: ${occurrence.isEmpty ? 'unknown' : occurrence}
+- missionId: ${mission.isEmpty ? 'unknown' : mission}
+- checkpointId: ${checkpoint.isEmpty ? 'unknown' : checkpoint}
+- conceptTags: ${tags.isEmpty ? 'none' : tags}
+- stateEstimate: ${_stateSnapshot()}
+
+Recent conversation:
+$conversation
+
+Learner message:
+$userInput
+
+Response style:
+- Be conversational and concise.
+- Reflect the learner's message in one sentence.
+- Give 1-3 concrete next steps.
+- End with one coaching follow-up question.
+''';
+  }
+
+  String _enrichCoachReply(String text) {
+    final String trimmed = text.trim();
+    if (trimmed.isEmpty) return 'Let\'s try that again. What part feels most confusing right now?';
+    if (trimmed.contains('?')) return trimmed;
+    switch (_selectedMode) {
+      case AiCoachMode.hint:
+        return '$trimmed\n\nWhat have you tried so far?';
+      case AiCoachMode.verify:
+        return '$trimmed\n\nCan you show the evidence for your answer?';
+      case AiCoachMode.explain:
+        return '$trimmed\n\nHow would you explain that in your own words?';
+      case AiCoachMode.debug:
+        return '$trimmed\n\nWhat changed right before the issue started?';
+    }
   }
 
   Future<void> _interruptSpeaking() async {
@@ -400,6 +496,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   Future<void> _sendMessage() async {
     final String input = _inputController.text.trim();
     if (_loading || input.isEmpty) return;
+    final String conversationalPrompt = _buildConversationalPrompt(input);
 
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -445,14 +542,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       try {
         response = await VoiceRuntimeService.instance.requestCopilot(
           VoiceCopilotRequest(
-            message: input,
+            message: conversationalPrompt,
             locale: Localizations.localeOf(context).toLanguageTag(),
             gradeBand: widget.runtime.gradeBand,
             context: <String, dynamic>{
+              'userInput': input,
+              'conversationTurns': _recentConversationTurns(),
               'learnerId': widget.runtime.learnerId,
               'siteId': widget.runtime.siteId,
               'missionId': widget.missionId,
               'checkpointId': widget.checkpointId,
+              'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
               'mode': _selectedMode.name,
               'role': widget.actorRole.name,
             },
@@ -488,15 +588,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
       setState(() {
         _lastResponse = response;
+        final String conversationalReply = _enrichCoachReply(response.message);
         _messages.add(_ChatMessage(
-          text: response.message,
+          text: conversationalReply,
           isUser: false,
           response: response,
         ));
         _loading = false;
       });
 
-      await _speakResponse(response);
+      await _speakText(
+        _messages.last.text,
+        traceId: response.traceId,
+      );
 
       // Emit ai_help_used (client-side tracking)
       widget.runtime.trackEvent(
