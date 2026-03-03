@@ -2,6 +2,7 @@
   "name": "functions",
   "scripts": {
     "build": "tsc",
+    "test:coppa": "ts-node src/coppaGuards.spec.ts",
     "serve": "firebase emulators:start --only functions,firestore",
     "deploy": "firebase deploy --only functions"
   },

@@ -120,6 +120,7 @@ The deployed runtime exposes the same contract through Firebase callable names:
   - server-side writes only.
 - Voice paths (`/copilot/message`, `/voice/transcribe`, `/tts/speak`) enforce active school consent before model/tool execution.
 - Student-facing payloads remain privacy-minimized through server-side sanitization/redaction.
+- Regression gate: run `cd functions && npm run test:coppa` to verify consent + cross-site denial guards.
 
 ---
 

@@ -23,6 +23,7 @@ run_step "Web production build" npm run build
 run_step "Flutter web wasm release build" bash -lc "cd '$FLUTTER_DIR' && flutter build web --release --wasm --no-tree-shake-icons"
 run_step "Flutter CTA reflection regression" bash -lc "cd '$FLUTTER_DIR' && flutter test test/cta_reflection_test.dart"
 run_step "Compliance runtime endpoint smoke" bash ./scripts/compliance_runtime_smoke.sh
+run_step "COPPA regression guards" bash -lc "cd '$ROOT_DIR/functions' && npm run test:coppa"
 run_step "Voice fixtures coverage" npm run vibe:voice:fixtures
 run_step "Voice STT smoke" npm run vibe:voice:stt-smoke
 run_step "Voice trace continuity" npm run vibe:voice:trace-continuity

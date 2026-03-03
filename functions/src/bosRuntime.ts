@@ -25,6 +25,7 @@ import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
+import { hasSiteAccess, isCoppaConsentActive } from './coppaGuards';
 
 const db = admin.firestore();
 const TELEMETRY_COLLECTION = 'telemetryEvents';
@@ -242,12 +243,7 @@ async function assertActiveSchoolConsent(siteId: string): Promise<void> {
     throw new HttpsError('failed-precondition', 'School consent record is required before BOS access.');
   }
   const consent = consentDoc.data() as Record<string, unknown>;
-  const active = consent.active === true
-    && consent.agreementSigned === true
-    && consent.educationalUseOnly === true
-    && consent.parentNoticeProvided === true
-    && consent.noStudentMarketing === true;
-  if (!active) {
+  if (!isCoppaConsentActive(consent)) {
     throw new HttpsError('failed-precondition', 'School consent record is incomplete or inactive.');
   }
 }
@@ -255,15 +251,7 @@ async function assertActiveSchoolConsent(siteId: string): Promise<void> {
 async function assertUserSiteAccess(uid: string, siteId: string): Promise<void> {
   const profileSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
   const profile = profileSnap.exists ? (profileSnap.data() as Record<string, unknown>) : {};
-  const role = normalizeString(profile.role)?.toLowerCase();
-  if (role === 'hq') return;
-
-  const siteIds = dedupeStrings([
-    ...normalizeStringArray(profile.siteIds),
-    ...(normalizeString(profile.activeSiteId) ? [normalizeString(profile.activeSiteId)!] : []),
-  ]);
-
-  if (!siteIds.includes(siteId)) {
+  if (!hasSiteAccess(profile, siteId)) {
     throw new HttpsError('permission-denied', 'Site access denied.');
   }
 }

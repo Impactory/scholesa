@@ -8,6 +8,7 @@ import {
   type InternalInferenceAuthMode,
   type InternalInferenceCallResult,
 } from './internalInferenceGateway';
+import { isCoppaConsentActive } from './coppaGuards';
 
 export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
 export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
@@ -721,12 +722,7 @@ async function assertActiveSchoolConsent(siteId: string): Promise<void> {
     throw new VoiceHttpError(412, 'failed_precondition', 'School consent record is required before voice AI access.');
   }
   const consent = consentDoc.data() as Record<string, unknown>;
-  const active = consent.active === true
-    && consent.agreementSigned === true
-    && consent.educationalUseOnly === true
-    && consent.parentNoticeProvided === true
-    && consent.noStudentMarketing === true;
-  if (!active) {
+  if (!isCoppaConsentActive(consent)) {
     throw new VoiceHttpError(412, 'failed_precondition', 'School consent record is incomplete or inactive.');
   }
 }
