@@ -38,13 +38,39 @@ class SessionBootstrap {
               .timeout(_profileBootstrapTimeout);
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
+      } else {
+        _appState.updateFromMeResponse(<String, dynamic>{
+          'userId': user.uid,
+          'email': user.email ?? '',
+          'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+          'role': 'learner',
+          'activeSiteId': null,
+          'siteIds': <String>[],
+          'entitlements': <Map<String, dynamic>>[],
+        });
       }
     } on TimeoutException {
       debugPrint('Session bootstrap timed out while loading profile');
-      _appState.setError('Profile load timed out. Please try again.');
+      _appState.updateFromMeResponse(<String, dynamic>{
+        'userId': user.uid,
+        'email': user.email ?? '',
+        'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+        'role': 'learner',
+        'activeSiteId': null,
+        'siteIds': <String>[],
+        'entitlements': <Map<String, dynamic>>[],
+      });
     } catch (e) {
       debugPrint('Session bootstrap failed: $e');
-      _appState.setError('Failed to load profile. Please try again.');
+      _appState.updateFromMeResponse(<String, dynamic>{
+        'userId': user.uid,
+        'email': user.email ?? '',
+        'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+        'role': 'learner',
+        'activeSiteId': null,
+        'siteIds': <String>[],
+        'entitlements': <Map<String, dynamic>>[],
+      });
     } finally {
       _appState.setLoading(false);
     }
