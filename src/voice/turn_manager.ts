@@ -21,7 +21,7 @@ export class TurnManager {
   }
 
   // Simulate silence detection
-  detectSilence(duration: number): void {
+  detectSilence(duration: number): boolean {
     if (duration > this.silenceThreshold) {
       this.emitter.emit({
         event_name: 'turn_taking_timeout',
@@ -29,6 +29,9 @@ export class TurnManager {
           duration: duration
         }
       });
+      return true;
     }
+
+    return false;
   }
 }

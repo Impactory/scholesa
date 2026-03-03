@@ -22,7 +22,50 @@ export class BosController {
     this.stateMachine = new BOSStateMachine();
     this.consentManager = new ConsentManager();
     this.safeModeHandler = new SafeModeHandler(this.consentManager, emitter);
-    this.voiceManager = new VoiceManager(emitter, gradeBand);
+    this.voiceManager = new VoiceManager(emitter, gradeBand, {
+      onTranscript: (transcript, transcriptConfidence) => {
+        this.handleLearnerResponse(transcript, transcriptConfidence);
+      },
+      onTurnTimeout: (durationMs) => {
+        const current = this.stateMachine.getState();
+        this.stateMachine.updateMetrics({
+          silence_duration: durationMs,
+          confusion_count: current.metrics.confusion_count + 1,
+        });
+
+        this.emitter.emit({
+          event_name: 'confusion_detected',
+          payload: {
+            source: 'voice_turn_timeout',
+            duration_ms: durationMs,
+          },
+        });
+
+        if (current.state !== 'COACHING_RECOVERY' && current.state !== 'SAFE_MODE') {
+          this.stateMachine.transitionTo('COACHING_RECOVERY');
+          this.emitter.emit({
+            event_name: 'bos_state_transition',
+            payload: {
+              from: current.state,
+              to: 'COACHING_RECOVERY',
+              reason: 'turn_timeout',
+              timestamp: Date.now(),
+            },
+          });
+        }
+      },
+      onBargeIn: () => {
+        this.emitter.emit({
+          event_name: 'learner_response_captured',
+          payload: {
+            modality: 'voice',
+            confidence: 1,
+            redaction_flags: [],
+            action: 'barge_in',
+          },
+        });
+      },
+    });
     
     // Initialize with granted consent
     this.consentManager.setConsent('granted');
@@ -30,12 +73,15 @@ export class BosController {
 
   // Handle learner response
   handleLearnerResponse(response: string, confidence: number): void {
+    const currentMetrics = this.stateMachine.getState().metrics;
+
     this.emitter.emit({
       event_name: 'learner_response_captured',
       payload: {
         modality: 'voice',
         confidence: confidence,
-        redaction_flags: []
+        redaction_flags: [],
+        transcript: response,
       }
     });
 
@@ -56,6 +102,19 @@ export class BosController {
       // Simulate progress
       this.stateMachine.updateMetrics({
         mastery_delta: 0.1
+      });
+    }
+
+    if (confidence < 0.6) {
+      this.stateMachine.updateMetrics({
+        confusion_count: currentMetrics.confusion_count + 1,
+      });
+      this.emitter.emit({
+        event_name: 'confusion_detected',
+        payload: {
+          source: 'low_stt_confidence',
+          confidence,
+        },
       });
     }
   }
@@ -133,5 +192,10 @@ export class BosController {
   // Speak response
   speakResponse(text: string): void {
     this.voiceManager.speak(text);
+  }
+
+  // Interrupt active spoken response and return to listening
+  interruptVoiceResponse(): void {
+    this.voiceManager.bargeIn();
   }
 }
