@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/gradeBandPolicy';
 import { useAITracking, useInteractionTracking } from '@/src/hooks/useTelemetry';
-import { AIService } from '@/src/lib/ai/aiService';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { recordAIFeedback } from '@/src/lib/ai/interactionLogger';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
@@ -406,84 +405,70 @@ Guidance: ${
       const composedQuestion = personalizedContext
         ? `${personalizedContext}\n\nStudent Question: ${resolvedQuestion}`
         : resolvedQuestion;
-      let aiResponse: AIServiceResponse | null = null;
-
-      // Primary path: voice system endpoint contract (/copilot/message)
-      if (user && voiceApiConfigured()) {
-        try {
-          const idToken = await user.getIdToken();
-          const voiceResponse = await sendCopilotVoiceMessage({
-            idToken,
-            message: composedQuestion,
-            siteId,
-            locale,
-            screenId: 'ai_coach_popup',
-            gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
-            context: buildBosVoiceContext(voiceInputTraceId),
-            voice: {
-              enabled: true,
-              output: true,
-            },
-          });
-
-          aiResponse = {
-            answer: voiceResponse.text,
-            hints: voiceResponse.metadata.toolsInvoked.map((tool) => `${tool}`),
-            modelUsed: 'voice-orchestrator',
-            modelVersion: voiceResponse.metadata.modelVersion,
-            logId: voiceResponse.metadata.traceId,
-            promptTemplateId: 'voice.copilot.message',
-            policyVersion: voiceResponse.metadata.policyVersion,
-            safetyOutcome: voiceResponse.metadata.safetyOutcome,
-            safetyReasonCode: voiceResponse.metadata.safetyReasonCode,
-            toolCallIds: voiceResponse.metadata.toolsInvoked,
-            targetLocale: voiceResponse.metadata.locale,
-            gradeBand: resolvedGradeBand,
-            traceId: voiceResponse.metadata.traceId,
-            missionAttemptId: missionId,
-          };
-
-          trackVoiceTelemetry('voice.message', {
-            traceId: voiceResponse.metadata.traceId,
-            locale: voiceResponse.metadata.locale,
-            safetyOutcome: voiceResponse.metadata.safetyOutcome,
-            redactionApplied: voiceResponse.metadata.redactionApplied,
-            redactionCount: voiceResponse.metadata.redactionCount,
-            toolsInvokedCount: voiceResponse.metadata.toolsInvoked.length,
-          });
-
-          if (voiceResponse.tts.available && voiceResponse.tts.audioUrl) {
-            trackVoiceTelemetry('voice.tts', {
-              traceId: voiceResponse.metadata.traceId,
-              voiceProfile: voiceResponse.tts.voiceProfile || 'default',
-            });
-            const audio = new Audio(voiceResponse.tts.audioUrl);
-            void audio.play().catch((error) => {
-              console.error('Voice playback failed in AI coach popup:', error);
-            });
-          }
-          setVoiceInputTraceId(voiceResponse.metadata.traceId);
-        } catch (voiceError) {
-          console.error('Voice endpoint request failed; falling back to AI service path.', voiceError);
-        }
+      if (!user) {
+        throw new Error('Authentication is required for BOS AI Coach voice flow.');
+      }
+      if (!voiceApiConfigured()) {
+        throw new Error('Voice API is not configured; BOS AI Coach endpoint unavailable.');
       }
 
-      // Fallback path: existing integrated AI service
-      if (!aiResponse) {
-        aiResponse = await AIService.request({
-          learnerId,
-          studentName,
-          siteId,
-          grade,
-          studentLevel,
-          sessionId: sprintSessionId,
-          missionId,
+      const idToken = await user.getIdToken();
+      const voiceResponse = await sendCopilotVoiceMessage({
+        idToken,
+        message: composedQuestion,
+        siteId,
+        locale,
+        screenId: 'ai_coach_popup',
+        gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
+        context: {
+          ...buildBosVoiceContext(voiceInputTraceId),
           taskType: taskTypeMap[mode],
-          targetLocale: locale,
-          role: 'learner',
-          question: composedQuestion,
+          studentLevel,
+          studentName,
+        },
+        voice: {
+          enabled: true,
+          output: true,
+        },
+      });
+
+      const aiResponse: AIServiceResponse = {
+        answer: voiceResponse.text,
+        hints: voiceResponse.metadata.toolsInvoked.map((tool) => `${tool}`),
+        modelUsed: 'voice-orchestrator',
+        modelVersion: voiceResponse.metadata.modelVersion,
+        logId: voiceResponse.metadata.traceId,
+        promptTemplateId: 'voice.copilot.message',
+        policyVersion: voiceResponse.metadata.policyVersion,
+        safetyOutcome: voiceResponse.metadata.safetyOutcome,
+        safetyReasonCode: voiceResponse.metadata.safetyReasonCode,
+        toolCallIds: voiceResponse.metadata.toolsInvoked,
+        targetLocale: voiceResponse.metadata.locale,
+        gradeBand: resolvedGradeBand,
+        traceId: voiceResponse.metadata.traceId,
+        missionAttemptId: missionId,
+      };
+
+      trackVoiceTelemetry('voice.message', {
+        traceId: voiceResponse.metadata.traceId,
+        locale: voiceResponse.metadata.locale,
+        safetyOutcome: voiceResponse.metadata.safetyOutcome,
+        redactionApplied: voiceResponse.metadata.redactionApplied,
+        redactionCount: voiceResponse.metadata.redactionCount,
+        toolsInvokedCount: voiceResponse.metadata.toolsInvoked.length,
+      });
+
+      if (voiceResponse.tts.available && voiceResponse.tts.audioUrl) {
+        trackVoiceTelemetry('voice.tts', {
+          traceId: voiceResponse.metadata.traceId,
+          voiceProfile: voiceResponse.tts.voiceProfile || 'default',
+        });
+        const audio = new Audio(voiceResponse.tts.audioUrl);
+        void audio.play().catch((error) => {
+          console.error('Voice playback failed in AI coach popup:', error);
         });
       }
+      setVoiceInputTraceId(voiceResponse.metadata.traceId);
 
       setResponse(aiResponse);
       setCurrentLogId(aiResponse.logId);

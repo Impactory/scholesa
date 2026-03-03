@@ -20,10 +20,10 @@ function assertTruthy(value: unknown, message: string): void {
   }
 }
 
-function makeRequest(headers: Record<string, string | undefined>) {
+function makeRequest(headers: Record<string, string | undefined>): any {
   return {
     header: (name: string) => headers[name.toLowerCase()],
-  } as unknown as { header: (name: string) => string | undefined };
+  };
 }
 
 function runVoiceSmokeRegressionSuite(): void {
@@ -31,7 +31,7 @@ function runVoiceSmokeRegressionSuite(): void {
     makeRequest({
       'x-trace-id': 'trace-header',
       'x-cloud-trace-context': 'trace-cloud/123;o=1',
-    }),
+    }) as any,
     {
       traceId: 'trace-body',
       context: {
@@ -46,7 +46,7 @@ function runVoiceSmokeRegressionSuite(): void {
   const traceFromVoiceContext = __voiceSystemInternals.resolveTraceId(
     makeRequest({
       'x-trace-id': 'trace-header',
-    }),
+    }) as any,
     {
       context: {
         voiceTraceId: 'trace-voice',
@@ -58,7 +58,7 @@ function runVoiceSmokeRegressionSuite(): void {
   const traceFromHeader = __voiceSystemInternals.resolveTraceId(
     makeRequest({
       'x-trace-id': 'trace-header',
-    }),
+    }) as any,
     {},
   );
   assertEqual(traceFromHeader, 'trace-header', 'traceId should fallback to x-trace-id header');
