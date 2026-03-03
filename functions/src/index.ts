@@ -32,6 +32,7 @@ export {
   bosTeacherOverrideMvl,
   bosGetClassInsights,
   bosContestability,
+  bosWeeklyFairnessAudit,
 } from './bosRuntime';
 
 // Export COPPA operational controls

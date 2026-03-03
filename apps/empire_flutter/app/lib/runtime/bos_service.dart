@@ -18,6 +18,30 @@ class BosService {
     return _functions!;
   }
 
+  // ── Endpoint 1: Ingest BOS event ────────────────
+
+  Future<void> ingestEvent(BosEvent event) async {
+    await _fn.httpsCallable('bosIngestEvent').call(<String, dynamic>{
+      'eventType': event.eventType,
+      'siteId': event.siteId,
+      'actorRole': event.actorRole,
+      'gradeBand': event.gradeBand.code,
+      if (event.sessionOccurrenceId != null)
+        'sessionOccurrenceId': event.sessionOccurrenceId,
+      if (event.missionId != null) 'missionId': event.missionId,
+      if (event.checkpointId != null) 'checkpointId': event.checkpointId,
+      'payload': <String, dynamic>{
+        ...event.payload,
+        'eventId': event.eventId,
+        'schemaVersion': BosEvent.schemaVersion,
+        'contextMode': event.contextMode.code,
+        if (event.actorIdPseudo != null) 'actorIdPseudo': event.actorIdPseudo,
+        if (event.assignmentId != null) 'assignmentId': event.assignmentId,
+        if (event.lessonId != null) 'lessonId': event.lessonId,
+      },
+    });
+  }
+
   // ── Endpoint 2: Get orchestration state ────────────
 
   Future<OrchestrationState?> getOrchestrationState({

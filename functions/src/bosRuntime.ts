@@ -23,11 +23,13 @@
 
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 
 const db = admin.firestore();
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const INTERACTION_COLLECTION = 'interactionEvents';
+const FEATURE_QUEUE_COLLECTION = 'fdmFeatureExtractionQueue';
 const BOS_PAYLOAD_KEY_BLOCKLIST = new Set([
   'prompt',
   'response',
@@ -50,6 +52,8 @@ const BOS_LOGIC_SPEC = Object.freeze({
   source: 'BOS Logic.tex',
   version: 'bos-logic-2026-02-25',
 });
+
+const FAIRNESS_COLLECTION = 'fairnessAudits';
 
 // ──────────────────────────────────────────────────────
 // §4.2  Grade-band thresholds
@@ -1203,7 +1207,21 @@ export const bosIngestEvent = onCall(
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection(INTERACTION_COLLECTION).add(eventDoc);
+    const eventRef = await db.collection(INTERACTION_COLLECTION).add(eventDoc);
+
+    await db.collection(FEATURE_QUEUE_COLLECTION).add({
+      siteId,
+      learnerId: uid,
+      actorRole,
+      gradeBand,
+      sessionOccurrenceId,
+      missionId,
+      checkpointId,
+      eventId: eventRef.id,
+      eventType,
+      status: 'pending',
+      queuedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
     await db.collection(TELEMETRY_COLLECTION).add({
       event: eventType,
@@ -1533,8 +1551,16 @@ export const bosGetIntervention = onCall(
     if (autonomyRiskResult.riskScore > autonomyRiskResult.threshold) riskSources.push('high_autonomy_risk');
     if (reliabilityRiskResult.riskScore > reliabilityRiskResult.threshold) riskSources.push('high_reliability_risk');
 
-    // Sensor fusion: override triggerMvl if ≥2 risk sources (even if policy didn't trigger it)
-    const shouldTriggerMvl = intervention.triggerMvl || riskSources.length >= 2;
+    // Sensor fusion hard rule: require corroboration (≥2 risk sources) for MVL trigger.
+    // Policy can request MVL, but cannot bypass corroboration.
+    const policyRequestedMvl = intervention.triggerMvl;
+    const shouldTriggerMvl = riskSources.length >= 2;
+    if (policyRequestedMvl && !shouldTriggerMvl) {
+      intervention.reasonCodes = Array.from(new Set([
+        ...intervention.reasonCodes,
+        'sensor_fusion_not_met',
+      ]));
+    }
     const mvlReason = shouldTriggerMvl
       ? (riskSources.length >= 2 ? riskSources.join(' + ') : (intervention.mvlReason || 'policy_triggered'))
       : undefined;
@@ -1628,6 +1654,25 @@ export const bosGetIntervention = onCall(
           resolution: null,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
+        await db.collection(INTERACTION_COLLECTION).add({
+          eventType: 'mvl_gate_triggered',
+          siteId,
+          actorId: targetLearnerId,
+          actorRole: 'system',
+          gradeBand: gBand,
+          sessionOccurrenceId,
+          missionId: null,
+          checkpointId: null,
+          payload: {
+            episodeId: mvlRef.id,
+            riskSources,
+            reliabilityScore: reliabilityRiskResult.riskScore,
+            autonomyScore: autonomyRiskResult.riskScore,
+            triggerPolicy: 'sensor_fusion_required',
+          },
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
         mvlEpisodeId = mvlRef.id;
       } else {
         mvlEpisodeId = existingMvl.docs[0].id;
@@ -1660,6 +1705,134 @@ export const bosGetIntervention = onCall(
       logicSpec: BOS_LOGIC_SPEC,
     };
   }
+);
+
+/**
+ * Weekly fairness audit rollup.
+ * Writes one audit document per site to fairnessAudits.
+ */
+export const bosWeeklyFairnessAudit = onSchedule(
+  {
+    schedule: '0 4 * * 1',
+    timeZone: 'UTC',
+    region: 'us-central1',
+  },
+  async () => {
+    const now = new Date();
+    const windowEndIso = now.toISOString();
+    const windowStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const windowStartIso = windowStart.toISOString();
+    const env = resolveTelemetryEnv();
+
+    const interventionsSnap = await db.collection('interventions')
+      .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(windowStart))
+      .get();
+
+    const bySite = new Map<string, {
+      interventions: number;
+      mvlTriggered: number;
+      byRole: Record<string, number>;
+      byGradeBand: Record<string, number>;
+      avgAutonomyRisk: number;
+      avgReliabilityRisk: number;
+      riskSamples: number;
+      modelVersions: Set<string>;
+    }>();
+
+    const getSiteBucket = (siteId: string) => {
+      const existing = bySite.get(siteId);
+      if (existing) return existing;
+      const created = {
+        interventions: 0,
+        mvlTriggered: 0,
+        byRole: {},
+        byGradeBand: {},
+        avgAutonomyRisk: 0,
+        avgReliabilityRisk: 0,
+        riskSamples: 0,
+        modelVersions: new Set<string>(),
+      };
+      bySite.set(siteId, created);
+      return created;
+    };
+
+    for (const doc of interventionsSnap.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const siteId = normalizeString(data.siteId) ?? 'unknown';
+      const bucket = getSiteBucket(siteId);
+
+      bucket.interventions += 1;
+      if (data.triggerMvl === true) {
+        bucket.mvlTriggered += 1;
+      }
+
+      const role = normalizeString(data.roleCanonical) ?? 'unknown';
+      bucket.byRole[role] = (bucket.byRole[role] ?? 0) + 1;
+
+      const gradeBand = normalizeString(data.gradeBandCanonical) ?? 'unknown';
+      bucket.byGradeBand[gradeBand] = (bucket.byGradeBand[gradeBand] ?? 0) + 1;
+
+      const autonomyRisk = asRecord(data.autonomyRisk);
+      const reliabilityRisk = asRecord(data.reliabilityRisk);
+      const autonomyScore = typeof autonomyRisk?.riskScore === 'number' ? autonomyRisk.riskScore : undefined;
+      const reliabilityScore =
+        typeof reliabilityRisk?.riskScore === 'number' ? reliabilityRisk.riskScore : undefined;
+      if (typeof autonomyScore === 'number' && typeof reliabilityScore === 'number') {
+        bucket.avgAutonomyRisk += autonomyScore;
+        bucket.avgReliabilityRisk += reliabilityScore;
+        bucket.riskSamples += 1;
+      }
+
+      const modelVersion = normalizeString(data.policyModelVersion);
+      if (modelVersion) {
+        bucket.modelVersions.add(modelVersion);
+      }
+    }
+
+    const writes: Promise<FirebaseFirestore.WriteResult>[] = [];
+    for (const [siteId, bucket] of bySite.entries()) {
+      const mvlRate = bucket.interventions > 0
+        ? Math.round((bucket.mvlTriggered / bucket.interventions) * 1000) / 1000
+        : 0;
+      const autonomyAvg = bucket.riskSamples > 0
+        ? Math.round((bucket.avgAutonomyRisk / bucket.riskSamples) * 1000) / 1000
+        : 0;
+      const reliabilityAvg = bucket.riskSamples > 0
+        ? Math.round((bucket.avgReliabilityRisk / bucket.riskSamples) * 1000) / 1000
+        : 0;
+
+      const docId = `${siteId}_${windowStartIso.slice(0, 10)}`;
+      writes.push(db.collection(FAIRNESS_COLLECTION).doc(docId).set({
+        siteId,
+        window: {
+          startIso: windowStartIso,
+          endIso: windowEndIso,
+          durationDays: 7,
+        },
+        metrics: {
+          interventions: bucket.interventions,
+          mvlTriggered: bucket.mvlTriggered,
+          mvlRate,
+          avgAutonomyRisk: autonomyAvg,
+          avgReliabilityRisk: reliabilityAvg,
+        },
+        slices: {
+          byRole: bucket.byRole,
+          byGradeBand: bucket.byGradeBand,
+        },
+        modelVersions: Array.from(bucket.modelVersions),
+        recommendations: [
+          mvlRate > 0.35 ? 'Review support calibration: elevated MVL rate.' : 'MVL rate within expected range.',
+          reliabilityAvg > 0.6 ? 'Increase verification scaffolds in high-risk contexts.' : 'Reliability indicators stable.',
+        ],
+        generatedBy: 'bosWeeklyFairnessAudit',
+        env,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }));
+    }
+
+    await Promise.all(writes);
+  },
 );
 
 /**

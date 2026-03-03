@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'bos_models.dart';
+import 'bos_service.dart';
 
 // ──────────────────────────────────────────────────────
 // BOS Event Bus  (36 allowed event types)
@@ -11,13 +11,13 @@ import 'bos_models.dart';
 
 /// Client-side event bus for BOS interaction events.
 ///
-/// Events are buffered locally and flushed to Firestore in batches.
+/// Events are buffered locally and flushed via server ingest endpoint.
 /// If offline, they accumulate until connectivity returns.
 class BosEventBus {
   BosEventBus._();
   static final BosEventBus instance = BosEventBus._();
 
-  final List<Map<String, dynamic>> _buffer = <Map<String, dynamic>>[];
+  final List<BosEvent> _buffer = <BosEvent>[];
   Timer? _flushTimer;
 
   /// All BOS event types that the client is allowed to emit.
@@ -72,7 +72,7 @@ class BosEventBus {
   /// Enqueue a [BosEvent] for asynchronous flush.
   void emit(BosEvent event) {
     if (!allowedBosEvents.contains(event.eventType)) return;
-    _buffer.add(event.toMap());
+    _buffer.add(event);
     _scheduleFlush();
   }
 
@@ -127,20 +127,13 @@ class BosEventBus {
   Future<void> _flush() async {
     if (_buffer.isEmpty) return;
 
-    final List<Map<String, dynamic>> batch =
-        List<Map<String, dynamic>>.from(_buffer);
+    final List<BosEvent> batch = List<BosEvent>.from(_buffer);
     _buffer.clear();
 
-    final WriteBatch wb = FirebaseFirestore.instance.batch();
-    final CollectionReference<Map<String, dynamic>> col =
-        FirebaseFirestore.instance.collection('interactionEvents');
-
-    for (final Map<String, dynamic> event in batch) {
-      wb.set(col.doc(), event);
-    }
-
     try {
-      await wb.commit();
+      for (final BosEvent event in batch) {
+        await BosService.instance.ingestEvent(event);
+      }
     } catch (_) {
       // Re-buffer on failure (offline resilience).
       _buffer.insertAll(0, batch);
