@@ -64,3 +64,30 @@ Project: `studio-3328096157-e3f79`
 - Self-account creation is blocked in both app logic and deployed Firestore rules.
 - Signup CTAs and registration paths are removed/disabled.
 - Router reset issue previously causing landing bounce has been addressed in app routing lifecycle.
+
+---
+
+## Addendum — HQ Curriculum Lifecycle Audit (2026-03-02)
+
+### Scope
+- Verify end-to-end curriculum lifecycle wiring and persistence from Drafts to In Review to Published.
+
+### Implementation Evidence
+- HQ Curriculum Manager now provides explicit transition actions:
+	- Submit for Review (Drafts)
+	- Publish Curriculum (In Review)
+- Firestore mission status transitions are persisted as:
+	- `draft -> review -> published`
+- Transition metadata persistence confirmed in implementation:
+	- `reviewSubmittedBy`, `reviewSubmittedAt`
+	- `published`, `publishedBy`, `publishedAt`
+
+### Validation Evidence
+- `flutter test apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart` → **PASS**
+	- Includes coverage for Draft -> In Review -> Published progression and persisted mission status/actor fields.
+- `flutter test apps/empire_flutter/app/test/cta_reflection_test.dart` → **PASS**
+- `flutter test apps/empire_flutter/app/test/dashboard_cta_regression_test.dart` → **PASS**
+- `npm run rc3:preflight` (repo root) → **PASS**
+
+### Audit Conclusion
+- Curriculum lifecycle flow is fully wired, persisted, and regression-covered for RC3 release readiness.

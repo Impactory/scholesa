@@ -729,7 +729,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           title: title,
                           pillar: selectedPillar,
                         );
-                        if (!mounted) return;
+                        if (!mounted || !dialogContext.mounted) return;
                         if (updated) {
                           Navigator.pop(dialogContext);
                         } else {
@@ -919,7 +919,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     pillar: selectedPillar,
                   );
 
-                  if (!mounted) return;
+                  if (!mounted || !dialogContext.mounted) return;
                   if (created) {
                     Navigator.pop(dialogContext);
                   } else {
@@ -1242,7 +1242,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           criteriaLabels: criteria,
                         );
 
-                        if (!mounted) return;
+                        if (!mounted || !dialogContext.mounted) return;
                         if (applied) {
                           Navigator.pop(dialogContext);
                         } else {
