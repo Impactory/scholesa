@@ -19,8 +19,17 @@ class FirestoreService {
     final User? user = _auth.currentUser;
     if (user == null) return null;
 
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _firestore.collection('users').doc(user.uid).get();
+    DocumentSnapshot<Map<String, dynamic>> doc;
+    try {
+      doc = await _firestore.collection('users').doc(user.uid).get();
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied' ||
+          e.code == 'unavailable' ||
+          e.code == 'unauthenticated') {
+        return _buildFallbackProfile(user);
+      }
+      rethrow;
+    }
 
     if (!doc.exists) {
       return _buildFallbackProfile(user);

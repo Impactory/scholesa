@@ -201,11 +201,37 @@ class AuthService {
           await _firestoreService.getUserProfile();
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
+      } else {
+        final User? user = _auth.currentUser;
+        if (user != null) {
+          _appState.updateFromMeResponse(<String, dynamic>{
+            'userId': user.uid,
+            'email': user.email ?? '',
+            'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+            'role': 'learner',
+            'activeSiteId': null,
+            'siteIds': <String>[],
+            'entitlements': <Map<String, dynamic>>[],
+          });
+        }
       }
     } catch (e) {
       debugPrint('Failed to bootstrap session: $e');
-      _appState.setError('Failed to load user profile');
-      rethrow;
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        _appState.updateFromMeResponse(<String, dynamic>{
+          'userId': user.uid,
+          'email': user.email ?? '',
+          'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
+          'role': 'learner',
+          'activeSiteId': null,
+          'siteIds': <String>[],
+          'entitlements': <Map<String, dynamic>>[],
+        });
+      } else {
+        _appState.setError('Failed to load user profile');
+        rethrow;
+      }
     }
   }
 
