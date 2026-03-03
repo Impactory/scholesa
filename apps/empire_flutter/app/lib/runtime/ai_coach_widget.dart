@@ -213,6 +213,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     });
     if (path == null || path.isEmpty) return;
 
+    if (mounted) {
+      setState(() => _loading = true);
+    }
+
     try {
       final TranscribeVoiceResponse transcribed =
           await VoiceRuntimeService.instance.transcribeAudioFile(
@@ -246,10 +250,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_t('ai.voice.transcriptionUnavailable')),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
       try {
         final File file = File(path);
         if (await file.exists()) {
@@ -452,7 +459,8 @@ Learner message:
 $userInput
 
 Response style:
-- Be conversational and concise.
+- Be conversational, warm, and age-appropriate for a learner.
+- Use simple words and short sentences that sound natural when spoken aloud.
 - Reflect the learner's message in one sentence.
 - Give 1-3 concrete next steps.
 - End with one coaching follow-up question.
@@ -606,10 +614,22 @@ Response style:
   }
 
   Future<void> _sendMessage() async {
+    // Immediately stop any ongoing speech, whether from user or AI
+    if (_isListening) {
+      if (_usingUploadStt) {
+        await _stopUploadRecordingAndTranscribe();
+      } else {
+        await _speechToText.stop();
+      }
+      if (mounted) setState(() => _isListening = false);
+    }
+    if (_isSpeaking) {
+      await _interruptSpeaking();
+    }
+
     final String input = _inputController.text.trim();
     if (_loading || input.isEmpty) return;
     _updateLearningGoals(input);
-    final String conversationalPrompt = _buildConversationalPrompt(input);
 
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -637,82 +657,24 @@ Response style:
     );
 
     try {
-      final AiCoachRequest request = AiCoachRequest(
-        siteId: widget.runtime.siteId,
-        learnerId: widget.runtime.learnerId,
-        gradeBand: widget.runtime.gradeBand,
-        mode: _selectedMode,
-        sessionOccurrenceId: widget.runtime.sessionOccurrenceId,
-        missionId: widget.missionId,
-        checkpointId: widget.checkpointId,
-        conceptTags: widget.conceptTags,
-        learnerState: widget.runtime.state?.xHat,
-        studentInput: input.isNotEmpty ? input : null,
+      final AiCoachResponse response = await _fetchAndProcessResponse(input);
+      if (!mounted) return;
+
+      _lastResponse = response;
+      final String conversationalReply = _enrichCoachReply(response.message);
+      final _ChatMessage aiMessage = _ChatMessage(
+        text: conversationalReply,
+        isUser: false,
+        response: response,
       );
 
-      late final AiCoachResponse response;
-
-      try {
-        response = await VoiceRuntimeService.instance.requestCopilot(
-          VoiceCopilotRequest(
-            message: conversationalPrompt,
-            locale: Localizations.localeOf(context).toLanguageTag(),
-            gradeBand: widget.runtime.gradeBand,
-            context: <String, dynamic>{
-              'userInput': input,
-              'conversationTurns': _recentConversationTurns(),
-              'learningGoals': _learningGoals,
-              'learnerId': widget.runtime.learnerId,
-              'siteId': widget.runtime.siteId,
-              'missionId': widget.missionId,
-              'checkpointId': widget.checkpointId,
-              'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
-              'mode': _selectedMode.name,
-              'role': widget.actorRole.name,
-            },
-            voiceEnabled: true,
-            voiceOutput: _voiceOutputEnabled,
-          ),
-        );
-        await TelemetryService.instance.logEvent(
-          event: 'voice.message',
-          metadata: <String, dynamic>{
-            'surface': 'ai_coach_widget',
-            'mode': _selectedMode.name,
-            'traceId': response.traceId,
-            'safetyOutcome': response.safetyOutcome,
-            'policyVersion': response.policyVersion,
-          },
-        );
-      } catch (_) {
-        if (!widget.allowBosFallback) {
-          rethrow;
-        }
-        response = await BosService.instance.callAiCoach(request);
-        await TelemetryService.instance.logEvent(
-          event: 'voice.message',
-          metadata: <String, dynamic>{
-            'surface': 'ai_coach_widget',
-            'mode': _selectedMode.name,
-            'source': 'bos_fallback',
-            'role': widget.actorRole.name,
-          },
-        );
-      }
-
       setState(() {
-        _lastResponse = response;
-        final String conversationalReply = _enrichCoachReply(response.message);
-        _messages.add(_ChatMessage(
-          text: conversationalReply,
-          isUser: false,
-          response: response,
-        ));
+        _messages.add(aiMessage);
         _loading = false;
       });
 
       await _speakText(
-        _messages.last.text,
+        aiMessage.text,
         traceId: response.traceId,
       );
 
@@ -729,19 +691,6 @@ Response style:
           'source': response.policyVersion == null ? 'bos_callable' : 'voice_api',
         },
       );
-
-      widget.runtime.trackEvent(
-        'ai_coach_response',
-        missionId: widget.missionId,
-        checkpointId: widget.checkpointId,
-        payload: <String, dynamic>{
-          'mode': _selectedMode.name,
-          'traceId': response.traceId,
-          'policyVersion': response.policyVersion,
-          'safetyOutcome': response.safetyOutcome,
-          'mvlGateActive': response.mvlGateActive,
-        },
-      );
     } catch (e) {
       setState(() {
         _messages.add(_ChatMessage(
@@ -753,6 +702,109 @@ Response style:
       });
     }
   }
+
+  Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
+    final AiCoachRequest request = AiCoachRequest(
+      siteId: widget.runtime.siteId,
+      learnerId: widget.runtime.learnerId,
+      gradeBand: widget.runtime.gradeBand,
+      mode: _selectedMode,
+      sessionOccurrenceId: widget.runtime.sessionOccurrenceId,
+      missionId: widget.missionId,
+      checkpointId: widget.checkpointId,
+      conceptTags: widget.conceptTags,
+      learnerState: widget.runtime.state?.xHat,
+      studentInput: prompt.isNotEmpty ? prompt : null,
+      personaInstructions:
+          'Your response should be friendly, conversational, and encouraging, suitable for being spoken aloud as a helpful guide. Do not provide direct answers, but help the user discover the answer themselves.',
+    );
+
+    late final AiCoachResponse response;
+
+    try {
+      response = await VoiceRuntimeService.instance.requestCopilot(
+        VoiceCopilotRequest(
+          message: _buildConversationalPrompt(prompt),
+          locale: Localizations.localeOf(context).toLanguageTag(),
+          gradeBand: widget.runtime.gradeBand,
+          context: <String, dynamic>{
+            'userInput': prompt,
+            'conversationTurns': _recentConversationTurns(),
+            'learningGoals': _learningGoals,
+            'learnerId': widget.runtime.learnerId,
+            'siteId': widget.runtime.siteId,
+            'missionId': widget.missionId,
+            'checkpointId': widget.checkpointId,
+            'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
+            'mode': _selectedMode.name,
+            'role': widget.actorRole.name,
+            'personaInstructions':
+                'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
+          },
+          voiceEnabled: true,
+          voiceOutput: _voiceOutputEnabled,
+        ),
+      );
+      await TelemetryService.instance.logEvent(
+        event: 'voice.message',
+        metadata: <String, dynamic>{
+          'surface': 'ai_coach_widget',
+          'mode': _selectedMode.name,
+          'traceId': response.traceId,
+          'safetyOutcome': response.safetyOutcome,
+          'policyVersion': response.policyVersion,
+        },
+      );
+    } catch (_) {
+      if (!widget.allowBosFallback) {
+        rethrow;
+      }
+      response = await BosService.instance.callAiCoach(request);
+      await TelemetryService.instance.logEvent(
+        event: 'voice.message',
+        metadata: <String, dynamic>{
+          'surface': 'ai_coach_widget',
+          'mode': _selectedMode.name,
+          'source': 'bos_fallback',
+          'role': widget.actorRole.name,
+        },
+      );
+    }
+
+    widget.runtime.trackEvent(
+      'ai_coach_response',
+      missionId: widget.missionId,
+      checkpointId: widget.checkpointId,
+      payload: <String, dynamic>{
+        'mode': _selectedMode.name,
+        'traceId': response.traceId,
+        'policyVersion': response.policyVersion,
+        'safetyOutcome': response.safetyOutcome,
+        'mvlGateActive': response.mvlGateActive,
+      },
+    );
+
+    // MVL Gating Logic (client-side override)
+    if (widget.allowBosFallback &&
+        widget.runtime.hasMvlGate &&
+        response.mvlGateActive) {
+      widget.runtime.trackEvent(
+        'mvl.gate.triggered',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'mode': _selectedMode.name,
+          'gated_response': response.message
+        },
+      );
+      return response.copyWith(
+        message: _t('ai.mvl.gatedResponse'),
+      );
+    }
+
+    return response;
+  }
+
 
   void _sendFeedback(bool helpful) {
     TelemetryService.instance.logEvent(

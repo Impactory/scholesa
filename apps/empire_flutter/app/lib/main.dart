@@ -95,6 +95,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
   late final AuthService _authService;
   late final SessionBootstrap _sessionBootstrap;
   late final ThemeService _themeService;
+  final GlobalKey<NavigatorState> _rootNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'root_router_navigator');
   GoRouter? _router;
 
   bool _isInitialized = false;
@@ -146,7 +148,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
       // Start listening to auth changes
       _sessionBootstrap.listenToAuthChanges();
 
-      _router = createAppRouter(_appState);
+      _router = createAppRouter(
+        _appState,
+        navigatorKey: _rootNavigatorKey,
+      );
 
       if (!kIsWeb) {
         final Duration elapsed = DateTime.now().difference(initStart);
@@ -390,7 +395,9 @@ class _ScholesaAppState extends State<ScholesaApp> {
               return Stack(
                 children: <Widget>[
                   if (child != null) child,
-                  const GlobalAiAssistantOverlay(),
+                  GlobalAiAssistantOverlay(
+                    navigatorKey: _rootNavigatorKey,
+                  ),
                 ],
               );
             },

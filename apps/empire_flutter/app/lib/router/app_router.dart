@@ -95,11 +95,14 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
 /// Check if a route is enabled
 bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
 
-/// Create the app router
-GoRouter createAppRouter(AppState appState) {
+GoRouter createAppRouter(
+  AppState appState, {
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
   const String unauthenticatedEntry = kIsWeb ? '/welcome' : '/login';
 
   return GoRouter(
+    navigatorKey: navigatorKey,
     refreshListenable: appState,
     initialLocation: unauthenticatedEntry,
     debugLogDiagnostics: true,

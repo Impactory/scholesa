@@ -722,6 +722,7 @@ class AiCoachRequest {
     this.learnerState,
     this.recentEventsRef = const <String>[],
     this.studentInput,
+    this.personaInstructions,
   });
 
   final String siteId;
@@ -735,6 +736,7 @@ class AiCoachRequest {
   final XHat? learnerState;
   final List<String> recentEventsRef;
   final String? studentInput;
+  final String? personaInstructions;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'siteId': siteId,
@@ -756,12 +758,10 @@ class AiCoachRequest {
           'recentEventsRef': recentEventsRef,
         },
         if (studentInput != null) 'studentInput': studentInput,
+        if (personaInstructions != null) 'personaInstructions': personaInstructions,
       };
 }
 
-// ──── AI Coach Response ────
-
-/// AI Coach response from genAiCoach (BOS+MIA contract A2).
 @immutable
 class AiCoachResponse {
   const AiCoachResponse({
@@ -805,6 +805,50 @@ class AiCoachResponse {
   final String? modelVersion;
   final String? voiceAudioUrl;
   final bool voiceAvailable;
+
+  AiCoachResponse copyWith({
+    String? message,
+    AiCoachMode? mode,
+    bool? requiresExplainBack,
+    List<String>? suggestedNextSteps,
+    XHat? learnerState,
+    ReliabilityRisk? reliabilityRisk,
+    AutonomyRisk? autonomyRisk,
+    bool? mvlGateActive,
+    String? mvlEpisodeId,
+    String? mvlReason,
+    String? version,
+    String? aiHelpOpenedEventId,
+    String? traceId,
+    String? policyVersion,
+    String? safetyOutcome,
+    String? safetyReasonCode,
+    String? modelVersion,
+    String? voiceAudioUrl,
+    bool? voiceAvailable,
+  }) {
+    return AiCoachResponse(
+      message: message ?? this.message,
+      mode: mode ?? this.mode,
+      requiresExplainBack: requiresExplainBack ?? this.requiresExplainBack,
+      suggestedNextSteps: suggestedNextSteps ?? this.suggestedNextSteps,
+      learnerState: learnerState ?? this.learnerState,
+      reliabilityRisk: reliabilityRisk ?? this.reliabilityRisk,
+      autonomyRisk: autonomyRisk ?? this.autonomyRisk,
+      mvlGateActive: mvlGateActive ?? this.mvlGateActive,
+      mvlEpisodeId: mvlEpisodeId ?? this.mvlEpisodeId,
+      mvlReason: mvlReason ?? this.mvlReason,
+      version: version ?? this.version,
+      aiHelpOpenedEventId: aiHelpOpenedEventId ?? this.aiHelpOpenedEventId,
+      traceId: traceId ?? this.traceId,
+      policyVersion: policyVersion ?? this.policyVersion,
+      safetyOutcome: safetyOutcome ?? this.safetyOutcome,
+      safetyReasonCode: safetyReasonCode ?? this.safetyReasonCode,
+      modelVersion: modelVersion ?? this.modelVersion,
+      voiceAudioUrl: voiceAudioUrl ?? this.voiceAudioUrl,
+      voiceAvailable: voiceAvailable ?? this.voiceAvailable,
+    );
+  }
 
   factory AiCoachResponse.fromMap(Map<String, dynamic> m) {
     final Map<String, dynamic>? risk = m['risk'] as Map<String, dynamic>?;

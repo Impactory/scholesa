@@ -12,7 +12,12 @@ import 'bos_models.dart';
 import 'learning_runtime_provider.dart';
 
 class GlobalAiAssistantOverlay extends StatelessWidget {
-  const GlobalAiAssistantOverlay({super.key});
+  const GlobalAiAssistantOverlay({
+    super.key,
+    this.navigatorKey,
+  });
+
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +66,20 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
     required String siteId,
     required String learnerId,
   }) async {
+    final BuildContext? sheetContext =
+        navigatorKey?.currentContext ?? Navigator.maybeOf(context, rootNavigator: true)?.context;
+    if (sheetContext == null) {
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'assistant.open.failed',
+        metadata: <String, dynamic>{
+          'reason': 'missing_navigator_context',
+          'surface': 'floating_assistant',
+          'role': role.name,
+        },
+      ));
+      return;
+    }
+
     unawaited(TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -70,22 +89,35 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
       },
     ));
 
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext sheetContext) {
-        return _GlobalAiAssistantSheet(
-          siteId: siteId,
-          learnerId: learnerId,
-          role: role,
-        );
-      },
-    );
+    try {
+      await showModalBottomSheet<void>(
+        context: sheetContext,
+        isScrollControlled: true,
+        useRootNavigator: true,
+        useSafeArea: true,
+        backgroundColor: Theme.of(sheetContext).colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (BuildContext sheetContext) {
+          return _GlobalAiAssistantSheet(
+            siteId: siteId,
+            learnerId: learnerId,
+            role: role,
+          );
+        },
+      );
+    } catch (_) {
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'assistant.open.failed',
+        metadata: <String, dynamic>{
+          'reason': 'sheet_open_error',
+          'surface': 'floating_assistant',
+          'role': role.name,
+        },
+      ));
+      return;
+    }
 
     await TelemetryService.instance.logEvent(
       event: 'cta.clicked',
