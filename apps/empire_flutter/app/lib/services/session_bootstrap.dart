@@ -15,6 +15,7 @@ class SessionBootstrap {
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
+  static const Duration _profileBootstrapTimeout = Duration(seconds: 8);
 
   /// Initialize session - call after Firebase.initializeApp()
   Future<void> initialize() async {
@@ -30,15 +31,20 @@ class SessionBootstrap {
     try {
       // Fetch user profile directly from Firestore
       final Map<String, dynamic>? profile =
-          await _firestoreService.getUserProfile();
+          await _firestoreService
+              .getUserProfile()
+              .timeout(_profileBootstrapTimeout);
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
-      } else {
-        _appState.setLoading(false);
       }
+    } on TimeoutException {
+      debugPrint('Session bootstrap timed out while loading profile');
+      _appState.setError('Profile load timed out. Please try again.');
     } catch (e) {
       debugPrint('Session bootstrap failed: $e');
       _appState.setError('Failed to load profile. Please try again.');
+    } finally {
+      _appState.setLoading(false);
     }
   }
 
