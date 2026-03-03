@@ -4,8 +4,8 @@
  * AI Coach Popup
  * 
  * Floating assistant in bottom-right corner
- * - Speech input (for younger learners)
- * - Text input (for older learners)
+ * - Voice-first input and auto-submit
+ * - Spoken response when available
  * - Age-appropriate modes based on GradeBandPolicy
  */
 
@@ -13,7 +13,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   MessageCircleIcon,
   MicIcon,
-  SendIcon,
   XIcon,
   LightbulbIcon,
   ClipboardCheckIcon,
@@ -149,13 +148,14 @@ export function AICoachPopup({
   const { locale, t } = useI18n();
   const { user, profile } = useAuthContext();
   const modeConfig = buildModeConfig((key) => t(key));
-  const hasVoiceInputControl = Boolean(
-    recognitionRef.current ||
-    (typeof window !== 'undefined' &&
+  const hasVoiceInputControl = typeof window !== 'undefined' && (
+    (
       typeof MediaRecorder !== 'undefined' &&
       Boolean(navigator.mediaDevices?.getUserMedia) &&
-      user &&
-      voiceApiConfigured())
+      Boolean(user) &&
+      voiceApiConfigured()
+    ) ||
+    Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
   );
 
   // Fetch SDT profile for personalization
@@ -183,8 +183,8 @@ export function AICoachPopup({
       recognitionRef.current.interimResults = false;
       
       recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript;
-        setQuestion(prev => prev + ' ' + transcript);
+        const transcript = event.results[0][0].transcript.trim();
+        setQuestion(transcript);
         setIsListening(false);
       };
       
@@ -244,10 +244,13 @@ export function AICoachPopup({
             const transcribed = await transcribeVoiceAudio({
               idToken,
               audioBlob: blob,
+              siteId,
               locale,
               partial: false,
+              traceId: voiceInputTraceId || undefined,
+              context: buildBosVoiceContext(voiceInputTraceId),
             });
-            setQuestion((prev) => `${prev} ${transcribed.transcript}`.trim());
+            setQuestion(transcribed.transcript.trim());
             if (transcribed.metadata?.traceId) {
               setVoiceInputTraceId(transcribed.metadata.traceId);
               trackVoiceTelemetry('voice.transcribe', {
@@ -257,7 +260,7 @@ export function AICoachPopup({
               });
             }
           } catch (error) {
-            console.error('Voice transcription failed; keeping manual input path.', error);
+            console.error('Voice transcription failed in AI coach popup.', error);
           } finally {
             audioChunksRef.current = [];
             setIsTranscribing(false);
@@ -308,6 +311,23 @@ export function AICoachPopup({
     });
   };
 
+  const buildBosVoiceContext = (traceId?: string | null) => ({
+    learnerId,
+    selectedLearnerId: learnerId,
+    sessionOccurrenceId: sprintSessionId,
+    missionId,
+    contextMode: sprintSessionId ? 'in_class' : 'homework',
+    conceptTags: [
+      'ai_coach_popup',
+      'voice',
+      mode ? `mode:${mode}` : 'mode:general',
+    ],
+    traceId: traceId || undefined,
+    voiceTraceId: traceId || undefined,
+    voiceInputTraceId: traceId || undefined,
+    source: 'ai_coach_popup_voice',
+  });
+
   const handleOpenPopup = () => {
     trackInteraction('help_accessed', {
       cta: 'ai_assistant_open',
@@ -328,8 +348,11 @@ export function AICoachPopup({
     setIsMinimized(true);
   };
 
-  const handleAsk = async () => {
-    if (!question.trim() || !mode) return;
+  const handleAsk = async (questionOverride?: string) => {
+    const resolvedQuestion = (questionOverride ?? question).trim();
+    if (!resolvedQuestion || !mode) return;
+
+    setQuestion(resolvedQuestion);
 
     try {
       setLoading(true);
@@ -381,8 +404,8 @@ Guidance: ${
       }
 
       const composedQuestion = personalizedContext
-        ? `${personalizedContext}\n\nStudent Question: ${question}`
-        : question;
+        ? `${personalizedContext}\n\nStudent Question: ${resolvedQuestion}`
+        : resolvedQuestion;
       let aiResponse: AIServiceResponse | null = null;
 
       // Primary path: voice system endpoint contract (/copilot/message)
@@ -392,15 +415,11 @@ Guidance: ${
           const voiceResponse = await sendCopilotVoiceMessage({
             idToken,
             message: composedQuestion,
+            siteId,
             locale,
             screenId: 'ai_coach_popup',
             gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
-            context: {
-              learnerId,
-              missionId,
-              sprintSessionId,
-              voiceInputTraceId,
-            },
+            context: buildBosVoiceContext(voiceInputTraceId),
             voice: {
               enabled: true,
               output: true,
@@ -472,7 +491,7 @@ Guidance: ${
       // Track telemetry
       trackAI('ai_hint_requested', {
         mode,
-        questionLength: question.trim().length,
+        questionLength: resolvedQuestion.length,
         missionId,
         sessionId: sprintSessionId,
         modelUsed: aiResponse.modelUsed,
@@ -531,6 +550,13 @@ Guidance: ${
     alert(t('aiCoach.explainBackSuccess'));
   };
 
+  useEffect(() => {
+    if (!mode) return;
+    const transcript = question.trim();
+    if (!transcript || isListening || isTranscribing || loading || response) return;
+    void handleAsk(transcript);
+  }, [mode, question, isListening, isTranscribing, loading, response]);
+
   const reset = () => {
     setMode(null);
     setQuestion('');
@@ -543,12 +569,13 @@ Guidance: ${
     return (
       <button
         onClick={handleOpenPopup}
-        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 via-purple-500 to-cyan-500 shadow-2xl ring-2 ring-white/30 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
         aria-label={t('aiCoach.openAria')}
         title={t('aiCoach.tooltip')}
       >
-        <MessageCircleIcon className="w-8 h-8 text-white" />
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+        <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 via-transparent to-transparent" />
+        <MessageCircleIcon className="relative z-10 w-8 h-8 text-white" />
+        <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-400 ring-2 ring-fuchsia-600 animate-pulse" />
       </button>
     );
   }
@@ -556,7 +583,7 @@ Guidance: ${
   return (
     <div className="fixed bottom-6 right-6 w-96 bg-app-surface-raised rounded-lg shadow-2xl border border-app z-50 flex flex-col max-h-[600px]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-lg p-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 rounded-t-lg p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
           <MessageCircleIcon className="w-5 h-5" />
           <h3 className="font-semibold">{t('aiCoach.title')}</h3>
@@ -653,62 +680,56 @@ Guidance: ${
               {t('aiCoach.back')}
             </button>
 
-            <div>
+            <div className="rounded-lg border border-app bg-app-surface-muted p-3">
               <label className="mb-2 block text-sm font-medium text-app-foreground">
                 {modeConfig[mode].placeholder}
               </label>
-              <textarea
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder={t('aiCoach.questionPlaceholder')}
-                className="h-24 w-full resize-none rounded-lg border border-app bg-app-surface px-3 py-2 text-sm text-app-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
-                disabled={loading}
-              />
+              <p className="text-xs text-app-muted">
+                {hasVoiceInputControl
+                  ? t('aiCoach.speakQuestion')
+                  : t('aiCoach.questionPlaceholder')}
+              </p>
+              <p className="mt-2 min-h-10 rounded-lg bg-app-surface px-3 py-2 text-sm text-app-foreground">
+                {question || '...'}
+              </p>
             </div>
 
             {/* Speech input button */}
-            {hasVoiceInputControl && (
-              <button
-                onClick={isListening ? stopListening : startListening}
-                disabled={loading || isTranscribing}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
-                  isListening
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-app-surface-muted text-app-foreground hover:bg-app-surface'
-                }`}
-              >
-                {isListening ? (
-                  <>
-                    <Volume2Icon className="w-5 h-5 animate-pulse" />
-                    <span>{t('aiCoach.listening')}</span>
-                  </>
-                ) : (
-                  <>
-                    <MicIcon className="w-5 h-5" />
-                    <span>{t('aiCoach.speakQuestion')}</span>
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Send button */}
             <button
-              onClick={handleAsk}
-              disabled={!question.trim() || loading || isTranscribing}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-3 font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-app-surface-muted disabled:text-app-muted"
+              onClick={isListening ? stopListening : startListening}
+              disabled={!hasVoiceInputControl || loading || isTranscribing}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
+                isListening
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50'
+              }`}
             >
-              {loading || isTranscribing ? (
+              {isListening ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  <Volume2Icon className="w-5 h-5 animate-pulse" />
+                  <span>{t('aiCoach.listening')}</span>
+                </>
+              ) : isTranscribing ? (
+                <>
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>{t('aiCoach.thinking')}</span>
+                </>
+              ) : loading ? (
+                <>
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   <span>{t('aiCoach.thinking')}</span>
                 </>
               ) : (
                 <>
-                  <SendIcon className="w-5 h-5" />
-                  <span>{t('aiCoach.ask')}</span>
+                  <MicIcon className="w-5 h-5" />
+                  <span>{t('aiCoach.speakQuestion')}</span>
                 </>
               )}
             </button>
+
+            {!hasVoiceInputControl && (
+              <p className="text-xs text-red-500">Microphone access is required for AI Coach voice mode.</p>
+            )}
           </div>
         )}
 

@@ -6,6 +6,7 @@ const DEFAULT_TIMEOUT_MS = 25_000;
 export interface CopilotVoiceRequest {
   idToken: string;
   message: string;
+  siteId?: string;
   locale?: SupportedLocale | string;
   screenId?: string;
   context?: Record<string, unknown>;
@@ -43,9 +44,11 @@ export interface CopilotVoiceResponse {
 export interface TranscribeVoiceRequest {
   idToken: string;
   audioBlob: Blob;
+  siteId?: string;
   locale?: SupportedLocale | string;
   partial?: boolean;
   traceId?: string;
+  context?: Record<string, unknown>;
 }
 
 export interface TranscribeVoiceResponse {
@@ -136,6 +139,7 @@ export async function sendCopilotVoiceMessage(req: CopilotVoiceRequest): Promise
   const locale = normalizeLocale(req.locale);
   return postJson<CopilotVoiceResponse>('/copilot/message', req.idToken, {
     message: req.message,
+    siteId: req.siteId,
     screenId: req.screenId || 'ai_coach_popup',
     context: req.context || {},
     locale,
@@ -158,6 +162,18 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
   formData.append('locale', locale);
   formData.append('partial', req.partial ? 'true' : 'false');
   formData.append('traceId', traceId);
+  if (req.siteId) {
+    formData.append('siteId', req.siteId);
+  }
+  if (req.context && Object.keys(req.context).length > 0) {
+    formData.append('context', JSON.stringify(req.context));
+  }
+  if (req.context?.voiceTraceId) {
+    formData.append('voiceTraceId', String(req.context.voiceTraceId));
+  }
+  if (req.context?.voiceInputTraceId) {
+    formData.append('voiceInputTraceId', String(req.context.voiceInputTraceId));
+  }
 
   const response = await withTimeout(
     aiSafeFetch(`${baseUrl}/voice/transcribe`, {

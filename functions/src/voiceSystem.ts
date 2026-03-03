@@ -126,13 +126,22 @@ interface AudioTokenPayload {
 }
 
 interface VoiceInferenceMeta {
-  service: 'llm' | 'stt' | 'tts';
+  service: 'llm' | 'stt' | 'tts' | 'bos';
   route: 'internal' | 'local';
   authMode: InternalInferenceAuthMode;
   statusCode?: number;
   errorCode?: string;
   reason?: string;
   endpoint?: string;
+}
+
+interface BosPolicyHint {
+  mode?: 'hint' | 'verify' | 'explain' | 'debug';
+  type?: 'nudge' | 'scaffold' | 'handoff' | 'revisit' | 'pace';
+  salience?: 'low' | 'medium' | 'high';
+  triggerMvl: boolean;
+  confidence: number;
+  reasonCodes: string[];
 }
 
 interface VoiceLearningSnapshot {
@@ -1181,6 +1190,25 @@ function selectToolCalls(
   return [allowedTools[0]];
 }
 
+function deriveBosModeToolHints(role: VoiceRole, policyHint: BosPolicyHint): string[] {
+  if (!policyHint.mode) return [];
+  if (role === 'student') {
+    if (policyHint.mode === 'hint') return ['hint_ladder'];
+    if (policyHint.mode === 'verify') return ['glossary'];
+    if (policyHint.mode === 'explain') return ['read_aloud'];
+    if (policyHint.mode === 'debug') return ['hint_ladder'];
+    return [];
+  }
+  if (role === 'teacher') {
+    if (policyHint.mode === 'hint') return ['differentiate_lesson'];
+    if (policyHint.mode === 'verify') return ['rubric_feedback_draft'];
+    if (policyHint.mode === 'explain') return ['class_summary'];
+    if (policyHint.mode === 'debug') return ['rubric_feedback_draft'];
+    return [];
+  }
+  return ['setup_help'];
+}
+
 function detectLanguageCompatibility(text: string, locale: VoiceLocale): boolean {
   if (!text.trim()) return false;
   if (locale === 'en') return /[A-Za-z]/.test(text);
@@ -1389,6 +1417,47 @@ function extractInternalTtsPayload(data: unknown): {
       result?.understanding ??
       metadata?.understanding,
     ),
+  };
+}
+
+function extractInternalBosPayload(data: unknown): BosPolicyHint | undefined {
+  const root = asRecord(data);
+  const intervention = asRecord(root?.intervention) ??
+    asRecord(root?.policy) ??
+    asRecord(root?.recommendation) ??
+    root;
+  if (!intervention) return undefined;
+
+  const modeCandidate = normalizeString(intervention.mode)?.toLowerCase();
+  const typeCandidate = normalizeString(intervention.type)?.toLowerCase();
+  const salienceCandidate = normalizeString(intervention.salience)?.toLowerCase();
+  const confidence = clampProbability(toFiniteNumber(
+    intervention.confidence ?? asRecord(intervention.metadata)?.confidence,
+    0.5,
+  ));
+
+  const mode = modeCandidate === 'hint' || modeCandidate === 'verify' || modeCandidate === 'explain' || modeCandidate === 'debug'
+    ? modeCandidate
+    : undefined;
+  const type = typeCandidate === 'nudge' || typeCandidate === 'scaffold' || typeCandidate === 'handoff' || typeCandidate === 'revisit' || typeCandidate === 'pace'
+    ? typeCandidate
+    : undefined;
+  const salience = salienceCandidate === 'low' || salienceCandidate === 'medium' || salienceCandidate === 'high'
+    ? salienceCandidate
+    : undefined;
+  const reasonCodes = dedupeStrings(
+    (Array.isArray(intervention.reasonCodes) ? intervention.reasonCodes : [])
+      .map((reason) => normalizeString(reason))
+      .filter((reason): reason is string => Boolean(reason)),
+  ).slice(0, 6);
+
+  return {
+    mode,
+    type,
+    salience,
+    triggerMvl: intervention.triggerMvl === true,
+    confidence,
+    reasonCodes,
   };
 }
 
@@ -2346,6 +2415,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       loadRoleIntelligenceContext(authContext, body),
     ]);
     const requestContext = asRecord(body.context);
+    const bosContext = resolveBosInteractionContext(body, authContext);
     const personaInstructions = normalizeString(requestContext?.personaInstructions);
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
@@ -2358,6 +2428,11 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       'llm',
       safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
     );
+    let bosInferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
+      'bos',
+      safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
+    );
+    let bosPolicyHint: BosPolicyHint | null = null;
     if (safety.safetyOutcome === 'allowed') {
       const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
         service: 'llm',
@@ -2426,6 +2501,58 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
       } else {
         inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
+      }
+
+      const bosResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+        service: 'bos',
+        body: {
+          message,
+          locale,
+          role: authContext.role,
+          gradeBand: authContext.gradeBand,
+          actorId: bosContext.actorId,
+          actorRole: bosContext.actorRole,
+          sessionOccurrenceId: bosContext.sessionOccurrenceId,
+          missionId: bosContext.missionId,
+          checkpointId: bosContext.checkpointId,
+          contextMode: bosContext.contextMode,
+          conceptTags: bosContext.conceptTags,
+          understanding,
+          learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
+          roleIntelligenceContext: roleIntelligence,
+        },
+        context: buildInferenceContextHeaders({
+          traceId,
+          requestId,
+          authContext,
+          locale,
+          callerService: 'scholesa-ai-bos',
+        }),
+      });
+
+      if (isInternalInferenceRequired() && !bosResult.ok) {
+        throw new VoiceHttpError(503, 'inference_unavailable', 'Internal BOS inference is required but unavailable.');
+      }
+
+      if (bosResult.ok) {
+        const policyHint = extractInternalBosPayload(bosResult.data);
+        if (policyHint) {
+          bosPolicyHint = policyHint;
+          const applyPolicyHint = policyHint.confidence >= 0.35;
+          if (applyPolicyHint) {
+            const bosModeToolHints = deriveBosModeToolHints(authContext.role, policyHint);
+            modelToolHints = dedupeStrings([...modelToolHints, ...bosModeToolHints]).slice(0, 6);
+          }
+          bosInferenceMeta = buildInferenceMeta(
+            'bos',
+            bosResult,
+            applyPolicyHint ? 'policy_hint_applied' : 'policy_hint_low_confidence',
+          );
+        } else {
+          bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'no_policy_payload');
+        }
+      } else {
+        bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'internal_call_failed');
       }
     }
 
@@ -2714,6 +2841,16 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         personalizationContextUsed,
         roleIntelligenceSignals,
         roleIntelligenceRole: roleIntelligence.role,
+        bosPolicy: bosPolicyHint
+          ? {
+            mode: bosPolicyHint.mode ?? null,
+            type: bosPolicyHint.type ?? null,
+            salience: bosPolicyHint.salience ?? null,
+            triggerMvl: bosPolicyHint.triggerMvl,
+            confidence: bosPolicyHint.confidence,
+            reasonCodes: bosPolicyHint.reasonCodes,
+          }
+          : null,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,
@@ -2722,6 +2859,15 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           errorCode: inferenceMeta.errorCode ?? null,
           reason: inferenceMeta.reason ?? null,
           endpoint: inferenceMeta.endpoint ?? null,
+          bos: {
+            service: bosInferenceMeta.service,
+            route: bosInferenceMeta.route,
+            authMode: bosInferenceMeta.authMode,
+            statusCode: bosInferenceMeta.statusCode ?? null,
+            errorCode: bosInferenceMeta.errorCode ?? null,
+            reason: bosInferenceMeta.reason ?? null,
+            endpoint: bosInferenceMeta.endpoint ?? null,
+          },
         },
         understanding: {
           intent: understanding.intent,
@@ -3321,12 +3467,16 @@ export const __voiceSystemInternals = {
   buildAdaptiveLocalizedResponse,
   cleanTranscript,
   createAudioToken,
+  deriveBosModeToolHints,
   deriveUnderstandingSignal,
   detectLanguageCompatibility,
+  extractInternalBosPayload,
   evaluateSafetyDecision,
   normalizeVoiceLocale,
   redactTextForSpeech,
+  resolveBosInteractionContext,
   resolveLocale,
+  resolveTraceId,
   selectToolCalls,
   synthesizeAudioWave,
   verifyAudioToken,
