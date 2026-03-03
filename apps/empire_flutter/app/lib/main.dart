@@ -52,16 +52,23 @@ void main() async {
   }
 
   // Configure emulators if enabled
-  if (AppConfig.useEmulators) {
+  if (AppConfig.shouldUseEmulators) {
     try {
       final List<String> authParts = AppConfig.authEmulatorHost.split(':');
       await FirebaseAuth.instance.useAuthEmulator(
         authParts[0],
         int.parse(authParts[1]),
       );
+      debugPrint(
+        'Firebase mode: EMULATOR (auth=${AppConfig.authEmulatorHost}, firestore=${AppConfig.firestoreEmulatorHost})',
+      );
     } catch (e) {
       debugPrint('Failed to connect to auth emulator: $e');
     }
+  } else {
+    debugPrint(
+      'Firebase mode: LIVE (project=${AppConfig.firebaseProjectId}, env=${AppConfig.environment})',
+    );
   }
 
   runApp(const ScholesaApp());

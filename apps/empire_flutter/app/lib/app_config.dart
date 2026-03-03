@@ -28,6 +28,9 @@ class AppConfig {
     'USE_EMULATORS',
   );
 
+  /// Effective emulator mode. Production always uses live Firebase.
+  static bool get shouldUseEmulators => useEmulators && environment != 'prod';
+
   /// Provisioning API is optional. Keep Firestore-first by default for RC3.
   static const bool enableProvisioningApi = bool.fromEnvironment(
     'ENABLE_PROVISIONING_API',
