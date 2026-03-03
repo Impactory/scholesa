@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -24,6 +25,10 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Apply Rubric': 'Aplicar rúbrica',
   'Parent summary shared': 'Resumen para familias compartido',
   'Share Parent Summary': 'Compartir resumen para familias',
+  'Curriculum updated': 'Currículo actualizado',
+  'Update failed': 'Error al actualizar currículo',
+  'Rubric apply failed': 'Error al aplicar rúbrica',
+  'Share failed': 'Error al compartir resumen',
   'Title': 'Título',
   'Pillar': 'Pilar',
   'Future Skills': 'Habilidades del futuro',
@@ -32,6 +37,7 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Cancel': 'Cancelar',
   'Curriculum created': 'Currículo creado',
   'Create': 'Crear',
+  'Title is required': 'El título es obligatorio',
   'v': 'v',
   'h ago': 'h atrás',
   'd ago': 'd atrás',
@@ -368,11 +374,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                         },
                       );
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(_tHqCurriculum(
-                                context, 'Opening curriculum editor...'))),
-                      );
+                      _showEditDialog(curriculum);
                     },
                     child: Text(_tHqCurriculum(context, 'Edit')),
                   ),
@@ -383,7 +385,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   TelemetryService.instance.logEvent(
                     event: 'rubric.applied',
                     metadata: <String, dynamic>{
@@ -392,11 +394,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       'source': 'curriculum_details_sheet',
                     },
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(_tHqCurriculum(
-                            context, 'Rubric applied to this curriculum'))),
-                  );
+                  Navigator.pop(context);
+                  await _applyRubric(curriculum);
                 },
                 icon: const Icon(Icons.rule_rounded),
                 label: Text(_tHqCurriculum(context, 'Apply Rubric')),
@@ -406,7 +405,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   TelemetryService.instance.logEvent(
                     event: 'rubric.shared_to_parent_summary',
                     metadata: <String, dynamic>{
@@ -415,11 +414,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       'source': 'curriculum_details_sheet',
                     },
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text(_tHqCurriculum(context, 'Parent summary shared'))),
-                  );
+                  Navigator.pop(context);
+                  await _shareParentSummary(curriculum);
                 },
                 icon: const Icon(Icons.share_rounded),
                 label: Text(_tHqCurriculum(context, 'Share Parent Summary')),
@@ -427,6 +423,109 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditDialog(_Curriculum curriculum) {
+    final TextEditingController titleController =
+        TextEditingController(text: curriculum.title);
+    String selectedPillar = curriculum.pillar;
+    bool isSubmitting = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder:
+            (BuildContext context, void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            backgroundColor: ScholesaColors.surface,
+            title: Text(_tHqCurriculum(context, 'Edit')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Title'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedPillar,
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Pillar'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'Future Skills',
+                      child: Text(_tHqCurriculum(context, 'Future Skills')),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Leadership & Agency',
+                      child:
+                          Text(_tHqCurriculum(context, 'Leadership & Agency')),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'Impact & Innovation',
+                      child:
+                          Text(_tHqCurriculum(context, 'Impact & Innovation')),
+                    ),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedPillar = value);
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(_tHqCurriculum(context, 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final String title = titleController.text.trim();
+                        if (title.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  _tHqCurriculum(context, 'Title is required')),
+                            ),
+                          );
+                          return;
+                        }
+
+                        setLocalState(() => isSubmitting = true);
+                        final bool updated = await _updateCurriculum(
+                          curriculum,
+                          title: title,
+                          pillar: selectedPillar,
+                        );
+                        if (!mounted) return;
+                        if (updated) {
+                          Navigator.pop(dialogContext);
+                        } else {
+                          setLocalState(() => isSubmitting = false);
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(_tHqCurriculum(context, 'Edit')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -448,6 +547,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   void _showCreateDialog() {
     final TextEditingController titleController = TextEditingController();
     String selectedPillar = 'Future Skills';
+    bool isSubmitting = false;
 
     showDialog<void>(
       context: context,
@@ -514,12 +614,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 child: Text(_tHqCurriculum(context, 'Cancel')),
               ),
               ElevatedButton(
-                onPressed: () async {
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
                   final String title = titleController.text.trim();
                   if (title.isEmpty) {
-                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text(_tHqCurriculum(context, 'Title is required'))),
+                    );
                     return;
                   }
+
+                  setLocalState(() => isSubmitting = true);
 
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
@@ -537,10 +645,25 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     },
                   );
 
-                  Navigator.pop(dialogContext);
-                  await _createCurriculum(title: title, pillar: selectedPillar);
+                  final bool created = await _createCurriculum(
+                    title: title,
+                    pillar: selectedPillar,
+                  );
+
+                  if (!mounted) return;
+                  if (created) {
+                    Navigator.pop(dialogContext);
+                  } else {
+                    setLocalState(() => isSubmitting = false);
+                  }
                 },
-                child: Text(_tHqCurriculum(context, 'Create')),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(_tHqCurriculum(context, 'Create')),
               ),
             ],
           );
@@ -616,43 +739,219 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }
   }
 
-  Future<void> _createCurriculum({
+  Future<bool> _createCurriculum({
     required String title,
     required String pillar,
   }) async {
+    final AppState? appState = _maybeAppState();
     final FirestoreService? firestoreService = _maybeFirestoreService();
     if (firestoreService == null) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))),
+        SnackBar(content: Text(_tHqCurriculum(context, 'Create failed'))),
       );
-      return;
+      return false;
     }
 
     try {
       final String pillarCode = _pillarCodeFromLabel(pillar);
-      await firestoreService.firestore.collection('missions').add(<String, dynamic>{
+      final String? actorRole = appState?.role?.name;
+      final String? actorId = appState?.userId;
+      final String? activeSiteId = appState?.activeSiteId;
+
+      final String createdId = await firestoreService.createDocument(
+        'missions',
+        <String, dynamic>{
         'title': title,
         'description': title,
         'pillar': pillar,
         'pillarCode': pillarCode,
         'pillarCodes': <String>[pillarCode],
+        'siteId': activeSiteId,
+        'createdBy': actorId,
+        'createdByRole': actorRole,
+        'publisherType': actorRole ?? 'hq',
+        'published': false,
         'status': 'draft',
         'version': '1.0',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      if (!mounted) return;
+        },
+      );
+
+      final _Curriculum created = _Curriculum(
+        id: createdId,
+        title: title,
+        pillar: pillar,
+        version: '1.0',
+        status: _CurriculumStatus.draft,
+        lastUpdated: DateTime.now(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _curricula = <_Curriculum>[created, ..._curricula];
+        });
+      }
+
+      if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum created'))),
+      );
+      await _loadCurricula();
+      return true;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Create failed'))),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> _updateCurriculum(
+    _Curriculum curriculum, {
+    required String title,
+    required String pillar,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Update failed'))),
+      );
+      return false;
+    }
+
+    try {
+      final String pillarCode = _pillarCodeFromLabel(pillar);
+      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+        'title': title,
+        'description': title,
+        'pillar': pillar,
+        'pillarCode': pillarCode,
+        'pillarCodes': <String>[pillarCode],
+      });
+
+      _replaceLocalCurriculum(
+        curriculum.id,
+        title: title,
+        pillar: pillar,
+        lastUpdated: DateTime.now(),
+      );
+
+      if (!mounted) return true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Curriculum updated'))),
+      );
+      await _loadCurricula();
+      return true;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Update failed'))),
+      );
+      return false;
+    }
+  }
+
+  Future<void> _applyRubric(_Curriculum curriculum) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Rubric apply failed'))),
+      );
+      return;
+    }
+
+    try {
+      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+        'rubricApplied': true,
+        'rubricAppliedBy': appState?.userId,
+        'rubricAppliedAt': FieldValue.serverTimestamp(),
+        'status': 'review',
+      });
+
+      _replaceLocalCurriculum(
+        curriculum.id,
+        status: _CurriculumStatus.review,
+        lastUpdated: DateTime.now(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(_tHqCurriculum(context, 'Rubric applied to this curriculum')),
+        ),
       );
       await _loadCurricula();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Create failed'))),
+        SnackBar(content: Text(_tHqCurriculum(context, 'Rubric apply failed'))),
       );
     }
+  }
+
+  Future<void> _shareParentSummary(_Curriculum curriculum) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Share failed'))),
+      );
+      return;
+    }
+
+    try {
+      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+        'parentSummaryShared': true,
+        'parentSummarySharedBy': appState?.userId,
+        'parentSummarySharedAt': FieldValue.serverTimestamp(),
+      });
+
+      _replaceLocalCurriculum(
+        curriculum.id,
+        lastUpdated: DateTime.now(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Parent summary shared'))),
+      );
+      await _loadCurricula();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Share failed'))),
+      );
+    }
+  }
+
+  void _replaceLocalCurriculum(
+    String id, {
+    String? title,
+    String? pillar,
+    String? version,
+    _CurriculumStatus? status,
+    DateTime? lastUpdated,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      _curricula = _curricula.map((_Curriculum entry) {
+        if (entry.id != id) return entry;
+        return _Curriculum(
+          id: entry.id,
+          title: title ?? entry.title,
+          pillar: pillar ?? entry.pillar,
+          version: version ?? entry.version,
+          status: status ?? entry.status,
+          lastUpdated: lastUpdated ?? entry.lastUpdated,
+        );
+      }).toList();
+    });
   }
 
   _CurriculumStatus _parseCurriculumStatus(String? raw) {
@@ -719,6 +1018,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   FirestoreService? _maybeFirestoreService() {
     try {
       return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  AppState? _maybeAppState() {
+    try {
+      return context.read<AppState>();
     } catch (_) {
       return null;
     }
