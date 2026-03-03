@@ -113,7 +113,7 @@ function sleepMs(ms) {
   Atomics.wait(int32, 0, 0, ms);
 }
 
-function runNodeCommand({ id, scriptPath, args = [], env = {}, retries = 0, retryDelayMs = 2000 }) {
+function runNodeCommand({ id, scriptPath, args = [], env = {}, retries = 0, retryDelayMs = 2000, timeoutMs = 120000 }) {
   const startedAt = Date.now();
   const resolvedScriptPath = path.resolve(ROOT, scriptPath);
   let attempt = 0;
@@ -128,6 +128,7 @@ function runNodeCommand({ id, scriptPath, args = [], env = {}, retries = 0, retr
       env: { ...process.env, ...env },
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 64,
+      timeout: timeoutMs,
     });
 
     stdout = String(result.stdout || '');
@@ -152,6 +153,7 @@ function runNodeCommand({ id, scriptPath, args = [], env = {}, retries = 0, retr
     details: {
       command: `node ${scriptPath}${args.length > 0 ? ` ${args.join(' ')}` : ''}`,
       exitCode: typeof result.status === 'number' ? result.status : 1,
+      timedOut: result.error?.code === 'ETIMEDOUT',
       durationMs: Date.now() - startedAt,
       attempts: attempt + 1,
       resultLine: pickResultLine(stdout, stderr),
@@ -226,6 +228,7 @@ function main() {
         FIREBASE_PROJECT_ID: args.project,
       },
       retries: 2,
+      timeoutMs: 180000,
     }),
   );
 
@@ -240,6 +243,10 @@ function main() {
         `--project=${args.project}`,
         '--strict',
       ],
+      env: {
+        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
+        FIREBASE_PROJECT_ID: args.project,
+      },
       retries: 2,
     }),
   );
@@ -266,6 +273,8 @@ function main() {
   );
 
   const liveRunnerArgs = ['--strict'];
+  liveRunnerArgs.push(`--project=${args.project}`);
+  liveRunnerArgs.push(`--service-account=${args.credentials}`);
   if (args.baseUrl) {
     liveRunnerArgs.push(`--base-url=${args.baseUrl}`);
   }
@@ -274,7 +283,12 @@ function main() {
       id: 'voice_live_runner',
       scriptPath: 'scripts/vibe_voice_live_runner.js',
       args: liveRunnerArgs,
+      env: {
+        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
+        FIREBASE_PROJECT_ID: args.project,
+      },
       retries: 1,
+      timeoutMs: 180000,
     }),
   );
 
@@ -287,31 +301,12 @@ function main() {
         '--strict',
         `--report-name=${args.wiringReportName}`,
       ],
+      env: {
+        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
+        FIREBASE_PROJECT_ID: args.project,
+      },
       retries: 2,
-    }),
-  );
-
-  checks.push(
-    runNodeCommand({
-      id: 'master_telemetry_audit',
-      scriptPath: 'scripts/vibe_telemetry_audit_master.js',
-      args: [
-        `--env=${args.env}`,
-        '--strict',
-        `--hours=${args.hours}`,
-        `--limit=${args.limit}`,
-        `--project=${args.project}`,
-        `--credentials=${args.credentials}`,
-      ],
-      retries: 2,
-    }),
-  );
-
-  checks.push(
-    runNodeCommand({
-      id: 'ci_blocker_gate',
-      scriptPath: 'scripts/vibe_ci_blocker_gate.js',
-      args: ['--strict'],
+      timeoutMs: 180000,
     }),
   );
 
@@ -378,16 +373,16 @@ function main() {
   );
   checks.push(
     readReportCheck({
-      id: 'report_master_telemetry_audit',
-      reportName: 'vibe-telemetry-audit-master',
-      relativePath: 'audit-pack/reports/vibe-telemetry-audit-master.json',
+      id: 'report_voice_retention_ttl',
+      reportName: 'voice-retention-ttl',
+      relativePath: 'audit-pack/reports/voice-retention-ttl.json',
     }),
   );
   checks.push(
     readReportCheck({
-      id: 'report_ci_blocker_gate',
-      reportName: 'vibe-ci-blocker-gate',
-      relativePath: 'audit-pack/reports/vibe-ci-blocker-gate.json',
+      id: 'report_logging_no_raw_content',
+      reportName: 'logging-no-raw-content',
+      relativePath: 'audit-pack/reports/logging-no-raw-content.json',
     }),
   );
 

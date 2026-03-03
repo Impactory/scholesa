@@ -181,6 +181,18 @@ export class BosController {
 
   // Start voice interaction
   startVoiceInteraction(): void {
+    if (!this.consentManager.isConsentGranted()) {
+      this.emitter.emit({
+        event_name: 'policy_check_blocked',
+        payload: {
+          action: 'voice_listen',
+          reason: 'consent_revoked',
+        },
+      });
+      this.activateSafeMode();
+      return;
+    }
+
     this.voiceManager.startListening();
   }
 
@@ -189,8 +201,25 @@ export class BosController {
     this.voiceManager.stopListening();
   }
 
+  // Detect silence during voice interaction
+  detectVoiceSilence(durationMs: number): void {
+    this.voiceManager.detectSilence(durationMs);
+  }
+
   // Speak response
   speakResponse(text: string): void {
+    if (!this.consentManager.isConsentGranted()) {
+      this.emitter.emit({
+        event_name: 'policy_check_blocked',
+        payload: {
+          action: 'voice_speak',
+          reason: 'consent_revoked',
+        },
+      });
+      this.activateSafeMode();
+      return;
+    }
+
     this.voiceManager.speak(text);
   }
 

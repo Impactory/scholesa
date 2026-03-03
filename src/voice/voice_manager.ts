@@ -27,7 +27,11 @@ export class VoiceManager {
     this.emitter = emitter;
     this.gradeBand = gradeBand;
     this.callbacks = callbacks;
-    this.sttStreamer = new STTStreamer(emitter);
+    this.sttStreamer = new STTStreamer(emitter, {
+      onFinalTranscript: (transcript, confidence) => {
+        this.handleFinalTranscript(transcript, confidence);
+      },
+    });
     this.ttsEngine = new TTSEngine(emitter);
     this.turnManager = new TurnManager(emitter, gradeBand);
   }
@@ -38,14 +42,6 @@ export class VoiceManager {
     console.log('Starting voice listening...');
     await this.sttStreamer.startStream();
     this.listening = true;
-
-    setTimeout(() => {
-      if (!this.listening) {
-        return;
-      }
-
-      this.handleFinalTranscript('I think the answer is photosynthesis.', 0.91);
-    }, 920);
   }
 
   // Stop voice interaction

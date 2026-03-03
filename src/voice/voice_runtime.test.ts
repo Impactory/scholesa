@@ -180,6 +180,7 @@ describe('Voice runtime', () => {
       'device-1',
     );
 
+    controller.transitionToNextState();
     controller.startVoiceInteraction();
     jest.advanceTimersByTime(920);
 
@@ -189,6 +190,35 @@ describe('Voice runtime', () => {
       }),
     );
 
-    controller.detectSilence?.(7000 as never);
+    controller.detectVoiceSilence(7000);
+
+    expect(controller.getCurrentState()).toBe('COACHING_RECOVERY');
+    expect(controller.getStateMetrics().confusion_count).toBeGreaterThan(0);
+    expect(emitter.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_name: 'confusion_detected',
+      }),
+    );
+  });
+
+  test('BosController blocks voice in safe mode when consent revoked', () => {
+    const emitter = createEmitterMock();
+    const controller = new BosController(
+      emitter as never,
+      '4-6',
+      'learner-2',
+      'device-2',
+    );
+
+    controller.activateSafeMode();
+    controller.startVoiceInteraction();
+    controller.speakResponse('Can you hear me?');
+
+    const eventNames = emitter.emit.mock.calls.map(([event]) => event.event_name);
+    expect(eventNames).toContain('policy_check_blocked');
+    expect(eventNames).toContain('SAFE_MODE_ACTIVATED');
+    expect(eventNames).not.toContain('stt_stream_started');
+    expect(eventNames).not.toContain('tts_request_started');
+    expect(controller.getCurrentState()).toBe('SAFE_MODE');
   });
 });

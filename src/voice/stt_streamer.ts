@@ -1,14 +1,20 @@
 // src/voice/stt_streamer.ts
 import { TelemetryEmitter } from '../telemetry/emitter';
 
+export interface STTStreamerCallbacks {
+  onFinalTranscript?: (transcript: string, confidence: number) => void;
+}
+
 export class STTStreamer {
   private emitter: TelemetryEmitter;
   private partialResultTimer: ReturnType<typeof setTimeout> | null = null;
   private partialTimer: ReturnType<typeof setTimeout> | null = null;
   private streaming = false;
+  private callbacks: STTStreamerCallbacks;
 
-  constructor(emitter: TelemetryEmitter) {
+  constructor(emitter: TelemetryEmitter, callbacks: STTStreamerCallbacks = {}) {
     this.emitter = emitter;
+    this.callbacks = callbacks;
   }
 
   // Simulate streaming STT
@@ -40,19 +46,24 @@ export class STTStreamer {
       if (!this.streaming) {
         return;
       }
+
+      const finalTranscript = 'I think the answer is photosynthesis.';
+      const finalConfidence = 0.91;
+
       this.emitter.emit({
         event_name: 'stt_final_transcript',
         payload: {
-          transcript: 'I think the answer is photosynthesis.',
+          transcript: finalTranscript,
           duration_ms: 900
         }
       });
       this.emitter.emit({
         event_name: 'stt_confidence_scored',
         payload: {
-          confidence: 0.91
+          confidence: finalConfidence
         }
       });
+      this.callbacks.onFinalTranscript?.(finalTranscript, finalConfidence);
       this.streaming = false;
       this.partialTimer = null;
     }, 900);
