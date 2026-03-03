@@ -40,6 +40,7 @@ class AuthService {
   }) async {
     try {
       _appState.setLoading(true);
+      _appState.clearError();
       await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -49,6 +50,7 @@ class AuthService {
       _appState.setError(_mapAuthError(e.code));
       rethrow;
     } catch (e) {
+      debugPrint('Email sign-in error: $e');
       _appState.setError('An unexpected error occurred');
       rethrow;
     }

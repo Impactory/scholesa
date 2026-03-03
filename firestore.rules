@@ -17,26 +17,36 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
+    // Safe version that returns empty map if user has no profile
+    function getUserDataSafe() {
+      let userRef = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userRef.exists ? userRef.data : {};
+    }
+    
     function hasRole(role) {
       return isAuthenticated() && getUserData().role == role;
     }
     
+    function hasRoleSafe(role) {
+      return isAuthenticated() && (getUserDataSafe().get('role', '') == role);
+    }
+    
     function isEducator() {
-      return hasRole('educator') || hasRole('siteLead') || hasRole('site') || hasRole('hq');
+      return hasRoleSafe('educator') || hasRoleSafe('siteLead') || hasRoleSafe('site') || hasRoleSafe('hq');
     }
     
     function isHQ() {
-      return hasRole('hq');
+      return hasRoleSafe('hq');
     }
 
     function isAdminOrHQ() {
-      return hasRole('admin') || isHQ();
+      return hasRoleSafe('admin') || isHQ();
     }
 
     function userHasSite(siteId) {
       return isAuthenticated() && (
-        (getUserData().keys().hasAny(['siteId']) && getUserData().siteId == siteId) ||
-        (getUserData().keys().hasAny(['siteIds']) && getUserData().siteIds.hasAny([siteId]))
+        (getUserDataSafe().keys().hasAny(['siteId']) && getUserDataSafe().siteId == siteId) ||
+        (getUserDataSafe().keys().hasAny(['siteIds']) && getUserDataSafe().siteIds.hasAny([siteId]))
       );
     }
 
@@ -45,7 +55,7 @@ service cloud.firestore {
     }
 
     function actorSiteIds() {
-      return getUserData().keys().hasAny(['siteIds']) ? getUserData().siteIds : [];
+      return getUserDataSafe().keys().hasAny(['siteIds']) ? getUserDataSafe().siteIds : [];
     }
 
     function requestSharesActorSite(data) {
@@ -67,27 +77,10 @@ service cloud.firestore {
     // - Educators/HQ can read profiles (to view learners).
     match /users/{userId} {
       allow read: if isOwner(userId) || isEducator();
-      allow create: if isHQ() || (
-        hasRole('site')
-        && requestSharesActorSite(request.resource.data)
-        && request.resource.data.uid == userId
-        && request.resource.data.role in ['learner', 'parent']
-        && request.resource.data.keys().hasOnly([
-          'uid',
-          'email',
-          'displayName',
-          'role',
-          'siteIds',
-          'activeSiteId',
-          'parentIds',
-          'isActive',
-          'status',
-          'createdAt',
-          'updatedAt'
-        ])
-      );
+      // Only HQ and site admins can create user profiles
+      allow create: if isHQ() || hasRoleSafe('site');
       allow update: if isOwner(userId) || isHQ() || (
-        hasRole('site')
+        hasRoleSafe('site')
         && requestSharesActorSite(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'siteIds',
