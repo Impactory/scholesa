@@ -380,27 +380,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (mounted) setState(() => _isSpeaking = false);
     }
 
-    if (kIsWeb) {
-      try {
-        await _audioPlayer.stop();
-        await _flutterTts.stop();
-        if (mounted) setState(() => _isSpeaking = true);
-        await _flutterTts.speak(text);
-        await TelemetryService.instance.logEvent(
-          event: 'voice.tts',
-          metadata: <String, dynamic>{
-            'source': 'flutter_tts_web',
-            'surface': 'ai_coach_widget',
-            'traceId': traceId,
-            'chars': text.length,
-          },
-        );
-        return;
-      } catch (_) {
-        if (mounted) setState(() => _isSpeaking = false);
-      }
-    }
-
+    bool played = false;
     if (_lastResponse?.voiceAvailable == true &&
         _lastResponse?.voiceAudioUrl != null &&
         _lastResponse!.voiceAudioUrl!.isNotEmpty) {
@@ -409,6 +389,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         await _audioPlayer.stop();
         if (mounted) setState(() => _isSpeaking = true);
         await _audioPlayer.play(UrlSource(_lastResponse!.voiceAudioUrl!));
+        played = true;
         await TelemetryService.instance.logEvent(
           event: 'voice.tts',
           metadata: <String, dynamic>{
@@ -418,24 +399,55 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             'audioUrlAvailable': true,
           },
         );
-        return;
       } catch (_) {
-        // Fall through to local TTS fallback.
+        if (mounted) setState(() => _isSpeaking = false);
       }
     }
 
-    await _flutterTts.stop();
-    if (mounted) setState(() => _isSpeaking = true);
-    await _flutterTts.speak(text);
-    await TelemetryService.instance.logEvent(
-      event: 'voice.tts',
-      metadata: <String, dynamic>{
-        'source': 'flutter_tts',
-        'surface': 'ai_coach_widget',
-        'chars': text.length,
-        'traceId': traceId,
-      },
-    );
+    if (!played) {
+      try {
+        await _audioPlayer.stop();
+        await _flutterTts.stop();
+        if (mounted) setState(() => _isSpeaking = true);
+        await _flutterTts.speak(text);
+        played = true;
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': kIsWeb ? 'flutter_tts_web' : 'flutter_tts',
+            'surface': 'ai_coach_widget',
+            'chars': text.length,
+            'traceId': traceId,
+          },
+        );
+      } catch (_) {
+        if (mounted) setState(() => _isSpeaking = false);
+      }
+    }
+
+    if (!played) {
+      await TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        metadata: <String, dynamic>{
+          'source': 'voice_unavailable',
+          'surface': 'ai_coach_widget',
+          'traceId': traceId,
+          'chars': text.length,
+          'web': kIsWeb,
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            kIsWeb
+                ? _t('ai.voice.outputUnavailableWeb')
+                : _t('ai.voice.outputUnavailable'),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   String _coachDirectiveForMode(AiCoachMode mode) {

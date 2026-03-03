@@ -74,6 +74,10 @@ class AppStrings {
       'ai.voice.enableOutput': 'Enable voice output',
       'ai.voice.speaking': 'Speaking…',
       'ai.voice.tapInterrupt': 'Tap to interrupt',
+      'ai.voice.outputUnavailable':
+          'Voice output is unavailable. Check device volume and audio permissions.',
+      'ai.voice.outputUnavailableWeb':
+          'Voice output is blocked in the browser. Use HTTPS, allow autoplay/audio, and try again.',
       'ai.clearGoals.title': 'Clear current goals?',
       'ai.clearGoals.body':
           'This removes the in-session coaching goals memory for this assistant conversation.',
@@ -195,6 +199,10 @@ class AppStrings {
       'ai.voice.enableOutput': 'Activar salida de voz',
       'ai.voice.speaking': 'Hablando…',
       'ai.voice.tapInterrupt': 'Toca para interrumpir',
+      'ai.voice.outputUnavailable':
+          'La salida de voz no está disponible. Verifica el volumen y los permisos de audio del dispositivo.',
+      'ai.voice.outputUnavailableWeb':
+          'La salida de voz está bloqueada en el navegador. Usa HTTPS, permite reproducción automática/audio y vuelve a intentar.',
       'ai.clearGoals.title': '¿Borrar metas actuales?',
       'ai.clearGoals.body':
           'Esto elimina la memoria de metas de coaching en sesión para esta conversación del asistente.',
