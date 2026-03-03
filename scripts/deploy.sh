@@ -136,6 +136,8 @@ deploy_compliance_operator() {
   local region service image_tag
   region="${GCP_REGION:-us-central1}"
   service="${COMPLIANCE_RUN_SERVICE:-scholesa-compliance}"
+  local root_redirect_url
+  root_redirect_url="${COMPLIANCE_ROOT_REDIRECT_URL:-https://www.scholesa.com/en}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
 
   log "Building compliance operator image with Cloud Build..."
@@ -148,7 +150,7 @@ deploy_compliance_operator() {
     --region "$region" \
     --platform managed \
     --no-allow-unauthenticated \
-    --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0")
+    --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0,COMPLIANCE_ROOT_REDIRECT_URL=${root_redirect_url}")
 
   log "Compliance operator deployed ✓"
 }

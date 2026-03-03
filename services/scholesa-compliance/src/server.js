@@ -6,11 +6,24 @@ const { runComplianceSuite } = require('./checks/runAllChecks');
 const { REPO_ROOT } = require('./utils');
 
 const PORT = Number(process.env.PORT || 8080);
+const ROOT_REDIRECT_URL = String(process.env.COMPLIANCE_ROOT_REDIRECT_URL || 'https://www.scholesa.com/en').trim();
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload, null, 2));
+}
+
+function sendRedirect(res, location) {
+  res.statusCode = 307;
+  res.setHeader('Location', location);
+  res.end();
+}
+
+function shouldRedirectRoot(req) {
+  if (!ROOT_REDIRECT_URL) return false;
+  const accept = String(req.headers.accept || '').toLowerCase();
+  return accept.includes('text/html');
 }
 
 function parseBody(req) {
@@ -62,6 +75,10 @@ async function handleRequest(req, res) {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
     if (req.method === 'GET' && url.pathname === '/') {
+      if (shouldRedirectRoot(req)) {
+        sendRedirect(res, ROOT_REDIRECT_URL);
+        return;
+      }
       sendJson(res, 200, {
         ok: true,
         service: 'scholesa-compliance',
