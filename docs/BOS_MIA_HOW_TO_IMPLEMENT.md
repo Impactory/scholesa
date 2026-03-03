@@ -122,6 +122,9 @@ The deployed runtime exposes the same contract through Firebase callable names:
 - Student-facing payloads remain privacy-minimized through server-side sanitization/redaction.
 - Regression gate: run `cd functions && npm run test:coppa` to verify consent + cross-site denial guards.
 - Full completion gate: run `npm run qa:bos:mia:complete` from repo root.
+- Production signoff report: run `npm run qa:bos:mia:signoff` to generate `audit-pack/reports/bos-mia-signoff.json`.
+- Latest release certificate: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`.
+- Production sign-off checklist: `docs/BOS_MIA_PROD_SIGNOFF_CHECKLIST.md`.
 
 ---
 
