@@ -191,9 +191,11 @@ class AuthService {
         }
       }
     } catch (e) {
-      debugPrint('Failed to bootstrap session: $e');
+      debugPrint('Error in _bootstrapSession: $e');
+      debugPrintStack(label: '_bootstrapSession error stack');
       final User? user = _auth.currentUser;
       if (user != null) {
+        debugPrint('Falling back to Firebase user data for: ${user.email}');
         _appState.updateFromMeResponse(<String, dynamic>{
           'userId': user.uid,
           'email': user.email ?? '',

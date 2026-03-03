@@ -146,16 +146,27 @@ class AppState extends ChangeNotifier {
 
     final List<dynamic> entitlementsData =
         data['entitlements'] as List<dynamic>? ?? <dynamic>[];
-    _entitlements = entitlementsData.map<Entitlement>((dynamic e) {
-      final Map<String, dynamic> item = e as Map<String, dynamic>;
-      return Entitlement(
-        id: item['id'] as String,
-        feature: item['feature'] as String,
-        expiresAt: item['expiresAt'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(item['expiresAt'] as int)
-            : null,
-      );
-    }).toList();
+    _entitlements = <Entitlement>[];
+    for (final dynamic e in entitlementsData) {
+      try {
+        if (e is Map<String, dynamic>) {
+          final String? id = e['id'] as String?;
+          final String? feature = e['feature'] as String?;
+          if (id != null && feature != null) {
+            _entitlements.add(Entitlement(
+              id: id,
+              feature: feature,
+              expiresAt: e['expiresAt'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(e['expiresAt'] as int)
+                  : null,
+            ));
+          }
+        }
+      } catch (ex) {
+        debugPrint('Failed to parse entitlement: $e, error: $ex');
+        // Skip malformed entitlements instead of crashing
+      }
+    }
 
     _isLoading = false;
     _error = null;

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service for direct Firestore operations
 class FirestoreService {
@@ -36,6 +37,22 @@ class FirestoreService {
     }
 
     final Map<String, dynamic> data = doc.data()!;
+    
+    // Parse entitlements safely
+    List<Map<String, dynamic>> entitlements = <Map<String, dynamic>>[];
+    try {
+      final dynamic entsData = data['entitlements'];
+      if (entsData is List) {
+        for (final dynamic e in entsData) {
+          if (e is Map<String, dynamic>) {
+            entitlements.add(e);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Warning: Failed to parse entitlements: $e');
+    }
+    
     return <String, dynamic>{
       'userId': user.uid,
       'email': data['email'] ?? user.email,
@@ -44,8 +61,7 @@ class FirestoreService {
       'activeSiteId': data['activeSiteId'] ??
           (data['siteIds'] as List<dynamic>?)?.firstOrNull,
       'siteIds': List<String>.from(data['siteIds'] ?? <dynamic>[]),
-      'entitlements':
-          List<Map<String, dynamic>>.from(data['entitlements'] ?? <dynamic>[]),
+      'entitlements': entitlements,
     };
   }
 
