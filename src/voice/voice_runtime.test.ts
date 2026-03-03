@@ -1,6 +1,7 @@
 import { STTStreamer } from './stt_streamer';
 import { TTSEngine } from './tts_engine';
 import { VoiceManager } from './voice_manager';
+import { BosController } from '../bos/bos_controller';
 
 type EmitFn = (payload: {
   event_name: string;
@@ -131,5 +132,63 @@ describe('Voice runtime', () => {
 
     jest.runOnlyPendingTimers();
     await speakPromise;
+  });
+
+  test('VoiceManager adapts speech for younger learners', async () => {
+    const emitter = createEmitterMock();
+    const manager = new VoiceManager(emitter as never, '1-3');
+
+    const speakPromise = manager.speak('Therefore, utilize this method to solve it.');
+    jest.advanceTimersByTime(1000);
+    await speakPromise;
+
+    const requestEvents = emitter.emit.mock.calls.filter(
+      ([event]) => event.event_name === 'tts_request_started',
+    );
+
+    expect(requestEvents.length).toBeGreaterThan(0);
+    const lastRequest = requestEvents[requestEvents.length - 1][0];
+    expect(String(lastRequest.payload?.text)).toContain('Great thinking!');
+    expect(String(lastRequest.payload?.text)).toContain('so');
+    expect(String(lastRequest.payload?.text)).toContain('use');
+  });
+
+  test('VoiceManager triggers turn-timeout callback', () => {
+    const emitter = createEmitterMock();
+    const onTurnTimeout = jest.fn();
+    const manager = new VoiceManager(emitter as never, '4-6', {
+      onTurnTimeout,
+    });
+
+    manager.detectSilence(7000);
+
+    expect(onTurnTimeout).toHaveBeenCalledWith(7000);
+    expect(emitter.emit).toHaveBeenCalledWith({
+      event_name: 'turn_taking_timeout',
+      payload: {
+        duration: 7000,
+      },
+    });
+  });
+
+  test('BosController ingests transcript and updates confusion on timeout', async () => {
+    const emitter = createEmitterMock();
+    const controller = new BosController(
+      emitter as never,
+      '4-6',
+      'learner-1',
+      'device-1',
+    );
+
+    controller.startVoiceInteraction();
+    jest.advanceTimersByTime(920);
+
+    expect(emitter.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_name: 'learner_response_captured',
+      }),
+    );
+
+    controller.detectSilence?.(7000 as never);
   });
 });
