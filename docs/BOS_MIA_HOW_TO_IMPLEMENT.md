@@ -10,6 +10,7 @@
 2) **No punitive language, ever.** MVL is formative: “verify / explain / show evidence.”  
 3) **Privacy-minimized telemetry.** Default to derived features + buckets; avoid raw student text storage unless explicitly allowed.  
 4) **Sensor fusion rule:** No single proxy triggers high-salience actions (MVL/teacher alerts). Needs corroboration.
+5) **COPPA-first gating:** BOS + voice AI access requires active school consent (`coppaSchoolConsents/{siteId}`) and site-scoped authorization.
 
 **Source spine:**
 - Rewire Plan (runtime modules + sequence)  
@@ -99,7 +100,26 @@ AI is “fully implemented” only when all are true:
 7) `POST /teacher/override-mvl`
 8) `POST /contestability/request` and `POST /contestability/resolve`
 
+### Callable Mapping (Scholesa production runtime)
+The deployed runtime exposes the same contract through Firebase callable names:
+- `/ingest-event` → `bosIngestEvent`
+- `/orchestration-state` → `bosGetOrchestrationState`
+- `/get-intervention` → `bosGetIntervention`
+- `/score-mvl` → `bosScoreMvl`
+- `/mvl/submit-evidence` → `bosSubmitMvlEvidence`
+- `/educator/class/:sessionOccurrenceId/insights` → `bosGetClassInsights`
+- `/teacher/override-mvl` → `bosTeacherOverrideMvl`
+- `/contestability/request|resolve` → `bosContestability` (`action=request|resolve`)
+
 **Rule:** Every write includes `siteId`. Every timestamp is server time.
+
+### COPPA Runtime Enforcement
+- `bosIngestEvent`, `bosGetIntervention`, `bosGetClassInsights`, and MVL mutation endpoints enforce:
+  - active school consent,
+  - site membership scope,
+  - server-side writes only.
+- Voice paths (`/copilot/message`, `/voice/transcribe`, `/tts/speak`) enforce active school consent before model/tool execution.
+- Student-facing payloads remain privacy-minimized through server-side sanitization/redaction.
 
 ---
 

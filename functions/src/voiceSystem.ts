@@ -35,6 +35,7 @@ const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const BOS_INTERACTION_COLLECTION = 'interactionEvents';
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
+const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
 
 type VoiceTelemetryEvent =
   | 'voice.transcribe'
@@ -712,6 +713,22 @@ function collectSiteIdsFromClaims(decoded: admin.auth.DecodedIdToken): string[] 
 async function fetchUserProfile(uid: string): Promise<Record<string, unknown>> {
   const userSnap = await admin.firestore().collection('users').doc(uid).get();
   return (userSnap.exists ? (userSnap.data() as Record<string, unknown>) : {});
+}
+
+async function assertActiveSchoolConsent(siteId: string): Promise<void> {
+  const consentDoc = await admin.firestore().collection(SCHOOL_CONSENT_COLLECTION).doc(siteId).get();
+  if (!consentDoc.exists) {
+    throw new VoiceHttpError(412, 'failed_precondition', 'School consent record is required before voice AI access.');
+  }
+  const consent = consentDoc.data() as Record<string, unknown>;
+  const active = consent.active === true
+    && consent.agreementSigned === true
+    && consent.educationalUseOnly === true
+    && consent.parentNoticeProvided === true
+    && consent.noStudentMarketing === true;
+  if (!active) {
+    throw new VoiceHttpError(412, 'failed_precondition', 'School consent record is incomplete or inactive.');
+  }
 }
 
 function validateSiteAccess(requestedSiteId: string | undefined, context: VoiceAuthContext): void {
@@ -2306,6 +2323,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
   try {
     const body = parseJsonBody(req);
     const authContext = await resolveAuthContext(req, body);
+    await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
     await maybeValidateTeacherLearnerScope(authContext, body);
@@ -2786,6 +2804,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     }
 
     const authContext = await resolveAuthContext(req, resolvedBody);
+    await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
 
@@ -3007,6 +3026,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
   try {
     const body = parseJsonBody(req);
     const authContext = await resolveAuthContext(req, body);
+    await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
     const locale = resolveLocale(body.locale, req, settings.allowedLocales);

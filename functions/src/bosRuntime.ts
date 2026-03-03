@@ -30,6 +30,8 @@ const db = admin.firestore();
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const INTERACTION_COLLECTION = 'interactionEvents';
 const FEATURE_QUEUE_COLLECTION = 'fdmFeatureExtractionQueue';
+const USERS_COLLECTION = 'users';
+const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
 const BOS_PAYLOAD_KEY_BLOCKLIST = new Set([
   'prompt',
   'response',
@@ -54,6 +56,17 @@ const BOS_LOGIC_SPEC = Object.freeze({
 });
 
 const FAIRNESS_COLLECTION = 'fairnessAudits';
+
+type FairnessAuditBucket = {
+  interventions: number;
+  mvlTriggered: number;
+  byRole: Record<string, number>;
+  byGradeBand: Record<string, number>;
+  avgAutonomyRisk: number;
+  avgReliabilityRisk: number;
+  riskSamples: number;
+  modelVersions: Set<string>;
+};
 
 // ──────────────────────────────────────────────────────
 // §4.2  Grade-band thresholds
@@ -221,6 +234,43 @@ function shouldRedactBosPayloadKey(pathValue: string): boolean {
   const leaf = pathValue.split('.').pop() ?? pathValue;
   const normalized = normalizeKey(leaf.replace(/\[\d+\]/g, ''));
   return BOS_PAYLOAD_KEY_BLOCKLIST.has(normalized);
+}
+
+async function assertActiveSchoolConsent(siteId: string): Promise<void> {
+  const consentDoc = await db.collection(SCHOOL_CONSENT_COLLECTION).doc(siteId).get();
+  if (!consentDoc.exists) {
+    throw new HttpsError('failed-precondition', 'School consent record is required before BOS access.');
+  }
+  const consent = consentDoc.data() as Record<string, unknown>;
+  const active = consent.active === true
+    && consent.agreementSigned === true
+    && consent.educationalUseOnly === true
+    && consent.parentNoticeProvided === true
+    && consent.noStudentMarketing === true;
+  if (!active) {
+    throw new HttpsError('failed-precondition', 'School consent record is incomplete or inactive.');
+  }
+}
+
+async function assertUserSiteAccess(uid: string, siteId: string): Promise<void> {
+  const profileSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
+  const profile = profileSnap.exists ? (profileSnap.data() as Record<string, unknown>) : {};
+  const role = normalizeString(profile.role)?.toLowerCase();
+  if (role === 'hq') return;
+
+  const siteIds = dedupeStrings([
+    ...normalizeStringArray(profile.siteIds),
+    ...(normalizeString(profile.activeSiteId) ? [normalizeString(profile.activeSiteId)!] : []),
+  ]);
+
+  if (!siteIds.includes(siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+}
+
+async function assertCoppaSiteAccess(uid: string, siteId: string): Promise<void> {
+  await assertUserSiteAccess(uid, siteId);
+  await assertActiveSchoolConsent(siteId);
 }
 
 function sanitizeBosPayloadValue(
@@ -1163,6 +1213,7 @@ export const bosIngestEvent = onCall(
     if (!eventType || !siteId) {
       throw new HttpsError('invalid-argument', 'eventType and siteId required');
     }
+    await assertCoppaSiteAccess(uid, siteId);
 
     const actorRole = normalizeBosActorRole(data.actorRole);
     const gradeBand = normalizeBosGradeBand(data.gradeBand);
@@ -1288,6 +1339,11 @@ export const bosGetOrchestrationState = onCall(
       return { state: null, message: 'No orchestration state found' };
     }
 
+    const stateSiteId = normalizeString(doc.data()?.siteId);
+    if (stateSiteId) {
+      await assertCoppaSiteAccess(uid, stateSiteId);
+    }
+
     return { state: doc.data() };
   }
 );
@@ -1310,6 +1366,7 @@ export const bosGetIntervention = onCall(
     if (!sessionOccurrenceId || !siteId) {
       throw new HttpsError('invalid-argument', 'sessionOccurrenceId and siteId required');
     }
+    await assertCoppaSiteAccess(uid, siteId);
 
     // Step 1: Extract features (FDM)
     const features = await extractFeatures(targetLearnerId, sessionOccurrenceId);
@@ -1728,21 +1785,12 @@ export const bosWeeklyFairnessAudit = onSchedule(
       .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(windowStart))
       .get();
 
-    const bySite = new Map<string, {
-      interventions: number;
-      mvlTriggered: number;
-      byRole: Record<string, number>;
-      byGradeBand: Record<string, number>;
-      avgAutonomyRisk: number;
-      avgReliabilityRisk: number;
-      riskSamples: number;
-      modelVersions: Set<string>;
-    }>();
+    const bySite = new Map<string, FairnessAuditBucket>();
 
     const getSiteBucket = (siteId: string) => {
       const existing = bySite.get(siteId);
       if (existing) return existing;
-      const created = {
+      const created: FairnessAuditBucket = {
         interventions: 0,
         mvlTriggered: 0,
         byRole: {},
@@ -1847,6 +1895,16 @@ export const bosScoreMvl = onCall(
     const { episodeId } = request.data;
     if (!episodeId) throw new HttpsError('invalid-argument', 'episodeId required');
 
+    const episodeDoc = await db.collection('mvlEpisodes').doc(episodeId).get();
+    if (!episodeDoc.exists) {
+      throw new HttpsError('not-found', 'MVL episode not found');
+    }
+    const episodeSiteId = normalizeString(episodeDoc.data()?.siteId);
+    if (!episodeSiteId) {
+      throw new HttpsError('failed-precondition', 'MVL episode missing site scope.');
+    }
+    await assertCoppaSiteAccess(uid, episodeSiteId);
+
     const resolution = await scoreMvlEpisode(episodeId);
     return { resolution };
   }
@@ -1865,6 +1923,16 @@ export const bosSubmitMvlEvidence = onCall(
     if (!episodeId || !eventIds?.length) {
       throw new HttpsError('invalid-argument', 'episodeId and eventIds required');
     }
+
+    const episodeDoc = await db.collection('mvlEpisodes').doc(episodeId).get();
+    if (!episodeDoc.exists) {
+      throw new HttpsError('not-found', 'MVL episode not found');
+    }
+    const episodeSiteId = normalizeString(episodeDoc.data()?.siteId);
+    if (!episodeSiteId) {
+      throw new HttpsError('failed-precondition', 'MVL episode missing site scope.');
+    }
+    await assertCoppaSiteAccess(uid, episodeSiteId);
 
     await db.collection('mvlEpisodes').doc(episodeId).update({
       evidenceEventIds: admin.firestore.FieldValue.arrayUnion(...eventIds),
@@ -1887,6 +1955,16 @@ export const bosTeacherOverrideMvl = onCall(
     if (!episodeId || !resolution) {
       throw new HttpsError('invalid-argument', 'episodeId and resolution required');
     }
+
+    const episodeDoc = await db.collection('mvlEpisodes').doc(episodeId).get();
+    if (!episodeDoc.exists) {
+      throw new HttpsError('not-found', 'MVL episode not found');
+    }
+    const episodeSiteId = normalizeString(episodeDoc.data()?.siteId);
+    if (!episodeSiteId) {
+      throw new HttpsError('failed-precondition', 'MVL episode missing site scope.');
+    }
+    await assertCoppaSiteAccess(uid, episodeSiteId);
 
     await db.collection('mvlEpisodes').doc(episodeId).update({
       resolution,
@@ -1915,6 +1993,7 @@ export const bosGetClassInsights = onCall(
     if (!sessionOccurrenceId || !siteId) {
       throw new HttpsError('invalid-argument', 'sessionOccurrenceId and siteId required');
     }
+    await assertCoppaSiteAccess(uid, siteId);
 
     // Fetch all orchestration states for this session
     const statesSnap = await db.collection('orchestrationStates')
@@ -1967,9 +2046,20 @@ export const bosContestability = onCall(
 
     const { action, episodeId, reason, resolution } = request.data;
 
-    if (action === 'request') {
-      if (!episodeId) throw new HttpsError('invalid-argument', 'episodeId required');
+    if (!episodeId) {
+      throw new HttpsError('invalid-argument', 'episodeId required');
+    }
+    const episodeDoc = await db.collection('mvlEpisodes').doc(episodeId).get();
+    if (!episodeDoc.exists) {
+      throw new HttpsError('not-found', 'MVL episode not found');
+    }
+    const episodeSiteId = normalizeString(episodeDoc.data()?.siteId);
+    if (!episodeSiteId) {
+      throw new HttpsError('failed-precondition', 'MVL episode missing site scope.');
+    }
+    await assertCoppaSiteAccess(uid, episodeSiteId);
 
+    if (action === 'request') {
       await db.collection('mvlEpisodes').doc(episodeId).update({
         contestability: {
           requestedBy: uid,
