@@ -12,9 +12,13 @@ function parseArgs(argv = process.argv.slice(2)) {
     baseUrl: process.env.VOICE_API_BASE_URL || '',
     apiKey: process.env.VOICE_LIVE_API_KEY || '',
     strict: false,
+    autoServiceAccount: false,
+    seedConsent: false,
   };
   for (const arg of argv) {
     if (arg === '--strict') options.strict = true;
+    if (arg === '--auto-service-account') options.autoServiceAccount = true;
+    if (arg === '--seed-consent') options.seedConsent = true;
     if (arg.startsWith('--project=')) options.projectId = arg.slice('--project='.length);
     if (arg.startsWith('--service-account=')) options.serviceAccountPath = arg.slice('--service-account='.length);
     if (arg.startsWith('--base-url=')) options.baseUrl = arg.slice('--base-url='.length);
@@ -30,6 +34,48 @@ function extractApiKeyFromFlutterOptions() {
   const source = fs.readFileSync(optionsPath, 'utf8');
   const match = source.match(/apiKey:\s*'([^']+)'/);
   return match ? match[1] : '';
+}
+
+function discoverServiceAccountPath(projectId) {
+  const byProject = path.resolve(`.idx/${projectId}-firebase-adminsdk-fbsvc-9d9be1eb80.json`);
+  const fallbackCandidates = [
+    byProject,
+    path.resolve(`.idx/${projectId}-firebase-adminsdk-fbsvc.json`),
+    path.resolve(`${projectId}.json`),
+    path.resolve('scholesa-10cfaceb0561.json'),
+    path.resolve('firebase-service-account.json'),
+  ];
+
+  for (const candidate of fallbackCandidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  const idxDir = path.resolve('.idx');
+  if (fs.existsSync(idxDir)) {
+    const idxMatch = fs.readdirSync(idxDir)
+      .find((entry) => entry.startsWith(`${projectId}-`) && entry.endsWith('.json'));
+    if (idxMatch) {
+      return path.join(idxDir, idxMatch);
+    }
+  }
+
+  return null;
+}
+
+async function ensureLiveSiteConsent(siteId) {
+  await admin.firestore().collection('coppaSchoolConsents').doc(siteId).set({
+    siteId,
+    active: true,
+    agreementSigned: true,
+    educationalUseOnly: true,
+    parentNoticeProvided: true,
+    noStudentMarketing: true,
+    signedBy: 'voice-live-runner',
+    signedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
 }
 
 async function signInWithCustomToken(apiKey, customToken) {
@@ -69,6 +115,13 @@ async function main() {
     throw new Error('Missing API key. Set --api-key or VOICE_LIVE_API_KEY.');
   }
 
+  if (options.autoServiceAccount) {
+    const discovered = discoverServiceAccountPath(options.projectId);
+    if (discovered) {
+      options.serviceAccountPath = discovered;
+    }
+  }
+
   const serviceAccountPath = path.resolve(options.serviceAccountPath);
   if (!fs.existsSync(serviceAccountPath)) {
     throw new Error(`Service account file not found: ${serviceAccountPath}`);
@@ -82,6 +135,9 @@ async function main() {
   }
 
   const siteId = 'voice-vibe-site-live';
+  if (options.seedConsent) {
+    await ensureLiveSiteConsent(siteId);
+  }
   const studentToken = await mintRoleToken({
     role: 'student',
     apiKey: options.apiKey,

@@ -53,6 +53,7 @@
     "vibe:voice:abuse-safety": "node scripts/vibe_voice_abuse_safety.js",
     "vibe:voice:all": "node scripts/vibe_voice_all.js",
     "vibe:voice:all:live": "npm run qa:coppa:guards && node scripts/vibe_voice_live_runner.js --strict",
+    "vibe:voice:all:live:auto": "npm run qa:coppa:guards && node scripts/vibe_voice_live_runner.js --strict --auto-service-account --seed-consent",
     "vibe:compliance:notice:i18n": "node scripts/vibe_compliance_notice_i18n.js",
     "ai:dependency-ban": "node scripts/ai_dependency_ban.js",
     "ai:import-ban": "node scripts/ai_import_ban.js",

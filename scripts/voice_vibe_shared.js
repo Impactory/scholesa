@@ -279,6 +279,28 @@ async function fetchJson(url, init) {
   return body;
 }
 
+function isRetryableNetworkError(error) {
+  if (!error) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|network|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(message);
+}
+
+async function fetchJsonWithRetry(url, init, maxAttempts = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await fetchJson(url, init);
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableNetworkError(error) || attempt === maxAttempts) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+    }
+  }
+  throw lastError;
+}
+
 async function runFixtureViaLiveEndpoint(fixture, options) {
   const role = normalizeRole(fixture.role);
   const tokenEnvName = ROLE_TOKENS[role];
@@ -294,7 +316,7 @@ async function runFixtureViaLiveEndpoint(fixture, options) {
     gradeBand: fixture.gradeBand,
     voice: { enabled: true, output: true },
   };
-  return fetchJson(`${options.baseUrl}/copilot/message`, {
+  return fetchJsonWithRetry(`${options.baseUrl}/copilot/message`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${idToken}`,
