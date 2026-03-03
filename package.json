@@ -59,7 +59,7 @@
     "ai:internal-only:all": "npm run ai:dependency-ban && npm run ai:import-ban && npm run ai:domain-ban && npm run ai:egress-none",
     "compliance:scan": "node services/scholesa-compliance/src/cli.js --scan-only",
     "compliance:run": "node services/scholesa-compliance/src/cli.js --trigger=manual-cli",
-    "compliance:gate": "node services/scholesa-compliance/src/cli.js --trigger=ci",
+    "compliance:gate": "npm run qa:coppa:guards && node services/scholesa-compliance/src/cli.js --trigger=ci",
     "compliance:serve": "node services/scholesa-compliance/src/server.js",
     "vibe:all": "node scripts/vibe_all.js",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",

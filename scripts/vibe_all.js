@@ -6,6 +6,7 @@ const fs = require('fs');
 const { finish } = require('./vibe_report_utils');
 
 const suites = [
+  { name: 'qa:coppa:guards', command: 'npm', args: ['run', 'qa:coppa:guards'], report: null },
   { name: 'vibe:i18n:lint', script: 'scripts/vibe_i18n_lint.js', report: 'vibe-i18n-lint-report.json' },
   { name: 'vibe:i18n:keys', script: 'scripts/vibe_i18n_keys.js', report: 'vibe-i18n-keys-report.json' },
   { name: 'vibe:ui:screens:i18n', script: 'scripts/vibe_ui_screens_i18n.js', report: 'vibe-ui-screens-i18n-report.json' },
@@ -25,14 +26,16 @@ const failures = [];
 const details = { suites: [] };
 
 for (const suite of suites) {
-  const result = cp.spawnSync('node', [suite.script], {
+  const bin = suite.command || 'node';
+  const args = suite.args || [suite.script];
+  const result = cp.spawnSync(bin, args, {
     stdio: 'pipe',
     encoding: 'utf8',
   });
 
-  const reportPath = path.resolve('audit-pack/reports', suite.report);
+  const reportPath = suite.report ? path.resolve('audit-pack/reports', suite.report) : null;
   let reportSummary = null;
-  if (fs.existsSync(reportPath)) {
+  if (reportPath && fs.existsSync(reportPath)) {
     reportSummary = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
   }
 
