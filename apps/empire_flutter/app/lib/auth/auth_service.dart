@@ -112,20 +112,7 @@ class AuthService {
         await _auth.signInWithCredential(credential);
       }
 
-      // Ensure user profile exists in Firestore
-      final User? user = _auth.currentUser;
-      if (user != null) {
-        final Map<String, dynamic>? existingProfile =
-            await _firestoreService.getUserProfile();
-        if (existingProfile == null) {
-          // Create profile for new SSO user
-          await _firestoreService.createUserProfile(
-            displayName:
-                user.displayName ?? user.email?.split('@').first ?? 'User',
-          );
-        }
-      }
-
+      // Bootstrap session with profile (falls back to Firebase user data if Firestore unavailable)
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -170,19 +157,7 @@ class AuthService {
         await _auth.signInWithProvider(microsoftProvider);
       }
 
-      // Ensure user profile exists in Firestore
-      final User? user = _auth.currentUser;
-      if (user != null) {
-        final Map<String, dynamic>? existingProfile =
-            await _firestoreService.getUserProfile();
-        if (existingProfile == null) {
-          await _firestoreService.createUserProfile(
-            displayName:
-                user.displayName ?? user.email?.split('@').first ?? 'User',
-          );
-        }
-      }
-
+      // Bootstrap session with profile (falls back to Firebase user data if Firestore unavailable)
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));

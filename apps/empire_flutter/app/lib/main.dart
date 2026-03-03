@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -82,7 +84,7 @@ class ScholesaApp extends StatefulWidget {
 }
 
 class _ScholesaAppState extends State<ScholesaApp> {
-    static final List<LocalizationsDelegate<dynamic>> _localizationDelegates =
+  static final List<LocalizationsDelegate<dynamic>> _localizationDelegates =
       <LocalizationsDelegate<dynamic>>[
     GlobalMaterialLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,
@@ -93,6 +95,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
     Locale('es'),
   ];
   static const Duration _minNativeSplashDuration = Duration(milliseconds: 1600);
+  static const Duration _webInitStepTimeout = Duration(seconds: 6);
 
   late final AppState _appState;
   late final FirestoreService _firestoreService;
@@ -121,21 +124,29 @@ class _ScholesaAppState extends State<ScholesaApp> {
     try {
       // Create core services
       _themeService = ThemeService();
-      await _themeService.initialize();
+      await _runInitStep(
+        label: 'theme.initialize',
+        future: _themeService.initialize(),
+      );
 
       _appState = AppState();
       _firestoreService = FirestoreService();
       _storageService = StorageService.instance;
       _offlineQueue = OfflineQueue();
 
-      // Initialize offline queue
-      await _offlineQueue.init();
+      await _runInitStep(
+        label: 'offline_queue.init',
+        future: _offlineQueue.init(),
+      );
 
       _syncCoordinator = SyncCoordinator(
         queue: _offlineQueue,
         firestoreService: _firestoreService,
       );
-      await _syncCoordinator.init();
+      await _runInitStep(
+        label: 'sync_coordinator.init',
+        future: _syncCoordinator.init(),
+      );
 
       _authService = AuthService(
         auth: FirebaseAuth.instance,
@@ -149,8 +160,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
         appState: _appState,
       );
 
-      // Bootstrap session if user is already logged in
-      await _sessionBootstrap.initialize();
+      await _runInitStep(
+        label: 'session_bootstrap.initialize',
+        future: _sessionBootstrap.initialize(),
+      );
 
       // Start listening to auth changes
       _sessionBootstrap.listenToAuthChanges();
@@ -176,6 +189,23 @@ class _ScholesaAppState extends State<ScholesaApp> {
       setState(() {
         _initError = e.toString();
       });
+    }
+  }
+
+  Future<void> _runInitStep({
+    required String label,
+    required Future<void> future,
+  }) async {
+    try {
+      if (kIsWeb) {
+        await future.timeout(_webInitStepTimeout);
+      } else {
+        await future;
+      }
+    } on TimeoutException {
+      debugPrint('Init step timed out on web: $label');
+    } catch (e) {
+      debugPrint('Init step failed: $label ($e)');
     }
   }
 
