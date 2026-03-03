@@ -25,6 +25,14 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Apply Rubric': 'Aplicar rúbrica',
   'Parent summary shared': 'Resumen para familias compartido',
   'Share Parent Summary': 'Compartir resumen para familias',
+  'Create Snapshot': 'Crear snapshot',
+  'Snapshot created': 'Snapshot creado',
+  'Snapshot create failed': 'Error al crear snapshot',
+  'Create Rubric': 'Crear rúbrica',
+  'Rubric title': 'Título de rúbrica',
+  'Criteria (comma-separated)': 'Criterios (separados por coma)',
+  'Rubric title is required': 'El título de la rúbrica es obligatorio',
+  'At least one criterion is required': 'Se requiere al menos un criterio',
   'Curriculum updated': 'Currículo actualizado',
   'Update failed': 'Error al actualizar currículo',
   'Rubric apply failed': 'Error al aplicar rúbrica',
@@ -381,6 +389,27 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_curriculum',
+                      'cta_id': 'create_mission_snapshot',
+                      'surface': 'curriculum_details_sheet',
+                      'curriculum_id': curriculum.id,
+                    },
+                  );
+                  Navigator.pop(context);
+                  await _createMissionSnapshot(curriculum);
+                },
+                icon: const Icon(Icons.copy_all_rounded),
+                label: Text(_tHqCurriculum(context, 'Create Snapshot')),
+              ),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -395,7 +424,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     },
                   );
                   Navigator.pop(context);
-                  await _applyRubric(curriculum);
+                  _showRubricWorkflowDialog(curriculum);
                 },
                 icon: const Icon(Icons.rule_rounded),
                 label: Text(_tHqCurriculum(context, 'Apply Rubric')),
@@ -853,20 +882,153 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }
   }
 
-  Future<void> _applyRubric(_Curriculum curriculum) async {
+  void _showRubricWorkflowDialog(_Curriculum curriculum) {
+    final TextEditingController titleController = TextEditingController(
+      text: '${curriculum.title} Rubric',
+    );
+    final TextEditingController criteriaController = TextEditingController(
+      text: 'Clarity, Evidence, Agency',
+    );
+    bool isSubmitting = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder:
+            (BuildContext context, void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            backgroundColor: ScholesaColors.surface,
+            title: Text(_tHqCurriculum(context, 'Create Rubric')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Rubric title'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: criteriaController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText:
+                        _tHqCurriculum(context, 'Criteria (comma-separated)'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(_tHqCurriculum(context, 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final String rubricTitle = titleController.text.trim();
+                        final List<String> criteria = criteriaController.text
+                            .split(',')
+                            .map((String item) => item.trim())
+                            .where((String item) => item.isNotEmpty)
+                            .toList();
+
+                        if (rubricTitle.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(_tHqCurriculum(
+                                  context, 'Rubric title is required')),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (criteria.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(_tHqCurriculum(
+                                  context, 'At least one criterion is required')),
+                            ),
+                          );
+                          return;
+                        }
+
+                        setLocalState(() => isSubmitting = true);
+                        final bool applied = await _createAndApplyRubric(
+                          curriculum,
+                          rubricTitle: rubricTitle,
+                          criteriaLabels: criteria,
+                        );
+
+                        if (!mounted) return;
+                        if (applied) {
+                          Navigator.pop(dialogContext);
+                        } else {
+                          setLocalState(() => isSubmitting = false);
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(_tHqCurriculum(context, 'Apply Rubric')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _createAndApplyRubric(
+    _Curriculum curriculum, {
+    required String rubricTitle,
+    required List<String> criteriaLabels,
+  }) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     if (firestoreService == null) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_tHqCurriculum(context, 'Rubric apply failed'))),
       );
-      return;
+      return false;
     }
 
     try {
+      final List<Map<String, dynamic>> criteria = criteriaLabels
+          .asMap()
+          .entries
+          .map((MapEntry<int, String> entry) => <String, dynamic>{
+                'id': 'c${entry.key + 1}',
+                'label': entry.value,
+                'pillarCode': _pillarCodeFromLabel(curriculum.pillar),
+                'levels': <int>[0, 1, 2, 3, 4],
+              })
+          .toList();
+
+      final String rubricId = await firestoreService.createDocument(
+        'rubrics',
+        <String, dynamic>{
+          'title': rubricTitle,
+          'siteId': appState?.activeSiteId,
+          'criteria': criteria,
+          'createdBy': appState?.userId,
+          'createdByRole': appState?.role?.name,
+        },
+      );
+
       await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
         'rubricApplied': true,
+        'rubricId': rubricId,
+        'rubricTitle': rubricTitle,
         'rubricAppliedBy': appState?.userId,
         'rubricAppliedAt': FieldValue.serverTimestamp(),
         'status': 'review',
@@ -878,7 +1040,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         lastUpdated: DateTime.now(),
       );
 
-      if (!mounted) return;
+      if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
@@ -886,10 +1048,107 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         ),
       );
       await _loadCurricula();
+      return true;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Rubric apply failed'))),
+      );
+      return false;
+    }
+  }
+
+  Future<void> _createMissionSnapshot(_Curriculum curriculum) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
+      );
+      return;
+    }
+
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> missionDoc =
+          await firestoreService.firestore.collection('missions').doc(curriculum.id).get();
+      final Map<String, dynamic> mission = missionDoc.data() ?? <String, dynamic>{};
+
+      final String currentVersion =
+          (mission['version'] as String?)?.trim().isNotEmpty == true
+              ? (mission['version'] as String).trim()
+              : curriculum.version;
+      final String nextVersion = _incrementVersion(currentVersion);
+      final String title = (mission['title'] as String?)?.trim().isNotEmpty == true
+          ? (mission['title'] as String).trim()
+          : curriculum.title;
+      final String description =
+          (mission['description'] as String?)?.trim().isNotEmpty == true
+              ? (mission['description'] as String).trim()
+              : title;
+      final List<dynamic> pillarCodes = (mission['pillarCodes'] as List?) ??
+          <dynamic>[_pillarCodeFromLabel(curriculum.pillar)];
+
+      final String hashSource = <String>[
+        curriculum.id,
+        title,
+        description,
+        pillarCodes.join(','),
+        currentVersion,
+        DateTime.now().toUtc().toIso8601String(),
+      ].join('|');
+      final String contentHash = _simpleHash(hashSource);
+
+      final String snapshotId = await firestoreService.createDocument(
+        'missionSnapshots',
+        <String, dynamic>{
+          'missionId': curriculum.id,
+          'contentHash': contentHash,
+          'title': title,
+          'description': description,
+          'pillarCodes': pillarCodes,
+          'skillIds': (mission['skillIds'] as List?) ?? <dynamic>[],
+          'bodyJson': mission['bodyJson'],
+          'publisherType': appState?.role?.name ?? 'hq',
+          'publisherId': appState?.userId,
+          'publishedAt': FieldValue.serverTimestamp(),
+          'sourceVersion': currentVersion,
+          'snapshotVersion': nextVersion,
+        },
+      );
+
+      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+        'version': nextVersion,
+        'latestSnapshotId': snapshotId,
+        'latestContentHash': contentHash,
+      });
+
+      TelemetryService.instance.logEvent(
+        event: 'mission.snapshot.created',
+        metadata: <String, dynamic>{
+          'module': 'hq_curriculum',
+          'mission_id': curriculum.id,
+          'snapshot_id': snapshotId,
+          'source_version': currentVersion,
+          'snapshot_version': nextVersion,
+        },
+      );
+
+      _replaceLocalCurriculum(
+        curriculum.id,
+        version: nextVersion,
+        lastUpdated: DateTime.now(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Snapshot created'))),
+      );
+      await _loadCurricula();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Rubric apply failed'))),
+        SnackBar(content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
       );
     }
   }
@@ -1003,6 +1262,19 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     if (value.contains('leadership')) return 'LEAD';
     if (value.contains('impact')) return 'IMP';
     return 'FS';
+  }
+
+  String _incrementVersion(String rawVersion) {
+    final List<String> parts = rawVersion.trim().split('.');
+    final int major = int.tryParse(parts.isNotEmpty ? parts[0] : '1') ?? 1;
+    final int minor = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    final int patch = int.tryParse(parts.length > 2 ? parts[2] : '0') ?? 0;
+    return '$major.$minor.${patch + 1}';
+  }
+
+  String _simpleHash(String input) {
+    final int hash = input.hashCode & 0x7fffffff;
+    return hash.toRadixString(16).padLeft(8, '0');
   }
 
   DateTime? _toDateTime(dynamic value) {
