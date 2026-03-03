@@ -68,6 +68,28 @@
 
 ---
 
+## Release Note Addendum — HQ Curriculum Manager (2026-03-02)
+
+### What shipped
+- End-to-end persisted status flow for curriculum lifecycle: `draft -> review -> published`.
+- Explicit transition CTAs added in curriculum details:
+	- `Submit for Review` from Draft
+	- `Publish Curriculum` from In Review
+- Firestore mission writes now include transition metadata:
+	- Review submission: `reviewSubmittedBy`, `reviewSubmittedAt`
+	- Publish action: `published`, `publishedBy`, `publishedAt`
+- UI now reflects transitions immediately and routes operator focus to the destination tab.
+
+### Validation evidence
+- `flutter test test/hq_curriculum_workflow_test.dart` (PASS)
+	- Covers Draft -> In Review -> Published status progression.
+	- Verifies persisted `missions.status == published` and publish/review actor metadata.
+- `flutter test test/cta_reflection_test.dart` (PASS)
+- `flutter test test/dashboard_cta_regression_test.dart` (PASS)
+- Repository gate: `npm run rc3:preflight` (PASS)
+
+---
+
 ## Remaining Risk Notes (Non-blocking)
 
 - Golden files were intentionally updated due UI evolution; future UI changes should update goldens in same PR.
