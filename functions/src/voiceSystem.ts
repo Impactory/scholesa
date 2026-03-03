@@ -1121,6 +1121,24 @@ function generateLocalizedResponse(role: VoiceRole, locale: VoiceLocale, categor
   return localized.adminGeneric;
 }
 
+function applyStudentConversationalTone(
+  text: string,
+  locale: VoiceLocale,
+): string {
+  const normalized = normalizeSpeechText(text);
+  if (!normalized) return normalized;
+  if (locale !== 'en') return normalized;
+
+  const hasEncouragement = /\b(great|good|nice|awesome|you can do this|you've got this|well done)\b/i.test(normalized);
+  const hasQuestion = /\?/.test(normalized);
+
+  let out = hasEncouragement ? normalized : `Nice effort. ${normalized}`;
+  if (!hasQuestion) {
+    out = `${out} What should we try first?`;
+  }
+  return out;
+}
+
 function selectToolCalls(
   role: VoiceRole,
   category: SafetyDecision['category'],
@@ -2313,6 +2331,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       loadVoiceLearningSnapshot(authContext, body),
       loadRoleIntelligenceContext(authContext, body),
     ]);
+    const requestContext = asRecord(body.context);
+    const personaInstructions = normalizeString(requestContext?.personaInstructions);
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
@@ -2393,6 +2413,13 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       } else {
         inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
       }
+    }
+
+    if (authContext.role === 'student') {
+      candidateText = applyStudentConversationalTone(candidateText, locale);
+    }
+    if (personaInstructions && /kid|child|friendly|conversational|spoken/i.test(personaInstructions)) {
+      candidateText = applyStudentConversationalTone(candidateText, locale);
     }
 
     const toolsInvoked = selectToolCalls(

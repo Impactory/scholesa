@@ -822,6 +822,29 @@ function generateCoachResponse(
   return { message, requiresExplainBack, suggestedNextSteps };
 }
 
+function applyKidFriendlyConversationalTone(
+  message: string,
+  displayName: string,
+  personaHint?: string,
+): string {
+  const trimmed = (message || '').replace(/\s+/g, ' ').trim();
+  if (!trimmed) {
+    return `${displayName}, you are doing great. Let's take one small step together. What do you want to try first?`;
+  }
+
+  const encouragementRegex = /\b(great|good|nice|awesome|well done|you can do this|you've got this)\b/i;
+  const hasEncouragement = encouragementRegex.test(trimmed);
+  const hasQuestion = /\?/.test(trimmed);
+  const skipFollowupQuestion = /no\s+question/i.test(personaHint ?? '');
+
+  let shaped = hasEncouragement ? trimmed : `${displayName}, nice effort. ${trimmed}`;
+  if (!hasQuestion && !skipFollowupQuestion) {
+    shaped = `${shaped} What do you want to try first?`;
+  }
+
+  return shaped;
+}
+
 export const genAiCoach = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
@@ -835,7 +858,7 @@ export const genAiCoach = onCall(async (request) => {
   // ── A2) Hard schema validation ──────────────────
   const {
     mode, siteId, gradeBand, sessionOccurrenceId, missionId, checkpointId,
-    conceptTags, studentInput, attachments,
+    conceptTags, studentInput, attachments, personaInstructions,
   } = request.data || {};
 
   const coachMode: string = mode || 'hint';
@@ -922,6 +945,9 @@ export const genAiCoach = onCall(async (request) => {
     requiresExplainBack = generated.requiresExplainBack;
     suggestedNextSteps = generated.suggestedNextSteps;
   }
+
+  const personaHint = typeof personaInstructions === 'string' ? personaInstructions.trim() : '';
+  message = applyKidFriendlyConversationalTone(message, displayName, personaHint);
 
   if (coppaBand === 'G6_8') {
     suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Connect this response to your checkpoint submission.'])];
