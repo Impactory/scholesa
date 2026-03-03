@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -100,12 +101,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       await _flutterTts.setPitch(1.0);
       await _flutterTts.awaitSpeakCompletion(true);
 
-      if (Platform.isIOS || Platform.isMacOS) {
+      final bool isApplePlatform = !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS);
+
+      if (isApplePlatform) {
         await _flutterTts.setSharedInstance(true);
         await _flutterTts.autoStopSharedSession(false);
       }
 
-      if (Platform.isIOS) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         await _flutterTts.setIosAudioCategory(
           IosTextToSpeechAudioCategory.playback,
           <IosTextToSpeechAudioCategoryOptions>[
@@ -152,7 +157,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         setState(() => _isSpeaking = false);
       });
 
-      final bool uploadReady = await _audioRecorder.hasPermission();
+      final bool uploadReady = kIsWeb ? false : await _audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -270,15 +275,36 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (_loading) return;
 
     if (!_speechAvailable && !_uploadSttAvailable) {
-      final bool uploadReady = await _audioRecorder.hasPermission();
+      bool speechReady = false;
+      try {
+        speechReady = await _speechToText.initialize(
+          onError: (_) {
+            if (!mounted) return;
+            setState(() => _isListening = false);
+          },
+          onStatus: (String status) {
+            if (!mounted) return;
+            if (status == 'done' || status == 'notListening') {
+              setState(() => _isListening = false);
+            }
+          },
+        );
+      } catch (_) {
+        speechReady = false;
+      }
+
+      final bool uploadReady = kIsWeb ? false : await _audioRecorder.hasPermission();
       if (!mounted) return;
-      if (uploadReady) {
-        setState(() => _uploadSttAvailable = true);
-      } else {
+      setState(() {
+        _speechAvailable = speechReady;
+        _uploadSttAvailable = uploadReady;
+      });
+
+      if (!speechReady && !uploadReady) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_t('ai.voice.microphonePermissionRequired')),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
         return;
@@ -296,42 +322,53 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       return;
     }
 
-    if (_uploadSttAvailable) {
+    if (_speechAvailable) {
+      final bool started = await _speechToText.listen(
+        onResult: (result) {
+          if (!mounted) return;
+          setState(() {
+            _inputController.text = result.recognizedWords;
+            _inputController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _inputController.text.length),
+            );
+          });
+
+          if (result.finalResult) {
+            TelemetryService.instance.logEvent(
+              event: 'voice.transcribe',
+              metadata: <String, dynamic>{
+                'source': 'speech_to_text',
+                'surface': 'ai_coach_widget',
+                'chars': result.recognizedWords.length,
+                'mode': _selectedMode.name,
+              },
+            );
+          }
+        },
+        listenOptions: SpeechListenOptions(
+          listenMode: ListenMode.confirmation,
+          cancelOnError: true,
+          partialResults: true,
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() => _isListening = started);
+      return;
+    }
+
+    if (_uploadSttAvailable && !kIsWeb) {
       await _startUploadRecording();
       return;
     }
 
-    final bool started = await _speechToText.listen(
-      onResult: (result) {
-        if (!mounted) return;
-        setState(() {
-          _inputController.text = result.recognizedWords;
-          _inputController.selection = TextSelection.fromPosition(
-            TextPosition(offset: _inputController.text.length),
-          );
-        });
-
-        if (result.finalResult) {
-          TelemetryService.instance.logEvent(
-            event: 'voice.transcribe',
-            metadata: <String, dynamic>{
-              'source': 'speech_to_text',
-              'surface': 'ai_coach_widget',
-              'chars': result.recognizedWords.length,
-              'mode': _selectedMode.name,
-            },
-          );
-        }
-      },
-      listenOptions: SpeechListenOptions(
-        listenMode: ListenMode.confirmation,
-        cancelOnError: true,
-        partialResults: true,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_t('ai.voice.microphonePermissionRequired')),
+        duration: const Duration(seconds: 2),
       ),
     );
-
-    if (!mounted) return;
-    setState(() => _isListening = started);
   }
 
   Future<void> _speakText(String text, {String? traceId}) async {
@@ -341,6 +378,27 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       await _audioPlayer.stop();
       await _flutterTts.stop();
       if (mounted) setState(() => _isSpeaking = false);
+    }
+
+    if (kIsWeb) {
+      try {
+        await _audioPlayer.stop();
+        await _flutterTts.stop();
+        if (mounted) setState(() => _isSpeaking = true);
+        await _flutterTts.speak(text);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': 'flutter_tts_web',
+            'surface': 'ai_coach_widget',
+            'traceId': traceId,
+            'chars': text.length,
+          },
+        );
+        return;
+      } catch (_) {
+        if (mounted) setState(() => _isSpeaking = false);
+      }
     }
 
     if (_lastResponse?.voiceAvailable == true &&
