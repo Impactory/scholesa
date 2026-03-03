@@ -1,7 +1,6 @@
-import enMessages from '@/packages/i18n/locales/en.json';
-import zhCnMessages from '@/packages/i18n/locales/zh-CN.json';
-import zhTwMessages from '@/packages/i18n/locales/zh-TW.json';
-import thMessages from '@/packages/i18n/locales/th.json';
+import enMessages from '@/locales/en.json';
+import zhCnMessages from '@/locales/zh-CN.json';
+import zhTwMessages from '@/locales/zh-TW.json';
 import { getFallbackChain, type SupportedLocale } from './config';
 
 type MessageDictionary = Record<string, unknown>;
@@ -12,7 +11,7 @@ const CATALOGS: Record<SupportedLocale, MessageDictionary> = {
   en: enMessages as MessageDictionary,
   'zh-CN': zhCnMessages as MessageDictionary,
   'zh-TW': zhTwMessages as MessageDictionary,
-  th: thMessages as MessageDictionary,
+  th: enMessages as MessageDictionary,
 };
 
 function getMessageByPath(messages: MessageDictionary, key: string): unknown {

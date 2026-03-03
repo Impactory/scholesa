@@ -29,46 +29,6 @@ import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { sendCopilotVoiceMessage, transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
 
-// TypeScript declarations for Web Speech API
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: Event) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  readonly length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  readonly length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-  isFinal: boolean;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => SpeechRecognition;
-    webkitSpeechRecognition?: new () => SpeechRecognition;
-  }
-}
-
 interface AICoachPopupProps {
   learnerId: string;
   studentName: string;
@@ -136,7 +96,6 @@ export function AICoachPopup({
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
@@ -147,15 +106,11 @@ export function AICoachPopup({
   const { locale, t } = useI18n();
   const { user, profile } = useAuthContext();
   const modeConfig = buildModeConfig((key) => t(key));
-  const hasVoiceInputControl = typeof window !== 'undefined' && (
-    (
-      typeof MediaRecorder !== 'undefined' &&
-      Boolean(navigator.mediaDevices?.getUserMedia) &&
-      Boolean(user) &&
-      voiceApiConfigured()
-    ) ||
-    Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
-  );
+  const hasVoiceInputControl = typeof window !== 'undefined'
+    && typeof MediaRecorder !== 'undefined'
+    && Boolean(navigator.mediaDevices?.getUserMedia)
+    && Boolean(user)
+    && voiceApiConfigured();
 
   // Fetch SDT profile for personalization
   useEffect(() => {
@@ -171,30 +126,8 @@ export function AICoachPopup({
     fetchSDT();
   }, [learnerId, siteId]);
 
-  // Initialize speech recognition fallback
+  // Recorder cleanup
   useEffect(() => {
-    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
-      if (!SpeechRecognitionAPI) return;
-      
-      recognitionRef.current = new SpeechRecognitionAPI();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript.trim();
-        setQuestion(transcript);
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
     return () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
@@ -217,66 +150,92 @@ export function AICoachPopup({
       && user
       && voiceApiConfigured();
 
-    if (canRecordAudio) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaStreamRef.current = stream;
-        audioChunksRef.current = [];
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        mediaRecorderRef.current = recorder;
-
-        recorder.ondataavailable = (event: BlobEvent) => {
-          if (event.data.size > 0) audioChunksRef.current.push(event.data);
-        };
-        recorder.onerror = () => {
-          setIsListening(false);
-        };
-        recorder.onstop = async () => {
-          setIsListening(false);
-          mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-          if (!user || audioChunksRef.current.length === 0) return;
-          setIsTranscribing(true);
-          try {
-            const idToken = await user.getIdToken();
-            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-            const transcribed = await transcribeVoiceAudio({
-              idToken,
-              audioBlob: blob,
-              siteId,
-              locale,
-              partial: false,
-              traceId: voiceInputTraceId || undefined,
-              context: buildBosVoiceContext(voiceInputTraceId),
-            });
-            setQuestion(transcribed.transcript.trim());
-            if (transcribed.metadata?.traceId) {
-              setVoiceInputTraceId(transcribed.metadata.traceId);
-              trackVoiceTelemetry('voice.transcribe', {
-                traceId: transcribed.metadata.traceId,
-                latencyMs: transcribed.metadata.latencyMs,
-                partial: transcribed.metadata.partial,
-              });
-            }
-          } catch (error) {
-            console.error('Voice transcription failed in AI coach popup.', error);
-          } finally {
-            audioChunksRef.current = [];
-            setIsTranscribing(false);
-          }
-        };
-
-        recorder.start();
-        setIsListening(true);
-        return;
-      } catch (error) {
-        console.error('Microphone capture unavailable; falling back to browser speech recognition.', error);
-      }
+    if (!canRecordAudio) {
+      setResponse({
+        answer: 'Voice capture is unavailable. Please sign in and ensure voice API settings are configured.',
+        modelUsed: 'error',
+        modelVersion: 'error',
+        logId: 'error',
+        promptTemplateId: 'coach.voice_unavailable',
+        policyVersion: 'i18n-guardrails-2026-02-23',
+        safetyOutcome: 'escalated',
+        safetyReasonCode: 'voice_unavailable',
+        toolCallIds: [],
+        targetLocale: locale,
+        gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
+        traceId: `ai_popup_voice_${Date.now()}`,
+      });
+      return;
     }
 
-    if (recognitionRef.current) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onerror = () => {
+        setIsListening(false);
+      };
+      recorder.onstop = async () => {
+        setIsListening(false);
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        if (!user || audioChunksRef.current.length === 0) return;
+        setIsTranscribing(true);
+        try {
+          const idToken = await user.getIdToken();
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const transcribed = await transcribeVoiceAudio({
+            idToken,
+            audioBlob: blob,
+            siteId,
+            locale,
+            partial: false,
+            traceId: voiceInputTraceId || undefined,
+            context: buildBosVoiceContext(voiceInputTraceId),
+          });
+          setQuestion(transcribed.transcript.trim());
+          if (transcribed.metadata?.traceId) {
+            setVoiceInputTraceId(transcribed.metadata.traceId);
+            trackVoiceTelemetry('voice.transcribe', {
+              traceId: transcribed.metadata.traceId,
+              latencyMs: transcribed.metadata.latencyMs,
+              partial: transcribed.metadata.partial,
+            });
+          }
+        } catch (error) {
+          console.error('Voice transcription failed in AI coach popup.', error);
+        } finally {
+          audioChunksRef.current = [];
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start();
       setIsListening(true);
-      recognitionRef.current.start();
+      return;
+    } catch (error) {
+      console.error('Microphone capture unavailable for BOS voice flow.', error);
+      setResponse({
+        answer: 'Microphone access is required for voice mode. Please allow microphone permission and try again.',
+        modelUsed: 'error',
+        modelVersion: 'error',
+        logId: 'error',
+        promptTemplateId: 'coach.microphone_unavailable',
+        policyVersion: 'i18n-guardrails-2026-02-23',
+        safetyOutcome: 'escalated',
+        safetyReasonCode: 'microphone_unavailable',
+        toolCallIds: [],
+        targetLocale: locale,
+        gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
+        traceId: `ai_popup_voice_${Date.now()}`,
+      });
+      setIsListening(false);
     }
   };
 
@@ -285,10 +244,7 @@ export function AICoachPopup({
       mediaRecorderRef.current.stop();
       return;
     }
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
+    setIsListening(false);
   };
 
   const trackVoiceTelemetry = (
@@ -713,7 +669,7 @@ Guidance: ${
             </button>
 
             {!hasVoiceInputControl && (
-              <p className="text-xs text-red-500">Microphone access is required for AI Coach voice mode.</p>
+              <p className="text-xs text-red-500">Sign in, enable microphone access, and configure voice API to use AI Coach voice mode.</p>
             )}
           </div>
         )}

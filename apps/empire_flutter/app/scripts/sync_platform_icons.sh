@@ -29,6 +29,62 @@ require_file() {
   fi
 }
 
+has_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+resize_png() {
+  local height="$1"
+  local width="$2"
+  local src="$3"
+  local dst="$4"
+
+  require_file "$src"
+
+  if has_cmd sips; then
+    sips -z "$height" "$width" "$src" --out "$dst" >/dev/null
+    return
+  fi
+
+  if has_cmd magick; then
+    magick "$src" -resize "${width}x${height}" "$dst"
+    return
+  fi
+
+  if has_cmd convert; then
+    convert "$src" -resize "${width}x${height}" "$dst"
+    return
+  fi
+
+  echo "[icons] Warning: no image resize tool found (sips/magick/convert). Copying source without resize: $dst" >&2
+  cp "$src" "$dst"
+}
+
+convert_to_ico() {
+  local src="$1"
+  local dst="$2"
+
+  require_file "$src"
+
+  if has_cmd sips; then
+    sips -s format ico "$src" --out "$dst" >/dev/null
+    return
+  fi
+
+  if has_cmd magick; then
+    magick "$src" "$dst"
+    return
+  fi
+
+  if has_cmd convert; then
+    convert "$src" "$dst"
+    return
+  fi
+
+  echo "[icons] Warning: no ico conversion tool found (sips/magick/convert). Copying PNG with .ico extension: $dst" >&2
+  cp "$src" "$dst"
+}
+
 copy_png() {
   local src="$1"
   local dst="$2"
@@ -46,7 +102,7 @@ copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$ANDROID_RES/mipmap-xx
 echo "[icons] Syncing Android native splash logo from transparent source"
 mkdir -p "$ANDROID_SPLASH_DIR"
 require_file "$IOS_SRC/1024.png"
-sips -z 512 512 "$IOS_SRC/1024.png" --out "$ANDROID_SPLASH_DIR/splash_logo.png" >/dev/null
+resize_png 512 512 "$IOS_SRC/1024.png" "$ANDROID_SPLASH_DIR/splash_logo.png"
 
 echo "[icons] Syncing iOS app icons from assets/icons/ios"
 copy_png "$IOS_SRC/20.png" "$IOS_APPICON/Icon-App-20x20@1x.png"
@@ -82,13 +138,13 @@ copy_png "$IOS_SRC/1024.png" "$MACOS_APPICON/app_icon_1024.png"
 
 echo "[icons] Syncing iOS launch image from assets/icons/ios"
 require_file "$IOS_SRC/1024.png"
-sips -z 168 168 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage.png" >/dev/null
-sips -z 336 336 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage@2x.png" >/dev/null
-sips -z 504 504 "$IOS_SRC/1024.png" --out "$IOS_LAUNCH_IMAGE/LaunchImage@3x.png" >/dev/null
+resize_png 168 168 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage.png"
+resize_png 336 336 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage@2x.png"
+resize_png 504 504 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage@3x.png"
 
 echo "[icons] Generating Windows app_icon.ico from assets/icons/windows11"
 require_file "$WIN_SRC/Square44x44Logo.targetsize-256.png"
-sips -s format ico "$WIN_SRC/Square44x44Logo.targetsize-256.png" --out "$WINDOWS_ICON" >/dev/null
+convert_to_ico "$WIN_SRC/Square44x44Logo.targetsize-256.png" "$WINDOWS_ICON"
 
 echo "[icons] Syncing Flutter web PNG icons from assets/icons/android"
 copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$FLUTTER_WEB_DIR/icons/Icon-192.png"
@@ -96,14 +152,14 @@ copy_png "$ANDROID_SRC/android-launchericon-512-512.png" "$FLUTTER_WEB_DIR/icons
 copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$FLUTTER_WEB_DIR/icons/Icon-maskable-192.png"
 copy_png "$ANDROID_SRC/android-launchericon-512-512.png" "$FLUTTER_WEB_DIR/icons/Icon-maskable-512.png"
 copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$FLUTTER_WEB_DIR/favicon.png"
-sips -z 16 16 "$ANDROID_SRC/android-launchericon-512-512.png" --out "$FLUTTER_WEB_DIR/icons/favicon-16x16.png" >/dev/null
-sips -z 32 32 "$ANDROID_SRC/android-launchericon-512-512.png" --out "$FLUTTER_WEB_DIR/icons/favicon-32x32.png" >/dev/null
-sips -s format ico "$FLUTTER_WEB_DIR/icons/favicon-32x32.png" --out "$FLUTTER_WEB_DIR/icons/favicon.ico" >/dev/null
+resize_png 16 16 "$ANDROID_SRC/android-launchericon-512-512.png" "$FLUTTER_WEB_DIR/icons/favicon-16x16.png"
+resize_png 32 32 "$ANDROID_SRC/android-launchericon-512-512.png" "$FLUTTER_WEB_DIR/icons/favicon-32x32.png"
+convert_to_ico "$FLUTTER_WEB_DIR/icons/favicon-32x32.png" "$FLUTTER_WEB_DIR/icons/favicon.ico"
 
 echo "[icons] Syncing Next.js public PNG icons from assets/icons/android"
 copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$NEXT_PUBLIC_DIR/icons/icon-192.png"
 copy_png "$ANDROID_SRC/android-launchericon-512-512.png" "$NEXT_PUBLIC_DIR/icons/icon-512.png"
-sips -z 32 32 "$ANDROID_SRC/android-launchericon-512-512.png" --out "$NEXT_PUBLIC_DIR/favicon.png" >/dev/null
-sips -s format ico "$NEXT_PUBLIC_DIR/favicon.png" --out "$NEXT_PUBLIC_DIR/favicon.ico" >/dev/null
+resize_png 32 32 "$ANDROID_SRC/android-launchericon-512-512.png" "$NEXT_PUBLIC_DIR/favicon.png"
+convert_to_ico "$NEXT_PUBLIC_DIR/favicon.png" "$NEXT_PUBLIC_DIR/favicon.ico"
 
 echo "[icons] Platform icon sync complete."

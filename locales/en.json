@@ -2,8 +2,11 @@
   "landing": {
     "title": "Scholesa – Future Skills Academy",
     "subtitle": "The operating system for K–9 learning studios and schools.",
+    "tagline": "Learn with purpose. Build future-ready skills every day.",
     "login": "Login",
+    "loginCta": "Login",
     "register": "Register",
+    "registerArrow": "Register →",
     "pillars": {
       "title": "The 3 Pillars of Scholesa",
       "future_skills": "Future Skills",
@@ -19,5 +22,11 @@
       "partners": "Partners",
       "hq": "HQ & Network"
     }
+  },
+  "navigation": {
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeLabel": "Theme"
   }
 }
