@@ -10,7 +10,7 @@ Assessment target: current Scholesa BOS + AI runtime implementation across Flutt
 - **"Fully wired into BOS requirements" claim:** **YES (runtime-complete)**.
 - **COPPA adherence (BOS + spoken AI):** **PASS** (active school consent + site scope enforced across BOS callables and voice endpoints).
 
-Overall status: **13 PASS / 1 PARTIAL / 0 GAP** for the highest-impact BOS requirements below.
+Overall status: **14 PASS / 0 PARTIAL / 0 GAP** for the highest-impact BOS requirements below.
 
 ## Requirement Matrix
 
@@ -33,8 +33,8 @@ Overall status: **13 PASS / 1 PARTIAL / 0 GAP** for the highest-impact BOS requi
 
 ## Residual Partial
 
-- **Endpoint naming form (REST vs callable)** remains documentation-level partial only.
-- Runtime capabilities are fully implemented via callable Functions surface.
+- None. Runtime and operational gates are fully wired for BOS+MIA + COPPA.
+- Consolidated verification gate: `npm run qa:bos:mia:complete`.
 
 ## Confidence
 - **High** for identified PASS/GAP items tied to concrete code paths.
