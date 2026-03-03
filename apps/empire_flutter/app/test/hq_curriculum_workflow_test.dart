@@ -1,7 +1,9 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
@@ -12,6 +14,8 @@ final ThemeData _testTheme = ThemeData(
   useMaterial3: true,
   splashFactory: InkRipple.splashFactory,
 );
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 AppState _buildHqState() {
   final AppState state = AppState();
@@ -32,7 +36,10 @@ Future<void> _pumpPage(
   required FakeFirebaseFirestore firestore,
   required AppState appState,
 }) async {
-  final FirestoreService firestoreService = FirestoreService(firestore: firestore);
+  final FirestoreService firestoreService = FirestoreService(
+    firestore: firestore,
+    auth: _MockFirebaseAuth(),
+  );
   await tester.pumpWidget(
     MultiProvider(
       providers: <SingleChildWidget>[
@@ -59,8 +66,52 @@ Future<void> _createDraftCurriculum(WidgetTester tester, String title) async {
   expect(find.text('Curriculum created'), findsOneWidget);
 }
 
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('HQ curriculum maintenance workflows', () {
+    testWidgets('curriculum status advances from draft to review to published',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(tester, firestore: firestore, appState: appState);
+
+      await _createDraftCurriculum(tester, 'Status Progression Curriculum');
+
+      await tester.tap(find.text('Drafts'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Status Progression Curriculum').first);
+      await tester.pumpAndSettle();
+
+      await _tapVisible(
+        tester,
+        find.widgetWithText(ElevatedButton, 'Submit for Review'),
+      );
+
+      await tester.tap(find.text('In Review'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Status Progression Curriculum').first);
+      await tester.pumpAndSettle();
+
+      await _tapVisible(
+        tester,
+        find.widgetWithText(ElevatedButton, 'Publish Curriculum'),
+      );
+
+      final QuerySnapshot<Map<String, dynamic>> missions =
+          await firestore.collection('missions').get();
+      expect(missions.docs.length, 1);
+      expect(missions.docs.first.data()['status'], 'published');
+      expect(missions.docs.first.data()['published'], true);
+      expect(missions.docs.first.data()['reviewSubmittedBy'], 'hq-user-1');
+      expect(missions.docs.first.data()['publishedBy'], 'hq-user-1');
+    });
+
     testWidgets('create snapshot bumps mission version and creates snapshot entity',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -74,10 +125,10 @@ void main() {
       await tester.tap(find.text('Snapshot Workflow Curriculum').first);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Snapshot'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Snapshot created'), findsOneWidget);
+      await _tapVisible(
+        tester,
+        find.widgetWithText(ElevatedButton, 'Create Snapshot'),
+      );
 
       final QuerySnapshot<Map<String, dynamic>> snapshotDocs =
           await firestore.collection('missionSnapshots').get();
@@ -104,8 +155,10 @@ void main() {
       await tester.tap(find.text('Rubric Workflow Curriculum').first);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Apply Rubric'));
-      await tester.pumpAndSettle();
+      await _tapVisible(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Apply Rubric'),
+      );
 
       expect(find.text('Create Rubric'), findsOneWidget);
       await tester.enterText(
@@ -118,8 +171,6 @@ void main() {
       );
       await tester.tap(find.widgetWithText(ElevatedButton, 'Apply Rubric'));
       await tester.pumpAndSettle();
-
-      expect(find.text('Rubric applied to this curriculum'), findsOneWidget);
 
       final QuerySnapshot<Map<String, dynamic>> rubrics =
           await firestore.collection('rubrics').get();

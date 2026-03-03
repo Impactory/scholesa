@@ -54,6 +54,11 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'published': 'publicado',
   'Loading...': 'Cargando...',
   'Create failed': 'Error al crear currículo',
+  'Submit for Review': 'Enviar a revisión',
+  'Publish Curriculum': 'Publicar currículo',
+  'Moved to In Review': 'Movido a En revisión',
+  'Curriculum published': 'Currículo publicado',
+  'Transition failed': 'Error al cambiar estado',
 };
 
 String _tHqCurriculum(BuildContext context, String input) {
@@ -328,20 +333,28 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
+      showDragHandle: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (BuildContext context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+      builder: (BuildContext context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(curriculum.title,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: ScholesaColors.textPrimary,
+                )),
             const SizedBox(height: 8),
             Text(_tHqCurriculum(context, curriculum.pillar),
-                style: TextStyle(color: _getPillarColor(curriculum.pillar))),
+                style: TextStyle(
+                  color: _getPillarColor(curriculum.pillar),
+                  fontWeight: FontWeight.w600,
+                )),
             const SizedBox(height: 16),
             _buildDetailRow(_tHqCurriculum(context, 'Version'), curriculum.version),
             _buildDetailRow(_tHqCurriculum(context, 'Status'),
@@ -353,6 +366,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ScholesaColors.textPrimary,
+                      side: const BorderSide(color: ScholesaColors.border),
+                    ),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -371,6 +388,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ScholesaColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -393,6 +414,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.hq,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
@@ -413,7 +438,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
+              child: _buildAdvanceStatusButton(curriculum),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
               child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ScholesaColors.textPrimary,
+                  side: const BorderSide(color: ScholesaColors.border),
+                ),
                 onPressed: () async {
                   TelemetryService.instance.logEvent(
                     event: 'rubric.applied',
@@ -434,6 +468,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.primary,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
                   TelemetryService.instance.logEvent(
                     event: 'rubric.shared_to_parent_summary',
@@ -453,7 +491,122 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           ],
         ),
       ),
+      ),
     );
+  }
+
+  Widget _buildAdvanceStatusButton(_Curriculum curriculum) {
+    final _CurriculumStatus? targetStatus = _nextStatus(curriculum.status);
+    if (targetStatus == null) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isPublishing = targetStatus == _CurriculumStatus.published;
+    final String label = isPublishing
+        ? _tHqCurriculum(context, 'Publish Curriculum')
+        : _tHqCurriculum(context, 'Submit for Review');
+
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: ScholesaColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      onPressed: () async {
+        TelemetryService.instance.logEvent(
+          event: 'curriculum.status.transition',
+          metadata: <String, dynamic>{
+            'module': 'hq_curriculum',
+            'curriculum_id': curriculum.id,
+            'from_status': curriculum.status.name,
+            'to_status': targetStatus.name,
+            'source': 'curriculum_details_sheet',
+          },
+        );
+        Navigator.pop(context);
+        await _advanceCurriculumStatus(curriculum, targetStatus);
+      },
+      icon: Icon(
+        isPublishing ? Icons.publish_rounded : Icons.rate_review_rounded,
+      ),
+      label: Text(label),
+    );
+  }
+
+  _CurriculumStatus? _nextStatus(_CurriculumStatus current) {
+    switch (current) {
+      case _CurriculumStatus.draft:
+        return _CurriculumStatus.review;
+      case _CurriculumStatus.review:
+        return _CurriculumStatus.published;
+      case _CurriculumStatus.published:
+        return null;
+    }
+  }
+
+  Future<void> _advanceCurriculumStatus(
+    _Curriculum curriculum,
+    _CurriculumStatus targetStatus,
+  ) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Transition failed'))),
+      );
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final bool isPublishing = targetStatus == _CurriculumStatus.published;
+
+    try {
+      final Map<String, dynamic> updates = <String, dynamic>{
+        'status': targetStatus.name,
+        'published': isPublishing,
+      };
+
+      if (targetStatus == _CurriculumStatus.review) {
+        updates['reviewSubmittedAt'] = FieldValue.serverTimestamp();
+        updates['reviewSubmittedBy'] = appState?.userId;
+      }
+
+      if (isPublishing) {
+        updates['publishedAt'] = FieldValue.serverTimestamp();
+        updates['publishedBy'] = appState?.userId;
+      }
+
+      await firestoreService.updateDocument('missions', curriculum.id, updates);
+
+      _replaceLocalCurriculum(
+        curriculum.id,
+        status: targetStatus,
+        lastUpdated: now,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqCurriculum(
+              context,
+              isPublishing ? 'Curriculum published' : 'Moved to In Review',
+            ),
+          ),
+        ),
+      );
+
+      if (_tabController.index != targetStatus.index) {
+        _tabController.animateTo(targetStatus.index);
+      }
+
+      await _loadCurricula();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tHqCurriculum(context, 'Transition failed'))),
+      );
+    }
   }
 
   void _showEditDialog(_Curriculum curriculum) {
@@ -469,23 +622,55 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             (BuildContext context, void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
+            surfaceTintColor: ScholesaColors.surface,
+            scrollable: true,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'Edit')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 TextField(
                   controller: titleController,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Title'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedPillar,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  dropdownColor: ScholesaColors.surface,
+                  iconEnabledColor: ScholesaColors.textSecondary,
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Pillar'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                   items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
@@ -513,10 +698,17 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             ),
             actions: <Widget>[
               TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: ScholesaColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(dialogContext),
                 child: Text(_tHqCurriculum(context, 'Cancel')),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.primary,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: isSubmitting
                     ? null
                     : () async {
@@ -566,8 +758,17 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Text(label,
-              style: const TextStyle(color: ScholesaColors.textSecondary)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              )),
+          Text(
+            value,
+            style: const TextStyle(
+              color: ScholesaColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -585,23 +786,55 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             (BuildContext context, void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
+            surfaceTintColor: ScholesaColors.surface,
+            scrollable: true,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'New Curriculum')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 TextField(
                   controller: titleController,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Title'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedPillar,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  dropdownColor: ScholesaColors.surface,
+                  iconEnabledColor: ScholesaColors.textSecondary,
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Pillar'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                   items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
@@ -629,6 +862,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             ),
             actions: <Widget>[
               TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: ScholesaColors.textPrimary,
+                ),
                 onPressed: () {
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
@@ -643,6 +879,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 child: Text(_tHqCurriculum(context, 'Cancel')),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.primary,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: isSubmitting
                     ? null
                     : () async {
@@ -898,15 +1138,32 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             (BuildContext context, void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
+            surfaceTintColor: ScholesaColors.surface,
+            scrollable: true,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'Create Rubric')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 TextField(
                   controller: titleController,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Rubric title'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -914,20 +1171,40 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   controller: criteriaController,
                   minLines: 2,
                   maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     labelText:
                         _tHqCurriculum(context, 'Criteria (comma-separated)'),
+                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
                   ),
                 ),
               ],
             ),
             actions: <Widget>[
               TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: ScholesaColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(dialogContext),
                 child: Text(_tHqCurriculum(context, 'Cancel')),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.primary,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: isSubmitting
                     ? null
                     : () async {
