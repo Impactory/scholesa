@@ -68,6 +68,27 @@ Define the exact steps to cutover safely to production.
 - verify Classroom/GitHub jobs (if enabled)
 - run a test export and verify access controls
 
+---
+
+## 6) Release note addendum (HQ Curriculum Manager)
+- Date: 2026-03-02
+- Scope: Curriculum lifecycle flow is fully wired and persisted from Drafts to In Review to Published.
+
+### Shipped behavior
+- Explicit action in Drafts: Submit for Review.
+- Explicit action in In Review: Publish Curriculum.
+- Mission status transitions persist in Firestore: draft -> review -> published.
+- Transition metadata is stored:
+   - reviewSubmittedBy, reviewSubmittedAt
+   - published, publishedBy, publishedAt
+- UI reflects the new status immediately and shifts operator focus to the destination tab.
+
+### Validation evidence
+- flutter test apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart (PASS)
+- flutter test apps/empire_flutter/app/test/cta_reflection_test.dart (PASS)
+- flutter test apps/empire_flutter/app/test/dashboard_cta_regression_test.dart (PASS)
+- npm run rc3:preflight (PASS)
+
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
 - Wired end-to-end: yes
