@@ -1029,7 +1029,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: <String, dynamic>{
@@ -1037,21 +1037,38 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                               'mission_id': mission.id,
                             },
                           );
-                          context
+                          final bool started = await context
                               .read<MissionService>()
                               .startMission(mission.id);
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '${_tMissions(context, 'Started')}: ${mission.title}'),
-                              backgroundColor: ScholesaColors.success,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+
+                          if (!context.mounted) return;
+
+                          if (started) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '${_tMissions(context, 'Started')}: ${mission.title}'),
+                                backgroundColor: ScholesaColors.success,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(_tMissions(
+                                    context, 'Unable to start mission right now')),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _pillarColor,
