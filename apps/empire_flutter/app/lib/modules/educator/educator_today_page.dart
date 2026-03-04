@@ -583,6 +583,86 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     final String period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
+
+  Widget _buildAiCoachingSection(BuildContext context) {
+    final AppState? appState = context.read<AppState>();
+    final UserRole? role = appState?.role;
+
+    if (role == null || role != UserRole.educator) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: ScholesaColors.educator.withValues(alpha: 0.1),
+              border: Border.all(
+                color: ScholesaColors.educator.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.smart_toy_rounded,
+                color: ScholesaColors.educator,
+              ),
+              title: Text(_tEducatorToday(context, 'AI Classroom Coach')),
+              subtitle: Text(_tEducatorToday(context, 'Get personalized coaching for classroom management')),
+              trailing: IconButton(
+                icon: Icon(
+                  _showAiCoach ? Icons.expand_less : Icons.expand_more,
+                ),
+                onPressed: () {
+                  setState(() => _showAiCoach = !_showAiCoach);
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'educator_today',
+                      'cta': 'educator_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'surface': 'today_dashboard',
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          if (_showAiCoach) _buildAiCoachPanel(context, role),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.educator.withValues(alpha: 0.05),
+        border: Border.all(
+          color: ScholesaColors.educator.withValues(alpha: 0.1),
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      constraints: const BoxConstraints(minHeight: 350),
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        conceptTags: <String>[
+          'classroom_management',
+          'educator_support',
+          'learner_engagement',
+        ],
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
