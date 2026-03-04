@@ -31,6 +31,9 @@ const Map<String, String> _educatorMissionReviewEs = <String, String>{
   'Request Revision': 'Solicitar revisión',
   'Mission approved!': '¡Misión aprobada!',
   'Approve': 'Aprobar',
+  'Review AI Coach': 'Coach IA de revisión',
+  'Keep BOS/MIA loop active while reviewing learner submissions':
+      'Mantén activo el ciclo BOS/MIA al revisar entregas de estudiantes',
 };
 
 String _tEducatorMissionReview(BuildContext context, String input) {
@@ -79,7 +82,24 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
-                SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
+                SliverToBoxAdapter(
+                  child: AiContextCoachSection(
+                    title: _tEducatorMissionReview(context, 'Review AI Coach'),
+                    subtitle: _tEducatorMissionReview(
+                      context,
+                      'Keep BOS/MIA loop active while reviewing learner submissions',
+                    ),
+                    module: 'educator_mission_review',
+                    surface: 'mission_review_queue',
+                    actorRole: UserRole.educator,
+                    accentColor: ScholesaColors.educator,
+                    conceptTags: const <String>[
+                      'mission_review',
+                      'feedback_quality',
+                      'learner_growth',
+                    ],
+                  ),
+                ),
                 SliverToBoxAdapter(child: _buildFilters()),
                 SliverToBoxAdapter(child: _buildStats(service)),
                 if (service.isLoading)

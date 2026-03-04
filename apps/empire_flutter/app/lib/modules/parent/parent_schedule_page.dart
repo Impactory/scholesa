@@ -53,6 +53,9 @@ const Map<String, String> _parentScheduleEs = <String, String>{
   'min': 'min',
   'hr': 'h',
   'on': 'el',
+  'Schedule AI Coach': 'Coach IA de horario',
+  'Keep BOS/MIA loop active for each learner schedule':
+      'Mantén activo el ciclo BOS/MIA para el horario de cada estudiante',
 };
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
@@ -124,6 +127,22 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
                 SliverToBoxAdapter(child: _buildLearnerFilter(service)),
+                SliverToBoxAdapter(
+                  child: AiContextCoachSection(
+                    title: _t('Schedule AI Coach'),
+                    subtitle: _t(
+                        'Keep BOS/MIA loop active for each learner schedule'),
+                    module: 'parent_schedule',
+                    surface: 'schedule_overview',
+                    actorRole: UserRole.parent,
+                    accentColor: ScholesaColors.parent,
+                    conceptTags: const <String>[
+                      'schedule_planning',
+                      'attendance_readiness',
+                      'parent_support',
+                    ],
+                  ),
+                ),
                 SliverToBoxAdapter(child: _buildCalendarStrip(service)),
                 SliverToBoxAdapter(child: _buildUpcomingSection(service)),
                 SliverToBoxAdapter(child: _buildTodaySchedule(service)),

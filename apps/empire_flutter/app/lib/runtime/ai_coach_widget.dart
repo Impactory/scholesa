@@ -556,7 +556,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     final String mission = (widget.missionId ?? '').trim();
     final String checkpoint = (widget.checkpointId ?? '').trim();
     final String occurrence = (widget.runtime.sessionOccurrenceId ?? '').trim();
-    final String tags = widget.conceptTags.join(', ');
+    final String tags = _bosMiaLoopTags().join(', ');
     final String goals = _learningGoals.isEmpty
       ? 'none yet'
       : _learningGoals.map((g) => '- $g').join('\n');
@@ -575,6 +575,7 @@ Context:
 - checkpointId: ${checkpoint.isEmpty ? 'unknown' : checkpoint}
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
+- bosMiaLoop: Always stay in BOS/MIA closed-loop coaching and improve this specific learner over time.
 
 Session learning goals:
 $goals
@@ -642,6 +643,16 @@ Response style:
     if (_learningGoals.length > 3) {
       _learningGoals.removeRange(3, _learningGoals.length);
     }
+    unawaited(_persistLearningGoals());
+    widget.runtime.trackEvent(
+      'ai_learning_goal_updated',
+      missionId: widget.missionId,
+      checkpointId: widget.checkpointId,
+      payload: <String, dynamic>{
+        'goals_count': _learningGoals.length,
+        'latest_goal': candidate,
+      },
+    );
   }
 
   bool get _canClearGoals {
@@ -685,6 +696,7 @@ Response style:
     }
 
     setState(() => _learningGoals.clear());
+    await _persistLearningGoals();
     await TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -871,7 +883,7 @@ Response style:
       sessionOccurrenceId: widget.runtime.sessionOccurrenceId,
       missionId: widget.missionId,
       checkpointId: widget.checkpointId,
-      conceptTags: widget.conceptTags,
+      conceptTags: _bosMiaLoopTags(),
       learnerState: widget.runtime.state?.xHat,
       studentInput: prompt.isNotEmpty ? prompt : null,
       personaInstructions:
@@ -897,6 +909,8 @@ Response style:
             'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
             'mode': _selectedMode.name,
             'role': widget.actorRole.name,
+            'bosMiaLoop': true,
+            'loopTags': _bosMiaLoopTags(),
             'personaInstructions':
                 'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
           },

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
@@ -50,6 +52,9 @@ const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
   'Support outcome logged': 'Resultado de apoyo registrado',
   'No support plans yet': 'Aún no hay planes de apoyo',
   'Loading...': 'Cargando...',
+  'Support AI Coach': 'Coach IA de apoyos',
+  'Keep BOS/MIA loop active for each learner support plan':
+      'Mantén activo el ciclo BOS/MIA para cada plan de apoyo del estudiante',
 };
 
 String _tEducatorLearnerSupports(BuildContext context, String input) {
@@ -124,6 +129,22 @@ class _EducatorLearnerSupportsPageState
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
+              AiContextCoachSection(
+                title: _tEducatorLearnerSupports(context, 'Support AI Coach'),
+                subtitle: _tEducatorLearnerSupports(
+                  context,
+                  'Keep BOS/MIA loop active for each learner support plan',
+                ),
+                module: 'educator_learner_supports',
+                surface: 'support_plans',
+                actorRole: UserRole.educator,
+                accentColor: ScholesaColors.educator,
+                conceptTags: const <String>[
+                  'learner_supports',
+                  'accommodations',
+                  'wellbeing',
+                ],
+              ),
               _buildSummaryCards(supports),
               const SizedBox(height: 24),
               Text(

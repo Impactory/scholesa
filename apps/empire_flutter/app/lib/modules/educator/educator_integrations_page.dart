@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 
 const Map<String, String> _educatorIntegrationsEs = <String, String>{
   'My Integrations': 'Mis integraciones',
@@ -16,6 +18,9 @@ const Map<String, String> _educatorIntegrationsEs = <String, String>{
   'Disconnect': 'Desconectar',
   'Connect': 'Conectar',
   'Connecting': 'Conectando',
+  'Integrations AI Coach': 'Coach IA de integraciones',
+  'Keep BOS/MIA loop active while syncing learner systems':
+      'Mantén activo el ciclo BOS/MIA al sincronizar sistemas de estudiantes',
 };
 
 String _tEducatorIntegrations(BuildContext context, String input) {
@@ -41,6 +46,22 @@ class EducatorIntegrationsPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
+          AiContextCoachSection(
+            title: _tEducatorIntegrations(context, 'Integrations AI Coach'),
+            subtitle: _tEducatorIntegrations(
+              context,
+              'Keep BOS/MIA loop active while syncing learner systems',
+            ),
+            module: 'educator_integrations',
+            surface: 'integrations_management',
+            actorRole: UserRole.educator,
+            accentColor: ScholesaColors.educator,
+            conceptTags: const <String>[
+              'integrations',
+              'sync_health',
+              'learner_data_flow',
+            ],
+          ),
           _buildInfoCard(context),
           const SizedBox(height: 24),
           Text(

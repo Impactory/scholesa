@@ -21,6 +21,9 @@ const Map<String, String> _educatorLearnersEs = <String, String>{
   'Impact': 'Impacto',
   'Message': 'Mensaje',
   'Full Profile': 'Perfil completo',
+  'Learner AI Coach': 'Coach IA para estudiantes',
+  'Keep BOS/MIA loop active for each learner':
+      'Mantén activo el ciclo BOS/MIA para cada estudiante',
 };
 
 String _tEducatorLearners(BuildContext context, String input) {
@@ -79,6 +82,22 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 SliverToBoxAdapter(child: _buildSearchBar()),
                 SliverToBoxAdapter(child: _buildSessionFilter(service)),
                 SliverToBoxAdapter(child: _buildStats(service)),
+                SliverToBoxAdapter(
+                  child: AiContextCoachSection(
+                    title: _tEducatorLearners(context, 'Learner AI Coach'),
+                    subtitle: _tEducatorLearners(
+                        context, 'Keep BOS/MIA loop active for each learner'),
+                    module: 'educator_learners',
+                    surface: 'learners_roster',
+                    actorRole: UserRole.educator,
+                    accentColor: ScholesaColors.educator,
+                    conceptTags: const <String>[
+                      'educator_roster',
+                      'learner_progress',
+                      'individual_support',
+                    ],
+                  ),
+                ),
                 if (service.isLoading)
                   const SliverFillRemaining(
                     child: Center(

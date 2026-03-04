@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -56,6 +58,9 @@ const Map<String, String> _parentBillingEs = <String, String>{
   'On file': 'En archivo',
   'Billed monthly': 'Facturación mensual',
   'month': 'mes',
+  'Billing AI Coach': 'Coach IA de facturación',
+  'Keep BOS/MIA loop active around family billing and learner continuity':
+      'Mantén activo el ciclo BOS/MIA alrededor de la facturación familiar y la continuidad del estudiante',
 };
 
 String _tParentBilling(BuildContext context, String input) {
@@ -116,6 +121,24 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   SliverToBoxAdapter(child: _buildHeader(service)),
                   SliverToBoxAdapter(child: _buildLearnerFilter(service)),
                   SliverToBoxAdapter(child: _buildBalanceSummary(service)),
+                  SliverToBoxAdapter(
+                    child: AiContextCoachSection(
+                      title: _tParentBilling(context, 'Billing AI Coach'),
+                      subtitle: _tParentBilling(
+                        context,
+                        'Keep BOS/MIA loop active around family billing and learner continuity',
+                      ),
+                      module: 'parent_billing',
+                      surface: 'billing_dashboard',
+                      actorRole: UserRole.parent,
+                      accentColor: ScholesaColors.parent,
+                      conceptTags: const <String>[
+                        'billing_support',
+                        'family_continuity',
+                        'plan_guidance',
+                      ],
+                    ),
+                  ),
                   SliverToBoxAdapter(child: _buildTabBar()),
                 ];
               },

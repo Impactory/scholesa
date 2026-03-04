@@ -33,6 +33,9 @@ const Map<String, String> _parentSummaryEs = <String, String>{
   'APR': 'ABR',
   'AUG': 'AGO',
   'DEC': 'DIC',
+  'Family AI Coach': 'Coach IA familiar',
+  'Keep BOS/MIA loop active for each child’s progress':
+      'Mantén activo el ciclo BOS/MIA para el progreso de cada hijo',
 };
 
 String _tParentSummary(BuildContext context, String input) {
@@ -100,6 +103,22 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 if (service.learnerSummaries.length > 1)
                   SliverToBoxAdapter(child: _buildLearnerSelector(service)),
                 SliverToBoxAdapter(child: _buildProgressCard(selectedLearner)),
+                SliverToBoxAdapter(
+                  child: AiContextCoachSection(
+                    title: _t('Family AI Coach'),
+                    subtitle: _t(
+                        'Keep BOS/MIA loop active for each child’s progress'),
+                    module: 'parent_summary',
+                    surface: 'family_dashboard',
+                    actorRole: UserRole.parent,
+                    accentColor: ScholesaColors.parent,
+                    conceptTags: <String>[
+                      'parent_view',
+                      'home_support',
+                      'learner_${selectedLearner.learnerId}',
+                    ],
+                  ),
+                ),
                 SliverToBoxAdapter(
                     child: _buildPillarProgress(selectedLearner)),
                 SliverToBoxAdapter(

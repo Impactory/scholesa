@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -38,6 +37,9 @@ const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Apply': 'Aplicar',
   'Failed to load missions': 'No se pudieron cargar las misiones',
   'Failed to create mission': 'No se pudo crear la misión',
+  'Mission Planning AI Coach': 'Coach IA de planificación de misiones',
+  'Keep BOS/MIA loop active while designing missions for each learner':
+      'Mantén activo el ciclo BOS/MIA al diseñar misiones para cada estudiante',
 };
 
 String _tEducatorMissionPlans(BuildContext context, String input) {
@@ -103,6 +105,29 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget content = _isLoading
+        ? Center(
+            child: Text(
+              _tEducatorMissionPlans(context, 'Loading...'),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+          )
+        : _filteredMissionPlans.isEmpty
+            ? Center(
+                child: Text(
+                  _tEducatorMissionPlans(context, 'No missions yet'),
+                  style:
+                      const TextStyle(color: ScholesaColors.textSecondary),
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _filteredMissionPlans.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildMissionPlanCard(_filteredMissionPlans[index]);
+                },
+              );
+
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
@@ -122,27 +147,28 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         icon: const Icon(Icons.add_rounded),
         label: Text(_tEducatorMissionPlans(context, 'New Mission')),
       ),
-      body: _isLoading
-          ? Center(
-              child: Text(
-                _tEducatorMissionPlans(context, 'Loading...'),
-                style: const TextStyle(color: ScholesaColors.textSecondary),
-              ),
-            )
-          : _filteredMissionPlans.isEmpty
-              ? Center(
-                  child: Text(
-                    _tEducatorMissionPlans(context, 'No missions yet'),
-                    style: const TextStyle(color: ScholesaColors.textSecondary),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filteredMissionPlans.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildMissionPlanCard(_filteredMissionPlans[index]);
-                  },
-                ),
+      body: Column(
+        children: <Widget>[
+          AiContextCoachSection(
+            title: _tEducatorMissionPlans(
+                context, 'Mission Planning AI Coach'),
+            subtitle: _tEducatorMissionPlans(
+              context,
+              'Keep BOS/MIA loop active while designing missions for each learner',
+            ),
+            module: 'educator_mission_plans',
+            surface: 'mission_planning',
+            actorRole: UserRole.educator,
+            accentColor: ScholesaColors.educator,
+            conceptTags: const <String>[
+              'mission_design',
+              'curriculum_planning',
+              'individual_learning_path',
+            ],
+          ),
+          Expanded(child: content),
+        ],
+      ),
     );
   }
 

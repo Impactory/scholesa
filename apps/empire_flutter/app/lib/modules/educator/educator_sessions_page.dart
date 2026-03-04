@@ -36,6 +36,9 @@ const Map<String, String> _educatorSessionsEs = <String, String>{
       'Solicitud de sustituto enviada para aprobación',
   'Request Substitute': 'Solicitar sustituto',
   'View Full Details': 'Ver detalles completos',
+  'Session AI Coach': 'Coach IA de sesiones',
+  'Keep BOS/MIA loop active for each session and learner':
+      'Mantén activo el ciclo BOS/MIA para cada sesión y estudiante',
 };
 
 String _tEducatorSessions(BuildContext context, String input) {
@@ -130,6 +133,24 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 SliverToBoxAdapter(child: _buildHeader()),
                 SliverToBoxAdapter(child: _buildTabBar()),
                 SliverToBoxAdapter(child: _buildFilters()),
+                SliverToBoxAdapter(
+                  child: AiContextCoachSection(
+                    title: _tEducatorSessions(context, 'Session AI Coach'),
+                    subtitle: _tEducatorSessions(
+                      context,
+                      'Keep BOS/MIA loop active for each session and learner',
+                    ),
+                    module: 'educator_sessions',
+                    surface: 'sessions_schedule',
+                    actorRole: UserRole.educator,
+                    accentColor: ScholesaColors.educator,
+                    conceptTags: const <String>[
+                      'session_planning',
+                      'classroom_orchestration',
+                      'attendance_support',
+                    ],
+                  ),
+                ),
                 if (service.isLoading)
                   const SliverFillRemaining(
                     child: Center(
