@@ -113,6 +113,7 @@ class _AiContextCoachSectionState extends State<AiContextCoachSection> {
               child: AiCoachWidget(
                 runtime: runtime,
                 actorRole: role,
+                autoAssistOnHesitation: role == UserRole.learner,
                 missionId: widget.missionId,
                 checkpointId: widget.checkpointId,
                 conceptTags: _enrichedTags(runtime),

@@ -65,6 +65,10 @@ class AppStrings {
           'Hi! I\'m your AI coach. I can guide you with hints, explanations, and quick debug steps whenever you need support.',
       'ai.autoAssist.hesitationPrompt':
           'The learner may be hesitating. Current BOS state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
+      'ai.autoAssist.interventionPrompt':
+          'BOS detected a proactive support moment. Intervention type: {type}, salience: {salience}, reason codes: {reasons}. Give a short supportive voice nudge with one immediate action and one follow-up question.',
+      'ai.autoAssist.fallbackPrompt':
+          'Check in proactively with the learner. Offer one tiny next step and ask a confidence-building follow-up question.',
       'ai.error.unreachable':
           'Unable to reach AI Coach right now. Try again in a moment.',
       'ai.voice.transcriptionUnavailable':
@@ -194,6 +198,10 @@ class AppStrings {
           '¡Hola! Soy tu coach de IA. Puedo guiarte con pistas, explicaciones y pasos rápidos de depuración cuando necesites apoyo.',
       'ai.autoAssist.hesitationPrompt':
           'El estudiante puede estar dudando. Estado BOS actual: {state}. Ofrece una verificación breve de apoyo, un siguiente paso pequeño y una pregunta de seguimiento.',
+      'ai.autoAssist.interventionPrompt':
+          'BOS detectó un momento de apoyo proactivo. Tipo de intervención: {type}, saliencia: {salience}, códigos de motivo: {reasons}. Da un breve impulso de voz de apoyo con una acción inmediata y una pregunta de seguimiento.',
+      'ai.autoAssist.fallbackPrompt':
+          'Haz una verificación proactiva con el estudiante. Ofrece un siguiente paso pequeño y una pregunta de seguimiento que construya confianza.',
       'ai.error.unreachable':
           'No se puede conectar con el Coach de IA ahora. Inténtalo de nuevo en un momento.',
       'ai.voice.transcriptionUnavailable':

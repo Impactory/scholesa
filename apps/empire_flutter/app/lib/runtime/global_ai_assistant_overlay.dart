@@ -8,6 +8,7 @@ import '../auth/app_state.dart';
 import '../modules/educator/educator_service.dart';
 import '../services/telemetry_service.dart';
 import '../ui/localization/app_strings.dart';
+import '../ui/theme/scholesa_theme.dart';
 import 'ai_coach_widget.dart';
 import 'bos_models.dart';
 import 'learning_runtime_provider.dart';
@@ -92,8 +93,11 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
                 child: FloatingActionButton(
                   heroTag: 'global_ai_assistant_fab',
                   tooltip: AppStrings.of(context, 'assistant.tooltip'),
-                  backgroundColor: theme.colorScheme.primary,
+                  backgroundColor: Colors.transparent,
                   foregroundColor: theme.colorScheme.onPrimary,
+                  elevation: 0,
+                  hoverElevation: 0,
+                  highlightElevation: 0,
                   onPressed: () => _openAssistantSheet(
                     context,
                     role: role,
@@ -101,7 +105,30 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
                     learnerId: learnerId,
                     trigger: 'click',
                   ),
-                  child: const Icon(Icons.smart_toy_rounded),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[
+                          ScholesaColors.futureSkills,
+                          ScholesaColors.leadership,
+                          ScholesaColors.impact,
+                        ],
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: ScholesaColors.leadership.withValues(alpha: 0.28),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+                  ),
                 ),
               ),
             ),

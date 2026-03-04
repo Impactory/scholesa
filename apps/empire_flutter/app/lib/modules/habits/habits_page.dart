@@ -1726,6 +1726,10 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
       },
     );
 
+    final String createdSuffix = _tHabits(context, 'created!');
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final NavigatorState navigator = Navigator.of(context);
+
     // Use Firebase method to persist habit
     await context.read<HabitService>().createHabitInFirestore(
           title: _titleController.text,
@@ -1739,14 +1743,18 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
           targetMinutes: _targetMinutes,
         );
 
+    if (!mounted) {
+      return;
+    }
+
     widget.onCompleted();
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    navigator.pop();
+    messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: <Widget>[
             const Text('🌱 ', style: TextStyle(fontSize: 20)),
-            Text('${_titleController.text} ${_tHabits(context, 'created!')}'),
+            Text('${_titleController.text} $createdSuffix'),
           ],
         ),
         backgroundColor: Colors.green,

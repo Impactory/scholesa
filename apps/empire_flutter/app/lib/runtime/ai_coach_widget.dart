@@ -42,6 +42,11 @@ class AiCoachWidget extends StatefulWidget {
     this.autoAssistOnHesitation = false,
     this.hesitationInactivityThreshold = const Duration(seconds: 35),
     this.autoAssistCooldown = const Duration(seconds: 120),
+    this.proactiveScanInterval = const Duration(seconds: 8),
+    this.skipVoiceInitializationForTesting = false,
+    this.onSpeakOverride,
+    this.onInterventionRequest,
+    this.onAutoResponseRequest,
     this.missionId,
     this.checkpointId,
     this.conceptTags = const <String>[],
@@ -55,6 +60,12 @@ class AiCoachWidget extends StatefulWidget {
   final bool autoAssistOnHesitation;
   final Duration hesitationInactivityThreshold;
   final Duration autoAssistCooldown;
+  final Duration proactiveScanInterval;
+  final bool skipVoiceInitializationForTesting;
+  final Future<void> Function(String text)? onSpeakOverride;
+  final Future<BosIntervention?> Function()? onInterventionRequest;
+  final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
+      onAutoResponseRequest;
   final String? missionId;
   final String? checkpointId;
   final List<String> conceptTags;
@@ -72,6 +83,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   final AudioRecorder _audioRecorder = AudioRecorder();
   StreamSubscription<void>? _playerCompleteSub;
   StreamSubscription<PlayerState>? _playerStateSub;
+  Timer? _proactiveAssistTimer;
   AiCoachMode _selectedMode = AiCoachMode.hint;
   bool _loading = false;
   bool _isListening = false;
@@ -93,6 +105,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   void initState() {
     super.initState();
     _attachRuntimeListener();
+    _startProactiveAssistLoop();
     unawaited(_restoreLearningGoals());
     unawaited(_initializeVoiceStack());
   }
@@ -103,6 +116,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (!identical(oldWidget.runtime, widget.runtime)) {
       oldWidget.runtime.removeListener(_handleRuntimeSignalChange);
       _attachRuntimeListener();
+    }
+    if (oldWidget.autoAssistOnHesitation != widget.autoAssistOnHesitation ||
+        oldWidget.actorRole != widget.actorRole) {
+      _proactiveAssistTimer?.cancel();
+      _startProactiveAssistLoop();
     }
   }
 
@@ -162,6 +180,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   Future<void> _initializeVoiceStack() async {
+    if (widget.skipVoiceInitializationForTesting) {
+      if (mounted) {
+        setState(() {
+          _speechAvailable = false;
+          _uploadSttAvailable = false;
+        });
+      }
+      unawaited(_maybeSpeakInitialGreeting());
+      return;
+    }
+
     try {
       final bool speechReady = await _speechToText.initialize(
         onError: (_) {
@@ -265,6 +294,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _lastLearnerActivityAt = DateTime.now();
   }
 
+  void _startProactiveAssistLoop() {
+    if (!widget.autoAssistOnHesitation || widget.actorRole != UserRole.learner) {
+      return;
+    }
+    _proactiveAssistTimer = Timer.periodic(widget.proactiveScanInterval, (_) {
+      if (!mounted) return;
+      unawaited(_evaluateBosAutoAssist(trigger: 'periodic_idle_scan'));
+    });
+  }
+
   bool _isHesitating(XHat state) {
     return state.engagement <= 0.42 || state.cognition <= 0.38;
   }
@@ -273,6 +312,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     final String profile =
         'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
     return _t('ai.autoAssist.hesitationPrompt').replaceFirst('{state}', profile);
+  }
+
+  String _buildInterventionPrompt(BosIntervention intervention) {
+    final String reasons = intervention.reasonCodes.isEmpty
+        ? 'none'
+        : intervention.reasonCodes.join(', ');
+    return _t('ai.autoAssist.interventionPrompt')
+        .replaceFirst('{type}', intervention.type.name)
+        .replaceFirst('{salience}', intervention.salience.name)
+        .replaceFirst('{reasons}', reasons);
   }
 
   Future<void> _maybeSpeakInitialGreeting() async {
@@ -309,9 +358,6 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
 
     final XHat? state = widget.runtime.state?.xHat;
-    if (state == null || !_isHesitating(state)) {
-      return;
-    }
 
     final DateTime now = DateTime.now();
     if (now.difference(_lastLearnerActivityAt) <
@@ -325,17 +371,35 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     _autoAssistInFlight = true;
     try {
+      BosIntervention? intervention;
       if ((widget.runtime.sessionOccurrenceId ?? '').trim().isNotEmpty) {
-        final BosIntervention? intervention = await BosService.instance
-            .getIntervention(
-          siteId: widget.runtime.siteId,
-          learnerId: widget.runtime.learnerId,
-          sessionOccurrenceId: widget.runtime.sessionOccurrenceId!,
-          gradeBand: widget.runtime.gradeBand,
-        );
+        intervention = widget.onInterventionRequest != null
+            ? await widget.onInterventionRequest!()
+            : await BosService.instance.getIntervention(
+                siteId: widget.runtime.siteId,
+                learnerId: widget.runtime.learnerId,
+                sessionOccurrenceId: widget.runtime.sessionOccurrenceId!,
+                gradeBand: widget.runtime.gradeBand,
+              );
         if (intervention?.mode != null && mounted) {
           setState(() => _selectedMode = intervention!.mode!);
         }
+      }
+
+      final bool triggeredByState = state != null && _isHesitating(state);
+      final bool triggeredByIntervention =
+          intervention != null && intervention.salience != Salience.low;
+      if (!triggeredByState && !triggeredByIntervention) {
+        return;
+      }
+
+      final String autoPrompt;
+      if (triggeredByState) {
+        autoPrompt = _buildHesitationPrompt(state);
+      } else if (intervention != null) {
+        autoPrompt = _buildInterventionPrompt(intervention);
+      } else {
+        autoPrompt = _t('ai.autoAssist.fallbackPrompt');
       }
 
       widget.runtime.trackEvent(
@@ -344,8 +408,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         checkpointId: widget.checkpointId,
         payload: <String, dynamic>{
           'trigger': trigger,
-          'engagement': state.engagement,
-          'cognition': state.cognition,
+          if (state != null) 'engagement': state.engagement,
+          if (state != null) 'cognition': state.cognition,
+          if (intervention != null) 'interventionType': intervention.type.name,
+          if (intervention != null) 'interventionSalience': intervention.salience.name,
+          'reasonCodes': intervention?.reasonCodes ?? const <String>[],
           'autoAssist': true,
         },
       );
@@ -361,8 +428,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         },
       );
 
-      final AiCoachResponse response =
-          await _fetchAndProcessResponse(_buildHesitationPrompt(state));
+        final AiCoachResponse response = widget.onAutoResponseRequest != null
+          ? await widget.onAutoResponseRequest!(autoPrompt, _selectedMode)
+          : await _fetchAndProcessResponse(autoPrompt);
       if (!mounted) return;
 
       _lastResponse = response;
@@ -398,6 +466,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   @override
   void dispose() {
     widget.runtime.removeListener(_handleRuntimeSignalChange);
+    _proactiveAssistTimer?.cancel();
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
     unawaited(_audioPlayer.stop());
@@ -598,6 +667,20 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   Future<void> _speakText(String text, {String? traceId}) async {
     if (!_voiceOutputEnabled) return;
+
+    if (widget.onSpeakOverride != null) {
+      await widget.onSpeakOverride!(text);
+      await TelemetryService.instance.logEvent(
+        event: 'voice.tts',
+        metadata: <String, dynamic>{
+          'source': 'test_override',
+          'surface': 'ai_coach_widget',
+          'chars': text.length,
+          'traceId': traceId,
+        },
+      );
+      return;
+    }
 
     if (_isSpeaking) {
       await _audioPlayer.stop();

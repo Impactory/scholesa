@@ -111,5 +111,118 @@ void main() {
       expect(find.text('Current goals'), findsNothing);
       expect(find.byType(Chip), findsNothing);
     });
+
+    testWidgets('auto greeting proactively speaks on open',
+        (WidgetTester tester) async {
+      final List<String> spoken = <String>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: runtime,
+              actorRole: UserRole.learner,
+              autoSpeakGreeting: true,
+              skipVoiceInitializationForTesting: true,
+              onSpeakOverride: (String text) async {
+                spoken.add(text);
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 320));
+
+      expect(spoken, isNotEmpty);
+      expect(
+        spoken.first.toLowerCase(),
+        contains('ai coach'),
+      );
+    });
+
+    testWidgets('proactive BOS hesitation triggers voiced auto-assist',
+        (WidgetTester tester) async {
+      final _FakeRuntime fakeRuntime = _FakeRuntime();
+      final List<String> spoken = <String>[];
+
+      addTearDown(fakeRuntime.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: fakeRuntime,
+              actorRole: UserRole.learner,
+              autoAssistOnHesitation: true,
+              hesitationInactivityThreshold: Duration.zero,
+              autoAssistCooldown: const Duration(milliseconds: 50),
+              proactiveScanInterval: const Duration(milliseconds: 40),
+              skipVoiceInitializationForTesting: true,
+              onSpeakOverride: (String text) async {
+                spoken.add(text);
+              },
+              onAutoResponseRequest:
+                  (String prompt, AiCoachMode mode) async {
+                return AiCoachResponse.fromMap(<String, dynamic>{
+                  'message': 'Try one tiny next step now.',
+                  'mode': mode.name,
+                  'meta': <String, dynamic>{'version': 'test'},
+                });
+              },
+            ),
+          ),
+        ),
+      );
+
+      fakeRuntime.setHesitatingState();
+      await tester.pump(const Duration(milliseconds: 220));
+
+      expect(spoken.any((String text) => text.contains('Try one tiny next step now.')), isTrue);
+      expect(fakeRuntime.trackedEvents, contains('idle_detected'));
+      expect(fakeRuntime.trackedEvents, contains('ai_help_opened'));
+      expect(fakeRuntime.trackedEvents, contains('ai_help_used'));
+      expect(find.textContaining('Try one tiny next step now.'), findsOneWidget);
+    });
   });
+}
+
+class _FakeRuntime extends LearningRuntimeProvider {
+  _FakeRuntime()
+      : super(
+          siteId: 'site_fake',
+          learnerId: 'learner_fake',
+          gradeBand: GradeBand.g4_6,
+        );
+
+  OrchestrationState? _fakeState;
+  final List<String> trackedEvents = <String>[];
+
+  @override
+  OrchestrationState? get state => _fakeState;
+
+  void setHesitatingState() {
+    _fakeState = OrchestrationState(
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceId: 'occ_test',
+      xHat: const XHat(cognition: 0.32, engagement: 0.29, integrity: 0.71),
+      p: const CovarianceSummary(),
+      model: const EstimatorModel(),
+      fusion: const FusionInfo(),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void trackEvent(
+    String eventType, {
+    String? missionId,
+    String? checkpointId,
+    Map<String, dynamic> payload = const <String, dynamic>{},
+  }) {
+    trackedEvents.add(eventType);
+  }
 }
