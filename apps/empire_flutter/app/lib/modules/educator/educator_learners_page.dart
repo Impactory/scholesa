@@ -4,6 +4,7 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
@@ -24,23 +25,18 @@ const Map<String, String> _educatorLearnersEs = <String, String>{
   'Learner AI Coach': 'Coach IA para estudiantes',
   'Keep BOS/MIA loop active for each learner':
       'Mantén activo el ciclo BOS/MIA para cada estudiante',
-    'BOS/MIA Learner Loop': 'Ciclo BOS/MIA del estudiante',
-    'Latest individual improvement signal':
-      'Señal más reciente de mejora individual',
-    'No learner loop data yet': 'Aún no hay datos del ciclo del estudiante',
-    'Cognition': 'Cognición',
-    'Engagement': 'Compromiso',
-    'Integrity': 'Integridad',
-    'Goals': 'Metas',
-    'MVL': 'MVL',
-    'score': 'puntaje',
-    'delta': 'delta',
+  'delta': 'delta',
 };
 
-String _tEducatorLearners(BuildContext context, String input) {
+String _tEducatorLearnersPageSpecific(BuildContext context, String input) {
   final String locale = Localizations.localeOf(context).languageCode;
   if (locale != 'es') return input;
   return _educatorLearnersEs[input] ?? input;
+}
+
+// Alias for backward compatibility
+String _tEducatorLearners(BuildContext context, String input) {
+  return _tEducatorLearnersPageSpecific(context, input);
 }
 
 /// Educator Learners Page - View and manage learner roster
@@ -104,8 +100,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 SliverToBoxAdapter(child: _buildLearnerLoopCard()),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _tEducatorLearners(context, 'Learner AI Coach'),
-                    subtitle: _tEducatorLearners(
+                    title: _tEducatorLearnersPageSpecific(context, 'Learner AI Coach'),
+                    subtitle: _tEducatorLearnersPageSpecific(
                         context, 'Keep BOS/MIA loop active for each learner'),
                     module: 'educator_learners',
                     surface: 'learners_roster',
@@ -234,7 +230,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                     color: ScholesaColors.educator, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  _tEducatorLearners(context, 'BOS/MIA Learner Loop'),
+                  BosCoachingI18n.sessionLoopTitle(context),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: ScholesaColors.educator,
@@ -245,47 +241,46 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             const SizedBox(height: 4),
             Text(
               _loopLearnerName == null
-                  ? _tEducatorLearners(
-                      context, 'Latest individual improvement signal')
-                  : '${_tEducatorLearners(context, 'Latest individual improvement signal')}: $_loopLearnerName',
+                  ? BosCoachingI18n.latestSignal(context)
+                  : '${BosCoachingI18n.latestSignal(context)}: $_loopLearnerName',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 10),
             if (_loopInsightsLoading)
               const LinearProgressIndicator(minHeight: 4)
             else if (insights == null)
-              Text(_tEducatorLearners(context, 'No learner loop data yet'))
+              Text(BosCoachingI18n.sessionLoopEmpty(context))
             else ...<Widget>[
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: <Widget>[
                   _metricChip(
-                    '${_tEducatorLearners(context, 'Cognition')} ${pct(state['cognition'])}',
+                    '${BosCoachingI18n.cognition(context)} ${pct(state['cognition'])}',
                   ),
                   _metricChip(
-                    '${_tEducatorLearners(context, 'Engagement')} ${pct(state['engagement'])}',
+                    '${BosCoachingI18n.engagement(context)} ${pct(state['engagement'])}',
                   ),
                   _metricChip(
-                    '${_tEducatorLearners(context, 'Integrity')} ${pct(state['integrity'])}',
+                    '${BosCoachingI18n.integrity(context)} ${pct(state['integrity'])}',
                   ),
                   _metricChip(
-                    '${_tEducatorLearners(context, 'score')} ${delta(trend['improvementScore'])}',
+                    '${BosCoachingI18n.improvementScore(context)} ${delta(trend['improvementScore'])}',
                   ),
                   _metricChip(
-                    '${_tEducatorLearners(context, 'MVL')} ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
+                    '${BosCoachingI18n.mvlStatus(context)} ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                '${_tEducatorLearners(context, 'delta')}: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
+                '${_tEducatorLearnersPageSpecific(context, 'delta')}: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
                 style: theme.textTheme.bodySmall,
               ),
               if (goals.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
-                  '${_tEducatorLearners(context, 'Goals')}: ${goals.take(3).join(' • ')}',
+                  '${BosCoachingI18n.activeGoals(context)}: ${goals.take(3).join(' • ')}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],
