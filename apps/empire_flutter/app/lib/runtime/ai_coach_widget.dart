@@ -655,6 +655,22 @@ Response style:
     }
   }
 
+  String _buildOfflineFallbackReply(String learnerInput) {
+    final String normalized = learnerInput.trim();
+    final String safeInput = normalized.isEmpty ? _t('ai.enrich.retryPrompt') : normalized;
+
+    switch (_selectedMode) {
+      case AiCoachMode.hint:
+        return 'Let\'s keep moving. From your message, "$safeInput", what is one small next step you can try now?';
+      case AiCoachMode.verify:
+        return 'Good check-in. Based on "$safeInput", can you explain your reasoning in 2 short steps and what evidence supports it?';
+      case AiCoachMode.explain:
+        return 'Let\'s simplify this. In your own words, what is the main idea behind "$safeInput" and where did you get stuck?';
+      case AiCoachMode.debug:
+        return 'Let\'s debug together. For "$safeInput", what did you expect to happen, what actually happened, and what changed right before it?';
+    }
+  }
+
   Future<void> _interruptSpeaking() async {
     try {
       await HapticFeedback.selectionClick();
@@ -762,11 +778,27 @@ Response style:
         },
       );
     } catch (e) {
+      final String fallbackReply = _buildOfflineFallbackReply(input);
+      await TelemetryService.instance.logEvent(
+        event: 'voice.message',
+        metadata: <String, dynamic>{
+          'surface': 'ai_coach_widget',
+          'mode': _selectedMode.name,
+          'source': 'local_fallback',
+          'error': e.toString(),
+          'role': widget.actorRole.name,
+        },
+      );
+
+      if (kDebugMode) {
+        debugPrint('AI request failed, using local fallback: $e');
+      }
+
       setState(() {
         _messages.add(_ChatMessage(
-          text: _t('ai.error.unreachable'),
+          text: fallbackReply,
           isUser: false,
-          isError: true,
+          isError: false,
         ));
         _loading = false;
       });
