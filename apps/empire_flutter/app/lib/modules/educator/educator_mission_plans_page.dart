@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 
 const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Future Skills': 'Habilidades del futuro',

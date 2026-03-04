@@ -4,6 +4,8 @@ import 'parent_models.dart';
 import 'parent_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 
 const Map<String, String> _parentScheduleEs = <String, String>{
   'No learner links found yet. Ask your site admin to link parent and learner accounts.':
