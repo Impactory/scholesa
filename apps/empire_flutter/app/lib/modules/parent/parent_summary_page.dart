@@ -118,8 +118,19 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       'learner_${selectedLearner.learnerId}',
                     ],
                   ),
-                ),
-                SliverToBoxAdapter(
+                ),                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: BosLearnerLoopInsightsCard(
+                      title: _t('Family Learning Loop'),
+                      subtitle: _t('Your child\'s individual improvement signals'),
+                      emptyLabel: _t('No family learning data yet'),
+                      learnerId: selectedLearner.learnerId,
+                      learnerName: selectedLearner.learnerName,
+                      accentColor: ScholesaColors.parent,
+                    ),
+                  ),
+                ),                SliverToBoxAdapter(
                     child: _buildPillarProgress(selectedLearner)),
                 SliverToBoxAdapter(
                     child: _buildRecentActivity(selectedLearner)),

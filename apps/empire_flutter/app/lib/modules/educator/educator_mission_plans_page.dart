@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import 'educator_service.dart';
 
 const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Future Skills': 'Habilidades del futuro',
@@ -40,6 +42,10 @@ const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Mission Planning AI Coach': 'Coach IA de planificación de misiones',
   'Keep BOS/MIA loop active while designing missions for each learner':
       'Mantén activo el ciclo BOS/MIA al diseñar misiones para cada estudiante',
+  'BOS/MIA Mission Loop': 'Ciclo de misión BOS/MIA',
+  'Latest individual improvement signal while designing':
+      'Señal de mejora individual más reciente al diseñar',
+  'No mission loop data yet': 'Sin datos de ciclo de misión aún',
 };
 
 String _tEducatorMissionPlans(BuildContext context, String input) {
@@ -92,6 +98,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   void initState() {
     super.initState();
     _loadMissionPlans();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EducatorService>().loadLearners();
+    });
   }
 
   List<_MissionPlan> get _filteredMissionPlans {
@@ -147,27 +156,46 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         icon: const Icon(Icons.add_rounded),
         label: Text(_tEducatorMissionPlans(context, 'New Mission')),
       ),
-      body: Column(
-        children: <Widget>[
-          AiContextCoachSection(
-            title: _tEducatorMissionPlans(
-                context, 'Mission Planning AI Coach'),
-            subtitle: _tEducatorMissionPlans(
-              context,
-              'Keep BOS/MIA loop active while designing missions for each learner',
-            ),
-            module: 'educator_mission_plans',
-            surface: 'mission_planning',
-            actorRole: UserRole.educator,
-            accentColor: ScholesaColors.educator,
-            conceptTags: const <String>[
-              'mission_design',
-              'curriculum_planning',
-              'individual_learning_path',
+      body: Consumer<EducatorService>(
+        builder: (BuildContext context, EducatorService service, _) {
+          return Column(
+            children: <Widget>[
+              AiContextCoachSection(
+                title: _tEducatorMissionPlans(
+                    context, 'Mission Planning AI Coach'),
+                subtitle: _tEducatorMissionPlans(
+                  context,
+                  'Keep BOS/MIA loop active while designing missions for each learner',
+                ),
+                module: 'educator_mission_plans',
+                surface: 'mission_planning',
+                actorRole: UserRole.educator,
+                accentColor: ScholesaColors.educator,
+                conceptTags: const <String>[
+                  'mission_design',
+                  'curriculum_planning',
+                  'individual_learning_path',
+                ],
+              ),
+              if (service.learners.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: BosLearnerLoopInsightsCard(
+                    title: _tEducatorMissionPlans(context, 'BOS/MIA Mission Loop'),
+                    subtitle: _tEducatorMissionPlans(
+                      context,
+                      'Latest individual improvement signal while designing',
+                    ),
+                    emptyLabel: _tEducatorMissionPlans(context, 'No mission loop data yet'),
+                    learnerId: service.learners.first.id,
+                    learnerName: service.learners.first.name,
+                    accentColor: ScholesaColors.educator,
+                  ),
+                ),
+              Expanded(child: content),
             ],
-          ),
-          Expanded(child: content),
-        ],
+          );
+        },
       ),
     );
   }

@@ -133,6 +133,23 @@ class BosService {
     return result.data as Map<String, dynamic>;
   }
 
+  // ── Endpoint 9: Get learner loop insights ───────
+
+  Future<Map<String, dynamic>> getLearnerLoopInsights({
+    required String siteId,
+    required String learnerId,
+    int lookbackDays = 30,
+  }) async {
+    final HttpsCallableResult<dynamic> result = await _fn
+        .httpsCallable('bosGetLearnerLoopInsights')
+        .call(<String, dynamic>{
+      'siteId': siteId,
+      'learnerId': learnerId,
+      'lookbackDays': lookbackDays,
+    });
+    return result.data as Map<String, dynamic>;
+  }
+
   // ── Endpoint 8: Contestability ────────────────────
 
   Future<void> requestContestability({

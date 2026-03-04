@@ -41,6 +41,7 @@ class BosEventBus {
     'ai_help_used',
     'ai_coach_response',
     'ai_coach_feedback',
+    'ai_learning_goal_updated',
     // ── Metacognition (feeds FDM y_t — Math Contract §8)
     'explain_it_back_submitted',
     'source_check_performed',

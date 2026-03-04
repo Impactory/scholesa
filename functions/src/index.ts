@@ -31,6 +31,7 @@ export {
   bosSubmitMvlEvidence,
   bosTeacherOverrideMvl,
   bosGetClassInsights,
+  bosGetLearnerLoopInsights,
   bosContestability,
   bosWeeklyFairnessAudit,
 } from './bosRuntime';

@@ -4,6 +4,7 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
@@ -101,6 +102,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EducatorService>().loadSessions();
+      context.read<EducatorService>().loadLearners();
       _logScheduleViewed(trigger: 'page_open');
     });
   }
@@ -151,6 +153,20 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     ],
                   ),
                 ),
+                if (service.learners.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: BosLearnerLoopInsightsCard(
+                        title: BosCoachingI18n.sessionLoopTitle(context),
+                        subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                        emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
+                        learnerId: service.learners.first.id,
+                        learnerName: service.learners.first.name,
+                        accentColor: ScholesaColors.educator,
+                      ),
+                    ),
+                  ),
                 if (service.isLoading)
                   const SliverFillRemaining(
                     child: Center(

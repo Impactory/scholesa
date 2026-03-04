@@ -962,7 +962,7 @@ Response style:
         widget.runtime.hasMvlGate &&
         response.mvlGateActive) {
       widget.runtime.trackEvent(
-        'mvl.gate.triggered',
+        'mvl_gate_triggered',
         missionId: widget.missionId,
         checkpointId: widget.checkpointId,
         payload: <String, dynamic>{

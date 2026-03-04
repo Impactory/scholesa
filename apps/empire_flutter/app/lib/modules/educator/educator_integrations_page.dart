@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import 'educator_service.dart';
 
 const Map<String, String> _educatorIntegrationsEs = <String, String>{
   'My Integrations': 'Mis integraciones',
@@ -21,6 +23,10 @@ const Map<String, String> _educatorIntegrationsEs = <String, String>{
   'Integrations AI Coach': 'Coach IA de integraciones',
   'Keep BOS/MIA loop active while syncing learner systems':
       'Mantén activo el ciclo BOS/MIA al sincronizar sistemas de estudiantes',
+  'BOS/MIA Integration Loop': 'Ciclo de integración BOS/MIA',
+  'Latest individual improvement signal across integrated systems':
+      'Señal de mejora individual más reciente en sistemas integrados',
+  'No integration loop data yet': 'Sin datos de ciclo de integración aún',
 };
 
 String _tEducatorIntegrations(BuildContext context, String input) {
@@ -31,8 +37,22 @@ String _tEducatorIntegrations(BuildContext context, String input) {
 
 /// Educator integrations page for managing external tool connections
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
-class EducatorIntegrationsPage extends StatelessWidget {
+class EducatorIntegrationsPage extends StatefulWidget {
   const EducatorIntegrationsPage({super.key});
+
+  @override
+  State<EducatorIntegrationsPage> createState() =>
+      _EducatorIntegrationsPageState();
+}
+
+class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EducatorService>().loadLearners();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,82 +63,101 @@ class EducatorIntegrationsPage extends StatelessWidget {
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          AiContextCoachSection(
-            title: _tEducatorIntegrations(context, 'Integrations AI Coach'),
-            subtitle: _tEducatorIntegrations(
-              context,
-              'Keep BOS/MIA loop active while syncing learner systems',
-            ),
-            module: 'educator_integrations',
-            surface: 'integrations_management',
-            actorRole: UserRole.educator,
-            accentColor: ScholesaColors.educator,
-            conceptTags: const <String>[
-              'integrations',
-              'sync_health',
-              'learner_data_flow',
+      body: Consumer<EducatorService>(
+        builder: (BuildContext context, EducatorService service, _) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              AiContextCoachSection(
+                title: _tEducatorIntegrations(context, 'Integrations AI Coach'),
+                subtitle: _tEducatorIntegrations(
+                  context,
+                  'Keep BOS/MIA loop active while syncing learner systems',
+                ),
+                module: 'educator_integrations',
+                surface: 'integrations_management',
+                actorRole: UserRole.educator,
+                accentColor: ScholesaColors.educator,
+                conceptTags: const <String>[
+                  'integrations',
+                  'sync_health',
+                  'learner_data_flow',
+                ],
+              ),
+              if (service.learners.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: BosLearnerLoopInsightsCard(
+                    title: _tEducatorIntegrations(context, 'BOS/MIA Integration Loop'),
+                    subtitle: _tEducatorIntegrations(
+                      context,
+                      'Latest individual improvement signal across integrated systems',
+                    ),
+                    emptyLabel: _tEducatorIntegrations(context, 'No integration loop data yet'),
+                    learnerId: service.learners.first.id,
+                    learnerName: service.learners.first.name,
+                    accentColor: ScholesaColors.educator,
+                  ),
+                ),
+              _buildInfoCard(context),
+              const SizedBox(height: 24),
+              Text(
+                _tEducatorIntegrations(context, 'Connected Services'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ScholesaColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildIntegrationCard(
+                context,
+                name: 'Google Classroom',
+                icon: Icons.school_rounded,
+                color: Colors.blue,
+                isConnected: true,
+                syncStatus:
+                    _tEducatorIntegrations(context, 'Last synced 15 min ago'),
+              ),
+              const SizedBox(height: 12),
+              _buildIntegrationCard(
+                context,
+                name: 'GitHub Classroom',
+                icon: Icons.code_rounded,
+                color: Colors.black87,
+                isConnected: true,
+                syncStatus: _tEducatorIntegrations(context, '3 repos connected'),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                _tEducatorIntegrations(context, 'Available Integrations'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ScholesaColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildIntegrationCard(
+                context,
+                name: 'Canvas LMS',
+                icon: Icons.dashboard_rounded,
+                color: Colors.red,
+                isConnected: false,
+                syncStatus: null,
+              ),
+              const SizedBox(height: 12),
+              _buildIntegrationCard(
+                context,
+                name: 'Microsoft Teams',
+                icon: Icons.groups_rounded,
+                color: Colors.purple,
+                isConnected: false,
+                syncStatus: null,
+              ),
             ],
-          ),
-          _buildInfoCard(context),
-          const SizedBox(height: 24),
-          Text(
-            _tEducatorIntegrations(context, 'Connected Services'),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: ScholesaColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildIntegrationCard(
-            context,
-            name: 'Google Classroom',
-            icon: Icons.school_rounded,
-            color: Colors.blue,
-            isConnected: true,
-            syncStatus:
-                _tEducatorIntegrations(context, 'Last synced 15 min ago'),
-          ),
-          const SizedBox(height: 12),
-          _buildIntegrationCard(
-            context,
-            name: 'GitHub Classroom',
-            icon: Icons.code_rounded,
-            color: Colors.black87,
-            isConnected: true,
-            syncStatus: _tEducatorIntegrations(context, '3 repos connected'),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _tEducatorIntegrations(context, 'Available Integrations'),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: ScholesaColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildIntegrationCard(
-            context,
-            name: 'Canvas LMS',
-            icon: Icons.dashboard_rounded,
-            color: Colors.red,
-            isConnected: false,
-            syncStatus: null,
-          ),
-          const SizedBox(height: 12),
-          _buildIntegrationCard(
-            context,
-            name: 'Microsoft Teams',
-            icon: Icons.groups_rounded,
-            color: Colors.purple,
-            isConnected: false,
-            syncStatus: null,
-          ),
-        ],
+          );
+        },
       ),
     );
   }

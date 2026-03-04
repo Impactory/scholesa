@@ -56,6 +56,10 @@ const Map<String, String> _parentScheduleEs = <String, String>{
   'Schedule AI Coach': 'Coach IA de horario',
   'Keep BOS/MIA loop active for each learner schedule':
       'Mantén activo el ciclo BOS/MIA para el horario de cada estudiante',
+  'Family Schedule Loop': 'Ciclo de horario familiar',
+  'Your child\'s learning readiness and attendance signals':
+      'Señales de disponibilidad de aprendizaje y asistencia de tu hijo',
+  'No schedule learning data yet': 'Sin datos de aprendizaje de horario aún',
 };
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
@@ -143,6 +147,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                     ],
                   ),
                 ),
+                if (service.learnerSummaries.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: _buildScheduleLearnerLoopCard(service),
+                    ),
+                  ),
                 SliverToBoxAdapter(child: _buildCalendarStrip(service)),
                 SliverToBoxAdapter(child: _buildUpcomingSection(service)),
                 SliverToBoxAdapter(child: _buildTodaySchedule(service)),
@@ -321,6 +332,34 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildScheduleLearnerLoopCard(ParentService service) {
+    LearnerSummary? selectedLearner;
+    if (_selectedLearner == 'all') {
+      selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+    } else {
+      try {
+        selectedLearner = service.learnerSummaries.firstWhere(
+          (LearnerSummary l) => l.learnerId == _selectedLearner,
+        );
+      } catch (e) {
+        selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+      }
+    }
+    
+    if (selectedLearner == null) {
+      return const SizedBox.shrink();
+    }
+
+    return BosLearnerLoopInsightsCard(
+      title: _t('Family Schedule Loop'),
+      subtitle: _t('Your child\'s learning readiness and attendance signals'),
+      emptyLabel: _t('No schedule learning data yet'),
+      learnerId: selectedLearner.learnerId,
+      learnerName: selectedLearner.learnerName,
+      accentColor: ScholesaColors.parent,
     );
   }
 

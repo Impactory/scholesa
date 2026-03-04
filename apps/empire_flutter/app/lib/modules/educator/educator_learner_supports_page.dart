@@ -55,6 +55,10 @@ const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
   'Support AI Coach': 'Coach IA de apoyos',
   'Keep BOS/MIA loop active for each learner support plan':
       'Mantén activo el ciclo BOS/MIA para cada plan de apoyo del estudiante',
+  'BOS/MIA Support Loop': 'Ciclo de apoyo BOS/MIA',
+  'Latest individual improvement signal for support planning':
+      'Señal de mejora individual más reciente para planificación de apoyos',
+  'No support loop data yet': 'Sin datos de ciclo de apoyo aún',
 };
 
 String _tEducatorLearnerSupports(BuildContext context, String input) {
@@ -145,6 +149,18 @@ class _EducatorLearnerSupportsPageState
                   'wellbeing',
                 ],
               ),
+              if (service.learners.isNotEmpty)
+                BosLearnerLoopInsightsCard(
+                  title: _tEducatorLearnerSupports(context, 'BOS/MIA Support Loop'),
+                  subtitle: _tEducatorLearnerSupports(
+                    context,
+                    'Latest individual improvement signal for support planning',
+                  ),
+                  emptyLabel: _tEducatorLearnerSupports(context, 'No support loop data yet'),
+                  learnerId: service.learners.first.id,
+                  learnerName: service.learners.first.name,
+                  accentColor: ScholesaColors.educator,
+                ),
               _buildSummaryCards(supports),
               const SizedBox(height: 24),
               Text(

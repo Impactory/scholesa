@@ -2024,6 +2024,200 @@ export const bosGetClassInsights = onCall(
 );
 
 /**
+ * Endpoint 9: Learner loop insights (BOS/MIA individual improvement)
+ * Enhanced with timeout handling and graceful error degradation
+ */
+export const bosGetLearnerLoopInsights = onCall(
+  { region: 'us-central1' },
+  async (request: CallableRequest) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
+
+    const requestData = asRecord(request.data) ?? {};
+    const siteId = normalizeString(requestData.siteId);
+    const learnerId = normalizeString(requestData.learnerId);
+    const lookbackDays = Math.min(
+      90,
+      Math.max(7, Number(requestData.lookbackDays ?? 30) || 30),
+    );
+
+    if (!siteId || !learnerId) {
+      throw new HttpsError('invalid-argument', 'siteId and learnerId required');
+    }
+
+    try {
+      await assertCoppaSiteAccess(uid, siteId);
+    } catch (error) {
+      console.error(`[BOS] COPPA access check failed for uid=${uid}, siteId=${siteId}:`, error);
+      throw new HttpsError('permission-denied', 'Access denied to this site.');
+    }
+
+    const since = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000);
+
+    try {
+      // Execute queries with Promise.all (Firebase will timeout at 30s server-side)
+      const [
+        statesSnap,
+        eventsSnap,
+        mvlSnap,
+      ] = await Promise.all([
+        db.collection('orchestrationStates')
+          .where('siteId', '==', siteId)
+          .where('learnerId', '==', learnerId)
+          .orderBy('lastUpdatedAt', 'desc')
+          .limit(20)
+          .get(),
+        db.collection('interactionEvents')
+          .where('siteId', '==', siteId)
+          .where('actorId', '==', learnerId)
+          .where('createdAt', '>=', since)
+          .orderBy('createdAt', 'desc')
+          .limit(500)
+          .get(),
+        db.collection('mvlEpisodes')
+          .where('siteId', '==', siteId)
+          .where('learnerId', '==', learnerId)
+          .where('createdAt', '>=', since)
+          .orderBy('createdAt', 'desc')
+          .limit(200)
+          .get(),
+      ]);
+
+      const states = statesSnap.docs.map((doc: admin.firestore.QueryDocumentSnapshot) => {
+        const data = doc.data() as Record<string, unknown>;
+        // Validate state structure
+        if (!data['x_hat'] || typeof data['x_hat'] !== 'object') {
+          console.warn(`[BOS] Malformed orchestration state: ${doc.id}`);
+          return null;
+        }
+        return data;
+      }).filter((d: Record<string, unknown> | null): d is Record<string, unknown> => d !== null);
+
+      const latestState = states.length > 0
+        ? ((states[0]['x_hat'] as Record<string, unknown> | undefined) ?? {})
+        : {};
+      const oldestState = states.length > 1
+        ? ((states[states.length - 1]['x_hat'] as Record<string, unknown> | undefined) ?? latestState)
+        : latestState;
+
+      const latestCognition = clamp(Number(latestState['cognition'] ?? 0.5));
+      const latestEngagement = clamp(Number(latestState['engagement'] ?? 0.5));
+      const latestIntegrity = clamp(Number(latestState['integrity'] ?? 0.5));
+
+      const deltaCognition = latestCognition - clamp(Number(oldestState['cognition'] ?? latestCognition));
+      const deltaEngagement = latestEngagement - clamp(Number(oldestState['engagement'] ?? latestEngagement));
+      const deltaIntegrity = latestIntegrity - clamp(Number(oldestState['integrity'] ?? latestIntegrity));
+
+      const eventCounts: Record<string, number> = {
+        ai_help_used: 0,
+        ai_coach_response: 0,
+        ai_learning_goal_updated: 0,
+        mvl_gate_triggered: 0,
+        checkpoint_submitted: 0,
+        artifact_submitted: 0,
+        mission_completed: 0,
+      };
+      const goals = new Set<string>();
+
+      for (const doc of eventsSnap.docs) {
+        const eventData = doc.data() as Record<string, unknown>;
+        const eventType = normalizeString(eventData.eventType) ?? '';
+        if (eventType in eventCounts) {
+          eventCounts[eventType] += 1;
+        }
+        if (eventType === 'ai_learning_goal_updated') {
+          const payload = asRecord(eventData.payload);
+          const latestGoal = normalizeString(payload?.latest_goal);
+          if (latestGoal) goals.add(latestGoal);
+        }
+      }
+
+      let mvlActive = 0;
+      let mvlPassed = 0;
+      let mvlFailed = 0;
+      for (const doc of mvlSnap.docs) {
+        const data = doc.data() as Record<string, unknown>;
+        const resolution = normalizeString(data.resolution);
+        if (!resolution) {
+          mvlActive += 1;
+        } else if (resolution === 'passed') {
+          mvlPassed += 1;
+        } else if (resolution === 'failed') {
+          mvlFailed += 1;
+        }
+      }
+
+      const improvementScore =
+        deltaCognition * 0.3 + deltaEngagement * 0.3 + deltaIntegrity * 0.4;
+
+      return {
+        siteId,
+        learnerId,
+        lookbackDays,
+        state: {
+          cognition: latestCognition,
+          engagement: latestEngagement,
+          integrity: latestIntegrity,
+        },
+        trend: {
+          cognitionDelta: deltaCognition,
+          engagementDelta: deltaEngagement,
+          integrityDelta: deltaIntegrity,
+          improvementScore,
+        },
+        eventCounts,
+        mvl: {
+          active: mvlActive,
+          passed: mvlPassed,
+          failed: mvlFailed,
+        },
+        activeGoals: Array.from(goals).slice(0, 5),
+        generatedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      // Log error for debugging
+      console.error(`[BOS] learner loop query error for learnerId=${learnerId}, siteId=${siteId}:`, error);
+
+      // Return graceful degradation with defaults
+      // Client can use this to show a fallback UI or retry
+      return {
+        siteId,
+        learnerId,
+        lookbackDays,
+        state: {
+          cognition: 0.5,
+          engagement: 0.5,
+          integrity: 0.5,
+        },
+        trend: {
+          cognitionDelta: 0,
+          engagementDelta: 0,
+          integrityDelta: 0,
+          improvementScore: 0,
+        },
+        eventCounts: {
+          ai_help_used: 0,
+          ai_coach_response: 0,
+          ai_learning_goal_updated: 0,
+          mvl_gate_triggered: 0,
+          checkpoint_submitted: 0,
+          artifact_submitted: 0,
+          mission_completed: 0,
+        },
+        mvl: {
+          active: 0,
+          passed: 0,
+          failed: 0,
+        },
+        activeGoals: [],
+        generatedAt: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Query failed; returning defaults',
+      };
+    }
+  }
+);
+
+/**
  * Endpoint 8: Contestability — request + resolve
  */
 export const bosContestability = onCall(

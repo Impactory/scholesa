@@ -61,6 +61,10 @@ const Map<String, String> _parentBillingEs = <String, String>{
   'Billing AI Coach': 'Coach IA de facturación',
   'Keep BOS/MIA loop active around family billing and learner continuity':
       'Mantén activo el ciclo BOS/MIA alrededor de la facturación familiar y la continuidad del estudiante',
+  'Family Billing Loop': 'Ciclo de facturación familiar',
+  'Your child\'s learning continuity and engagement signals':
+      'Señales de continuidad de aprendizaje e insistencia de tu hijo',
+  'No billing learning data yet': 'Sin datos de aprendizaje de facturación aún',
 };
 
 String _tParentBilling(BuildContext context, String input) {
@@ -139,6 +143,13 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       ],
                     ),
                   ),
+                  if (service.learnerSummaries.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: _buildBillingLearnerLoopCard(service),
+                      ),
+                    ),
                   SliverToBoxAdapter(child: _buildTabBar()),
                 ];
               },
@@ -432,6 +443,34 @@ class _ParentBillingPageState extends State<ParentBillingPage>
           Tab(text: _tParentBilling(context, 'Plan')),
         ],
       ),
+    );
+  }
+
+  Widget _buildBillingLearnerLoopCard(ParentService service) {
+    LearnerSummary? selectedLearner;
+    if (_selectedLearner == 'all') {
+      selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+    } else {
+      try {
+        selectedLearner = service.learnerSummaries.firstWhere(
+          (LearnerSummary l) => l.learnerId == _selectedLearner,
+        );
+      } catch (e) {
+        selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+      }
+    }
+    
+    if (selectedLearner == null) {
+      return const SizedBox.shrink();
+    }
+
+    return BosLearnerLoopInsightsCard(
+      title: _tParentBilling(context, 'Family Billing Loop'),
+      subtitle: _tParentBilling(context, 'Your child\'s learning continuity and engagement signals'),
+      emptyLabel: _tParentBilling(context, 'No billing learning data yet'),
+      learnerId: selectedLearner.learnerId,
+      learnerName: selectedLearner.learnerName,
+      accentColor: ScholesaColors.parent,
     );
   }
 

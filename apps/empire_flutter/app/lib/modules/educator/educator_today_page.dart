@@ -52,6 +52,10 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'AI Classroom Coach': 'Entrenador de aula con IA',
   'Get personalized coaching for classroom management': 'Obtén asesoramiento personalizado para la gestión del aula',
   'Hide Coaching': 'Ocultar asesoramiento',
+  'BOS/MIA Learner Loop': 'Ciclo BOS/MIA del estudiante',
+  'Latest individual improvement signal':
+      'Señal más reciente de mejora individual',
+  'No learner loop data yet': 'Aún no hay datos del ciclo del estudiante',
 };
 
 String _tEducatorToday(BuildContext context, String input) {
@@ -74,8 +78,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EducatorService>().loadTodaySchedule();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final EducatorService service = context.read<EducatorService>();
+      await service.loadTodaySchedule();
+      await service.loadLearners();
     });
   }
 
@@ -107,6 +113,22 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader()),
                 SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
+                SliverToBoxAdapter(
+                  child: BosLearnerLoopInsightsCard(
+                    title: _tEducatorToday(context, 'BOS/MIA Learner Loop'),
+                    subtitle: _tEducatorToday(
+                        context, 'Latest individual improvement signal'),
+                    emptyLabel:
+                        _tEducatorToday(context, 'No learner loop data yet'),
+                    learnerId: service.learners.isNotEmpty
+                        ? service.learners.first.id
+                        : null,
+                    learnerName: service.learners.isNotEmpty
+                        ? service.learners.first.name
+                        : null,
+                    accentColor: ScholesaColors.educator,
+                  ),
+                ),
                 SliverToBoxAdapter(child: _buildQuickStats(service)),
                 SliverToBoxAdapter(child: _buildQuickActions()),
                 SliverToBoxAdapter(child: _buildCurrentClass(service)),

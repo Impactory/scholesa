@@ -34,6 +34,10 @@ const Map<String, String> _educatorMissionReviewEs = <String, String>{
   'Review AI Coach': 'Coach IA de revisión',
   'Keep BOS/MIA loop active while reviewing learner submissions':
       'Mantén activo el ciclo BOS/MIA al revisar entregas de estudiantes',
+  'BOS/MIA Learner Loop': 'Ciclo BOS/MIA del estudiante',
+  'Latest individual improvement signal':
+      'Señal más reciente de mejora individual',
+  'No learner loop data yet': 'Aún no hay datos del ciclo del estudiante',
 };
 
 String _tEducatorMissionReview(BuildContext context, String input) {
@@ -79,6 +83,15 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
         ),
         child: Consumer<MissionService>(
           builder: (BuildContext context, MissionService service, _) {
+            final List<MissionSubmission> filteredSubmissions =
+                _getFilteredSubmissions(service);
+            final MissionSubmission? loopSubmission =
+                filteredSubmissions.isNotEmpty
+                    ? filteredSubmissions.first
+                    : (service.pendingReviews.isNotEmpty
+                        ? service.pendingReviews.first
+                        : null);
+
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
@@ -100,6 +113,19 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                     ],
                   ),
                 ),
+                SliverToBoxAdapter(
+                  child: BosLearnerLoopInsightsCard(
+                    title:
+                        _tEducatorMissionReview(context, 'BOS/MIA Learner Loop'),
+                    subtitle: _tEducatorMissionReview(
+                        context, 'Latest individual improvement signal'),
+                    emptyLabel: _tEducatorMissionReview(
+                        context, 'No learner loop data yet'),
+                    learnerId: loopSubmission?.learnerId,
+                    learnerName: loopSubmission?.learnerName,
+                    accentColor: ScholesaColors.educator,
+                  ),
+                ),
                 SliverToBoxAdapter(child: _buildFilters()),
                 SliverToBoxAdapter(child: _buildStats(service)),
                 if (service.isLoading)
@@ -110,7 +136,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                       ),
                     ),
                   )
-                else if (_getFilteredSubmissions(service).isEmpty)
+                else if (filteredSubmissions.isEmpty)
                   SliverFillRemaining(
                     child: _buildEmptyState(),
                   )
@@ -121,14 +147,14 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
                           final List<MissionSubmission> submissions =
-                              _getFilteredSubmissions(service);
+                              filteredSubmissions;
                           if (index >= submissions.length) return null;
                           return _SubmissionCard(
                             submission: submissions[index],
                             onTap: () => _openReviewSheet(submissions[index]),
                           );
                         },
-                        childCount: _getFilteredSubmissions(service).length,
+                        childCount: filteredSubmissions.length,
                       ),
                     ),
                   ),
