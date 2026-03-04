@@ -20,8 +20,7 @@ const Map<String, String> _educatorSessionsEs = <String, String>{
   'Leadership': 'Liderazgo',
   'Impact': 'Impacto',
   'Failed to create session': 'No se pudo crear la sesión',
-  'Session created and added to your list':
-      'Sesión creada y agregada a tu lista',
+  'Session created and added to your list': 'Sesión creada y agregada a tu lista',
   'Create Session': 'Crear sesión',
   'Session title': 'Título de la sesión',
   'Title is required': 'El título es obligatorio',
@@ -33,13 +32,9 @@ const Map<String, String> _educatorSessionsEs = <String, String>{
   'learners enrolled': 'estudiantes inscritos',
   'Enrolled': 'Inscritos',
   'Schedule': 'Horario',
-  'Substitute request submitted for approval':
-      'Solicitud de sustituto enviada para aprobación',
+  'Substitute request submitted for approval': 'Solicitud de sustituto enviada para aprobación',
   'Request Substitute': 'Solicitar sustituto',
   'View Full Details': 'Ver detalles completos',
-  'Session AI Coach': 'Coach IA de sesiones',
-  'Keep BOS/MIA loop active for each session and learner':
-      'Mantén activo el ciclo BOS/MIA para cada sesión y estudiante',
 };
 
 String _tEducatorSessions(BuildContext context, String input) {

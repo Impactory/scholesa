@@ -9,9 +9,6 @@ import '../../auth/app_state.dart';
 import 'educator_service.dart';
 
 const Map<String, String> _educatorMissionPlansEs = <String, String>{
-  'Future Skills': 'Habilidades del futuro',
-  'Impact & Innovation': 'Impacto e innovación',
-  'Leadership & Agency': 'Liderazgo y agencia',
   'Mission Plans': 'Planes de misión',
   'New Mission': 'Nueva misión',
   'Grade': 'Grado',
@@ -31,21 +28,13 @@ const Map<String, String> _educatorMissionPlansEs = <String, String>{
   'Pillar': 'Pilar',
   'Cancel': 'Cancelar',
   'Mission title is required': 'El título de la misión es obligatorio',
-  'Mission created and added to list':
-      'Misión creada y agregada a la lista',
+  'Mission created and added to list': 'Misión creada y agregada a la lista',
   'Create': 'Crear',
   'No missions yet': 'Aún no hay misiones',
   'Loading...': 'Cargando...',
   'Apply': 'Aplicar',
   'Failed to load missions': 'No se pudieron cargar las misiones',
   'Failed to create mission': 'No se pudo crear la misión',
-  'Mission Planning AI Coach': 'Coach IA de planificación de misiones',
-  'Keep BOS/MIA loop active while designing missions for each learner':
-      'Mantén activo el ciclo BOS/MIA al diseñar misiones para cada estudiante',
-  'BOS/MIA Mission Loop': 'Ciclo de misión BOS/MIA',
-  'Latest individual improvement signal while designing':
-      'Señal de mejora individual más reciente al diseñar',
-  'No mission loop data yet': 'Sin datos de ciclo de misión aún',
 };
 
 String _tEducatorMissionPlans(BuildContext context, String input) {

@@ -27,8 +27,7 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'Week View': 'Vista semanal',
   'Week View Summary': 'Resumen de vista semanal',
   'This week:': 'Esta semana:',
-  'classes loaded from your current schedule.':
-      'clases cargadas desde tu horario actual.',
+  'classes loaded from your current schedule.': 'clases cargadas desde tu horario actual.',
   'Close': 'Cerrar',
   'Mission Review Queue': 'Cola de revisión de misiones',
   'You have': 'Tienes',
@@ -52,10 +51,6 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'AI Classroom Coach': 'Entrenador de aula con IA',
   'Get personalized coaching for classroom management': 'Obtén asesoramiento personalizado para la gestión del aula',
   'Hide Coaching': 'Ocultar asesoramiento',
-  'BOS/MIA Learner Loop': 'Ciclo BOS/MIA del estudiante',
-  'Latest individual improvement signal':
-      'Señal más reciente de mejora individual',
-  'No learner loop data yet': 'Aún no hay datos del ciclo del estudiante',
 };
 
 String _tEducatorToday(BuildContext context, String input) {
