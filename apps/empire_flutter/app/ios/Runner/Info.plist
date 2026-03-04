@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Scholesa uses your microphone to capture voice questions for the AI assistant.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Scholesa uses your photo library so you can attach images to learner profiles, missions, and learning evidence.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Scholesa uses speech recognition to transcribe learner voice input.</string>
 	<key>UIApplicationSceneManifest</key>
