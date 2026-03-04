@@ -305,20 +305,42 @@
   <script>
     {{flutter_js}}
     {{flutter_build_config}}
-    
+
+    function hideSplash() {
+      const splash = document.getElementById('splash');
+      if (!splash || splash.classList.contains('hidden')) return;
+      splash.classList.add('hidden');
+      setTimeout(() => splash.remove(), 500);
+    }
+
+    const splashFallbackTimer = setTimeout(hideSplash, 12000);
+
+    window.addEventListener('flutter-first-frame', () => {
+      clearTimeout(splashFallbackTimer);
+      hideSplash();
+    });
+
+    window.addEventListener('error', () => {
+      clearTimeout(splashFallbackTimer);
+      hideSplash();
+    });
+
+    window.addEventListener('unhandledrejection', () => {
+      clearTimeout(splashFallbackTimer);
+      hideSplash();
+    });
+
     _flutter.loader.load({
       onEntrypointLoaded: async function(engineInitializer) {
-        const appRunner = await engineInitializer.initializeEngine();
-        await appRunner.runApp();
-        
-        // Hide splash after Flutter is ready
-        setTimeout(() => {
-          const splash = document.getElementById('splash');
-          if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(() => splash.remove(), 500);
-          }
-        }, 300);
+        try {
+          const appRunner = await engineInitializer.initializeEngine();
+          await appRunner.runApp();
+          clearTimeout(splashFallbackTimer);
+          setTimeout(hideSplash, 300);
+        } catch (_) {
+          clearTimeout(splashFallbackTimer);
+          hideSplash();
+        }
       }
     });
   </script>
