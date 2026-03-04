@@ -247,6 +247,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'voice.tts',
   'voice.blocked',
   'voice.escalated',
+  'bos_mia.usability.feedback',
 ]);
 
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';

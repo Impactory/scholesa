@@ -61,6 +61,11 @@ Move from "integration complete" to evidence-based usefulness using telemetry al
 - Target: `>= 0.65`
 - Why: direct perceived usefulness signal
 
+8) HQ Real-World Usability Score
+- Formula: `avg(usability_score, usefulness_score, reliability_score, voice_quality_score)` from `bos_mia.usability.feedback`
+- Target: `>= 4.0 / 5.0`
+- Why: leadership-level field feedback on real deployment quality
+
 ## Guardrail Metrics (Must Pass)
 
 A) BOS Spam Guardrail
@@ -77,13 +82,13 @@ C) Silent Failure Guardrail
 
 ## Go / No-Go Rubric (after 14 days)
 - GO (scale):
-  - At least 6/7 core KPIs hit target
+  - At least 7/8 core KPIs hit target
   - All 3 guardrails pass
 - CONDITIONAL GO:
-  - 5/7 core KPIs hit
+  - 6/8 core KPIs hit
   - No more than 1 guardrail fail, with a concrete mitigation plan
 - NO-GO:
-  - <=4/7 core KPIs hit, or >=2 guardrail failures
+  - <=5/8 core KPIs hit, or >=2 guardrail failures
 
 ## Daily Operating Checklist (10 minutes)
 - Confirm BOS proactive open/close parity trend is stable

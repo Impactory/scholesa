@@ -104,6 +104,7 @@ class TelemetryService {
     'focus_restored',
     'educator_class_view',
     'educator_learner_drilldown',
+    'bos_mia.usability.feedback',
   };
 
   FirebaseFunctions? _functions;

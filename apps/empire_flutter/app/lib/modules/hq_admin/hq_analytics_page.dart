@@ -50,6 +50,25 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'No comparison data available': 'No hay datos de comparación disponibles',
   'No top performers available': 'No hay mejores desempeños disponibles',
   'Cancel': 'Cancelar',
+  'BOS-MIA Feedback': 'Feedback de BOS-MIA',
+  'Rate real-world BOS-MIA usability':
+      'Califica la usabilidad real de BOS-MIA',
+  'Usability': 'Usabilidad',
+  'Usefulness': 'Utilidad',
+  'Reliability': 'Confiabilidad',
+  'Voice quality': 'Calidad de voz',
+  'Rollout recommendation': 'Recomendación de despliegue',
+  'Scale now': 'Escalar ahora',
+  'Scale with guardrails': 'Escalar con guardrails',
+  'Hold and fix': 'Pausar y corregir',
+  'Top issues observed': 'Principales issues observados',
+  'Over-triggering': 'Sobre-activación',
+  'Voice recognition misses': 'Fallas de reconocimiento de voz',
+  'Weak coaching quality': 'Calidad de coaching débil',
+  'Low learner re-engagement': 'Baja reactivación del learner',
+  'Telemetry gaps': 'Brechas de telemetría',
+  'Submit feedback': 'Enviar feedback',
+  'HQ feedback submitted': 'Feedback de HQ enviado',
   'HQ analytics report prepared for export':
     'Reporte de analítica HQ preparado para exportar',
   'Export': 'Exportar',
@@ -77,6 +96,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   List<_PillarAnalyticsData> _pillarAnalyticsData = <_PillarAnalyticsData>[];
   List<_SiteComparisonData> _siteComparisonData = <_SiteComparisonData>[];
   List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
+  int _usabilityScore = 4;
+  int _usefulnessScore = 4;
+  int _reliabilityScore = 4;
+  int _voiceQualityScore = 4;
+  String _rolloutRecommendation = 'scale_with_guardrails';
+  Set<String> _topIssues = <String>{};
 
   String _t(String input) {
     final String locale = Localizations.localeOf(context).languageCode;
@@ -214,6 +239,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              onPressed: _openBosMiaFeedbackDialog,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.rate_review, color: ScholesaColors.futureSkills),
               ),
             ),
             IconButton(
@@ -835,6 +871,225 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openBosMiaFeedbackDialog() async {
+    TelemetryService.instance.logEvent(
+      event: 'popup.shown',
+      metadata: const <String, dynamic>{
+        'popup_id': 'hq_bos_mia_feedback',
+        'surface': 'hq_analytics_page',
+      },
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setDialogState) {
+            return AlertDialog(
+              title: Text(_t('BOS-MIA Feedback')),
+              content: SizedBox(
+                width: 420,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        _t('Rate real-world BOS-MIA usability'),
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildScoreChips(
+                        label: _t('Usability'),
+                        currentValue: _usabilityScore,
+                        onChanged: (int value) {
+                          setDialogState(() => _usabilityScore = value);
+                        },
+                      ),
+                      _buildScoreChips(
+                        label: _t('Usefulness'),
+                        currentValue: _usefulnessScore,
+                        onChanged: (int value) {
+                          setDialogState(() => _usefulnessScore = value);
+                        },
+                      ),
+                      _buildScoreChips(
+                        label: _t('Reliability'),
+                        currentValue: _reliabilityScore,
+                        onChanged: (int value) {
+                          setDialogState(() => _reliabilityScore = value);
+                        },
+                      ),
+                      _buildScoreChips(
+                        label: _t('Voice quality'),
+                        currentValue: _voiceQualityScore,
+                        onChanged: (int value) {
+                          setDialogState(() => _voiceQualityScore = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _t('Rollout recommendation'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Map<String, String>>[
+                          <String, String>{'value': 'scale_now', 'label': _t('Scale now')},
+                          <String, String>{
+                            'value': 'scale_with_guardrails',
+                            'label': _t('Scale with guardrails')
+                          },
+                          <String, String>{'value': 'hold_and_fix', 'label': _t('Hold and fix')},
+                        ].map((Map<String, String> option) {
+                          return ChoiceChip(
+                            label: Text(option['label']!),
+                            selected: _rolloutRecommendation == option['value'],
+                            onSelected: (_) {
+                              setDialogState(() {
+                                _rolloutRecommendation = option['value']!;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _t('Top issues observed'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Map<String, String>>[
+                          <String, String>{
+                            'value': 'over_triggering',
+                            'label': _t('Over-triggering'),
+                          },
+                          <String, String>{
+                            'value': 'voice_recognition_misses',
+                            'label': _t('Voice recognition misses'),
+                          },
+                          <String, String>{
+                            'value': 'weak_coaching_quality',
+                            'label': _t('Weak coaching quality'),
+                          },
+                          <String, String>{
+                            'value': 'low_reengagement',
+                            'label': _t('Low learner re-engagement'),
+                          },
+                          <String, String>{
+                            'value': 'telemetry_gaps',
+                            'label': _t('Telemetry gaps'),
+                          },
+                        ].map((Map<String, String> option) {
+                          final bool selected = _topIssues.contains(option['value']);
+                          return FilterChip(
+                            label: Text(option['label']!),
+                            selected: selected,
+                            onSelected: (bool value) {
+                              setDialogState(() {
+                                if (value) {
+                                  _topIssues = <String>{..._topIssues, option['value']!};
+                                } else {
+                                  _topIssues = _topIssues
+                                      .where((String issue) => issue != option['value'])
+                                      .toSet();
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'popup.dismissed',
+                      metadata: const <String, dynamic>{
+                        'popup_id': 'hq_bos_mia_feedback',
+                        'surface': 'hq_analytics_page',
+                      },
+                    );
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Text(_t('Cancel')),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'bos_mia.usability.feedback',
+                      metadata: <String, dynamic>{
+                        'surface': 'hq_analytics_page',
+                        'site_filter': _selectedSite,
+                        'period': _selectedPeriod,
+                        'usability_score': _usabilityScore,
+                        'usefulness_score': _usefulnessScore,
+                        'reliability_score': _reliabilityScore,
+                        'voice_quality_score': _voiceQualityScore,
+                        'rollout_recommendation': _rolloutRecommendation,
+                        'top_issues': _topIssues.toList()..sort(),
+                      },
+                    );
+                    TelemetryService.instance.logEvent(
+                      event: 'popup.completed',
+                      metadata: const <String, dynamic>{
+                        'popup_id': 'hq_bos_mia_feedback',
+                        'surface': 'hq_analytics_page',
+                        'completion_action': 'submit_feedback',
+                      },
+                    );
+                    Navigator.pop(dialogContext);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(_t('HQ feedback submitted')),
+                        backgroundColor: ScholesaColors.hq,
+                      ),
+                    );
+                  },
+                  child: Text(_t('Submit feedback')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildScoreChips({
+    required String label,
+    required int currentValue,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: List<Widget>.generate(5, (int index) {
+            final int score = index + 1;
+            return ChoiceChip(
+              label: Text('$score'),
+              selected: currentValue == score,
+              onSelected: (_) => onChanged(score),
+            );
+          }),
+        ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 

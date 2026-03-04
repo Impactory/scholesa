@@ -167,6 +167,28 @@ FROM base
 GROUP BY 1;
 ```
 
+## 8) HQ Real-World Usability Score
+```sql
+WITH base AS (...)
+SELECT
+  site_id,
+  AVG(CAST(JSON_VALUE(metadata_json, '$.usability_score') AS FLOAT64)) AS avg_usability_score,
+  AVG(CAST(JSON_VALUE(metadata_json, '$.usefulness_score') AS FLOAT64)) AS avg_usefulness_score,
+  AVG(CAST(JSON_VALUE(metadata_json, '$.reliability_score') AS FLOAT64)) AS avg_reliability_score,
+  AVG(CAST(JSON_VALUE(metadata_json, '$.voice_quality_score') AS FLOAT64)) AS avg_voice_quality_score,
+  AVG(
+    (
+      CAST(JSON_VALUE(metadata_json, '$.usability_score') AS FLOAT64) +
+      CAST(JSON_VALUE(metadata_json, '$.usefulness_score') AS FLOAT64) +
+      CAST(JSON_VALUE(metadata_json, '$.reliability_score') AS FLOAT64) +
+      CAST(JSON_VALUE(metadata_json, '$.voice_quality_score') AS FLOAT64)
+    ) / 4.0
+  ) AS hq_real_world_usability_score
+FROM base
+WHERE event_type = 'bos_mia.usability.feedback'
+GROUP BY 1;
+```
+
 ---
 
 ## Guardrail Queries
