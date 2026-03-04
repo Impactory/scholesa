@@ -19,6 +19,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const resolveLoginError = (err: unknown): string => {
+    if (typeof err === 'object' && err !== null && 'code' in err) {
+      const code = String((err as { code?: unknown }).code ?? '');
+      if (code.startsWith('auth/')) {
+        return t('auth.login.invalidCredentials');
+      }
+    }
+
+    return 'Firebase login succeeded, but Firebase session setup failed. Check Firebase Admin credentials.';
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -30,9 +41,9 @@ export default function LoginPage() {
       // Redirect to Dashboard (Redirector will handle role routing)
       router.replace(`/${locale}/dashboard`);
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(t('auth.login.invalidCredentials'));
+      setError(resolveLoginError(err));
     } finally {
       setLoading(false);
     }

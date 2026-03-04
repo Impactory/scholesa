@@ -1,14 +1,43 @@
 import admin from 'firebase-admin';
 
+type ServiceAccountShape = {
+  project_id?: string;
+  client_email?: string;
+  private_key?: string;
+};
+
+function parseServiceAccountFromEnv(): ServiceAccountShape | null {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as ServiceAccountShape;
+  } catch (_) {
+    try {
+      const decoded = Buffer.from(raw, 'base64').toString('utf8');
+      return JSON.parse(decoded) as ServiceAccountShape;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
 const initializeFirebaseAdmin = () => {
   if (admin.apps.length > 0) {
     return admin.apps[0]!;
   }
 
   // Check if we have credentials
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const serviceAccount = parseServiceAccountFromEnv();
+  const projectId =
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? serviceAccount?.project_id;
+  const clientEmail =
+    process.env.FIREBASE_ADMIN_CLIENT_EMAIL ?? serviceAccount?.client_email;
+  const privateKey =
+    process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n') ??
+    serviceAccount?.private_key?.replace(/\\n/g, '\n');
 
   if (!projectId || !clientEmail || !privateKey) {
     // During build time or when credentials are missing, initialize with default (for GCP environments)

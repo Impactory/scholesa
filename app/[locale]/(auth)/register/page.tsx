@@ -23,6 +23,17 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const resolveRegisterError = (err: unknown): string => {
+    if (typeof err === 'object' && err !== null && 'code' in err) {
+      const code = String((err as { code?: unknown }).code ?? '');
+      if (code.startsWith('auth/')) {
+        return String((err as { message?: unknown }).message ?? t('auth.register.fallbackError'));
+      }
+    }
+
+    return 'Firebase account was created, but Firebase session setup failed. Check Firebase Admin credentials.';
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -52,9 +63,9 @@ export default function RegisterPage() {
       // 4. Redirect to Dashboard (Redirector will handle role routing)
       router.replace(`/${locale}/dashboard`);
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      setError(err.message || t('auth.register.fallbackError'));
+      setError(resolveRegisterError(err));
     } finally {
       setLoading(false);
     }

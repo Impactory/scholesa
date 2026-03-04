@@ -1,5 +1,7 @@
 export const SUPPORTED_LOCALES = ['en', 'es', 'zh'] as const;
 
+const COMPLIANCE_REQUIRED_LOCALE_MARKERS = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
+
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 const LOCALE_ALIASES: Record<string, SupportedLocale> = {
@@ -17,7 +19,8 @@ const LOCALE_ALIASES: Record<string, SupportedLocale> = {
   'zh-tw': 'zh',
   'zh-hant': 'zh',
   'zh-hk': 'zh',
-  th: 'zh'
+  th: 'zh',
+  'th-th': 'zh',
 };
 
 export function normalizeLocale(rawLocale: string | null | undefined): SupportedLocale {

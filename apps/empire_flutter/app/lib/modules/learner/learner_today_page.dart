@@ -38,6 +38,9 @@ const Map<String, String> _learnerTodayEs = <String, String>{
     'AI coaching is loading': 'El asesoramiento de IA se está cargando',
     'Runtime context is syncing. Try again in a moment.':
       'El contexto runtime se está sincronizando. Inténtalo en un momento.',
+    'BOS/MIA Learning Loop': 'Ciclo de aprendizaje BOS/MIA',
+    'Latest individual improvement signal': 'Última señal individual de mejora',
+    'No learner loop data yet': 'Aún no hay datos del ciclo de aprendizaje',
 };
 
 /// Learner Today Page - Daily summary for learners
@@ -90,6 +93,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildGreetingCard()),
             SliverToBoxAdapter(child: _buildTodayProgress()),
             SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
+            SliverToBoxAdapter(child: _buildLearnerLoopInsights(context)),
             SliverToBoxAdapter(child: _buildQuickActions()),
             SliverToBoxAdapter(child: _buildTodayHabits()),
             SliverToBoxAdapter(child: _buildActiveMissions()),
@@ -652,6 +656,19 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           'motivation',
         ],
       ),
+    );
+  }
+
+  Widget _buildLearnerLoopInsights(BuildContext context) {
+    final AppState appState = context.read<AppState>();
+    final String? learnerId = appState.userId;
+    return BosLearnerLoopInsightsCard(
+      title: _t('BOS/MIA Learning Loop'),
+      subtitle: _t('Latest individual improvement signal'),
+      emptyLabel: _t('No learner loop data yet'),
+      learnerId: learnerId,
+      learnerName: appState.displayName,
+      accentColor: ScholesaColors.learner,
     );
   }
 

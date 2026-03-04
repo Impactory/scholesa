@@ -10,6 +10,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
   }
 
+  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+  const localeCookieOptions = {
+    name: 'scholesa_locale',
+    value: resolvedLocale,
+    maxAge: expiresIn,
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    sameSite: 'lax' as const,
+  };
+
   try {
     const auth = getAdminAuth();
     const db = getAdminDb();
@@ -36,7 +47,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
     const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
 
     const options = {
@@ -50,15 +60,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ status: 'success' }, { status: 200 });
     response.cookies.set(options);
-    response.cookies.set({
-      name: 'scholesa_locale',
-      value: resolvedLocale,
-      maxAge: expiresIn,
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      sameSite: 'lax',
-    });
+    response.cookies.set(localeCookieOptions);
 
     console.info(
       JSON.stringify({
@@ -70,6 +72,21 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
+    const isAdminMissing =
+      error instanceof Error &&
+      error.message.includes('Firebase Admin not initialized');
+
+    if (isAdminMissing) {
+      console.error('Firebase Admin credentials are missing for session creation.');
+      return NextResponse.json(
+        {
+          error:
+            'Firebase Admin is not initialized. Configure FIREBASE_SERVICE_ACCOUNT or FIREBASE_ADMIN_* env vars.',
+        },
+        { status: 503 },
+      );
+    }
+
     console.error('Error creating session cookie:', error);
     return NextResponse.json({ error: 'Failed to create session' }, { status: 401 });
   }

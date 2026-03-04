@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth/app_state.dart';
+import '../services/telemetry_service.dart';
 import '../ui/theme/scholesa_theme.dart';
 import 'bos_service.dart';
 
@@ -30,11 +33,23 @@ class BosLearnerLoopInsightsCard extends StatefulWidget {
 
 class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard> {
   Future<Map<String, dynamic>?>? _futureInsights;
+  String? _lastSiteId;
 
   @override
   void initState() {
     super.initState();
+    _lastSiteId = _activeSiteId();
     _futureInsights = _loadInsights();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final String? siteId = _activeSiteId();
+    if (siteId != _lastSiteId) {
+      _lastSiteId = siteId;
+      _futureInsights = _loadInsights();
+    }
   }
 
   @override
@@ -49,18 +64,59 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
     final String? learnerId = widget.learnerId;
     if (learnerId == null || learnerId.isEmpty) return null;
     final AppState? appState = context.read<AppState?>();
-    final String? siteId = appState?.activeSiteId;
+    final String? siteId = _activeSiteId();
     if (siteId == null || siteId.isEmpty) return null;
 
     try {
-      return await BosService.instance.getLearnerLoopInsights(
+      final Map<String, dynamic> insights =
+          await BosService.instance.getLearnerLoopInsights(
         siteId: siteId,
         learnerId: learnerId,
         lookbackDays: 30,
       );
+
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'insight.viewed',
+        metadata: <String, dynamic>{
+          'surface': 'bos_learner_loop_card',
+          'insight_type': 'bos_mia_learner_loop',
+          'site_id': siteId,
+          'learner_id': learnerId,
+          'role': appState?.role?.name,
+          'status': insights['error'] == null ? 'ok' : 'fallback',
+        },
+      ));
+
+      return insights;
     } catch (_) {
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'insight.viewed',
+        metadata: <String, dynamic>{
+          'surface': 'bos_learner_loop_card',
+          'insight_type': 'bos_mia_learner_loop',
+          'site_id': siteId,
+          'learner_id': learnerId,
+          'role': appState?.role?.name,
+          'status': 'error',
+        },
+      ));
       return null;
     }
+  }
+
+  String? _activeSiteId() {
+    final AppState? appState = context.read<AppState?>();
+    final String activeSite = appState?.activeSiteId?.trim() ?? '';
+    if (activeSite.isNotEmpty) {
+      return activeSite;
+    }
+    if (appState != null && appState.siteIds.isNotEmpty) {
+      final String firstSite = appState.siteIds.first.trim();
+      if (firstSite.isNotEmpty) {
+        return firstSite;
+      }
+    }
+    return null;
   }
 
   @override
