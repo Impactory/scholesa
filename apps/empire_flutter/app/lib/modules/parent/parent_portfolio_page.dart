@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -22,6 +24,9 @@ const Map<String, String> _parentPortfolioEs = <String, String>{
   'Download': 'Descargar',
   'activity': 'actividad',
   'Completed by': 'Completado por',
+  'Getting AI Guidance': 'Obteniendo orientación de IA',
+  'Get personalized coaching on supporting your child': 'Obtén asesoramiento personalizado sobre cómo apoyar a tu hijo',
+  'Hide AI Guidance': 'Ocultar orientación de IA',
 };
 
 /// Parent portfolio page for viewing learner's work and achievements
@@ -36,6 +41,7 @@ class ParentPortfolioPage extends StatefulWidget {
 class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _showAiCoach = false;
 
   String _t(String input) {
     final String locale = Localizations.localeOf(context).languageCode;
@@ -82,12 +88,19 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         builder: (BuildContext context, ParentService service, _) {
           final List<_PortfolioItem> portfolioItems =
               _portfolioItemsFromService(service);
-          return TabBarView(
-            controller: _tabController,
+          return Column(
             children: <Widget>[
-              _buildPortfolioGrid(portfolioItems, null),
-              _buildPortfolioGrid(portfolioItems, _ItemType.project),
-              _buildPortfolioGrid(portfolioItems, _ItemType.badge),
+              _buildAiCoachingSection(context),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: <Widget>[
+                    _buildPortfolioGrid(portfolioItems, null),
+                    _buildPortfolioGrid(portfolioItems, _ItemType.project),
+                    _buildPortfolioGrid(portfolioItems, _ItemType.badge),
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -417,6 +430,90 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       return 'Impact & Innovation';
     }
     return 'Future Skills';
+  }
+
+  Widget _buildAiCoachingSection(BuildContext context) {
+    final AppState? appState = context.read<AppState>();
+    final UserRole? role = appState?.role;
+
+    if (role == null || role != UserRole.parent) {
+      return const SizedBox.shrink();
+    }
+
+    final Color parentColor = ScholesaColors.parentGradient.colors.first;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: parentColor.withValues(alpha: 0.1),
+              border: Border.all(
+                color: parentColor.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.smart_toy_rounded,
+                color: parentColor,
+              ),
+              title: Text(_t('Getting AI Guidance')),
+              subtitle: Text(_t('Get personalized coaching on supporting your child')),
+              trailing: IconButton(
+                icon: Icon(
+                  _showAiCoach ? Icons.expand_less : Icons.expand_more,
+                ),
+                onPressed: () {
+                  setState(() => _showAiCoach = !_showAiCoach);
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'parent_portfolio',
+                      'cta': 'parent_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'surface': 'portfolio_header',
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          if (_showAiCoach) _buildAiCoachPanel(context, role),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return const SizedBox.shrink();
+    }
+
+    final Color parentColor = ScholesaColors.parentGradient.colors.first;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: parentColor.withValues(alpha: 0.05),
+        border: Border.all(
+          color: parentColor.withValues(alpha: 0.1),
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      constraints: const BoxConstraints(minHeight: 350),
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        conceptTags: <String>[
+          'parent_support',
+          'learning_guidance',
+          'child_achievement',
+        ],
+      ),
+    );
   }
 }
 

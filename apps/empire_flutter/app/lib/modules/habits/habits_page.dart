@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import 'habit_models.dart';
 import 'habit_service.dart';
 
@@ -39,6 +41,9 @@ const Map<String, String> _habitsEs = <String, String>{
   'minutes': 'minutos',
   'Please enter a habit name': 'Ingresa un nombre de hábito',
   'created!': '¡creado!',
+  'Reflect with AI': 'Reflexiona con IA',
+  'Get coaching on your progress': 'Obtén orientación sobre tu progreso',
+  'Hide AI Reflection': 'Ocultar reflexión de IA',
 };
 
 String _tHabits(BuildContext context, String input) {
@@ -868,7 +873,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
 }
 
 /// Habit detail bottom sheet
-class _HabitDetailSheet extends StatelessWidget {
+class _HabitDetailSheet extends StatefulWidget {
   const _HabitDetailSheet({
     required this.habit,
     required this.onDismissed,
@@ -877,7 +882,15 @@ class _HabitDetailSheet extends StatelessWidget {
   final VoidCallback onDismissed;
 
   @override
+  State<_HabitDetailSheet> createState() => _HabitDetailSheetState();
+}
+
+class _HabitDetailSheetState extends State<_HabitDetailSheet> {
+  bool _showAiReflection = false;
+
+  @override
   Widget build(BuildContext context) {
+    final Habit habit = widget.habit;
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -958,7 +971,7 @@ class _HabitDetailSheet extends StatelessWidget {
                         'habit_id': habit.id,
                       },
                     );
-                    onDismissed();
+                    widget.onDismissed();
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.close),
@@ -1052,9 +1065,116 @@ class _HabitDetailSheet extends StatelessWidget {
               _tHabits(context, 'Started'),
               _formatDate(habit.createdAt),
             ),
+            const SizedBox(height: 24),
+
+            // AI Reflection Section
+            _buildAiReflectionSection(context),
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiReflectionSection(BuildContext context) {
+    final AppState? appState = context.read<AppState>();
+    final String learnerId = appState?.userId ?? '';
+    final UserRole? role = appState?.role;
+
+    if (learnerId.isEmpty || role == null || role != UserRole.learner) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.learner.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: ScholesaColors.learner.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Icon(Icons.smart_toy_rounded,
+                      color: ScholesaColors.learner, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _tHabits(context, 'Reflect with AI'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: ScholesaColors.learner,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'cta': _showAiReflection
+                          ? 'habit_ai_hide'
+                          : 'habit_ai_show',
+                      'habit_id': widget.habit.id,
+                      'surface': 'habit_detail_sheet',
+                    },
+                  );
+                  setState(() => _showAiReflection = !_showAiReflection);
+                },
+                icon: Icon(
+                  _showAiReflection
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                  color: ScholesaColors.learner,
+                ),
+              ),
+            ],
+          ),
+          if (!_showAiReflection) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              _tHabits(context, 'Get coaching on your progress'),
+              style: TextStyle(
+                color: context.schTextSecondary,
+                fontSize: 13,
+              ),
+            ),
+          ],
+          if (_showAiReflection) ...<Widget>[
+            const SizedBox(height: 16),
+            _buildAiReflectionPanel(context, role),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiReflectionPanel(
+      BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return Center(
+        child: Text(
+          'AI Coach not available',
+          style: TextStyle(color: context.schTextSecondary),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 400,
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        conceptTags: <String>['habit_reflection', widget.habit.title],
       ),
     );
   }

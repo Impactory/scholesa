@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import 'mission_models.dart';
 import 'mission_service.dart';
 
@@ -37,6 +39,9 @@ const Map<String, String> _missionsEs = <String, String>{
       'No se puede enviar la misión en este momento',
   'Submitted': 'Enviada',
   'Submit for Review': 'Enviar para revisión',
+  'Get AI Help': 'Obtener ayuda de IA',
+  'Ask for hints, explanations, or debugging help': 'Pide pistas, explicaciones o ayuda para depuración',
+  'Hide AI Coach': 'Ocultar AI Coach',
 };
 
 String _tMissions(BuildContext context, String input) {
@@ -778,12 +783,19 @@ class _MissionCard extends StatelessWidget {
   }
 }
 
-class _MissionDetailsSheet extends StatelessWidget {
+class _MissionDetailsSheet extends StatefulWidget {
   const _MissionDetailsSheet({required this.mission});
   final Mission mission;
 
+  @override
+  State<_MissionDetailsSheet> createState() => _MissionDetailsSheetState();
+}
+
+class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
+  bool _showAiCoach = false;
+
   Color get _pillarColor {
-    switch (mission.pillar) {
+    switch (widget.mission.pillar) {
       case Pillar.futureSkills:
         return const Color(0xFF3B82F6);
       case Pillar.leadership:
@@ -795,6 +807,7 @@ class _MissionDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Mission mission = widget.mission;
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
@@ -1007,6 +1020,10 @@ class _MissionDetailsSheet extends StatelessWidget {
                     const SizedBox(height: 24),
                   ],
 
+                  // AI Coaching Section
+                  _buildAiCoachingSection(context, _pillarColor),
+                  const SizedBox(height: 24),
+
                   // Action button
                   if (mission.status == MissionStatus.notStarted)
                     SizedBox(
@@ -1142,6 +1159,113 @@ class _MissionDetailsSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachingSection(BuildContext context, Color pillarColor) {
+    final AppState? appState = context.read<AppState>();
+    final String learnerId = appState?.userId ?? '';
+    final UserRole? role = appState?.role;
+
+    if (learnerId.isEmpty || role == null || role != UserRole.learner) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: pillarColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: pillarColor.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Icon(Icons.smart_toy_rounded, color: pillarColor, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        _tMissions(context, 'Get AI Help'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: pillarColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': _showAiCoach
+                              ? 'mission_ai_hide'
+                              : 'mission_ai_show',
+                          'mission_id': widget.mission.id,
+                          'surface': 'mission_detail_sheet',
+                        },
+                      );
+                      setState(() => _showAiCoach = !_showAiCoach);
+                    },
+                    icon: Icon(
+                      _showAiCoach
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      color: pillarColor,
+                    ),
+                  ),
+                ],
+              ),
+              if (!_showAiCoach) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  _tMissions(
+                      context, 'Ask for hints, explanations, or debugging help'),
+                  style: TextStyle(
+                    color: context.schTextSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+              if (_showAiCoach) ...<Widget>[
+                const SizedBox(height: 16),
+                _buildAiCoachPanel(context, role),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAiCoachPanel(
+      BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return Center(
+        child: Text(
+          'AI Coach not available',
+          style: TextStyle(color: context.schTextSecondary),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 400,
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        missionId: widget.mission.id,
+        conceptTags: widget.mission.skills.map((Skill s) => s.name).toList(),
       ),
     );
   }

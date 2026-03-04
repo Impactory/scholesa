@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 
 const Map<String, String> _learnerPortfolioEs = <String, String>{
   'Share': 'Compartir',
@@ -59,6 +62,9 @@ const Map<String, String> _learnerPortfolioEs = <String, String>{
   'missions': 'misiones',
   'Level': 'Nivel',
   'to next level': 'para el siguiente nivel',
+  'Reflect on Progress': 'Reflexiona sobre tu progreso',
+  'Get AI insights on your achievements': 'Obtén información de IA sobre tus logros',
+  'Hide AI Insights': 'Ocultar información de IA',
 };
 
 String _tLearnerPortfolio(BuildContext context, String input) {
@@ -78,6 +84,7 @@ class LearnerPortfolioPage extends StatefulWidget {
 class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _showAiCoach = false;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
 
@@ -135,6 +142,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               SliverToBoxAdapter(child: _buildProfileCard()),
               SliverToBoxAdapter(child: _buildLevelProgress()),
               SliverToBoxAdapter(child: _buildPillarStats()),
+              SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
               SliverToBoxAdapter(child: _buildTabBar()),
             ];
           },
@@ -724,6 +732,86 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             },
             child: Text(_t('Generate Link')),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachingSection(BuildContext context) {
+    final AppState? appState = context.read<AppState>();
+    final UserRole? role = appState?.role;
+
+    if (role == null || role != UserRole.learner) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: context.schSurface,
+              border: Border.all(
+                color: ScholesaColors.learner.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.smart_toy_rounded,
+                color: ScholesaColors.learner,
+              ),
+              title: Text(_t('Reflect on Progress')),
+              subtitle: Text(_t('Get AI insights on your achievements')),
+              trailing: IconButton(
+                icon: Icon(
+                  _showAiCoach ? Icons.expand_less : Icons.expand_more,
+                ),
+                onPressed: () {
+                  setState(() => _showAiCoach = !_showAiCoach);
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'learner_portfolio',
+                      'cta': 'portfolio_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'surface': 'portfolio_header',
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          if (_showAiCoach) _buildAiCoachPanel(context, role),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: context.schSurface,
+        border: Border.all(
+          color: ScholesaColors.learner.withValues(alpha: 0.1),
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      constraints: const BoxConstraints(minHeight: 350),
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        conceptTags: <String>[
+          'portfolio',
+          'reflection',
+          'achievements',
         ],
       ),
     );
