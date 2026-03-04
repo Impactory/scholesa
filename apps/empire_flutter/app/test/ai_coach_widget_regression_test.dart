@@ -186,6 +186,30 @@ void main() {
       expect(fakeRuntime.trackedEvents, contains('ai_help_used'));
       expect(find.textContaining('Try one tiny next step now.'), findsOneWidget);
     });
+
+    testWidgets('voice-only mode hides text input and send button',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: runtime,
+              actorRole: UserRole.learner,
+              voiceOnlyConversation: true,
+              skipVoiceInitializationForTesting: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 240));
+
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byIcon(Icons.send), findsNothing);
+      expect(find.byIcon(Icons.mic_none), findsOneWidget);
+      expect(find.textContaining('BOS-MIA'), findsOneWidget);
+    });
   });
 }
 

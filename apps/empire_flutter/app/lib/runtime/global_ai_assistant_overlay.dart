@@ -29,6 +29,10 @@ class GlobalAiAssistantOverlay extends StatefulWidget {
 class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
   bool _assistantSheetOpen = false;
   DateTime? _lastHoverOpenAt;
+  DateTime? _lastBosPopupAt;
+  bool _bosPopupInFlight = false;
+  String? _bosMonitorKey;
+  LearningRuntimeProvider? _bosRuntime;
 
   bool _shouldOpenFromHover() {
     if (_assistantSheetOpen) {
@@ -41,6 +45,10 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
     }
     _lastHoverOpenAt = now;
     return true;
+  }
+
+  bool _isHesitating(XHat state) {
+    return state.engagement <= 0.42 || state.cognition <= 0.38;
   }
 
   bool _isPointerPlatform() {
@@ -70,6 +78,13 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
         if (siteId.isEmpty) {
           return const SizedBox.shrink();
         }
+
+        _syncBosAutoPopupMonitor(
+          context,
+          role: role,
+          siteId: siteId,
+          learnerId: learnerId,
+        );
 
         final ThemeData theme = Theme.of(context);
         return SafeArea(
@@ -219,6 +234,168 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
         'trigger': trigger,
       },
     );
+  }
+
+  void _syncBosAutoPopupMonitor(
+    BuildContext context, {
+    required UserRole role,
+    required String siteId,
+    required String learnerId,
+  }) {
+    if (role != UserRole.learner) {
+      _disposeBosMonitor();
+      return;
+    }
+
+    final String monitorKey = '$siteId::$learnerId';
+    if (_bosMonitorKey == monitorKey && _bosRuntime != null) {
+      return;
+    }
+
+    _disposeBosMonitor();
+    _bosMonitorKey = monitorKey;
+    unawaited(_initializeBosMonitor(
+      context,
+      monitorKey: monitorKey,
+      siteId: siteId,
+      learnerId: learnerId,
+    ));
+  }
+
+  Future<void> _initializeBosMonitor(
+    BuildContext context, {
+    required String monitorKey,
+    required String siteId,
+    required String learnerId,
+  }) async {
+    final String? sessionOccurrenceId = await _resolveSessionOccurrenceId(
+      context,
+      siteId: siteId,
+      learnerId: learnerId,
+    );
+
+    if (!mounted || _bosMonitorKey != monitorKey) {
+      return;
+    }
+
+    final LearningRuntimeProvider runtime = LearningRuntimeProvider(
+      siteId: siteId,
+      learnerId: learnerId,
+      gradeBand: GradeBand.g4_6,
+      sessionOccurrenceId: sessionOccurrenceId,
+    );
+    runtime.startListening();
+    runtime.addListener(_handleBosRuntimeUpdate);
+
+    _bosRuntime = runtime;
+    unawaited(_handleBosRuntimeUpdate());
+  }
+
+  Future<void> _handleBosRuntimeUpdate() async {
+    final LearningRuntimeProvider? runtime = _bosRuntime;
+    if (!mounted || runtime == null || _assistantSheetOpen || _bosPopupInFlight) {
+      return;
+    }
+
+    final XHat? state = runtime.state?.xHat;
+    if (state == null || !_isHesitating(state)) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (_lastBosPopupAt != null &&
+        now.difference(_lastBosPopupAt!) < const Duration(minutes: 3)) {
+      return;
+    }
+
+    final AppState? appState = context.read<AppState?>();
+    final UserRole? role = appState?.role;
+    final String learnerId = (appState?.userId ?? '').trim();
+    final String siteId = appState == null ? '' : _resolveSiteId(appState);
+    if (role != UserRole.learner || learnerId.isEmpty || siteId.isEmpty) {
+      return;
+    }
+
+    _bosPopupInFlight = true;
+    _lastBosPopupAt = now;
+    try {
+      await _openAssistantSheet(
+        context,
+        role: role!,
+        siteId: siteId,
+        learnerId: learnerId,
+        trigger: 'bos_auto_popup',
+      );
+    } finally {
+      _bosPopupInFlight = false;
+    }
+  }
+
+  Future<String?> _resolveSessionOccurrenceId(
+    BuildContext context, {
+    required String siteId,
+    required String learnerId,
+  }) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> attempts =
+          await FirebaseFirestore.instance
+              .collection('missionAttempts')
+              .where('learnerId', isEqualTo: learnerId)
+              .where('siteId', isEqualTo: siteId)
+              .orderBy('updatedAt', descending: true)
+              .limit(10)
+              .get();
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in attempts.docs) {
+        final String value =
+            (doc.data()['sessionOccurrenceId'] as String? ?? '').trim();
+        if (value.isNotEmpty) return value;
+      }
+    } catch (_) {
+      // Best-effort only; continue to interaction event fallback.
+    }
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> interactions =
+          await FirebaseFirestore.instance
+              .collection('interactionEvents')
+              .where('actorId', isEqualTo: learnerId)
+              .where('siteId', isEqualTo: siteId)
+              .where('eventType', isEqualTo: 'session_joined')
+              .orderBy('timestamp', descending: true)
+              .limit(1)
+              .get();
+
+      if (interactions.docs.isNotEmpty) {
+        final Map<String, dynamic> data = interactions.docs.first.data();
+        final String topLevel =
+            (data['sessionOccurrenceId'] as String? ?? '').trim();
+        if (topLevel.isNotEmpty) return topLevel;
+        final Map<String, dynamic>? payload =
+            data['payload'] as Map<String, dynamic>?;
+        final String fromPayload =
+            (payload?['sessionOccurrenceId'] as String? ?? '').trim();
+        if (fromPayload.isNotEmpty) return fromPayload;
+      }
+    } catch (_) {
+      // Keep null when unavailable.
+    }
+
+    return null;
+  }
+
+  void _disposeBosMonitor() {
+    _bosRuntime?.removeListener(_handleBosRuntimeUpdate);
+    _bosRuntime?.dispose();
+    _bosRuntime = null;
+    _bosMonitorKey = null;
+  }
+
+  @override
+  void dispose() {
+    _disposeBosMonitor();
+    super.dispose();
   }
 
   String _resolveSiteId(AppState appState) {
@@ -387,6 +564,7 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                     allowBosFallback: widget.role == UserRole.learner,
                     autoSpeakGreeting: true,
                     autoAssistOnHesitation: widget.role == UserRole.learner,
+                    voiceOnlyConversation: widget.role == UserRole.learner,
                     conceptTags: <String>[
                       'global-assistant',
                       widget.role.name,

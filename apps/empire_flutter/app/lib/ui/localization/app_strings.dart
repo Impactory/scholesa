@@ -82,6 +82,9 @@ class AppStrings {
       'ai.voice.enableOutput': 'Enable voice output',
       'ai.voice.speaking': 'Speaking…',
       'ai.voice.tapInterrupt': 'Tap to interrupt',
+      'ai.voiceOnly.promptTap':
+          'Tap the mic and speak. BOS-MIA and AI will reply by voice.',
+      'ai.voiceOnly.listening': 'Listening… speak now.',
       'ai.voice.outputUnavailable':
           'Voice output is unavailable. Check device volume and audio permissions.',
       'ai.voice.outputUnavailableWeb':
@@ -215,6 +218,9 @@ class AppStrings {
       'ai.voice.enableOutput': 'Activar salida de voz',
       'ai.voice.speaking': 'Hablando…',
       'ai.voice.tapInterrupt': 'Toca para interrumpir',
+      'ai.voiceOnly.promptTap':
+          'Toca el micrófono y habla. BOS-MIA y la IA responderán por voz.',
+      'ai.voiceOnly.listening': 'Escuchando… habla ahora.',
       'ai.voice.outputUnavailable':
           'La salida de voz no está disponible. Verifica el volumen y los permisos de audio del dispositivo.',
       'ai.voice.outputUnavailableWeb':

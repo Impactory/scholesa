@@ -47,6 +47,7 @@ class AiCoachWidget extends StatefulWidget {
     this.onSpeakOverride,
     this.onInterventionRequest,
     this.onAutoResponseRequest,
+    this.voiceOnlyConversation = false,
     this.missionId,
     this.checkpointId,
     this.conceptTags = const <String>[],
@@ -66,6 +67,7 @@ class AiCoachWidget extends StatefulWidget {
   final Future<BosIntervention?> Function()? onInterventionRequest;
   final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
       onAutoResponseRequest;
+  final bool voiceOnlyConversation;
   final String? missionId;
   final String? checkpointId;
   final List<String> conceptTags;
@@ -96,6 +98,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   AiCoachResponse? _lastResponse;
   bool _hasSpokenGreeting = false;
   bool _autoAssistInFlight = false;
+  bool _listenAfterSpeech = false;
   DateTime _lastLearnerActivityAt = DateTime.now();
   DateTime? _lastAutoAssistAt;
 
@@ -242,6 +245,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       _playerCompleteSub = _audioPlayer.onPlayerComplete.listen((_) {
         if (!mounted) return;
         setState(() => _isSpeaking = false);
+        if (_listenAfterSpeech) {
+          _listenAfterSpeech = false;
+          unawaited(_toggleListening());
+        }
       });
 
       _playerStateSub?.cancel();
@@ -249,6 +256,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         if (!mounted) return;
         if (state == PlayerState.stopped || state == PlayerState.completed) {
           setState(() => _isSpeaking = false);
+          if (_listenAfterSpeech) {
+            _listenAfterSpeech = false;
+            unawaited(_toggleListening());
+          }
         }
       });
 
@@ -259,10 +270,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       _flutterTts.setCompletionHandler(() {
         if (!mounted) return;
         setState(() => _isSpeaking = false);
+        if (_listenAfterSpeech) {
+          _listenAfterSpeech = false;
+          unawaited(_toggleListening());
+        }
       });
       _flutterTts.setErrorHandler((_) {
         if (!mounted) return;
         setState(() => _isSpeaking = false);
+        _listenAfterSpeech = false;
       });
 
       final bool uploadReady = kIsWeb ? false : await _audioRecorder.hasPermission();
@@ -543,6 +559,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'mode': _selectedMode.name,
         },
       );
+
+      if (widget.voiceOnlyConversation) {
+        if (mounted) {
+          setState(() => _loading = false);
+        }
+        await _sendMessageWithInput(
+          transcribed.transcript,
+          source: 'voice_upload_auto',
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -637,6 +663,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                 'mode': _selectedMode.name,
               },
             );
+            if (widget.voiceOnlyConversation) {
+              unawaited(_speechToText.stop());
+              if (mounted) {
+                setState(() => _isListening = false);
+              }
+              unawaited(_sendMessageWithInput(
+                result.recognizedWords,
+                source: 'speech_to_text_auto',
+              ));
+            }
           }
         },
         listenOptions: SpeechListenOptions(
@@ -682,6 +718,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       return;
     }
 
+    _listenAfterSpeech = widget.voiceOnlyConversation;
+
     if (_isSpeaking) {
       await _audioPlayer.stop();
       await _flutterTts.stop();
@@ -709,6 +747,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         );
       } catch (_) {
         if (mounted) setState(() => _isSpeaking = false);
+        _listenAfterSpeech = false;
       }
     }
 
@@ -730,10 +769,12 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         );
       } catch (_) {
         if (mounted) setState(() => _isSpeaking = false);
+        _listenAfterSpeech = false;
       }
     }
 
     if (!played) {
+      _listenAfterSpeech = false;
       await TelemetryService.instance.logEvent(
         event: 'voice.tts',
         metadata: <String, dynamic>{
@@ -1001,6 +1042,7 @@ Response style:
 
     await _audioPlayer.stop();
     await _flutterTts.stop();
+    _listenAfterSpeech = false;
     if (!mounted) return;
     setState(() => _isSpeaking = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1034,7 +1076,17 @@ Response style:
       await _interruptSpeaking();
     }
 
-    final String input = _inputController.text.trim();
+    await _sendMessageWithInput(
+      _inputController.text,
+      source: 'manual',
+    );
+  }
+
+  Future<void> _sendMessageWithInput(
+    String rawInput, {
+    required String source,
+  }) async {
+    final String input = rawInput.trim();
     if (_loading || input.isEmpty) return;
     _updateLearningGoals(input);
 
@@ -1044,6 +1096,7 @@ Response style:
         'module': 'ai_coach_widget',
         'cta_id': 'send_message',
         'surface': 'input_bar',
+        'source': source,
         'mode': _selectedMode.name,
         'has_input': input.isNotEmpty,
       },
@@ -1434,7 +1487,9 @@ Response style:
             top: false,
             child: Row(
               children: <Widget>[
-                if (_speechAvailable || _uploadSttAvailable)
+                if (widget.voiceOnlyConversation ||
+                    _speechAvailable ||
+                    _uploadSttAvailable)
                   IconButton(
                     onPressed: (_loading || _isSpeaking) ? null : _toggleListening,
                     icon: Icon(
@@ -1459,26 +1514,46 @@ Response style:
                       ? _t('ai.voice.disableOutput')
                       : _t('ai.voice.enableOutput'),
                 ),
-                Expanded(
-                  child: TextField(
-                    controller: _inputController,
-                    enabled: !_isSpeaking,
-                    decoration: InputDecoration(
-                      hintText: _isSpeaking ? _t('ai.voice.speaking') : _modeHint(_selectedMode),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      isDense: true,
+                if (widget.voiceOnlyConversation)
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        _isListening
+                            ? _t('ai.voiceOnly.listening')
+                            : _t('ai.voiceOnly.promptTap'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
-                    textInputAction: TextInputAction.send,
-                    onChanged: (_) => _markLearnerActivity(),
-                    onSubmitted: (_) => _sendMessage(),
-                    maxLines: 3,
-                    minLines: 1,
+                  )
+                else
+                  Expanded(
+                    child: TextField(
+                      controller: _inputController,
+                      enabled: !_isSpeaking,
+                      decoration: InputDecoration(
+                        hintText: _isSpeaking ? _t('ai.voice.speaking') : _modeHint(_selectedMode),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        isDense: true,
+                      ),
+                      textInputAction: TextInputAction.send,
+                      onChanged: (_) => _markLearnerActivity(),
+                      onSubmitted: (_) => _sendMessage(),
+                      maxLines: 3,
+                      minLines: 1,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                if (!widget.voiceOnlyConversation) const SizedBox(width: 8),
                 if (_isSpeaking)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -1523,15 +1598,16 @@ Response style:
                       ],
                     ),
                   ),
-                IconButton.filled(
-                  onPressed: (_loading || _isSpeaking) ? null : _sendMessage,
-                  icon: _loading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.send),
-                ),
+                if (!widget.voiceOnlyConversation)
+                  IconButton.filled(
+                    onPressed: (_loading || _isSpeaking) ? null : _sendMessage,
+                    icon: _loading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.send),
+                  ),
               ],
             ),
           ),
