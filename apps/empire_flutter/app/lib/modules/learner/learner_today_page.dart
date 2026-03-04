@@ -80,6 +80,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildGreetingCard()),
             SliverToBoxAdapter(child: _buildTodayProgress()),
+            SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
             SliverToBoxAdapter(child: _buildQuickActions()),
             SliverToBoxAdapter(child: _buildTodayHabits()),
             SliverToBoxAdapter(child: _buildActiveMissions()),
@@ -480,6 +481,87 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     if (hour < 17) return _t('Good afternoon');
     return _t('Good evening');
   }
+
+  Widget _buildAiCoachingSection(BuildContext context) {
+    final AppState? appState = context.read<AppState>();
+    final UserRole? role = appState?.role;
+
+    if (role == null || role != UserRole.learner) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: ScholesaColors.learner.withValues(alpha: 0.1),
+              border: Border.all(
+                color: ScholesaColors.learner.withValues(alpha: 0.2),
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: Icon(
+                Icons.smart_toy_rounded,
+                color: ScholesaColors.learner,
+              ),
+              title: Text(_t('Daily Coaching')),
+              subtitle: Text(_t('Get personalized guidance for today')),
+              trailing: IconButton(
+                icon: Icon(
+                  _showAiCoach ? Icons.expand_less : Icons.expand_more,
+                ),
+                onPressed: () {
+                  setState(() => _showAiCoach = !_showAiCoach);
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'learner_today',
+                      'cta': 'daily_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'surface': 'today_dashboard',
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          if (_showAiCoach) _buildAiCoachPanel(context, role),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+    final LearningRuntimeProvider? runtime =
+        context.read<LearningRuntimeProvider?>();
+    if (runtime == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.learner.withValues(alpha: 0.05),
+        border: Border.all(
+          color: ScholesaColors.learner.withValues(alpha: 0.1),
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      constraints: const BoxConstraints(minHeight: 350),
+      child: AiCoachWidget(
+        runtime: runtime,
+        actorRole: role,
+        conceptTags: <String>[
+          'daily_planning',
+          'today_goals',
+          'motivation',
+        ],
+      ),
+    );
+  }
+
 }
 
 class _ProgressCard extends StatelessWidget {
@@ -793,84 +875,5 @@ class _MissionTile extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildAiCoachingSection(BuildContext context) {
-    final AppState? appState = context.read<AppState>();
-    final UserRole? role = appState?.role;
-
-    if (role == null || role != UserRole.learner) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        children: <Widget>[
-          Container(
-            decoration: BoxDecoration(
-              color: ScholesaColors.learner.withValues(alpha: 0.1),
-              border: Border.all(
-                color: ScholesaColors.learner.withValues(alpha: 0.2),
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              leading: Icon(
-                Icons.smart_toy_rounded,
-                color: ScholesaColors.learner,
-              ),
-              title: Text(_t('Daily Coaching')),
-              subtitle: Text(_t('Get personalized guidance for today')),
-              trailing: IconButton(
-                icon: Icon(
-                  _showAiCoach ? Icons.expand_less : Icons.expand_more,
-                ),
-                onPressed: () {
-                  setState(() => _showAiCoach = !_showAiCoach);
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'module': 'learner_today',
-                      'cta': 'daily_ai_${_showAiCoach ? 'show' : 'hide'}',
-                      'surface': 'today_dashboard',
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-          if (_showAiCoach) _buildAiCoachPanel(context, role),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
-    final LearningRuntimeProvider? runtime =
-        context.read<LearningRuntimeProvider?>();
-    if (runtime == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: ScholesaColors.learner.withValues(alpha: 0.05),
-        border: Border.all(
-          color: ScholesaColors.learner.withValues(alpha: 0.1),
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      constraints: const BoxConstraints(minHeight: 350),
-      child: AiCoachWidget(
-        runtime: runtime,
-        actorRole: role,
-        conceptTags: <String>[
-          'daily_planning',
-          'today_goals',
-          'motivation',
-        ],
-      ),
-    );
-  }
 }
+
