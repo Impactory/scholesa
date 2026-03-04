@@ -38,6 +38,10 @@ class AiCoachWidget extends StatefulWidget {
     required this.runtime,
     required this.actorRole,
     this.allowBosFallback = true,
+    this.autoSpeakGreeting = false,
+    this.autoAssistOnHesitation = false,
+    this.hesitationInactivityThreshold = const Duration(seconds: 35),
+    this.autoAssistCooldown = const Duration(seconds: 120),
     this.missionId,
     this.checkpointId,
     this.conceptTags = const <String>[],
@@ -47,6 +51,10 @@ class AiCoachWidget extends StatefulWidget {
   final LearningRuntimeProvider runtime;
   final UserRole actorRole;
   final bool allowBosFallback;
+  final bool autoSpeakGreeting;
+  final bool autoAssistOnHesitation;
+  final Duration hesitationInactivityThreshold;
+  final Duration autoAssistCooldown;
   final String? missionId;
   final String? checkpointId;
   final List<String> conceptTags;
@@ -74,14 +82,28 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _isSpeaking = false;
   final List<String> _learningGoals = <String>[];
   AiCoachResponse? _lastResponse;
+  bool _hasSpokenGreeting = false;
+  bool _autoAssistInFlight = false;
+  DateTime _lastLearnerActivityAt = DateTime.now();
+  DateTime? _lastAutoAssistAt;
 
   String _t(String key) => AppStrings.of(context, key);
 
   @override
   void initState() {
     super.initState();
+    _attachRuntimeListener();
     unawaited(_restoreLearningGoals());
     unawaited(_initializeVoiceStack());
+  }
+
+  @override
+  void didUpdateWidget(covariant AiCoachWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.runtime, widget.runtime)) {
+      oldWidget.runtime.removeListener(_handleRuntimeSignalChange);
+      _attachRuntimeListener();
+    }
   }
 
   String get _learningGoalsKey {
@@ -220,6 +242,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         _speechAvailable = speechReady;
         _uploadSttAvailable = uploadReady;
       });
+      unawaited(_maybeSpeakInitialGreeting());
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -229,8 +252,152 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
   }
 
+  void _attachRuntimeListener() {
+    widget.runtime.addListener(_handleRuntimeSignalChange);
+  }
+
+  void _handleRuntimeSignalChange() {
+    if (!mounted) return;
+    unawaited(_evaluateBosAutoAssist(trigger: 'runtime_state_change'));
+  }
+
+  void _markLearnerActivity() {
+    _lastLearnerActivityAt = DateTime.now();
+  }
+
+  bool _isHesitating(XHat state) {
+    return state.engagement <= 0.42 || state.cognition <= 0.38;
+  }
+
+  String _buildHesitationPrompt(XHat state) {
+    final String profile =
+        'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
+    return _t('ai.autoAssist.hesitationPrompt').replaceFirst('{state}', profile);
+  }
+
+  Future<void> _maybeSpeakInitialGreeting() async {
+    if (!widget.autoSpeakGreeting || _hasSpokenGreeting || !mounted) {
+      return;
+    }
+    _hasSpokenGreeting = true;
+
+    await Future<void>.delayed(const Duration(milliseconds: 240));
+    if (!mounted) return;
+
+    final String greeting = _t('ai.greeting.initial');
+    await _speakText(greeting);
+
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'ai_coach_widget',
+        'cta_id': 'assistant_auto_greeting',
+        'surface': 'floating_assistant',
+        'role': widget.actorRole.name,
+      },
+    );
+  }
+
+  Future<void> _evaluateBosAutoAssist({required String trigger}) async {
+    if (!widget.autoAssistOnHesitation ||
+        widget.actorRole != UserRole.learner ||
+        _autoAssistInFlight ||
+        _loading ||
+        _isListening ||
+        _isSpeaking) {
+      return;
+    }
+
+    final XHat? state = widget.runtime.state?.xHat;
+    if (state == null || !_isHesitating(state)) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (now.difference(_lastLearnerActivityAt) <
+        widget.hesitationInactivityThreshold) {
+      return;
+    }
+    if (_lastAutoAssistAt != null &&
+        now.difference(_lastAutoAssistAt!) < widget.autoAssistCooldown) {
+      return;
+    }
+
+    _autoAssistInFlight = true;
+    try {
+      if ((widget.runtime.sessionOccurrenceId ?? '').trim().isNotEmpty) {
+        final BosIntervention? intervention = await BosService.instance
+            .getIntervention(
+          siteId: widget.runtime.siteId,
+          learnerId: widget.runtime.learnerId,
+          sessionOccurrenceId: widget.runtime.sessionOccurrenceId!,
+          gradeBand: widget.runtime.gradeBand,
+        );
+        if (intervention?.mode != null && mounted) {
+          setState(() => _selectedMode = intervention!.mode!);
+        }
+      }
+
+      widget.runtime.trackEvent(
+        'idle_detected',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'trigger': trigger,
+          'engagement': state.engagement,
+          'cognition': state.cognition,
+          'autoAssist': true,
+        },
+      );
+
+      widget.runtime.trackEvent(
+        'ai_help_opened',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'mode': _selectedMode.name,
+          'source': 'bos_auto_hesitation',
+          'trigger': trigger,
+        },
+      );
+
+      final AiCoachResponse response =
+          await _fetchAndProcessResponse(_buildHesitationPrompt(state));
+      if (!mounted) return;
+
+      _lastResponse = response;
+      final _ChatMessage aiMessage = _ChatMessage(
+        text: _enrichCoachReply(response.message),
+        isUser: false,
+        response: response,
+      );
+
+      setState(() => _messages.add(aiMessage));
+      await _speakText(aiMessage.text, traceId: response.traceId);
+
+      widget.runtime.trackEvent(
+        'ai_help_used',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'mode': _selectedMode.name,
+          'source': 'bos_auto_hesitation',
+          'trigger': trigger,
+          'traceId': response.traceId,
+        },
+      );
+
+      _lastAutoAssistAt = DateTime.now();
+    } catch (_) {
+      // Keep learner flow resilient if BOS auto-assist fails.
+    } finally {
+      _autoAssistInFlight = false;
+    }
+  }
+
   @override
   void dispose() {
+    widget.runtime.removeListener(_handleRuntimeSignalChange);
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
     unawaited(_audioPlayer.stop());
@@ -329,6 +496,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   Future<void> _toggleListening() async {
+    _markLearnerActivity();
     if (_loading) return;
 
     if (!_speechAvailable && !_uploadSttAvailable) {
@@ -769,6 +937,7 @@ Response style:
   }
 
   Future<void> _sendMessage() async {
+    _markLearnerActivity();
     // Immediately stop any ongoing speech, whether from user or AI
     if (_isListening) {
       if (_usingUploadStt) {
@@ -1220,6 +1389,7 @@ Response style:
                       isDense: true,
                     ),
                     textInputAction: TextInputAction.send,
+                    onChanged: (_) => _markLearnerActivity(),
                     onSubmitted: (_) => _sendMessage(),
                     maxLines: 3,
                     minLines: 1,

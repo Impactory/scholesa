@@ -61,6 +61,10 @@ class AppStrings {
       'assistant.title': 'AI Assistant',
       'assistant.close': 'Close',
       'assistant.loading': 'Loading assistant…',
+      'ai.greeting.initial':
+          'Hi! I\'m your AI coach. I can guide you with hints, explanations, and quick debug steps whenever you need support.',
+      'ai.autoAssist.hesitationPrompt':
+          'The learner may be hesitating. Current BOS state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
       'ai.error.unreachable':
           'Unable to reach AI Coach right now. Try again in a moment.',
       'ai.voice.transcriptionUnavailable':
@@ -186,6 +190,10 @@ class AppStrings {
       'assistant.title': 'Asistente de IA',
       'assistant.close': 'Cerrar',
       'assistant.loading': 'Cargando asistente…',
+      'ai.greeting.initial':
+          '¡Hola! Soy tu coach de IA. Puedo guiarte con pistas, explicaciones y pasos rápidos de depuración cuando necesites apoyo.',
+      'ai.autoAssist.hesitationPrompt':
+          'El estudiante puede estar dudando. Estado BOS actual: {state}. Ofrece una verificación breve de apoyo, un siguiente paso pequeño y una pregunta de seguimiento.',
       'ai.error.unreachable':
           'No se puede conectar con el Coach de IA ahora. Inténtalo de nuevo en un momento.',
       'ai.voice.transcriptionUnavailable':

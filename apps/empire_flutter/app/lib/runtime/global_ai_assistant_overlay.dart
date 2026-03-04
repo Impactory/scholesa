@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
@@ -11,13 +12,48 @@ import 'ai_coach_widget.dart';
 import 'bos_models.dart';
 import 'learning_runtime_provider.dart';
 
-class GlobalAiAssistantOverlay extends StatelessWidget {
+class GlobalAiAssistantOverlay extends StatefulWidget {
   const GlobalAiAssistantOverlay({
     super.key,
     this.navigatorKey,
   });
 
   final GlobalKey<NavigatorState>? navigatorKey;
+
+  @override
+  State<GlobalAiAssistantOverlay> createState() =>
+      _GlobalAiAssistantOverlayState();
+}
+
+class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
+  bool _assistantSheetOpen = false;
+  DateTime? _lastHoverOpenAt;
+
+  bool _shouldOpenFromHover() {
+    if (_assistantSheetOpen) {
+      return false;
+    }
+    final DateTime now = DateTime.now();
+    if (_lastHoverOpenAt != null &&
+        now.difference(_lastHoverOpenAt!) < const Duration(seconds: 4)) {
+      return false;
+    }
+    _lastHoverOpenAt = now;
+    return true;
+  }
+
+  bool _isPointerPlatform() {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+        return true;
+      case TargetPlatform.iOS:
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +76,33 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.only(right: 16, bottom: 16),
-              child: FloatingActionButton(
-                heroTag: 'global_ai_assistant_fab',
-                tooltip: AppStrings.of(context, 'assistant.tooltip'),
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                onPressed: () => _openAssistantSheet(
-                  context,
-                  role: role,
-                  siteId: siteId,
-                  learnerId: learnerId,
+              child: MouseRegion(
+                onEnter: (_) {
+                  if (!_isPointerPlatform() || !_shouldOpenFromHover()) {
+                    return;
+                  }
+                  unawaited(_openAssistantSheet(
+                    context,
+                    role: role,
+                    siteId: siteId,
+                    learnerId: learnerId,
+                    trigger: 'hover',
+                  ));
+                },
+                child: FloatingActionButton(
+                  heroTag: 'global_ai_assistant_fab',
+                  tooltip: AppStrings.of(context, 'assistant.tooltip'),
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  onPressed: () => _openAssistantSheet(
+                    context,
+                    role: role,
+                    siteId: siteId,
+                    learnerId: learnerId,
+                    trigger: 'click',
+                  ),
+                  child: const Icon(Icons.smart_toy_rounded),
                 ),
-                child: const Icon(Icons.smart_toy_rounded),
               ),
             ),
           ),
@@ -65,9 +116,15 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
     required UserRole role,
     required String siteId,
     required String learnerId,
+    required String trigger,
   }) async {
+    if (_assistantSheetOpen) {
+      return;
+    }
+
     final BuildContext? sheetContext =
-        navigatorKey?.currentContext ?? Navigator.maybeOf(context, rootNavigator: true)?.context;
+        widget.navigatorKey?.currentContext ??
+            Navigator.maybeOf(context, rootNavigator: true)?.context;
     if (sheetContext == null) {
       unawaited(TelemetryService.instance.logEvent(
         event: 'assistant.open.failed',
@@ -75,6 +132,7 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
           'reason': 'missing_navigator_context',
           'surface': 'floating_assistant',
           'role': role.name,
+          'trigger': trigger,
         },
       ));
       return;
@@ -86,9 +144,11 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
         'cta': 'global_ai_assistant_open',
         'surface': 'floating_assistant',
         'role': role.name,
+        'trigger': trigger,
       },
     ));
 
+    _assistantSheetOpen = true;
     try {
       await showModalBottomSheet<void>(
         context: sheetContext,
@@ -114,10 +174,14 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
           'reason': 'sheet_open_error',
           'surface': 'floating_assistant',
           'role': role.name,
+          'trigger': trigger,
         },
       ));
+      _assistantSheetOpen = false;
       return;
     }
+
+    _assistantSheetOpen = false;
 
     await TelemetryService.instance.logEvent(
       event: 'cta.clicked',
@@ -125,6 +189,7 @@ class GlobalAiAssistantOverlay extends StatelessWidget {
         'cta': 'global_ai_assistant_close',
         'surface': 'floating_assistant',
         'role': role.name,
+        'trigger': trigger,
       },
     );
   }
@@ -293,6 +358,8 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                     runtime: _runtime!,
                     actorRole: widget.role,
                     allowBosFallback: widget.role == UserRole.learner,
+                    autoSpeakGreeting: true,
+                    autoAssistOnHesitation: widget.role == UserRole.learner,
                     conceptTags: <String>[
                       'global-assistant',
                       widget.role.name,
