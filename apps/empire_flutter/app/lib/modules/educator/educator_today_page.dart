@@ -49,6 +49,9 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'TBD': 'Por definir',
   'Enrolled Learners': 'Estudiantes inscritos',
   'Not recorded': 'No registrado',
+  'AI Classroom Coach': 'Entrenador de aula con IA',
+  'Get personalized coaching for classroom management': 'Obtén asesoramiento personalizado para la gestión del aula',
+  'Hide Coaching': 'Ocultar asesoramiento',
 };
 
 String _tEducatorToday(BuildContext context, String input) {
@@ -66,6 +69,8 @@ class EducatorTodayPage extends StatefulWidget {
 }
 
 class _EducatorTodayPageState extends State<EducatorTodayPage> {
+  bool _showAiCoach = false;
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +106,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader()),
+                SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
                 SliverToBoxAdapter(child: _buildQuickStats(service)),
                 SliverToBoxAdapter(child: _buildQuickActions()),
                 SliverToBoxAdapter(child: _buildCurrentClass(service)),
