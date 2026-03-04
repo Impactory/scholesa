@@ -35,6 +35,8 @@ const Map<String, String> _missionsEs = <String, String>{
   'Educator Feedback': 'Comentarios del educador',
   'Started': 'Iniciada',
   'Start Mission': 'Iniciar misión',
+    'Unable to start mission right now':
+      'No se puede iniciar la misión en este momento',
   'Unable to submit mission right now':
       'No se puede enviar la misión en este momento',
   'Submitted': 'Enviada',
