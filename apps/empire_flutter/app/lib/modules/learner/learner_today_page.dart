@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../runtime/runtime.dart';
+import '../../auth/app_state.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
 
