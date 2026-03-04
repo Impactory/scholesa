@@ -69,6 +69,12 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Telemetry gaps': 'Brechas de telemetría',
   'Submit feedback': 'Enviar feedback',
   'HQ feedback submitted': 'Feedback de HQ enviado',
+  'HQ BOS-MIA Usability': 'Usabilidad BOS-MIA (HQ)',
+  'Real-world HQ feedback (14-day)': 'Feedback real de HQ (14 días)',
+  'No HQ feedback submissions yet': 'Aún no hay feedback de HQ',
+  'submissions': 'envíos',
+  'Top recommendation': 'Recomendación principal',
+  'Most reported issue': 'Issue más reportado',
   'HQ analytics report prepared for export':
     'Reporte de analítica HQ preparado para exportar',
   'Export': 'Exportar',
@@ -96,6 +102,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   List<_PillarAnalyticsData> _pillarAnalyticsData = <_PillarAnalyticsData>[];
   List<_SiteComparisonData> _siteComparisonData = <_SiteComparisonData>[];
   List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
+  _BosMiaFeedbackSummary? _bosMiaFeedbackSummary;
   int _usabilityScore = 4;
   int _usefulnessScore = 4;
   int _reliabilityScore = 4;
@@ -189,6 +196,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildFilters()),
             SliverToBoxAdapter(child: _buildKeyMetrics()),
+            SliverToBoxAdapter(child: _buildBosMiaFeedbackSummaryCard()),
             SliverToBoxAdapter(child: _buildGrowthChart()),
             SliverToBoxAdapter(child: _buildPillarAnalytics()),
             SliverToBoxAdapter(child: _buildSiteComparison()),
@@ -608,6 +616,111 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   fontSize: 12,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBosMiaFeedbackSummaryCard() {
+    if (_isLoadingSupplemental) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Center(child: CircularProgressIndicator(color: ScholesaColors.hq)),
+      );
+    }
+
+    final _BosMiaFeedbackSummary? summary = _bosMiaFeedbackSummary;
+    if (summary == null || summary.submissionCount == 0) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('HQ BOS-MIA Usability'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t('Real-world HQ feedback (14-day)'),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _t('No HQ feedback submissions yet'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t('HQ BOS-MIA Usability'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _t('Real-world HQ feedback (14-day)'),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.thumb_up_alt,
+                    value: '${summary.avgUsefulness.toStringAsFixed(2)}/5',
+                    label: _t('Usefulness'),
+                    trend: '${summary.submissionCount} ${_t('submissions')}',
+                    trendUp: summary.avgUsefulness >= 4,
+                    color: ScholesaColors.impact,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.verified,
+                    value: '${summary.avgOverall.toStringAsFixed(2)}/5',
+                    label: _t('Usability'),
+                    trend: _t(summary.topRecommendationLabel),
+                    trendUp: summary.avgOverall >= 4,
+                    color: ScholesaColors.hq,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '${_t('Top recommendation')}: ${_t(summary.topRecommendationLabel)}',
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_t('Most reported issue')}: ${_t(summary.topIssueLabel)}',
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -1341,6 +1454,21 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         );
       }
 
+      Query<Map<String, dynamic>> feedbackQuery = firestoreService
+          .firestore
+          .collection('telemetryEvents')
+          .where('eventType', isEqualTo: 'bos_mia.usability.feedback')
+          .limit(200);
+      if (_selectedSite != 'all') {
+        feedbackQuery = feedbackQuery.where('siteId', isEqualTo: _selectedSite);
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> feedbackSnapshot =
+          await feedbackQuery.get();
+
+      final _BosMiaFeedbackSummary summary =
+          _summarizeBosMiaFeedback(feedbackSnapshot.docs);
+
       if (!mounted) return;
       setState(() {
         _siteOptions = options;
@@ -1350,6 +1478,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         _pillarAnalyticsData = pillarData;
         _siteComparisonData = comparisonTop;
         _topPerformersData = performers;
+        _bosMiaFeedbackSummary = summary;
       });
     } catch (_) {
       if (!mounted) return;
@@ -1357,12 +1486,100 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         _pillarAnalyticsData = <_PillarAnalyticsData>[];
         _siteComparisonData = <_SiteComparisonData>[];
         _topPerformersData = <_TopPerformerData>[];
+        _bosMiaFeedbackSummary = null;
       });
     } finally {
       if (mounted) {
         setState(() => _isLoadingSupplemental = false);
       }
     }
+  }
+
+  _BosMiaFeedbackSummary _summarizeBosMiaFeedback(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    if (docs.isEmpty) {
+      return const _BosMiaFeedbackSummary.empty();
+    }
+
+    const Duration lookback = Duration(days: 14);
+    final DateTime now = DateTime.now();
+    int submissions = 0;
+    double usabilityTotal = 0;
+    double usefulnessTotal = 0;
+    double reliabilityTotal = 0;
+    double voiceQualityTotal = 0;
+    final Map<String, int> recommendationCounts = <String, int>{};
+    final Map<String, int> issueCounts = <String, int>{};
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in docs) {
+      final Map<String, dynamic> data = doc.data();
+      final DateTime eventTime = _toDateTime(data['timestamp']) ??
+          _toDateTime(data['createdAt']) ??
+          now;
+      if (now.difference(eventTime) > lookback) {
+        continue;
+      }
+
+      final Map<String, dynamic> metadata =
+          (data['metadata'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+
+      final int usability = (_asInt(metadata['usability_score']) ?? 0).clamp(1, 5);
+      final int usefulness = (_asInt(metadata['usefulness_score']) ?? 0).clamp(1, 5);
+      final int reliability = (_asInt(metadata['reliability_score']) ?? 0).clamp(1, 5);
+      final int voiceQuality = (_asInt(metadata['voice_quality_score']) ?? 0).clamp(1, 5);
+      if (usability == 0 || usefulness == 0 || reliability == 0 || voiceQuality == 0) {
+        continue;
+      }
+
+      submissions += 1;
+      usabilityTotal += usability;
+      usefulnessTotal += usefulness;
+      reliabilityTotal += reliability;
+      voiceQualityTotal += voiceQuality;
+
+      final String recommendation =
+          ((metadata['rollout_recommendation'] as String?) ?? '').trim();
+      if (recommendation.isNotEmpty) {
+        recommendationCounts[recommendation] =
+            (recommendationCounts[recommendation] ?? 0) + 1;
+      }
+
+      final List<dynamic> issues = (metadata['top_issues'] as List?) ?? <dynamic>[];
+      for (final dynamic issue in issues) {
+        final String value = issue.toString().trim();
+        if (value.isEmpty) continue;
+        issueCounts[value] = (issueCounts[value] ?? 0) + 1;
+      }
+    }
+
+    if (submissions == 0) {
+      return const _BosMiaFeedbackSummary.empty();
+    }
+
+    String topRecommendation = 'scale_with_guardrails';
+    if (recommendationCounts.isNotEmpty) {
+      final List<MapEntry<String, int>> ranked = recommendationCounts.entries.toList()
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
+      topRecommendation = ranked.first.key;
+    }
+
+    String topIssue = 'telemetry_gaps';
+    if (issueCounts.isNotEmpty) {
+      final List<MapEntry<String, int>> ranked = issueCounts.entries.toList()
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
+      topIssue = ranked.first.key;
+    }
+
+    return _BosMiaFeedbackSummary(
+      submissionCount: submissions,
+      avgUsability: usabilityTotal / submissions,
+      avgUsefulness: usefulnessTotal / submissions,
+      avgReliability: reliabilityTotal / submissions,
+      avgVoiceQuality: voiceQualityTotal / submissions,
+      topRecommendation: topRecommendation,
+      topIssue: topIssue,
+    );
   }
 
   Future<Map<String, String>> _loadUserNames(
@@ -1563,6 +1780,66 @@ class _PillarAnalyticsData {
   final double progress;
   final int learners;
   final int missions;
+}
+
+class _BosMiaFeedbackSummary {
+  const _BosMiaFeedbackSummary({
+    required this.submissionCount,
+    required this.avgUsability,
+    required this.avgUsefulness,
+    required this.avgReliability,
+    required this.avgVoiceQuality,
+    required this.topRecommendation,
+    required this.topIssue,
+  });
+
+  const _BosMiaFeedbackSummary.empty()
+      : submissionCount = 0,
+        avgUsability = 0,
+        avgUsefulness = 0,
+        avgReliability = 0,
+        avgVoiceQuality = 0,
+        topRecommendation = 'scale_with_guardrails',
+        topIssue = 'telemetry_gaps';
+
+  final int submissionCount;
+  final double avgUsability;
+  final double avgUsefulness;
+  final double avgReliability;
+  final double avgVoiceQuality;
+  final String topRecommendation;
+  final String topIssue;
+
+  double get avgOverall =>
+      (avgUsability + avgUsefulness + avgReliability + avgVoiceQuality) / 4;
+
+  String get topRecommendationLabel {
+    switch (topRecommendation) {
+      case 'scale_now':
+        return 'Scale now';
+      case 'hold_and_fix':
+        return 'Hold and fix';
+      case 'scale_with_guardrails':
+      default:
+        return 'Scale with guardrails';
+    }
+  }
+
+  String get topIssueLabel {
+    switch (topIssue) {
+      case 'over_triggering':
+        return 'Over-triggering';
+      case 'voice_recognition_misses':
+        return 'Voice recognition misses';
+      case 'weak_coaching_quality':
+        return 'Weak coaching quality';
+      case 'low_reengagement':
+        return 'Low learner re-engagement';
+      case 'telemetry_gaps':
+      default:
+        return 'Telemetry gaps';
+    }
+  }
 }
 
 class _MetricCard extends StatelessWidget {
