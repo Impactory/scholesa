@@ -26,6 +26,9 @@ const Map<String, String> _learnerTodayEs = <String, String>{
   'Good evening': 'Buenas noches',
   'done': 'hecho',
   'Start': 'Iniciar',
+  'Daily Coaching': 'Asesoramiento diario',
+  'Get personalized guidance for today': 'Obtén orientación personalizada para hoy',
+  'Hide Coaching': 'Ocultar asesoramiento',
 };
 
 /// Learner Today Page - Daily summary for learners
@@ -37,6 +40,8 @@ class LearnerTodayPage extends StatefulWidget {
 }
 
 class _LearnerTodayPageState extends State<LearnerTodayPage> {
+  bool _showAiCoach = false;
+
   String _t(String input) {
     final String locale = Localizations.localeOf(context).languageCode;
     if (locale != 'es') return input;

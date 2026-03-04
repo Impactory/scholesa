@@ -79,6 +79,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
+                SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
                 SliverToBoxAdapter(child: _buildFilters()),
                 SliverToBoxAdapter(child: _buildStats(service)),
                 if (service.isLoading)
