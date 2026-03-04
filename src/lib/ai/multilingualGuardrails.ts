@@ -15,16 +15,14 @@ const POLICY_VERSION = 'i18n-guardrails-2026-02-23';
 
 const REFUSAL_BY_LOCALE: Record<SupportedLocale, string> = {
   en: 'I cannot help with that request. I can support safe, school-appropriate learning instead.',
-  'zh-CN': '我无法协助该请求。我可以改为提供安全、适合学校场景的学习帮助。',
-  'zh-TW': '我無法協助該請求。我可以改為提供安全、適合校園情境的學習協助。',
-  th: 'ฉันไม่สามารถช่วยตามคำขอนี้ได้ แต่สามารถช่วยในบทเรียนที่ปลอดภัยและเหมาะสมกับโรงเรียนแทนได้'
+  es: 'No puedo ayudarte con esa solicitud. Puedo apoyar el aprendizaje seguro y apropiado para la escuela en su lugar.',
+  zh: '我无法协助该请求。我可以改为提供安全、适合学校场景的学习帮助。'
 };
 
 const NEUTRAL_FALLBACK_BY_LOCALE: Record<SupportedLocale, string> = {
   en: 'Let\'s focus on your learning goal. What part would you like to understand first?',
-  'zh-CN': '我们先聚焦你的学习目标。你想先理解哪一部分？',
-  'zh-TW': '我們先聚焦你的學習目標。你想先理解哪一部分？',
-  th: 'เรามาโฟกัสที่เป้าหมายการเรียนรู้ของคุณกันก่อน คุณอยากเริ่มจากส่วนไหน?'
+  es: 'Enfoquémonos en tu objetivo de aprendizaje. ¿Qué parte te gustaría entender primero?',
+  zh: '我们先聚焦你的学习目标。你想先理解哪一部分？'
 };
 
 const INJECTION_PATTERNS = [
@@ -125,12 +123,10 @@ export function languageLooksCompatible(text: string, locale: SupportedLocale): 
   switch (locale) {
     case 'en':
       return /[A-Za-z]/.test(text);
-    case 'zh-CN':
-      return /[\u4e00-\u9fff]/.test(text) && /我们|学习|请|你/.test(text);
-    case 'zh-TW':
-      return /[\u4e00-\u9fff]/.test(text) && /我們|學習|請|你/.test(text);
-    case 'th':
-      return /[\u0E00-\u0E7F]/.test(text);
+    case 'es':
+      return /[á-üÁ-Ü a-zA-Z]/.test(text) && /qué|el|la|de|para/.test(text);
+    case 'zh':
+      return /[\u4e00-\u9fff]/.test(text) && /我们|学习|请|你|我們|學習|請/.test(text);
     default:
       return false;
   }
