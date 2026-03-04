@@ -29,6 +29,15 @@ const Map<String, String> _learnerTodayEs = <String, String>{
   'Daily Coaching': 'Asesoramiento diario',
   'Get personalized guidance for today': 'Obtén orientación personalizada para hoy',
   'Hide Coaching': 'Ocultar asesoramiento',
+    'No habits scheduled yet': 'Aún no hay hábitos programados',
+    'Set up a habit to start your daily streak.':
+      'Configura un hábito para iniciar tu racha diaria.',
+    'No active missions yet': 'Aún no hay misiones activas',
+    'Start a mission to activate your learning loop.':
+      'Inicia una misión para activar tu ciclo de aprendizaje.',
+    'AI coaching is loading': 'El asesoramiento de IA se está cargando',
+    'Runtime context is syncing. Try again in a moment.':
+      'El contexto runtime se está sincronizando. Inténtalo en un momento.',
 };
 
 /// Learner Today Page - Daily summary for learners
@@ -384,7 +393,38 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     return Consumer<HabitService>(
       builder: (BuildContext context, HabitService service, _) {
         final List<Habit> habits = service.todayHabits.take(3).toList();
-        if (habits.isEmpty) return const SizedBox.shrink();
+        if (habits.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _t("Today's Habits"),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _t('No habits scheduled yet'),
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _t('Set up a habit to start your daily streak.'),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -431,7 +471,38 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     return Consumer<MissionService>(
       builder: (BuildContext context, MissionService service, _) {
         final List<Mission> missions = service.activeMissions.take(2).toList();
-        if (missions.isEmpty) return const SizedBox.shrink();
+        if (missions.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _t('Active Missions'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _t('No active missions yet'),
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _t('Start a mission to activate your learning loop.'),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -537,7 +608,29 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {
-      return const SizedBox.shrink();
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t('AI coaching is loading'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _t('Runtime context is syncing. Try again in a moment.'),
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(

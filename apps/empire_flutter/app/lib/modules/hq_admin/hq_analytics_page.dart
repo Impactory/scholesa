@@ -21,6 +21,9 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Unable to load telemetry metrics:':
     'No se pudieron cargar las métricas de telemetría:',
   'Telemetry KPIs': 'KPIs de telemetría',
+  'Telemetry feed pending': 'Feed de telemetría pendiente',
+  'Waiting for first data sync from BOS-MIA telemetry.':
+      'Esperando la primera sincronización de telemetría BOS-MIA.',
   '7-day': '7 días',
   'Weekly Accountability': 'Responsabilidad semanal',
   'Review SLA': 'SLA de revisión',
@@ -393,7 +396,57 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
     final TelemetryDashboardMetrics? metrics = _metrics;
     if (metrics == null) {
-      return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('Telemetry KPIs'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _t('Waiting for first data sync from BOS-MIA telemetry.'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _MetricCard(
+                      icon: Icons.assignment_turned_in,
+                      value: '--',
+                      label: _t('Weekly Accountability'),
+                      trend: _t('Telemetry feed pending'),
+                      trendUp: true,
+                      color: ScholesaColors.futureSkills,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricCard(
+                      icon: Icons.timer,
+                      value: '--',
+                      label: _t('Review SLA'),
+                      trend: _t('Telemetry feed pending'),
+                      trendUp: true,
+                      color: ScholesaColors.warning,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final String adherenceRate =

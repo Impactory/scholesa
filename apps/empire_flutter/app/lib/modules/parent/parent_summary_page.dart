@@ -36,6 +36,12 @@ const Map<String, String> _parentSummaryEs = <String, String>{
   'Family AI Coach': 'Coach IA familiar',
   'Keep BOS/MIA loop active for each child’s progress':
       'Mantén activo el ciclo BOS/MIA para el progreso de cada hijo',
+    'No recent activity yet': 'Aún no hay actividad reciente',
+    'Recent learner updates will appear here once missions or habits are completed.':
+      'Las actualizaciones recientes aparecerán aquí cuando se completen misiones o hábitos.',
+    'No upcoming events yet': 'Aún no hay próximos eventos',
+    'Upcoming sessions and school events will appear here.':
+      'Las próximas sesiones y eventos escolares aparecerán aquí.',
 };
 
 String _tParentSummary(BuildContext context, String input) {
@@ -459,7 +465,38 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   Widget _buildRecentActivity(LearnerSummary learner) {
-    if (learner.recentActivities.isEmpty) return const SizedBox.shrink();
+    if (learner.recentActivities.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('Recent Activity'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _t('No recent activity yet'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t('Recent learner updates will appear here once missions or habits are completed.'),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -494,7 +531,38 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   Widget _buildUpcomingEvents(LearnerSummary learner) {
-    if (learner.upcomingEvents.isEmpty) return const SizedBox.shrink();
+    if (learner.upcomingEvents.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('Upcoming'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _t('No upcoming events yet'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t('Upcoming sessions and school events will appear here.'),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),

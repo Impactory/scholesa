@@ -51,6 +51,15 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'AI Classroom Coach': 'Entrenador de aula con IA',
   'Get personalized coaching for classroom management': 'Obtén asesoramiento personalizado para la gestión del aula',
   'Hide Coaching': 'Ocultar asesoramiento',
+    'No class in progress': 'No hay clase en progreso',
+    'Your next class will appear here when schedule data syncs.':
+      'Tu próxima clase aparecerá aquí cuando se sincronice el horario.',
+    'No classes scheduled yet': 'Aún no hay clases programadas',
+    'Add or sync classes to populate today’s schedule.':
+      'Agrega o sincroniza clases para poblar el horario de hoy.',
+    'AI coaching is loading': 'El asesoramiento de IA se está cargando',
+    'Runtime context is syncing. Try again in a moment.':
+      'El contexto runtime se está sincronizando. Inténtalo en un momento.',
 };
 
 String _tEducatorToday(BuildContext context, String input) {
@@ -128,6 +137,38 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 SliverToBoxAdapter(child: _buildQuickActions()),
                 SliverToBoxAdapter(child: _buildCurrentClass(service)),
                 SliverToBoxAdapter(child: _buildScheduleHeader()),
+                if (service.todayClasses.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _tEducatorToday(context, 'No classes scheduled yet'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _tEducatorToday(context,
+                                  'Add or sync classes to populate today’s schedule.'),
+                              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) => _ClassCard(
@@ -219,7 +260,41 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
 
   Widget _buildQuickStats(EducatorService service) {
     final EducatorDayStats? stats = service.dayStats;
-    if (stats == null) return const SizedBox.shrink();
+    if (stats == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: _StatCard(
+                icon: Icons.school,
+                value: '--',
+                label: _tEducatorToday(context, 'Classes'),
+                color: ScholesaColors.educator,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                icon: Icons.people,
+                value: '--',
+                label: _tEducatorToday(context, 'Attendance'),
+                color: const Color(0xFF10B981),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                icon: Icons.assignment,
+                value: '--',
+                label: _tEducatorToday(context, 'To Review'),
+                color: ScholesaColors.warning,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -310,7 +385,32 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
 
   Widget _buildCurrentClass(EducatorService service) {
     final TodayClass? currentClass = service.currentClass;
-    if (currentClass == null) return const SizedBox.shrink();
+    if (currentClass == null) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _tEducatorToday(context, 'No class in progress'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _tEducatorToday(
+                  context, 'Your next class will appear here when schedule data syncs.'),
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -656,7 +756,30 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (role == null || runtime == null) {
-      return const SizedBox.shrink();
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _tEducatorToday(context, 'AI coaching is loading'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _tEducatorToday(context,
+                  'Runtime context is syncing. Try again in a moment.'),
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
