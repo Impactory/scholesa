@@ -122,6 +122,7 @@ class Habit extends Equatable {
     this.lastCompletedAt,
     this.isActive = true,
     this.customDays,
+    this.buildingPhaseStartDate, // 30-day habit building phase
   });
 
   factory Habit.fromJson(Map<String, dynamic> json) {
@@ -152,6 +153,9 @@ class Habit extends Equatable {
           : null,
       isActive: json['isActive'] as bool? ?? true,
       customDays: (json['customDays'] as List<dynamic>?)?.cast<int>(),
+      buildingPhaseStartDate: json['buildingPhaseStartDate'] != null
+          ? DateTime.parse(json['buildingPhaseStartDate'] as String)
+          : null,
     );
   }
   final String id;
@@ -169,6 +173,7 @@ class Habit extends Equatable {
   final DateTime? lastCompletedAt;
   final bool isActive;
   final List<int>? customDays;
+  final DateTime? buildingPhaseStartDate; // Track 30-day building phase
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -187,6 +192,7 @@ class Habit extends Equatable {
       'lastCompletedAt': lastCompletedAt?.toIso8601String(),
       'isActive': isActive,
       'customDays': customDays,
+      'buildingPhaseStartDate': buildingPhaseStartDate?.toIso8601String(),
     };
   }
 
@@ -206,6 +212,7 @@ class Habit extends Equatable {
     DateTime? lastCompletedAt,
     bool? isActive,
     List<int>? customDays,
+    DateTime? buildingPhaseStartDate,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -223,6 +230,7 @@ class Habit extends Equatable {
       lastCompletedAt: lastCompletedAt ?? this.lastCompletedAt,
       isActive: isActive ?? this.isActive,
       customDays: customDays ?? this.customDays,
+      buildingPhaseStartDate: buildingPhaseStartDate ?? this.buildingPhaseStartDate,
     );
   }
 
@@ -232,6 +240,30 @@ class Habit extends Equatable {
     return lastCompletedAt!.year == now.year &&
         lastCompletedAt!.month == now.month &&
         lastCompletedAt!.day == now.day;
+  }
+
+  /// Check if this habit is in its 30-day building phase
+  bool get isInBuildingPhase {
+    if (buildingPhaseStartDate == null) return false;
+    final DateTime now = DateTime.now();
+    final int daysSinceStart = now.difference(buildingPhaseStartDate!).inDays;
+    return daysSinceStart < 30;
+  }
+
+  /// Get days remaining in the building phase (0 if not in building phase)
+  int get buildingPhaseDaysRemaining {
+    if (!isInBuildingPhase) return 0;
+    final DateTime now = DateTime.now();
+    final int daysSinceStart = now.difference(buildingPhaseStartDate!).inDays;
+    return 30 - daysSinceStart;
+  }
+
+  /// Get days completed in the building phase
+  int get buildingPhaseDaysCompleted {
+    if (buildingPhaseStartDate == null) return 0;
+    final DateTime now = DateTime.now();
+    final int daysSinceStart = now.difference(buildingPhaseStartDate!).inDays;
+    return daysSinceStart.clamp(0, 30);
   }
 
   @override
@@ -251,6 +283,7 @@ class Habit extends Equatable {
         lastCompletedAt,
         isActive,
         customDays,
+        buildingPhaseStartDate,
       ];
 }
 

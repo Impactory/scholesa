@@ -73,6 +73,7 @@ class HabitService extends ChangeNotifier {
           totalCompletions: data['totalCompletions'] as int? ?? 0,
           lastCompletedAt: _parseTimestamp(data['lastCompletedAt']),
           isActive: data['isActive'] as bool? ?? true,
+          buildingPhaseStartDate: _parseTimestamp(data['buildingPhaseStartDate']),
         );
       }).toList();
 
@@ -352,6 +353,7 @@ class HabitService extends ChangeNotifier {
         'totalCompletions': 0,
         'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
+        'buildingPhaseStartDate': FieldValue.serverTimestamp(), // Start 30-day building phase
       });
 
       final Habit habit = Habit(
@@ -364,6 +366,7 @@ class HabitService extends ChangeNotifier {
         preferredTime: preferredTime,
         targetMinutes: targetMinutes,
         createdAt: DateTime.now(),
+        buildingPhaseStartDate: DateTime.now(), // Start 30-day building phase
       );
 
       _habits = <Habit>[..._habits, habit];

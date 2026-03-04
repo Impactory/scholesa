@@ -44,6 +44,13 @@ const Map<String, String> _habitsEs = <String, String>{
   'Reflect with AI': 'Reflexiona con IA',
   'Get coaching on your progress': 'Obtén orientación sobre tu progreso',
   'Hide AI Reflection': 'Ocultar reflexión de IA',
+  'Building Phase': 'Fase de construcción',
+  'days': 'días',
+  'Day': 'Día',
+  'of 30-day building phase': 'de fase de 30 días',
+  'Keep going to build this habit!': '¡Sigue así para construir este hábito!',
+  'Building phase complete!': '¡Fase de construcción completada!',
+  'This habit is now part of your routine': 'Este hábito ya es parte de tu rutina',
 };
 
 String _tHabits(BuildContext context, String input) {
@@ -601,6 +608,32 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
+                        // Building phase badge
+                        if (habit.isInBuildingPhase) ...<Widget>[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.amber.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '${habit.buildingPhaseDaysCompleted}/30',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         if (habit.currentStreak > 0) ...<Widget>[
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -693,7 +726,8 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                   'habit_id': habit.id,
                 },
               );
-              final bool success = await service.completeHabit(habit.id);
+              // Use Firebase method to persist completion
+              final bool success = await service.completeHabitInFirestore(habit.id);
               if (success && mounted) {
                 _celebrationController.forward(from: 0);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -985,6 +1019,102 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
                 style: TextStyle(
                   fontSize: 14,
                   color: context.schTextSecondary,
+                ),
+              ),
+            ],
+            // Building phase indicator
+            if (habit.buildingPhaseStartDate != null) ...<Widget>[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: habit.isInBuildingPhase
+                        ? <Color>[
+                            Colors.amber.withValues(alpha: 0.2),
+                            Colors.orange.withValues(alpha: 0.1),
+                          ]
+                        : <Color>[
+                            Colors.green.withValues(alpha: 0.2),
+                            Colors.teal.withValues(alpha: 0.1),
+                          ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: habit.isInBuildingPhase
+                        ? Colors.amber.withValues(alpha: 0.3)
+                        : Colors.green.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          habit.isInBuildingPhase
+                              ? Icons.fitness_center
+                              : Icons.check_circle,
+                          color: habit.isInBuildingPhase
+                              ? Colors.amber
+                              : Colors.green,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          habit.isInBuildingPhase
+                              ? _tHabits(context, 'Building Phase')
+                              : _tHabits(context, 'Building phase complete!'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: habit.isInBuildingPhase
+                                ? Colors.amber.shade700
+                                : Colors.green.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (habit.isInBuildingPhase) ...<Widget>[
+                      Text(
+                        '${_tHabits(context, 'Day')} ${habit.buildingPhaseDaysCompleted} ${_tHabits(context, 'of 30-day building phase')}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.schTextSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: habit.buildingPhaseDaysCompleted / 30,
+                          backgroundColor:
+                              Colors.amber.withValues(alpha: 0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.amber),
+                          minHeight: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _tHabits(context, 'Keep going to build this habit!'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: context.schTextSecondary,
+                        ),
+                      ),
+                    ] else ...<Widget>[
+                      Text(
+                        _tHabits(context,
+                            'This habit is now part of your routine'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.schTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -1569,7 +1699,7 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
     );
   }
 
-  void _createHabit() {
+  Future<void> _createHabit() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_tHabits(context, 'Please enter a habit name'))),
@@ -1596,7 +1726,8 @@ class _CreateHabitSheetState extends State<_CreateHabitSheet> {
       },
     );
 
-    context.read<HabitService>().createHabit(
+    // Use Firebase method to persist habit
+    await context.read<HabitService>().createHabitInFirestore(
           title: _titleController.text,
           description: _descriptionController.text.isEmpty
               ? null
