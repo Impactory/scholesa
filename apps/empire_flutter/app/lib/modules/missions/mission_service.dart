@@ -223,6 +223,21 @@ class MissionService extends ChangeNotifier {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
+        final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+            await _firestore
+                .collection('missionAssignments')
+                .where('learnerId', isEqualTo: learnerId)
+                .where('missionId', isEqualTo: missionId)
+                .limit(1)
+                .get();
+
+        if (assignmentsSnapshot.docs.isNotEmpty) {
+          await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+            'status': 'in_progress',
+            'startedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
         _missions[index] = _missions[index].copyWith(
           status: MissionStatus.inProgress,
           startedAt: DateTime.now(),
@@ -245,6 +260,14 @@ class MissionService extends ChangeNotifier {
           _missions.indexWhere((Mission m) => m.id == missionId);
       if (missionIndex == -1) return false;
 
+      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+        await _firestore
+          .collection('missionAssignments')
+          .where('learnerId', isEqualTo: learnerId)
+          .where('missionId', isEqualTo: missionId)
+          .limit(1)
+          .get();
+
       final Mission mission = _missions[missionIndex];
       final List<MissionStep> updatedSteps =
           mission.steps.map((MissionStep step) {
@@ -265,6 +288,14 @@ class MissionService extends ChangeNotifier {
         steps: updatedSteps,
         progress: progress,
       );
+
+      if (assignmentsSnapshot.docs.isNotEmpty) {
+        await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+          'progress': progress,
+          'status': progress >= 1.0 ? 'completed' : 'in_progress',
+          if (progress >= 1.0) 'completedAt': FieldValue.serverTimestamp(),
+        });
+      }
 
       notifyListeners();
       return true;
@@ -341,12 +372,28 @@ class MissionService extends ChangeNotifier {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
+        final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+            await _firestore
+                .collection('missionAssignments')
+                .where('learnerId', isEqualTo: learnerId)
+                .where('missionId', isEqualTo: missionId)
+                .limit(1)
+                .get();
+
         final Mission mission = _missions[index];
         _missions[index] = mission.copyWith(
           status: MissionStatus.completed,
           completedAt: DateTime.now(),
           progress: 1.0,
         );
+
+        if (assignmentsSnapshot.docs.isNotEmpty) {
+          await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+            'status': 'completed',
+            'progress': 1.0,
+            'completedAt': FieldValue.serverTimestamp(),
+          });
+        }
 
         // Update progress
         if (_progress != null) {

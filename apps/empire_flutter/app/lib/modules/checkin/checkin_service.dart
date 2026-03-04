@@ -145,6 +145,7 @@ class CheckinService extends ChangeNotifier {
         // Find latest checkin and checkout
         CheckRecord? latestCheckin;
         CheckRecord? latestCheckout;
+        CheckRecord? latestLate;
         for (final CheckRecord r in records) {
           if (r.status == CheckStatus.checkedIn &&
               (latestCheckin == null ||
@@ -156,17 +157,34 @@ class CheckinService extends ChangeNotifier {
                   r.timestamp.isAfter(latestCheckout.timestamp))) {
             latestCheckout = r;
           }
+          if (r.status == CheckStatus.late &&
+              (latestLate == null ||
+                  r.timestamp.isAfter(latestLate.timestamp))) {
+            latestLate = r;
+          }
         }
 
         // Determine current status
         CheckStatus? currentStatus;
-        if (latestCheckout != null && latestCheckin != null) {
+        final DateTime? latestInOrLateTime = latestCheckin != null || latestLate != null
+            ? ((latestCheckin?.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
+                    .isAfter(latestLate?.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
+                ? latestCheckin!.timestamp
+                : latestLate!.timestamp)
+            : null;
+
+        if (latestCheckout != null && latestInOrLateTime != null) {
           currentStatus =
-              latestCheckout.timestamp.isAfter(latestCheckin.timestamp)
+              latestCheckout.timestamp.isAfter(latestInOrLateTime)
                   ? CheckStatus.checkedOut
-                  : CheckStatus.checkedIn;
+                  : (latestLate != null &&
+                          latestLate.timestamp == latestInOrLateTime
+                      ? CheckStatus.late
+                      : CheckStatus.checkedIn);
         } else if (latestCheckin != null) {
           currentStatus = CheckStatus.checkedIn;
+        } else if (latestLate != null) {
+          currentStatus = CheckStatus.late;
         }
 
         return LearnerDaySummary(

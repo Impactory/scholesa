@@ -207,67 +207,26 @@ class HabitService extends ChangeNotifier {
     HabitTimePreference preferredTime = HabitTimePreference.anytime,
     int targetMinutes = 10,
   }) async {
-    try {
-      final Habit habit = Habit(
-        id: 'habit_${DateTime.now().millisecondsSinceEpoch}',
-        title: title,
-        description: description,
-        emoji: emoji,
-        category: category,
-        frequency: frequency,
-        preferredTime: preferredTime,
-        targetMinutes: targetMinutes,
-        createdAt: DateTime.now(),
-      );
-
-      _habits = <Habit>[..._habits, habit];
-      notifyListeners();
-      return habit;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return null;
-    }
+    return createHabitInFirestore(
+      title: title,
+      description: description,
+      emoji: emoji,
+      category: category,
+      frequency: frequency,
+      preferredTime: preferredTime,
+      targetMinutes: targetMinutes,
+    );
   }
 
   /// Complete a habit for today
   Future<bool> completeHabit(String habitId,
       {int? durationMinutes, String? note, String? moodEmoji}) async {
-    try {
-      final int index = _habits.indexWhere((Habit h) => h.id == habitId);
-      if (index == -1) return false;
-
-      final Habit habit = _habits[index];
-      final DateTime now = DateTime.now();
-
-      // Create log entry
-      final HabitLog log = HabitLog(
-        id: 'log_${now.millisecondsSinceEpoch}',
-        habitId: habitId,
-        completedAt: now,
-        durationMinutes: durationMinutes ?? habit.targetMinutes,
-        note: note,
-        moodEmoji: moodEmoji,
-      );
-      _recentLogs = <HabitLog>[log, ..._recentLogs];
-
-      // Update habit
-      final int newStreak = _calculateNewStreak(habit);
-      _habits[index] = habit.copyWith(
-        currentStreak: newStreak,
-        longestStreak:
-            newStreak > habit.longestStreak ? newStreak : habit.longestStreak,
-        totalCompletions: habit.totalCompletions + 1,
-        lastCompletedAt: now,
-      );
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    }
+    return completeHabitInFirestore(
+      habitId,
+      durationMinutes: durationMinutes,
+      note: note,
+      moodEmoji: moodEmoji,
+    );
   }
 
   int _calculateNewStreak(Habit habit) {
@@ -289,6 +248,25 @@ class HabitService extends ChangeNotifier {
     try {
       final int index = _habits.indexWhere((Habit h) => h.id == habitId);
       if (index != -1) {
+        await _firestore
+            .collection('habits')
+            .doc(habitId)
+            .update(<String, dynamic>{
+          'title': updatedHabit.title,
+          'description': updatedHabit.description,
+          'emoji': updatedHabit.emoji,
+          'category': updatedHabit.category.name,
+          'frequency': updatedHabit.frequency.name,
+          'preferredTime': updatedHabit.preferredTime.name,
+          'targetMinutes': updatedHabit.targetMinutes,
+          'isActive': updatedHabit.isActive,
+          'customDays': updatedHabit.customDays,
+          if (updatedHabit.buildingPhaseStartDate != null)
+            'buildingPhaseStartDate':
+                Timestamp.fromDate(updatedHabit.buildingPhaseStartDate!),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
         _habits[index] = updatedHabit;
         notifyListeners();
         return true;
