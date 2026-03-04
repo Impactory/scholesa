@@ -2,6 +2,7 @@
 library;
 
 export 'ai_coach_widget.dart';
+export 'ai_context_coach_section.dart';
 export 'bos_models.dart';
 export 'bos_event_bus.dart';
 export 'bos_service.dart';

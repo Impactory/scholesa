@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:record/record.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
@@ -79,7 +80,63 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   @override
   void initState() {
     super.initState();
+    unawaited(_restoreLearningGoals());
     unawaited(_initializeVoiceStack());
+  }
+
+  String get _learningGoalsKey {
+    return 'bos_mia.learning_goals.${widget.runtime.siteId}.${widget.runtime.learnerId}';
+  }
+
+  Future<void> _restoreLearningGoals() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final List<String> storedGoals =
+          prefs.getStringList(_learningGoalsKey) ?? <String>[];
+      if (!mounted || storedGoals.isEmpty) {
+        return;
+      }
+
+      setState(() {
+        _learningGoals
+          ..clear()
+          ..addAll(storedGoals.take(3));
+      });
+    } catch (_) {
+      // Keep AI available even if local persistence fails.
+    }
+  }
+
+  Future<void> _persistLearningGoals() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+          _learningGoalsKey, _learningGoals.take(3).toList());
+    } catch (_) {
+      // Keep AI available even if local persistence fails.
+    }
+  }
+
+  List<String> _bosMiaLoopTags() {
+    final Set<String> tags = <String>{
+      ...widget.conceptTags.where((String tag) => tag.trim().isNotEmpty),
+      'bos_mia_loop',
+      'continuous_improvement',
+      'learner_${widget.runtime.learnerId}',
+      'site_${widget.runtime.siteId}',
+      'role_${widget.actorRole.name}',
+      'mode_${_selectedMode.name}',
+      if (widget.missionId != null && widget.missionId!.trim().isNotEmpty)
+        'mission_${widget.missionId!}',
+      if (widget.checkpointId != null &&
+          widget.checkpointId!.trim().isNotEmpty)
+        'checkpoint_${widget.checkpointId!}',
+      ..._learningGoals.map(
+        (String goal) =>
+            'goal_${goal.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_').replaceAll(RegExp(r'^_+|_+$'), '')}',
+      ),
+    };
+    return tags.where((String tag) => tag.isNotEmpty).toList();
   }
 
   Future<void> _initializeVoiceStack() async {
