@@ -1164,9 +1164,9 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   }
 
   Widget _buildAiCoachingSection(BuildContext context, Color pillarColor) {
-    final AppState? appState = context.read<AppState>();
-    final String learnerId = appState?.userId ?? '';
-    final UserRole? role = appState?.role;
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId ?? '';
+    final UserRole? role = appState.role;
 
     if (learnerId.isEmpty || role == null || role != UserRole.learner) {
       return const SizedBox.shrink();

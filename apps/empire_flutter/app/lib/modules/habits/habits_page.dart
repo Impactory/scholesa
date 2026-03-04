@@ -1077,9 +1077,9 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
   }
 
   Widget _buildAiReflectionSection(BuildContext context) {
-    final AppState? appState = context.read<AppState>();
-    final String learnerId = appState?.userId ?? '';
-    final UserRole? role = appState?.role;
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId ?? '';
+    final UserRole? role = appState.role;
 
     if (learnerId.isEmpty || role == null || role != UserRole.learner) {
       return const SizedBox.shrink();

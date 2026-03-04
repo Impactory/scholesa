@@ -738,8 +738,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildAiCoachingSection(BuildContext context) {
-    final AppState? appState = context.read<AppState>();
-    final UserRole? role = appState?.role;
+    final AppState appState = context.read<AppState>();
+    final UserRole? role = appState.role;
 
     if (role == null || role != UserRole.learner) {
       return const SizedBox.shrink();

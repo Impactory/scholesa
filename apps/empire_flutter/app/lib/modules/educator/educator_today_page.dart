@@ -602,10 +602,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   }
 
   Widget _buildAiCoachingSection(BuildContext context) {
-    final AppState? appState = context.read<AppState>();
-    final UserRole? role = appState?.role;
+    final AppState appState = context.read<AppState>();
+    final UserRole? role = appState.role;
 
-    if (role == null || role != UserRole.educator) {
+    if (role != UserRole.educator) {
       return const SizedBox.shrink();
     }
 
@@ -652,10 +652,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     );
   }
 
-  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+  Widget _buildAiCoachPanel(BuildContext context, UserRole? role) {
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
-    if (runtime == null) {
+    if (role == null || runtime == null) {
       return const SizedBox.shrink();
     }
 

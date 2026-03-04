@@ -433,8 +433,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   }
 
   Widget _buildAiCoachingSection(BuildContext context) {
-    final AppState? appState = context.read<AppState>();
-    final UserRole? role = appState?.role;
+    final AppState appState = context.read<AppState>();
+    final UserRole? role = appState.role;
 
     if (role == null || role != UserRole.parent) {
       return const SizedBox.shrink();

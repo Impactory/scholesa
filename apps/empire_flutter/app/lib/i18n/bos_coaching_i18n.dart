@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+/// BOS/MIA coaching internationalization keys
+/// 
 /// Centralized i18n keys for BOS/MIA coaching surfaces.
 /// Shared by all educator and parent pages to ensure consistency.
 ///
@@ -7,10 +11,6 @@
 /// 
 /// final title = BosCoachingI18n.sessionLoopTitle(context);
 /// ```
-
-import 'package:flutter/material.dart';
-
-/// BOS/MIA coaching internationalization keys
 class BosCoachingI18n {
   static const Map<String, String> _esTranslations = <String, String>{
     'sessionLoopTitle': 'Ciclo de sesión BOS/MIA',
