@@ -13,13 +13,39 @@ import 'ai_coach_widget.dart';
 import 'bos_models.dart';
 import 'learning_runtime_provider.dart';
 
+typedef RuntimeProviderFactory = LearningRuntimeProvider Function({
+  required String siteId,
+  required String learnerId,
+  required GradeBand gradeBand,
+  String? sessionOccurrenceId,
+});
+
+typedef SessionOccurrenceResolver = Future<String?> Function(
+  BuildContext context, {
+  required String siteId,
+  required String learnerId,
+});
+
+typedef AssistantSheetPresenter = Future<void> Function(
+  BuildContext context,
+  Widget child,
+);
+
 class GlobalAiAssistantOverlay extends StatefulWidget {
   const GlobalAiAssistantOverlay({
     super.key,
     this.navigatorKey,
+    this.runtimeFactory,
+    this.sessionOccurrenceResolver,
+    this.sheetPresenter,
+    this.nowProvider,
   });
 
   final GlobalKey<NavigatorState>? navigatorKey;
+  final RuntimeProviderFactory? runtimeFactory;
+  final SessionOccurrenceResolver? sessionOccurrenceResolver;
+  final AssistantSheetPresenter? sheetPresenter;
+  final DateTime Function()? nowProvider;
 
   @override
   State<GlobalAiAssistantOverlay> createState() =>
@@ -38,7 +64,7 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
     if (_assistantSheetOpen) {
       return false;
     }
-    final DateTime now = DateTime.now();
+    final DateTime now = widget.nowProvider?.call() ?? DateTime.now();
     if (_lastHoverOpenAt != null &&
         now.difference(_lastHoverOpenAt!) < const Duration(seconds: 4)) {
       return false;
@@ -192,23 +218,26 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
 
     _assistantSheetOpen = true;
     try {
-      await showModalBottomSheet<void>(
-        context: sheetContext,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        useSafeArea: true,
-        backgroundColor: Theme.of(sheetContext).colorScheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (BuildContext sheetContext) {
-          return _GlobalAiAssistantSheet(
-            siteId: siteId,
-            learnerId: learnerId,
-            role: role,
-          );
-        },
+      final Widget sheetChild = _GlobalAiAssistantSheet(
+        siteId: siteId,
+        learnerId: learnerId,
+        role: role,
       );
+      if (widget.sheetPresenter != null) {
+        await widget.sheetPresenter!(sheetContext, sheetChild);
+      } else {
+        await showModalBottomSheet<void>(
+          context: sheetContext,
+          isScrollControlled: true,
+          useRootNavigator: true,
+          useSafeArea: true,
+          backgroundColor: Theme.of(sheetContext).colorScheme.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (BuildContext sheetContext) => sheetChild,
+        );
+      }
     } catch (_) {
       unawaited(TelemetryService.instance.logEvent(
         event: 'assistant.open.failed',
@@ -278,7 +307,21 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
       return;
     }
 
-    final LearningRuntimeProvider runtime = LearningRuntimeProvider(
+    final RuntimeProviderFactory runtimeFactory =
+        widget.runtimeFactory ??
+            ({
+              required String siteId,
+              required String learnerId,
+              required GradeBand gradeBand,
+              String? sessionOccurrenceId,
+            }) =>
+                LearningRuntimeProvider(
+                  siteId: siteId,
+                  learnerId: learnerId,
+                  gradeBand: gradeBand,
+                  sessionOccurrenceId: sessionOccurrenceId,
+                );
+    final LearningRuntimeProvider runtime = runtimeFactory(
       siteId: siteId,
       learnerId: learnerId,
       gradeBand: GradeBand.g4_6,
@@ -302,7 +345,7 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
       return;
     }
 
-    final DateTime now = DateTime.now();
+    final DateTime now = widget.nowProvider?.call() ?? DateTime.now();
     if (_lastBosPopupAt != null &&
         now.difference(_lastBosPopupAt!) < const Duration(minutes: 3)) {
       return;
@@ -336,6 +379,14 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
     required String siteId,
     required String learnerId,
   }) async {
+    if (widget.sessionOccurrenceResolver != null) {
+      return widget.sessionOccurrenceResolver!(
+        context,
+        siteId: siteId,
+        learnerId: learnerId,
+      );
+    }
+
     try {
       final QuerySnapshot<Map<String, dynamic>> attempts =
           await FirebaseFirestore.instance
