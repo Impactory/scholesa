@@ -12,23 +12,16 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Fetch user profile to check role (costs 1 read)
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-    
     // Safe version that returns empty map if user has no profile
     function getUserDataSafe() {
-      let userRef = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      let uid = request.auth.uid;
+      let userRef = get(/databases/$(database)/documents/users/$(uid));
       return userRef.exists ? userRef.data : {};
     }
     
-    function hasRole(role) {
-      return isAuthenticated() && getUserData().role == role;
-    }
-    
     function hasRoleSafe(role) {
-      return isAuthenticated() && (getUserDataSafe().get('role', '') == role);
+      let userData = getUserDataSafe();
+      return isAuthenticated() && userData.keys().hasAny(['role']) && userData.role == role;
     }
     
     function isEducator() {
