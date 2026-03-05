@@ -90,7 +90,7 @@ void main() {
 
       await _tapVisible(
         tester,
-        find.widgetWithText(ElevatedButton, 'Submit for Review'),
+        find.text('Submit for Review').first,
       );
 
       await tester.tap(find.text('In Review'));
@@ -100,7 +100,7 @@ void main() {
 
       await _tapVisible(
         tester,
-        find.widgetWithText(ElevatedButton, 'Publish Curriculum'),
+        find.text('Publish Curriculum').first,
       );
 
       final QuerySnapshot<Map<String, dynamic>> missions =
@@ -127,7 +127,7 @@ void main() {
 
       await _tapVisible(
         tester,
-        find.widgetWithText(ElevatedButton, 'Create Snapshot'),
+        find.text('Create Snapshot').first,
       );
 
       final QuerySnapshot<Map<String, dynamic>> snapshotDocs =
