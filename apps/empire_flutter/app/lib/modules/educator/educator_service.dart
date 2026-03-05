@@ -8,9 +8,11 @@ class EducatorService extends ChangeNotifier {
   EducatorService({
     required FirestoreService firestoreService,
     required this.educatorId,
+    this.siteId,
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String educatorId;
+  final String? siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<TodayClass> _todayClasses = <TodayClass>[];
@@ -138,16 +140,38 @@ class EducatorService extends ChangeNotifier {
     return educatorIds.contains(educatorId);
   }
 
+  bool _recordMatchesSite(Map<String, dynamic> data) {
+    final String normalizedSiteId = siteId?.trim() ?? '';
+    if (normalizedSiteId.isEmpty) {
+      return true;
+    }
+
+    final String directSiteId = (data['siteId'] as String?)?.trim() ?? '';
+    if (directSiteId == normalizedSiteId) {
+      return true;
+    }
+
+    final Set<String> siteIds = <String>{
+      ..._asStringIterable(data['siteIds']),
+      ..._asStringIterable(data['sites']),
+    };
+    return siteIds.contains(normalizedSiteId);
+  }
+
   Future<void> _appendOccurrenceQueryResults({
     required Query<Map<String, dynamic>> query,
     required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
     bool filterByEducator = false,
+    bool filterBySite = false,
   }) async {
     try {
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in snapshot.docs) {
         if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        if (filterBySite && !_recordMatchesSite(doc.data())) {
           continue;
         }
         sink[doc.id] = doc;
@@ -176,6 +200,7 @@ class EducatorService extends ChangeNotifier {
           .where('startTime', isLessThan: endTs)
           .orderBy('startTime'),
       sink: merged,
+      filterBySite: true,
     );
 
     if (merged.isEmpty) {
@@ -187,6 +212,7 @@ class EducatorService extends ChangeNotifier {
             .orderBy('startTime'),
         sink: merged,
         filterByEducator: true,
+        filterBySite: true,
       );
     }
 
@@ -200,6 +226,7 @@ class EducatorService extends ChangeNotifier {
             .orderBy('date')
             .orderBy('startTime'),
         sink: merged,
+        filterBySite: true,
       );
     }
 
@@ -213,6 +240,7 @@ class EducatorService extends ChangeNotifier {
             .orderBy('startTime'),
         sink: merged,
         filterByEducator: true,
+        filterBySite: true,
       );
     }
 
@@ -281,6 +309,7 @@ class EducatorService extends ChangeNotifier {
       String classId, String learnerId, String status) async {
     try {
       await _firestore.collection('attendanceRecords').add(<String, dynamic>{
+        if ((siteId?.trim() ?? '').isNotEmpty) 'siteId': siteId!.trim(),
         'sessionOccurrenceId': classId,
         'learnerId': learnerId,
         'status': status,
@@ -373,6 +402,7 @@ class EducatorService extends ChangeNotifier {
       final String sessionId = await _firestoreService.createDocument(
         'sessions',
         <String, dynamic>{
+          if ((siteId?.trim() ?? '').isNotEmpty) 'siteId': siteId!.trim(),
           'educatorId': educatorId,
           'educatorIds': <String>[educatorId],
           'title': title,
@@ -433,6 +463,9 @@ class EducatorService extends ChangeNotifier {
             await _firestore.collection('users').doc(learnerId).get();
         if (doc.exists) {
           final Map<String, dynamic> data = doc.data()!;
+          if (!_recordMatchesSite(data)) {
+            continue;
+          }
           loadedLearners.add(EducatorLearner(
             id: doc.id,
             name: data['displayName'] as String? ?? 'Unknown',
@@ -467,12 +500,16 @@ class EducatorService extends ChangeNotifier {
     required Query<Map<String, dynamic>> query,
     required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
     bool filterByEducator = false,
+    bool filterBySite = false,
   }) async {
     try {
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in snapshot.docs) {
         if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        if (filterBySite && !_recordMatchesSite(doc.data())) {
           continue;
         }
         sink[doc.id] = doc;
@@ -493,6 +530,7 @@ class EducatorService extends ChangeNotifier {
           .where('educatorId', isEqualTo: educatorId)
           .orderBy('startTime', descending: true),
       sink: merged,
+      filterBySite: true,
     );
 
     await _appendSessionQueryResults(
@@ -501,6 +539,7 @@ class EducatorService extends ChangeNotifier {
           .where('educatorIds', arrayContains: educatorId)
           .orderBy('startTime', descending: true),
       sink: merged,
+      filterBySite: true,
     );
 
     if (merged.isEmpty) {
@@ -510,6 +549,7 @@ class EducatorService extends ChangeNotifier {
             .where('educatorId', isEqualTo: educatorId)
             .orderBy('startDate', descending: true),
         sink: merged,
+        filterBySite: true,
       );
       await _appendSessionQueryResults(
         query: _firestore
@@ -517,6 +557,7 @@ class EducatorService extends ChangeNotifier {
             .where('educatorIds', arrayContains: educatorId)
             .orderBy('startDate', descending: true),
         sink: merged,
+        filterBySite: true,
       );
     }
 
@@ -528,6 +569,7 @@ class EducatorService extends ChangeNotifier {
             .limit(300),
         sink: merged,
         filterByEducator: true,
+        filterBySite: true,
       );
     }
 
@@ -538,12 +580,16 @@ class EducatorService extends ChangeNotifier {
     required Query<Map<String, dynamic>> query,
     required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
     bool filterByEducator = false,
+    bool filterBySite = false,
   }) async {
     try {
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in snapshot.docs) {
         if (filterByEducator && !_recordMatchesEducator(doc.data())) {
+          continue;
+        }
+        if (filterBySite && !_recordMatchesSite(doc.data())) {
           continue;
         }
         sink[doc.id] = doc;
@@ -609,6 +655,7 @@ class EducatorService extends ChangeNotifier {
           .collection('enrollments')
           .where('educatorId', isEqualTo: educatorId),
       sink: enrollments,
+      filterBySite: true,
     );
 
     if (enrollments.isEmpty) {
@@ -617,6 +664,7 @@ class EducatorService extends ChangeNotifier {
             .collection('enrollments')
             .where('educatorIds', arrayContains: educatorId),
         sink: enrollments,
+        filterBySite: true,
       );
     }
 

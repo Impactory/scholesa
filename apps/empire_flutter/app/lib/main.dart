@@ -394,17 +394,21 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => EducatorService(
             firestoreService: _firestoreService,
             educatorId: '',
+            siteId: '',
           ),
           update:
               (_, AppState appState, EducatorService? previousEducatorService) {
             final String educatorId = _normalizeContextValue(appState.userId);
+            final String siteId = _normalizeContextValue(appState.activeSiteId);
             if (previousEducatorService != null &&
-                previousEducatorService.educatorId == educatorId) {
+                previousEducatorService.educatorId == educatorId &&
+                (previousEducatorService.siteId?.trim() ?? '') == siteId) {
               return previousEducatorService;
             }
             final EducatorService service = EducatorService(
               firestoreService: _firestoreService,
               educatorId: educatorId,
+              siteId: siteId,
             );
             if (educatorId.isNotEmpty &&
                 (appState.role == UserRole.educator ||

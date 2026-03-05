@@ -43,12 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (currentUser) {
-        const userRef = doc(firestore, 'users', currentUser.uid);
-        unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-          setProfile(docSnap.exists() ? (docSnap.data() as UserProfile) : null);
-          setLoading(false);
+        void syncSessionCookie(currentUser).catch((error) => {
+          console.error('Failed to sync Firebase session cookie after auth state change.', error);
         });
+
+        const userRef = doc(firestore, 'users', currentUser.uid);
+        unsubscribeProfile = onSnapshot(
+          userRef,
+          (docSnap) => {
+            setProfile(docSnap.exists() ? (docSnap.data() as UserProfile) : null);
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Failed to subscribe to Firebase profile snapshot.', error);
+            setProfile(null);
+            setLoading(false);
+          },
+        );
       } else {
+        void clearSessionCookie().catch((error) => {
+          console.error('Failed to clear Firebase session cookie after auth state cleared.', error);
+        });
         setProfile(null);
         setLoading(false);
       }
