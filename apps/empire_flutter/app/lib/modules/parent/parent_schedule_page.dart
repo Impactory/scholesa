@@ -40,7 +40,7 @@ const Map<String, String> _parentScheduleEs = <String, String>{
   'Future Skills': 'Habilidades del futuro',
   'Leadership': 'Liderazgo',
   'Impact': 'Impacto',
-  'TBD': 'Por definir',
+  'Unassigned': 'Sin asignar',
   'Mon': 'Lun',
   'Tue': 'Mar',
   'Wed': 'Mié',
@@ -150,7 +150,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 if (service.learnerSummaries.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       child: _buildScheduleLearnerLoopCard(service),
                     ),
                   ),
@@ -338,17 +339,21 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   Widget _buildScheduleLearnerLoopCard(ParentService service) {
     LearnerSummary? selectedLearner;
     if (_selectedLearner == 'all') {
-      selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+      selectedLearner = service.learnerSummaries.isNotEmpty
+          ? service.learnerSummaries.first
+          : null;
     } else {
       try {
         selectedLearner = service.learnerSummaries.firstWhere(
           (LearnerSummary l) => l.learnerId == _selectedLearner,
         );
       } catch (e) {
-        selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+        selectedLearner = service.learnerSummaries.isNotEmpty
+            ? service.learnerSummaries.first
+            : null;
       }
     }
-    
+
     if (selectedLearner == null) {
       return const SizedBox.shrink();
     }
@@ -814,7 +819,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             title: event.title,
             location: event.location?.trim().isNotEmpty == true
                 ? event.location!.trim()
-              : _t('TBD'),
+                : _t('Unassigned'),
             dateTime: event.dateTime,
             pillarKey: pillarKey,
             pillarLabel: _pillarLabel(pillarKey),

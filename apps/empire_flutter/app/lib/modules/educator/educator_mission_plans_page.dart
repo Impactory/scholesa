@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
@@ -114,8 +114,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             ? Center(
                 child: Text(
                   _tEducatorMissionPlans(context, 'No missions yet'),
-                  style:
-                      const TextStyle(color: ScholesaColors.textSecondary),
+                  style: const TextStyle(color: ScholesaColors.textSecondary),
                 ),
               )
             : ListView.builder(
@@ -168,14 +167,17 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               ),
               if (service.learners.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: BosLearnerLoopInsightsCard(
-                    title: _tEducatorMissionPlans(context, 'BOS/MIA Mission Loop'),
+                    title:
+                        _tEducatorMissionPlans(context, 'BOS/MIA Mission Loop'),
                     subtitle: _tEducatorMissionPlans(
                       context,
                       'Latest individual improvement signal while designing',
                     ),
-                    emptyLabel: _tEducatorMissionPlans(context, 'No mission loop data yet'),
+                    emptyLabel: _tEducatorMissionPlans(
+                        context, 'No mission loop data yet'),
                     learnerId: service.learners.first.id,
                     learnerName: service.learners.first.name,
                     accentColor: ScholesaColors.educator,
@@ -238,13 +240,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   _buildInfoItem(Icons.timer_outlined, plan.duration),
-                  _buildInfoItem(
-                      Icons.school_outlined,
+                  _buildInfoItem(Icons.school_outlined,
                       '${_tEducatorMissionPlans(context, 'Grade')} ${plan.targetGrade}'),
                   _buildInfoItem(Icons.calendar_today_outlined,
                       '${plan.assignedSessions} ${_tEducatorMissionPlans(context, 'sessions')}'),
-                  _buildInfoItem(
-                      Icons.check_circle_outline,
+                  _buildInfoItem(Icons.check_circle_outline,
                       '${plan.completedBy} ${_tEducatorMissionPlans(context, 'done')}'),
                 ],
               ),
@@ -560,13 +560,16 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
                         value: 'Future Skills',
-                        child: Text(_tEducatorMissionPlans(context, 'Future Skills'))),
+                        child: Text(
+                            _tEducatorMissionPlans(context, 'Future Skills'))),
                     DropdownMenuItem<String>(
                         value: 'Leadership & Agency',
-                        child: Text(_tEducatorMissionPlans(context, 'Leadership & Agency'))),
+                        child: Text(_tEducatorMissionPlans(
+                            context, 'Leadership & Agency'))),
                     DropdownMenuItem<String>(
                         value: 'Impact & Innovation',
-                        child: Text(_tEducatorMissionPlans(context, 'Impact & Innovation'))),
+                        child: Text(_tEducatorMissionPlans(
+                            context, 'Impact & Innovation'))),
                   ],
                   onChanged: (String? value) {
                     if (value != null) {
@@ -599,8 +602,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final String titleRequiredText =
-                    _tEducatorMissionPlans(context, 'Mission title is required');
+                final String titleRequiredText = _tEducatorMissionPlans(
+                    context, 'Mission title is required');
                 final String createdText = _tEducatorMissionPlans(
                     context, 'Mission created and added to list');
                 final String createFailedText =
@@ -644,7 +647,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   Future<void> _loadMissionPlans() async {
     setState(() => _isLoading = true);
     try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final FirebaseFirestore firestore = _resolveFirestore();
       Query<Map<String, dynamic>> query =
           firestore.collection('missions').limit(100);
       try {
@@ -652,43 +655,42 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       } catch (_) {}
 
       final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-      final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final String? currentUserId = _resolveActorId();
 
-      final List<_MissionPlan> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-            final Map<String, dynamic> data = doc.data();
-            final String pillar = _canonicalPillar(
-              data['pillar'] as String? ?? data['pillarCode'] as String?,
-            );
-            return _MissionPlan(
-              id: doc.id,
-              title: (data['title'] as String? ?? '').trim().isEmpty
-                  ? 'Mission'
-                  : (data['title'] as String).trim(),
-              pillar: pillar,
-              duration: (data['duration'] as String? ?? '4 weeks'),
-              targetGrade:
-                  (data['targetGrade'] as String? ?? data['gradeBand'] as String? ?? '6-8'),
-              status: _parsePlanStatus(data['status'] as String?),
-              assignedSessions: _asInt(data['assignedSessions']) ??
-                  ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
-              completedBy: _asInt(data['completedBy']) ??
-                  _asInt(data['completedCount']) ??
-                  0,
-            );
-          })
-          .where((_MissionPlan plan) {
-            if (currentUserId == null || currentUserId.isEmpty) return true;
-            final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
-                snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
-            final Map<String, dynamic>? data = sourceDoc?.data();
-            if (data == null) return true;
-            final String? ownerId =
-                (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
-            if (ownerId == null || ownerId.trim().isEmpty) return true;
-            return ownerId.trim() == currentUserId;
-          })
-          .toList();
+      final List<_MissionPlan> loaded =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        final String pillar = _canonicalPillar(
+          data['pillar'] as String? ?? data['pillarCode'] as String?,
+        );
+        return _MissionPlan(
+          id: doc.id,
+          title: (data['title'] as String? ?? '').trim().isEmpty
+              ? 'Mission'
+              : (data['title'] as String).trim(),
+          pillar: pillar,
+          duration: (data['duration'] as String? ?? '4 weeks'),
+          targetGrade: (data['targetGrade'] as String? ??
+              data['gradeBand'] as String? ??
+              '6-8'),
+          status: _parsePlanStatus(data['status'] as String?),
+          assignedSessions: _asInt(data['assignedSessions']) ??
+              ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
+          completedBy: _asInt(data['completedBy']) ??
+              _asInt(data['completedCount']) ??
+              0,
+        );
+      }).where((_MissionPlan plan) {
+        if (currentUserId == null || currentUserId.isEmpty) return true;
+        final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
+            snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
+        final Map<String, dynamic>? data = sourceDoc?.data();
+        if (data == null) return true;
+        final String? ownerId =
+            (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
+        if (ownerId == null || ownerId.trim().isEmpty) return true;
+        return ownerId.trim() == currentUserId;
+      }).toList();
 
       setState(() {
         _missionPlans = loaded;
@@ -707,9 +709,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     required String pillar,
   }) async {
     try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      await firestore.collection('missions').add(<String, dynamic>{
+      final FirebaseFirestore firestore = _resolveFirestore();
+      final String? userId = _resolveActorId();
+      final DocumentReference<Map<String, dynamic>> createdRef =
+          await firestore.collection('missions').add(<String, dynamic>{
         'title': title,
         'pillar': pillar,
         'pillarCode': _pillarCodeFromLabel(pillar),
@@ -723,28 +726,64 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      final _MissionPlan created = _MissionPlan(
+        id: createdRef.id,
+        title: title,
+        pillar: pillar,
+        duration: '4 weeks',
+        targetGrade: '6-8',
+        status: _PlanStatus.draft,
+        assignedSessions: 0,
+        completedBy: 0,
+      );
+      if (mounted) {
+        setState(() {
+          _missionPlans = <_MissionPlan>[
+            created,
+            ..._missionPlans
+                .where((_MissionPlan plan) => plan.id != created.id),
+          ];
+        });
+      }
       await _loadMissionPlans();
       return true;
-    } catch (_) {
-      _insertLocalMission(title: title, pillar: pillar);
-      return true;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Create mission failed: $error')),
+        );
+      }
+      return false;
     }
   }
 
-  void _insertLocalMission({required String title, required String pillar}) {
-    final _MissionPlan fallback = _MissionPlan(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      title: title,
-      pillar: pillar,
-      duration: '4 weeks',
-      targetGrade: '6-8',
-      status: _PlanStatus.draft,
-      assignedSessions: 0,
-      completedBy: 0,
-    );
-    setState(() {
-      _missionPlans = <_MissionPlan>[fallback, ..._missionPlans];
-    });
+  FirebaseFirestore _resolveFirestore() {
+    try {
+      return context.read<FirestoreService>().firestore;
+    } catch (_) {
+      return FirebaseFirestore.instance;
+    }
+  }
+
+  String? _resolveActorId() {
+    try {
+      final String educatorId =
+          context.read<EducatorService>().educatorId.trim();
+      if (educatorId.isNotEmpty) {
+        return educatorId;
+      }
+    } catch (_) {
+      // no-op
+    }
+    try {
+      final String? appStateUserId = context.read<AppState>().userId;
+      if (appStateUserId != null && appStateUserId.trim().isNotEmpty) {
+        return appStateUserId.trim();
+      }
+    } catch (_) {
+      // no-op
+    }
+    return null;
   }
 
   _PlanStatus _parsePlanStatus(String? status) {

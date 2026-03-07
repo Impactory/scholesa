@@ -1,17 +1,35 @@
 'use client';
 
+import Link from 'next/link';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { Button } from '@/src/components/ui/Button';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
+import { normalizeUserRole } from '@/src/lib/auth/roleAliases';
+import { getRoleNavigationPaths, type WorkflowPath } from '@/src/lib/routing/workflowRoutes';
+
+function formatRouteLabel(path: WorkflowPath): string {
+  if (path === '/messages') return 'messages';
+  if (path === '/notifications') return 'notifications';
+  if (path === '/profile') return 'profile';
+  if (path === '/settings') return 'settings';
+  const parts = path.split('/').filter(Boolean);
+  if (parts.length <= 1) return path.replace('/', '');
+  return parts.slice(1).join(' / ');
+}
 
 export function Navigation() {
-  const { user, signOut } = useAuthContext();
+  const { user, profile, signOut } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
   const trackInteraction = useInteractionTracking();
   const { locale, t } = useI18n();
+  const normalizedRole = normalizeUserRole(profile?.role);
+  const roleRoutes: WorkflowPath[] = normalizedRole
+    ? getRoleNavigationPaths(normalizedRole)
+    : ['/messages', '/notifications', '/profile', '/settings'];
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,10 +44,35 @@ export function Navigation() {
   return (
     <nav className="bg-app-surface border-b border-app">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
+        <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-2">
+          <div className="flex items-center gap-4">
             <div className="flex-shrink-0 flex items-center">
               <span className="font-bold text-xl text-app-foreground">Scholesa</span>
+            </div>
+            <div className="hidden xl:flex flex-wrap items-center gap-2">
+              {roleRoutes.map((routePath) => {
+                const href = `/${locale}${routePath}`;
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={routePath}
+                    href={href}
+                    onClick={() =>
+                      trackInteraction('feature_discovered', {
+                        cta: 'navigation_workflow_route',
+                        routePath,
+                      })
+                    }
+                    className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-app-muted hover:text-app-foreground hover:bg-app-canvas'
+                    }`}
+                  >
+                    {formatRouteLabel(routePath)}
+                  </Link>
+                );
+              })}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -56,6 +99,31 @@ export function Navigation() {
               {t('navigation.signOut')}
             </Button>
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pb-3 xl:hidden">
+          {roleRoutes.map((routePath) => {
+            const href = `/${locale}${routePath}`;
+            const active = pathname === href;
+            return (
+              <Link
+                key={`${routePath}-mobile`}
+                href={href}
+                onClick={() =>
+                  trackInteraction('feature_discovered', {
+                    cta: 'navigation_workflow_route_mobile',
+                    routePath,
+                  })
+                }
+                className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                  active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-app-muted hover:text-app-foreground hover:bg-app-canvas'
+                }`}
+              >
+                {formatRouteLabel(routePath)}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </nav>

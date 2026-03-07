@@ -6,6 +6,7 @@ import { Spinner } from '@/src/components/ui/Spinner';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { normalizeUserRole, roleIsAllowed } from '@/src/lib/auth/roleAliases';
+import { getRoleDefaultRoute } from '@/src/lib/routing/workflowRoutes';
 import type { UserRole } from '@/src/types/user';
 
 interface RoleRouteGuardProps {
@@ -28,7 +29,7 @@ export function RoleRouteGuard({ allowedRoles, children }: RoleRouteGuardProps) 
       return;
     }
     if (!hasAccess) {
-      const fallback = normalizedRole || 'dashboard';
+      const fallback = normalizedRole ? getRoleDefaultRoute(normalizedRole) : 'dashboard';
       router.replace(`/${locale}/${fallback}`);
     }
   }, [hasAccess, loading, locale, normalizedRole, router, user]);

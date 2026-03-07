@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-import '../../services/firestore_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -78,7 +75,6 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   late TabController _tabController;
   bool _isLoading = false;
 
-  final List<_ApprovalItem> _fallbackApprovals = <_ApprovalItem>[];
   List<_ApprovalItem> _approvals = <_ApprovalItem>[];
 
   @override
@@ -348,78 +344,40 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   }
 
   Future<void> _loadApprovals() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => _approvals = _fallbackApprovals);
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final List<_ApprovalItem> loaded = <_ApprovalItem>[];
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listWorkflowApprovals');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'limit': 200});
+      final Map<String, dynamic> payload =
+          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final List<dynamic> rows = payload['approvals'] as List<dynamic>? ?? <dynamic>[];
 
-      QuerySnapshot<Map<String, dynamic>> contractsSnap;
-      try {
-        contractsSnap = await firestoreService.firestore
-            .collection('partnerContracts')
-            .orderBy('createdAt', descending: true)
-            .limit(100)
-            .get();
-      } catch (_) {
-        contractsSnap = await firestoreService.firestore
-            .collection('partnerContracts')
-            .limit(100)
-            .get();
-      }
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in contractsSnap.docs) {
-        final Map<String, dynamic> data = doc.data();
-        final _ApprovalStatus status = _parseStatus(data['status'] as String?);
+      for (final dynamic row in rows) {
+        if (row is! Map) continue;
+        final Map<String, dynamic> data = row.map((dynamic key, dynamic value) =>
+            MapEntry(key.toString(), value));
+        final String sourceCollection =
+            (data['sourceCollection'] as String?) ?? 'partnerContracts';
+        final _ApprovalType type = sourceCollection == 'payouts'
+            ? _ApprovalType.payout
+            : _ApprovalType.partnerContract;
         loaded.add(
           _ApprovalItem(
-            id: doc.id,
+            id: (data['id'] as String?) ?? '',
             title: (data['title'] as String?)?.trim().isNotEmpty == true
                 ? (data['title'] as String).trim()
-                : 'Partner Contract',
-            type: _ApprovalType.partnerContract,
-            submittedBy: (data['createdBy'] as String?) ?? 'Partner Ops',
-            submittedAt: _toDateTime(data['createdAt']) ?? DateTime.now(),
-            status: status,
-            sourceCollection: 'partnerContracts',
-          ),
-        );
-      }
-
-      QuerySnapshot<Map<String, dynamic>> payoutsSnap;
-      try {
-        payoutsSnap = await firestoreService.firestore
-            .collection('payouts')
-            .orderBy('createdAt', descending: true)
-            .limit(100)
-            .get();
-      } catch (_) {
-        payoutsSnap = await firestoreService.firestore
-            .collection('payouts')
-            .limit(100)
-            .get();
-      }
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in payoutsSnap.docs) {
-        final Map<String, dynamic> data = doc.data();
-        final _ApprovalStatus status = _parseStatus(data['status'] as String?);
-        final String amount = (data['amount'] as String?) ?? '0';
-        final String currency = (data['currency'] as String?) ?? 'USD';
-        loaded.add(
-          _ApprovalItem(
-            id: doc.id,
-            title: 'Payout Request: $amount $currency',
-            type: _ApprovalType.payout,
-            submittedBy: (data['createdBy'] as String?) ?? 'Finance Ops',
-            submittedAt: _toDateTime(data['createdAt']) ?? DateTime.now(),
-            status: status,
-            sourceCollection: 'payouts',
+                : 'Approval Item',
+            type: type,
+            submittedBy: (data['submittedBy'] as String?) ?? 'Ops',
+            submittedAt: _toDateTime(data['updatedAt']) ??
+                _toDateTime(data['createdAt']) ??
+                DateTime.now(),
+            status: _parseStatus(data['status'] as String?),
+            sourceCollection: sourceCollection,
           ),
         );
       }
@@ -431,7 +389,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       setState(() => _approvals = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _approvals = _fallbackApprovals);
+      setState(() => _approvals = <_ApprovalItem>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -441,44 +399,16 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
 
   Future<void> _updateApprovalStatus(
       _ApprovalItem item, _ApprovalStatus newStatus) async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
     final String statusLabel =
         newStatus == _ApprovalStatus.approved ? 'approved' : 'rejected';
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() {
-        _approvals = _approvals
-            .map((_ApprovalItem current) => current.id == item.id
-                ? _ApprovalItem(
-                    id: current.id,
-                    title: current.title,
-                    type: current.type,
-                    submittedBy: current.submittedBy,
-                    submittedAt: current.submittedAt,
-                    status: newStatus,
-                    sourceCollection: current.sourceCollection,
-                  )
-                : current)
-            .toList();
-      });
-      return;
-    }
 
     try {
-      final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'hq';
-      await firestoreService.firestore
-          .collection(item.sourceCollection)
-          .doc(item.id)
-          .set(<String, dynamic>{
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('decideWorkflowApproval');
+      await callable.call(<String, dynamic>{
+        'id': item.id,
         'status': statusLabel,
-        if (newStatus == _ApprovalStatus.approved) 'approvedBy': userId,
-        if (newStatus == _ApprovalStatus.approved)
-          'approvedAt': FieldValue.serverTimestamp(),
-        if (newStatus == _ApprovalStatus.rejected) 'rejectedBy': userId,
-        if (newStatus == _ApprovalStatus.rejected)
-          'rejectedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -518,20 +448,17 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   }
 
   DateTime? _toDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+    if (value is Map && value['seconds'] is int) {
+      final int seconds = value['seconds'] as int;
+      final int nanos = (value['nanoseconds'] as int?) ?? 0;
+      return DateTime.fromMillisecondsSinceEpoch(
+          (seconds * 1000) + (nanos ~/ 1000000));
+    }
     if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     if (value is String && value.trim().isNotEmpty) {
       return DateTime.tryParse(value.trim());
     }
     return null;
-  }
-
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
-    }
   }
 }

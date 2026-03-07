@@ -70,6 +70,3 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/icons/android/
-    - assets/icons/ios/
-    - assets/icons/windows11/

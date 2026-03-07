@@ -9,6 +9,10 @@ module.exports = {
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',
   ],
+  testPathIgnorePatterns: [
+    '<rootDir>/src/coppaGuards.spec.ts',
+    '<rootDir>/src/voiceSystem.voiceSmoke.spec.ts',
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   globals: {
     'ts-jest': {

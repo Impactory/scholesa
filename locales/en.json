@@ -28,5 +28,25 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeLabel": "Theme"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue into your Scholesa workflow.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Email address",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "switchToRegister": "Create an account",
+      "invalidCredentials": "Invalid email or password."
+    }
+  },
+  "common": {
+    "loading": "Loading..."
+  },
+  "dashboard": {
+    "redirecting": "Redirecting to your workspace..."
   }
 }

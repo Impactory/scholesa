@@ -72,52 +72,53 @@ class MessageService extends ChangeNotifier {
           isRead: data['isRead'] as bool? ?? false,
           readAt: _parseTimestamp(data['readAt']),
           actionUrl: data['actionUrl'] as String?,
+          metadata: <String, dynamic>{
+            if (data['threadId'] != null) 'threadId': data['threadId'],
+          },
         );
       }).toList();
 
-      // Load conversations for this user
-      final QuerySnapshot<Map<String, dynamic>> conversationsSnapshot =
+      // Load canonical conversation threads for this user
+      final QuerySnapshot<Map<String, dynamic>> threadsSnapshot =
           await _firestore
-              .collection('conversations')
+              .collection('messageThreads')
               .where('participantIds', arrayContains: userId)
               .orderBy('updatedAt', descending: true)
               .limit(20)
               .get();
 
-      _conversations = await Future.wait(
-        conversationsSnapshot.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+      _conversations = threadsSnapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
           final Map<String, dynamic> data = doc.data();
           final List<String> participantIds =
               List<String>.from(data['participantIds'] as List? ?? <String>[]);
           final List<String> participantNames = List<String>.from(
               data['participantNames'] as List? ?? <String>[]);
+          final String lastPreview = data['lastMessagePreview'] as String? ?? '';
+          final Message? lastMessage = lastPreview.isEmpty
+              ? null
+              : Message(
+                  id: doc.id,
+                  title: data['title'] as String? ?? '',
+                  body: lastPreview,
+                  type: MessageType.direct,
+                  senderId: data['lastMessageSenderId'] as String?,
+                  senderName: _participantNameForLastSender(
+                    participantIds: participantIds,
+                    participantNames: participantNames,
+                    lastSenderId: data['lastMessageSenderId'] as String?,
+                  ),
+                  createdAt:
+                      _parseTimestamp(data['updatedAt']) ?? DateTime.now(),
+                  isRead: false,
+                );
 
-          // Get the last message in the conversation
-          final QuerySnapshot<Map<String, dynamic>> lastMsgSnapshot =
-              await _firestore
-                  .collection('conversations')
-                  .doc(doc.id)
-                  .collection('messages')
-                  .orderBy('createdAt', descending: true)
-                  .limit(1)
-                  .get();
-
-          Message? lastMessage;
-          if (lastMsgSnapshot.docs.isNotEmpty) {
-            final Map<String, dynamic> msgData =
-                lastMsgSnapshot.docs.first.data();
-            lastMessage = Message(
-              id: lastMsgSnapshot.docs.first.id,
-              title: '',
-              body: msgData['body'] as String? ?? '',
-              type: MessageType.direct,
-              senderName: msgData['senderName'] as String?,
-              createdAt:
-                  _parseTimestamp(msgData['createdAt']) ?? DateTime.now(),
-              isRead: msgData['isRead'] as bool? ?? false,
-            );
-          }
+          final int unreadCount = _messages
+              .where((Message message) =>
+                  message.metadata?['threadId'] == doc.id &&
+                  !message.isRead &&
+                  message.type == MessageType.direct)
+              .length;
 
           return Conversation(
             id: doc.id,
@@ -125,10 +126,10 @@ class MessageService extends ChangeNotifier {
             participantNames: participantNames,
             lastMessage: lastMessage,
             updatedAt: _parseTimestamp(data['updatedAt']) ?? DateTime.now(),
-            unreadCount: data['unreadCount'] as int? ?? 0,
+            unreadCount: unreadCount,
           );
-        }),
-      );
+        })
+        .toList();
 
       debugPrint(
           'Loaded ${_messages.length} messages and ${_conversations.length} conversations');
@@ -230,47 +231,47 @@ class MessageService extends ChangeNotifier {
       final String senderName =
           senderDoc.data()?['displayName'] as String? ?? 'Unknown';
 
-      if (conversationId != null) {
-        // Add to existing conversation
-        await _firestore
-            .collection('conversations')
-            .doc(conversationId)
-            .collection('messages')
-            .add(<String, dynamic>{
-          'body': body,
-          'senderId': userId,
-          'senderName': senderName,
-          'createdAt': FieldValue.serverTimestamp(),
-          'isRead': false,
-        });
-
-        await _firestore
-            .collection('conversations')
-            .doc(conversationId)
-            .update(<String, dynamic>{
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+      final String recipientName =
+          await _loadDisplayName(recipientId, fallback: recipientId);
+      DocumentReference<Map<String, dynamic>> threadRef;
+      if (conversationId != null && conversationId.trim().isNotEmpty) {
+        threadRef = _firestore.collection('messageThreads').doc(conversationId);
       } else {
-        // Create new conversation
-        final DocumentReference<Map<String, dynamic>> convRef =
-            await _firestore.collection('conversations').add(<String, dynamic>{
+        threadRef = _firestore.collection('messageThreads').doc();
+        await threadRef.set(<String, dynamic>{
           'participantIds': <String>[userId, recipientId],
-          'participantNames': <String>[
-            senderName,
-            recipientId
-          ], // Will need to lookup recipient name
+          'participantNames': <String>[senderName, recipientName],
+          'title': 'Direct conversation',
+          'status': 'open',
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        });
-
-        await convRef.collection('messages').add(<String, dynamic>{
-          'body': body,
-          'senderId': userId,
-          'senderName': senderName,
-          'createdAt': FieldValue.serverTimestamp(),
-          'isRead': false,
-        });
+        }, SetOptions(merge: true));
       }
+
+      await threadRef.set(<String, dynamic>{
+        'participantIds': <String>[userId, recipientId],
+        'participantNames': <String>[senderName, recipientName],
+        'status': 'open',
+        'lastMessagePreview': body,
+        'lastMessageSenderId': userId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      await _firestore.collection('messages').add(<String, dynamic>{
+        'threadId': threadRef.id,
+        'title': 'Direct message',
+        'body': body,
+        'type': 'direct',
+        'priority': 'normal',
+        'senderId': userId,
+        'senderName': senderName,
+        'recipientId': recipientId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'status': 'sent',
+        'metadata': <String, dynamic>{'threadId': threadRef.id},
+      });
 
       await TelemetryService.instance.logEvent(
         event: 'message.sent',
@@ -324,5 +325,33 @@ class MessageService extends ChangeNotifier {
     if (value is Timestamp) return value.toDate();
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     return null;
+  }
+
+  Future<String> _loadDisplayName(
+    String uid, {
+    required String fallback,
+  }) async {
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> snap =
+          await _firestore.collection('users').doc(uid).get();
+      final String? displayName = snap.data()?['displayName'] as String?;
+      final String? email = snap.data()?['email'] as String?;
+      return (displayName?.trim().isNotEmpty ?? false)
+          ? displayName!.trim()
+          : ((email?.trim().isNotEmpty ?? false) ? email!.trim() : fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  String? _participantNameForLastSender({
+    required List<String> participantIds,
+    required List<String> participantNames,
+    required String? lastSenderId,
+  }) {
+    if (lastSenderId == null || lastSenderId.isEmpty) return null;
+    final int index = participantIds.indexOf(lastSenderId);
+    if (index == -1 || index >= participantNames.length) return null;
+    return participantNames[index];
   }
 }

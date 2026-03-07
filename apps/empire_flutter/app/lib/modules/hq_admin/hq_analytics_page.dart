@@ -19,7 +19,7 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'This Quarter': 'Este trimestre',
   'This Year': 'Este año',
   'Unable to load telemetry metrics:':
-    'No se pudieron cargar las métricas de telemetría:',
+      'No se pudieron cargar las métricas de telemetría:',
   'Telemetry KPIs': 'KPIs de telemetría',
   'Telemetry feed pending': 'Feed de telemetría pendiente',
   'Waiting for first data sync from BOS-MIA telemetry.':
@@ -35,27 +35,27 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Attendance Trend': 'Tendencia de asistencia',
   'Attendance data unavailable': 'Datos de asistencia no disponibles',
   'No attendance telemetry for this period':
-    'No hay telemetría de asistencia para este periodo',
+      'No hay telemetría de asistencia para este periodo',
   'Latest attendance:': 'Asistencia más reciente:',
   'Capture attendance records to render this trend.':
-    'Registra asistencias para mostrar esta tendencia.',
+      'Registra asistencias para mostrar esta tendencia.',
   'Pillar Performance': 'Desempeño por pilar',
   'Future Skills': 'Habilidades del futuro',
   'Leadership': 'Liderazgo',
   'Impact': 'Impacto',
+  'No pillar data available': 'No hay datos de pilares disponibles',
   'Site Comparison': 'Comparación de sedes',
   'Top Performers': 'Mejor desempeño',
   'View All': 'Ver todo',
   'Export HQ Analytics': 'Exportar analítica HQ',
   'Generate and export the current HQ analytics summary for cross-site review.':
-    'Genera y exporta el resumen actual de analítica HQ para revisión entre sedes.',
+      'Genera y exporta el resumen actual de analítica HQ para revisión entre sedes.',
   'Loading...': 'Cargando...',
   'No comparison data available': 'No hay datos de comparación disponibles',
   'No top performers available': 'No hay mejores desempeños disponibles',
   'Cancel': 'Cancelar',
   'BOS-MIA Feedback': 'Feedback de BOS-MIA',
-  'Rate real-world BOS-MIA usability':
-      'Califica la usabilidad real de BOS-MIA',
+  'Rate real-world BOS-MIA usability': 'Califica la usabilidad real de BOS-MIA',
   'Usability': 'Usabilidad',
   'Usefulness': 'Utilidad',
   'Reliability': 'Confiabilidad',
@@ -79,7 +79,7 @@ const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Top recommendation': 'Recomendación principal',
   'Most reported issue': 'Issue más reportado',
   'HQ analytics report prepared for export':
-    'Reporte de analítica HQ preparado para exportar',
+      'Reporte de analítica HQ preparado para exportar',
   'Export': 'Exportar',
 };
 
@@ -260,7 +260,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.rate_review, color: ScholesaColors.futureSkills),
+                child: const Icon(Icons.rate_review,
+                    color: ScholesaColors.futureSkills),
               ),
             ),
             IconButton(
@@ -301,7 +302,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   ..._siteOptions.map(
                     (_SiteFilterOption option) => DropdownMenuItem<String>(
                       value: option.id,
-                      child: Text(option.id == 'all' ? _t('All Sites') : option.name),
+                      child: Text(
+                          option.id == 'all' ? _t('All Sites') : option.name),
                     ),
                   ),
                 ],
@@ -337,13 +339,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 underline: const SizedBox(),
                 items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                    value: 'week', child: Text(_t('This Week'))),
+                      value: 'week', child: Text(_t('This Week'))),
                   DropdownMenuItem<String>(
-                    value: 'month', child: Text(_t('This Month'))),
+                      value: 'month', child: Text(_t('This Month'))),
                   DropdownMenuItem<String>(
-                    value: 'quarter', child: Text(_t('This Quarter'))),
+                      value: 'quarter', child: Text(_t('This Quarter'))),
                   DropdownMenuItem<String>(
-                    value: 'year', child: Text(_t('This Year'))),
+                      value: 'year', child: Text(_t('This Year'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -410,7 +412,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             children: <Widget>[
               Text(
                 _t('Telemetry KPIs'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 8),
               Text(
@@ -479,7 +482,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   icon: Icons.assignment_turned_in,
                   value: adherenceRate,
                   label: _t('Weekly Accountability'),
-                    trend: _t('7-day'),
+                  trend: _t('7-day'),
                   trendUp: true,
                   color: ScholesaColors.futureSkills,
                 ),
@@ -489,7 +492,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 child: _MetricCard(
                   icon: Icons.timer,
                   value: reviewSlaRate,
-                  label: '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
+                  label:
+                      '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
                   trend: _t('within SLA'),
                   trendUp: true,
                   color: ScholesaColors.warning,
@@ -679,7 +683,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (_isLoadingSupplemental) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Center(child: CircularProgressIndicator(color: ScholesaColors.hq)),
+        child:
+            Center(child: CircularProgressIndicator(color: ScholesaColors.hq)),
       );
     }
 
@@ -699,7 +704,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             children: <Widget>[
               Text(
                 _t('HQ BOS-MIA Usability'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
@@ -787,29 +793,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Widget _buildPillarAnalytics() {
-    final List<_PillarAnalyticsData> data = _pillarAnalyticsData;
-    final List<_PillarAnalyticsData> fallback = <_PillarAnalyticsData>[
-      const _PillarAnalyticsData(
-        pillar: 'Future Skills',
-        progress: 0,
-        learners: 0,
-        missions: 0,
-      ),
-      const _PillarAnalyticsData(
-        pillar: 'Leadership',
-        progress: 0,
-        learners: 0,
-        missions: 0,
-      ),
-      const _PillarAnalyticsData(
-        pillar: 'Impact',
-        progress: 0,
-        learners: 0,
-        missions: 0,
-      ),
-    ];
-    final List<_PillarAnalyticsData> rows =
-        data.isEmpty ? fallback : data;
+    final List<_PillarAnalyticsData> rows = _pillarAnalyticsData;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -828,17 +812,23 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 20),
-            for (int index = 0; index < rows.length; index++) ...<Widget>[
-              _PillarAnalyticsRow(
-                icon: _pillarIcon(rows[index].pillar),
-                label: _t(rows[index].pillar),
-                progress: rows[index].progress,
-                learners: rows[index].learners,
-                missions: rows[index].missions,
-                color: _pillarColor(rows[index].pillar),
-              ),
-              if (index < rows.length - 1) const SizedBox(height: 16),
-            ],
+            if (rows.isEmpty)
+              Text(
+                _t('No pillar data available'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              )
+            else
+              for (int index = 0; index < rows.length; index++) ...<Widget>[
+                _PillarAnalyticsRow(
+                  icon: _pillarIcon(rows[index].pillar),
+                  label: _t(rows[index].pillar),
+                  progress: rows[index].progress,
+                  learners: rows[index].learners,
+                  missions: rows[index].missions,
+                  color: _pillarColor(rows[index].pillar),
+                ),
+                if (index < rows.length - 1) const SizedBox(height: 16),
+              ],
           ],
         ),
       ),
@@ -889,7 +879,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ),
             child: Column(
               children: <Widget>[
-                for (int index = 0; index < _siteComparisonData.length; index++) ...<Widget>[
+                for (int index = 0;
+                    index < _siteComparisonData.length;
+                    index++) ...<Widget>[
                   _SiteComparisonRow(
                     name: _siteComparisonData[index].name,
                     learners: _siteComparisonData[index].learners,
@@ -1027,8 +1019,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(_t('HQ analytics report prepared for export')),
+                SnackBar(
+                  content: Text(_t('HQ analytics report prepared for export')),
                   backgroundColor: ScholesaColors.hq,
                 ),
               );
@@ -1052,7 +1044,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       context: context,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (BuildContext context, void Function(void Function()) setDialogState) {
+          builder: (BuildContext context,
+              void Function(void Function()) setDialogState) {
             return AlertDialog(
               title: Text(_t('BOS-MIA Feedback')),
               content: SizedBox(
@@ -1105,12 +1098,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                         spacing: 8,
                         runSpacing: 8,
                         children: <Map<String, String>>[
-                          <String, String>{'value': 'scale_now', 'label': _t('Scale now')},
+                          <String, String>{
+                            'value': 'scale_now',
+                            'label': _t('Scale now')
+                          },
                           <String, String>{
                             'value': 'scale_with_guardrails',
                             'label': _t('Scale with guardrails')
                           },
-                          <String, String>{'value': 'hold_and_fix', 'label': _t('Hold and fix')},
+                          <String, String>{
+                            'value': 'hold_and_fix',
+                            'label': _t('Hold and fix')
+                          },
                         ].map((Map<String, String> option) {
                           return ChoiceChip(
                             label: Text(option['label']!),
@@ -1154,17 +1153,22 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                             'label': _t('Telemetry gaps'),
                           },
                         ].map((Map<String, String> option) {
-                          final bool selected = _topIssues.contains(option['value']);
+                          final bool selected =
+                              _topIssues.contains(option['value']);
                           return FilterChip(
                             label: Text(option['label']!),
                             selected: selected,
                             onSelected: (bool value) {
                               setDialogState(() {
                                 if (value) {
-                                  _topIssues = <String>{..._topIssues, option['value']!};
+                                  _topIssues = <String>{
+                                    ..._topIssues,
+                                    option['value']!
+                                  };
                                 } else {
                                   _topIssues = _topIssues
-                                      .where((String issue) => issue != option['value'])
+                                      .where((String issue) =>
+                                          issue != option['value'])
                                       .toSet();
                                 }
                               });
@@ -1327,7 +1331,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       if (!mounted) return;
       setState(() {
         _isLoadingSupplemental = false;
-        _siteOptions = <_SiteFilterOption>[const _SiteFilterOption(id: 'all', name: 'All Sites')];
+        _siteOptions = <_SiteFilterOption>[
+          const _SiteFilterOption(id: 'all', name: 'All Sites')
+        ];
         _pillarAnalyticsData = <_PillarAnalyticsData>[];
         _siteComparisonData = <_SiteComparisonData>[];
         _topPerformersData = <_TopPerformerData>[];
@@ -1349,7 +1355,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       ];
 
       final QuerySnapshot<Map<String, dynamic>> missionsSnapshot =
-          await firestoreService.firestore.collection('missions').limit(500).get();
+          await firestoreService.firestore
+              .collection('missions')
+              .limit(500)
+              .get();
 
       final Map<String, String> missionPillarById = <String, String>{};
       final Map<String, int> missionsByPillar = <String, int>{
@@ -1358,10 +1367,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         'Impact': 0,
       };
 
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in missionsSnapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in missionsSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         final String siteId = ((data['siteId'] as String?) ?? '').trim();
-        if (_selectedSite != 'all' && siteId.isNotEmpty && siteId != _selectedSite) {
+        if (_selectedSite != 'all' &&
+            siteId.isNotEmpty &&
+            siteId != _selectedSite) {
           continue;
         }
         final String pillar = _pillarLabelFromData(data);
@@ -1369,12 +1381,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         missionsByPillar[pillar] = (missionsByPillar[pillar] ?? 0) + 1;
       }
 
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in sitesSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
-        final String name =
-            (data['name'] as String?)?.trim().isNotEmpty == true
-                ? (data['name'] as String).trim()
-                : doc.id;
+        final String name = (data['name'] as String?)?.trim().isNotEmpty == true
+            ? (data['name'] as String).trim()
+            : doc.id;
         siteNames[doc.id] = name;
         options.add(_SiteFilterOption(id: doc.id, name: name));
 
@@ -1384,9 +1396,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ((data['educatorIds'] as List?)?.length ?? 0);
         final int health = _asInt(data['healthScore']) ?? 75;
         final int attendance = health.clamp(0, 100);
-        final int engagement =
-            (learners == 0 ? 0 : ((educators * 100) ~/ (learners == 0 ? 1 : learners)) * 5)
-                .clamp(0, 100);
+        final int engagement = (learners == 0
+                ? 0
+                : ((educators * 100) ~/ (learners == 0 ? 1 : learners)) * 5)
+            .clamp(0, 100);
 
         comparison.add(
           _SiteComparisonData(
@@ -1401,7 +1414,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
       comparison.sort((_SiteComparisonData a, _SiteComparisonData b) =>
           b.attendance.compareTo(a.attendance));
-      final List<_SiteComparisonData> comparisonTop = comparison.take(3).toList();
+      final List<_SiteComparisonData> comparisonTop =
+          comparison.take(3).toList();
 
       Query<Map<String, dynamic>> attemptsQuery =
           firestoreService.firestore.collection('missionAttempts');
@@ -1430,7 +1444,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         'Impact': <String>{},
       };
 
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attemptsSnapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in attemptsSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         final String learnerId = ((data['learnerId'] as String?) ?? '').trim();
         if (learnerId.isEmpty) continue;
@@ -1439,14 +1454,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         final String siteId = ((data['siteId'] as String?) ?? '').trim();
         if (siteId.isNotEmpty) learnerSite[learnerId] = siteId;
 
-        final DateTime? createdAt = _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
+        final DateTime? createdAt =
+            _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
         if (createdAt != null) {
-          final String dayKey = '${createdAt.year}-${createdAt.month}-${createdAt.day}';
+          final String dayKey =
+              '${createdAt.year}-${createdAt.month}-${createdAt.day}';
           learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
         }
 
         final String missionId = ((data['missionId'] as String?) ?? '').trim();
-        final String pillar = _pillarLabelFromAttempt(data, missionPillarById[missionId]);
+        final String pillar =
+            _pillarLabelFromAttempt(data, missionPillarById[missionId]);
         attemptsByPillar[pillar] = (attemptsByPillar[pillar] ?? 0) + 1;
         learnersByPillar.putIfAbsent(pillar, () => <String>{}).add(learnerId);
         final String status = ((data['status'] as String?) ?? '').toLowerCase();
@@ -1483,10 +1501,16 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ),
       ];
 
-      final List<MapEntry<String, int>> ranked = attemptsByLearner.entries.toList()
-        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
-      final List<String> topLearnerIds = ranked.take(10).map((MapEntry<String, int> entry) => entry.key).toList();
-      final Map<String, String> learnerNames = await _loadUserNames(firestoreService, topLearnerIds);
+      final List<MapEntry<String, int>> ranked = attemptsByLearner.entries
+          .toList()
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
+            b.value.compareTo(a.value));
+      final List<String> topLearnerIds = ranked
+          .take(10)
+          .map((MapEntry<String, int> entry) => entry.key)
+          .toList();
+      final Map<String, String> learnerNames =
+          await _loadUserNames(firestoreService, topLearnerIds);
 
       final List<_TopPerformerData> performers = <_TopPerformerData>[];
       final int topCount = ranked.length < 3 ? ranked.length : 3;
@@ -1507,8 +1531,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         );
       }
 
-      Query<Map<String, dynamic>> feedbackQuery = firestoreService
-          .firestore
+      Query<Map<String, dynamic>> feedbackQuery = firestoreService.firestore
           .collection('telemetryEvents')
           .where('eventType', isEqualTo: 'bos_mia.usability.feedback')
           .limit(200);
@@ -1525,7 +1548,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       if (!mounted) return;
       setState(() {
         _siteOptions = options;
-        if (!_siteOptions.any((_SiteFilterOption option) => option.id == _selectedSite)) {
+        if (!_siteOptions
+            .any((_SiteFilterOption option) => option.id == _selectedSite)) {
           _selectedSite = 'all';
         }
         _pillarAnalyticsData = pillarData;
@@ -1577,11 +1601,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final Map<String, dynamic> metadata =
           (data['metadata'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
-      final int usability = (_asInt(metadata['usability_score']) ?? 0).clamp(1, 5);
-      final int usefulness = (_asInt(metadata['usefulness_score']) ?? 0).clamp(1, 5);
-      final int reliability = (_asInt(metadata['reliability_score']) ?? 0).clamp(1, 5);
-      final int voiceQuality = (_asInt(metadata['voice_quality_score']) ?? 0).clamp(1, 5);
-      if (usability == 0 || usefulness == 0 || reliability == 0 || voiceQuality == 0) {
+      final int usability =
+          (_asInt(metadata['usability_score']) ?? 0).clamp(1, 5);
+      final int usefulness =
+          (_asInt(metadata['usefulness_score']) ?? 0).clamp(1, 5);
+      final int reliability =
+          (_asInt(metadata['reliability_score']) ?? 0).clamp(1, 5);
+      final int voiceQuality =
+          (_asInt(metadata['voice_quality_score']) ?? 0).clamp(1, 5);
+      if (usability == 0 ||
+          usefulness == 0 ||
+          reliability == 0 ||
+          voiceQuality == 0) {
         continue;
       }
 
@@ -1598,7 +1629,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             (recommendationCounts[recommendation] ?? 0) + 1;
       }
 
-      final List<dynamic> issues = (metadata['top_issues'] as List?) ?? <dynamic>[];
+      final List<dynamic> issues =
+          (metadata['top_issues'] as List?) ?? <dynamic>[];
       for (final dynamic issue in issues) {
         final String value = issue.toString().trim();
         if (value.isEmpty) continue;
@@ -1612,15 +1644,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
     String topRecommendation = 'scale_with_guardrails';
     if (recommendationCounts.isNotEmpty) {
-      final List<MapEntry<String, int>> ranked = recommendationCounts.entries.toList()
-        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
+      final List<MapEntry<String, int>> ranked = recommendationCounts.entries
+          .toList()
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
+            b.value.compareTo(a.value));
       topRecommendation = ranked.first.key;
     }
 
     String topIssue = 'telemetry_gaps';
     if (issueCounts.isNotEmpty) {
       final List<MapEntry<String, int>> ranked = issueCounts.entries.toList()
-        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) => b.value.compareTo(a.value));
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
+            b.value.compareTo(a.value));
       topIssue = ranked.first.key;
     }
 
@@ -1644,15 +1679,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final List<String> chunk = learnerIds.sublist(
           i, (i + 10 > learnerIds.length) ? learnerIds.length : i + 10);
 
-      final QuerySnapshot<Map<String, dynamic>> usersByUid = await firestoreService
-          .firestore
-          .collection('users')
-          .where('uid', whereIn: chunk)
-          .get();
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in usersByUid.docs) {
+      final QuerySnapshot<Map<String, dynamic>> usersByUid =
+          await firestoreService.firestore
+              .collection('users')
+              .where('uid', whereIn: chunk)
+              .get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in usersByUid.docs) {
         final Map<String, dynamic> data = doc.data();
         final String uid = ((data['uid'] as String?) ?? '').trim();
-        final String displayName = ((data['displayName'] as String?) ?? '').trim();
+        final String displayName =
+            ((data['displayName'] as String?) ?? '').trim();
         if (uid.isNotEmpty && displayName.isNotEmpty) {
           names[uid] = displayName;
         }
@@ -1661,10 +1698,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       for (final String learnerId in chunk) {
         if (names.containsKey(learnerId)) continue;
         final DocumentSnapshot<Map<String, dynamic>> userDoc =
-            await firestoreService.firestore.collection('users').doc(learnerId).get();
+            await firestoreService.firestore
+                .collection('users')
+                .doc(learnerId)
+                .get();
         if (userDoc.exists) {
           final Map<String, dynamic>? data = userDoc.data();
-          final String displayName = ((data?['displayName'] as String?) ?? '').trim();
+          final String displayName =
+              ((data?['displayName'] as String?) ?? '').trim();
           if (displayName.isNotEmpty) {
             names[learnerId] = displayName;
           }
@@ -1710,7 +1751,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     final int attempts = attemptsByPillar[pillar] ?? 0;
     final int completed = completedByPillar[pillar] ?? 0;
     final int learners = learnersByPillar[pillar]?.length ?? 0;
-    final double progress = attempts == 0 ? 0 : (completed / attempts).clamp(0, 1);
+    final double progress =
+        attempts == 0 ? 0 : (completed / attempts).clamp(0, 1);
     return _PillarAnalyticsData(
       pillar: pillar,
       progress: progress,
@@ -1728,7 +1770,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (code.isNotEmpty) {
       return _normalizePillarLabel(code);
     }
-    final List<dynamic> pillarCodes = (data['pillarCodes'] as List?) ?? <dynamic>[];
+    final List<dynamic> pillarCodes =
+        (data['pillarCodes'] as List?) ?? <dynamic>[];
     if (pillarCodes.isNotEmpty) {
       return _normalizePillarLabel(pillarCodes.first.toString());
     }

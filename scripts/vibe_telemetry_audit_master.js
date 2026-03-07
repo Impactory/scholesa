@@ -31,9 +31,29 @@ const { VIBE_BLOCKER_REPORTS } = require('./vibe_blockers');
 
 const BLOCKER_REPORTS = VIBE_BLOCKER_REPORTS;
 
+function isServiceAccountCredentialPath(candidate) {
+  if (typeof candidate !== 'string' || !candidate.trim()) return false;
+  const resolved = path.resolve(process.cwd(), candidate);
+  if (!fs.existsSync(resolved)) return false;
+  try {
+    const payload = JSON.parse(fs.readFileSync(resolved, 'utf8'));
+    return (
+      payload &&
+      typeof payload === 'object' &&
+      payload.type === 'service_account' &&
+      typeof payload.private_key === 'string' &&
+      payload.private_key.length > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
 function parseArgs(argv) {
   const defaultCredentialsPath = path.resolve(process.cwd(), 'firebase-service-account.json');
-  const hasDefaultCredentials = fs.existsSync(defaultCredentialsPath);
+  const hasDefaultCredentials = isServiceAccountCredentialPath(defaultCredentialsPath);
+  const envCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const usableEnvCredentials = isServiceAccountCredentialPath(envCredentials) ? envCredentials : undefined;
 
   const args = {
     env: process.env.VIBE_ENV || process.env.NODE_ENV || 'dev',
@@ -41,7 +61,7 @@ function parseArgs(argv) {
     hours: 168,
     limit: 20000,
     project: process.env.FIREBASE_PROJECT_ID,
-    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || (hasDefaultCredentials ? 'firebase-service-account.json' : undefined),
+    credentials: usableEnvCredentials || (hasDefaultCredentials ? 'firebase-service-account.json' : undefined),
   };
 
   for (const arg of argv) {
@@ -368,7 +388,7 @@ function runTelemetrySchemaValid(env, args) {
     `--limit=${Number.isFinite(args.limit) ? args.limit : 20000}`,
   ];
   if (args.project) commandParts.push(`--project=${args.project}`);
-  if (args.credentials) commandParts.push(`--credentials=${args.credentials}`);
+  if (isServiceAccountCredentialPath(args.credentials)) commandParts.push(`--credentials=${args.credentials}`);
 
   const liveResult = runCommand(commandParts.join(' '));
   if (!liveResult.pass) {

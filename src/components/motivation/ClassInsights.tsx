@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { BelongingEngine, CompetenceEngine } from '@/src/lib/motivation/motivationEngine';
+import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
 
 interface ClassInsightsProps {
   siteId: string;
@@ -12,6 +13,8 @@ interface ClassInsightsProps {
 
 export function ClassInsights(_props: ClassInsightsProps) {
   const { siteId, learnerIds = [], onSelectLearner } = _props;
+  const trackInteraction = useInteractionTracking();
+  usePageViewTracking('class_insights', { siteId, learnerCount: learnerIds.length });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<Array<{
@@ -88,7 +91,14 @@ export function ClassInsights(_props: ClassInsightsProps) {
               key={row.learnerId}
               type="button"
               className="w-full rounded-lg border border-gray-200 p-3 text-left hover:bg-gray-50"
-              onClick={() => onSelectLearner?.(row.learnerId)}
+              onClick={() => {
+                trackInteraction('feature_discovered', {
+                  cta: 'class_insights_select_learner',
+                  learnerId: row.learnerId,
+                  siteId,
+                });
+                onSelectLearner?.(row.learnerId);
+              }}
             >
               <p className="text-sm font-medium text-gray-900">Learner {row.learnerId}</p>
               <p className="mt-1 text-xs text-gray-600">
@@ -109,6 +119,7 @@ export function ClassInsightsCompact({
   siteId: string;
   onViewFull?: () => void;
 }) {
+  const trackInteraction = useInteractionTracking();
   const summaryText = useMemo(() => `Class insights are available for ${siteId}.`, [siteId]);
 
   return (
@@ -118,7 +129,13 @@ export function ClassInsightsCompact({
         <button
           type="button"
           className="mt-2 rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700"
-          onClick={onViewFull}
+          onClick={() => {
+            trackInteraction('feature_discovered', {
+              cta: 'class_insights_view_full',
+              siteId,
+            });
+            onViewFull();
+          }}
         >
           View full insights
         </button>

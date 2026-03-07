@@ -20,8 +20,7 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Close': 'Cerrar',
   'Opening curriculum editor...': 'Abriendo editor curricular...',
   'Edit': 'Editar',
-  'Rubric applied to this curriculum':
-      'Rúbrica aplicada a este currículo',
+  'Rubric applied to this curriculum': 'Rúbrica aplicada a este currículo',
   'Apply Rubric': 'Aplicar rúbrica',
   'Parent summary shared': 'Resumen para familias compartido',
   'Share Parent Summary': 'Compartir resumen para familias',
@@ -105,7 +104,6 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   late TabController _tabController;
   bool _isLoading = false;
 
-  final List<_Curriculum> _fallbackCurricula = <_Curriculum>[];
   List<_Curriculum> _curricula = <_Curriculum>[];
 
   @override
@@ -210,7 +208,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              '${_tHqCurriculum(context, 'No')} ${_tHqCurriculum(context, status.name)} ${_tHqCurriculum(context, 'curricula')}',
+                '${_tHqCurriculum(context, 'No')} ${_tHqCurriculum(context, status.name)} ${_tHqCurriculum(context, 'curricula')}',
                 style: const TextStyle(color: ScholesaColors.textSecondary)),
           ],
         ),
@@ -264,7 +262,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       color: ScholesaColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('${_tHqCurriculum(context, 'v')}${curriculum.version}',
+                    child: Text(
+                        '${_tHqCurriculum(context, 'v')}${curriculum.version}',
                         style: const TextStyle(
                             fontSize: 12, color: ScholesaColors.primary)),
                   ),
@@ -340,157 +339,160 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(curriculum.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ScholesaColors.textPrimary,
-                )),
-            const SizedBox(height: 8),
-            Text(_tHqCurriculum(context, curriculum.pillar),
-                style: TextStyle(
-                  color: _getPillarColor(curriculum.pillar),
-                  fontWeight: FontWeight.w600,
-                )),
-            const SizedBox(height: 16),
-            _buildDetailRow(_tHqCurriculum(context, 'Version'), curriculum.version),
-            _buildDetailRow(_tHqCurriculum(context, 'Status'),
-              _tHqCurriculum(context, curriculum.status.name).toUpperCase()),
-            _buildDetailRow(
-              _tHqCurriculum(context, 'Updated'), _formatTime(curriculum.lastUpdated)),
-            const SizedBox(height: 24),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ScholesaColors.textPrimary,
-                      side: const BorderSide(color: ScholesaColors.border),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(curriculum.title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: ScholesaColors.textPrimary,
+                  )),
+              const SizedBox(height: 8),
+              Text(_tHqCurriculum(context, curriculum.pillar),
+                  style: TextStyle(
+                    color: _getPillarColor(curriculum.pillar),
+                    fontWeight: FontWeight.w600,
+                  )),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                  _tHqCurriculum(context, 'Version'), curriculum.version),
+              _buildDetailRow(
+                  _tHqCurriculum(context, 'Status'),
+                  _tHqCurriculum(context, curriculum.status.name)
+                      .toUpperCase()),
+              _buildDetailRow(_tHqCurriculum(context, 'Updated'),
+                  _formatTime(curriculum.lastUpdated)),
+              const SizedBox(height: 24),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ScholesaColors.textPrimary,
+                        side: const BorderSide(color: ScholesaColors.border),
+                      ),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'module': 'hq_curriculum',
+                            'cta_id': 'close_curriculum_details',
+                            'surface': 'curriculum_details_sheet',
+                            'curriculum_id': curriculum.id,
+                          },
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: Text(_tHqCurriculum(context, 'Close')),
                     ),
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'hq_curriculum',
-                          'cta_id': 'close_curriculum_details',
-                          'surface': 'curriculum_details_sheet',
-                          'curriculum_id': curriculum.id,
-                        },
-                      );
-                      Navigator.pop(context);
-                    },
-                    child: Text(_tHqCurriculum(context, 'Close')),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ScholesaColors.primary,
-                      foregroundColor: Colors.white,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ScholesaColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'module': 'hq_curriculum',
+                            'cta_id': 'open_curriculum_editor',
+                            'surface': 'curriculum_details_sheet',
+                            'curriculum_id': curriculum.id,
+                          },
+                        );
+                        Navigator.pop(context);
+                        _showEditDialog(curriculum);
+                      },
+                      child: Text(_tHqCurriculum(context, 'Edit')),
                     ),
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'hq_curriculum',
-                          'cta_id': 'open_curriculum_editor',
-                          'surface': 'curriculum_details_sheet',
-                          'curriculum_id': curriculum.id,
-                        },
-                      );
-                      Navigator.pop(context);
-                      _showEditDialog(curriculum);
-                    },
-                    child: Text(_tHqCurriculum(context, 'Edit')),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ScholesaColors.hq,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'module': 'hq_curriculum',
-                      'cta_id': 'create_mission_snapshot',
-                      'surface': 'curriculum_details_sheet',
-                      'curriculum_id': curriculum.id,
-                    },
-                  );
-                  Navigator.pop(context);
-                  await _createMissionSnapshot(curriculum);
-                },
-                icon: const Icon(Icons.copy_all_rounded),
-                label: Text(_tHqCurriculum(context, 'Create Snapshot')),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: _buildAdvanceStatusButton(curriculum),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ScholesaColors.textPrimary,
-                  side: const BorderSide(color: ScholesaColors.border),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ScholesaColors.hq,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_curriculum',
+                        'cta_id': 'create_mission_snapshot',
+                        'surface': 'curriculum_details_sheet',
+                        'curriculum_id': curriculum.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                    await _createMissionSnapshot(curriculum);
+                  },
+                  icon: const Icon(Icons.copy_all_rounded),
+                  label: Text(_tHqCurriculum(context, 'Create Snapshot')),
                 ),
-                onPressed: () async {
-                  TelemetryService.instance.logEvent(
-                    event: 'rubric.applied',
-                    metadata: <String, dynamic>{
-                      'module': 'hq_curriculum',
-                      'curriculum_id': curriculum.id,
-                      'source': 'curriculum_details_sheet',
-                    },
-                  );
-                  Navigator.pop(context);
-                  _showRubricWorkflowDialog(curriculum);
-                },
-                icon: const Icon(Icons.rule_rounded),
-                label: Text(_tHqCurriculum(context, 'Apply Rubric')),
               ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ScholesaColors.primary,
-                  foregroundColor: Colors.white,
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: _buildAdvanceStatusButton(curriculum),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ScholesaColors.textPrimary,
+                    side: const BorderSide(color: ScholesaColors.border),
+                  ),
+                  onPressed: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'rubric.applied',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_curriculum',
+                        'curriculum_id': curriculum.id,
+                        'source': 'curriculum_details_sheet',
+                      },
+                    );
+                    Navigator.pop(context);
+                    _showRubricWorkflowDialog(curriculum);
+                  },
+                  icon: const Icon(Icons.rule_rounded),
+                  label: Text(_tHqCurriculum(context, 'Apply Rubric')),
                 ),
-                onPressed: () async {
-                  TelemetryService.instance.logEvent(
-                    event: 'rubric.shared_to_parent_summary',
-                    metadata: <String, dynamic>{
-                      'module': 'hq_curriculum',
-                      'curriculum_id': curriculum.id,
-                      'source': 'curriculum_details_sheet',
-                    },
-                  );
-                  Navigator.pop(context);
-                  await _shareParentSummary(curriculum);
-                },
-                icon: const Icon(Icons.share_rounded),
-                label: Text(_tHqCurriculum(context, 'Share Parent Summary')),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ScholesaColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'rubric.shared_to_parent_summary',
+                      metadata: <String, dynamic>{
+                        'module': 'hq_curriculum',
+                        'curriculum_id': curriculum.id,
+                        'source': 'curriculum_details_sheet',
+                      },
+                    );
+                    Navigator.pop(context);
+                    await _shareParentSummary(curriculum);
+                  },
+                  icon: const Icon(Icons.share_rounded),
+                  label: Text(_tHqCurriculum(context, 'Share Parent Summary')),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -618,13 +620,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder:
-            (BuildContext context, void Function(void Function()) setLocalState) {
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
             surfaceTintColor: ScholesaColors.surface,
             scrollable: true,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'Edit')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -638,7 +641,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Title'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -646,7 +650,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -661,7 +666,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   iconEnabledColor: ScholesaColors.textSecondary,
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Pillar'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -669,7 +675,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                   items: <DropdownMenuItem<String>>[
@@ -782,13 +789,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder:
-            (BuildContext context, void Function(void Function()) setLocalState) {
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
             surfaceTintColor: ScholesaColors.surface,
             scrollable: true,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'New Curriculum')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -802,7 +810,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Title'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -810,7 +819,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -825,7 +835,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   iconEnabledColor: ScholesaColors.textSecondary,
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Pillar'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -833,7 +844,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                   items: <DropdownMenuItem<String>>[
@@ -886,46 +898,46 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                  final String title = titleController.text.trim();
-                  if (title.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text(_tHqCurriculum(context, 'Title is required'))),
-                    );
-                    return;
-                  }
+                        final String title = titleController.text.trim();
+                        if (title.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(_tHqCurriculum(
+                                    context, 'Title is required'))),
+                          );
+                          return;
+                        }
 
-                  setLocalState(() => isSubmitting = true);
+                        setLocalState(() => isSubmitting = true);
 
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: const <String, dynamic>{
-                      'module': 'hq_curriculum',
-                      'cta_id': 'submit_create_curriculum',
-                      'surface': 'create_curriculum_dialog',
-                    },
-                  );
-                  TelemetryService.instance.logEvent(
-                    event: 'mission.snapshot.created',
-                    metadata: <String, dynamic>{
-                      'module': 'hq_curriculum',
-                      'source': 'create_curriculum_dialog',
-                    },
-                  );
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: const <String, dynamic>{
+                            'module': 'hq_curriculum',
+                            'cta_id': 'submit_create_curriculum',
+                            'surface': 'create_curriculum_dialog',
+                          },
+                        );
+                        TelemetryService.instance.logEvent(
+                          event: 'mission.snapshot.created',
+                          metadata: <String, dynamic>{
+                            'module': 'hq_curriculum',
+                            'source': 'create_curriculum_dialog',
+                          },
+                        );
 
-                  final bool created = await _createCurriculum(
-                    title: title,
-                    pillar: selectedPillar,
-                  );
+                        final bool created = await _createCurriculum(
+                          title: title,
+                          pillar: selectedPillar,
+                        );
 
-                  if (!mounted || !dialogContext.mounted) return;
-                  if (created) {
-                    Navigator.pop(dialogContext);
-                  } else {
-                    setLocalState(() => isSubmitting = false);
-                  }
-                },
+                        if (!mounted || !dialogContext.mounted) return;
+                        if (created) {
+                          Navigator.pop(dialogContext);
+                        } else {
+                          setLocalState(() => isSubmitting = false);
+                        }
+                      },
                 child: isSubmitting
                     ? const SizedBox(
                         width: 18,
@@ -943,7 +955,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inHours < 24) return '${diff.inHours}${_tHqCurriculum(context, 'h ago')}';
+    if (diff.inHours < 24) {
+      return '${diff.inHours}${_tHqCurriculum(context, 'h ago')}';
+    }
     return '${diff.inDays}${_tHqCurriculum(context, 'd ago')}';
   }
 
@@ -951,7 +965,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final FirestoreService? firestoreService = _maybeFirestoreService();
     if (firestoreService == null) {
       if (!mounted) return;
-      setState(() => _curricula = _fallbackCurricula);
+      setState(() => _curricula = <_Curriculum>[]);
       return;
     }
 
@@ -972,12 +986,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             .get();
       }
 
-      final List<_Curriculum> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final List<_Curriculum> loaded =
+          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
-        final String title = (data['title'] as String?)?.trim().isNotEmpty == true
-            ? (data['title'] as String).trim()
-            : 'Curriculum';
+        final String title =
+            (data['title'] as String?)?.trim().isNotEmpty == true
+                ? (data['title'] as String).trim()
+                : 'Curriculum';
 
         final DateTime lastUpdated = _toDateTime(data['updatedAt']) ??
             _toDateTime(data['createdAt']) ??
@@ -1000,7 +1015,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       setState(() => _curricula = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _curricula = _fallbackCurricula);
+      setState(() => _curricula = <_Curriculum>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -1031,18 +1046,18 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       final String createdId = await firestoreService.createDocument(
         'missions',
         <String, dynamic>{
-        'title': title,
-        'description': title,
-        'pillar': pillar,
-        'pillarCode': pillarCode,
-        'pillarCodes': <String>[pillarCode],
-        'siteId': activeSiteId,
-        'createdBy': actorId,
-        'createdByRole': actorRole,
-        'publisherType': actorRole ?? 'hq',
-        'published': false,
-        'status': 'draft',
-        'version': '1.0',
+          'title': title,
+          'description': title,
+          'pillar': pillar,
+          'pillarCode': pillarCode,
+          'pillarCodes': <String>[pillarCode],
+          'siteId': activeSiteId,
+          'createdBy': actorId,
+          'createdByRole': actorRole,
+          'publisherType': actorRole ?? 'hq',
+          'published': false,
+          'status': 'draft',
+          'version': '1.0',
         },
       );
 
@@ -1092,7 +1107,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
     try {
       final String pillarCode = _pillarCodeFromLabel(pillar);
-      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+      await firestoreService
+          .updateDocument('missions', curriculum.id, <String, dynamic>{
         'title': title,
         'description': title,
         'pillar': pillar,
@@ -1134,13 +1150,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder:
-            (BuildContext context, void Function(void Function()) setLocalState) {
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
           return AlertDialog(
             backgroundColor: ScholesaColors.surface,
             surfaceTintColor: ScholesaColors.surface,
             scrollable: true,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             title: Text(_tHqCurriculum(context, 'Create Rubric')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1154,7 +1171,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Rubric title'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -1162,7 +1180,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -1178,7 +1197,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   decoration: InputDecoration(
                     labelText:
                         _tHqCurriculum(context, 'Criteria (comma-separated)'),
-                    labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
                     fillColor: ScholesaColors.surfaceVariant,
                     border: const OutlineInputBorder(),
@@ -1186,7 +1206,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       borderSide: BorderSide(color: ScholesaColors.border),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
                 ),
@@ -1228,8 +1249,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                         if (criteria.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(_tHqCurriculum(
-                                  context, 'At least one criterion is required')),
+                              content: Text(_tHqCurriculum(context,
+                                  'At least one criterion is required')),
                             ),
                           );
                           return;
@@ -1302,7 +1323,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         },
       );
 
-      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+      await firestoreService
+          .updateDocument('missions', curriculum.id, <String, dynamic>{
         'rubricApplied': true,
         'rubricId': rubricId,
         'rubricTitle': rubricTitle,
@@ -1320,8 +1342,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(_tHqCurriculum(context, 'Rubric applied to this curriculum')),
+          content: Text(
+              _tHqCurriculum(context, 'Rubric applied to this curriculum')),
         ),
       );
       await _loadCurricula();
@@ -1341,24 +1363,30 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     if (firestoreService == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
+        SnackBar(
+            content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
       );
       return;
     }
 
     try {
       final DocumentSnapshot<Map<String, dynamic>> missionDoc =
-          await firestoreService.firestore.collection('missions').doc(curriculum.id).get();
-      final Map<String, dynamic> mission = missionDoc.data() ?? <String, dynamic>{};
+          await firestoreService.firestore
+              .collection('missions')
+              .doc(curriculum.id)
+              .get();
+      final Map<String, dynamic> mission =
+          missionDoc.data() ?? <String, dynamic>{};
 
       final String currentVersion =
           (mission['version'] as String?)?.trim().isNotEmpty == true
               ? (mission['version'] as String).trim()
               : curriculum.version;
       final String nextVersion = _incrementVersion(currentVersion);
-      final String title = (mission['title'] as String?)?.trim().isNotEmpty == true
-          ? (mission['title'] as String).trim()
-          : curriculum.title;
+      final String title =
+          (mission['title'] as String?)?.trim().isNotEmpty == true
+              ? (mission['title'] as String).trim()
+              : curriculum.title;
       final String description =
           (mission['description'] as String?)?.trim().isNotEmpty == true
               ? (mission['description'] as String).trim()
@@ -1394,7 +1422,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         },
       );
 
-      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+      await firestoreService
+          .updateDocument('missions', curriculum.id, <String, dynamic>{
         'version': nextVersion,
         'latestSnapshotId': snapshotId,
         'latestContentHash': contentHash,
@@ -1425,7 +1454,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
+        SnackBar(
+            content: Text(_tHqCurriculum(context, 'Snapshot create failed'))),
       );
     }
   }
@@ -1442,7 +1472,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }
 
     try {
-      await firestoreService.updateDocument('missions', curriculum.id, <String, dynamic>{
+      await firestoreService
+          .updateDocument('missions', curriculum.id, <String, dynamic>{
         'parentSummaryShared': true,
         'parentSummarySharedBy': appState?.userId,
         'parentSummarySharedAt': FieldValue.serverTimestamp(),
@@ -1455,7 +1486,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tHqCurriculum(context, 'Parent summary shared'))),
+        SnackBar(
+            content: Text(_tHqCurriculum(context, 'Parent summary shared'))),
       );
       await _loadCurricula();
     } catch (_) {
@@ -1513,7 +1545,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     if (pillarCode != null && pillarCode.trim().isNotEmpty) {
       return _pillarLabelFromCode(pillarCode);
     }
-    final List<dynamic> pillarCodes = (data['pillarCodes'] as List?) ?? <dynamic>[];
+    final List<dynamic> pillarCodes =
+        (data['pillarCodes'] as List?) ?? <dynamic>[];
     if (pillarCodes.isNotEmpty) {
       return _pillarLabelFromCode(pillarCodes.first.toString());
     }

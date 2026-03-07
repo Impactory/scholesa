@@ -17,6 +17,11 @@ FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 IMAGE=gcr.io/${GCP_PROJECT_ID}/empire-web:${IMAGE_TAG}
 STAGING_DIR="$(mktemp -d)"
 
+# Avoid interactive prompts and macOS extended-attribute sidecars during staging/archive.
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+export COPYFILE_DISABLE=1
+export COPY_EXTENDED_ATTRIBUTES_DISABLE=1
+
 command -v gcloud >/dev/null 2>&1 || { echo "gcloud not found on PATH"; exit 1; }
 command -v rsync >/dev/null 2>&1 || { echo "rsync not found on PATH"; exit 1; }
 
@@ -41,15 +46,23 @@ rsync -a \
   --exclude .git \
   --exclude .idea \
   --exclude .vscode \
+  --exclude android \
+  --exclude ios \
+  --exclude linux \
+  --exclude macos \
+  --exclude windows \
+  --exclude test \
+  --exclude integration_test \
   "$FLUTTER_APP/" "$STAGING_DIR/apps/empire_flutter/app/"
 
 echo "Submitting Docker build with Dockerfile.flutter for $IMAGE"
-gcloud builds submit "$STAGING_DIR" --project "$GCP_PROJECT_ID" --config "$STAGING_DIR/cloudbuild.flutter.yaml" --substitutions "_TAG=${IMAGE_TAG}"
+gcloud builds submit "$STAGING_DIR" --quiet --project "$GCP_PROJECT_ID" --config "$STAGING_DIR/cloudbuild.flutter.yaml" --substitutions "_TAG=${IMAGE_TAG}"
 
 echo "Deploying to Cloud Run: service=$CLOUD_RUN_SERVICE region=$GCP_REGION"
 
 gcloud run deploy "$CLOUD_RUN_SERVICE" \
   --image "$IMAGE" \
+  --quiet \
   --project "$GCP_PROJECT_ID" \
   --region "$GCP_REGION" \
   --platform managed \

@@ -3,7 +3,6 @@
  * Covers bosGetLearnerLoopInsights happy path + error scenarios
  */
 
-import * as functions from 'firebase-functions';
 import { HttpsError } from 'firebase-functions/v1/https';
 
 // Mock Firebase Admin SDK

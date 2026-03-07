@@ -3,6 +3,7 @@ import { onCall, onRequest, HttpsError, CallableRequest } from 'firebase-functio
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { guardedFetch } from './security/egressGuard';
 import {
@@ -14,6 +15,13 @@ import {
 } from './voiceSystem';
 
 admin.initializeApp();
+
+const firestoreNamespace = admin.firestore as typeof admin.firestore & {
+  FieldValue?: typeof FieldValue;
+  Timestamp?: typeof Timestamp;
+};
+firestoreNamespace.FieldValue ??= FieldValue;
+firestoreNamespace.Timestamp ??= Timestamp;
 
 // Export telemetry aggregation functions
 export {
@@ -48,6 +56,28 @@ export {
   getCoppaComplianceSnapshot,
 } from './coppaOps';
 
+// Export workflow callable boundaries for finance/admin/secret operations.
+export {
+  listPartnerPayouts,
+  listWorkflowApprovals,
+  decideWorkflowApproval,
+  listSafetyIncidents,
+  resolveSafetyIncident,
+  getIntegrationsHealth,
+  triggerIntegrationSyncJob,
+  updateIntegrationConnectionStatus,
+  listExternalIdentityLinks,
+  resolveExternalIdentityLink,
+  listFeatureFlags,
+  upsertFeatureFlag,
+  listWorkflowContacts,
+  getParentBillingSummary,
+  getSiteBillingSnapshot,
+  requestSiteBillingPlanChange,
+  listHqBillingRecords,
+  createHqInvoice,
+} from './workflowOps';
+
 // Voice-first API surface (scholesa-api + scholesa-stt + scholesa-tts)
 export const voiceApi = onRequest({ cors: true }, async (req, res) => handleVoiceApi(req, res));
 export const copilotMessage = onRequest({ cors: true }, async (req, res) => handleCopilotMessage(req, res));
@@ -75,7 +105,7 @@ function getStripe(): Stripe | null {
   const key = stripeSecretKey.value();
   if (key) {
     stripeClient = new Stripe(key, {
-      apiVersion: '2026-01-28.clover',
+      apiVersion: '2026-02-25.clover',
       typescript: true,
     });
   }
@@ -725,7 +755,7 @@ async function checkAndMaybeCreateMvl(params: {
     autonomy: autonomyRisk,
     evidenceEventIds: [],
     resolution: null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Emit mvl_gate_triggered event
@@ -743,7 +773,7 @@ async function checkAndMaybeCreateMvl(params: {
       autonomyScore: autonomyRisk.riskScore,
       integrityState: xHat?.integrity ?? null,
     },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   return {
@@ -908,7 +938,7 @@ export const genAiCoach = onCall(async (request) => {
     missionId: missionId || null,
     checkpointId: checkpointId || null,
     payload: { mode: coachMode, conceptTags: tags, coppaBand, gradeBandSource },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   // ── A0) Detect: Compute reliability risk (SEP v1 heuristic) ──
@@ -982,7 +1012,7 @@ export const genAiCoach = onCall(async (request) => {
       requiresExplainBack,
       coppaBand,
     },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   // ── Emit ai_coach_response event (audit trail) ──
@@ -1005,7 +1035,7 @@ export const genAiCoach = onCall(async (request) => {
       coppaBand,
       gradeBandSource,
     },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   // ── A2) Response contract ──────────────────
@@ -1331,9 +1361,9 @@ async function persistTelemetryEvent(params: {
       redactionApplied: redactedPaths.length > 0,
       redactedPathCount: redactedPaths.length,
     },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
     timestampIso,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 }
 
@@ -1474,8 +1504,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return {};
 }
 
-function asTimestamp(value: unknown): admin.firestore.Timestamp | null {
-  if (value instanceof admin.firestore.Timestamp) return value;
+function asTimestamp(value: unknown): Timestamp | null {
+  if (value instanceof Timestamp) return value;
   return null;
 }
 
@@ -1538,11 +1568,11 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
   const now = new Date();
   const periodStart = startOfUtcDay(now);
   periodStart.setUTCDate(periodStart.getUTCDate() - (periodDays - 1));
-  const periodStartTimestamp = admin.firestore.Timestamp.fromDate(periodStart);
+  const periodStartTimestamp = Timestamp.fromDate(periodStart);
 
   const accountabilityStart = startOfUtcDay(now);
   accountabilityStart.setUTCDate(accountabilityStart.getUTCDate() - 6);
-  const accountabilityStartTimestamp = admin.firestore.Timestamp.fromDate(accountabilityStart);
+  const accountabilityStartTimestamp = Timestamp.fromDate(accountabilityStart);
 
   const telemetryCollection = admin.firestore().collection(TELEMETRY_COLLECTION);
 
@@ -1699,7 +1729,7 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
 });
 
 function parseDateFromUnknown(value: unknown): Date | null {
-  if (value instanceof admin.firestore.Timestamp) return value.toDate();
+  if (value instanceof Timestamp) return value.toDate();
   if (value instanceof Date) return value;
   if (typeof value === 'number' && Number.isFinite(value)) {
     return new Date(value);
@@ -1877,7 +1907,7 @@ async function buildParentLearnerSummary(params: {
       .firestore()
       .collection('events')
       .where('learnerId', '==', learnerId)
-      .where('dateTime', '>=', admin.firestore.Timestamp.fromDate(now))
+      .where('dateTime', '>=', Timestamp.fromDate(now))
       .orderBy('dateTime')
       .limit(5)
       .get();
@@ -2130,7 +2160,7 @@ async function computeRoleDashboardStats(params: {
     try {
       if (learnerIds.length > 0) {
         let query: FirebaseFirestore.Query = db.collection('events');
-        query = query.where('dateTime', '>=', admin.firestore.Timestamp.fromDate(now));
+        query = query.where('dateTime', '>=', Timestamp.fromDate(now));
         const events = await query.get();
         upcomingSessions = events.docs.filter((doc) => learnerIds.includes(String(doc.data().learnerId || ''))).length;
       }
@@ -2166,11 +2196,11 @@ async function computeRoleDashboardStats(params: {
 
     try {
       const records = await db
-        .collection('presenceRecords')
+        .collection('checkins')
         .where('siteId', '==', siteId)
         .where('type', '==', 'checkin')
-        .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
-        .where('timestamp', '<', admin.firestore.Timestamp.fromDate(endOfDay))
+        .where('timestamp', '>=', Timestamp.fromDate(startOfDay))
+        .where('timestamp', '<', Timestamp.fromDate(endOfDay))
         .get();
       checkedIn = records.size;
     } catch {
@@ -2459,7 +2489,7 @@ export const updateUserRoles = onCall(async (request: CallableRequest) => {
   if (activeSiteId) updates.activeSiteId = activeSiteId;
   if (isActive !== undefined) updates.isActive = isActive;
 
-  updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+  updates.updatedAt = FieldValue.serverTimestamp();
 
   await admin.firestore().runTransaction(async (tx) => {
     const ref = admin.firestore().collection(USERS_COLLECTION).doc(targetUid);
@@ -2483,7 +2513,7 @@ export const updateUserRoles = onCall(async (request: CallableRequest) => {
       entityType: 'user',
       entityId: targetUid,
       details: { before, updates },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -2514,8 +2544,8 @@ export const processCheckout = onCall(async (request: CallableRequest) => {
       currency: product.currency,
       status: 'paid',
       entitlementRoles: roles,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      paidAt: FieldValue.serverTimestamp(),
       actorId: actor.uid,
       actorRole: actor.role,
     });
@@ -2557,7 +2587,7 @@ export const requestNotificationSend = onCall(async (request: CallableRequest) =
     requestedBy: actor.uid,
     role: actor.role,
     rateKey: `${actor.uid}:${channel}`,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     status: 'pending',
   });
 
@@ -2608,14 +2638,14 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
     .limit(10)
     .get();
 
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   for (const docSnap of pendingSnap.docs) {
     const data = docSnap.data();
     const rateKey = (data.rateKey as string | undefined) ?? 'global';
     const rateRef = db.collection(NOTIFICATION_RATE_COLLECTION).doc(rateKey);
     const rateSnap = await rateRef.get();
-    const last = rateSnap.exists ? (rateSnap.data()?.lastProcessedAt as admin.firestore.Timestamp | undefined) : undefined;
+    const last = rateSnap.exists ? (rateSnap.data()?.lastProcessedAt as Timestamp | undefined) : undefined;
     if (last && now.toMillis() - last.toMillis() < 60_000) {
       // Skip due to rate limit
       continue;
@@ -2690,7 +2720,7 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
     status: 'intent',
     actorId: actor.uid,
     actorRole: actor.role,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   await persistTelemetryEvent({
@@ -2735,7 +2765,7 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
 
     tx.set(intentSnap.ref, {
       status: 'paid',
-      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      paidAt: FieldValue.serverTimestamp(),
       entitlementId: entitlementRef.id,
     }, { merge: true });
 
@@ -2744,18 +2774,18 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       siteId: current.siteId,
       productId,
       roles: product.roles,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
     tx.set(
       userRef,
       {
-        roles: admin.firestore.FieldValue.arrayUnion(...product.roles),
-        entitlements: admin.firestore.FieldValue.arrayUnion(...product.roles),
-        siteIds: admin.firestore.FieldValue.arrayUnion(current.siteId),
+        roles: FieldValue.arrayUnion(...product.roles),
+        entitlements: FieldValue.arrayUnion(...product.roles),
+        siteIds: FieldValue.arrayUnion(current.siteId),
         primarySiteId: current.siteId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
@@ -2769,7 +2799,7 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       entityId: intentId,
       siteId: current.siteId,
       details: { productId, amount: product.amount, currency: product.currency, roles: product.roles },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -2831,7 +2861,7 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
 
       tx.set(intentSnap.ref, {
         status: 'paid',
-        paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
         entitlementId: entitlementRef.id,
       }, { merge: true });
 
@@ -2840,18 +2870,18 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         siteId: current.siteId,
         productId,
         roles: product.roles,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
       tx.set(
         userRef,
         {
-          roles: admin.firestore.FieldValue.arrayUnion(...product.roles),
-          entitlements: admin.firestore.FieldValue.arrayUnion(...product.roles),
-          siteIds: admin.firestore.FieldValue.arrayUnion(current.siteId),
+          roles: FieldValue.arrayUnion(...product.roles),
+          entitlements: FieldValue.arrayUnion(...product.roles),
+          siteIds: FieldValue.arrayUnion(current.siteId),
           primarySiteId: current.siteId,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
       );
@@ -2865,7 +2895,7 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         entityId: intentId,
         siteId: current.siteId,
         details: { productId, amount: product.amount, currency: product.currency, roles: product.roles, via: 'webhook' },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
     });
 
@@ -2917,7 +2947,7 @@ async function getOrCreateStripeCustomer(userId: string, email: string, name?: s
     stripeCustomerId: customer.id,
     email,
     name,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return customer.id;
@@ -2973,7 +3003,7 @@ export const createStripeCheckoutSession = onCall({
     actorId: actor.uid,
     actorRole: actor.role,
     stripeCustomerId,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Create Stripe Checkout Session
@@ -3061,7 +3091,7 @@ export const createStripeSubscription = onCall({
     userId: actor.uid,
     productId,
     status: 'pending',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   const session = await stripeInstance.checkout.sessions.create({
@@ -3308,7 +3338,7 @@ async function logWebhookEvent(event: Stripe.Event) {
       eventType: event.type,
       livemode: event.livemode,
       created: new Date(event.created * 1000),
-      receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      receivedAt: FieldValue.serverTimestamp(),
       objectId: (event.data.object as any).id,
     });
   } catch (err) {
@@ -3329,7 +3359,7 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
   if (intentSnap.exists && intentSnap.data()?.status === 'pending') {
     await intentRef.update({
       status: 'expired',
-      expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiredAt: FieldValue.serverTimestamp(),
     });
     console.log('Checkout session expired:', intentId);
   }
@@ -3366,7 +3396,7 @@ async function handleInvoiceUpcoming(invoice: Stripe.Invoice) {
       dueDate: invoiceData.due_date ? new Date(invoiceData.due_date * 1000) : null,
       invoiceUrl: invoiceData.hosted_invoice_url,
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Upcoming invoice notification created for user:', userId);
@@ -3419,7 +3449,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     currentPeriodStart: subData.current_period_start ? new Date(subData.current_period_start * 1000) : null,
     currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
     cancelAtPeriodEnd: subData.cancel_at_period_end,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Subscription created:', subscription.id, 'for user:', userId);
@@ -3451,7 +3481,7 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
       trialEnd: subData.trial_end ? new Date(subData.trial_end * 1000) : null,
       productId: sub.productId,
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Trial ending notification created for subscription:', subscription.id);
@@ -3480,7 +3510,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   await intentRef.update({
     status: 'paid',
     stripePaymentIntentId: paymentIntent.id,
-    paidAt: admin.firestore.FieldValue.serverTimestamp(),
+    paidAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Payment intent succeeded:', paymentIntent.id);
@@ -3502,7 +3532,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   await intentRef.update({
     status: 'failed',
     failureReason: piData.last_payment_error?.message || 'Payment failed',
-    failedAt: admin.firestore.FieldValue.serverTimestamp(),
+    failedAt: FieldValue.serverTimestamp(),
   });
 
   // Create notification for failed payment
@@ -3518,7 +3548,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
         currency: paymentIntent.currency,
         reason: piData.last_payment_error?.message,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   }
 
@@ -3543,14 +3573,14 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) 
 
   const customerDoc = customerSnap.docs[0];
   await customerDoc.ref.update({
-    paymentMethods: admin.firestore.FieldValue.arrayUnion({
+    paymentMethods: FieldValue.arrayUnion({
       id: paymentMethod.id,
       type: paymentMethod.type,
       last4: pmData.card?.last4 || null,
       brand: pmData.card?.brand || null,
       addedAt: new Date(),
     }),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Payment method attached:', paymentMethod.id);
@@ -3573,7 +3603,7 @@ async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) 
     if (filtered.length !== paymentMethods.length) {
       await doc.ref.update({
         paymentMethods: filtered,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
       console.log('Payment method detached:', paymentMethod.id);
       break;
@@ -3606,7 +3636,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   const intent = intentDoc.data();
 
   await intentDoc.ref.update({
-    refundedAt: admin.firestore.FieldValue.serverTimestamp(),
+    refundedAt: FieldValue.serverTimestamp(),
     refundAmount: chargeData.amount_refunded,
     refundStatus: charge.refunded ? 'full' : 'partial',
   });
@@ -3625,13 +3655,13 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       currency: charge.currency,
       refundReason: chargeData.refunds?.data?.[0]?.reason || 'unknown',
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Optionally revoke entitlements on full refund
   if (charge.refunded && intent.entitlementId) {
     await admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc(intent.entitlementId).update({
-      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedAt: FieldValue.serverTimestamp(),
       revokeReason: 'refunded',
     });
   }
@@ -3654,7 +3684,7 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
     reason: dispute.reason,
     status: dispute.status,
     evidenceDueBy: disputeData.evidence_details?.due_by ? new Date(disputeData.evidence_details.due_by * 1000) : null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Alert HQ about the dispute
@@ -3670,7 +3700,7 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
       currency: dispute.currency,
       reason: dispute.reason,
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Dispute created:', dispute.id, 'reason:', dispute.reason);
@@ -3690,7 +3720,7 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
 
   await disputeSnap.docs[0].ref.update({
     status: dispute.status,
-    closedAt: admin.firestore.FieldValue.serverTimestamp(),
+    closedAt: FieldValue.serverTimestamp(),
   });
 
   // Log outcome
@@ -3704,7 +3734,7 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
       status: dispute.status,
       won: dispute.status === 'won',
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Dispute closed:', dispute.id, 'status:', dispute.status);
@@ -3726,7 +3756,7 @@ async function handleCustomerUpdated(customer: Stripe.Customer) {
   await customerDoc.ref.update({
     email: customer.email,
     name: customer.name,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Customer updated:', customer.id);
@@ -3747,7 +3777,7 @@ async function handleCustomerDeleted(customer: Stripe.DeletedCustomer) {
   const customerDoc = customerSnap.docs[0];
   await customerDoc.ref.update({
     deleted: true,
-    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    deletedAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Customer deleted:', customer.id);
@@ -3792,7 +3822,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // Update intent
     tx.set(intentSnap.ref, {
       status: 'paid',
-      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      paidAt: FieldValue.serverTimestamp(),
       entitlementId: entitlementRef.id,
       stripePaymentIntentId: session.payment_intent,
       stripePaymentStatus: session.payment_status,
@@ -3805,7 +3835,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       productId,
       roles: product.roles,
       stripeSessionId: session.id,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     // Update user roles
@@ -3813,11 +3843,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     tx.set(
       userRef,
       {
-        roles: admin.firestore.FieldValue.arrayUnion(...product.roles),
-        entitlements: admin.firestore.FieldValue.arrayUnion(...product.roles),
-        siteIds: admin.firestore.FieldValue.arrayUnion(current.siteId),
+        roles: FieldValue.arrayUnion(...product.roles),
+        entitlements: FieldValue.arrayUnion(...product.roles),
+        siteIds: FieldValue.arrayUnion(current.siteId),
         primarySiteId: current.siteId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
@@ -3839,7 +3869,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         stripeSessionId: session.id,
         stripePaymentIntent: session.payment_intent,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -3888,7 +3918,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     status: 'active',
     currentPeriodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : null,
     lastInvoiceId: invoice.id,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Subscription invoice paid:', subscriptionId);
@@ -3918,8 +3948,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   await subDoc.ref.update({
     status: 'past_due',
     lastPaymentError: invoice.last_finalization_error?.message ?? 'Payment failed',
-    failedAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    failedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   // Send notification to user about failed payment
@@ -3937,7 +3967,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         invoiceUrl: invoiceData.hosted_invoice_url,
         errorMessage: invoice.last_finalization_error?.message ?? 'Payment failed',
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     // Log audit event for payment failure
@@ -3955,7 +3985,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         currency: invoiceData.currency,
         error: invoice.last_finalization_error?.message,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   }
 
@@ -3983,7 +4013,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
           stripeSubscriptionId: subscription.id,
           status: subscription.status,
           currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         });
       }
     }
@@ -3995,7 +4025,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     status: subscription.status,
     currentPeriodEnd: subData.current_period_end ? new Date(subData.current_period_end * 1000) : null,
     cancelAtPeriodEnd: subData.cancel_at_period_end,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   console.log('Subscription updated:', subscription.id, subscription.status);
@@ -4018,8 +4048,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   await subDoc.ref.update({
     status: 'cancelled',
-    cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    cancelledAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   // Optionally revoke entitlements
@@ -4222,7 +4252,7 @@ export const checkExpiringSubscriptions = onSchedule('0 9 * * *', async () => {
           expiresAt: periodEnd,
           daysUntilExpiry,
         },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       console.log(`Sent expiring subscription reminder to user ${sub.userId}, expires in ${daysUntilExpiry} days`);
@@ -4258,7 +4288,7 @@ export const archiveOldTelemetry = onSchedule('0 3 * * 0', async () => {
     const archiveRef = db.collection('telemetryArchive').doc(doc.id);
     batch.set(archiveRef, {
       ...doc.data(),
-      archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      archivedAt: FieldValue.serverTimestamp(),
     });
     batch.delete(doc.ref);
     count++;
@@ -4294,7 +4324,7 @@ export const cleanupExpiredIntents = onSchedule('0 */6 * * *', async () => {
   for (const doc of expiredIntentsSnap.docs) {
     batch.update(doc.ref, {
       status: 'expired',
-      expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiredAt: FieldValue.serverTimestamp(),
     });
     count++;
   }
@@ -4342,9 +4372,9 @@ export const cancelSubscription = onCall({
     // Update local record
     await subSnap.ref.update({
       cancelAtPeriodEnd,
-      cancelledAt: cancelAtPeriodEnd ? null : admin.firestore.FieldValue.serverTimestamp(),
+      cancelledAt: cancelAtPeriodEnd ? null : FieldValue.serverTimestamp(),
       status: cancelAtPeriodEnd ? 'active' : 'cancelled',
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     // Audit log
@@ -4359,7 +4389,7 @@ export const cancelSubscription = onCall({
         stripeSubscriptionId: sub.stripeSubscriptionId,
         cancelAtPeriodEnd,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -4412,7 +4442,7 @@ export const resumeSubscription = onCall({
 
     await subSnap.ref.update({
       cancelAtPeriodEnd: false,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     await admin.firestore().collection(AUDIT_COLLECTION).add({
@@ -4423,7 +4453,7 @@ export const resumeSubscription = onCall({
       entityId: subscriptionId,
       siteId: sub.siteId,
       details: { stripeSubscriptionId: sub.stripeSubscriptionId },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return { success: true };
@@ -4569,7 +4599,7 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
   // Get recent webhook logs
   const logsSnap = await admin.firestore()
     .collection('stripeWebhookLogs')
-    .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(oneDayAgo))
+    .where('timestamp', '>=', Timestamp.fromDate(oneDayAgo))
     .get();
 
   const logs = logsSnap.docs.map(doc => doc.data());
@@ -4597,7 +4627,7 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
     entityType: 'system',
     entityId: 'stripe-webhooks',
     details: summary,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // If failure rate is high, create an alert
@@ -4609,7 +4639,7 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
       message: `${failedEvents.length} of ${logs.length} webhook events failed in the last 24 hours`,
       details: summary,
       acknowledged: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   }
 
@@ -4661,7 +4691,7 @@ export const processRefund = onCall({
       status: refund.status,
       reason: reason || 'requested_by_customer',
       processedBy: request.auth!.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     // Audit log
@@ -4676,7 +4706,7 @@ export const processRefund = onCall({
         amount: refund.amount,
         reason,
       },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -4883,7 +4913,7 @@ export const createStripeProduct = onCall({
       entityType: 'stripeProduct',
       entityId: product.id,
       details: { name, description },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -4943,7 +4973,7 @@ export const updateStripeProduct = onCall({
       entityType: 'stripeProduct',
       entityId: productId,
       details: updateParams,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -5020,7 +5050,7 @@ export const createStripePrice = onCall({
       entityType: 'stripePrice',
       entityId: price.id,
       details: { productId, unitAmount, currency, recurring, nickname },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -5080,7 +5110,7 @@ export const updateStripePrice = onCall({
       entityType: 'stripePrice',
       entityId: priceId,
       details: updateParams,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -5142,7 +5172,7 @@ export const archiveStripeProduct = onCall({
       entityType: 'stripeProduct',
       entityId: productId,
       details: { pricesArchived: prices.data.length },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
@@ -5229,7 +5259,7 @@ export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
     })),
     notes: notes || null,
     highlights: highlights || [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Log telemetry
@@ -5296,7 +5326,7 @@ export const logSupportIntervention = onCall(async (request: CallableRequest<{
     learnerResponse: learnerResponse || null,
     notes: notes || null,
     recommendForFuture,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // Update effectiveness score in motivation profile
@@ -5398,7 +5428,7 @@ export const trackLearnerInteraction = onCall(async (request: CallableRequest<{
     siteId,
     eventType,
     metadata: metadata || {},
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   // Also log to general telemetry
@@ -5521,11 +5551,11 @@ export const respondToNudge = onCall(async (request: CallableRequest<{
   // Update nudge status
   const updateData: Record<string, any> = {
     status: response === 'snoozed' ? 'pending' : response,
-    respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+    respondedAt: FieldValue.serverTimestamp(),
   };
 
   if (response === 'snoozed' && snoozeDurationMinutes) {
-    updateData.scheduledFor = admin.firestore.Timestamp.fromMillis(
+    updateData.scheduledFor = Timestamp.fromMillis(
       Date.now() + snoozeDurationMinutes * 60 * 1000
     );
   }
@@ -5542,7 +5572,7 @@ export const respondToNudge = onCall(async (request: CallableRequest<{
       nudgeType: nudgeData.type,
       motivationType: nudgeData.motivationTypeTarget,
     },
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
   });
 
   return { success: true };
@@ -5753,11 +5783,11 @@ async function createInitialMotivationProfile(learnerId: string, siteId: string)
       IMPACT_INNOVATION: { interest: 0.5, performance: 0.5, growth: 0 },
     },
     insights: [],
-    lastInteractionUpdate: admin.firestore.FieldValue.serverTimestamp(),
-    lastEducatorFeedback: admin.firestore.FieldValue.serverTimestamp(),
-    lastComputedAt: admin.firestore.FieldValue.serverTimestamp(),
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastInteractionUpdate: FieldValue.serverTimestamp(),
+    lastEducatorFeedback: FieldValue.serverTimestamp(),
+    lastComputedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 
   const docRef = await admin.firestore()
@@ -5789,7 +5819,7 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
   }
 
   // Compute signals from interactions (last 30 days)
-  const thirtyDaysAgo = admin.firestore.Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const interactions = await admin.firestore()
     .collection(MOTIVATION_COLLECTIONS.LEARNER_INTERACTIONS)
@@ -5847,8 +5877,8 @@ async function updateLearnerMotivationProfile(learnerId: string, siteId: string)
     interactionPatterns,
     effectiveStrategies,
     insights,
-    lastComputedAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastComputedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   return { success: true };
@@ -6070,7 +6100,7 @@ function generateInsights(
   engagementLevel: EngagementLevel
 ): any[] {
   const insights: any[] = [];
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   // Strength insights
   const topMotivator = Object.entries(motivatorScores)
@@ -6162,7 +6192,7 @@ async function updateStrategyEffectiveness(
         ...s,
         effectiveness: Math.min(1, Math.max(0, s.effectiveness + delta)),
         usageCount: s.usageCount + 1,
-        lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUsedAt: FieldValue.serverTimestamp(),
       };
     }
     return s;
@@ -6170,7 +6200,7 @@ async function updateStrategyEffectiveness(
 
   await profileRef.update({
     effectiveStrategies: updated,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 }
 
@@ -6253,7 +6283,7 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
     status: 'pending',
     generatedBy: 'system',
     basedOnInsights: profile.insights?.slice(0, 2).map((i: any) => i.id) || [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    createdAt: FieldValue.serverTimestamp(),
+    expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
 }

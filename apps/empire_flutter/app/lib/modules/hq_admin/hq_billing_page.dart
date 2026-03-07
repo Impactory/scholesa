@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
-import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -267,11 +267,14 @@ class _HqBillingPageState extends State<HqBillingPage>
                 underline: const SizedBox(),
                 items: <DropdownMenuItem<String>>[
                   DropdownMenuItem<String>(
-                    value: 'month', child: Text(_tHqBilling(context, 'This Month'))),
+                      value: 'month',
+                      child: Text(_tHqBilling(context, 'This Month'))),
                   DropdownMenuItem<String>(
-                    value: 'quarter', child: Text(_tHqBilling(context, 'This Quarter'))),
+                      value: 'quarter',
+                      child: Text(_tHqBilling(context, 'This Quarter'))),
                   DropdownMenuItem<String>(
-                    value: 'year', child: Text(_tHqBilling(context, 'This Year'))),
+                      value: 'year',
+                      child: Text(_tHqBilling(context, 'This Year'))),
                 ],
                 onChanged: (String? value) {
                   if (value != null) {
@@ -301,21 +304,18 @@ class _HqBillingPageState extends State<HqBillingPage>
         _invoices.fold<double>(0, (double sum, Map<String, dynamic> invoice) {
       return sum + ((invoice['amount'] as double?) ?? 0);
     });
-    final double collected =
-        _invoices.where((Map<String, dynamic> invoice) {
+    final double collected = _invoices.where((Map<String, dynamic> invoice) {
       final String status = (invoice['status'] as String? ?? '').toLowerCase();
       return status == 'paid' || status == 'approved' || status == 'completed';
     }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
       return sum + ((invoice['amount'] as double?) ?? 0);
     });
-    final double pending =
-        _invoices.where((Map<String, dynamic> invoice) {
+    final double pending = _invoices.where((Map<String, dynamic> invoice) {
       return (invoice['status'] as String? ?? '').toLowerCase() == 'pending';
     }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
       return sum + ((invoice['amount'] as double?) ?? 0);
     });
-    final double overdue =
-        _invoices.where((Map<String, dynamic> invoice) {
+    final double overdue = _invoices.where((Map<String, dynamic> invoice) {
       return (invoice['status'] as String? ?? '').toLowerCase() == 'overdue';
     }).fold<double>(0, (double sum, Map<String, dynamic> invoice) {
       return sum + ((invoice['amount'] as double?) ?? 0);
@@ -599,8 +599,8 @@ class _HqBillingPageState extends State<HqBillingPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                      _tHqBilling(context, 'Financial report prepared for export')),
+                  content: Text(_tHqBilling(
+                      context, 'Financial report prepared for export')),
                   backgroundColor: ScholesaColors.hq,
                 ),
               );
@@ -613,145 +613,105 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   Future<void> _loadBillingData() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
-          await firestoreService.firestore.collection('sites').limit(500).get();
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listHqBillingRecords');
+      final HttpsCallableResult<dynamic> response =
+          await callable.call(<String, dynamic>{
+        'siteId': _selectedSite == 'all' ? null : _selectedSite,
+        'period': _selectedPeriod,
+        'limit': 500,
+      });
 
-      final List<_SiteFilterOption> siteOptions = <_SiteFilterOption>[
-        const _SiteFilterOption(id: 'all', label: 'All Sites'),
-        ...sitesSnapshot.docs.map((siteDoc) {
-          final Map<String, dynamic> data = siteDoc.data();
-          return _SiteFilterOption(
-            id: siteDoc.id,
-            label: (data['name'] as String?)?.trim().isNotEmpty == true
-                ? (data['name'] as String).trim()
-                : siteDoc.id,
-          );
-        }),
+      final Map<String, dynamic> payload = _asMap(response.data);
+      final List<_SiteFilterOption> callableSiteOptions = <_SiteFilterOption>[
+        ..._asMapList(payload['siteOptions']).map(
+          (Map<String, dynamic> row) => _SiteFilterOption(
+            id: ((row['id'] as String?) ?? '').trim().isNotEmpty
+                ? (row['id'] as String).trim()
+                : 'all',
+            label: ((row['label'] as String?) ?? '').trim().isNotEmpty
+                ? (row['label'] as String).trim()
+                : 'All Sites',
+          ),
+        ),
       ];
 
-      Query<Map<String, dynamic>> payoutsQuery =
-          firestoreService.firestore.collection('payouts');
       final DateTime now = DateTime.now();
-      final DateTime periodStart = _periodStart(now, _selectedPeriod);
-      try {
-        payoutsQuery = payoutsQuery.where(
-          'createdAt',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
-        );
-      } catch (_) {}
-      QuerySnapshot<Map<String, dynamic>> payoutsSnapshot;
-      try {
-        payoutsSnapshot = await payoutsQuery
-            .orderBy('createdAt', descending: true)
-            .limit(500)
-            .get();
-      } catch (_) {
-        payoutsSnapshot = await payoutsQuery.limit(500).get();
-      }
+      final List<Map<String, dynamic>> callableInvoices = _asMapList(
+        payload['invoices'],
+      )
+          .map((Map<String, dynamic> row) {
+            final String id = ((row['id'] as String?) ?? '').trim();
+            if (id.isEmpty) {
+              return null;
+            }
+            final DateTime date = _toDateTime(row['date']) ?? now;
+            return <String, dynamic>{
+              'id': id,
+              'parent': (row['parent'] as String?) ?? 'Unknown',
+              'learner': (row['learner'] as String?) ?? '-',
+              'site': (row['site'] as String?) ?? 'Unknown',
+              'amount': _asDouble(row['amount']) ?? 0,
+              'status': _invoiceStatusFromPayoutStatus(
+                (row['status'] as String?) ?? 'pending',
+              ),
+              'date': _formatDate(date),
+            };
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
 
-      final Map<String, String> siteNames = <String, String>{
-        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnapshot.docs)
-          doc.id: (doc.data()['name'] as String?)?.trim().isNotEmpty == true
-              ? (doc.data()['name'] as String).trim()
-              : doc.id,
-      };
+      final List<Map<String, dynamic>> callablePayments = _asMapList(
+        payload['payments'],
+      )
+          .map((Map<String, dynamic> row) {
+            final String id = ((row['id'] as String?) ?? '').trim();
+            if (id.isEmpty) {
+              return null;
+            }
+            final DateTime date = _toDateTime(row['date']) ?? now;
+            return <String, dynamic>{
+              'id': id,
+              'from': (row['from'] as String?) ?? 'Unknown',
+              'method': (row['method'] as String?) ?? 'Transfer',
+              'amount': _asDouble(row['amount']) ?? 0,
+              'date': _formatDate(date),
+              'invoice': (row['invoice'] as String?) ?? '-',
+            };
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
 
-      final List<Map<String, dynamic>> allInvoices = <Map<String, dynamic>>[];
-      final List<Map<String, dynamic>> allPayments = <Map<String, dynamic>>[];
-
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in payoutsSnapshot.docs) {
-        final Map<String, dynamic> data = doc.data();
-        final String siteId = (data['siteId'] as String?) ?? '';
-        final DateTime createdAt = _toDateTime(data['createdAt']) ?? now;
-        if (!_passesFilters(siteId: siteId, timestamp: createdAt)) {
-          continue;
-        }
-        final String status =
-            ((data['status'] as String?) ?? 'pending').toLowerCase();
-        final String siteName = siteNames[siteId] ?? siteId;
-        final double amount = _asDouble(data['amount']) ?? 0;
-        final String parentName = (data['parentName'] as String?) ??
-            (data['requestedBy'] as String?) ??
-            (data['createdBy'] as String?) ??
-            'Unknown';
-        final String learnerName =
-            (data['learnerName'] as String?) ?? (data['learnerId'] as String?) ?? '-';
-        final String dateLabel = _formatDate(createdAt);
-        final String invoiceId = (data['invoiceId'] as String?) ?? doc.id;
-        final String method = (data['paymentMethod'] as String?) ??
-            (data['method'] as String?) ??
-            'Transfer';
-
-        allInvoices.add(<String, dynamic>{
-          'id': invoiceId,
-          'parent': parentName,
-          'learner': learnerName,
-          'site': siteName.isEmpty ? 'Unknown' : siteName,
-          'amount': amount,
-          'status': _invoiceStatusFromPayoutStatus(status),
-          'date': dateLabel,
-        });
-
-        if (status == 'approved' || status == 'paid' || status == 'completed') {
-          allPayments.add(<String, dynamic>{
-            'id': doc.id,
-            'from': parentName,
-            'method': method,
-            'amount': amount,
-            'date': dateLabel,
-            'invoice': invoiceId,
-          });
-        }
-      }
-
-      final List<Map<String, dynamic>> subscriptions = sitesSnapshot.docs
-          .where((QueryDocumentSnapshot<Map<String, dynamic>> siteDoc) {
-        return _selectedSite == 'all' || siteDoc.id == _selectedSite;
-      }).map((QueryDocumentSnapshot<Map<String, dynamic>> siteDoc) {
-        final Map<String, dynamic> siteData = siteDoc.data();
-        final String siteName = (siteData['name'] as String?)?.trim().isNotEmpty == true
-            ? (siteData['name'] as String).trim()
-            : siteDoc.id;
-        final int learners = _asInt(siteData['learnerCount']) ??
-            ((siteData['learnerIds'] as List?)?.length ?? 0);
-        final String plan =
-            (siteData['billingPlan'] as String?)?.trim().isNotEmpty == true
-                ? (siteData['billingPlan'] as String).trim()
-                : 'Standard';
-        final double amount = _asDouble(siteData['monthlyFee']) ?? 0;
-        final String status =
-            ((siteData['billingStatus'] as String?) ?? 'active').toLowerCase();
-        final DateTime? nextBilling = _toDateTime(siteData['nextBillingDate']);
-
+      final List<Map<String, dynamic>> callableSubscriptions =
+          _asMapList(payload['subscriptions']).map((Map<String, dynamic> row) {
+        final DateTime? nextBilling = _toDateTime(row['nextBilling']);
         return <String, dynamic>{
-          'parent': siteName,
-          'learners': learners,
-          'plan': plan,
-          'amount': amount,
-          'status': _normalizeSubscriptionStatus(status),
-          'nextBilling':
-              nextBilling != null ? _formatDate(nextBilling) : '-',
+          'parent': (row['parent'] as String?) ?? 'Unknown Site',
+          'learners': _asInt(row['learners']) ?? 0,
+          'plan': (row['plan'] as String?) ?? 'Standard',
+          'amount': _asDouble(row['amount']) ?? 0,
+          'status': _normalizeSubscriptionStatus(
+              (row['status'] as String?) ?? 'active'),
+          'nextBilling': nextBilling != null ? _formatDate(nextBilling) : '-',
         };
       }).toList();
 
       if (!mounted) return;
       setState(() {
-        _siteOptions = siteOptions;
+        _siteOptions = callableSiteOptions.isEmpty
+            ? <_SiteFilterOption>[
+                const _SiteFilterOption(id: 'all', label: 'All Sites')
+              ]
+            : callableSiteOptions;
         if (!_siteOptions.any((option) => option.id == _selectedSite)) {
           _selectedSite = 'all';
         }
-        _invoices = allInvoices;
-        _payments = allPayments;
-        _subscriptions = subscriptions;
+        _invoices = callableInvoices;
+        _payments = callablePayments;
+        _subscriptions = callableSubscriptions;
       });
     } finally {
       if (mounted) {
@@ -760,50 +720,18 @@ class _HqBillingPageState extends State<HqBillingPage>
     }
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((dynamic key, dynamic nestedValue) =>
+          MapEntry<String, dynamic>(key.toString(), nestedValue));
     }
+    return <String, dynamic>{};
   }
 
-  AppState? _maybeAppState() {
-    try {
-      return context.read<AppState>();
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool _passesFilters({required String siteId, required DateTime timestamp}) {
-    final AppState? appState = _maybeAppState();
-    final List<String> allowedSiteIds = appState?.siteIds ?? <String>[];
-    if (allowedSiteIds.isNotEmpty && siteId.isNotEmpty &&
-        !allowedSiteIds.contains(siteId)) {
-      return false;
-    }
-
-    if (_selectedSite != 'all' && siteId != _selectedSite) {
-      return false;
-    }
-
-    final DateTime now = DateTime.now();
-    final DateTime start = _periodStart(now, _selectedPeriod);
-    return !timestamp.isBefore(start) && !timestamp.isAfter(now);
-  }
-
-  DateTime _periodStart(DateTime now, String period) {
-    switch (period) {
-      case 'year':
-        return DateTime(now.year, 1, 1);
-      case 'quarter':
-        final int quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-        return DateTime(now.year, quarterStartMonth, 1);
-      case 'month':
-      default:
-        return DateTime(now.year, now.month, 1);
-    }
+  List<Map<String, dynamic>> _asMapList(dynamic value) {
+    if (value is! List) return <Map<String, dynamic>>[];
+    return value.map<Map<String, dynamic>>(_asMap).toList();
   }
 
   DateTime? _toDateTime(dynamic value) {
@@ -832,8 +760,18 @@ class _HqBillingPageState extends State<HqBillingPage>
 
   String _formatDate(DateTime value) {
     const List<String> months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[value.month - 1]} ${value.day}, ${value.year}';
   }
@@ -1479,7 +1417,6 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 
   Future<void> _createInvoice() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     final double? amount = double.tryParse(_amountController.text.trim());
     if (_selectedParent == null ||
@@ -1515,42 +1452,39 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       },
     );
 
-    if (firestoreService != null) {
-      try {
-        final String? selectedSiteId = widget.selectedSiteId;
-        final String? activeSiteId = appState?.activeSiteId;
-        final String siteId = (selectedSiteId != null && selectedSiteId.isNotEmpty)
-            ? selectedSiteId
-            : ((activeSiteId != null && activeSiteId.isNotEmpty)
-                ? activeSiteId
-                : ((appState?.siteIds.isNotEmpty ?? false)
-                    ? appState!.siteIds.first
-                    : ''));
-        await firestoreService.firestore.collection('payouts').add(
-          <String, dynamic>{
-            'type': 'invoice',
-            'status': 'pending',
-            'amount': amount,
-            'parentId': _selectedParent,
-            'parentName': parent?.label ?? _selectedParent,
-            'learnerId': _selectedLearner,
-            'learnerName': learner?.label ?? _selectedLearner,
-            'description': _descriptionController.text.trim(),
-            if (siteId.isNotEmpty) 'siteId': siteId,
-            'createdAt': FieldValue.serverTimestamp(),
-            'createdBy': appState?.userId,
-          },
-        );
-      } catch (_) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_tHqBilling(context, 'Invoice creation failed')),
-            backgroundColor: ScholesaColors.error,
-          ),
-        );
-        return;
-      }
+    try {
+      final String? selectedSiteId = widget.selectedSiteId;
+      final String? activeSiteId = appState?.activeSiteId;
+      final String siteId =
+          (selectedSiteId != null && selectedSiteId.isNotEmpty)
+              ? selectedSiteId
+              : ((activeSiteId != null && activeSiteId.isNotEmpty)
+                  ? activeSiteId
+                  : ((appState?.siteIds.isNotEmpty ?? false)
+                      ? appState!.siteIds.first
+                      : ''));
+
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('createHqInvoice');
+      await callable.call(<String, dynamic>{
+        'siteId': siteId.isNotEmpty ? siteId : null,
+        'parentId': _selectedParent,
+        'parentName': parent?.label ?? _selectedParent,
+        'learnerId': _selectedLearner,
+        'learnerName': learner?.label ?? _selectedLearner,
+        'amount': amount,
+        'description': _descriptionController.text.trim(),
+        'currency': 'USD',
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqBilling(context, 'Invoice creation failed')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+      return;
     }
 
     if (!mounted) return;
@@ -1564,62 +1498,49 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 
   Future<void> _loadUserOptions() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) return;
-
     if (!mounted) return;
     setState(() => _isLoadingUsers = true);
     try {
       final AppState? appState = _maybeAppState();
       final String? selectedSiteId = widget.selectedSiteId;
       final String? activeSiteId = appState?.activeSiteId;
-      final String siteScopeId = (selectedSiteId != null && selectedSiteId.isNotEmpty)
-          ? selectedSiteId
-          : ((activeSiteId != null && activeSiteId.isNotEmpty)
-              ? activeSiteId
-              : '');
+      final String siteScopeId =
+          (selectedSiteId != null && selectedSiteId.isNotEmpty)
+              ? selectedSiteId
+              : ((activeSiteId != null && activeSiteId.isNotEmpty)
+                  ? activeSiteId
+                  : '');
 
-      QuerySnapshot<Map<String, dynamic>> usersSnapshot;
-      try {
-        usersSnapshot = await firestoreService.firestore
-            .collection('users')
-            .where('role', whereIn: <String>['parent', 'learner'])
-            .limit(500)
-            .get();
-      } catch (_) {
-        usersSnapshot = await firestoreService.firestore
-            .collection('users')
-            .limit(500)
-            .get();
-      }
+      final HttpsCallable listUsersCallable =
+          FirebaseFunctions.instance.httpsCallable('listUsers');
+      final List<HttpsCallableResult<dynamic>> responses =
+          await Future.wait(<Future<HttpsCallableResult<dynamic>>>[
+        listUsersCallable.call(<String, dynamic>{
+          'role': 'parent',
+          if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
+          'limit': 300,
+        }),
+        listUsersCallable.call(<String, dynamic>{
+          'role': 'learner',
+          if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
+          'limit': 300,
+        }),
+      ]);
 
-      final List<_UserOption> parents = <_UserOption>[];
-      final List<_UserOption> learners = <_UserOption>[];
-
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in usersSnapshot.docs) {
-        final Map<String, dynamic> data = doc.data();
-        final String role = ((data['role'] as String?) ?? '').toLowerCase().trim();
-        if (role != 'parent' && role != 'learner') continue;
-
-        if (siteScopeId.isNotEmpty) {
-          final List<String> siteIds =
-              (data['siteIds'] as List?)?.map((dynamic e) => e.toString()).toList() ??
-                  <String>[];
-          final String activeSite = (data['activeSiteId'] as String?) ?? '';
-          if (siteIds.isNotEmpty && !siteIds.contains(siteScopeId) && activeSite != siteScopeId) {
-            continue;
-          }
-        }
-
-        final String label = _displayNameFromUserDoc(data, doc.id);
-        final _UserOption option = _UserOption(id: doc.id, label: label);
-        if (role == 'parent') {
-          parents.add(option);
-        } else {
-          learners.add(option);
-        }
-      }
+      final List<_UserOption> parents =
+          _asMapList(_asMap(responses[0].data)['users'])
+              .map((_MapValue row) => _UserOption(
+                    id: row.id,
+                    label: _displayNameFromUserDoc(row.data, row.id),
+                  ))
+              .toList();
+      final List<_UserOption> learners =
+          _asMapList(_asMap(responses[1].data)['users'])
+              .map((_MapValue row) => _UserOption(
+                    id: row.id,
+                    label: _displayNameFromUserDoc(row.data, row.id),
+                  ))
+              .toList();
 
       if (!mounted) return;
       setState(() {
@@ -1641,14 +1562,6 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     }
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
-    }
-  }
-
   AppState? _maybeAppState() {
     try {
       return context.read<AppState>();
@@ -1666,6 +1579,28 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     if (email.isNotEmpty) return email;
     return fallbackId;
   }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((dynamic key, dynamic nestedValue) =>
+          MapEntry<String, dynamic>(key.toString(), nestedValue));
+    }
+    return <String, dynamic>{};
+  }
+
+  List<_MapValue> _asMapList(dynamic value) {
+    if (value is! List) return <_MapValue>[];
+    return value
+        .map((dynamic row) {
+          final Map<String, dynamic> data = _asMap(row);
+          final String id = ((data['id'] as String?) ?? '').trim();
+          if (id.isEmpty) return null;
+          return _MapValue(id: id, data: data);
+        })
+        .whereType<_MapValue>()
+        .toList();
+  }
 }
 
 class _UserOption {
@@ -1673,4 +1608,11 @@ class _UserOption {
 
   final String id;
   final String label;
+}
+
+class _MapValue {
+  const _MapValue({required this.id, required this.data});
+
+  final String id;
+  final Map<String, dynamic> data;
 }

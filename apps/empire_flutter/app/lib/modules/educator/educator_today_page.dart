@@ -27,7 +27,8 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'Week View': 'Vista semanal',
   'Week View Summary': 'Resumen de vista semanal',
   'This week:': 'Esta semana:',
-  'classes loaded from your current schedule.': 'clases cargadas desde tu horario actual.',
+  'classes loaded from your current schedule.':
+      'clases cargadas desde tu horario actual.',
   'Close': 'Cerrar',
   'Mission Review Queue': 'Cola de revisión de misiones',
   'You have': 'Tienes',
@@ -45,20 +46,20 @@ const Map<String, String> _educatorTodayEs = <String, String>{
   'Apr': 'Abr',
   'Aug': 'Ago',
   'Dec': 'Dic',
-  'TBD': 'Por definir',
   'Enrolled Learners': 'Estudiantes inscritos',
   'Not recorded': 'No registrado',
   'AI Classroom Coach': 'Entrenador de aula con IA',
-  'Get personalized coaching for classroom management': 'Obtén asesoramiento personalizado para la gestión del aula',
+  'Get personalized coaching for classroom management':
+      'Obtén asesoramiento personalizado para la gestión del aula',
   'Hide Coaching': 'Ocultar asesoramiento',
-    'No class in progress': 'No hay clase en progreso',
-    'Your next class will appear here when schedule data syncs.':
+  'No class in progress': 'No hay clase en progreso',
+  'Your next class will appear here when schedule data syncs.':
       'Tu próxima clase aparecerá aquí cuando se sincronice el horario.',
-    'No classes scheduled yet': 'Aún no hay clases programadas',
-    'Add or sync classes to populate today’s schedule.':
+  'No classes scheduled yet': 'Aún no hay clases programadas',
+  'Add or sync classes to populate today’s schedule.':
       'Agrega o sincroniza clases para poblar el horario de hoy.',
-    'AI coaching is loading': 'El asesoramiento de IA se está cargando',
-    'Runtime context is syncing. Try again in a moment.':
+  'AI coaching is loading': 'El asesoramiento de IA se está cargando',
+  'Runtime context is syncing. Try again in a moment.':
       'El contexto runtime se está sincronizando. Inténtalo en un momento.',
 };
 
@@ -152,7 +153,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              _tEducatorToday(context, 'No classes scheduled yet'),
+                              _tEducatorToday(
+                                  context, 'No classes scheduled yet'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -162,7 +164,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                             Text(
                               _tEducatorToday(context,
                                   'Add or sync classes to populate today’s schedule.'),
-                              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.grey[700], fontSize: 12),
                             ),
                           ],
                         ),
@@ -403,8 +406,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              _tEducatorToday(
-                  context, 'Your next class will appear here when schedule data syncs.'),
+              _tEducatorToday(context,
+                  'Your next class will appear here when schedule data syncs.'),
               style: TextStyle(color: Colors.grey[700], fontSize: 12),
             ),
           ],
@@ -491,7 +494,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   size: 16, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 4),
               Text(
-                currentClass.location ?? _tEducatorToday(context, 'No location'),
+                currentClass.location ??
+                    _tEducatorToday(context, 'No location'),
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(width: 16),
@@ -631,7 +635,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_tEducatorToday(context, 'Mission Review Queue')),
-        content: Text('${_tEducatorToday(context, 'You have')} $count ${_tEducatorToday(context, 'missions pending review today.')}'),
+        content: Text(
+            '${_tEducatorToday(context, 'You have')} $count ${_tEducatorToday(context, 'missions pending review today.')}'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -655,7 +660,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               );
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(_tEducatorToday(context, 'Mission review queue opened'))),
+                SnackBar(
+                    content: Text(_tEducatorToday(
+                        context, 'Mission review queue opened'))),
               );
             },
             child: Text(_tEducatorToday(context, 'Open Queue')),
@@ -727,7 +734,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 color: ScholesaColors.educator,
               ),
               title: Text(_tEducatorToday(context, 'AI Classroom Coach')),
-              subtitle: Text(_tEducatorToday(context, 'Get personalized coaching for classroom management')),
+              subtitle: Text(_tEducatorToday(context,
+                  'Get personalized coaching for classroom management')),
               trailing: IconButton(
                 icon: Icon(
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,
@@ -1002,7 +1010,8 @@ class _ClassCard extends StatelessWidget {
                                 .withValues(alpha: 0.74)),
                         const SizedBox(width: 4),
                         Text(
-                          todayClass.location ?? _tEducatorToday(context, 'TBD'),
+                          todayClass.location ??
+                              _tEducatorToday(context, 'No location'),
                           style: TextStyle(
                               color: context.schTextSecondary
                                   .withValues(alpha: 0.88),
@@ -1111,7 +1120,8 @@ class _ClassDetailSheet extends StatelessWidget {
                     const SizedBox(width: 12),
                     _DetailChip(
                       icon: Icons.location_on,
-                      label: todayClass.location ?? 'TBD',
+                      label: todayClass.location ??
+                          _tEducatorToday(context, 'No location'),
                     ),
                   ],
                 ),

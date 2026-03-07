@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -556,7 +557,7 @@ class ProfilePage extends StatelessWidget {
             child: Text(_tProfile(context, 'Cancel')),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
@@ -564,16 +565,44 @@ class ProfilePage extends StatelessWidget {
                   'has_name': nameController.text.trim().isNotEmpty,
                 },
               );
+              final String nextName = nameController.text.trim();
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    nameController.text.trim().isEmpty
-                        ? _tProfile(context, 'No profile changes applied')
-                        : '${_tProfile(context, 'Profile update request saved for')} ${nameController.text.trim()}',
+              if (nextName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text(_tProfile(context, 'No profile changes applied')),
                   ),
-                ),
-              );
+                );
+                return;
+              }
+
+              try {
+                final FirestoreService firestoreService =
+                    context.read<FirestoreService>();
+                await firestoreService.updateUserProfile(<String, dynamic>{
+                  'displayName': nextName,
+                  'profileUpdatedAt': DateTime.now().millisecondsSinceEpoch,
+                });
+                final Map<String, dynamic>? profile =
+                    await firestoreService.getUserProfile();
+                if (profile != null) {
+                  appState.updateFromMeResponse(profile);
+                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${_tProfile(context, 'Profile update request saved for')} $nextName',
+                    ),
+                  ),
+                );
+              } catch (error) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(error.toString())),
+                );
+              }
             },
             child: Text(_tProfile(context, 'Save')),
           ),

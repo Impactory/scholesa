@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// User roles in the Scholesa platform
 enum UserRole {
@@ -92,6 +92,12 @@ class AppState extends ChangeNotifier {
   String? _activeSiteId;
   List<String> _siteIds = <String>[];
   List<Entitlement> _entitlements = <Entitlement>[];
+  String _preferredLocaleCode = 'en';
+  String _timeZone = 'auto';
+  bool _notificationsEnabled = true;
+  bool _emailNotifications = true;
+  bool _pushNotifications = true;
+  bool _biometricEnabled = false;
   bool _isLoading = true;
   String? _error;
 
@@ -119,6 +125,24 @@ class AppState extends ChangeNotifier {
   List<String> get siteIds => List<String>.unmodifiable(_siteIds);
   List<Entitlement> get entitlements =>
       List<Entitlement>.unmodifiable(_entitlements);
+  String get preferredLocaleCode => _preferredLocaleCode;
+  Locale get preferredLocale {
+    switch (_preferredLocaleCode) {
+      case 'zh-CN':
+        return const Locale('zh', 'CN');
+      case 'zh-TW':
+        return const Locale('zh', 'TW');
+      case 'th':
+        return const Locale('th');
+      default:
+        return const Locale('en');
+    }
+  }
+  String get timeZone => _timeZone;
+  bool get notificationsEnabled => _notificationsEnabled;
+  bool get emailNotifications => _emailNotifications;
+  bool get pushNotifications => _pushNotifications;
+  bool get biometricEnabled => _biometricEnabled;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _userId != null;
@@ -143,6 +167,12 @@ class AppState extends ChangeNotifier {
     _activeSiteId = data['activeSiteId'] as String?;
     _siteIds =
         List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]);
+    _preferredLocaleCode = _canonicalLocaleCode(data['localeCode'] as String?);
+    _timeZone = (data['timeZone'] as String?) ?? 'auto';
+    _notificationsEnabled = data['notificationsEnabled'] as bool? ?? true;
+    _emailNotifications = data['emailNotifications'] as bool? ?? true;
+    _pushNotifications = data['pushNotifications'] as bool? ?? true;
+    _biometricEnabled = data['biometricEnabled'] as bool? ?? false;
 
     final List<dynamic> entitlementsData =
         data['entitlements'] as List<dynamic>? ?? <dynamic>[];
@@ -209,6 +239,12 @@ class AppState extends ChangeNotifier {
     _activeSiteId = null;
     _siteIds = <String>[];
     _entitlements = <Entitlement>[];
+    _preferredLocaleCode = 'en';
+    _timeZone = 'auto';
+    _notificationsEnabled = true;
+    _emailNotifications = true;
+    _pushNotifications = true;
+    _biometricEnabled = false;
     _isLoading = false;
     _error = null;
     _impersonatingRole = null;
@@ -227,5 +263,22 @@ class AppState extends ChangeNotifier {
   void clearImpersonation() {
     _impersonatingRole = null;
     notifyListeners();
+  }
+
+  String _canonicalLocaleCode(String? rawLocale) {
+    final String normalized = (rawLocale ?? '').trim();
+    switch (normalized) {
+      case 'zh':
+      case 'zh-CN':
+      case 'zh-Hans':
+        return 'zh-CN';
+      case 'zh-TW':
+      case 'zh-Hant':
+        return 'zh-TW';
+      case 'th':
+        return 'th';
+      default:
+        return 'en';
+    }
   }
 }

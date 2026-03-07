@@ -56,7 +56,10 @@ function parseArgs(argv, options = {}) {
     strict: false,
     apply: false,
     siteId: process.env.TEST_SITE_ID || DEFAULT_SITE_ID,
-    project: process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT,
+    project:
+      process.env.FIREBASE_PROJECT_ID ||
+      process.env.GCLOUD_PROJECT ||
+      process.env.GOOGLE_CLOUD_PROJECT,
     credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   };
 
@@ -113,6 +116,12 @@ function resolveProjectId(argsProjectId, credentialPath) {
       if (typeof payload.project_id === 'string' && payload.project_id.trim().length > 0) {
         return payload.project_id.trim();
       }
+      if (typeof payload.client_email === 'string') {
+        const match = payload.client_email.match(/@([a-z0-9-]+)\.iam\.gserviceaccount\.com$/i);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
     } catch {
       return undefined;
     }
@@ -126,11 +135,27 @@ function initializeAdmin(args) {
 
   if (!admin.apps.length) {
     if (credentialPath) {
-      const serviceAccount = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: projectId || serviceAccount.project_id,
-      });
+      const credentialsPayload = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
+      const credentialType = credentialsPayload && typeof credentialsPayload.type === 'string'
+        ? credentialsPayload.type
+        : '';
+
+      if (credentialType === 'service_account') {
+        const serviceAccount = { ...credentialsPayload };
+        if (!serviceAccount.project_id && projectId) {
+          serviceAccount.project_id = projectId;
+        }
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          projectId: projectId || serviceAccount.project_id,
+        });
+      } else {
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialPath;
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          projectId,
+        });
+      }
     } else {
       admin.initializeApp({
         projectId,

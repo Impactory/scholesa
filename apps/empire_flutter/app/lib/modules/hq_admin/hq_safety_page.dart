@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../../services/firestore_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -18,7 +16,8 @@ const Map<String, String> _hqSafetyEs = <String, String>{
   'Yes': 'Sí',
   'No': 'No',
   'Close': 'Cerrar',
-  'Opening full incident report...': 'Abriendo informe completo del incidente...',
+  'Opening full incident report...':
+      'Abriendo informe completo del incidente...',
   'View Full Report': 'Ver informe completo',
   'm ago': 'min atrás',
   'h ago': 'h atrás',
@@ -72,7 +71,6 @@ class _SafetyIncident {
 }
 
 class _HqSafetyPageState extends State<HqSafetyPage> {
-  final List<_SafetyIncident> _fallbackIncidents = <_SafetyIncident>[];
   List<_SafetyIncident> _incidents = <_SafetyIncident>[];
   bool _isLoading = false;
 
@@ -116,19 +114,17 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
+          _buildMetric(_tHqSafety(context, 'Open'),
+              _incidents.length.toString(), Icons.warning_rounded),
           _buildMetric(
-            _tHqSafety(context, 'Open'),
-            _incidents.length.toString(),
-            Icons.warning_rounded),
-          _buildMetric(
-            _tHqSafety(context, 'Escalated'),
+              _tHqSafety(context, 'Escalated'),
               _incidents
                   .where((_SafetyIncident i) => i.isEscalated)
                   .length
                   .toString(),
               Icons.priority_high_rounded),
           _buildMetric(
-            _tHqSafety(context, 'Critical'),
+              _tHqSafety(context, 'Critical'),
               _incidents
                   .where(
                       (_SafetyIncident i) => i.severity == _Severity.critical)
@@ -242,8 +238,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         leading: _buildSeverityIcon(incident.severity),
         title: Text(_tHqSafety(context, incident.title),
             style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle:
-          Text('${_tHqSafety(context, incident.site)} • ${_formatTime(incident.reportedAt)}'),
+        subtitle: Text(
+            '${_tHqSafety(context, incident.site)} • ${_formatTime(incident.reportedAt)}'),
         trailing: IconButton(
           icon: const Icon(Icons.chevron_right_rounded),
           onPressed: () {
@@ -311,16 +307,16 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _buildDetailRow(_tHqSafety(context, 'Site'),
-              _tHqSafety(context, incident.site)),
+                _tHqSafety(context, incident.site)),
+            _buildDetailRow(_tHqSafety(context, 'Severity'),
+                _tHqSafety(context, incident.severity.name).toUpperCase()),
+            _buildDetailRow(_tHqSafety(context, 'Reported'),
+                _formatTime(incident.reportedAt)),
             _buildDetailRow(
-              _tHqSafety(context, 'Severity'),
-              _tHqSafety(context, incident.severity.name).toUpperCase()),
-            _buildDetailRow(
-              _tHqSafety(context, 'Reported'), _formatTime(incident.reportedAt)),
-            _buildDetailRow(_tHqSafety(context, 'Escalated'),
-              incident.isEscalated
-                ? _tHqSafety(context, 'Yes')
-                : _tHqSafety(context, 'No')),
+                _tHqSafety(context, 'Escalated'),
+                incident.isEscalated
+                    ? _tHqSafety(context, 'Yes')
+                    : _tHqSafety(context, 'No')),
             const SizedBox(height: 24),
             Row(
               children: <Widget>[
@@ -388,67 +384,68 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}${_tHqSafety(context, 'm ago')}';
-    if (diff.inHours < 24) return '${diff.inHours}${_tHqSafety(context, 'h ago')}';
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}${_tHqSafety(context, 'm ago')}';
+    }
+    if (diff.inHours < 24) {
+      return '${diff.inHours}${_tHqSafety(context, 'h ago')}';
+    }
     return '${diff.inDays}${_tHqSafety(context, 'd ago')}';
   }
 
   Future<void> _loadIncidents() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => _incidents = _fallbackIncidents);
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await firestoreService.firestore
-            .collection('incidents')
-            .orderBy('reportedAt', descending: true)
-            .limit(150)
-            .get();
-      } catch (_) {
-        snapshot = await firestoreService.firestore
-            .collection('incidents')
-            .limit(150)
-            .get();
-      }
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listSafetyIncidents');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'limit': 150});
+      final Map<String, dynamic> payload = _asMap(result.data);
+      final List<dynamic> rows =
+          payload['incidents'] as List<dynamic>? ?? <dynamic>[];
 
-      final List<_SafetyIncident> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final DateTime reportedAt = _toDateTime(data['reportedAt']) ??
-            _toDateTime(data['createdAt']) ??
-            DateTime.now();
-        final _Severity severity =
-            _parseSeverity((data['severity'] as String?) ?? (data['type'] as String?));
-        final String title = (data['title'] as String?)?.trim().isNotEmpty == true
-            ? (data['title'] as String).trim()
-            : (data['description'] as String?) ?? 'Incident';
-        final String siteLabel = (data['siteName'] as String?)?.trim().isNotEmpty == true
-            ? (data['siteName'] as String).trim()
-            : (data['siteId'] as String?)?.trim().isNotEmpty == true
-                ? (data['siteId'] as String).trim()
-                : _tHqSafety(context, 'Unknown Site');
-        final String status = ((data['status'] as String?) ?? '').toLowerCase();
-        final bool escalated = (data['isEscalated'] as bool?) ??
-            severity == _Severity.critical ||
-            status == 'reviewed' ||
-            status == 'escalated';
+      final List<_SafetyIncident> loaded = rows
+          .map((dynamic row) {
+            final Map<String, dynamic> data = _asMap(row);
+            final String id = ((data['id'] as String?) ?? '').trim();
+            if (id.isEmpty) return null;
+            final DateTime reportedAt = _toDateTime(data['updatedAt']) ??
+                _toDateTime(data['createdAt']) ??
+                _toDateTime(data['reportedAt']) ??
+                DateTime.now();
+            final _Severity severity = _parseSeverity(
+                (data['severity'] as String?) ?? (data['type'] as String?));
+            final String title =
+                (data['title'] as String?)?.trim().isNotEmpty == true
+                    ? (data['title'] as String).trim()
+                    : ((data['summary'] as String?)?.trim().isNotEmpty == true
+                        ? (data['summary'] as String).trim()
+                        : (data['description'] as String?) ?? 'Incident');
+            final String siteLabel =
+                (data['siteName'] as String?)?.trim().isNotEmpty == true
+                    ? (data['siteName'] as String).trim()
+                    : (data['siteId'] as String?)?.trim().isNotEmpty == true
+                        ? (data['siteId'] as String).trim()
+                        : _tHqSafety(context, 'Unknown Site');
+            final String status =
+                ((data['status'] as String?) ?? '').toLowerCase();
+            final bool escalated = (data['isEscalated'] as bool?) ??
+                severity == _Severity.critical ||
+                    status == 'reviewed' ||
+                    status == 'escalated';
 
-        return _SafetyIncident(
-          id: doc.id,
-          title: title,
-          site: siteLabel,
-          severity: severity,
-          reportedAt: reportedAt,
-          isEscalated: escalated,
-        );
-      }).toList();
+            return _SafetyIncident(
+              id: id,
+              title: title,
+              site: siteLabel,
+              severity: severity,
+              reportedAt: reportedAt,
+              isEscalated: escalated,
+            );
+          })
+          .whereType<_SafetyIncident>()
+          .toList(growable: false);
 
       loaded.sort((_SafetyIncident a, _SafetyIncident b) =>
           b.reportedAt.compareTo(a.reportedAt));
@@ -457,7 +454,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       setState(() => _incidents = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _incidents = _fallbackIncidents);
+      setState(() => _incidents = <_SafetyIncident>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -473,20 +470,41 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
   }
 
   DateTime? _toDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+    if (value is Map) {
+      final dynamic secondsRaw = value['seconds'] ?? value['_seconds'];
+      final dynamic nanosRaw = value['nanoseconds'] ?? value['_nanoseconds'];
+      final int? seconds =
+          secondsRaw is int ? secondsRaw : int.tryParse('$secondsRaw');
+      final int nanos =
+          nanosRaw is int ? nanosRaw : int.tryParse('$nanosRaw') ?? 0;
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(
+          (seconds * 1000) + (nanos ~/ 1000000),
+        );
+      }
+    }
+    if (value != null &&
+        value is Object &&
+        value.runtimeType.toString().contains('Timestamp') &&
+        (value as dynamic).toDate is Function) {
+      return (value as dynamic).toDate() as DateTime?;
+    }
     if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     if (value is String && value.trim().isNotEmpty) {
       return DateTime.tryParse(value.trim());
     }
     return null;
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map(
+        (dynamic key, dynamic mapValue) => MapEntry(key.toString(), mapValue),
+      );
     }
+    return <String, dynamic>{};
   }
 }

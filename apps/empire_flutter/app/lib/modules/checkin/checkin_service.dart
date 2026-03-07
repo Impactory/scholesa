@@ -90,7 +90,7 @@ class CheckinService extends ChangeNotifier {
       // Query presence records for today
       final QuerySnapshot<Map<String, dynamic>> recordsSnapshot =
           await _firestore
-              .collection('presenceRecords')
+              .collection('checkins')
               .where('siteId', isEqualTo: siteId)
               .where('timestamp',
                   isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
@@ -166,21 +166,23 @@ class CheckinService extends ChangeNotifier {
 
         // Determine current status
         CheckStatus? currentStatus;
-        final DateTime? latestInOrLateTime = latestCheckin != null || latestLate != null
-            ? ((latestCheckin?.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
-                    .isAfter(latestLate?.timestamp ?? DateTime.fromMillisecondsSinceEpoch(0))
-                ? latestCheckin!.timestamp
-                : latestLate!.timestamp)
-            : null;
+        final DateTime? latestInOrLateTime =
+            latestCheckin != null || latestLate != null
+                ? ((latestCheckin?.timestamp ??
+                            DateTime.fromMillisecondsSinceEpoch(0))
+                        .isAfter(latestLate?.timestamp ??
+                            DateTime.fromMillisecondsSinceEpoch(0))
+                    ? latestCheckin!.timestamp
+                    : latestLate!.timestamp)
+                : null;
 
         if (latestCheckout != null && latestInOrLateTime != null) {
-          currentStatus =
-              latestCheckout.timestamp.isAfter(latestInOrLateTime)
-                  ? CheckStatus.checkedOut
-                  : (latestLate != null &&
-                          latestLate.timestamp == latestInOrLateTime
-                      ? CheckStatus.late
-                      : CheckStatus.checkedIn);
+          currentStatus = latestCheckout.timestamp.isAfter(latestInOrLateTime)
+              ? CheckStatus.checkedOut
+              : (latestLate != null &&
+                      latestLate.timestamp == latestInOrLateTime
+                  ? CheckStatus.late
+                  : CheckStatus.checkedIn);
         } else if (latestCheckin != null) {
           currentStatus = CheckStatus.checkedIn;
         } else if (latestLate != null) {
@@ -228,11 +230,13 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      await _firestore.collection('presenceRecords').add(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> createdRef =
+          await _firestore.collection('checkins').add(<String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'learnerName': learnerName,
         'type': 'checkin',
+        'status': 'completed',
         'timestamp': FieldValue.serverTimestamp(),
         'recordedBy': visitorId,
         'recorderName': visitorName,
@@ -240,7 +244,7 @@ class CheckinService extends ChangeNotifier {
       });
 
       final CheckRecord record = CheckRecord(
-        id: 'rec_${DateTime.now().millisecondsSinceEpoch}',
+        id: createdRef.id,
         visitorId: visitorId,
         visitorName: visitorName,
         learnerId: learnerId,
@@ -287,11 +291,13 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      await _firestore.collection('presenceRecords').add(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> createdRef =
+          await _firestore.collection('checkins').add(<String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'learnerName': learnerName,
         'type': 'checkout',
+        'status': 'completed',
         'timestamp': FieldValue.serverTimestamp(),
         'recordedBy': visitorId,
         'recorderName': visitorName,
@@ -299,7 +305,7 @@ class CheckinService extends ChangeNotifier {
       });
 
       final CheckRecord record = CheckRecord(
-        id: 'rec_${DateTime.now().millisecondsSinceEpoch}',
+        id: createdRef.id,
         visitorId: visitorId,
         visitorName: visitorName,
         learnerId: learnerId,
@@ -346,11 +352,12 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      await _firestore.collection('presenceRecords').add(<String, dynamic>{
+      await _firestore.collection('checkins').add(<String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'learnerName': learnerName,
         'type': 'late',
+        'status': 'completed',
         'timestamp': FieldValue.serverTimestamp(),
         'notes': notes,
       });

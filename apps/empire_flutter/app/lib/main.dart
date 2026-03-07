@@ -92,7 +92,9 @@ class _ScholesaAppState extends State<ScholesaApp> {
   ];
   static const List<Locale> _supportedLocales = <Locale>[
     Locale('en'),
-    Locale('es'),
+    Locale('zh', 'CN'),
+    Locale('zh', 'TW'),
+    Locale('th'),
   ];
   static const Duration _minNativeSplashDuration = Duration(milliseconds: 1600);
   static const Duration _webInitStepTimeout = Duration(seconds: 6);
@@ -420,9 +422,13 @@ class _ScholesaAppState extends State<ScholesaApp> {
           },
         ),
       ],
-      child: Consumer<ThemeService>(
-        builder:
-            (BuildContext context, ThemeService themeService, Widget? child) {
+      child: Consumer2<ThemeService, AppState>(
+        builder: (
+          BuildContext context,
+          ThemeService themeService,
+          AppState appState,
+          Widget? child,
+        ) {
           return MaterialApp.router(
             onGenerateTitle: (BuildContext context) =>
                 AppStrings.of(context, 'app.title'),
@@ -430,6 +436,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
             theme: ScholesaTheme.light,
             darkTheme: ScholesaTheme.dark,
             themeMode: themeService.themeMode,
+            locale: appState.preferredLocale,
             localizationsDelegates: _localizationDelegates,
             supportedLocales: _supportedLocales,
             builder: (BuildContext context, Widget? child) {

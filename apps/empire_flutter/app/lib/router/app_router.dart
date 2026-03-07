@@ -95,6 +95,20 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
 /// Check if a route is enabled
 bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
 
+const Map<UserRole, String> kRoleDefaultWorkflowRoute = <UserRole, String>{
+  UserRole.learner: '/learner/today',
+  UserRole.educator: '/educator/today',
+  UserRole.parent: '/parent/summary',
+  UserRole.site: '/site/dashboard',
+  UserRole.partner: '/partner/listings',
+  UserRole.hq: '/hq/sites',
+};
+
+String roleDefaultWorkflowRoute(UserRole? role) {
+  if (role == null) return '/';
+  return kRoleDefaultWorkflowRoute[role] ?? '/';
+}
+
 GoRouter createAppRouter(
   AppState appState, {
   GlobalKey<NavigatorState>? navigatorKey,
@@ -126,7 +140,16 @@ GoRouter createAppRouter(
       if (!isLoggedIn && !isPublicRoute) return unauthenticatedEntry;
 
       // Logged in and on public route -> go to dashboard
-      if (isLoggedIn && isPublicRoute) return '/';
+      if (isLoggedIn && isPublicRoute) {
+        final String target = roleDefaultWorkflowRoute(appState.role);
+        return target == state.matchedLocation ? null : target;
+      }
+
+      // Logged in and navigating to root dashboard -> canonical role workflow landing
+      if (isLoggedIn && state.matchedLocation == '/') {
+        final String target = roleDefaultWorkflowRoute(appState.role);
+        return target == state.matchedLocation ? null : target;
+      }
 
       return null;
     },
@@ -163,8 +186,7 @@ GoRouter createAppRouter(
       // Dashboard - redirects to role-specific dashboard
       GoRoute(
         path: '/',
-        builder: (BuildContext context, GoRouterState state) =>
-            const RoleDashboard(),
+        builder: (BuildContext context, GoRouterState state) => const RoleDashboard(),
       ),
 
       // Educator routes

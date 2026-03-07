@@ -7,7 +7,8 @@ import 'package:scholesa_app/auth/app_state.dart';
 ///   1. If loading AND on public route → stay (return null)
 ///   2. If loading AND NOT on public route → redirect to /welcome
 ///   3. If NOT logged in AND NOT on public route → redirect to /welcome
-///   4. If logged in AND on public route → redirect to / (dashboard)
+///   4. If logged in AND on public route → redirect to role default route
+///   5. If logged in AND on / → redirect to role default route
 ///   5. Otherwise → stay (return null)
 ///
 /// Public routes: /welcome, /login, /register
@@ -24,10 +25,10 @@ void main() {
       expect(state.isAuthenticated, isFalse);
 
       // Redirect logic: isLoading && isPublicRoute → null (stay)
-      expect(_redirectResult(state, isPublicRoute: true), isNull);
+      expect(_redirectResult(state, matchedLocation: '/welcome'), isNull);
 
       // Redirect logic: isLoading && !isPublicRoute → /welcome
-      expect(_redirectResult(state, isPublicRoute: false), '/welcome');
+      expect(_redirectResult(state, matchedLocation: '/educator/today'), '/welcome');
     });
 
     test('after updateFromMeResponse: isAuthenticated=true, isLoading=false',
@@ -47,10 +48,10 @@ void main() {
       expect(state.isLoading, isFalse);
 
       // Authenticated user on public route → redirect to dashboard
-      expect(_redirectResult(state, isPublicRoute: true), '/');
+      expect(_redirectResult(state, matchedLocation: '/welcome'), '/educator/today');
 
       // Authenticated user on protected route → stay
-      expect(_redirectResult(state, isPublicRoute: false), isNull);
+      expect(_redirectResult(state, matchedLocation: '/educator/today'), isNull);
     });
 
     test('after clear: isAuthenticated=false, isLoading=false', () {
@@ -70,10 +71,10 @@ void main() {
       expect(state.isLoading, isFalse);
 
       // Unauthenticated on protected route → redirect to /welcome
-      expect(_redirectResult(state, isPublicRoute: false), '/welcome');
+      expect(_redirectResult(state, matchedLocation: '/educator/today'), '/welcome');
 
       // Unauthenticated on public route → stay
-      expect(_redirectResult(state, isPublicRoute: true), isNull);
+      expect(_redirectResult(state, matchedLocation: '/welcome'), isNull);
     });
 
     test('role-to-dashboard mapping: all 6 roles authenticate', () {
@@ -103,22 +104,44 @@ void main() {
       expect(state.isLoading, isFalse);
 
       // Not loading, not authenticated, protected route → /welcome
-      expect(_redirectResult(state, isPublicRoute: false), '/welcome');
+      expect(_redirectResult(state, matchedLocation: '/hq/sites'), '/welcome');
 
       // Not loading, not authenticated, public route → stay
-      expect(_redirectResult(state, isPublicRoute: true), isNull);
+      expect(_redirectResult(state, matchedLocation: '/login'), isNull);
     });
   });
 }
 
 /// Simulates the redirect logic from app_router.dart L101-125 using AppState
-String? _redirectResult(AppState appState, {required bool isPublicRoute}) {
+String _defaultRouteForRole(UserRole? role) {
+  switch (role) {
+    case UserRole.learner:
+      return '/learner/today';
+    case UserRole.educator:
+      return '/educator/today';
+    case UserRole.parent:
+      return '/parent/summary';
+    case UserRole.site:
+      return '/site/dashboard';
+    case UserRole.partner:
+      return '/partner/listings';
+    case UserRole.hq:
+      return '/hq/sites';
+    default:
+      return '/';
+  }
+}
+
+String? _redirectResult(AppState appState, {required String matchedLocation}) {
   final bool isLoading = appState.isLoading;
   final bool isLoggedIn = appState.isAuthenticated;
+  final bool isPublicRoute = matchedLocation == '/welcome' || matchedLocation == '/login';
+  final String defaultRoute = _defaultRouteForRole(appState.role);
 
   if (isLoading && isPublicRoute) return null;
   if (isLoading && !isPublicRoute) return '/welcome';
   if (!isLoggedIn && !isPublicRoute) return '/welcome';
-  if (isLoggedIn && isPublicRoute) return '/';
+  if (isLoggedIn && isPublicRoute) return matchedLocation == defaultRoute ? null : defaultRoute;
+  if (isLoggedIn && matchedLocation == '/') return matchedLocation == defaultRoute ? null : defaultRoute;
   return null;
 }

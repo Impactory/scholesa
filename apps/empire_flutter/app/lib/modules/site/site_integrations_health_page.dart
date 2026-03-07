@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
-import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -465,15 +464,12 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _handleConnectIntegration(_Integration integration) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
-    await firestoreService.firestore
-        .collection('integrationConnections')
-        .doc(integration.id)
-        .set(<String, dynamic>{
+    final HttpsCallable callable = FirebaseFunctions.instance
+        .httpsCallable('updateIntegrationConnectionStatus');
+    await callable.call(<String, dynamic>{
+      'id': integration.id,
       'status': 'active',
-      'lastError': null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
     await _loadIntegrations();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -482,14 +478,11 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _handleForceSyncIntegration(_Integration integration) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
-    await firestoreService.firestore.collection('syncJobs').add(<String, dynamic>{
-      'type': '${integration.providerKey}_manual_sync',
-      'requestedBy': FirebaseAuth.instance.currentUser?.uid,
-      'status': 'queued',
-      if ((_siteId ?? '').isNotEmpty) 'siteId': _siteId,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
+    await callable.call(<String, dynamic>{
+      'siteId': _siteId,
+      'provider': integration.providerKey,
     });
     await _loadIntegrations();
     if (!mounted) return;
@@ -499,24 +492,12 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _handleRetryFailedSyncs(_Integration integration) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
-    Query<Map<String, dynamic>> query =
-        firestoreService.firestore.collection('syncJobs');
-    if ((_siteId ?? '').isNotEmpty) {
-      query = query.where('siteId', isEqualTo: _siteId);
-    }
-    query = query.where('status', isEqualTo: 'failed').limit(25);
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-    final WriteBatch batch = firestoreService.firestore.batch();
-    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
-      final String type = ((doc.data()['type'] as String?) ?? '').toLowerCase();
-      if (!_typeMatchesProvider(type, integration.providerKey)) continue;
-      batch.set(doc.reference, <String, dynamic>{
-        'status': 'queued',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    }
-    await batch.commit();
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
+    await callable.call(<String, dynamic>{
+      'siteId': _siteId,
+      'provider': integration.providerKey,
+    });
     await _loadIntegrations();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -525,14 +506,12 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _handleDisconnectIntegration(_Integration integration) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
-    await firestoreService.firestore
-        .collection('integrationConnections')
-        .doc(integration.id)
-        .set(<String, dynamic>{
+    final HttpsCallable callable = FirebaseFunctions.instance
+        .httpsCallable('updateIntegrationConnectionStatus');
+    await callable.call(<String, dynamic>{
+      'id': integration.id,
       'status': 'disconnected',
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
     await _loadIntegrations();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -553,52 +532,38 @@ class _SiteIntegrationsHealthPageState
 
   Future<void> _loadIntegrations() async {
     final AppState appState = context.read<AppState>();
-    final FirestoreService firestoreService = context.read<FirestoreService>();
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
     _siteId = siteId;
-    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
-      Query<Map<String, dynamic>> connectionsQuery =
-          firestoreService.firestore.collection('integrationConnections');
-      if (uid.isNotEmpty) {
-        connectionsQuery = connectionsQuery.where('ownerUserId', isEqualTo: uid);
-      }
-
-      QuerySnapshot<Map<String, dynamic>> connectionsSnap;
-      try {
-        connectionsSnap =
-            await connectionsQuery.orderBy('createdAt', descending: true).get();
-      } catch (_) {
-        connectionsSnap = await connectionsQuery.get();
-      }
-
-      Query<Map<String, dynamic>> syncQuery =
-          firestoreService.firestore.collection('syncJobs');
-      if (siteId.isNotEmpty) {
-        syncQuery = syncQuery.where('siteId', isEqualTo: siteId);
-      }
-
-      QuerySnapshot<Map<String, dynamic>> syncSnap;
-      try {
-        syncSnap = await syncQuery.orderBy('createdAt', descending: true).limit(200).get();
-      } catch (_) {
-        syncSnap = await syncQuery.limit(200).get();
-      }
-
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'siteId': siteId});
+      final Map<String, dynamic> payload =
+          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final List<Map<String, dynamic>> connectionsRows =
+          (payload['connections'] as List<dynamic>? ?? <dynamic>[])
+              .whereType<Map<dynamic, dynamic>>()
+              .map((Map<dynamic, dynamic> row) =>
+                  row.map((dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value)))
+              .toList();
       final List<Map<String, dynamic>> syncRows =
-          syncSnap.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        return <String, dynamic>{'id': doc.id, ...doc.data()};
-      }).toList();
+          (payload['syncJobs'] as List<dynamic>? ?? <dynamic>[])
+              .whereType<Map<dynamic, dynamic>>()
+              .map((Map<dynamic, dynamic> row) =>
+                  row.map((dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value)))
+              .toList();
 
-      final List<_Integration> loaded = connectionsSnap.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
+      final List<_Integration> loaded = connectionsRows
+          .map((Map<String, dynamic> data) {
         final String providerKey =
             ((data['provider'] as String?) ?? 'google_classroom').toLowerCase();
         final List<Map<String, dynamic>> providerJobs = syncRows
@@ -626,12 +591,11 @@ class _SiteIntegrationsHealthPageState
 
         final String connectionStatus =
             ((data['status'] as String?) ?? 'active').toLowerCase();
-        final String? lastError = data['lastError'] as String?;
         final _IntegrationStatus status = connectionStatus == 'disconnected' ||
                 connectionStatus == 'revoked' ||
                 connectionStatus == 'inactive'
             ? _IntegrationStatus.disconnected
-            : (errors > 0 || (lastError?.trim().isNotEmpty ?? false))
+            : (errors > 0)
                 ? _IntegrationStatus.warning
                 : _IntegrationStatus.healthy;
 
@@ -639,7 +603,7 @@ class _SiteIntegrationsHealthPageState
             _providerVisual(providerKey);
 
         return _Integration(
-          id: doc.id,
+          id: (data['id'] as String?) ?? providerKey,
           providerKey: providerKey,
           name: visual.name,
           icon: visual.icon,
@@ -655,6 +619,9 @@ class _SiteIntegrationsHealthPageState
 
       if (!mounted) return;
       setState(() => _integrations = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _integrations = <_Integration>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

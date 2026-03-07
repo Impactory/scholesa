@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const cp = require('child_process');
 const { initializeApp, applicationDefault, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
@@ -97,13 +98,34 @@ function usage() {
   ].join('\n');
 }
 
+function isServiceAccountCredentialPath(candidate) {
+  if (typeof candidate !== 'string' || !candidate.trim()) return false;
+  const credentialPath = path.resolve(ROOT, candidate);
+  if (!fs.existsSync(credentialPath)) return false;
+  try {
+    const payload = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
+    return (
+      payload &&
+      typeof payload === 'object' &&
+      payload.type === 'service_account' &&
+      typeof payload.private_key === 'string' &&
+      payload.private_key.length > 0 &&
+      typeof payload.project_id === 'string' &&
+      payload.project_id.trim().length > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
 function parseArgs(argv) {
+  const envCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   const args = {
     hours: 168,
     limit: 20000,
     site: undefined,
     project: process.env.FIREBASE_PROJECT_ID,
-    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    credentials: isServiceAccountCredentialPath(envCredentials) ? envCredentials : undefined,
     strict: false,
     help: false,
   };
@@ -414,6 +436,343 @@ function overlap(leftSet, rightSet) {
   return out;
 }
 
+function isCredentialAuthError(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return (
+    /unable to impersonate/i.test(message) ||
+    /Could not refresh access token/i.test(message) ||
+    /iam\.serviceAccounts\.getAccessToken/i.test(message) ||
+    /\bUNAUTHENTICATED\b/i.test(message) ||
+    /invalid authentication credentials/i.test(message)
+  );
+}
+
+function resolveProjectIdForRest(args) {
+  if (typeof args.project === 'string' && args.project.trim()) {
+    return args.project.trim();
+  }
+  try {
+    const value = cp.execSync('gcloud config get-value project', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    });
+    const normalized = String(value || '').trim();
+    if (normalized && normalized !== '(unset)') {
+      return normalized;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
+function getGcloudAccessToken() {
+  try {
+    const token = cp.execSync('gcloud auth print-access-token', {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      encoding: 'utf8',
+    });
+    const normalized = String(token || '').trim();
+    if (!normalized) {
+      throw new Error('gcloud auth print-access-token returned an empty token.');
+    }
+    return normalized;
+  } catch (error) {
+    const stderr =
+      error && typeof error === 'object' && typeof error.stderr === 'string'
+        ? error.stderr.trim()
+        : '';
+    throw new Error(
+      stderr ||
+        'Unable to obtain a gcloud access token. Run `gcloud auth login` and ensure the signed-in user can read Firestore.',
+    );
+  }
+}
+
+function encodeFirestoreValue(value) {
+  if (value instanceof Timestamp) return { timestampValue: value.toDate().toISOString() };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
+  if (value === null) return { nullValue: null };
+  if (Array.isArray(value)) {
+    return {
+      arrayValue: {
+        values: value.map((entry) => encodeFirestoreValue(entry)),
+      },
+    };
+  }
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number') {
+    if (Number.isInteger(value)) return { integerValue: String(value) };
+    return { doubleValue: value };
+  }
+  if (value && typeof value === 'object') {
+    const fields = {};
+    for (const [key, entry] of Object.entries(value)) {
+      fields[key] = encodeFirestoreValue(entry);
+    }
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(value) };
+}
+
+function decodeFirestoreValue(value) {
+  if (!value || typeof value !== 'object') return undefined;
+  if (Object.prototype.hasOwnProperty.call(value, 'nullValue')) return null;
+  if (Object.prototype.hasOwnProperty.call(value, 'stringValue')) return value.stringValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'booleanValue')) return value.booleanValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'integerValue')) return Number(value.integerValue);
+  if (Object.prototype.hasOwnProperty.call(value, 'doubleValue')) return value.doubleValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'timestampValue')) return new Date(value.timestampValue);
+  if (Object.prototype.hasOwnProperty.call(value, 'referenceValue')) return value.referenceValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'bytesValue')) return value.bytesValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'arrayValue')) {
+    const entries = Array.isArray(value.arrayValue && value.arrayValue.values)
+      ? value.arrayValue.values
+      : [];
+    return entries.map((entry) => decodeFirestoreValue(entry));
+  }
+  if (Object.prototype.hasOwnProperty.call(value, 'mapValue')) {
+    const fields = (value.mapValue && value.mapValue.fields) || {};
+    const record = {};
+    for (const [key, entry] of Object.entries(fields)) {
+      record[key] = decodeFirestoreValue(entry);
+    }
+    return record;
+  }
+  return undefined;
+}
+
+function decodeFirestoreDocument(document) {
+  const data = {};
+  const fields = (document && document.fields) || {};
+  for (const [key, value] of Object.entries(fields)) {
+    data[key] = decodeFirestoreValue(value);
+  }
+  return data;
+}
+
+function normalizeRestOperator(operator) {
+  if (operator === '==') return 'EQUAL';
+  if (operator === '>=') return 'GREATER_THAN_OR_EQUAL';
+  throw new Error(`Unsupported Firestore REST operator: ${operator}`);
+}
+
+function buildStructuredWhere(filters) {
+  if (!Array.isArray(filters) || filters.length === 0) return undefined;
+  const entries = filters.map(({ field, operator, value }) => ({
+    fieldFilter: {
+      field: { fieldPath: field },
+      op: normalizeRestOperator(operator),
+      value: encodeFirestoreValue(value),
+    },
+  }));
+  if (entries.length === 1) return entries[0];
+  return {
+    compositeFilter: {
+      op: 'AND',
+      filters: entries,
+    },
+  };
+}
+
+function normalizeRestDirection(direction) {
+  const normalized = String(direction || 'asc').trim().toLowerCase();
+  return normalized === 'desc' ? 'DESCENDING' : 'ASCENDING';
+}
+
+async function firestoreRestJson(url, accessToken, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const text = await response.text();
+  const payload = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    const message = (payload && payload.error && payload.error.message) || `${response.status} ${response.statusText}`;
+    const error = new Error(`${response.status} ${message}`);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
+async function runFirestoreRestQuery({ projectId, accessToken, collection, filters = [], orderBy = [], limit }) {
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+  const structuredQuery = {
+    from: [{ collectionId: collection }],
+  };
+  const where = buildStructuredWhere(filters);
+  if (where) structuredQuery.where = where;
+  if (Array.isArray(orderBy) && orderBy.length > 0) {
+    structuredQuery.orderBy = orderBy.map(({ field, direction }) => ({
+      field: { fieldPath: field },
+      direction: normalizeRestDirection(direction),
+    }));
+  }
+  if (typeof limit === 'number' && Number.isFinite(limit)) {
+    structuredQuery.limit = Math.max(0, Math.trunc(limit));
+  }
+
+  const responses = await firestoreRestJson(baseUrl, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ structuredQuery }),
+  });
+
+  return Array.isArray(responses)
+    ? responses
+        .filter((entry) => entry && entry.document)
+        .map((entry) => {
+          const name = String(entry.document.name || '');
+          const id = name.split('/').pop() || '';
+          return { id, ...decodeFirestoreDocument(entry.document) };
+        })
+    : [];
+}
+
+async function queryFirestoreCollectionsWithAdmin(db, args, since) {
+  const snapshot = await db
+    .collection(TELEMETRY_COLLECTION)
+    .where('createdAt', '>=', Timestamp.fromDate(since))
+    .orderBy('createdAt', 'desc')
+    .limit(args.limit)
+    .get();
+
+  const allDocs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const docs = allDocs.filter((row) => !args.site || row.siteId === args.site);
+
+  const interactionQueryErrors = [];
+  const learningProfileQueryErrors = [];
+  let interactionSnapshot = { docs: [] };
+  try {
+    interactionSnapshot = await db
+      .collection(INTERACTION_COLLECTION)
+      .where('timestamp', '>=', Timestamp.fromDate(since))
+      .orderBy('timestamp', 'desc')
+      .limit(args.limit)
+      .get();
+  } catch (error) {
+    interactionQueryErrors.push(
+      `interaction_query_failed:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  const allInteractionDocs = interactionSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const interactionDocs = allInteractionDocs.filter((row) => !args.site || row.siteId === args.site);
+
+  let learningProfilesSnapshot = { docs: [] };
+  try {
+    learningProfilesSnapshot = await db
+      .collection('bosLearningProfiles')
+      .orderBy('updatedAt', 'desc')
+      .limit(Math.max(200, Math.min(args.limit, 2000)))
+      .get();
+  } catch (error) {
+    learningProfileQueryErrors.push(
+      `bos_learning_profiles_query_failed:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  const allLearningProfileDocs = learningProfilesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const learningProfileDocs = allLearningProfileDocs.filter((row) => !args.site || row.siteId === args.site);
+
+  return {
+    transport: 'firebaseAdmin',
+    docs,
+    docsScanned: allDocs.length,
+    interactionDocs,
+    interactionDocsScanned: allInteractionDocs.length,
+    learningProfileDocs,
+    learningProfilesScanned: allLearningProfileDocs.length,
+    interactionQueryErrors,
+    learningProfileQueryErrors,
+  };
+}
+
+async function queryFirestoreCollectionsWithGcloudRest(args, since) {
+  const projectId = resolveProjectIdForRest(args);
+  if (!projectId) {
+    throw new Error('Unable to resolve project ID for Firestore REST fallback.');
+  }
+  const accessToken = getGcloudAccessToken();
+
+  const allDocs = await runFirestoreRestQuery({
+    projectId,
+    accessToken,
+    collection: TELEMETRY_COLLECTION,
+    filters: [{ field: 'createdAt', operator: '>=', value: since }],
+    orderBy: [{ field: 'createdAt', direction: 'desc' }],
+    limit: args.limit,
+  });
+  const docs = allDocs.filter((row) => !args.site || row.siteId === args.site);
+
+  const interactionQueryErrors = [];
+  const learningProfileQueryErrors = [];
+  let allInteractionDocs = [];
+  let interactionDocs = [];
+  try {
+    allInteractionDocs = await runFirestoreRestQuery({
+      projectId,
+      accessToken,
+      collection: INTERACTION_COLLECTION,
+      filters: [{ field: 'timestamp', operator: '>=', value: since }],
+      orderBy: [{ field: 'timestamp', direction: 'desc' }],
+      limit: args.limit,
+    });
+    interactionDocs = allInteractionDocs.filter((row) => !args.site || row.siteId === args.site);
+  } catch (error) {
+    interactionQueryErrors.push(
+      `interaction_query_failed:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  let allLearningProfileDocs = [];
+  let learningProfileDocs = [];
+  try {
+    allLearningProfileDocs = await runFirestoreRestQuery({
+      projectId,
+      accessToken,
+      collection: 'bosLearningProfiles',
+      orderBy: [{ field: 'updatedAt', direction: 'desc' }],
+      limit: Math.max(200, Math.min(args.limit, 2000)),
+    });
+    learningProfileDocs = allLearningProfileDocs.filter((row) => !args.site || row.siteId === args.site);
+  } catch (error) {
+    learningProfileQueryErrors.push(
+      `bos_learning_profiles_query_failed:${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  return {
+    transport: 'firestoreRestOAuth',
+    docs,
+    docsScanned: allDocs.length,
+    interactionDocs,
+    interactionDocsScanned: allInteractionDocs.length,
+    learningProfileDocs,
+    learningProfilesScanned: allLearningProfileDocs.length,
+    interactionQueryErrors,
+    learningProfileQueryErrors,
+  };
+}
+
+async function loadLiveDatasets(args, since) {
+  try {
+    const db = initializeAdmin(args);
+    return await queryFirestoreCollectionsWithAdmin(db, args, since);
+  } catch (error) {
+    if (!isCredentialAuthError(error)) {
+      throw error;
+    }
+    return queryFirestoreCollectionsWithGcloudRest(args, since);
+  }
+}
+
 function hasValidUnderstandingShape(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const metadata = value;
@@ -434,11 +793,8 @@ function initializeAdmin(args) {
   if (args.project) {
     appOptions.projectId = args.project;
   }
-  if (args.credentials) {
+  if (isServiceAccountCredentialPath(args.credentials)) {
     const credentialPath = path.resolve(ROOT, args.credentials);
-    if (!fs.existsSync(credentialPath)) {
-      throw new Error(`Credentials file not found: ${credentialPath}`);
-    }
     appOptions.credential = cert(require(credentialPath));
   } else {
     appOptions.credential = applicationDefault();
@@ -450,39 +806,18 @@ function initializeAdmin(args) {
 }
 
 async function runLiveAudit(args, registries) {
-  const db = initializeAdmin(args);
   const since = new Date(Date.now() - args.hours * 60 * 60 * 1000);
-
-  const snapshot = await db
-    .collection(TELEMETRY_COLLECTION)
-    .where('createdAt', '>=', Timestamp.fromDate(since))
-    .orderBy('createdAt', 'desc')
-    .limit(args.limit)
-    .get();
-
-  const docs = snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }))
-    .filter((row) => !args.site || row.siteId === args.site);
-
-  const interactionQueryErrors = [];
-  const learningProfileQueryErrors = [];
-  let interactionSnapshot = { docs: [] };
-  try {
-    interactionSnapshot = await db
-      .collection(INTERACTION_COLLECTION)
-      .where('timestamp', '>=', Timestamp.fromDate(since))
-      .orderBy('timestamp', 'desc')
-      .limit(args.limit)
-      .get();
-  } catch (error) {
-    interactionQueryErrors.push(
-      `interaction_query_failed:${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-
-  const interactionDocs = interactionSnapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }))
-    .filter((row) => !args.site || row.siteId === args.site);
+  const {
+    transport,
+    docs,
+    docsScanned,
+    interactionDocs,
+    interactionDocsScanned,
+    learningProfileDocs,
+    learningProfilesScanned,
+    interactionQueryErrors,
+    learningProfileQueryErrors,
+  } = await loadLiveDatasets(args, since);
 
   const eventCounts = new Map();
   const roleCounts = new Map();
@@ -521,23 +856,6 @@ async function runLiveAudit(args, registries) {
     ai_help_used: new Set(),
     ai_coach_response: new Set(),
   };
-
-  let learningProfilesSnapshot = { docs: [] };
-  try {
-    learningProfilesSnapshot = await db
-      .collection('bosLearningProfiles')
-      .orderBy('updatedAt', 'desc')
-      .limit(Math.max(200, Math.min(args.limit, 2000)))
-      .get();
-  } catch (error) {
-    learningProfileQueryErrors.push(
-      `bos_learning_profiles_query_failed:${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-
-  const learningProfileDocs = learningProfilesSnapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }))
-    .filter((row) => !args.site || row.siteId === args.site);
 
   const allowedEventSet = new Set(registries.backendAllowedEvents);
   const nonCoreEventSet = new Set(registries.nonCoreRequiredEvents);
@@ -589,6 +907,8 @@ async function runLiveAudit(args, registries) {
     if (VOICE_EVENTS.has(event)) {
       const missingKeys = VOICE_REQUIRED_METADATA_KEYS.filter((key) => metadata[key] === undefined || metadata[key] === null);
       const invalids = [];
+      const metadataRoleCanonical = normalizeTelemetryRole(metadata.role);
+      const rowRoleCanonical = normalizeTelemetryRole(role);
       if (typeof metadata.eventType !== 'string' || metadata.eventType !== event) {
         invalids.push(`eventType_mismatch:${String(metadata.eventType || 'missing')}`);
       }
@@ -598,7 +918,7 @@ async function runLiveAudit(args, registries) {
       if (typeof metadata.env !== 'string' || !VALID_VOICE_ENVS.has(metadata.env)) {
         invalids.push(`env_invalid:${String(metadata.env || 'missing')}`);
       }
-      if (typeof metadata.role !== 'string' || !VALID_VOICE_ROLES.has(metadata.role)) {
+      if (!metadataRoleCanonical || !VALID_VOICE_ROLES.has(metadataRoleCanonical)) {
         invalids.push(`role_invalid:${String(metadata.role || 'missing')}`);
       }
       if (typeof metadata.gradeBand !== 'string' || !VALID_VOICE_GRADE_BANDS.has(metadata.gradeBand)) {
@@ -613,8 +933,11 @@ async function runLiveAudit(args, registries) {
       if (typeof metadata.siteId !== 'string' || metadata.siteId !== siteId) {
         invalids.push(`siteId_mismatch:${String(metadata.siteId || 'missing')}:${siteId}`);
       }
-      if (typeof metadata.role === 'string' && metadata.role !== role) {
-        invalids.push(`role_mismatch:${metadata.role}:${role}`);
+      if (!rowRoleCanonical) {
+        invalids.push(`role_invalid_row:${String(role || 'missing')}`);
+      }
+      if (metadataRoleCanonical && rowRoleCanonical && metadataRoleCanonical !== rowRoleCanonical) {
+        invalids.push(`role_mismatch:${metadataRoleCanonical}:${rowRoleCanonical}`);
       }
 
       if (missingKeys.length > 0 || invalids.length > 0) {
@@ -912,11 +1235,12 @@ async function runLiveAudit(args, registries) {
   }
 
   return {
-    docsScanned: snapshot.docs.length,
+    transport,
+    docsScanned,
     docsAfterSiteFilter: docs.length,
-    interactionDocsScanned: interactionSnapshot.docs.length,
+    interactionDocsScanned,
     interactionDocsAfterSiteFilter: interactionDocs.length,
-    learningProfilesScanned: learningProfilesSnapshot.docs.length,
+    learningProfilesScanned,
     learningProfilesAfterSiteFilter: learningProfileDocs.length,
     distinctEventsSeen: eventCounts.size,
     eventCounts,
@@ -1008,6 +1332,7 @@ async function run() {
     `project=${args.project || '(from credentials/default)'}`,
     `credentials=${args.credentials || '(applicationDefault)'}`,
     `strict=${args.strict}`,
+    `transport=${live.transport || 'firebaseAdmin'}`,
   ]);
 
   printSection('Registry Sizes', [

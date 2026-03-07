@@ -158,7 +158,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             if (_isLoading)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Text(
                     _tSiteSessions(context, 'Loading...'),
                     style: const TextStyle(color: ScholesaColors.textSecondary),
@@ -168,7 +169,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             if (!_isLoading && timeSlots.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Text(
                     _tSiteSessions(context, 'No sessions scheduled'),
                     style: const TextStyle(color: ScholesaColors.textSecondary),
@@ -518,8 +520,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                           Navigator.pop(sheetContext);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content:
-                                  Text('${_tSiteSessions(context, 'Showing')} ${_modeLabel(context, mode)} ${_tSiteSessions(context, 'view')}'),
+                              content: Text(
+                                  '${_tSiteSessions(context, 'Showing')} ${_modeLabel(context, mode)} ${_tSiteSessions(context, 'view')}'),
                               backgroundColor: ScholesaColors.site,
                             ),
                           );
@@ -576,7 +578,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       'November',
       'December'
     ];
-    final String month = _tSiteSessions(context, months[_selectedDate.month - 1]);
+    final String month =
+        _tSiteSessions(context, months[_selectedDate.month - 1]);
     return '$month ${_selectedDate.day}, ${_selectedDate.year}';
   }
 
@@ -682,14 +685,19 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         snapshot = await query.orderBy('startTime').limit(300).get();
       } catch (_) {
         try {
-          snapshot = await query.orderBy('createdAt', descending: true).limit(300).get();
+          snapshot = await query
+              .orderBy('createdAt', descending: true)
+              .limit(300)
+              .get();
         } catch (_) {
           snapshot = await query.limit(300).get();
         }
       }
 
-      final Map<String, List<_SessionData>> grouped = <String, List<_SessionData>>{};
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+      final Map<String, List<_SessionData>> grouped =
+          <String, List<_SessionData>>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         final String slot = _sessionTimeSlot(data);
         final _SessionData session = _SessionData(
@@ -730,8 +738,11 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     }
 
     try {
-      final DateTime? startTime = _dateWithTimeLabel(_selectedDate, result.time);
-      await firestoreService.firestore.collection('sessions').add(<String, dynamic>{
+      final DateTime? startTime =
+          _dateWithTimeLabel(_selectedDate, result.time);
+      await firestoreService.firestore
+          .collection('sessions')
+          .add(<String, dynamic>{
         'siteId': siteId,
         'title': result.session.title,
         'educatorName': result.session.educator,
@@ -775,14 +786,12 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     if (startTime != null) {
       return _timeLabel(startTime);
     }
-    return 'TBD';
+    return _tSiteSessions(context, 'Unassigned');
   }
 
   String _sessionTitle(Map<String, dynamic> data, String fallback) {
-    final String title = ((data['title'] as String?) ??
-            (data['name'] as String?) ??
-            '')
-        .trim();
+    final String title =
+        ((data['title'] as String?) ?? (data['name'] as String?) ?? '').trim();
     return title.isNotEmpty ? title : fallback;
   }
 
@@ -792,7 +801,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             (data['educatorId'] as String?) ??
             '')
         .trim();
-    return educator.isNotEmpty ? educator : _tSiteSessions(context, 'Unassigned');
+    return educator.isNotEmpty
+        ? educator
+        : _tSiteSessions(context, 'Unassigned');
   }
 
   String _sessionRoom(Map<String, dynamic> data) {
@@ -801,7 +812,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             (data['location'] as String?) ??
             '')
         .trim();
-    return room.isNotEmpty ? room : 'TBD';
+    return room.isNotEmpty ? room : _tSiteSessions(context, 'Unassigned');
   }
 
   int _sessionLearnerCount(Map<String, dynamic> data) {
@@ -815,7 +826,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   String _sessionPillar(Map<String, dynamic> data) {
     final String direct = ((data['pillar'] as String?) ?? '').trim();
     if (direct.isNotEmpty) return direct;
-    final String code = ((data['pillarCode'] as String?) ?? '').trim().toLowerCase();
+    final String code =
+        ((data['pillarCode'] as String?) ?? '').trim().toLowerCase();
     switch (code) {
       case 'future_skills':
       case 'future-skills':
@@ -853,7 +865,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   DateTime? _dateWithTimeLabel(DateTime baseDate, String label) {
-    final RegExp regex = RegExp(r'^(\d{1,2}):(\d{2})\s*([AP]M)$', caseSensitive: false);
+    final RegExp regex =
+        RegExp(r'^(\d{1,2}):(\d{2})\s*([AP]M)$', caseSensitive: false);
     final Match? match = regex.firstMatch(label.trim());
     if (match == null) return null;
     int hour = int.tryParse(match.group(1) ?? '') ?? 0;
@@ -1144,7 +1157,8 @@ class _SessionCard extends StatelessWidget {
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${_tSiteSessions(context, pool)} ${_tSiteSessions(context, 'assigned as substitute')}'),
+                        content: Text(
+                            '${_tSiteSessions(context, pool)} ${_tSiteSessions(context, 'assigned as substitute')}'),
                         backgroundColor: ScholesaColors.success,
                       ),
                     );
@@ -1169,8 +1183,7 @@ class _CreateSessionSheet extends StatefulWidget {
 
 class _CreateSessionSheetState extends State<_CreateSessionSheet> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _learnerCountController =
-      TextEditingController();
+  final TextEditingController _learnerCountController = TextEditingController();
   String _selectedPillar = 'Future Skills';
   String? _selectedEducatorId;
   String? _selectedRoom;
@@ -1421,8 +1434,8 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                         if (title.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(_tSiteSessions(context,
-                                  'Session title is required')),
+                              content: Text(_tSiteSessions(
+                                  context, 'Session title is required')),
                             ),
                           );
                           return;
@@ -1432,27 +1445,27 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                             int.tryParse(_learnerCountController.text.trim()) ??
                                 0;
                         final String educatorName = _educatorOptions
-                                .firstWhere(
-                                  (_SheetOption option) =>
-                                      option.id == _selectedEducatorId,
-                                  orElse: () => const _SheetOption(
-                                    id: '',
-                                    label: '',
-                                  ),
-                                )
-                                .label
-                                .trim();
+                            .firstWhere(
+                              (_SheetOption option) =>
+                                  option.id == _selectedEducatorId,
+                              orElse: () => const _SheetOption(
+                                id: '',
+                                label: '',
+                              ),
+                            )
+                            .label
+                            .trim();
                         final String roomName = _roomOptions
-                                .firstWhere(
-                                  (_SheetOption option) =>
-                                      option.id == _selectedRoom,
-                                  orElse: () => const _SheetOption(
-                                    id: '',
-                                    label: '',
-                                  ),
-                                )
-                                .label
-                                .trim();
+                            .firstWhere(
+                              (_SheetOption option) =>
+                                  option.id == _selectedRoom,
+                              orElse: () => const _SheetOption(
+                                id: '',
+                                label: '',
+                              ),
+                            )
+                            .label
+                            .trim();
 
                         TelemetryService.instance.logEvent(
                           event: 'cta.clicked',
@@ -1473,7 +1486,9 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                               educator: educatorName.isEmpty
                                   ? _tSiteSessions(context, 'Unassigned')
                                   : educatorName,
-                              room: roomName.isEmpty ? 'TBD' : roomName,
+                              room: roomName.isEmpty
+                                  ? _tSiteSessions(context, 'Unassigned')
+                                  : roomName,
                               learnerCount: learnerCount,
                               pillar: _selectedPillar,
                             ),
@@ -1529,20 +1544,25 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
       }
 
       final List<_SheetOption> educators = <_SheetOption>[];
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in usersSnapshot.docs) {
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in usersSnapshot.docs) {
         final Map<String, dynamic> data = doc.data();
         final String role = ((data['role'] as String?) ?? '').toLowerCase();
         if (role != 'educator') continue;
-        final List<String> siteIds =
-            (data['siteIds'] as List?)?.map((dynamic e) => e.toString()).toList() ??
-                <String>[];
+        final List<String> siteIds = (data['siteIds'] as List?)
+                ?.map((dynamic e) => e.toString())
+                .toList() ??
+            <String>[];
         final String activeSiteId = (data['activeSiteId'] as String?) ?? '';
-        if (siteIds.isNotEmpty && !siteIds.contains(siteId) && activeSiteId != siteId) {
+        if (siteIds.isNotEmpty &&
+            !siteIds.contains(siteId) &&
+            activeSiteId != siteId) {
           continue;
         }
-        final String label =
-            ((data['displayName'] as String?) ?? (data['email'] as String?) ?? doc.id)
-                .trim();
+        final String label = ((data['displayName'] as String?) ??
+                (data['email'] as String?) ??
+                doc.id)
+            .trim();
         if (label.isEmpty) continue;
         educators.add(_SheetOption(id: doc.id, label: label));
       }

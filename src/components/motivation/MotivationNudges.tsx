@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { AutonomyEngine, CompetenceEngine, type MissionChoice } from '@/src/lib/motivation/motivationEngine';
+import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
 
 interface MotivationNudgesProps {
   siteId: string;
@@ -14,6 +15,8 @@ interface MotivationNudgesProps {
 export function MotivationNudges(_props: MotivationNudgesProps) {
   const { siteId, maxNudges = 3, showInline = false, onNudgeAction } = _props;
   const { user, profile } = useAuthContext();
+  const trackInteraction = useInteractionTracking();
+  usePageViewTracking('motivation_nudges', { siteId, maxNudges, showInline });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [choices, setChoices] = useState<MissionChoice[]>([]);
@@ -92,14 +95,28 @@ export function MotivationNudges(_props: MotivationNudgesProps) {
               <button
                 type="button"
                 className="rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white"
-                onClick={() => onNudgeAction?.(choice.id, 'accepted')}
+                onClick={() => {
+                  trackInteraction('feature_discovered', {
+                    cta: 'motivation_nudge_start',
+                    nudgeId: choice.id,
+                    siteId,
+                  });
+                  onNudgeAction?.(choice.id, 'accepted');
+                }}
               >
                 Start
               </button>
               <button
                 type="button"
                 className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700"
-                onClick={() => onNudgeAction?.(choice.id, 'dismissed')}
+                onClick={() => {
+                  trackInteraction('help_accessed', {
+                    cta: 'motivation_nudge_dismiss',
+                    nudgeId: choice.id,
+                    siteId,
+                  });
+                  onNudgeAction?.(choice.id, 'dismissed');
+                }}
               >
                 Dismiss
               </button>
@@ -117,7 +134,14 @@ export function MotivationNudges(_props: MotivationNudgesProps) {
                 <button
                   type="button"
                   className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700"
-                  onClick={() => onNudgeAction?.(id, 'snoozed')}
+                  onClick={() => {
+                    trackInteraction('help_accessed', {
+                      cta: 'motivation_nudge_snooze',
+                      nudgeId: id,
+                      siteId,
+                    });
+                    onNudgeAction?.(id, 'snoozed');
+                  }}
                 >
                   Snooze
                 </button>

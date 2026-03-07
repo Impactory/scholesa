@@ -14,11 +14,11 @@ function parseServiceAccountFromEnv(): ServiceAccountShape | null {
 
   try {
     return JSON.parse(raw) as ServiceAccountShape;
-  } catch (_) {
+  } catch {
     try {
       const decoded = Buffer.from(raw, 'base64').toString('utf8');
       return JSON.parse(decoded) as ServiceAccountShape;
-    } catch (_) {
+    } catch {
       return null;
     }
   }
@@ -32,12 +32,23 @@ const initializeFirebaseAdmin = () => {
   // Check if we have credentials
   const serviceAccount = parseServiceAccountFromEnv();
   const projectId =
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? serviceAccount?.project_id;
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
+    process.env.FIREBASE_PROJECT_ID ??
+    process.env.GOOGLE_CLOUD_PROJECT ??
+    process.env.GCLOUD_PROJECT ??
+    serviceAccount?.project_id;
   const clientEmail =
     process.env.FIREBASE_ADMIN_CLIENT_EMAIL ?? serviceAccount?.client_email;
   const privateKey =
     process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n') ??
     serviceAccount?.private_key?.replace(/\\n/g, '\n');
+  const usingFirebaseEmulators = Boolean(
+    process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.FIRESTORE_EMULATOR_HOST,
+  );
+
+  if (usingFirebaseEmulators && projectId) {
+    return admin.initializeApp({ projectId });
+  }
 
   if (!projectId || !clientEmail || !privateKey) {
     // During build time or when credentials are missing, initialize with default (for GCP environments)

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../../services/firestore_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -64,7 +62,6 @@ class _FeatureFlag {
 }
 
 class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
-  final List<_FeatureFlag> _fallbackFlags = <_FeatureFlag>[];
   List<_FeatureFlag> _flags = <_FeatureFlag>[];
   bool _isLoading = false;
 
@@ -279,44 +276,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Future<void> _loadFlags() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => _flags = _fallbackFlags);
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await firestoreService.firestore
-            .collection('featureFlags')
-            .orderBy('name')
-            .limit(200)
-            .get();
-      } catch (_) {
-        snapshot = await firestoreService.firestore
-            .collection('featureFlags')
-            .limit(200)
-            .get();
-      }
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listFeatureFlags');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{});
+      final Map<String, dynamic> payload =
+          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final List<dynamic> rows = payload['flags'] as List<dynamic>? ?? <dynamic>[];
 
-      final List<_FeatureFlag> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final List<String>? enabledSites =
-            (data['enabledSites'] as List?)?.map((dynamic e) => e.toString()).toList();
-        return _FeatureFlag(
-          id: doc.id,
-          name: (data['name'] as String?) ?? doc.id,
-          description: (data['description'] as String?) ?? '',
-          isEnabled: (data['isEnabled'] as bool?) ?? false,
-          scope: (data['scope'] as String?) ?? 'global',
-          enabledSites: enabledSites,
-        );
-      }).toList();
+      final List<_FeatureFlag> loaded = rows
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) =>
+              row.map((dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .map(_mapToFeatureFlag)
+          .toList();
 
       if (!mounted) return;
       setState(() {
@@ -324,7 +300,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _flags = _fallbackFlags);
+      setState(() => _flags = <_FeatureFlag>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -333,25 +309,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Future<void> _toggleFlag(_FeatureFlag flag, bool enabled) async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => flag.isEnabled = enabled);
-      return;
-    }
-
     try {
-      await firestoreService.firestore.collection('featureFlags').doc(flag.id).set(
-        <String, dynamic>{
-          'name': flag.name,
-          'description': flag.description,
-          'scope': flag.scope,
-          'isEnabled': enabled,
-          if (flag.enabledSites != null) 'enabledSites': flag.enabledSites,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('upsertFeatureFlag');
+      await callable.call(<String, dynamic>{
+        'id': flag.id,
+        'name': flag.name,
+        'description': flag.description,
+        'enabled': enabled,
+      });
 
       if (!mounted) return;
       setState(() => flag.isEnabled = enabled);
@@ -373,11 +339,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
-    }
+  _FeatureFlag _mapToFeatureFlag(Map<String, dynamic> data) {
+    final List<String>? enabledSites =
+        (data['enabledSites'] as List?)?.map((dynamic e) => e.toString()).toList();
+    return _FeatureFlag(
+      id: (data['id'] as String?) ?? (data['name'] as String?) ?? 'flag',
+      name: (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag',
+      description: (data['description'] as String?) ?? '',
+      isEnabled: (data['enabled'] as bool?) ?? (data['isEnabled'] as bool?) ?? false,
+      scope: (data['scope'] as String?) ?? 'global',
+      enabledSites: enabledSites,
+    );
   }
 }

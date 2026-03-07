@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
-import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -72,15 +70,15 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
               ),
             )
           : _pendingMatches.isEmpty
-          ? _buildEmptyState()
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: <Widget>[
-                _buildHeader(),
-                const SizedBox(height: 16),
-                ..._pendingMatches.map((match) => _buildMatchCard(match)),
-              ],
-            ),
+              ? _buildEmptyState()
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: <Widget>[
+                    _buildHeader(),
+                    const SizedBox(height: 16),
+                    ..._pendingMatches.map((match) => _buildMatchCard(match)),
+                  ],
+                ),
     );
   }
 
@@ -196,8 +194,10 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: _buildIdentityColumn(_tSiteIdentity(context, 'Local Account'),
-                      match.localName, Icons.person_rounded),
+                  child: _buildIdentityColumn(
+                      _tSiteIdentity(context, 'Local Account'),
+                      match.localName,
+                      Icons.person_rounded),
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -342,18 +342,12 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       },
     );
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
-      await firestoreService.firestore
-          .collection('externalIdentityLinks')
-          .doc(match.id)
-          .set(<String, dynamic>{
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('resolveExternalIdentityLink');
+      await callable.call(<String, dynamic>{
+        'id': match.id,
         'status': 'linked',
-        if ((match.suggestedUserId ?? '').isNotEmpty)
-          'scholesaUserId': match.suggestedUserId,
-        'approvedBy': FirebaseAuth.instance.currentUser?.uid,
-        'approvedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
       if (!mounted) return;
       setState(() {
         _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
@@ -388,14 +382,12 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       },
     );
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
-      await firestoreService.firestore
-          .collection('externalIdentityLinks')
-          .doc(match.id)
-          .set(<String, dynamic>{
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('resolveExternalIdentityLink');
+      await callable.call(<String, dynamic>{
+        'id': match.id,
         'status': 'ignored',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
       if (!mounted) return;
       setState(() {
         _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
@@ -419,7 +411,6 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
 
   Future<void> _loadPendingMatches() async {
     final AppState appState = context.read<AppState>();
-    final FirestoreService firestoreService = context.read<FirestoreService>();
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
@@ -434,57 +425,49 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         return;
       }
 
-      Query<Map<String, dynamic>> query = firestoreService.firestore
-          .collection('externalIdentityLinks')
-          .where('siteId', isEqualTo: siteId)
-          .where('status', isEqualTo: 'unmatched');
-
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await query.orderBy('createdAt', descending: true).limit(50).get();
-      } catch (_) {
-        snapshot = await query.limit(50).get();
-      }
-
-      final List<_IdentityMatch> loaded =
-          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final List<dynamic> suggestedRaw = (data['suggestedMatches'] as List?) ?? <dynamic>[];
-        final Map<String, dynamic>? firstSuggestion = suggestedRaw.isNotEmpty
-            ? Map<String, dynamic>.from(suggestedRaw.first as Map)
-            : null;
-
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listExternalIdentityLinks');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'siteId': siteId});
+      final Map<String, dynamic> payload =
+          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final List<dynamic> rows =
+          payload['links'] as List<dynamic>? ?? <dynamic>[];
+      final List<_IdentityMatch> loaded = rows
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .where((Map<String, dynamic> data) =>
+              ((data['status'] as String?) ?? '').toLowerCase() == 'unmatched')
+          .map((Map<String, dynamic> data) {
         final String localName =
-            (firstSuggestion?['displayName'] as String?)?.trim().isNotEmpty == true
-                ? (firstSuggestion!['displayName'] as String).trim()
-                : (firstSuggestion?['name'] as String?)?.trim().isNotEmpty == true
-                    ? (firstSuggestion!['name'] as String).trim()
-                    : _tSiteIdentity(context, 'Unknown local account');
-
+            (data['scholesaUserName'] as String?)?.trim().isNotEmpty == true
+                ? (data['scholesaUserName'] as String).trim()
+                : _tSiteIdentity(context, 'Unknown local account');
         final String externalName =
             (data['providerUserId'] as String?)?.trim().isNotEmpty == true
                 ? (data['providerUserId'] as String).trim()
                 : _tSiteIdentity(context, 'Unknown external account');
-
-        final dynamic rawConfidence = firstSuggestion?['confidence'] ?? firstSuggestion?['score'];
-        final double confidence = rawConfidence is num
-            ? rawConfidence.toDouble().clamp(0.0, 1.0)
-            : 0.5;
-
+        final double confidence =
+            ((data['confidence'] as num?) ?? 0.5).toDouble().clamp(0.0, 1.0);
         return _IdentityMatch(
-          id: doc.id,
+          id: (data['id'] as String?) ?? '',
           localName: localName,
           externalName: externalName,
-          provider: _providerLabel((data['provider'] as String?) ?? 'google_classroom'),
+          provider: _providerLabel(
+              (data['provider'] as String?) ?? 'google_classroom'),
           confidence: confidence,
           status: _MatchStatus.pending,
-          suggestedUserId: (firstSuggestion?['scholesaUserId'] as String?) ??
-              (firstSuggestion?['userId'] as String?),
+          suggestedUserId: (data['scholesaUserId'] as String?) ??
+              (data['userId'] as String?),
         );
       }).toList();
 
       if (!mounted) return;
       setState(() => _pendingMatches = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _pendingMatches = <_IdentityMatch>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

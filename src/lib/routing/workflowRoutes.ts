@@ -1,0 +1,439 @@
+import type { UserRole } from '@/src/types/user';
+
+export const ROLE_DEFAULT_WORKFLOW_ROUTE: Record<UserRole, string> = {
+  learner: 'learner/today',
+  educator: 'educator/today',
+  parent: 'parent/summary',
+  site: 'site/dashboard',
+  partner: 'partner/listings',
+  hq: 'hq/sites',
+};
+
+export const LEGACY_ROLE_ROOT_SEGMENTS = new Set(['learner', 'educator', 'parent', 'site', 'partner', 'hq']);
+
+export const ALL_WORKFLOW_PATHS = [
+  '/learner/today',
+  '/learner/missions',
+  '/learner/habits',
+  '/learner/portfolio',
+  '/educator/today',
+  '/educator/attendance',
+  '/educator/sessions',
+  '/educator/learners',
+  '/educator/missions/review',
+  '/educator/mission-plans',
+  '/educator/learner-supports',
+  '/educator/integrations',
+  '/parent/summary',
+  '/parent/billing',
+  '/parent/schedule',
+  '/parent/portfolio',
+  '/site/checkin',
+  '/site/provisioning',
+  '/site/dashboard',
+  '/site/sessions',
+  '/site/ops',
+  '/site/incidents',
+  '/site/identity',
+  '/site/integrations-health',
+  '/site/billing',
+  '/partner/listings',
+  '/partner/contracts',
+  '/partner/payouts',
+  '/hq/user-admin',
+  '/hq/role-switcher',
+  '/hq/sites',
+  '/hq/analytics',
+  '/hq/billing',
+  '/hq/approvals',
+  '/hq/audit',
+  '/hq/safety',
+  '/hq/integrations-health',
+  '/hq/curriculum',
+  '/hq/feature-flags',
+  '/messages',
+  '/notifications',
+  '/profile',
+  '/settings',
+] as const;
+
+export type WorkflowPath = (typeof ALL_WORKFLOW_PATHS)[number];
+
+export interface WorkflowRouteDefinition {
+  path: WorkflowPath;
+  title: string;
+  description: string;
+  allowedRoles: UserRole[];
+  navGroup: 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq' | 'common';
+  dataMode: 'firestore' | 'callable' | 'hybrid';
+}
+
+const allRoles: UserRole[] = ['learner', 'educator', 'parent', 'site', 'partner', 'hq'];
+
+export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
+  {
+    path: '/learner/today',
+    title: 'Learner Today',
+    description: 'Active sessions and immediate learning queue.',
+    allowedRoles: ['learner', 'educator', 'hq'],
+    navGroup: 'learner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/learner/missions',
+    title: 'Learner Missions',
+    description: 'Mission assignment and completion workflow.',
+    allowedRoles: ['learner', 'educator', 'hq'],
+    navGroup: 'learner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/learner/habits',
+    title: 'Learner Habits',
+    description: 'Daily habit tracking and consistency history.',
+    allowedRoles: ['learner', 'educator', 'hq'],
+    navGroup: 'learner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/learner/portfolio',
+    title: 'Learner Portfolio',
+    description: 'Artifacts and outcomes captured over time.',
+    allowedRoles: ['learner', 'educator', 'hq'],
+    navGroup: 'learner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/today',
+    title: 'Educator Today',
+    description: 'Daily educator queue across active sessions.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/attendance',
+    title: 'Educator Attendance',
+    description: 'Attendance recording and review workflow.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/sessions',
+    title: 'Educator Sessions',
+    description: 'Session scheduling and class operations.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/learners',
+    title: 'Educator Learners',
+    description: 'Roster visibility and learner-level follow-up.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/missions/review',
+    title: 'Mission Review Queue',
+    description: 'Submission review and evaluation flow.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/mission-plans',
+    title: 'Mission Plans',
+    description: 'Mission planning and instructional sequencing.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/learner-supports',
+    title: 'Learner Supports',
+    description: 'Support intervention planning and tracking.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/educator/integrations',
+    title: 'Educator Integrations',
+    description: 'Connected classroom and assignment integrations.',
+    allowedRoles: ['educator', 'site', 'hq'],
+    navGroup: 'educator',
+    dataMode: 'callable',
+  },
+  {
+    path: '/parent/summary',
+    title: 'Parent Summary',
+    description: 'Household learning status and progress summaries.',
+    allowedRoles: ['parent', 'hq'],
+    navGroup: 'parent',
+    dataMode: 'hybrid',
+  },
+  {
+    path: '/parent/billing',
+    title: 'Parent Billing',
+    description: 'Subscription and invoice management.',
+    allowedRoles: ['parent', 'hq'],
+    navGroup: 'parent',
+    dataMode: 'callable',
+  },
+  {
+    path: '/parent/schedule',
+    title: 'Parent Schedule',
+    description: 'Upcoming sessions and calendar-aware visibility.',
+    allowedRoles: ['parent', 'hq'],
+    navGroup: 'parent',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/parent/portfolio',
+    title: 'Parent Portfolio',
+    description: 'Household learner portfolio highlights.',
+    allowedRoles: ['parent', 'hq'],
+    navGroup: 'parent',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/site/checkin',
+    title: 'Site Check-In',
+    description: 'Arrival and departure operations.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/site/provisioning',
+    title: 'Site Provisioning',
+    description: 'User linking, family links, and onboarding ops.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/site/dashboard',
+    title: 'Site Dashboard',
+    description: 'Daily site-level operational view.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'hybrid',
+  },
+  {
+    path: '/site/sessions',
+    title: 'Site Sessions',
+    description: 'Session configuration and staffing view.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/site/ops',
+    title: 'Site Operations',
+    description: 'Operational events and daily site health.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/site/incidents',
+    title: 'Site Incidents',
+    description: 'Incident reporting and lifecycle updates.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'callable',
+  },
+  {
+    path: '/site/identity',
+    title: 'Site Identity',
+    description: 'Identity reconciliation workflow.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'callable',
+  },
+  {
+    path: '/site/integrations-health',
+    title: 'Site Integrations Health',
+    description: 'Integration health checks and sync controls.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'callable',
+  },
+  {
+    path: '/site/billing',
+    title: 'Site Billing',
+    description: 'Site-level billing and payment operations.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'callable',
+  },
+  {
+    path: '/partner/listings',
+    title: 'Partner Listings',
+    description: 'Marketplace listing management.',
+    allowedRoles: ['partner', 'hq'],
+    navGroup: 'partner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/partner/contracts',
+    title: 'Partner Contracts',
+    description: 'Contract lifecycle and approvals.',
+    allowedRoles: ['partner', 'hq'],
+    navGroup: 'partner',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/partner/payouts',
+    title: 'Partner Payouts',
+    description: 'Payout history and reconciliation status.',
+    allowedRoles: ['partner', 'hq'],
+    navGroup: 'partner',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/user-admin',
+    title: 'HQ User Admin',
+    description: 'Cross-site user administration.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/role-switcher',
+    title: 'HQ Role Switcher',
+    description: 'Role simulation and support context switching.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/sites',
+    title: 'HQ Sites',
+    description: 'Network-wide site management.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/hq/analytics',
+    title: 'HQ Analytics',
+    description: 'Platform-level analytics and KPIs.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/billing',
+    title: 'HQ Billing',
+    description: 'Revenue operations and billing administration.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/approvals',
+    title: 'HQ Approvals',
+    description: 'Cross-workflow approval queue.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/audit',
+    title: 'HQ Audit',
+    description: 'Audit log visibility and forensics.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/safety',
+    title: 'HQ Safety',
+    description: 'Safety incident oversight and resolution.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/integrations-health',
+    title: 'HQ Integrations Health',
+    description: 'Global integration health and sync operations.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/hq/curriculum',
+    title: 'HQ Curriculum',
+    description: 'Curriculum authoring and mission quality controls.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/hq/feature-flags',
+    title: 'HQ Feature Flags',
+    description: 'Feature rollout controls by environment and role.',
+    allowedRoles: ['hq'],
+    navGroup: 'hq',
+    dataMode: 'callable',
+  },
+  {
+    path: '/messages',
+    title: 'Messages',
+    description: 'Cross-role messaging and coordination.',
+    allowedRoles: allRoles,
+    navGroup: 'common',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/notifications',
+    title: 'Notifications',
+    description: 'System and workflow notifications.',
+    allowedRoles: allRoles,
+    navGroup: 'common',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/profile',
+    title: 'Profile',
+    description: 'Personal identity and account settings.',
+    allowedRoles: allRoles,
+    navGroup: 'common',
+    dataMode: 'firestore',
+  },
+  {
+    path: '/settings',
+    title: 'Settings',
+    description: 'Application, locale, and account preferences.',
+    allowedRoles: allRoles,
+    navGroup: 'common',
+    dataMode: 'firestore',
+  },
+];
+
+export const WORKFLOW_ROUTES_BY_PATH: Record<WorkflowPath, WorkflowRouteDefinition> =
+  WORKFLOW_ROUTE_DEFINITIONS.reduce((acc, route) => {
+    acc[route.path] = route;
+    return acc;
+  }, {} as Record<WorkflowPath, WorkflowRouteDefinition>);
+
+export function getWorkflowRoute(pathname: string): WorkflowRouteDefinition | null {
+  return (WORKFLOW_ROUTES_BY_PATH as Record<string, WorkflowRouteDefinition>)[pathname] || null;
+}
+
+export function getRoleNavigationPaths(role: UserRole): WorkflowPath[] {
+  const rolePrefix = `/${role}/`;
+  const base = ALL_WORKFLOW_PATHS.filter((path) => path.startsWith(rolePrefix));
+  const common: WorkflowPath[] = ['/messages', '/notifications', '/profile', '/settings'];
+  return [...base, ...common];
+}
+
+export function getRoleDefaultRoute(role: UserRole): string {
+  return ROLE_DEFAULT_WORKFLOW_ROUTE[role];
+}

@@ -19,6 +19,11 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 FUNCTIONS_DIR="$REPO_ROOT/functions"
 TARGET="${1:-all}"
+FLUTTER_GATE_DONE=0
+
+export CLOUDSDK_CORE_DISABLE_PROMPTS="${CLOUDSDK_CORE_DISABLE_PROMPTS:-1}"
+export COPYFILE_DISABLE="${COPYFILE_DISABLE:-1}"
+export COPY_EXTENDED_ATTRIBUTES_DISABLE="${COPY_EXTENDED_ATTRIBUTES_DISABLE:-1}"
 
 # Colors
 RED='\033[0;31m'
@@ -63,6 +68,15 @@ flutter_gate() {
   log "Flutter gate passed ✓"
 }
 
+ensure_flutter_gate() {
+  if [[ "$FLUTTER_GATE_DONE" == "1" ]]; then
+    return 0
+  fi
+
+  flutter_gate
+  FLUTTER_GATE_DONE=1
+}
+
 # ── Enforce platform icon sync before any Flutter build ─────────
 sync_platform_icons() {
   local icon_sync_script
@@ -86,6 +100,15 @@ functions_build() {
   log "Functions build passed ✓"
 }
 
+resolve_project_id() {
+  if [[ -n "${GCP_PROJECT_ID:-}" ]]; then
+    printf '%s' "$GCP_PROJECT_ID"
+    return 0
+  fi
+
+  cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})'
+}
+
 # ── Deploy targets ─────────────────────────────────────────────
 deploy_functions() {
   functions_build
@@ -105,13 +128,10 @@ deploy_rules() {
 }
 
 deploy_cloud_run_web() {
-  flutter_gate
+  ensure_flutter_gate
 
   local project_id
-  project_id="${GCP_PROJECT_ID:-}"
-  if [[ -z "$project_id" ]]; then
-    project_id="$(cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})')"
-  fi
+  project_id="$(resolve_project_id)"
 
   [[ -n "$project_id" ]] || fail "Unable to resolve GCP project ID. Set GCP_PROJECT_ID in env."
 
@@ -127,10 +147,7 @@ deploy_cloud_run_web() {
 
 deploy_compliance_operator() {
   local project_id
-  project_id="${GCP_PROJECT_ID:-}"
-  if [[ -z "$project_id" ]]; then
-    project_id="$(cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})')"
-  fi
+  project_id="$(resolve_project_id)"
   [[ -n "$project_id" ]] || fail "Unable to resolve GCP project ID. Set GCP_PROJECT_ID in env."
 
   local region service image_tag
@@ -160,28 +177,27 @@ deploy_flutter_web() {
 }
 
 deploy_flutter_ios() {
-  flutter_gate
+  ensure_flutter_gate
   log "Building Flutter iOS (release)..."
   (cd "$FLUTTER_APP" && flutter build ios --release --no-codesign --no-tree-shake-icons)
   log "iOS build complete. Open Xcode to archive and distribute."
 }
 
 deploy_flutter_macos() {
-  flutter_gate
+  ensure_flutter_gate
   log "Building Flutter macOS (release)..."
   (cd "$FLUTTER_APP" && flutter build macos --release --no-tree-shake-icons)
   log "macOS build complete. Sign + notarize before distribution."
 }
 
 deploy_flutter_android() {
-  flutter_gate
+  ensure_flutter_gate
   log "Building Flutter Android APK (release)..."
   (cd "$FLUTTER_APP" && flutter build apk --release)
   log "Android APK: $FLUTTER_APP/build/app/outputs/flutter-apk/app-release.apk"
 }
 
 deploy_all() {
-  flutter_gate
   deploy_functions
   deploy_rules
   deploy_cloud_run_web

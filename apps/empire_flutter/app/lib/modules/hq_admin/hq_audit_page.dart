@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../../services/firestore_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -29,13 +27,13 @@ const Map<String, String> _hqAuditEs = <String, String>{
   'Data Export': 'Exportación de datos',
   'Config Update': 'Actualización de configuración',
   'Successful login from web client':
-    'Inicio de sesión exitoso desde cliente web',
+      'Inicio de sesión exitoso desde cliente web',
   'Changed user jane@school.edu role from educator to site_lead':
-    'Rol del usuario jane@school.edu cambiado de educador a site_lead',
+      'Rol del usuario jane@school.edu cambiado de educador a site_lead',
   'Exported learner progress report for Site: Downtown':
-    'Se exportó el informe de progreso de estudiantes para la sede: Centro',
+      'Se exportó el informe de progreso de estudiantes para la sede: Centro',
   'Feature flag "new_dashboard" enabled globally':
-    'Bandera de función "new_dashboard" habilitada globalmente',
+      'Bandera de función "new_dashboard" habilitada globalmente',
   'Loading...': 'Cargando...',
   'No audit logs found': 'No se encontraron registros de auditoría',
 };
@@ -78,7 +76,6 @@ class _AuditLog {
 }
 
 class _HqAuditPageState extends State<HqAuditPage> {
-  final List<_AuditLog> _fallbackAuditLogs = <_AuditLog>[];
   List<_AuditLog> _auditLogs = <_AuditLog>[];
   bool _isLoading = false;
 
@@ -151,13 +148,11 @@ class _HqAuditPageState extends State<HqAuditPage> {
       child: Row(
         children: <Widget>[
           Expanded(
-              child: _buildSummaryStat(
-                _tHqAudit(context, 'Total'),
-                _auditLogs.length.toString(),
-                Colors.blue)),
+              child: _buildSummaryStat(_tHqAudit(context, 'Total'),
+                  _auditLogs.length.toString(), Colors.blue)),
           Expanded(
               child: _buildSummaryStat(
-                _tHqAudit(context, 'Auth'),
+                  _tHqAudit(context, 'Auth'),
                   _auditLogs
                       .where((_AuditLog l) => l.category == _AuditCategory.auth)
                       .length
@@ -165,7 +160,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   Colors.green)),
           Expanded(
               child: _buildSummaryStat(
-                _tHqAudit(context, 'Admin'),
+                  _tHqAudit(context, 'Admin'),
                   _auditLogs
                       .where(
                           (_AuditLog l) => l.category == _AuditCategory.admin)
@@ -174,7 +169,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   Colors.orange)),
           Expanded(
               child: _buildSummaryStat(
-                _tHqAudit(context, 'System'),
+                  _tHqAudit(context, 'System'),
                   _auditLogs
                       .where(
                           (_AuditLog l) => l.category == _AuditCategory.system)
@@ -244,7 +239,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-          Text(_tHqAudit(context, log.details),
+            Text(_tHqAudit(context, log.details),
                 style: const TextStyle(
                     fontSize: 12, color: ScholesaColors.textSecondary)),
             const SizedBox(height: 4),
@@ -375,8 +370,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildDetailRow(
-                _tHqAudit(context, 'Category'), log.category.name.toUpperCase()),
+            _buildDetailRow(_tHqAudit(context, 'Category'),
+                log.category.name.toUpperCase()),
             _buildDetailRow(_tHqAudit(context, 'Actor'), log.actor),
             _buildDetailRow(
                 _tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
@@ -433,68 +428,65 @@ class _HqAuditPageState extends State<HqAuditPage> {
     if (diff.inMinutes < 60) {
       return '${diff.inMinutes}${_tHqAudit(context, 'm ago')}';
     }
-    if (diff.inHours < 24) return '${diff.inHours}${_tHqAudit(context, 'h ago')}';
+    if (diff.inHours < 24) {
+      return '${diff.inHours}${_tHqAudit(context, 'h ago')}';
+    }
     return '${diff.inDays}${_tHqAudit(context, 'd ago')}';
   }
 
   Future<void> _loadAuditLogs() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => _auditLogs = _fallbackAuditLogs);
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await firestoreService.firestore
-            .collection('auditLogs')
-            .orderBy('timestamp', descending: true)
-            .limit(200)
-            .get();
-      } catch (_) {
-        snapshot = await firestoreService.firestore
-            .collection('auditLogs')
-            .limit(200)
-            .get();
-      }
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listAuditLogs');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'limit': 100});
+      final Map<String, dynamic> payload = _asMap(result.data);
+      final List<dynamic> rows =
+          payload['logs'] as List<dynamic>? ?? <dynamic>[];
 
-      final List<_AuditLog> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final String actionRaw = (data['action'] as String?) ?? 'unknown';
-        final String actionTitle = _titleFromAction(actionRaw);
-        final String actor = ((data['actorEmail'] as String?)?.trim().isNotEmpty == true)
-            ? (data['actorEmail'] as String).trim()
-            : ((data['actorId'] as String?)?.trim().isNotEmpty == true)
-                ? (data['actorId'] as String).trim()
-                : 'system';
-        final DateTime timestamp = _toDateTime(data['timestamp']) ??
-            _toDateTime(data['createdAt']) ??
-            DateTime.now();
-        final String details = _detailsToText(data['details']);
+      final List<_AuditLog> loaded = rows
+          .map((dynamic row) {
+            final Map<String, dynamic> data = _asMap(row);
+            final String id = ((data['id'] as String?) ?? '').trim();
+            if (id.isEmpty) return null;
+            final String actionRaw =
+                ((data['action'] as String?) ?? 'unknown').trim();
+            final String actionTitle = _titleFromAction(actionRaw);
+            final String actor =
+                ((data['actorEmail'] as String?)?.trim().isNotEmpty == true)
+                    ? (data['actorEmail'] as String).trim()
+                    : ((data['actorId'] as String?)?.trim().isNotEmpty == true)
+                        ? (data['actorId'] as String).trim()
+                        : 'system';
+            final DateTime timestamp = _toDateTime(data['createdAt']) ??
+                _toDateTime(data['timestamp']) ??
+                _toDateTime(data['updatedAt']) ??
+                DateTime.now();
+            final String details = _detailsToText(data['details']);
 
-        return _AuditLog(
-          id: doc.id,
-          action: actionTitle,
-          category: _categoryFromAction(actionRaw),
-          actor: actor,
-          timestamp: timestamp,
-          details: details,
-          ipAddress: data['ipAddress'] as String?,
-        );
-      }).toList();
+            return _AuditLog(
+              id: id,
+              action: actionTitle,
+              category: _categoryFromAction(actionRaw),
+              actor: actor,
+              timestamp: timestamp,
+              details: details,
+              ipAddress: data['ipAddress'] as String?,
+            );
+          })
+          .whereType<_AuditLog>()
+          .toList(growable: false);
 
-      loaded.sort((_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
+      loaded.sort(
+          (_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
 
       if (!mounted) return;
       setState(() => _auditLogs = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _auditLogs = _fallbackAuditLogs);
+      setState(() => _auditLogs = <_AuditLog>[]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -526,14 +518,16 @@ class _HqAuditPageState extends State<HqAuditPage> {
         .where((String p) => p.isNotEmpty)
         .toList();
     return parts
-        .map((String p) => '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
+        .map((String p) =>
+            '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
         .join(' ');
   }
 
   String _detailsToText(dynamic details) {
     if (details is String && details.trim().isNotEmpty) return details.trim();
-    if (details is Map<String, dynamic>) {
-      final Iterable<String> pairs = details.entries
+    if (details is Map) {
+      final Map<String, dynamic> asMap = _asMap(details);
+      final Iterable<String> pairs = asMap.entries
           .where((MapEntry<String, dynamic> e) => e.value != null)
           .map((MapEntry<String, dynamic> e) => '${e.key}: ${e.value}');
       return pairs.isEmpty ? 'No additional details' : pairs.join(', ');
@@ -542,20 +536,41 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   DateTime? _toDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+    if (value is Map) {
+      final dynamic secondsRaw = value['seconds'] ?? value['_seconds'];
+      final dynamic nanosRaw = value['nanoseconds'] ?? value['_nanoseconds'];
+      final int? seconds =
+          secondsRaw is int ? secondsRaw : int.tryParse('$secondsRaw');
+      final int nanos =
+          nanosRaw is int ? nanosRaw : int.tryParse('$nanosRaw') ?? 0;
+      if (seconds != null) {
+        return DateTime.fromMillisecondsSinceEpoch(
+          (seconds * 1000) + (nanos ~/ 1000000),
+        );
+      }
+    }
+    if (value != null &&
+        value is Object &&
+        value.runtimeType.toString().contains('Timestamp') &&
+        (value as dynamic).toDate is Function) {
+      return (value as dynamic).toDate() as DateTime?;
+    }
     if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     if (value is String && value.trim().isNotEmpty) {
       return DateTime.tryParse(value.trim());
     }
     return null;
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map(
+        (dynamic key, dynamic mapValue) => MapEntry(key.toString(), mapValue),
+      );
     }
+    return <String, dynamic>{};
   }
 }

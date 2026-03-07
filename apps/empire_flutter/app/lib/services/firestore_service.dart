@@ -61,6 +61,16 @@ class FirestoreService {
       'activeSiteId': data['activeSiteId'] ??
           (data['siteIds'] as List<dynamic>?)?.firstOrNull,
       'siteIds': List<String>.from(data['siteIds'] ?? <dynamic>[]),
+      'localeCode': _preferenceString(data, 'locale', fallback: 'en'),
+      'timeZone': _preferenceString(data, 'timeZone', fallback: 'auto'),
+      'notificationsEnabled':
+          _preferenceBool(data, 'notificationsEnabled', fallback: true),
+      'emailNotifications':
+          _preferenceBool(data, 'emailNotifications', fallback: true),
+      'pushNotifications':
+          _preferenceBool(data, 'pushNotifications', fallback: true),
+      'biometricEnabled':
+          _preferenceBool(data, 'biometricEnabled', fallback: false),
       'entitlements': entitlements,
     };
   }
@@ -84,6 +94,12 @@ class FirestoreService {
       'role': role,
       'activeSiteId': null,
       'siteIds': <String>[],
+      'localeCode': 'en',
+      'timeZone': 'auto',
+      'notificationsEnabled': true,
+      'emailNotifications': true,
+      'pushNotifications': true,
+      'biometricEnabled': false,
       'entitlements': <Map<String, dynamic>>[],
     };
   }
@@ -97,6 +113,33 @@ class FirestoreService {
       ...updates,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  String _preferenceString(
+    Map<String, dynamic> data,
+    String key, {
+    required String fallback,
+  }) {
+    final dynamic rawPreferences = data['preferences'];
+    final Map<String, dynamic> preferences = rawPreferences is Map
+        ? rawPreferences.map((dynamic mapKey, dynamic value) =>
+            MapEntry<String, dynamic>(mapKey.toString(), value))
+        : <String, dynamic>{};
+    final String? value = preferences[key] as String? ?? data[key] as String?;
+    return (value?.trim().isNotEmpty ?? false) ? value!.trim() : fallback;
+  }
+
+  bool _preferenceBool(
+    Map<String, dynamic> data,
+    String key, {
+    required bool fallback,
+  }) {
+    final dynamic rawPreferences = data['preferences'];
+    final Map<String, dynamic> preferences = rawPreferences is Map
+        ? rawPreferences.map((dynamic mapKey, dynamic value) =>
+            MapEntry<String, dynamic>(mapKey.toString(), value))
+        : <String, dynamic>{};
+    return preferences[key] as bool? ?? data[key] as bool? ?? fallback;
   }
 
   /// Create user profile after registration
@@ -217,10 +260,11 @@ class FirestoreService {
     required String learnerId,
   }) async {
     final DocumentReference<Map<String, dynamic>> docRef =
-        await _firestore.collection('presenceRecords').add(<String, dynamic>{
+        await _firestore.collection('checkins').add(<String, dynamic>{
       'siteId': siteId,
       'learnerId': learnerId,
       'type': 'checkin',
+      'status': 'completed',
       'timestamp': FieldValue.serverTimestamp(),
       'recordedBy': _auth.currentUser?.uid,
     });
@@ -233,10 +277,11 @@ class FirestoreService {
     required String learnerId,
   }) async {
     final DocumentReference<Map<String, dynamic>> docRef =
-        await _firestore.collection('presenceRecords').add(<String, dynamic>{
+        await _firestore.collection('checkins').add(<String, dynamic>{
       'siteId': siteId,
       'learnerId': learnerId,
       'type': 'checkout',
+      'status': 'completed',
       'timestamp': FieldValue.serverTimestamp(),
       'recordedBy': _auth.currentUser?.uid,
     });
@@ -315,25 +360,59 @@ class FirestoreService {
     final User? user = _auth.currentUser;
     if (user == null) throw Exception('Not authenticated');
 
+    final DocumentSnapshot<Map<String, dynamic>> senderDoc =
+        await _firestore.collection('users').doc(user.uid).get();
+    final Map<String, dynamic>? senderData = senderDoc.data();
+    final String senderName =
+        senderData?['displayName'] as String? ??
+        user.displayName ??
+        user.email ??
+        user.uid;
+
+    final DocumentReference<Map<String, dynamic>> threadRef =
+        _firestore.collection('messageThreads').doc(conversationId);
+    final DocumentSnapshot<Map<String, dynamic>> threadDoc =
+        await threadRef.get();
+    final List<String> participantIds =
+        List<String>.from(threadDoc.data()?['participantIds'] ?? <dynamic>[]);
+    final List<String> participantNames =
+        List<String>.from(threadDoc.data()?['participantNames'] ?? <dynamic>[]);
+
+    if (!threadDoc.exists || !participantIds.contains(user.uid)) {
+      throw Exception('Conversation does not exist or is not accessible');
+    }
+
+    await threadRef.set(<String, dynamic>{
+      'participantIds': participantIds,
+      'participantNames': participantNames,
+      'status': 'open',
+      'lastMessagePreview':
+          content.length > 120 ? '${content.substring(0, 120)}...' : content,
+      'lastMessageSenderId': user.uid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    final String recipientId = participantIds.firstWhere(
+      (String participantId) => participantId != user.uid,
+      orElse: () => user.uid,
+    );
+
     final DocumentReference<Map<String, dynamic>> docRef =
         await _firestore.collection('messages').add(<String, dynamic>{
-      'conversationId': conversationId,
+      'threadId': conversationId,
+      'title': 'Direct message',
+      'body': content,
+      'type': 'direct',
+      'priority': 'normal',
       'senderId': user.uid,
-      'content': content,
+      'senderName': senderName,
+      'recipientId': recipientId,
       'attachmentUrl': attachmentUrl,
-      'readBy': <String>[user.uid],
-      'sentAt': FieldValue.serverTimestamp(),
+      'isRead': false,
+      'status': 'sent',
+      'metadata': <String, dynamic>{'threadId': conversationId},
       'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Update conversation last message
-    await _firestore
-        .collection('conversations')
-        .doc(conversationId)
-        .update(<String, dynamic>{
-      'lastMessageAt': FieldValue.serverTimestamp(),
-      'lastMessagePreview':
-          content.length > 50 ? '${content.substring(0, 50)}...' : content,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
 
     return docRef.id;
@@ -343,8 +422,8 @@ class FirestoreService {
   Stream<List<Map<String, dynamic>>> getMessages(String conversationId) {
     return _firestore
         .collection('messages')
-        .where('conversationId', isEqualTo: conversationId)
-        .orderBy('sentAt', descending: false)
+        .where('threadId', isEqualTo: conversationId)
+        .orderBy('createdAt', descending: false)
         .snapshots()
         .map((QuerySnapshot<Map<String, dynamic>> snapshot) => snapshot.docs
             .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>

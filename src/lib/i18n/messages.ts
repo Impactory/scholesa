@@ -1,6 +1,7 @@
 import enMessages from '@/locales/en.json';
-import esMessages from '@/locales/es.json';
-import zhMessages from '@/locales/zh.json';
+import zhCNMessages from '@/locales/zh-CN.json';
+import zhTWMessages from '@/locales/zh-TW.json';
+import thMessages from '@/locales/th.json';
 import { getFallbackChain, type SupportedLocale } from './config';
 
 type MessageDictionary = Record<string, unknown>;
@@ -9,8 +10,9 @@ type TranslationParams = Record<string, string | number>;
 
 const CATALOGS: Record<SupportedLocale, MessageDictionary> = {
   en: enMessages as MessageDictionary,
-  es: esMessages as MessageDictionary,
-  zh: zhMessages as MessageDictionary,
+  'zh-CN': zhCNMessages as MessageDictionary,
+  'zh-TW': zhTWMessages as MessageDictionary,
+  th: thMessages as MessageDictionary,
 };
 
 function getMessageByPath(messages: MessageDictionary, key: string): unknown {

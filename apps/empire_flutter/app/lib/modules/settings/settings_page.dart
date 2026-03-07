@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth/app_state.dart';
 import '../../auth/auth_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -149,10 +151,26 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _biometricEnabled = false;
   String _language = 'en';
   String _timeZone = 'auto';
+  bool _didLoadPreferences = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadPreferences) return;
+    final AppState appState = context.read<AppState>();
+    _notificationsEnabled = appState.notificationsEnabled;
+    _emailNotifications = appState.emailNotifications;
+    _pushNotifications = appState.pushNotifications;
+    _biometricEnabled = appState.biometricEnabled;
+    _language = appState.preferredLocaleCode;
+    _timeZone = appState.timeZone;
+    _didLoadPreferences = true;
+  }
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final AppState appState = context.watch<AppState>();
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -169,7 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: CustomScrollView(
           slivers: <Widget>[
             SliverToBoxAdapter(child: _buildHeader()),
-            SliverToBoxAdapter(child: _buildAccountSection()),
+            SliverToBoxAdapter(child: _buildAccountSection(appState)),
             SliverToBoxAdapter(child: _buildNotificationsSection()),
             SliverToBoxAdapter(child: _buildAppearanceSection()),
             SliverToBoxAdapter(child: _buildPrivacySection()),
@@ -231,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildAccountSection() {
+  Widget _buildAccountSection(AppState appState) {
     return _SettingsSection(
       title: _tSettings(context, 'Account'),
       children: <Widget>[
@@ -250,13 +268,15 @@ class _SettingsPageState extends State<SettingsPage> {
         _SettingsTile(
           icon: Icons.email,
           title: _tSettings(context, 'Email'),
-          subtitle: 'emma@example.com',
+          subtitle: (appState.email?.trim().isNotEmpty ?? false)
+              ? appState.email!.trim()
+              : 'Not set',
           onTap: () => _showChangeEmailSheet(),
         ),
         _SettingsTile(
           icon: Icons.phone,
           title: _tSettings(context, 'Phone Number'),
-          subtitle: '+1 234 567 8900',
+          subtitle: 'Managed in profile',
           onTap: () => _showChangePhoneSheet(),
         ),
       ],
@@ -274,6 +294,9 @@ class _SettingsPageState extends State<SettingsPage> {
           value: _notificationsEnabled,
           onChanged: (bool value) {
             setState(() => _notificationsEnabled = value);
+            _persistPreferences(<String, dynamic>{
+              'notificationsEnabled': value,
+            });
           },
         ),
         if (_notificationsEnabled) ...<Widget>[
@@ -284,6 +307,9 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _emailNotifications,
             onChanged: (bool value) {
               setState(() => _emailNotifications = value);
+              _persistPreferences(<String, dynamic>{
+                'emailNotifications': value,
+              });
             },
           ),
           _SettingsToggle(
@@ -293,6 +319,9 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _pushNotifications,
             onChanged: (bool value) {
               setState(() => _pushNotifications = value);
+              _persistPreferences(<String, dynamic>{
+                'pushNotifications': value,
+              });
             },
           ),
         ],
@@ -364,6 +393,9 @@ class _SettingsPageState extends State<SettingsPage> {
           value: _biometricEnabled,
           onChanged: (bool value) {
             setState(() => _biometricEnabled = value);
+            _persistPreferences(<String, dynamic>{
+              'biometricEnabled': value,
+            });
           },
         ),
         _SettingsTile(
@@ -472,9 +504,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String _getLanguageName(String code) {
     const Map<String, String> languages = <String, String>{
       'en': 'English',
-      'es': 'Español',
-      'zh': '中文',
-      'ms': 'Bahasa Melayu',
+      'zh-CN': 'Chinese (Simplified)',
+      'zh-TW': 'Chinese (Traditional)',
+      'th': 'Thai',
     };
     return languages[code] ?? _tSettings(context, 'English');
   }
@@ -670,6 +702,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             currentPassword: currentPassword,
                             newEmail: newEmail,
                           );
+                          await _refreshAppStateFromFirestore();
                           if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
                           _showSuccessSnackBar(emailRequestedMessage);
@@ -746,6 +779,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         try {
                           await authService.updatePhoneNumberInProfile(
                               phoneNumber);
+                          await _refreshAppStateFromFirestore();
                           if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
                           _showSuccessSnackBar(phoneUpdatedMessage);
@@ -788,6 +822,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     value: _emailNotifications,
                     onChanged: (bool value) {
                       setState(() => _emailNotifications = value);
+                      _persistPreferences(<String, dynamic>{
+                        'emailNotifications': value,
+                      });
                       setModalState(() {});
                     },
                   ),
@@ -796,6 +833,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     value: _pushNotifications,
                     onChanged: (bool value) {
                       setState(() => _pushNotifications = value);
+                      _persistPreferences(<String, dynamic>{
+                        'pushNotifications': value,
+                      });
                       setModalState(() {});
                     },
                   ),
@@ -891,7 +931,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              ...<String>['en', 'es', 'zh', 'ms'].map((String code) {
+              ...<String>['en', 'zh-CN', 'zh-TW', 'th'].map((String code) {
                 return ListTile(
                   title: Text(_getLanguageName(code)),
                   trailing: _language == code
@@ -906,6 +946,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                     );
                     setState(() => _language = code);
+                    _persistPreferences(<String, dynamic>{'locale': code});
                     Navigator.pop(context);
                   },
                 );
@@ -958,6 +999,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       : null,
                   onTap: () {
                     setState(() => _timeZone = zone);
+                    _persistPreferences(<String, dynamic>{
+                      'timeZone': zone,
+                    });
                     Navigator.pop(bottomSheetContext);
                   },
                 );
@@ -1315,6 +1359,30 @@ class _SettingsPageState extends State<SettingsPage> {
       return error.message!;
     }
     return error.toString().replaceFirst('Exception: ', '');
+  }
+
+  Future<void> _persistPreferences(Map<String, dynamic> updates) async {
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final Map<String, dynamic> payload = <String, dynamic>{};
+      updates.forEach((String key, dynamic value) {
+        payload['preferences.$key'] = value;
+      });
+      await firestoreService.updateUserProfile(payload);
+      final Map<String, dynamic>? profile = await firestoreService.getUserProfile();
+      if (!mounted || profile == null) return;
+      context.read<AppState>().updateFromMeResponse(profile);
+    } catch (error) {
+      if (!mounted) return;
+      _showErrorSnackBar(_mapActionError(error));
+    }
+  }
+
+  Future<void> _refreshAppStateFromFirestore() async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final Map<String, dynamic>? profile = await firestoreService.getUserProfile();
+    if (!mounted || profile == null) return;
+    context.read<AppState>().updateFromMeResponse(profile);
   }
 }
 

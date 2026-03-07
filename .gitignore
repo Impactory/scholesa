@@ -37,6 +37,9 @@ yarn-error.log*
 !firebase.json
 !firestore.indexes.json
 !.vscode/*.json
+client_secret_*.apps.googleusercontent.com.json
+*firebase-adminsdk*.json
+*service-account*.json
 
 # vercel
 .vercel
@@ -62,6 +65,7 @@ dataconnect/.dataconnect/pgliteData/
 .firebase/
 .vscode/
 .gemini/
+.idx/
 
 # Node deps
 node_modules/

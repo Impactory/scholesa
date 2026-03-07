@@ -268,52 +268,43 @@ class ParentService extends ChangeNotifier {
   /// Load billing summary from Firebase
   Future<void> _loadBillingSummary() async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> billingDoc =
-          await _firestore.collection('billingAccounts').doc(parentId).get();
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('getParentBillingSummary');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'parentId': parentId});
+      final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
+      final Map<String, dynamic>? summary =
+          _asStringDynamicMap(payload?['summary']);
+      if (summary != null) {
+        final List<dynamic> paymentsRaw =
+            summary['recentPayments'] as List<dynamic>? ?? <dynamic>[];
+        final List<PaymentHistory> payments = paymentsRaw
+            .map(_asStringDynamicMap)
+            .whereType<Map<String, dynamic>>()
+            .map((Map<String, dynamic> payData) => PaymentHistory(
+                  id: _asTrimmedString(payData['id']),
+                  amount: _toDouble(payData['amount']) ?? 0.0,
+                  date: _parseTimestamp(payData['date']) ?? DateTime.now(),
+                  status: _asTrimmedString(payData['status']).isEmpty
+                      ? 'unknown'
+                      : _asTrimmedString(payData['status']),
+                  description: _asTrimmedString(payData['description']),
+                ))
+            .toList();
 
-      if (!billingDoc.exists) {
-        _billingSummary = null;
+        _billingSummary = BillingSummary(
+          currentBalance: _toDouble(summary['currentBalance']) ?? 0.0,
+          nextPaymentAmount: _toDouble(summary['nextPaymentAmount']) ?? 0.0,
+          nextPaymentDate: _parseTimestamp(summary['nextPaymentDate']),
+          subscriptionPlan: _asTrimmedString(summary['subscriptionPlan']).isEmpty
+              ? 'Basic'
+              : _asTrimmedString(summary['subscriptionPlan']),
+          recentPayments: payments,
+        );
         return;
       }
-
-      final Map<String, dynamic>? data = billingDoc.data();
-      if (data == null) {
-        _billingSummary = null;
-        return;
-      }
-
-      // Get recent payments
-      final QuerySnapshot<Map<String, dynamic>> paymentsSnapshot =
-          await _firestore
-              .collection('payments')
-              .where('parentId', isEqualTo: parentId)
-              .orderBy('date', descending: true)
-              .limit(10)
-              .get();
-
-      final List<PaymentHistory> payments = paymentsSnapshot.docs.map(
-        (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-          final Map<String, dynamic> payData = doc.data();
-          return PaymentHistory(
-            id: doc.id,
-            amount: (payData['amount'] as num?)?.toDouble() ?? 0.0,
-            date: _parseTimestamp(payData['date']) ?? DateTime.now(),
-            status: payData['status'] as String? ?? 'unknown',
-            description: payData['description'] as String? ?? '',
-          );
-        },
-      ).toList();
-
-      _billingSummary = BillingSummary(
-        currentBalance: (data['currentBalance'] as num?)?.toDouble() ?? 0.0,
-        nextPaymentAmount:
-            (data['nextPaymentAmount'] as num?)?.toDouble() ?? 0.0,
-        nextPaymentDate: _parseTimestamp(data['nextPaymentDate']),
-        subscriptionPlan: data['subscriptionPlan'] as String? ?? 'Basic',
-        recentPayments: payments,
-      );
-    } catch (e) {
-      debugPrint('Error loading billing summary: $e');
+    } catch (error) {
+      debugPrint('Parent billing callable request failed: $error');
       _billingSummary = null;
     }
   }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../../services/firestore_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -18,8 +16,7 @@ const Map<String, String> _hqIntegrationsEs = <String, String>{
   'Last sync:': 'Última sincronización:',
   'Retry': 'Reintentar',
   'just now': 'justo ahora',
-  'Integrations health refreshed':
-      'Estado de integraciones actualizado',
+  'Integrations health refreshed': 'Estado de integraciones actualizado',
   'recovered successfully': 'recuperada correctamente',
   '5 min ago': '5 min atrás',
   '15 min ago': '15 min atrás',
@@ -27,7 +24,8 @@ const Map<String, String> _hqIntegrationsEs = <String, String>{
   '30 min ago': '30 min atrás',
   'Failed': 'Falló',
   'Loading...': 'Cargando...',
-  'No integration telemetry available': 'No hay telemetría de integración disponible',
+  'No integration telemetry available':
+      'No hay telemetría de integración disponible',
   'Unknown Site': 'Sede desconocida',
 };
 
@@ -48,7 +46,6 @@ class HqIntegrationsHealthPage extends StatefulWidget {
 }
 
 class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
-  final List<_SiteIntegration> _fallbackSites = <_SiteIntegration>[];
   List<_SiteIntegration> _sites = <_SiteIntegration>[];
   bool _isLoading = false;
 
@@ -105,7 +102,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  _tHqIntegrations(context, 'No integration telemetry available'),
+                  _tHqIntegrations(
+                      context, 'No integration telemetry available'),
                   style: const TextStyle(color: ScholesaColors.textSecondary),
                 ),
               ),
@@ -211,7 +209,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         title: Text(site.siteName,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          '${site.integrations.length} ${_tHqIntegrations(context, 'integrations')}'),
+            '${site.integrations.length} ${_tHqIntegrations(context, 'integrations')}'),
         leading: _buildSiteStatusIcon(site),
         children: site.integrations
             .map((integration) => _buildIntegrationTile(context, integration))
@@ -266,7 +264,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
       ),
       title: Text(integration.name),
-        subtitle: Text(
+      subtitle: Text(
           '${_tHqIntegrations(context, 'Last sync:')} ${_formatLastSync(integration)}'),
       trailing: integration.status == _Status.error
           ? TextButton(
@@ -301,18 +299,12 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Future<void> _retryIntegration(_Integration integration) async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      return;
-    }
-
     try {
-      await firestoreService.firestore.collection('syncJobs').add(<String, dynamic>{
-        'type': '${integration.providerKey}_manual_retry',
-        'status': 'queued',
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
+      await callable.call(<String, dynamic>{
         'siteId': integration.siteId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'provider': integration.providerKey,
       });
 
       if (!mounted) return;
@@ -326,80 +318,55 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   }
 
   Future<void> _loadIntegrationsHealth() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() {
-        _sites = _fallbackSites;
-        _isLoading = false;
-      });
-      return;
-    }
-
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      QuerySnapshot<Map<String, dynamic>> sitesSnap;
-      try {
-        sitesSnap = await firestoreService.firestore
-            .collection('sites')
-            .orderBy('name')
-            .limit(200)
-            .get();
-      } catch (_) {
-        sitesSnap = await firestoreService.firestore
-            .collection('sites')
-            .limit(200)
-            .get();
-      }
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'scope': 'hq'});
+      final Map<String, dynamic> payload = _asMap(result.data);
+      final List<dynamic> syncRows =
+          payload['syncJobs'] as List<dynamic>? ?? <dynamic>[];
+      final List<dynamic> connectionRows =
+          payload['connections'] as List<dynamic>? ?? <dynamic>[];
 
       final Map<String, String> siteNames = <String, String>{};
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in sitesSnap.docs) {
-        final Map<String, dynamic> data = doc.data();
-        siteNames[doc.id] =
-            (data['name'] as String?)?.trim().isNotEmpty == true
-                ? (data['name'] as String).trim()
-                : doc.id;
-      }
-
-      QuerySnapshot<Map<String, dynamic>> syncSnap;
-      try {
-        syncSnap = await firestoreService.firestore
-            .collection('syncJobs')
-            .orderBy('createdAt', descending: true)
-            .limit(400)
-            .get();
-      } catch (_) {
-        syncSnap = await firestoreService.firestore
-            .collection('syncJobs')
-            .limit(400)
-            .get();
+      for (final dynamic row in <dynamic>[...syncRows, ...connectionRows]) {
+        final Map<String, dynamic> data = _asMap(row);
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (siteId.isEmpty) continue;
+        final String siteName = ((data['siteName'] as String?) ?? '').trim();
+        siteNames[siteId] = siteName.isNotEmpty ? siteName : siteId;
       }
 
       final Map<String, Map<String, _Integration>> grouped =
           <String, Map<String, _Integration>>{};
 
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in syncSnap.docs) {
-        final Map<String, dynamic> data = doc.data();
+      for (final dynamic row in syncRows) {
+        final Map<String, dynamic> data = _asMap(row);
         final String siteId = ((data['siteId'] as String?) ?? '').trim();
         if (siteId.isEmpty) continue;
 
         final String providerKey = _providerKeyFromType(
-            ((data['type'] as String?) ?? '').trim().toLowerCase());
+            ((data['provider'] as String?) ?? (data['type'] as String?) ?? '')
+                .trim()
+                .toLowerCase());
         if (providerKey.isEmpty) continue;
 
         final String statusRaw =
             ((data['status'] as String?) ?? '').trim().toLowerCase();
         final _Status status = _statusFromRaw(statusRaw);
-        final DateTime? createdAt = _toDateTime(data['createdAt']);
+        final DateTime? createdAt =
+            _toDateTime(data['updatedAt'] ?? data['createdAt']);
 
         final Map<String, _Integration> byProvider =
             grouped.putIfAbsent(siteId, () => <String, _Integration>{});
         final _Integration? existing = byProvider[providerKey];
         if (existing == null ||
-            ((createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
-                .isAfter(existing.lastSyncAt ?? DateTime.fromMillisecondsSinceEpoch(0)))) {
+            ((createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)).isAfter(
+                existing.lastSyncAt ??
+                    DateTime.fromMillisecondsSinceEpoch(0)))) {
           byProvider[providerKey] = _Integration(
             name: _providerName(providerKey),
             providerKey: providerKey,
@@ -410,10 +377,45 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
         }
       }
 
+      for (final dynamic row in connectionRows) {
+        final Map<String, dynamic> data = _asMap(row);
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (siteId.isEmpty) continue;
+
+        final String providerKey = _providerKeyFromType(
+            ((data['provider'] as String?) ??
+                    (data['providerKey'] as String?) ??
+                    '')
+                .trim()
+                .toLowerCase());
+        if (providerKey.isEmpty) continue;
+
+        final String statusRaw =
+            ((data['status'] as String?) ?? '').trim().toLowerCase();
+        final _Status status = _statusFromRaw(statusRaw);
+        final DateTime? updatedAt = _toDateTime(data['updatedAt']);
+
+        final Map<String, _Integration> byProvider =
+            grouped.putIfAbsent(siteId, () => <String, _Integration>{});
+        final _Integration? existing = byProvider[providerKey];
+        if (existing == null ||
+            status == _Status.error ||
+            (status == _Status.warning && existing.status == _Status.healthy)) {
+          byProvider[providerKey] = _Integration(
+            name: _providerName(providerKey),
+            providerKey: providerKey,
+            siteId: siteId,
+            status: status,
+            lastSyncAt: updatedAt ?? existing?.lastSyncAt,
+          );
+        }
+      }
+
       final List<_SiteIntegration> loaded = grouped.entries
           .map((entry) => _SiteIntegration(
                 siteId: entry.key,
-                siteName: siteNames[entry.key] ?? _tHqIntegrations(context, 'Unknown Site'),
+                siteName: siteNames[entry.key] ??
+                    _tHqIntegrations(context, 'Unknown Site'),
                 integrations: entry.value.values.toList()
                   ..sort((_Integration a, _Integration b) =>
                       a.name.compareTo(b.name)),
@@ -429,7 +431,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _sites = _fallbackSites;
+        _sites = <_SiteIntegration>[];
       });
     } finally {
       if (mounted) {
@@ -460,16 +462,33 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
 
   _Status _statusFromRaw(String raw) {
     if (raw == 'failed' || raw == 'error') return _Status.error;
-    if (raw == 'queued' || raw == 'running' || raw == 'in_progress') {
+    if (raw == 'queued' ||
+        raw == 'running' ||
+        raw == 'in_progress' ||
+        raw == 'degraded' ||
+        raw == 'warning') {
       return _Status.warning;
     }
+    if (raw == 'disconnected') return _Status.error;
     return _Status.healthy;
   }
 
   DateTime? _toDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+    if (value is Map && value['seconds'] is int) {
+      final int seconds = value['seconds'] as int;
+      final int nanos = (value['nanoseconds'] as int?) ?? 0;
+      return DateTime.fromMillisecondsSinceEpoch(
+          (seconds * 1000) + (nanos ~/ 1000000));
+    }
+    if (value != null &&
+        value is Object &&
+        value.runtimeType.toString().contains('Timestamp') &&
+        (value as dynamic).toDate is Function) {
+      return (value as dynamic).toDate() as DateTime?;
+    }
     if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     if (value is String && value.trim().isNotEmpty) {
       return DateTime.tryParse(value.trim());
     }
@@ -486,12 +505,13 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     return '${diff.inDays}d ago';
   }
 
-  FirestoreService? _maybeFirestoreService() {
-    try {
-      return context.read<FirestoreService>();
-    } catch (_) {
-      return null;
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((dynamic key, dynamic nestedValue) =>
+          MapEntry<String, dynamic>(key.toString(), nestedValue));
     }
+    return <String, dynamic>{};
   }
 }
 

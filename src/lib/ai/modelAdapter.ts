@@ -150,22 +150,7 @@ const LOCALE_TEXT: Record<SupportedLocale, LocaleText> = {
     explainBack: 'Can you explain your reasoning in your own words?',
     followUp: 'What is one next step you can try now?',
   },
-  es: {
-    intro: 'Vamos paso a paso.',
-    noDirect: 'Te guiaré con pistas en lugar de dar la respuesta final.',
-    taskHint: {
-      hint_generation: 'Comienza identificando el objetivo, los datos conocidos y una acción mínima.',
-      rubric_check: 'Compara tu trabajo con cada criterio y señala una fortaleza y una brecha.',
-      debug_assistance: 'Verifica qué cambió recientemente y aísla una causa posible.',
-      critique_feedback: 'Enfoca la retroalimentación en evidencia, claridad y una mejora concreta.',
-      explain_concept: 'Desglosa el concepto en partes simples y conéctalo con un ejemplo familiar.',
-      reflection_prompt: 'Piensa en qué funcionó, qué no funcionó y qué intentarás después.',
-    },
-    contextLead: 'Usa esta pista de misión:',
-    explainBack: '¿Puedes explicar tu razonamiento con tus propias palabras?',
-    followUp: '¿Cuál es un próximo paso que puedes intentar?',
-  },
-  zh: {
+  'zh-CN': {
     intro: '我们一步一步来。',
     noDirect: '我会用提示引导你，而不是直接给最终答案。',
     taskHint: {
@@ -179,6 +164,36 @@ const LOCALE_TEXT: Record<SupportedLocale, LocaleText> = {
     contextLead: '可参考这个任务线索：',
     explainBack: '你可以用自己的话解释一下你的思路吗？',
     followUp: '你现在可以先尝试哪一步？',
+  },
+  'zh-TW': {
+    intro: '我們一步一步來。',
+    noDirect: '我會用提示引導你，而不是直接給最終答案。',
+    taskHint: {
+      hint_generation: '先明確目標、已知條件，再選一個最小可執行步驟。',
+      rubric_check: '按評分標準逐項對照，寫出一個優勢和一個改進點。',
+      debug_assistance: '先檢查最近改動，再定位一個最可能的原因。',
+      critique_feedback: '回饋聚焦證據、清晰度和一個可執行改進。',
+      explain_concept: '把概念拆成簡單部分，並連結一個熟悉例子。',
+      reflection_prompt: '回想什麼有效、什麼無效、下一步要嘗試什麼。',
+    },
+    contextLead: '可參考這個任務線索：',
+    explainBack: '你可以用自己的話解釋一下你的思路嗎？',
+    followUp: '你現在可以先嘗試哪一步？',
+  },
+  th: {
+    intro: 'เรามาแก้ทีละขั้นตอนกัน',
+    noDirect: 'ฉันจะช่วยด้วยคำใบ้แทนการให้คำตอบสุดท้ายทันที',
+    taskHint: {
+      hint_generation: 'เริ่มจากระบุเป้าหมาย ข้อมูลที่มี และหนึ่งขั้นตอนเล็ก ๆ ที่ทำได้ทันที',
+      rubric_check: 'เทียบงานของคุณกับเกณฑ์ทีละข้อ แล้วระบุจุดแข็งหนึ่งข้อและจุดที่ต้องปรับหนึ่งข้อ',
+      debug_assistance: 'ตรวจสอบสิ่งที่เปลี่ยนล่าสุด แล้วแยกสาเหตุที่เป็นไปได้ที่สุดหนึ่งข้อ',
+      critique_feedback: 'ให้ข้อเสนอแนะโดยยึดหลักฐาน ความชัดเจน และการปรับปรุงที่ทำได้จริงหนึ่งข้อ',
+      explain_concept: 'แยกแนวคิดออกเป็นส่วนง่าย ๆ และเชื่อมกับตัวอย่างที่คุ้นเคย',
+      reflection_prompt: 'ทบทวนว่าอะไรได้ผล อะไรยังไม่ดี และครั้งต่อไปจะลองอะไร',
+    },
+    contextLead: 'ใช้เบาะแสภารกิจนี้:',
+    explainBack: 'ลองอธิบายเหตุผลของคุณด้วยคำของคุณเองได้ไหม?',
+    followUp: 'ตอนนี้คุณลองทำขั้นตอนถัดไปข้อไหนได้บ้าง?',
   },
 };
 

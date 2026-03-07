@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
-import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -331,8 +331,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     _t(context, 'No invoices yet'),
-                    style:
-                        const TextStyle(color: ScholesaColors.textSecondary),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
                   ),
                 )
               : Column(
@@ -347,7 +346,8 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                         _invoices[index].amountLabel,
                         _invoices[index].paid,
                       ),
-                      if (index < ((_invoices.length > 3 ? 3 : _invoices.length) - 1))
+                      if (index <
+                          ((_invoices.length > 3 ? 3 : _invoices.length) - 1))
                         const Divider(height: 1),
                     ],
                   ],
@@ -357,7 +357,8 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     );
   }
 
-  Widget _buildInvoiceRow(BuildContext context, String id, String date, String amount, bool paid) {
+  Widget _buildInvoiceRow(
+      BuildContext context, String id, String date, String amount, bool paid) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -399,7 +400,8 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_t(context, 'Manage Site Plan')),
         content: Text(
-          _t(context, 'Review current usage, upgrade limits, or contact HQ billing support.'),
+          _t(context,
+              'Review current usage, upgrade limits, or contact HQ billing support.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -417,7 +419,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
             child: Text(_t(context, 'Close')),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
@@ -427,12 +429,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                 },
               );
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_t(context, 'Plan management request submitted')),
-                  backgroundColor: ScholesaColors.hq,
-                ),
-              );
+              await _requestPlanChange();
             },
             child: Text(_t(context, 'Request Change')),
           ),
@@ -492,9 +489,8 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
   }
 
   Future<void> _loadBillingData() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
-    if (firestoreService == null || appState == null) {
+    if (appState == null) {
       return;
     }
 
@@ -506,85 +502,67 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final DocumentSnapshot<Map<String, dynamic>> siteDoc =
-          await firestoreService.firestore.collection('sites').doc(siteId).get();
-      if (siteDoc.exists) {
-        final Map<String, dynamic>? data = siteDoc.data();
-        final String plan = (data?['billingPlan'] as String?)?.trim() ?? 'Pro Plan';
-        final String status = (data?['billingStatus'] as String?)?.trim() ?? 'Active';
-        final num? monthlyFee = data?['monthlyFee'] as num?;
-        final String currency = ((data?['currency'] as String?) ?? 'USD').toUpperCase();
-        final DateTime? nextBilling = _toDateTime(data?['nextBillingDate']);
-        final int learnerCount = _asInt(data?['learnerCount']) ??
-            ((data?['learnerIds'] as List?)?.length ?? 0);
-        final int educatorCount = _asInt(data?['educatorCount']) ??
-            ((data?['educatorIds'] as List?)?.length ?? 0);
-        final int learnerCap = _asInt(data?['learnerCap']) ??
-            _asInt(data?['billingLearnerLimit']) ??
-            100;
-        final int educatorCap = _asInt(data?['educatorCap']) ??
-            _asInt(data?['billingEducatorLimit']) ??
-            15;
-        final double storageUsed = _asDouble(data?['storageUsedGb']) ??
-            _asDouble(data?['storageUsed']) ??
-            0;
-        final double storageCap = _asDouble(data?['storageCapGb']) ??
-            _asDouble(data?['storageLimitGb']) ??
-            10;
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('getSiteBillingSnapshot');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'siteId': siteId});
+      final Map<String, dynamic> payload = _asMap(result.data);
+      final DateTime? nextBilling = _toDateTime(payload['nextBillingDate']);
 
-        _planName = plan;
-        _planStatus = status;
-        _monthlyAmount = monthlyFee != null
-            ? '${_currencySymbol(currency)}${monthlyFee.toStringAsFixed(0)}/month'
-            : '\$299/month';
-        _nextBillingDate = nextBilling != null
-            ? _formatDate(nextBilling)
-            : _nextBillingDate;
-        _activeLearnersUsed = learnerCount.toDouble();
-        _activeLearnersTotal = learnerCap.toDouble();
-        _educatorsUsed = educatorCount.toDouble();
-        _educatorsTotal = educatorCap.toDouble();
-        _storageUsedGb = storageUsed;
-        _storageTotalGb = storageCap;
-      }
-
-      Query<Map<String, dynamic>> invoicesQuery =
-          firestoreService.firestore.collection('payouts');
-      try {
-        invoicesQuery = invoicesQuery.where('siteId', isEqualTo: siteId);
-      } catch (_) {}
-      QuerySnapshot<Map<String, dynamic>> invoicesSnapshot;
-      try {
-        invoicesSnapshot = await invoicesQuery
-            .orderBy('createdAt', descending: true)
-            .limit(50)
-            .get();
-      } catch (_) {
-        invoicesSnapshot = await invoicesQuery.limit(50).get();
-      }
-
-      final List<_InvoiceItem> invoices = invoicesSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final String status = ((data['status'] as String?) ?? '').toLowerCase();
-        final bool paid = status == 'approved' || status == 'paid' || status == 'completed';
-        final String amountRaw = (data['amount'] as String?) ??
-            ((data['amount'] as num?)?.toString() ?? '0');
-        final String currency = ((data['currency'] as String?) ?? 'USD').toUpperCase();
-        final DateTime date = _toDateTime(data['approvedAt']) ??
-            _toDateTime(data['createdAt']) ??
-            DateTime.now();
-
-        return _InvoiceItem(
-          id: doc.id,
-          dateLabel: _formatDate(date),
-          amountLabel: '${_currencySymbol(currency)}$amountRaw',
-          paid: paid,
-        );
-      }).toList();
+      final List<_InvoiceItem> invoices = _asMapList(payload['invoices'])
+          .map((Map<String, dynamic> row) {
+            final String id = ((row['id'] as String?) ?? '').trim();
+            if (id.isEmpty) {
+              return null;
+            }
+            final String currency =
+                ((row['currency'] as String?) ?? 'USD').toUpperCase();
+            final String amount =
+                ((_asDouble(row['amount']) ?? 0)).toStringAsFixed(2);
+            final String status =
+                ((row['status'] as String?) ?? '').toLowerCase();
+            final bool paid = status == 'approved' ||
+                status == 'paid' ||
+                status == 'completed';
+            final DateTime date = _toDateTime(row['date']) ?? DateTime.now();
+            return _InvoiceItem(
+              id: id,
+              dateLabel: _formatDate(date),
+              amountLabel: '${_currencySymbol(currency)}$amount',
+              paid: paid,
+            );
+          })
+          .whereType<_InvoiceItem>()
+          .toList();
 
       if (!mounted) return;
       setState(() {
+        _planName = (payload['planName'] as String?)?.trim().isNotEmpty == true
+            ? (payload['planName'] as String).trim()
+            : _planName;
+        _planStatus =
+            (payload['planStatus'] as String?)?.trim().isNotEmpty == true
+                ? (payload['planStatus'] as String).trim()
+                : _planStatus;
+        final double monthlyAmount = _asDouble(payload['monthlyAmount']) ?? 0;
+        final String currency =
+            ((payload['currency'] as String?) ?? 'USD').toUpperCase();
+        _monthlyAmount =
+            '${_currencySymbol(currency)}${monthlyAmount.toStringAsFixed(0)}/month';
+        _nextBillingDate =
+            nextBilling != null ? _formatDate(nextBilling) : _nextBillingDate;
+        _activeLearnersUsed =
+            (_asDouble(payload['activeLearnersUsed']) ?? _activeLearnersUsed);
+        _activeLearnersTotal =
+            (_asDouble(payload['activeLearnersTotal']) ?? _activeLearnersTotal);
+        _educatorsUsed =
+            (_asDouble(payload['educatorsUsed']) ?? _educatorsUsed);
+        _educatorsTotal =
+            (_asDouble(payload['educatorsTotal']) ?? _educatorsTotal);
+        _storageUsedGb =
+            (_asDouble(payload['storageUsedGb']) ?? _storageUsedGb);
+        _storageTotalGb =
+            (_asDouble(payload['storageTotalGb']) ?? _storageTotalGb);
         _invoices = invoices;
       });
     } finally {
@@ -594,12 +572,52 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     }
   }
 
-  FirestoreService? _maybeFirestoreService() {
+  Future<void> _requestPlanChange() async {
+    final AppState? appState = _maybeAppState();
+    final String siteId = (appState?.activeSiteId ??
+            ((appState?.siteIds.isNotEmpty ?? false)
+                ? appState!.siteIds.first
+                : ''))
+        .trim();
+
     try {
-      return context.read<FirestoreService>();
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('requestSiteBillingPlanChange');
+      await callable.call(<String, dynamic>{
+        if (siteId.isNotEmpty) 'siteId': siteId,
+        'reason': 'Requested from site billing UI',
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t(context, 'Plan management request submitted')),
+          backgroundColor: ScholesaColors.hq,
+        ),
+      );
     } catch (_) {
-      return null;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t(context, 'Plan management request submitted')),
+          backgroundColor: ScholesaColors.warning,
+        ),
+      );
     }
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((dynamic key, dynamic nestedValue) =>
+          MapEntry<String, dynamic>(key.toString(), nestedValue));
+    }
+    return <String, dynamic>{};
+  }
+
+  List<Map<String, dynamic>> _asMapList(dynamic value) {
+    if (value is! List) return <Map<String, dynamic>>[];
+    return value.map<Map<String, dynamic>>(_asMap).toList();
   }
 
   AppState? _maybeAppState() {
@@ -620,13 +638,6 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     return null;
   }
 
-  int? _asInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
-    return null;
-  }
-
   double? _asDouble(dynamic value) {
     if (value is double) return value;
     if (value is num) return value.toDouble();
@@ -636,8 +647,18 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
 
   String _formatDate(DateTime value) {
     const List<String> months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[value.month - 1]} ${value.day}, ${value.year}';
   }

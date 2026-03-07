@@ -1,0 +1,2847 @@
+'use client';
+
+import { httpsCallable } from 'firebase/functions';
+import {
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  doc,
+  documentId,
+  getDoc,
+  getDocs,
+  increment,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  serverTimestamp,
+  updateDoc,
+  where,
+  type QueryConstraint,
+} from 'firebase/firestore';
+import { firestore, functions } from '@/src/firebase/client-init';
+import type { UserProfile, UserRole } from '@/src/types/user';
+import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
+
+export interface WorkflowContext {
+  routePath: WorkflowPath;
+  locale: string;
+  uid: string;
+  role: UserRole;
+  profile: UserProfile | null;
+}
+
+export interface WorkflowRecord {
+  id: string;
+  title: string;
+  subtitle: string;
+  status: string;
+  updatedAt: string;
+  siteId: string | null;
+  collectionName: string;
+  routePath: WorkflowPath;
+  canEdit: boolean;
+  canDelete: boolean;
+  primaryActionLabel?: string;
+  deleteActionLabel?: string;
+  metadata: Record<string, string>;
+}
+
+export interface WorkflowFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface WorkflowFieldDefinition {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'datetime-local' | 'checkbox' | 'email' | 'tel' | 'number';
+  required?: boolean;
+  placeholder?: string;
+  helperText?: string;
+  defaultValue?: string | boolean;
+  options?: WorkflowFieldOption[];
+}
+
+export interface WorkflowFormDefinition {
+  title: string;
+  submitLabel: string;
+  fields: WorkflowFieldDefinition[];
+}
+
+export interface WorkflowLoadResult {
+  records: WorkflowRecord[];
+  canCreate: boolean;
+  canRefresh: boolean;
+  createLabel: string;
+  createConfig?: WorkflowFormDefinition | null;
+}
+
+export interface WorkflowCreateInput {
+  values: Record<string, string | boolean>;
+}
+
+export interface WorkflowMutationTarget {
+  routePath: WorkflowPath;
+  collectionName: string;
+  id: string;
+}
+
+function toIsoDate(value: unknown): string {
+  if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  if (typeof value === 'number') return new Date(value).toISOString();
+  if (typeof value === 'string') {
+    const asMs = Date.parse(value);
+    if (!Number.isNaN(asMs)) return new Date(asMs).toISOString();
+  }
+  return new Date().toISOString();
+}
+
+function asString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
+function activeSiteId(profile: UserProfile | null): string | null {
+  return profile?.activeSiteId || profile?.siteIds?.[0] || null;
+}
+
+function chunkValues<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function toDateInputValue(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  const hours = String(value.getHours()).padStart(2, '0');
+  const minutes = String(value.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function parseDateInputValue(value: unknown): Date | null {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : new Date(parsed);
+}
+
+function optionLabelFromRecord(data: Record<string, unknown>, fallbackId: string): string {
+  const displayName = asString(data.displayName, '');
+  if (displayName) return displayName;
+  const title = asString(data.title, '');
+  if (title) return title;
+  const name = asString(data.name, '');
+  if (name) return name;
+  const email = asString(data.email, '');
+  if (email) return email;
+  return fallbackId;
+}
+
+async function loadMissionOptions(): Promise<WorkflowFieldOption[]> {
+  const snap = await getDocs(
+    query(
+      collection(firestore, 'missions'),
+      orderBy('title', 'asc'),
+      limit(120),
+    ),
+  );
+
+  return snap.docs.map((missionDoc) => {
+    const data = (missionDoc.data() || {}) as Record<string, unknown>;
+    return {
+      value: missionDoc.id,
+      label: optionLabelFromRecord(data, missionDoc.id),
+    };
+  });
+}
+
+async function loadSiteUserOptions(params: {
+  siteId: string | null;
+  roles?: UserRole[];
+  limitSize?: number;
+}): Promise<WorkflowFieldOption[]> {
+  const constraints: QueryConstraint[] = [orderBy('displayName', 'asc')];
+  if (params.siteId) {
+    constraints.unshift(where('siteIds', 'array-contains', params.siteId));
+  }
+  if (params.limitSize) {
+    constraints.push(limit(params.limitSize));
+  }
+
+  const snap = await getDocs(query(collection(firestore, 'users'), ...constraints));
+  const allowedRoles = new Set((params.roles || []).map((role) => role.toLowerCase()));
+
+  return snap.docs
+    .filter((userDoc) => {
+      if (allowedRoles.size === 0) return true;
+      const role = asString((userDoc.data() || {}).role, '').toLowerCase();
+      return allowedRoles.has(role === 'student' ? 'learner' : role);
+    })
+    .map((userDoc) => {
+      const data = (userDoc.data() || {}) as Record<string, unknown>;
+      const label = optionLabelFromRecord(data, userDoc.id);
+      const role = asString(data.role, '').toLowerCase();
+      return {
+        value: userDoc.id,
+        label: role ? `${label} (${role})` : label,
+      };
+    });
+}
+
+async function loadLearnerOptionsForActor(ctx: WorkflowContext, siteId: string | null): Promise<WorkflowFieldOption[]> {
+  if (ctx.role === 'educator') {
+    const linksSnap = await getDocs(
+      query(
+        collection(firestore, 'educatorLearnerLinks'),
+        where('educatorId', '==', ctx.uid),
+        limit(100),
+      ),
+    );
+    const learnerIds = Array.from(
+      new Set(
+        linksSnap.docs
+          .map((linkDoc) => asString((linkDoc.data() || {}).learnerId, ''))
+          .filter((value) => value.length > 0),
+      ),
+    );
+
+    if (learnerIds.length > 0) {
+      const options: WorkflowFieldOption[] = [];
+      for (const ids of chunkValues(learnerIds, 10)) {
+        const learnersSnap = await getDocs(
+          query(
+            collection(firestore, 'users'),
+            where(documentId(), 'in', ids),
+          ),
+        );
+        learnersSnap.docs.forEach((learnerDoc) => {
+          const data = (learnerDoc.data() || {}) as Record<string, unknown>;
+          options.push({
+            value: learnerDoc.id,
+            label: optionLabelFromRecord(data, learnerDoc.id),
+          });
+        });
+      }
+      return options.sort((left, right) => left.label.localeCompare(right.label));
+    }
+  }
+
+  return loadSiteUserOptions({
+    siteId,
+    roles: ['learner'],
+    limitSize: 160,
+  });
+}
+
+async function loadSessionOptionsForActor(ctx: WorkflowContext, siteId: string | null): Promise<WorkflowFieldOption[]> {
+  const constraints: QueryConstraint[] = [orderBy('startDate', 'asc'), limit(120)];
+  if (ctx.role === 'educator') {
+    constraints.unshift(where('educatorIds', 'array-contains', ctx.uid));
+  }
+  if (siteId) {
+    constraints.unshift(where('siteId', '==', siteId));
+  }
+
+  const snap = await getDocs(query(collection(firestore, 'sessions'), ...constraints));
+  return snap.docs.map((sessionDoc) => {
+    const data = (sessionDoc.data() || {}) as Record<string, unknown>;
+    const title = optionLabelFromRecord(data, sessionDoc.id);
+    const startDate = toIsoDate(data.startDate || data.createdAt);
+    return {
+      value: sessionDoc.id,
+      label: `${title} • ${new Date(startDate).toLocaleString()}`,
+    };
+  });
+}
+
+async function loadParentLinkRecords(ctx: WorkflowContext): Promise<Array<{ learnerId: string; learnerName: string }>> {
+  const learnerIds = new Set<string>();
+  const names = new Map<string, string>();
+
+  const guardianLinksSnap = await getDocs(
+    query(
+      collection(firestore, 'guardianLinks'),
+      where('parentId', '==', ctx.uid),
+      limit(120),
+    ),
+  ).catch(() => null);
+
+  guardianLinksSnap?.docs.forEach((linkDoc) => {
+    const data = (linkDoc.data() || {}) as Record<string, unknown>;
+    const learnerId = asString(data.learnerId, '');
+    if (!learnerId) return;
+    learnerIds.add(learnerId);
+    const learnerName = asString(data.learnerName, '');
+    if (learnerName) {
+      names.set(learnerId, learnerName);
+    }
+  });
+
+  const parentDoc = await getDoc(doc(collection(firestore, 'users'), ctx.uid)).catch(() => null);
+  const explicitLearnerIds = Array.isArray(parentDoc?.data()?.learnerIds)
+    ? (parentDoc?.data()?.learnerIds as unknown[]).filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+    : [];
+  explicitLearnerIds.forEach((learnerId) => learnerIds.add(learnerId));
+
+  return Array.from(learnerIds.values()).map((learnerId) => ({
+    learnerId,
+    learnerName: names.get(learnerId) || learnerId,
+  }));
+}
+
+async function loadPortfolioRecordsForLearners(params: {
+  routePath: WorkflowPath;
+  learnerIds: string[];
+}): Promise<WorkflowRecord[]> {
+  const records: WorkflowRecord[] = [];
+  for (const learnerId of params.learnerIds) {
+    const snap = await getDocs(
+      query(
+        collection(firestore, 'portfolioItems'),
+        where('learnerId', '==', learnerId),
+        orderBy('createdAt', 'desc'),
+        limit(40),
+      ),
+    );
+    snap.docs.forEach((snapDoc) => {
+      records.push(
+        buildRecord({
+          routePath: params.routePath,
+          collectionName: 'portfolioItems',
+          id: snapDoc.id,
+          raw: (snapDoc.data() || {}) as Record<string, unknown>,
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'mediaType'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+        }),
+      );
+    });
+  }
+
+  return records.sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+}
+
+async function loadParentSchedule(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const linkRecords = await loadParentLinkRecords(ctx);
+  const learnerIds = linkRecords.map((record) => record.learnerId);
+  if (learnerIds.length === 0) return [];
+
+  const sessionIds = new Set<string>();
+  for (const ids of chunkValues(learnerIds, 10)) {
+    const enrollmentsSnap = await getDocs(
+      query(
+        collection(firestore, 'enrollments'),
+        where('learnerId', 'in', ids),
+        where('status', '==', 'active'),
+        limit(120),
+      ),
+    );
+    enrollmentsSnap.docs.forEach((enrollmentDoc) => {
+      const sessionId = asString((enrollmentDoc.data() || {}).sessionId, '');
+      if (sessionId) {
+        sessionIds.add(sessionId);
+      }
+    });
+  }
+
+  if (sessionIds.size === 0) return [];
+
+  const records: WorkflowRecord[] = [];
+  for (const ids of chunkValues(Array.from(sessionIds.values()), 10)) {
+    const sessionsSnap = await getDocs(
+      query(
+        collection(firestore, 'sessions'),
+        where(documentId(), 'in', ids),
+      ),
+    );
+    sessionsSnap.docs.forEach((sessionDoc) => {
+      records.push(
+        buildRecord({
+          routePath: '/parent/schedule',
+          collectionName: 'sessions',
+          id: sessionDoc.id,
+          raw: (sessionDoc.data() || {}) as Record<string, unknown>,
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'siteId'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+        }),
+      );
+    });
+  }
+
+  return records.sort((left, right) => Date.parse(left.updatedAt) - Date.parse(right.updatedAt));
+}
+
+async function loadWorkflowContacts(ctx: WorkflowContext): Promise<WorkflowFieldOption[]> {
+  const callable = httpsCallable(functions, 'listWorkflowContacts');
+  const response = await callable({
+    siteId: activeSiteId(ctx.profile) || undefined,
+    limit: 80,
+  });
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const contacts = Array.isArray(payload.contacts) ? payload.contacts : [];
+  return contacts
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      const displayName = asString(entry.displayName, id);
+      const role = asString(entry.role, '');
+      return {
+        value: id,
+        label: role ? `${displayName} (${role})` : displayName,
+      };
+    })
+    .filter((entry) => entry.value.length > 0);
+}
+
+function buildCreateConfig(title: string, submitLabel: string, fields: WorkflowFieldDefinition[]): WorkflowFormDefinition {
+  return {
+    title,
+    submitLabel,
+    fields,
+  };
+}
+
+function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPath): WorkflowRecord[] {
+  return records.map((record) => {
+    let primaryActionLabel: string | undefined;
+    let deleteActionLabel: string | undefined;
+
+    if (routePath === '/hq/approvals') {
+      primaryActionLabel = 'Approve';
+    } else if (routePath === '/hq/feature-flags') {
+      primaryActionLabel = record.status === 'enabled' ? 'Disable flag' : 'Enable flag';
+    } else {
+      switch (routePath) {
+      case '/learner/missions':
+        primaryActionLabel = record.status === 'submitted' ? 'Reopen attempt' : 'Submit attempt';
+        break;
+      case '/learner/habits':
+        primaryActionLabel = 'Log completion';
+        break;
+      case '/learner/portfolio':
+        primaryActionLabel = record.status === 'published' ? 'Refresh item' : 'Publish item';
+        deleteActionLabel = 'Delete item';
+        break;
+      case '/educator/attendance':
+        primaryActionLabel = 'Verify record';
+        break;
+      case '/educator/sessions':
+      case '/site/sessions':
+        primaryActionLabel = record.status === 'in_progress' ? 'Complete session' : 'Start session';
+        break;
+      case '/educator/missions/review':
+        primaryActionLabel = 'Mark reviewed';
+        break;
+      case '/educator/mission-plans':
+        primaryActionLabel = record.status === 'active' ? 'Archive plan' : 'Activate plan';
+        break;
+      case '/site/provisioning':
+        primaryActionLabel = record.status === 'active' ? 'Suspend link' : 'Activate link';
+        deleteActionLabel = 'Remove link';
+        break;
+      case '/site/ops':
+        primaryActionLabel = record.status === 'resolved' ? 'Reopen event' : 'Resolve event';
+        break;
+      case '/partner/listings':
+        primaryActionLabel = record.status === 'published' ? 'Archive listing' : 'Publish listing';
+        break;
+      case '/partner/contracts':
+        primaryActionLabel = record.status === 'submitted' ? 'Return to draft' : 'Submit contract';
+        break;
+      case '/hq/sites':
+        primaryActionLabel = record.status === 'active' ? 'Pause site' : 'Activate site';
+        break;
+      case '/messages':
+        primaryActionLabel = record.status === 'archived' ? 'Reopen thread' : 'Archive thread';
+        break;
+      case '/notifications':
+        primaryActionLabel = record.metadata.isRead === 'true' ? 'Mark unread' : 'Mark read';
+        break;
+      default:
+        primaryActionLabel = record.canEdit ? 'Update' : undefined;
+        deleteActionLabel = record.canDelete ? 'Delete' : undefined;
+        break;
+      }
+    }
+
+    return {
+      ...record,
+      primaryActionLabel,
+      deleteActionLabel,
+    };
+  });
+}
+
+function buildRecord(params: {
+  routePath: WorkflowPath;
+  collectionName: string;
+  id: string;
+  raw: Record<string, unknown>;
+  titleKeys: string[];
+  subtitleKeys: string[];
+  statusKeys: string[];
+  siteKeys?: string[];
+  editable?: boolean;
+  deletable?: boolean;
+}): WorkflowRecord {
+  const pick = (keys: string[], fallback: string) => {
+    for (const key of keys) {
+      const value = params.raw[key];
+      if (typeof value === 'string' && value.trim().length > 0) {
+        return value;
+      }
+    }
+    return fallback;
+  };
+
+  const siteKeys = params.siteKeys || ['siteId'];
+  let siteId: string | null = null;
+  for (const key of siteKeys) {
+    const value = params.raw[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      siteId = value;
+      break;
+    }
+  }
+
+  const metadata: Record<string, string> = {};
+  Object.entries(params.raw).forEach(([key, value]) => {
+    if (['title', 'name', 'displayName', 'description', 'status'].includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      metadata[key] = String(value);
+    }
+  });
+
+  return {
+    id: params.id,
+    title: pick(params.titleKeys, params.id),
+    subtitle: pick(params.subtitleKeys, 'No details available yet.'),
+    status: pick(params.statusKeys, 'active'),
+    updatedAt: toIsoDate(params.raw.updatedAt || params.raw.createdAt || params.raw.timestamp),
+    siteId,
+    collectionName: params.collectionName,
+    routePath: params.routePath,
+    canEdit: Boolean(params.editable),
+    canDelete: Boolean(params.deletable),
+    primaryActionLabel: undefined,
+    deleteActionLabel: undefined,
+    metadata,
+  };
+}
+
+async function queryCollectionRecords(params: {
+  routePath: WorkflowPath;
+  collectionName: string;
+  constraints?: QueryConstraint[];
+  titleKeys: string[];
+  subtitleKeys: string[];
+  statusKeys: string[];
+  editable?: boolean;
+  deletable?: boolean;
+  limitSize?: number;
+}): Promise<WorkflowRecord[]> {
+  const constraints = [...(params.constraints || [])];
+  if (params.limitSize) {
+    constraints.push(limit(params.limitSize));
+  }
+  const ref = collection(firestore, params.collectionName);
+  const snap = await getDocs(constraints.length > 0 ? query(ref, ...constraints) : ref);
+  return snap.docs.map((snapDoc) =>
+    buildRecord({
+      routePath: params.routePath,
+      collectionName: params.collectionName,
+      id: snapDoc.id,
+      raw: (snapDoc.data() || {}) as Record<string, unknown>,
+      titleKeys: params.titleKeys,
+      subtitleKeys: params.subtitleKeys,
+      statusKeys: params.statusKeys,
+      editable: params.editable,
+      deletable: params.deletable,
+    }),
+  );
+}
+
+async function loadLearnerToday(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const enrollmentsSnap = await getDocs(
+    query(
+      collection(firestore, 'enrollments'),
+      where('learnerId', '==', ctx.uid),
+      where('status', '==', 'active'),
+      limit(25),
+    ),
+  );
+
+  const sessionIds = enrollmentsSnap.docs
+    .map((snapDoc) => snapDoc.data().sessionId)
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .slice(0, 10);
+
+  if (sessionIds.length === 0) return [];
+
+  const sessionsSnap = await getDocs(
+    query(collection(firestore, 'sessions'), where(documentId(), 'in', sessionIds)),
+  );
+
+  return sessionsSnap.docs.map((snapDoc) =>
+    buildRecord({
+      routePath: '/learner/today',
+      collectionName: 'sessions',
+      id: snapDoc.id,
+      raw: (snapDoc.data() || {}) as Record<string, unknown>,
+      titleKeys: ['title', 'name'],
+      subtitleKeys: ['description', 'siteId'],
+      statusKeys: ['status'],
+      editable: false,
+      deletable: false,
+    }),
+  );
+}
+
+async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, 'getParentDashboardBundle');
+  const payload = await callable({
+    siteId: activeSiteId(ctx.profile) || undefined,
+    locale: ctx.locale,
+    range: 'week',
+  });
+  const data = (payload.data || {}) as Record<string, unknown>;
+  const learners = Array.isArray(data.learners) ? data.learners : [];
+  return learners
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object' && !Array.isArray(item))
+    .map((learner) => {
+      const learnerId = asString(learner.learnerId, '');
+      if (!learnerId) return null;
+      return {
+        id: learnerId,
+        title: asString(learner.learnerName, learnerId),
+        subtitle: `Level ${String(learner.currentLevel || 0)} • XP ${String(learner.totalXp || 0)}`,
+        status: 'active',
+        updatedAt: toIsoDate(learner.updatedAt || learner.lastActivityAt),
+        siteId: activeSiteId(ctx.profile),
+        collectionName: 'parentDashboardBundle',
+        routePath: '/parent/summary',
+        canEdit: false,
+        canDelete: false,
+        metadata: {
+          missionsCompleted: String(learner.missionsCompleted || 0),
+          currentStreak: String(learner.currentStreak || 0),
+          attendanceRate: String(learner.attendanceRate || 0),
+        },
+      } as WorkflowRecord;
+    })
+    .filter((row): row is WorkflowRecord => Boolean(row));
+}
+
+async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, 'getParentBillingSummary');
+  const response = await callable({ parentId: ctx.uid });
+  const summary = (((response.data || {}) as Record<string, unknown>).summary || {}) as Record<string, unknown>;
+  const recentPayments = Array.isArray(summary.recentPayments) ? summary.recentPayments : [];
+
+  const summaryId = asString(summary.parentId, ctx.uid);
+  const summaryRecord: WorkflowRecord = {
+    id: summaryId,
+    title: asString(summary.subscriptionPlan, 'Parent Billing'),
+    subtitle: `Current balance ${String(summary.currentBalance || 0)} • Next ${String(summary.nextPaymentAmount || 0)}`,
+    status: 'active',
+    updatedAt: toIsoDate(summary.nextPaymentDate),
+    siteId: activeSiteId(ctx.profile),
+    collectionName: 'parentBillingSummary',
+    routePath: '/parent/billing',
+    canEdit: false,
+    canDelete: false,
+    metadata: {
+      nextPaymentDate: asString(summary.nextPaymentDate, ''),
+      parentId: asString(summary.parentId, ctx.uid),
+    },
+  };
+
+  const paymentRecords: WorkflowRecord[] = recentPayments
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      if (!id) return null;
+      return {
+        id,
+        title: asString(entry.description, 'Payment'),
+        subtitle: `Amount ${String(entry.amount || 0)} • ${asString(entry.status, 'unknown')}`,
+        status: asString(entry.status, 'unknown'),
+        updatedAt: toIsoDate(entry.date),
+        siteId: activeSiteId(ctx.profile),
+        collectionName: 'payments',
+        routePath: '/parent/billing',
+        canEdit: false,
+        canDelete: false,
+        metadata: {},
+      };
+    })
+    .filter((record): record is WorkflowRecord => Boolean(record));
+
+  return [summaryRecord, ...paymentRecords];
+}
+
+async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, 'getSiteBillingSnapshot');
+  const response = await callable({ siteId: activeSiteId(ctx.profile) || undefined });
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
+
+  const recordSiteId = asString(payload.siteId, activeSiteId(ctx.profile) || '');
+  const siteSummary: WorkflowRecord = {
+    id: recordSiteId,
+    title: asString(payload.planName, 'Site Billing'),
+    subtitle: `${asString(payload.currency, 'USD')} ${String(payload.monthlyAmount || 0)} / month`,
+    status: asString(payload.planStatus, 'active'),
+    updatedAt: toIsoDate(payload.nextBillingDate),
+    siteId: recordSiteId || null,
+    collectionName: 'siteBillingSummary',
+    routePath: '/site/billing',
+    canEdit: false,
+    canDelete: false,
+    metadata: {
+      activeLearnersUsed: String(payload.activeLearnersUsed || 0),
+      activeLearnersTotal: String(payload.activeLearnersTotal || 0),
+      educatorsUsed: String(payload.educatorsUsed || 0),
+      educatorsTotal: String(payload.educatorsTotal || 0),
+      storageUsedGb: String(payload.storageUsedGb || 0),
+      storageTotalGb: String(payload.storageTotalGb || 0),
+    },
+  };
+
+  const invoiceRecords: WorkflowRecord[] = invoices
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      if (!id) return null;
+      return {
+        id,
+        title: `Invoice ${id}`,
+        subtitle: `${asString(entry.currency, 'USD').toUpperCase()} ${String(entry.amount || 0)}`,
+        status: asString(entry.status, 'pending'),
+        updatedAt: toIsoDate(entry.date),
+        siteId: recordSiteId || null,
+        collectionName: 'siteInvoices',
+        routePath: '/site/billing',
+        canEdit: false,
+        canDelete: false,
+        metadata: {},
+      };
+    })
+    .filter((record): record is WorkflowRecord => Boolean(record));
+
+  return recordSiteId ? [siteSummary, ...invoiceRecords] : invoiceRecords;
+}
+
+async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
+  const billingCallable = httpsCallable(functions, 'listHqBillingRecords');
+  const response = await billingCallable({ period: 'month', limit: 500 });
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
+
+  const invoiceRecords: WorkflowRecord[] = [];
+  for (const rawEntry of invoices) {
+    if (!rawEntry || typeof rawEntry !== 'object' || Array.isArray(rawEntry)) {
+      continue;
+    }
+    const entry = rawEntry as Record<string, unknown>;
+    const id = asString(entry.id, '');
+    if (!id) continue;
+    invoiceRecords.push({
+      id,
+      title: `Invoice ${id}`,
+      subtitle: `${asString(entry.site, 'Unknown Site')} • ${String(entry.amount || 0)}`,
+      status: asString(entry.status, 'pending'),
+      updatedAt: toIsoDate(entry.date),
+      siteId: null,
+      collectionName: 'hqInvoices',
+      routePath: '/hq/billing',
+      canEdit: false,
+      canDelete: false,
+      metadata: {
+        parent: asString(entry.parent, ''),
+        learner: asString(entry.learner, ''),
+      },
+    });
+  }
+
+  return invoiceRecords;
+}
+
+async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, 'getTelemetryDashboardMetrics');
+  const response = await callable({
+    siteId: activeSiteId(ctx.profile) || undefined,
+    period: 'month',
+  });
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const metrics = ((payload.metrics || {}) as Record<string, unknown>);
+  const attendanceTrend = Array.isArray(metrics.attendanceTrend) ? metrics.attendanceTrend : [];
+
+  const trendRecords: WorkflowRecord[] = [];
+  for (const rawEntry of attendanceTrend) {
+    if (!rawEntry || typeof rawEntry !== 'object' || Array.isArray(rawEntry)) {
+      continue;
+    }
+    const entry = rawEntry as Record<string, unknown>;
+    const dateId = asString(entry.date, '');
+    if (!dateId) continue;
+    trendRecords.push({
+      id: dateId,
+      title: `Attendance ${dateId}`,
+      subtitle: `Records ${String(entry.records || 0)} • Present ${String(entry.presentRate ?? 'n/a')}%`,
+      status: 'active',
+      updatedAt: toIsoDate(entry.date),
+      siteId: activeSiteId(ctx.profile),
+      collectionName: 'analyticsAttendanceTrend',
+      routePath: '/hq/analytics',
+      canEdit: false,
+      canDelete: false,
+      metadata: {
+        events: String(entry.events || 0),
+        weeklyAccountabilityAdherenceRate: String(metrics.weeklyAccountabilityAdherenceRate || 0),
+        educatorReviewWithinSlaRate: String(metrics.educatorReviewWithinSlaRate || 0),
+        interventionHelpedRate: String(metrics.interventionHelpedRate || 0),
+      },
+    });
+  }
+
+  return trendRecords;
+}
+
+async function loadHqRoleSwitcherRecords(): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, 'listUsers');
+  const response = await callable({ limit: 250 });
+  const users = (((response.data || {}) as Record<string, unknown>).users || []) as unknown[];
+  const roleTargets: UserRole[] = ['learner', 'educator', 'parent', 'site', 'partner'];
+  const rows: WorkflowRecord[] = [];
+
+  for (const targetRole of roleTargets) {
+    const match = users.find((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+      const role = asString((entry as Record<string, unknown>).role, '').toLowerCase();
+      return role === targetRole;
+    }) as Record<string, unknown> | undefined;
+
+    if (!match) continue;
+    const userId = asString(match.id, '');
+    if (!userId) continue;
+    rows.push({
+      id: userId,
+      title: `Impersonate ${targetRole}`,
+      subtitle: asString(match.displayName, asString(match.email, userId)),
+      status: 'ready',
+      updatedAt: toIsoDate(match.updatedAt || match.createdAt),
+      siteId: asString(match.activeSiteId, '') || null,
+      collectionName: 'roleSwitcher',
+      routePath: '/hq/role-switcher',
+      canEdit: false,
+      canDelete: false,
+      metadata: {
+        targetRole,
+        targetUid: userId,
+        targetEmail: asString(match.email, ''),
+      },
+    });
+  }
+
+  return rows;
+}
+
+async function loadCallableRows(params: {
+  routePath: WorkflowPath;
+  callableName: string;
+  args: Record<string, unknown>;
+  rowArrayField: string;
+  collectionName: string;
+  titleKeys: string[];
+  subtitleKeys: string[];
+  statusKeys: string[];
+}): Promise<WorkflowRecord[]> {
+  const callable = httpsCallable(functions, params.callableName);
+  const response = await callable(params.args);
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const rows = payload[params.rowArrayField];
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && !Array.isArray(row))
+    .map((row) => {
+      const id = asString(row.id, '');
+      if (!id) return null;
+      return buildRecord({
+        routePath: params.routePath,
+        collectionName: params.collectionName,
+        id,
+        raw: row,
+        titleKeys: params.titleKeys,
+        subtitleKeys: params.subtitleKeys,
+        statusKeys: params.statusKeys,
+        editable: false,
+        deletable: false,
+      });
+    })
+    .filter((record): record is WorkflowRecord => Boolean(record));
+}
+
+export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
+  const siteId = activeSiteId(ctx.profile);
+
+  switch (ctx.routePath) {
+    case '/learner/today': {
+      const records = await loadLearnerToday(ctx);
+      return { records, canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+    }
+    case '/learner/missions': {
+      const missionOptions = await loadMissionOptions();
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'missionAttempts',
+          constraints: [
+            where('learnerId', '==', ctx.uid),
+            orderBy('startedAt', 'desc'),
+          ],
+          titleKeys: ['missionTitle', 'missionId'],
+          subtitleKeys: ['feedback', 'submissionUrl'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 40,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Start mission attempt',
+        createConfig: buildCreateConfig('Start mission attempt', 'Start attempt', [
+          {
+            name: 'missionId',
+            label: 'Mission',
+            type: 'select',
+            required: true,
+            options: missionOptions,
+          },
+          {
+            name: 'notes',
+            label: 'Attempt notes',
+            type: 'textarea',
+            placeholder: 'What are you trying to accomplish in this attempt?',
+          },
+        ]),
+      };
+    }
+    case '/learner/habits':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'habits',
+          constraints: [
+            where('learnerId', '==', ctx.uid),
+            orderBy('updatedAt', 'desc'),
+          ],
+          titleKeys: ['name', 'title'],
+          subtitleKeys: ['description', 'cadence'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 40,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create habit',
+        createConfig: buildCreateConfig('Create habit', 'Create habit', [
+          {
+            name: 'name',
+            label: 'Habit name',
+            type: 'text',
+            required: true,
+            placeholder: 'Morning reflection',
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'What should happen every day?',
+          },
+          {
+            name: 'cadence',
+            label: 'Cadence',
+            type: 'select',
+            required: true,
+            defaultValue: 'daily',
+            options: [
+              { value: 'daily', label: 'Daily' },
+              { value: 'weekly', label: 'Weekly' },
+            ],
+          },
+        ]),
+      };
+    case '/learner/portfolio':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'portfolioItems',
+          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'mediaType'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: true,
+          limitSize: 60,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Add portfolio item',
+        createConfig: buildCreateConfig('Add portfolio item', 'Add item', [
+          {
+            name: 'title',
+            label: 'Title',
+            type: 'text',
+            required: true,
+            placeholder: 'Robotics demo video',
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Describe the artifact and why it matters.',
+          },
+          {
+            name: 'mediaType',
+            label: 'Media type',
+            type: 'select',
+            required: true,
+            defaultValue: 'link',
+            options: [
+              { value: 'link', label: 'Link' },
+              { value: 'image', label: 'Image' },
+              { value: 'document', label: 'Document' },
+              { value: 'video', label: 'Video' },
+            ],
+          },
+          {
+            name: 'mediaUrl',
+            label: 'Media URL',
+            type: 'text',
+            placeholder: 'https://...',
+          },
+        ]),
+      };
+    case '/educator/today':
+      return {
+        records: await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'sessions',
+          constraints: [where('educatorIds', 'array-contains', ctx.uid), orderBy('startDate', 'asc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'siteId'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 40,
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/educator/attendance': {
+      const [learnerOptions, sessionOptions] = await Promise.all([
+        loadLearnerOptionsForActor(ctx, siteId),
+        loadSessionOptionsForActor(ctx, siteId),
+      ]);
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'attendanceRecords',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('timestamp', 'desc')] : [orderBy('timestamp', 'desc')],
+          titleKeys: ['learnerName', 'learnerId'],
+          subtitleKeys: ['notes', 'sessionOccurrenceId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Record attendance',
+        createConfig: buildCreateConfig('Record attendance', 'Save attendance', [
+          {
+            name: 'learnerId',
+            label: 'Learner',
+            type: 'select',
+            required: true,
+            options: learnerOptions,
+          },
+          {
+            name: 'sessionOccurrenceId',
+            label: 'Session',
+            type: 'select',
+            required: true,
+            options: sessionOptions,
+          },
+          {
+            name: 'status',
+            label: 'Attendance status',
+            type: 'select',
+            required: true,
+            defaultValue: 'present',
+            options: [
+              { value: 'present', label: 'Present' },
+              { value: 'late', label: 'Late' },
+              { value: 'absent', label: 'Absent' },
+              { value: 'excused', label: 'Excused' },
+            ],
+          },
+          {
+            name: 'notes',
+            label: 'Notes',
+            type: 'textarea',
+            placeholder: 'Optional context for this attendance update.',
+          },
+        ]),
+      };
+    }
+    case '/educator/sessions':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'sessions',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('startDate', 'asc')] : [orderBy('startDate', 'asc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'roomId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 60,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create session',
+        createConfig: buildCreateConfig('Create educator session', 'Create session', [
+          {
+            name: 'title',
+            label: 'Session title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+          },
+          {
+            name: 'startDate',
+            label: 'Start time',
+            type: 'datetime-local',
+            required: true,
+            defaultValue: toDateInputValue(new Date()),
+          },
+          {
+            name: 'endDate',
+            label: 'End time',
+            type: 'datetime-local',
+            required: true,
+            defaultValue: toDateInputValue(new Date(Date.now() + 60 * 60 * 1000)),
+          },
+        ]),
+      };
+    case '/educator/learners':
+      return {
+        records: await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'users',
+          constraints: siteId ? [where('siteIds', 'array-contains', siteId), orderBy('displayName', 'asc')] : [orderBy('displayName', 'asc')],
+          titleKeys: ['displayName', 'email', 'uid'],
+          subtitleKeys: ['email', 'activeSiteId'],
+          statusKeys: ['role', 'isActive'],
+          editable: false,
+          deletable: false,
+          limitSize: 100,
+        }).then((rows) => rows.filter((row) => row.status === 'learner' || row.metadata.role === 'learner')),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+      };
+    case '/educator/missions/review':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'missionAttempts',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), where('status', '==', 'submitted'), orderBy('submittedAt', 'desc')]
+            : [where('status', '==', 'submitted'), orderBy('submittedAt', 'desc')],
+          titleKeys: ['missionTitle', 'missionId'],
+          subtitleKeys: ['learnerId', 'feedback'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/educator/mission-plans':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'missionPlans',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('updatedAt', 'desc')] : [orderBy('updatedAt', 'desc')],
+          titleKeys: ['title', 'name', 'sessionOccurrenceId'],
+          subtitleKeys: ['description', 'educatorId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 80,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create mission plan',
+        createConfig: buildCreateConfig('Create mission plan', 'Create plan', [
+          {
+            name: 'title',
+            label: 'Plan title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+          },
+        ]),
+      };
+    case '/educator/learner-supports': {
+      const learnerOptions = await loadLearnerOptionsForActor(ctx, siteId);
+      return {
+        records: await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'supportInterventions',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')] : [orderBy('createdAt', 'desc')],
+          titleKeys: ['strategyDescription', 'learnerId'],
+          subtitleKeys: ['notes', 'context'],
+          statusKeys: ['outcome'],
+          editable: false,
+          deletable: false,
+          limitSize: 80,
+        }),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Log support intervention',
+        createConfig: buildCreateConfig('Log support intervention', 'Log intervention', [
+          {
+            name: 'learnerId',
+            label: 'Learner',
+            type: 'select',
+            required: true,
+            options: learnerOptions,
+          },
+          {
+            name: 'strategyType',
+            label: 'Strategy type',
+            type: 'select',
+            required: true,
+            defaultValue: 'autonomy',
+            options: [
+              { value: 'autonomy', label: 'Autonomy support' },
+              { value: 'competence', label: 'Competence support' },
+              { value: 'relatedness', label: 'Relatedness support' },
+            ],
+          },
+          {
+            name: 'context',
+            label: 'Context',
+            type: 'select',
+            required: true,
+            defaultValue: 'individual',
+            options: [
+              { value: 'individual', label: 'Individual' },
+              { value: 'small-group', label: 'Small group' },
+              { value: 'whole-class', label: 'Whole class' },
+            ],
+          },
+          {
+            name: 'strategyDescription',
+            label: 'Intervention',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Describe the support intervention.',
+          },
+          {
+            name: 'notes',
+            label: 'Notes',
+            type: 'textarea',
+          },
+        ]),
+      };
+    }
+    case '/educator/integrations':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'getIntegrationsHealth',
+          args: { siteId: siteId || undefined, scope: 'educator' },
+          rowArrayField: 'connections',
+          collectionName: 'integrationConnections',
+          titleKeys: ['provider', 'name'],
+          subtitleKeys: ['status', 'siteId'],
+          statusKeys: ['status'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/parent/summary':
+      return { records: await loadParentSummary(ctx), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+    case '/parent/billing':
+      return { records: await loadParentBillingRecords(ctx), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+    case '/site/billing':
+      return { records: await loadSiteBillingRecords(ctx), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+    case '/parent/schedule':
+      return {
+        records: await loadParentSchedule(ctx),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/parent/portfolio': {
+      const learnerLinks = await loadParentLinkRecords(ctx);
+      return {
+        records: await loadPortfolioRecordsForLearners({
+          routePath: ctx.routePath,
+          learnerIds: learnerLinks.map((row) => row.learnerId),
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    }
+    case '/site/checkin': {
+      const learnerOptions = await loadLearnerOptionsForActor(ctx, siteId);
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'checkins',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('timestamp', 'desc')] : [orderBy('timestamp', 'desc')],
+          titleKeys: ['learnerName', 'learnerId'],
+          subtitleKeys: ['type', 'notes'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Add check-in event',
+        createConfig: buildCreateConfig('Add check-in event', 'Save check-in', [
+          {
+            name: 'learnerId',
+            label: 'Learner',
+            type: 'select',
+            required: true,
+            options: learnerOptions,
+          },
+          {
+            name: 'type',
+            label: 'Event type',
+            type: 'select',
+            required: true,
+            defaultValue: 'checkin',
+            options: [
+              { value: 'checkin', label: 'Check-in' },
+              { value: 'late', label: 'Late arrival' },
+              { value: 'checkout', label: 'Check-out' },
+            ],
+          },
+          {
+            name: 'notes',
+            label: 'Notes',
+            type: 'textarea',
+          },
+        ]),
+      };
+    }
+    case '/site/provisioning': {
+      const [learnerOptions, parentOptions] = await Promise.all([
+        loadSiteUserOptions({ siteId, roles: ['learner'], limitSize: 160 }),
+        loadSiteUserOptions({ siteId, roles: ['parent'], limitSize: 160 }),
+      ]);
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'guardianLinks',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')] : [orderBy('createdAt', 'desc')],
+          titleKeys: ['parentId', 'learnerId'],
+          subtitleKeys: ['relationship', 'status'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: true,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Run provisioning action',
+        createConfig: buildCreateConfig('Provision learner, parent, or link', 'Run provisioning', [
+          {
+            name: 'action',
+            label: 'Provisioning action',
+            type: 'select',
+            required: true,
+            defaultValue: 'guardianLink',
+            options: [
+              { value: 'learner', label: 'Create learner' },
+              { value: 'parent', label: 'Create parent' },
+              { value: 'guardianLink', label: 'Create guardian link' },
+            ],
+          },
+          {
+            name: 'displayName',
+            label: 'Display name',
+            type: 'text',
+            placeholder: 'Required for learner or parent creation',
+          },
+          {
+            name: 'email',
+            label: 'Email',
+            type: 'email',
+            placeholder: 'Required for learner or parent creation',
+          },
+          {
+            name: 'phone',
+            label: 'Phone',
+            type: 'tel',
+            placeholder: 'Optional for parent creation',
+          },
+          {
+            name: 'gradeLevel',
+            label: 'Grade level',
+            type: 'number',
+            placeholder: 'Optional for learner creation',
+          },
+          {
+            name: 'notes',
+            label: 'Notes',
+            type: 'textarea',
+          },
+          {
+            name: 'parentId',
+            label: 'Parent',
+            type: 'select',
+            options: parentOptions,
+          },
+          {
+            name: 'learnerId',
+            label: 'Learner',
+            type: 'select',
+            options: learnerOptions,
+          },
+          {
+            name: 'relationship',
+            label: 'Relationship',
+            type: 'select',
+            defaultValue: 'guardian',
+            options: [
+              { value: 'guardian', label: 'Guardian' },
+              { value: 'parent', label: 'Parent' },
+              { value: 'caregiver', label: 'Caregiver' },
+            ],
+          },
+          {
+            name: 'isPrimary',
+            label: 'Primary guardian',
+            type: 'checkbox',
+            defaultValue: false,
+          },
+        ]),
+      };
+    }
+    case '/site/dashboard':
+      return {
+        records: await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'sites',
+          constraints: siteId ? [where(documentId(), '==', siteId)] : [],
+          titleKeys: ['name'],
+          subtitleKeys: ['location'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 1,
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/site/sessions':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'sessions',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('startDate', 'asc')] : [orderBy('startDate', 'asc')],
+          titleKeys: ['title'],
+          subtitleKeys: ['description', 'roomId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 80,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create site session',
+        createConfig: buildCreateConfig('Create site session', 'Create session', [
+          {
+            name: 'title',
+            label: 'Session title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+          },
+          {
+            name: 'startDate',
+            label: 'Start time',
+            type: 'datetime-local',
+            required: true,
+            defaultValue: toDateInputValue(new Date()),
+          },
+          {
+            name: 'endDate',
+            label: 'End time',
+            type: 'datetime-local',
+            required: true,
+            defaultValue: toDateInputValue(new Date(Date.now() + 60 * 60 * 1000)),
+          },
+        ]),
+      };
+    case '/site/ops':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'siteOpsEvents',
+          constraints: siteId ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')] : [orderBy('createdAt', 'desc')],
+          titleKeys: ['title', 'eventType'],
+          subtitleKeys: ['details', 'description'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Log ops event',
+        createConfig: buildCreateConfig('Log ops event', 'Create event', [
+          {
+            name: 'eventType',
+            label: 'Event type',
+            type: 'text',
+            required: true,
+            placeholder: 'staffing-gap',
+          },
+          {
+            name: 'details',
+            label: 'Details',
+            type: 'textarea',
+            required: true,
+          },
+        ]),
+      };
+    case '/site/incidents':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listSafetyIncidents',
+          args: { siteId: siteId || undefined },
+          rowArrayField: 'incidents',
+          collectionName: 'incidents',
+          titleKeys: ['title', 'type'],
+          subtitleKeys: ['summary', 'siteId'],
+          statusKeys: ['status', 'severity'],
+        }),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Report incident',
+        createConfig: buildCreateConfig('Report incident', 'Create incident', [
+          {
+            name: 'title',
+            label: 'Incident title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'summary',
+            label: 'Summary',
+            type: 'textarea',
+            required: true,
+          },
+        ]),
+      };
+    case '/site/identity':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listExternalIdentityLinks',
+          args: { siteId: siteId || undefined },
+          rowArrayField: 'links',
+          collectionName: 'externalIdentityLinks',
+          titleKeys: ['providerUserId', 'uid'],
+          subtitleKeys: ['provider', 'siteId'],
+          statusKeys: ['status'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/site/integrations-health':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'getIntegrationsHealth',
+          args: { siteId: siteId || undefined, scope: 'site' },
+          rowArrayField: 'syncJobs',
+          collectionName: 'syncJobs',
+          titleKeys: ['jobType', 'provider', 'id'],
+          subtitleKeys: ['status', 'siteId'],
+          statusKeys: ['status'],
+        }),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Trigger sync',
+        createConfig: buildCreateConfig('Trigger integration sync', 'Queue sync', [
+          {
+            name: 'provider',
+            label: 'Provider',
+            type: 'select',
+            required: true,
+            defaultValue: 'google-classroom',
+            options: [
+              { value: 'google-classroom', label: 'Google Classroom' },
+              { value: 'google-workspace', label: 'Google Workspace' },
+              { value: 'canvas', label: 'Canvas' },
+            ],
+          },
+        ]),
+      };
+    case '/partner/listings':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'marketplaceListings',
+          constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'category'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create listing',
+        createConfig: buildCreateConfig('Create listing', 'Create listing', [
+          {
+            name: 'title',
+            label: 'Listing title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            required: true,
+          },
+          {
+            name: 'category',
+            label: 'Category',
+            type: 'text',
+            placeholder: 'STEM, Arts, Leadership...',
+          },
+        ]),
+      };
+    case '/partner/contracts':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'partnerContracts',
+          constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
+          titleKeys: ['title', 'contractNumber', 'name'],
+          subtitleKeys: ['summary', 'siteId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create contract',
+        createConfig: buildCreateConfig('Create contract', 'Create contract', [
+          {
+            name: 'title',
+            label: 'Contract title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'summary',
+            label: 'Summary',
+            type: 'textarea',
+            required: true,
+          },
+          {
+            name: 'siteId',
+            label: 'Site ID',
+            type: 'text',
+            placeholder: 'Optional site reference',
+          },
+        ]),
+      };
+    case '/partner/payouts':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listPartnerPayouts',
+          args: {},
+          rowArrayField: 'payouts',
+          collectionName: 'payouts',
+          titleKeys: ['id', 'periodLabel'],
+          subtitleKeys: ['currency', 'partnerId'],
+          statusKeys: ['status'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/user-admin':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listUsers',
+          args: { limit: 100 },
+          rowArrayField: 'users',
+          collectionName: 'users',
+          titleKeys: ['displayName', 'email', 'uid'],
+          subtitleKeys: ['email', 'activeSiteId'],
+          statusKeys: ['role'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/role-switcher':
+      return {
+        records: await loadHqRoleSwitcherRecords(),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/sites':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'sites',
+          constraints: [orderBy('name', 'asc')],
+          titleKeys: ['name'],
+          subtitleKeys: ['location', 'id'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 200,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create site',
+        createConfig: buildCreateConfig('Create site', 'Create site', [
+          {
+            name: 'name',
+            label: 'Site name',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'location',
+            label: 'Location',
+            type: 'text',
+            required: true,
+          },
+        ]),
+      };
+    case '/hq/analytics':
+      return {
+        records: await loadHqAnalyticsRecords(ctx),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/billing':
+      return { records: await loadHqBillingRecords(), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+    case '/hq/approvals':
+      return {
+        records: applyRouteActionLabels(await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listWorkflowApprovals',
+          args: { limit: 120 },
+          rowArrayField: 'approvals',
+          collectionName: 'approvals',
+          titleKeys: ['title', 'sourceCollection', 'id'],
+          subtitleKeys: ['summary', 'siteId'],
+          statusKeys: ['status'],
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/audit':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listAuditLogs',
+          args: { limit: 120 },
+          rowArrayField: 'logs',
+          collectionName: 'auditLogs',
+          titleKeys: ['action', 'entityType', 'id'],
+          subtitleKeys: ['entityId', 'actorId'],
+          statusKeys: ['actorRole'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/safety':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listSafetyIncidents',
+          args: { limit: 120 },
+          rowArrayField: 'incidents',
+          collectionName: 'incidents',
+          titleKeys: ['title', 'type'],
+          subtitleKeys: ['summary', 'siteId'],
+          statusKeys: ['status', 'severity'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/hq/integrations-health':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'getIntegrationsHealth',
+          args: { scope: 'hq' },
+          rowArrayField: 'syncJobs',
+          collectionName: 'syncJobs',
+          titleKeys: ['jobType', 'provider'],
+          subtitleKeys: ['siteId', 'details'],
+          statusKeys: ['status'],
+        }),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Trigger global sync',
+        createConfig: buildCreateConfig('Trigger global sync', 'Queue sync', [
+          {
+            name: 'provider',
+            label: 'Provider',
+            type: 'select',
+            required: true,
+            defaultValue: 'google-classroom',
+            options: [
+              { value: 'google-classroom', label: 'Google Classroom' },
+              { value: 'google-workspace', label: 'Google Workspace' },
+              { value: 'canvas', label: 'Canvas' },
+            ],
+          },
+        ]),
+      };
+    case '/hq/curriculum':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'missions',
+          constraints: [orderBy('title', 'asc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['description', 'difficulty'],
+          statusKeys: ['status', 'isActive'],
+          editable: true,
+          deletable: false,
+          limitSize: 150,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create curriculum unit',
+        createConfig: buildCreateConfig('Create curriculum unit', 'Create mission', [
+          {
+            name: 'title',
+            label: 'Mission title',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            required: true,
+          },
+          {
+            name: 'difficulty',
+            label: 'Difficulty',
+            type: 'select',
+            required: true,
+            defaultValue: 'beginner',
+            options: [
+              { value: 'beginner', label: 'Beginner' },
+              { value: 'intermediate', label: 'Intermediate' },
+              { value: 'advanced', label: 'Advanced' },
+            ],
+          },
+        ]),
+      };
+    case '/hq/feature-flags':
+      return {
+        records: applyRouteActionLabels(await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'listFeatureFlags',
+          args: {},
+          rowArrayField: 'flags',
+          collectionName: 'featureFlags',
+          titleKeys: ['name', 'id'],
+          subtitleKeys: ['description', 'scope'],
+          statusKeys: ['status', 'enabled'],
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create feature flag',
+        createConfig: buildCreateConfig('Create feature flag', 'Create flag', [
+          {
+            name: 'name',
+            label: 'Flag name',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+          },
+        ]),
+      };
+    case '/messages': {
+      const contacts = await loadWorkflowContacts(ctx);
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'messageThreads',
+          constraints: [where('participantIds', 'array-contains', ctx.uid), orderBy('updatedAt', 'desc')],
+          titleKeys: ['title', 'subject'],
+          subtitleKeys: ['lastMessagePreview', 'siteId'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Start conversation',
+        createConfig: buildCreateConfig('Start conversation', 'Start conversation', [
+          {
+            name: 'recipientId',
+            label: 'Recipient',
+            type: 'select',
+            required: true,
+            options: contacts,
+          },
+          {
+            name: 'title',
+            label: 'Subject',
+            type: 'text',
+            required: true,
+          },
+          {
+            name: 'body',
+            label: 'Message',
+            type: 'textarea',
+            required: true,
+          },
+        ]),
+      };
+    }
+    case '/notifications': {
+      const notificationRows = await queryCollectionRecords({
+        routePath: ctx.routePath,
+        collectionName: 'messages',
+        constraints: [where('recipientId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+        titleKeys: ['title', 'body'],
+        subtitleKeys: ['body', 'senderName'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: false,
+        limitSize: 60,
+      });
+      return {
+        records: applyRouteActionLabels(
+          notificationRows.filter((record) => record.metadata.type !== 'direct'),
+          ctx.routePath,
+        ),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    }
+    case '/profile': {
+      const userSnap = await getDoc(doc(collection(firestore, 'users'), ctx.uid));
+      if (!userSnap.exists()) return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+      return {
+        records: [
+          buildRecord({
+            routePath: ctx.routePath,
+            collectionName: 'users',
+            id: userSnap.id,
+            raw: (userSnap.data() || {}) as Record<string, unknown>,
+            titleKeys: ['displayName', 'email', 'uid'],
+            subtitleKeys: ['email', 'role'],
+            statusKeys: ['role'],
+            editable: false,
+            deletable: false,
+          }),
+        ],
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Edit profile',
+        createConfig: buildCreateConfig('Edit profile', 'Save profile', [
+          {
+            name: 'displayName',
+            label: 'Display name',
+            type: 'text',
+            required: true,
+            defaultValue: asString((userSnap.data() || {}).displayName, ''),
+          },
+          {
+            name: 'phone',
+            label: 'Phone',
+            type: 'tel',
+            defaultValue: asString((userSnap.data() || {}).phone, ''),
+          },
+          {
+            name: 'photoUrl',
+            label: 'Photo URL',
+            type: 'text',
+            defaultValue: asString((userSnap.data() || {}).photoUrl, ''),
+          },
+        ]),
+      };
+    }
+    case '/settings': {
+      const userSnap = await getDoc(doc(collection(firestore, 'users'), ctx.uid));
+      if (!userSnap.exists()) return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+      const data = (userSnap.data() || {}) as Record<string, unknown>;
+      const preferences = (data.preferences && typeof data.preferences === 'object' && !Array.isArray(data.preferences))
+        ? (data.preferences as Record<string, unknown>)
+        : {};
+      return {
+        records: [
+          buildRecord({
+            routePath: ctx.routePath,
+            collectionName: 'users',
+            id: userSnap.id,
+            raw: data,
+            titleKeys: ['displayName', 'uid'],
+            subtitleKeys: ['activeSiteId', 'organizationId'],
+            statusKeys: ['isActive'],
+            editable: false,
+            deletable: false,
+          }),
+        ],
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Update settings',
+        createConfig: buildCreateConfig('Update settings', 'Save settings', [
+          {
+            name: 'locale',
+            label: 'Language',
+            type: 'select',
+            required: true,
+            defaultValue: asString(preferences.locale, 'en'),
+            options: [
+              { value: 'en', label: 'English' },
+              { value: 'zh-CN', label: 'Chinese (Simplified)' },
+              { value: 'zh-TW', label: 'Chinese (Traditional)' },
+              { value: 'th', label: 'Thai' },
+            ],
+          },
+          {
+            name: 'timeZone',
+            label: 'Time zone',
+            type: 'text',
+            defaultValue: asString(preferences.timeZone, 'auto'),
+          },
+          {
+            name: 'notificationsEnabled',
+            label: 'Enable notifications',
+            type: 'checkbox',
+            defaultValue: asBoolean(preferences.notificationsEnabled, true),
+          },
+          {
+            name: 'emailNotifications',
+            label: 'Email notifications',
+            type: 'checkbox',
+            defaultValue: asBoolean(preferences.emailNotifications, true),
+          },
+          {
+            name: 'pushNotifications',
+            label: 'Push notifications',
+            type: 'checkbox',
+            defaultValue: asBoolean(preferences.pushNotifications, true),
+          },
+        ]),
+      };
+    }
+    default:
+      return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+  }
+}
+
+function requireStringValue(input: WorkflowCreateInput, key: string, label: string): string {
+  const value = input.values[key];
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    throw new Error(`${label} is required.`);
+  }
+  return normalized;
+}
+
+function optionalStringValue(input: WorkflowCreateInput, key: string): string {
+  const value = input.values[key];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function booleanValue(input: WorkflowCreateInput, key: string, fallback = false): boolean {
+  return asBoolean(input.values[key], fallback);
+}
+
+async function loadUserDisplayName(userId: string): Promise<string> {
+  const userSnap = await getDoc(doc(collection(firestore, 'users'), userId));
+  if (!userSnap.exists()) return userId;
+  return optionLabelFromRecord((userSnap.data() || {}) as Record<string, unknown>, userId);
+}
+
+async function findUserByEmail(email: string): Promise<{ id: string; data: Record<string, unknown> } | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+  const snap = await getDocs(
+    query(
+      collection(firestore, 'users'),
+      where('email', '==', normalizedEmail),
+      limit(1),
+    ),
+  );
+  const match = snap.docs[0];
+  if (!match) return null;
+  return {
+    id: match.id,
+    data: (match.data() || {}) as Record<string, unknown>,
+  };
+}
+
+async function ensureUserLinkedToSite(userId: string, siteId: string): Promise<void> {
+  if (!userId.trim() || !siteId.trim()) return;
+  const userRef = doc(collection(firestore, 'users'), userId);
+  const existing = await getDoc(userRef);
+  if (!existing.exists()) return;
+  const data = (existing.data() || {}) as Record<string, unknown>;
+  const siteIds = Array.isArray(data.siteIds)
+    ? (data.siteIds as unknown[]).filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+    : [];
+  const activeSite = asString(data.activeSiteId, '');
+  const updates: Record<string, unknown> = { updatedAt: serverTimestamp() };
+  if (!siteIds.includes(siteId)) {
+    updates.siteIds = arrayUnion(siteId);
+  }
+  if (!activeSite) {
+    updates.activeSiteId = siteId;
+  }
+  await setDoc(userRef, updates, { merge: true });
+}
+
+async function syncLearnerParentLink(learnerId: string, parentId: string, add: boolean): Promise<void> {
+  const learnerRef = doc(collection(firestore, 'users'), learnerId);
+  await setDoc(learnerRef, {
+    parentIds: add ? arrayUnion(parentId) : arrayRemove(parentId),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+async function createOrLinkLearnerProfile(params: {
+  siteId: string;
+  email: string;
+  displayName: string;
+  gradeLevel?: string;
+  notes?: string;
+}): Promise<string> {
+  const normalizedEmail = params.email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(normalizedEmail);
+
+  const learnerId = existingUser?.id || doc(collection(firestore, 'users')).id;
+  const userRef = doc(collection(firestore, 'users'), learnerId);
+  const baseUserData: Record<string, unknown> = existingUser
+    ? {
+        displayName: params.displayName.trim(),
+        siteIds: arrayUnion(params.siteId),
+        activeSiteId: params.siteId,
+        updatedAt: serverTimestamp(),
+      }
+    : {
+        uid: learnerId,
+        email: normalizedEmail,
+        displayName: params.displayName.trim(),
+        role: 'learner',
+        siteIds: [params.siteId],
+        activeSiteId: params.siteId,
+        isActive: true,
+        status: 'active',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        parentIds: [],
+      };
+  await setDoc(userRef, baseUserData, { merge: true });
+
+  const profileRef = doc(collection(firestore, 'learnerProfiles'), learnerId);
+  const gradeLevelRaw = params.gradeLevel?.trim();
+  const gradeLevel = gradeLevelRaw && gradeLevelRaw.length > 0 ? Number(gradeLevelRaw) : null;
+  await setDoc(profileRef, {
+    siteId: params.siteId,
+    learnerId,
+    userId: learnerId,
+    displayName: params.displayName.trim(),
+    email: normalizedEmail,
+    ...(gradeLevel !== null && !Number.isNaN(gradeLevel) ? { gradeLevel } : {}),
+    ...(params.notes ? { notes: params.notes.trim() } : {}),
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
+  }, { merge: true });
+
+  return learnerId;
+}
+
+async function createOrLinkParentProfile(params: {
+  siteId: string;
+  email: string;
+  displayName: string;
+  phone?: string;
+}): Promise<string> {
+  const normalizedEmail = params.email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(normalizedEmail);
+
+  const parentId = existingUser?.id || doc(collection(firestore, 'users')).id;
+  const userRef = doc(collection(firestore, 'users'), parentId);
+  const baseUserData: Record<string, unknown> = existingUser
+    ? {
+        displayName: params.displayName.trim(),
+        siteIds: arrayUnion(params.siteId),
+        activeSiteId: params.siteId,
+        updatedAt: serverTimestamp(),
+      }
+    : {
+        uid: parentId,
+        email: normalizedEmail,
+        displayName: params.displayName.trim(),
+        role: 'parent',
+        siteIds: [params.siteId],
+        activeSiteId: params.siteId,
+        isActive: true,
+        status: 'active',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+  await setDoc(userRef, baseUserData, { merge: true });
+
+  const profileRef = doc(collection(firestore, 'parentProfiles'), parentId);
+  await setDoc(profileRef, {
+    siteId: params.siteId,
+    parentId,
+    userId: parentId,
+    displayName: params.displayName.trim(),
+    email: normalizedEmail,
+    ...(params.phone ? { phone: params.phone.trim() } : {}),
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
+  }, { merge: true });
+
+  return parentId;
+}
+
+export async function createWorkflowRecord(
+  ctx: WorkflowContext,
+  input: WorkflowCreateInput,
+): Promise<void> {
+  const siteId = activeSiteId(ctx.profile);
+  const payloadBase: Record<string, unknown> = {
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
+    siteId: siteId || null,
+    createdBy: ctx.uid,
+  };
+
+  switch (ctx.routePath) {
+    case '/learner/missions': {
+      const missionId = requireStringValue(input, 'missionId', 'Mission');
+      const missionSnap = await getDoc(doc(collection(firestore, 'missions'), missionId));
+      const missionData = (missionSnap.data() || {}) as Record<string, unknown>;
+      await addDoc(collection(firestore, 'missionAttempts'), {
+        ...payloadBase,
+        missionId,
+        missionTitle: optionLabelFromRecord(missionData, missionId),
+        learnerId: ctx.uid,
+        status: 'started',
+        startedAt: serverTimestamp(),
+        notes: optionalStringValue(input, 'notes') || null,
+      });
+      return;
+    }
+    case '/learner/habits':
+      await addDoc(collection(firestore, 'habits'), {
+        ...payloadBase,
+        name: requireStringValue(input, 'name', 'Habit name'),
+        description: optionalStringValue(input, 'description') || null,
+        cadence: requireStringValue(input, 'cadence', 'Cadence'),
+        learnerId: ctx.uid,
+        status: 'active',
+      });
+      return;
+    case '/learner/portfolio':
+      await addDoc(collection(firestore, 'portfolioItems'), {
+        ...payloadBase,
+        learnerId: ctx.uid,
+        title: requireStringValue(input, 'title', 'Title'),
+        description: optionalStringValue(input, 'description') || null,
+        mediaType: requireStringValue(input, 'mediaType', 'Media type'),
+        mediaUrl: optionalStringValue(input, 'mediaUrl') || null,
+        status: 'draft',
+      });
+      return;
+    case '/educator/attendance': {
+        const learnerId = requireStringValue(input, 'learnerId', 'Learner');
+        const sessionOccurrenceId = requireStringValue(input, 'sessionOccurrenceId', 'Session');
+        const learnerName = await loadUserDisplayName(learnerId);
+        await addDoc(collection(firestore, 'attendanceRecords'), {
+          ...payloadBase,
+          learnerId,
+          learnerName,
+          sessionOccurrenceId,
+          status: requireStringValue(input, 'status', 'Attendance status'),
+          notes: optionalStringValue(input, 'notes') || null,
+          timestamp: serverTimestamp(),
+          recordedAt: serverTimestamp(),
+          userId: learnerId,
+          recordedBy: ctx.uid,
+        });
+      }
+      return;
+    case '/educator/sessions':
+    case '/site/sessions': {
+        const title = requireStringValue(input, 'title', 'Session title');
+        const startDate = parseDateInputValue(input.values.startDate);
+        const endDate = parseDateInputValue(input.values.endDate);
+        if (!startDate || !endDate) {
+          throw new Error('Start and end times are required.');
+        }
+        if (endDate <= startDate) {
+          throw new Error('End time must be after start time.');
+        }
+      await addDoc(collection(firestore, 'sessions'), {
+        ...payloadBase,
+        title,
+        description: optionalStringValue(input, 'description') || null,
+        educatorIds: [ctx.uid],
+        pillarCodes: ['FUTURE_SKILLS'],
+        startDate,
+        endDate,
+        status: 'scheduled',
+      });
+      }
+      return;
+    case '/educator/mission-plans':
+      await addDoc(collection(firestore, 'missionPlans'), {
+        ...payloadBase,
+        title: requireStringValue(input, 'title', 'Plan title'),
+        description: optionalStringValue(input, 'description') || null,
+        educatorId: ctx.uid,
+        status: 'draft',
+      });
+      return;
+    case '/educator/learner-supports': {
+      const learnerId = requireStringValue(input, 'learnerId', 'Learner');
+      const callable = httpsCallable(functions, 'logSupportIntervention');
+      await callable({
+        learnerId,
+        siteId: siteId || '',
+        strategyType: requireStringValue(input, 'strategyType', 'Strategy type'),
+        strategyDescription: requireStringValue(input, 'strategyDescription', 'Intervention'),
+        context: requireStringValue(input, 'context', 'Context'),
+        outcome: 'partial',
+        notes: optionalStringValue(input, 'notes') || undefined,
+        recommendForFuture: true,
+      });
+      return;
+    }
+    case '/site/checkin': {
+        const learnerId = requireStringValue(input, 'learnerId', 'Learner');
+        const learnerName = await loadUserDisplayName(learnerId);
+        const type = requireStringValue(input, 'type', 'Event type');
+        await addDoc(collection(firestore, 'checkins'), {
+          ...payloadBase,
+          learnerId,
+          learnerName,
+          type,
+          status: 'completed',
+          notes: optionalStringValue(input, 'notes') || null,
+          recordedBy: ctx.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
+      return;
+    case '/site/provisioning': {
+      if (!siteId) {
+        throw new Error('Active site context is required for provisioning.');
+      }
+      const action = requireStringValue(input, 'action', 'Provisioning action');
+      if (action === 'learner') {
+        await createOrLinkLearnerProfile({
+          siteId,
+          email: requireStringValue(input, 'email', 'Email'),
+          displayName: requireStringValue(input, 'displayName', 'Display name'),
+          gradeLevel: optionalStringValue(input, 'gradeLevel') || undefined,
+          notes: optionalStringValue(input, 'notes') || undefined,
+        });
+        return;
+      }
+      if (action === 'parent') {
+        await createOrLinkParentProfile({
+          siteId,
+          email: requireStringValue(input, 'email', 'Email'),
+          displayName: requireStringValue(input, 'displayName', 'Display name'),
+          phone: optionalStringValue(input, 'phone') || undefined,
+        });
+        return;
+      }
+
+      const parentId = requireStringValue(input, 'parentId', 'Parent');
+      const learnerId = requireStringValue(input, 'learnerId', 'Learner');
+      await Promise.all([
+        ensureUserLinkedToSite(parentId, siteId),
+        ensureUserLinkedToSite(learnerId, siteId),
+        syncLearnerParentLink(learnerId, parentId, true),
+      ]);
+
+      await addDoc(collection(firestore, 'guardianLinks'), {
+        ...payloadBase,
+        siteId,
+        parentId,
+        parentName: await loadUserDisplayName(parentId),
+        learnerId,
+        learnerName: await loadUserDisplayName(learnerId),
+        status: 'active',
+        relationship: optionalStringValue(input, 'relationship') || 'guardian',
+        isPrimary: booleanValue(input, 'isPrimary'),
+      });
+      return;
+    }
+    case '/site/ops':
+      await addDoc(collection(firestore, 'siteOpsEvents'), {
+        ...payloadBase,
+        eventType: requireStringValue(input, 'eventType', 'Event type'),
+        details: requireStringValue(input, 'details', 'Details'),
+        status: 'open',
+      });
+      return;
+    case '/site/incidents': {
+      const callable = httpsCallable(functions, 'resolveSafetyIncident');
+      await callable({
+        mode: 'create',
+        siteId: siteId || '',
+        title: requireStringValue(input, 'title', 'Incident title'),
+        summary: requireStringValue(input, 'summary', 'Summary'),
+      });
+      return;
+    }
+    case '/site/integrations-health':
+    case '/hq/integrations-health': {
+      const callable = httpsCallable(functions, 'triggerIntegrationSyncJob');
+      await callable({
+        siteId: siteId || undefined,
+        provider: requireStringValue(input, 'provider', 'Provider'),
+        requestedBy: ctx.uid,
+      });
+      return;
+    }
+    case '/partner/listings':
+      await addDoc(collection(firestore, 'marketplaceListings'), {
+        ...payloadBase,
+        partnerId: ctx.uid,
+        title: requireStringValue(input, 'title', 'Listing title'),
+        description: requireStringValue(input, 'description', 'Description'),
+        category: optionalStringValue(input, 'category') || null,
+        status: 'draft',
+      });
+      return;
+    case '/partner/contracts':
+      await addDoc(collection(firestore, 'partnerContracts'), {
+        ...payloadBase,
+        partnerId: ctx.uid,
+        title: requireStringValue(input, 'title', 'Contract title'),
+        summary: requireStringValue(input, 'summary', 'Summary'),
+        siteId: optionalStringValue(input, 'siteId') || null,
+        status: 'draft',
+      });
+      return;
+    case '/hq/sites':
+      await addDoc(collection(firestore, 'sites'), {
+        ...payloadBase,
+        name: requireStringValue(input, 'name', 'Site name'),
+        location: requireStringValue(input, 'location', 'Location'),
+        siteLeadIds: [],
+        status: 'pending',
+      });
+      return;
+    case '/hq/curriculum':
+      await addDoc(collection(firestore, 'missions'), {
+        ...payloadBase,
+        title: requireStringValue(input, 'title', 'Mission title'),
+        description: requireStringValue(input, 'description', 'Description'),
+        pillarCodes: ['FUTURE_SKILLS'],
+        difficulty: requireStringValue(input, 'difficulty', 'Difficulty'),
+        status: 'draft',
+      });
+      return;
+    case '/hq/feature-flags': {
+      const callable = httpsCallable(functions, 'upsertFeatureFlag');
+      await callable({
+        name: requireStringValue(input, 'name', 'Flag name'),
+        description: optionalStringValue(input, 'description'),
+        enabled: false,
+      });
+      return;
+    }
+    case '/messages': {
+      const recipientId = requireStringValue(input, 'recipientId', 'Recipient');
+      const subject = requireStringValue(input, 'title', 'Subject');
+      const body = requireStringValue(input, 'body', 'Message');
+      const contacts = await loadWorkflowContacts(ctx);
+      const recipient = contacts.find((entry) => entry.value === recipientId);
+
+      const candidateThreads = await getDocs(
+        query(
+          collection(firestore, 'messageThreads'),
+          where('participantIds', 'array-contains', ctx.uid),
+          orderBy('updatedAt', 'desc'),
+          limit(40),
+        ),
+      ).catch(() => null);
+
+      const existingThread = candidateThreads?.docs.find((threadDoc) => {
+        const participantIds = Array.isArray(threadDoc.data().participantIds)
+          ? (threadDoc.data().participantIds as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+          : [];
+        return participantIds.includes(recipientId);
+      });
+
+      const threadRef = existingThread
+        ? doc(collection(firestore, 'messageThreads'), existingThread.id)
+        : doc(collection(firestore, 'messageThreads'));
+
+      await setDoc(threadRef, {
+        title: subject,
+        participantIds: existingThread
+          ? existingThread.data().participantIds
+          : [ctx.uid, recipientId],
+        participantNames: existingThread
+          ? existingThread.data().participantNames
+          : [ctx.profile?.displayName || ctx.uid, recipient?.label || recipientId],
+        status: 'open',
+        lastMessagePreview: body,
+        lastMessageSenderId: ctx.uid,
+        updatedAt: serverTimestamp(),
+        ...(existingThread ? {} : { createdAt: serverTimestamp(), createdBy: ctx.uid, siteId: siteId || null }),
+      }, { merge: true });
+
+      await addDoc(collection(firestore, 'messages'), {
+        threadId: threadRef.id,
+        title: subject,
+        body,
+        type: 'direct',
+        priority: 'normal',
+        senderId: ctx.uid,
+        senderName: ctx.profile?.displayName || ctx.uid,
+        recipientId,
+        siteId: siteId || null,
+        isRead: false,
+        status: 'sent',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/profile':
+      await setDoc(doc(collection(firestore, 'users'), ctx.uid), {
+        displayName: requireStringValue(input, 'displayName', 'Display name'),
+        phone: optionalStringValue(input, 'phone') || null,
+        photoUrl: optionalStringValue(input, 'photoUrl') || null,
+        profileUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return;
+    case '/settings':
+      await setDoc(doc(collection(firestore, 'users'), ctx.uid), {
+        preferences: {
+          locale: requireStringValue(input, 'locale', 'Language'),
+          timeZone: optionalStringValue(input, 'timeZone') || 'auto',
+          notificationsEnabled: booleanValue(input, 'notificationsEnabled', true),
+          emailNotifications: booleanValue(input, 'emailNotifications', true),
+          pushNotifications: booleanValue(input, 'pushNotifications', true),
+        },
+        settingsUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return;
+    default:
+      return;
+  }
+}
+
+export async function updateWorkflowRecord(
+  ctx: WorkflowContext,
+  target: WorkflowMutationTarget,
+): Promise<void> {
+  const ref = doc(collection(firestore, target.collectionName), target.id);
+  const existing = await getDoc(ref).catch(() => null);
+  const data = (existing?.data() || {}) as Record<string, unknown>;
+
+  if (target.collectionName === 'approvals') {
+    const callable = httpsCallable(functions, 'decideWorkflowApproval');
+    await callable({
+      id: target.id,
+      status: 'approved',
+    });
+    return;
+  }
+
+  if (target.collectionName === 'incidents') {
+    const callable = httpsCallable(functions, 'resolveSafetyIncident');
+    await callable({
+      mode: 'update',
+      id: target.id,
+      status: 'resolved',
+      siteId: activeSiteId(ctx.profile) || undefined,
+    });
+    return;
+  }
+
+  if (target.collectionName === 'featureFlags') {
+    const callable = httpsCallable(functions, 'upsertFeatureFlag');
+    await callable({
+      id: target.id,
+      enabled: asString(data.status, '') !== 'enabled',
+    });
+    return;
+  }
+
+  switch (ctx.routePath) {
+    case '/learner/missions':
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: asString(data.status, '') === 'submitted' ? 'started' : 'submitted',
+        submittedAt: serverTimestamp(),
+      });
+      return;
+    case '/learner/habits':
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        lastCompletedAt: serverTimestamp(),
+        completionCount: increment(1),
+        status: 'active',
+      });
+      return;
+    case '/learner/portfolio':
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: asString(data.status, '') === 'published' ? 'published' : 'published',
+        publishedAt: serverTimestamp(),
+      });
+      return;
+    case '/educator/attendance':
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        verifiedAt: serverTimestamp(),
+        verifiedBy: ctx.uid,
+      });
+      return;
+    case '/educator/missions/review':
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: 'reviewed',
+        reviewedBy: ctx.uid,
+        reviewedAt: serverTimestamp(),
+      });
+      return;
+    case '/educator/sessions':
+    case '/site/sessions': {
+      const currentStatus = asString(data.status, 'scheduled');
+      const nextStatus = currentStatus === 'in_progress' ? 'completed' : 'in_progress';
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: nextStatus,
+        ...(nextStatus === 'in_progress' ? { startedAt: serverTimestamp() } : { completedAt: serverTimestamp() }),
+      });
+      return;
+    }
+    case '/educator/mission-plans': {
+      const currentStatus = asString(data.status, 'draft');
+      const nextStatus = currentStatus === 'active' ? 'archived' : 'active';
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: nextStatus,
+        activatedAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/site/provisioning': {
+      const currentStatus = asString(data.status, 'active');
+      const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: nextStatus,
+      });
+      await syncLearnerParentLink(
+        asString(data.learnerId, ''),
+        asString(data.parentId, ''),
+        nextStatus === 'active',
+      );
+      return;
+    }
+    case '/site/ops': {
+      const currentStatus = asString(data.status, 'open');
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: currentStatus === 'resolved' ? 'open' : 'resolved',
+        resolvedBy: currentStatus === 'resolved' ? null : ctx.uid,
+        resolvedAt: currentStatus === 'resolved' ? null : serverTimestamp(),
+      });
+      return;
+    }
+    case '/partner/listings': {
+      const currentStatus = asString(data.status, 'draft');
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: currentStatus === 'published' ? 'archived' : 'published',
+        publishedAt: currentStatus === 'published' ? data.publishedAt || null : serverTimestamp(),
+      });
+      return;
+    }
+    case '/partner/contracts': {
+      const currentStatus = asString(data.status, 'draft');
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: currentStatus === 'submitted' ? 'draft' : 'submitted',
+        submittedAt: currentStatus === 'submitted' ? null : serverTimestamp(),
+      });
+      return;
+    }
+    case '/hq/sites': {
+      const currentStatus = asString(data.status, 'pending');
+      const nextStatus = currentStatus === 'active' ? 'paused' : 'active';
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: nextStatus,
+      });
+      return;
+    }
+    case '/messages': {
+      const currentStatus = asString(data.status, 'open');
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: currentStatus === 'archived' ? 'open' : 'archived',
+      });
+      return;
+    }
+    case '/notifications':
+      {
+        const currentlyRead = asBoolean(data.isRead, false);
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        isRead: !currentlyRead,
+        readAt: currentlyRead ? null : serverTimestamp(),
+      });
+      return;
+      }
+    default:
+      return;
+  }
+}
+
+export async function deleteWorkflowRecord(target: WorkflowMutationTarget): Promise<void> {
+  const deletableCollections = new Set(['portfolioItems', 'guardianLinks']);
+  if (!deletableCollections.has(target.collectionName)) {
+    return;
+  }
+
+  const ref = doc(collection(firestore, target.collectionName), target.id);
+  const existing = await getDoc(ref).catch(() => null);
+  const data = (existing?.data() || {}) as Record<string, unknown>;
+  await deleteDoc(ref);
+
+  if (target.collectionName === 'guardianLinks') {
+    const learnerId = asString(data.learnerId, '');
+    const parentId = asString(data.parentId, '');
+    if (learnerId && parentId) {
+      const remainingLinks = await getDocs(
+        query(
+          collection(firestore, 'guardianLinks'),
+          where('learnerId', '==', learnerId),
+          where('parentId', '==', parentId),
+          limit(1),
+        ),
+      ).catch(() => null);
+
+      if (!remainingLinks || remainingLinks.docs.length === 0) {
+        await syncLearnerParentLink(learnerId, parentId, false);
+      }
+    }
+  }
+}

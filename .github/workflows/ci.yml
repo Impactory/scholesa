@@ -2,8 +2,15 @@ name: CI
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - release/**
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test:
@@ -21,8 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Lint
         run: npm run lint
+
+      - name: Workflow no-mock audit
+        run: npm run qa:workflow:no-mock
 
       - name: Build
         run: npm run build
@@ -32,6 +45,9 @@ jobs:
 
       - name: Jest rules integration
         run: npm run test:integration:rules
+
+      - name: Web browser workflow E2E
+        run: npm run test:e2e:web
 
       - name: Jest analytics integration
         run: npm run test:integration:analytics
@@ -56,3 +72,83 @@ jobs:
           name: audit-pack-reports
           path: audit-pack/reports
           if-no-files-found: error
+
+  platform-gates:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full platform gates (no deploy)
+        run: npm run flow:platform:gates
+
+  platform-full:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      CLOUD_RUN_SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+      COMPLIANCE_RUN_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required deploy secrets
+        env:
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          missing=0
+          for key in FIREBASE_TOKEN GCP_PROJECT_ID GCP_REGION CLOUD_RUN_SERVICE COMPLIANCE_RUN_SERVICE GCP_SA_KEY_JSON; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "Missing required secret/env: $key"
+              missing=1
+            fi
+          done
+          [[ "$missing" -eq 0 ]] || exit 1
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Run full platform flow (includes deploy)
+        run: npm run flow:platform:full

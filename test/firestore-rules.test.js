@@ -6,7 +6,7 @@
  */
 
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, setLogLevel } = require('firebase/firestore');
+const { deleteDoc, doc, getDoc, setDoc, updateDoc, setLogLevel } = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,8 +18,10 @@ let testEnv;
 const hqUser = { uid: 'hq-user-1', email: 'hq@scholesa.com' };
 const educatorUser = { uid: 'educator-1', email: 'educator@site1.com' };
 const parentUser = { uid: 'parent-1', email: 'parent@example.com' };
+const otherParentUser = { uid: 'parent-2', email: 'parent2@example.com' };
 const learnerUser = { uid: 'learner-1', email: 'learner@example.com' };
 const otherSiteUser = { uid: 'other-site-user', email: 'other@site2.com' };
+const partnerUser = { uid: 'partner-1', email: 'partner@example.com' };
 
 beforeAll(async () => {
   setLogLevel('error');
@@ -68,17 +70,30 @@ beforeEach(async () => {
       role: 'parent',
       siteIds: ['site1'],
     });
+
+    await setDoc(doc(db, 'users', otherParentUser.uid), {
+      email: otherParentUser.email,
+      role: 'parent',
+      siteIds: ['site1'],
+    });
     
     await setDoc(doc(db, 'users', learnerUser.uid), {
       email: learnerUser.email,
       role: 'learner',
       siteIds: ['site1'],
+      parentIds: [parentUser.uid],
     });
     
     await setDoc(doc(db, 'users', otherSiteUser.uid), {
       email: otherSiteUser.email,
       role: 'educator',
       siteIds: ['site2'],
+    });
+
+    await setDoc(doc(db, 'users', partnerUser.uid), {
+      email: partnerUser.email,
+      role: 'partner',
+      siteIds: ['site1'],
     });
     
     // Create test site
@@ -93,6 +108,62 @@ beforeEach(async () => {
       occurrenceId: 'occ-1',
       userId: learnerUser.uid,
       status: 'present',
+    });
+
+    // Create test check-in record
+    await setDoc(doc(db, 'checkins', 'checkin-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      learnerName: 'Learner One',
+      status: 'completed',
+      type: 'checkin',
+    });
+
+    // Create test educator-learner link
+    await setDoc(doc(db, 'educatorLearnerLinks', 'link-1'), {
+      siteId: 'site1',
+      educatorId: educatorUser.uid,
+      learnerId: learnerUser.uid,
+      status: 'active',
+    });
+
+    // Create test support intervention
+    await setDoc(doc(db, 'supportInterventions', 'support-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      educatorId: educatorUser.uid,
+      strategyType: 'autonomy',
+      strategyDescription: 'Prompted learner reflection',
+      context: 'individual',
+      outcome: 'helped',
+    });
+
+    await setDoc(doc(db, 'portfolioItems', 'portfolio-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Learner artifact',
+      status: 'draft',
+    });
+
+    await setDoc(doc(db, 'messageThreads', 'thread-1'), {
+      participantIds: [educatorUser.uid, parentUser.uid],
+      participantNames: ['Educator One', 'Parent One'],
+      title: 'Family follow-up',
+      status: 'open',
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'messages', 'message-1'), {
+      threadId: 'thread-1',
+      recipientId: parentUser.uid,
+      senderId: educatorUser.uid,
+      title: 'Schedule update',
+      body: 'Please review tomorrow.',
+      type: 'alert',
+      isRead: false,
+      status: 'sent',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
   });
 });
@@ -198,11 +269,109 @@ describe('Attendance Collection', () => {
 
 describe('Cross-Site Access Denial', () => {
   test('educator from site2 cannot access site1 attendance', async () => {
-    // Note: Current rules don't enforce cross-site restrictions at rule level
-    // This test documents expected behavior when site-scoping is added
-    // Currently passes because rules only check role, not siteId
-    // When site-scoping is added, this should fail:
-    // await assertFails(getDoc(doc(db, 'attendance', 'att-1')));
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'attendanceRecords', 'att-1')));
+  });
+
+  test('educator from site2 cannot access site1 checkins', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'checkins', 'checkin-1')));
+  });
+
+  test('educator from site2 cannot access site1 support interventions', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'supportInterventions', 'support-1')));
+  });
+});
+
+describe('Checkins Collection', () => {
+  test('educator can create checkin in accessible site', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'checkins', 'checkin-2'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      learnerName: 'Learner One',
+      status: 'completed',
+      type: 'checkin',
+    }));
+  });
+
+  test('learner cannot create checkin directly', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'checkins', 'checkin-3'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      learnerName: 'Learner One',
+      status: 'completed',
+      type: 'checkin',
+    }));
+  });
+
+  test('learner can read own checkin record', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'checkins', 'checkin-1')));
+  });
+});
+
+describe('Educator Learner Links Collection', () => {
+  test('educator can read own link', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'educatorLearnerLinks', 'link-1')));
+  });
+
+  test('other educator cannot read link they do not own', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'educatorLearnerLinks', 'link-1')));
+  });
+
+  test('hq can read educator learner links', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'educatorLearnerLinks', 'link-1')));
+  });
+
+  test('educator can create own link', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'educatorLearnerLinks', 'link-2'), {
+      siteId: 'site1',
+      educatorId: educatorUser.uid,
+      learnerId: learnerUser.uid,
+      status: 'active',
+    }));
+  });
+
+  test('educator cannot create link for different educator id', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'educatorLearnerLinks', 'link-3'), {
+      siteId: 'site1',
+      educatorId: otherSiteUser.uid,
+      learnerId: learnerUser.uid,
+      status: 'active',
+    }));
+  });
+});
+
+describe('Support Interventions Collection', () => {
+  test('educator can read site-scoped support interventions', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'supportInterventions', 'support-1')));
+  });
+
+  test('hq can read support interventions', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'supportInterventions', 'support-1')));
+  });
+
+  test('educator cannot write support interventions directly', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'supportInterventions', 'support-2'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      educatorId: educatorUser.uid,
+      strategyType: 'autonomy',
+      strategyDescription: 'Direct write attempt',
+      context: 'individual',
+      outcome: 'helped',
+    }));
   });
 });
 
@@ -222,6 +391,104 @@ describe('Mission Attempts', () => {
       learnerId: 'other-learner',
       missionId: 'mission-1',
       status: 'draft',
+    }));
+  });
+});
+
+describe('Portfolio Access', () => {
+  test('linked parent can read learner portfolio item', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'portfolioItems', 'portfolio-1')));
+  });
+
+  test('unlinked parent cannot read learner portfolio item', async () => {
+    const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'portfolioItems', 'portfolio-1')));
+  });
+});
+
+describe('Messaging Rules', () => {
+  test('recipient can mark message as read', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(updateDoc(doc(db, 'messages', 'message-1'), {
+      isRead: true,
+      readAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+  });
+
+  test('sender cannot mark recipient message as read', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(updateDoc(doc(db, 'messages', 'message-1'), {
+      isRead: true,
+      readAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+  });
+
+  test('recipient can delete delivered message', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'messages', 'message-delete'), {
+        recipientId: parentUser.uid,
+        senderId: educatorUser.uid,
+        title: 'Delete me',
+        body: 'Body',
+        type: 'alert',
+        isRead: false,
+      });
+    });
+
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(deleteDoc(doc(db, 'messages', 'message-delete')));
+  });
+});
+
+describe('Partner Ownership Rules', () => {
+  test('partner can create own marketplace listing', async () => {
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'marketplaceListings', 'listing-1'), {
+      partnerId: partnerUser.uid,
+      siteId: 'site1',
+      title: 'STEM Residency',
+      status: 'draft',
+    }));
+  });
+
+  test('partner cannot create marketplace listing for different partner', async () => {
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'marketplaceListings', 'listing-2'), {
+      partnerId: 'partner-2',
+      siteId: 'site1',
+      title: 'Unauthorized Listing',
+      status: 'draft',
+    }));
+  });
+
+  test('partner can create own contract', async () => {
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'partnerContracts', 'contract-1'), {
+      partnerId: partnerUser.uid,
+      status: 'pending',
+      siteId: 'site1',
+      title: 'Pilot Contract',
+    }));
+  });
+
+  test('partner cannot update listing owned by another partner', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'marketplaceListings', 'listing-foreign'), {
+        partnerId: 'partner-2',
+        siteId: 'site1',
+        title: 'Foreign Listing',
+        status: 'published',
+      });
+    });
+
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertFails(updateDoc(doc(db, 'marketplaceListings', 'listing-foreign'), {
+      status: 'archived',
     }));
   });
 });

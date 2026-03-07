@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/firestore_service.dart';
 import 'partner_models.dart';
 
@@ -148,13 +149,18 @@ class PartnerService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final List<Map<String, dynamic>> data =
-          await _firestoreService.queryCollection(
-        'payouts',
-        where: <List<dynamic>>[
-          <dynamic>['partnerId', _partnerId]
-        ],
-      );
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listPartnerPayouts');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'limit': 200});
+      final Map<String, dynamic> payload =
+          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final List<dynamic> rows = payload['payouts'] as List<dynamic>? ?? <dynamic>[];
+      final List<Map<String, dynamic>> data = rows
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) =>
+              row.map((dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .toList();
 
       _payouts = data
           .map((Map<String, dynamic> doc) => Payout(

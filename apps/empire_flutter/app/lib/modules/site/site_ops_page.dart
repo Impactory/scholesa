@@ -448,7 +448,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
 
       final QuerySnapshot<Map<String, dynamic>> presenceSnap =
           await firestoreService.firestore
-              .collection('presenceRecords')
+              .collection('checkins')
               .where('siteId', isEqualTo: resolvedSiteId)
               .limit(250)
               .get();

@@ -3,6 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const cp = require('node:child_process');
 const admin = require('firebase-admin');
 const {
   buildCanonicalReport,
@@ -135,26 +136,341 @@ function resolveServiceAccount() {
   for (const candidate of SERVICE_ACCOUNT_PATHS) {
     if (!candidate) continue;
     if (!fs.existsSync(candidate)) continue;
+    const json = JSON.parse(fs.readFileSync(candidate, 'utf8'));
+    const isServiceAccount =
+      json &&
+      typeof json === 'object' &&
+      json.type === 'service_account' &&
+      typeof json.project_id === 'string' &&
+      typeof json.private_key === 'string';
+    if (!isServiceAccount) continue;
+    return { credentialPath: candidate, json };
+  }
+  return null;
+}
+
+function resolveProjectId() {
+  const envProjectId = [process.env.FIREBASE_PROJECT_ID, process.env.GOOGLE_CLOUD_PROJECT, process.env.GCLOUD_PROJECT].find(
+    (value) => typeof value === 'string' && value.trim(),
+  );
+  if (envProjectId) return envProjectId.trim();
+
+  try {
+    const gcloudProject = cp.execSync('gcloud config get-value project', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    });
+    const normalized = String(gcloudProject || '').trim();
+    if (normalized && normalized !== '(unset)') {
+      return normalized;
+    }
+  } catch {
+    // Best-effort project discovery; Firebase Admin will still attempt default resolution.
+  }
+
+  return undefined;
+}
+
+function isCredentialAuthError(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return (
+    /unable to impersonate/i.test(message) ||
+    /Could not refresh access token/i.test(message) ||
+    /iam\.serviceAccounts\.getAccessToken/i.test(message) ||
+    /\bUNAUTHENTICATED\b/i.test(message) ||
+    /invalid authentication credentials/i.test(message)
+  );
+}
+
+function getGcloudAccessToken() {
+  try {
+    const token = cp.execSync('gcloud auth print-access-token', {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      encoding: 'utf8',
+    });
+    const normalized = String(token || '').trim();
+    if (!normalized) {
+      throw new Error('gcloud auth print-access-token returned an empty token.');
+    }
+    return normalized;
+  } catch (error) {
+    const stderr =
+      error && typeof error === 'object' && typeof error.stderr === 'string'
+        ? error.stderr.trim()
+        : '';
+    throw new Error(
+      stderr ||
+        'Unable to obtain a gcloud access token. Run `gcloud auth login` and ensure the signed-in user can read Firestore.',
+    );
+  }
+}
+
+function encodeDocumentPath(...segments) {
+  return segments.map((segment) => encodeURIComponent(String(segment))).join('/');
+}
+
+function encodeFirestoreValue(value) {
+  if (value === null) return { nullValue: null };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
+  if (Array.isArray(value)) {
     return {
-      credentialPath: candidate,
-      json: JSON.parse(fs.readFileSync(candidate, 'utf8')),
+      arrayValue: {
+        values: value.map((entry) => encodeFirestoreValue(entry)),
+      },
     };
   }
-  throw new Error(`No service account JSON found. Checked: ${SERVICE_ACCOUNT_PATHS.join(', ')}`);
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number') {
+    if (Number.isInteger(value)) return { integerValue: String(value) };
+    return { doubleValue: value };
+  }
+  if (value && typeof value === 'object') {
+    const fields = {};
+    for (const [key, entry] of Object.entries(value)) {
+      fields[key] = encodeFirestoreValue(entry);
+    }
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(value) };
+}
+
+function decodeFirestoreValue(value) {
+  if (!value || typeof value !== 'object') return undefined;
+  if (Object.prototype.hasOwnProperty.call(value, 'nullValue')) return null;
+  if (Object.prototype.hasOwnProperty.call(value, 'stringValue')) return value.stringValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'booleanValue')) return value.booleanValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'integerValue')) return Number(value.integerValue);
+  if (Object.prototype.hasOwnProperty.call(value, 'doubleValue')) return value.doubleValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'timestampValue')) return new Date(value.timestampValue);
+  if (Object.prototype.hasOwnProperty.call(value, 'referenceValue')) return value.referenceValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'bytesValue')) return value.bytesValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'geoPointValue')) {
+    return {
+      latitude: value.geoPointValue.latitude,
+      longitude: value.geoPointValue.longitude,
+    };
+  }
+  if (Object.prototype.hasOwnProperty.call(value, 'arrayValue')) {
+    const entries = Array.isArray(value.arrayValue && value.arrayValue.values)
+      ? value.arrayValue.values
+      : [];
+    return entries.map((entry) => decodeFirestoreValue(entry));
+  }
+  if (Object.prototype.hasOwnProperty.call(value, 'mapValue')) {
+    const fields = (value.mapValue && value.mapValue.fields) || {};
+    const record = {};
+    for (const [key, entry] of Object.entries(fields)) {
+      record[key] = decodeFirestoreValue(entry);
+    }
+    return record;
+  }
+  return undefined;
+}
+
+function decodeFirestoreDocument(document) {
+  const fields = (document && document.fields) || {};
+  const data = {};
+  for (const [key, value] of Object.entries(fields)) {
+    data[key] = decodeFirestoreValue(value);
+  }
+  return data;
+}
+
+function createDocSnapshot(id, exists, data) {
+  return {
+    id,
+    exists,
+    data() {
+      return exists ? data : undefined;
+    },
+  };
+}
+
+function createQuerySnapshot(docs) {
+  return {
+    docs,
+    size: docs.length,
+  };
+}
+
+function normalizeRestOperator(operator) {
+  if (operator === '==') return 'EQUAL';
+  if (operator === 'array-contains') return 'ARRAY_CONTAINS';
+  throw new Error(`Unsupported Firestore REST operator: ${operator}`);
+}
+
+function buildStructuredWhere(filters) {
+  if (!Array.isArray(filters) || filters.length === 0) return undefined;
+
+  const mapped = filters.map(({ field, operator, value }) => ({
+    fieldFilter: {
+      field: { fieldPath: field },
+      op: normalizeRestOperator(operator),
+      value: encodeFirestoreValue(value),
+    },
+  }));
+
+  if (mapped.length === 1) {
+    return mapped[0];
+  }
+
+  return {
+    compositeFilter: {
+      op: 'AND',
+      filters: mapped,
+    },
+  };
+}
+
+function buildFirestoreRestClient(projectId, accessToken) {
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+
+  async function requestJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.headers || {}),
+      },
+    });
+
+    const text = await response.text();
+    const payload = text ? JSON.parse(text) : null;
+    if (!response.ok) {
+      const errorMessage =
+        (payload && payload.error && payload.error.message) ||
+        `${response.status} ${response.statusText}`;
+      const error = new Error(`${response.status} ${errorMessage}`);
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
+  }
+
+  function createQuery(collectionName, filters = [], limitCount = null) {
+    return {
+      where(field, operator, value) {
+        return createQuery(collectionName, [...filters, { field, operator, value }], limitCount);
+      },
+      limit(value) {
+        return createQuery(collectionName, filters, value);
+      },
+      async get() {
+        const structuredQuery = {
+          from: [{ collectionId: collectionName }],
+        };
+        const where = buildStructuredWhere(filters);
+        if (where) structuredQuery.where = where;
+        if (typeof limitCount === 'number' && Number.isFinite(limitCount)) {
+          structuredQuery.limit = Math.max(0, Math.trunc(limitCount));
+        }
+
+        const responses = await requestJson(`${baseUrl}:runQuery`, {
+          method: 'POST',
+          body: JSON.stringify({ structuredQuery }),
+        });
+
+        const docs = Array.isArray(responses)
+          ? responses
+              .filter((entry) => entry && entry.document)
+              .map((entry) => {
+                const name = String(entry.document.name || '');
+                const id = name.split('/').pop() || '';
+                return createDocSnapshot(id, true, decodeFirestoreDocument(entry.document));
+              })
+          : [];
+
+        return createQuerySnapshot(docs);
+      },
+    };
+  }
+
+  return {
+    collection(collectionName) {
+      return {
+        doc(documentId) {
+          return {
+            async get() {
+              const documentPath = `${baseUrl}/${encodeDocumentPath(collectionName, documentId)}`;
+              try {
+                const document = await requestJson(documentPath);
+                return createDocSnapshot(documentId, true, decodeFirestoreDocument(document));
+              } catch (error) {
+                if (
+                  error &&
+                  typeof error === 'object' &&
+                  (error.status === 404 ||
+                    (error.payload &&
+                      error.payload.error &&
+                      String(error.payload.error.status || '').toUpperCase() === 'NOT_FOUND'))
+                ) {
+                  return createDocSnapshot(documentId, false, undefined);
+                }
+                throw error;
+              }
+            },
+          };
+        },
+        where(field, operator, value) {
+          return createQuery(collectionName).where(field, operator, value);
+        },
+        limit(value) {
+          return createQuery(collectionName).limit(value);
+        },
+        async get() {
+          return createQuery(collectionName).get();
+        },
+      };
+    },
+  };
+}
+
+function initializeGcloudRestFallback(projectId) {
+  if (!projectId) {
+    throw new Error('Unable to initialize gcloud Firestore fallback without a resolved project ID.');
+  }
+
+  const accessToken = getGcloudAccessToken();
+  return {
+    db: buildFirestoreRestClient(projectId, accessToken),
+    projectId,
+    credentialPath: 'gcloud-auth-user',
+    transport: 'firestoreRestOAuth',
+  };
 }
 
 function initializeAdmin() {
   const serviceAccount = resolveServiceAccount();
+  const resolvedProjectId = resolveProjectId();
+
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount.json),
-      projectId: serviceAccount.json.project_id,
-    });
+    if (serviceAccount) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount.json),
+        projectId: serviceAccount.json.project_id,
+      });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        ...(resolvedProjectId ? { projectId: resolvedProjectId } : {}),
+      });
+    }
   }
+
+  const runtimeProjectId =
+    (serviceAccount && serviceAccount.json && serviceAccount.json.project_id) ||
+    admin.app().options.projectId ||
+    resolvedProjectId ||
+    null;
+
   return {
     db: admin.firestore(),
-    projectId: serviceAccount.json.project_id,
-    credentialPath: path.relative(process.cwd(), serviceAccount.credentialPath),
+    projectId: runtimeProjectId,
+    credentialPath: serviceAccount ? path.relative(process.cwd(), serviceAccount.credentialPath) : 'applicationDefault',
+    transport: 'firebaseAdmin',
   };
 }
 
@@ -1006,13 +1322,28 @@ function checkRoleDashboardStatSources(db, siteId) {
 
 async function run() {
   const args = parseArgs(process.argv.slice(2));
-  const { db, projectId, credentialPath } = initializeAdmin();
+  let { db, projectId, credentialPath, transport } = initializeAdmin();
 
-  const siteRef = db.collection('sites').doc(args.siteId);
-  const [siteSnap, usersSnap] = await Promise.all([
-    siteRef.get(),
-    db.collection('users').where('siteIds', 'array-contains', args.siteId).get(),
-  ]);
+  let siteSnap;
+  let usersSnap;
+  try {
+    const siteRef = db.collection('sites').doc(args.siteId);
+    [siteSnap, usersSnap] = await Promise.all([
+      siteRef.get(),
+      db.collection('users').where('siteIds', 'array-contains', args.siteId).get(),
+    ]);
+  } catch (error) {
+    if (!isCredentialAuthError(error)) {
+      throw error;
+    }
+
+    ({ db, projectId, credentialPath, transport } = initializeGcloudRestFallback(projectId));
+    const siteRef = db.collection('sites').doc(args.siteId);
+    [siteSnap, usersSnap] = await Promise.all([
+      siteRef.get(),
+      db.collection('users').where('siteIds', 'array-contains', args.siteId).get(),
+    ]);
+  }
 
   const siteDoc = siteSnap.exists ? siteSnap.data() || {} : null;
   const users = new Map(usersSnap.docs.map((doc) => [doc.id, doc.data() || {}]));
@@ -1058,6 +1389,7 @@ async function run() {
       strict: args.strict,
       projectId,
       credentialPath,
+      transport,
       counts: {
         usersAtSite: users.size,
         learners: usersByRole.learner.length,

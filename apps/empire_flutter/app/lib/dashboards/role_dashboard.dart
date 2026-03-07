@@ -651,7 +651,8 @@ class RoleDashboard extends StatelessWidget {
                               Row(
                                 children: <Widget>[
                                   UserAvatar(
-                                    name: appState.displayName ?? _t(context, 'User'),
+                                    name: appState.displayName ??
+                                        _t(context, 'User'),
                                     size: 50,
                                     backgroundColor:
                                         Colors.white.withValues(alpha: 0.25),
@@ -672,7 +673,8 @@ class RoleDashboard extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          appState.displayName ?? _t(context, 'User'),
+                                          appState.displayName ??
+                                              _t(context, 'User'),
                                           style: const TextStyle(
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
@@ -845,7 +847,18 @@ class RoleDashboard extends StatelessWidget {
         AsyncSnapshot<List<Map<String, dynamic>>> snapshot,
       ) {
         final List<Map<String, dynamic>> stats =
-            snapshot.data ?? _fallbackStatsForRole(role);
+            snapshot.data ?? const <Map<String, dynamic>>[];
+        if (stats.isEmpty) {
+          return SizedBox(
+            height: 100,
+            child: Center(
+              child: Text(
+                _t(context, 'No live metrics yet'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            ),
+          );
+        }
         return SizedBox(
           height: 100,
           child: ListView.separated(
@@ -887,10 +900,10 @@ class RoleDashboard extends StatelessWidget {
       'period': 'week',
     });
     final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
-    if (payload == null) return _fallbackStatsForRole(role);
+    if (payload == null) return <Map<String, dynamic>>[];
     final List<dynamic> rawStats =
         payload['stats'] as List<dynamic>? ?? <dynamic>[];
-    if (rawStats.isEmpty) return _fallbackStatsForRole(role);
+    if (rawStats.isEmpty) return <Map<String, dynamic>>[];
 
     final List<Map<String, dynamic>> stats = <Map<String, dynamic>>[];
     for (final dynamic raw in rawStats) {
@@ -910,7 +923,7 @@ class RoleDashboard extends StatelessWidget {
         if (item['positive'] is bool) 'positive': item['positive'] as bool,
       });
     }
-    if (stats.isEmpty) return _fallbackStatsForRole(role);
+    if (stats.isEmpty) return <Map<String, dynamic>>[];
     return stats;
   }
 
@@ -960,76 +973,6 @@ class RoleDashboard extends StatelessWidget {
         return ScholesaColors.error;
       default:
         return ScholesaColors.primary;
-    }
-  }
-
-  List<Map<String, dynamic>> _fallbackStatsForRole(UserRole role) {
-    switch (role) {
-      case UserRole.educator:
-        return <Map<String, dynamic>>[
-          <String, dynamic>{
-            'label': 'Students Today',
-            'value': '0',
-            'icon': Icons.people,
-            'color': ScholesaColors.info,
-          },
-          <String, dynamic>{
-            'label': 'Attendance',
-            'value': '0%',
-            'icon': Icons.check_circle,
-            'color': ScholesaColors.success,
-          },
-          <String, dynamic>{
-            'label': 'To Review',
-            'value': '0',
-            'icon': Icons.rate_review,
-            'color': ScholesaColors.warning
-          },
-        ];
-      case UserRole.site:
-        return <Map<String, dynamic>>[
-          <String, dynamic>{
-            'label': 'On Site',
-            'value': '0',
-            'icon': Icons.location_on,
-            'color': ScholesaColors.info
-          },
-          <String, dynamic>{
-            'label': 'Checked In',
-            'value': '0',
-            'icon': Icons.login,
-            'color': ScholesaColors.success,
-          },
-          <String, dynamic>{
-            'label': 'Open Incidents',
-            'value': '0',
-            'icon': Icons.warning,
-            'color': ScholesaColors.error
-          },
-        ];
-      case UserRole.hq:
-        return <Map<String, dynamic>>[
-          <String, dynamic>{
-            'label': 'Active Sites',
-            'value': '0',
-            'icon': Icons.business,
-            'color': ScholesaColors.primary
-          },
-          <String, dynamic>{
-            'label': 'Total Users',
-            'value': '0',
-            'icon': Icons.people,
-            'color': ScholesaColors.info,
-          },
-          <String, dynamic>{
-            'label': 'Pending',
-            'value': '0',
-            'icon': Icons.pending_actions,
-            'color': ScholesaColors.warning
-          },
-        ];
-      default:
-        return <Map<String, dynamic>>[];
     }
   }
 
@@ -1109,9 +1052,10 @@ class RoleDashboard extends StatelessWidget {
                   color: enabled
                       ? null
                       : Theme.of(sheetContext).colorScheme.onSurfaceVariant),
-                title: Text(_t(sheetContext, card.title)),
-                subtitle:
-                  Text(card.subtitle == null ? '' : _t(sheetContext, card.subtitle!)),
+              title: Text(_t(sheetContext, card.title)),
+              subtitle: Text(card.subtitle == null
+                  ? ''
+                  : _t(sheetContext, card.subtitle!)),
               trailing: Icon(
                 enabled ? Icons.arrow_forward_ios : Icons.lock_outline,
                 size: 16,
