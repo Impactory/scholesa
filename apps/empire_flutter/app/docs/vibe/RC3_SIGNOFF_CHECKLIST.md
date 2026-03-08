@@ -58,7 +58,7 @@
 ## 6) Documentation Gates
 - [ ] Smoke checklist completed: `docs/VOICE_RUNTIME_SMOKE_TEST.md`
 - [ ] RC3 gate doc reviewed: `docs/vibe/RC3_RELEASE_GATE.md`
-- [ ] Dependency baseline reviewed: `docs/DEPENDENCY_BASELINE_SCHOLESA.md`
+- [ ] Dependency baseline reviewed: `DEPENDENCY_BASELINE_SCHOLESA.md`
 
 ---
 
