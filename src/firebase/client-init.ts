@@ -26,6 +26,11 @@ const hasFullFirebaseClientConfig = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 );
 
+const isBuildPhase =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.__NEXT_PRIVATE_BUILD_WORKER === '1' ||
+  process.env.npm_lifecycle_event === 'build';
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo.firebaseapp.com',
@@ -35,7 +40,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:000000000000:web:demo',
 };
 
-if (!hasFullFirebaseClientConfig && typeof window === 'undefined') {
+if (!hasFullFirebaseClientConfig && typeof window === 'undefined' && !isBuildPhase) {
   console.warn('Firebase client env vars are missing; using safe server-side placeholder config for build/runtime.');
 }
 

@@ -6,6 +6,14 @@ type ServiceAccountShape = {
   private_key?: string;
 };
 
+function isBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.__NEXT_PRIVATE_BUILD_WORKER === '1' ||
+    process.env.npm_lifecycle_event === 'build'
+  );
+}
+
 function parseServiceAccountFromEnv(): ServiceAccountShape | null {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT?.trim();
   if (!raw) {
@@ -51,8 +59,13 @@ const initializeFirebaseAdmin = () => {
   }
 
   if (!projectId || !clientEmail || !privateKey) {
-    // During build time or when credentials are missing, initialize with default (for GCP environments)
-    // or skip initialization
+    // During build time, skip noisy warnings and allow safe static evaluation.
+    if (isBuildPhase()) {
+      return null;
+    }
+
+    // During runtime when credentials are missing, initialize with default (for GCP environments)
+    // or warn and skip initialization.
     if (process.env.NODE_ENV === 'production' && process.env.GOOGLE_CLOUD_PROJECT) {
       // On GCP (Cloud Run), use default credentials
       return admin.initializeApp({

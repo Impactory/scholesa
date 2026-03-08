@@ -1,5 +1,8 @@
 # RC3 Production Deployment Complete
 
+> Historical snapshot: this document reflects the March 3 deployment state only.
+> Current live signoff is captured in `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`, `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`, and `RC3_LAUNCH_READINESS_REPORT.md`.
+
 **Status**: ✅ **LIVE IN PRODUCTION**  
 **Deployment Date**: March 3, 2026, 18:45 UTC  
 **Git Commits**: 7 commits ahead of previous baseline  
