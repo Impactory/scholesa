@@ -12,7 +12,7 @@
 All **4 critical blockers** identified in the December 26, 2025 global post-implementation audit have been **resolved and validated**:
 
 ✅ **Blocker #1 (Firestore Indexes)**: Code ready for deployment  
-✅ **Blocker #2 (i18n Architecture)**: System centralized; 1 of 7 pages migrated  
+✅ **Blocker #2 (i18n Architecture)**: System centralized; educator and parent BOS/MIA surfaces migrated  
 ✅ **Blocker #3 (Callable Error Handling)**: Live in production (Dec 26 deployment)  
 ✅ **Blocker #4 (Unit Tests)**: 15/15 Jest tests passing; backend callable fully tested  
 
@@ -25,7 +25,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 | Blocker | Title | Issue | Fix | Status | Deployed? |
 |---------|-------|-------|-----|--------|-----------|
 | **#1** | Firestore Composite Indexes | Queries fail without explicit indexes | Added 3 indexes to firestore.indexes.json | ✅ Code Ready | ⏳ Pending |
-| **#2** | i18n Architecture Mismatch | Flutter local maps; no shared keys with Next.js | Centralized BosCoachingI18n class + Firebase i18n namespace | ✅ System Ready | ⏳ 1/7 Pages |
+| **#2** | i18n Architecture Mismatch | Flutter local maps; no shared keys with Next.js | Centralized BosCoachingI18n class + Firebase i18n namespace | ✅ Complete | ✅ 10/10 Surfaces |
 | **#3** | Callable Error Handling | No error handling; 500 responses on failure | Enhanced error wrapping + graceful degradation | ✅ Live | ✅ Dec 26 |
 | **#4** | Unit Test Coverage Gap | No Jest/Dart tests for learner loop | 15-test Jest suite for callable; Flutter tests optional | ✅ Complete | ✅ Mar 3 |
 
@@ -115,21 +115,22 @@ Added 3 composite indexes to `firestore.indexes.json`:
    - `packages/i18n/locales/en.json`: Added `bosCoaching` section (25 keys)
    - `packages/i18n/locales/es.json`: Created (NEW FILE, full Spanish translations)
 
-3. **Migrated Example Page**:
-   - `educator_sessions_page.dart`: Refactored to use `BosCoachingI18n` instead of local maps
+3. **Migrated BOS/MIA Surfaces**:
+  - `educator_sessions_page.dart`
+  - `educator_learners_page.dart`
+  - `educator_today_page.dart`
+  - `educator_mission_review_page.dart`
+  - `educator_mission_plans_page.dart`
+  - `educator_learner_supports_page.dart`
+  - `educator_integrations_page.dart`
+  - `parent_summary_page.dart`
+  - `parent_schedule_page.dart`
+  - `parent_billing_page.dart`
 
 **Migration Status**: 
 - ✅ System ready (centralized class + Firebase keys)
-- ✅ 1 of 7 pages migrated (educator_sessions_page)
-- ⏳ 6 remaining pages pending refactor
-
-**Remaining Pages** (Low effort, ~1 hour total):
-1. educator_learners_page
-2. educator_today_page
-3. educator_mission_review_page
-4. educator_mission_plans_page
-5. educator_learner_supports_page
-6. educator_integrations_page
+- ✅ All targeted educator and parent BOS/MIA surfaces migrated
+- ✅ Active insight cards now read shared BosCoachingI18n keys instead of page-local loop strings
 
 ---
 
@@ -323,10 +324,10 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 - **Impact**: Enables composite queries for learner loop insights
 
 ### Blocker #2: i18n Architecture
-- **Status**: ✅ System Ready (Partial Implementation)
+- **Status**: ✅ Complete
 - **Files**: BosCoachingI18n.dart (NEW), packages/i18n/locales/{en,es}.json (MODIFIED)
-- **Progress**: 1 of 7 pages migrated
-- **Action**: Migrate 6 remaining pages (~1 hour effort, can be parallel with launch)
+- **Progress**: Educator and parent BOS/MIA surfaces migrated
+- **Action**: Run bilingual smoke validation on the migrated surfaces
 - **Impact**: Unified translation system across platforms
 
 ### Blocker #3: Callable Error Handling
@@ -354,7 +355,7 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 1. ✅ All 4 blockers resolved and validated
 2. ✅ Backend callable (highest-risk component) fully tested (15/15 tests)
 3. ✅ Error handling deployed and working
-4. ✅ i18n architecture centralized (system ready, partial implementation)
+4. ✅ i18n architecture centralized and wired into active educator + parent BOS/MIA surfaces
 5. ✅ Firestore indexes ready for deployment
 6. ✅ All 10 surfaces integrated and compiling cleanly
 7. ✅ 4 non-blocking lints (info-level, no functionality impact)
@@ -369,7 +370,7 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 **Optional Post-Launch** (2 hours):
 - Flutter unit tests
 - Integration tests
-- i18n migration (6 remaining pages)
+- Additional bilingual regression coverage
 
 ---
 

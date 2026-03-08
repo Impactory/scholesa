@@ -5,6 +5,7 @@ import 'parent_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 
 const Map<String, String> _parentScheduleEs = <String, String>{
@@ -359,9 +360,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     }
 
     return BosLearnerLoopInsightsCard(
-      title: _t('Family Schedule Loop'),
-      subtitle: _t('Your child\'s learning readiness and attendance signals'),
-      emptyLabel: _t('No schedule learning data yet'),
+      title: BosCoachingI18n.familyScheduleTitle(context),
+      subtitle: BosCoachingI18n.familyScheduleSubtitle(context),
+      emptyLabel: BosCoachingI18n.familyScheduleEmpty(context),
       learnerId: selectedLearner.learnerId,
       learnerName: selectedLearner.learnerName,
       accentColor: ScholesaColors.parent,

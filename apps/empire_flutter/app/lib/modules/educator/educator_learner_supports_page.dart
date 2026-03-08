@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
@@ -151,12 +152,9 @@ class _EducatorLearnerSupportsPageState
               ),
               if (service.learners.isNotEmpty)
                 BosLearnerLoopInsightsCard(
-                  title: _tEducatorLearnerSupports(context, 'BOS/MIA Support Loop'),
-                  subtitle: _tEducatorLearnerSupports(
-                    context,
-                    'Latest individual improvement signal for support planning',
-                  ),
-                  emptyLabel: _tEducatorLearnerSupports(context, 'No support loop data yet'),
+                  title: BosCoachingI18n.sessionLoopTitle(context),
+                  subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                  emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                   learnerId: service.learners.first.id,
                   learnerName: service.learners.first.name,
                   accentColor: ScholesaColors.educator,

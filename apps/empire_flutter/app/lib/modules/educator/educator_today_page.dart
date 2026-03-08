@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
@@ -120,11 +121,9 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
                 SliverToBoxAdapter(
                   child: BosLearnerLoopInsightsCard(
-                    title: _tEducatorToday(context, 'BOS/MIA Learner Loop'),
-                    subtitle: _tEducatorToday(
-                        context, 'Latest individual improvement signal'),
-                    emptyLabel:
-                        _tEducatorToday(context, 'No learner loop data yet'),
+                  title: BosCoachingI18n.sessionLoopTitle(context),
+                  subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                  emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                     learnerId: service.learners.isNotEmpty
                         ? service.learners.first.id
                         : null,

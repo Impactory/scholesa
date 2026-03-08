@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
@@ -465,9 +466,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     }
 
     return BosLearnerLoopInsightsCard(
-      title: _tParentBilling(context, 'Family Billing Loop'),
-      subtitle: _tParentBilling(context, 'Your child\'s learning continuity and engagement signals'),
-      emptyLabel: _tParentBilling(context, 'No billing learning data yet'),
+      title: BosCoachingI18n.familyBillingTitle(context),
+      subtitle: BosCoachingI18n.familyBillingSubtitle(context),
+      emptyLabel: BosCoachingI18n.familyBillingEmpty(context),
       learnerId: selectedLearner.learnerId,
       learnerName: selectedLearner.learnerName,
       accentColor: ScholesaColors.parent,

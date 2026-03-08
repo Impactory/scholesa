@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_service.dart';
 
@@ -88,12 +89,9 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: BosLearnerLoopInsightsCard(
-                    title: _tEducatorIntegrations(context, 'BOS/MIA Integration Loop'),
-                    subtitle: _tEducatorIntegrations(
-                      context,
-                      'Latest individual improvement signal across integrated systems',
-                    ),
-                    emptyLabel: _tEducatorIntegrations(context, 'No integration loop data yet'),
+                    title: BosCoachingI18n.sessionLoopTitle(context),
+                    subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                    emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                     learnerId: service.learners.first.id,
                     learnerName: service.learners.first.name,
                     accentColor: ScholesaColors.educator,

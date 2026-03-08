@@ -12,31 +12,58 @@ import 'package:flutter/material.dart';
 /// final title = BosCoachingI18n.sessionLoopTitle(context);
 /// ```
 class BosCoachingI18n {
-  static const Map<String, String> _esTranslations = <String, String>{
-    'sessionLoopTitle': 'Ciclo de sesión BOS/MIA',
-    'sessionLoopSubtitle': 'Señal de mejora individual más reciente para esta sesión',
-    'sessionLoopEmpty': 'Sin datos de ciclo de sesión aún',
-    'familyLearningTitle': 'Ciclo de aprendizaje familiar',
-    'familyLearningSubtitle': 'Disponibilidad de aprendizaje de tu hijo y señales de mejora',
-    'familyLearningEmpty': 'Sin datos de aprendizaje familiar aún',
-    'familyScheduleTitle': 'Ciclo de horario familiar',
-    'familyScheduleSubtitle': 'Disponibilidad de aprendizaje de tu hijo y señales de asistencia',
-    'familyScheduleEmpty': 'Sin datos de aprendizaje de horario aún',
-    'familyBillingTitle': 'Ciclo de facturación familiar',
-    'familyBillingSubtitle': 'Métricas de compromiso de aprendizaje y progreso',
-    'familyBillingEmpty': 'Sin datos de ciclo de facturación aún',
-    'cognition': 'Cognición',
-    'engagement': 'Participación',
-    'integrity': 'Integridad',
-    'improvementScore': 'Puntuación de mejora',
-    'activeGoals': 'Objetivos de aprendizaje activos',
-    'mvlStatus': 'Validación de dominio',
-    'mvlActive': 'En progreso',
-    'mvlPassed': 'Aprobado',
-    'mvlFailed': 'Desafiado',
-    'loadingInsights': 'Cargando información de aprendizaje...',
-    'errorLoadingInsights': 'No se puede cargar información; intenta más tarde',
-    'latestSignal': 'Señal más reciente',
+  static const Map<String, String> _zhCnTranslations = <String, String>{
+    'sessionLoopTitle': 'BOS/MIA 课堂循环',
+    'sessionLoopSubtitle': '本次课堂最新的个人成长信号',
+    'sessionLoopEmpty': '暂无课堂循环数据',
+    'familyLearningTitle': '家庭学习循环',
+    'familyLearningSubtitle': '你孩子的学习准备度与成长信号',
+    'familyLearningEmpty': '暂无家庭学习数据',
+    'familyScheduleTitle': '家庭日程循环',
+    'familyScheduleSubtitle': '你孩子的学习准备度与出勤信号',
+    'familyScheduleEmpty': '暂无日程学习数据',
+    'familyBillingTitle': '家庭账单循环',
+    'familyBillingSubtitle': '学习投入度与进展指标',
+    'familyBillingEmpty': '暂无账单循环数据',
+    'cognition': '认知',
+    'engagement': '投入度',
+    'integrity': '完整性',
+    'improvementScore': '提升分数',
+    'activeGoals': '当前学习目标',
+    'mvlStatus': '掌握度验证',
+    'mvlActive': '进行中',
+    'mvlPassed': '已通过',
+    'mvlFailed': '需加强',
+    'loadingInsights': '正在加载学习洞察...',
+    'errorLoadingInsights': '无法加载学习洞察，请稍后重试',
+    'latestSignal': '最新信号',
+  };
+
+  static const Map<String, String> _zhTwTranslations = <String, String>{
+    'sessionLoopTitle': 'BOS/MIA 課堂循環',
+    'sessionLoopSubtitle': '本次課堂最新的個人成長訊號',
+    'sessionLoopEmpty': '目前沒有課堂循環資料',
+    'familyLearningTitle': '家庭學習循環',
+    'familyLearningSubtitle': '你孩子的學習準備度與成長訊號',
+    'familyLearningEmpty': '目前沒有家庭學習資料',
+    'familyScheduleTitle': '家庭日程循環',
+    'familyScheduleSubtitle': '你孩子的學習準備度與出勤訊號',
+    'familyScheduleEmpty': '目前沒有日程學習資料',
+    'familyBillingTitle': '家庭帳單循環',
+    'familyBillingSubtitle': '學習投入度與進展指標',
+    'familyBillingEmpty': '目前沒有帳單循環資料',
+    'cognition': '認知',
+    'engagement': '投入度',
+    'integrity': '完整性',
+    'improvementScore': '提升分數',
+    'activeGoals': '目前學習目標',
+    'mvlStatus': '掌握度驗證',
+    'mvlActive': '進行中',
+    'mvlPassed': '已通過',
+    'mvlFailed': '需加強',
+    'loadingInsights': '正在載入學習洞察...',
+    'errorLoadingInsights': '無法載入學習洞察，請稍後再試',
+    'latestSignal': '最新訊號',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -69,9 +96,19 @@ class BosCoachingI18n {
   /// Get a BOS/MIA coaching key in the user's locale
   /// Returns English default if locale not supported
   static String get(BuildContext context, String key) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale == 'es') {
-      return _esTranslations[key] ?? _enTranslations[key] ?? key;
+    final Locale locale = Localizations.localeOf(context);
+    final String countryCode = (locale.countryCode ?? '').toUpperCase();
+    if (locale.languageCode == 'zh') {
+      if (countryCode == 'TW' || countryCode == 'HK' || countryCode == 'MO') {
+        return _zhTwTranslations[key] ??
+            _zhCnTranslations[key] ??
+            _enTranslations[key] ??
+            key;
+      }
+      return _zhCnTranslations[key] ??
+          _zhTwTranslations[key] ??
+          _enTranslations[key] ??
+          key;
     }
     return _enTranslations[key] ?? key;
   }

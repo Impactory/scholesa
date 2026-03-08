@@ -5,6 +5,7 @@ import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_service.dart';
 
@@ -170,14 +171,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: BosLearnerLoopInsightsCard(
-                    title:
-                        _tEducatorMissionPlans(context, 'BOS/MIA Mission Loop'),
-                    subtitle: _tEducatorMissionPlans(
-                      context,
-                      'Latest individual improvement signal while designing',
-                    ),
-                    emptyLabel: _tEducatorMissionPlans(
-                        context, 'No mission loop data yet'),
+                    title: BosCoachingI18n.sessionLoopTitle(context),
+                    subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                    emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                     learnerId: service.learners.first.id,
                     learnerName: service.learners.first.name,
                     accentColor: ScholesaColors.educator,

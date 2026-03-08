@@ -95,7 +95,6 @@ class _ScholesaAppState extends State<ScholesaApp> {
     Locale('en'),
     Locale('zh', 'CN'),
     Locale('zh', 'TW'),
-    Locale('th'),
   ];
   static const Duration _minNativeSplashDuration = Duration(milliseconds: 1600);
   static const Duration _webInitStepTimeout = Duration(seconds: 6);

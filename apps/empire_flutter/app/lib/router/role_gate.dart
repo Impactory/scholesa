@@ -2,22 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import '../services/telemetry_service.dart';
+import '../ui/localization/inline_locale_text.dart';
 
-const Map<String, String> _roleGateEs = <String, String>{
-  'Access Denied': 'Acceso denegado',
-  "You don't have permission to access this page.":
-      'No tienes permiso para acceder a esta página.',
-  'Your current role:': 'Tu rol actual:',
-  'Go Back': 'Volver',
-  'This feature requires an upgrade': 'Esta función requiere una mejora',
-  'Contact your administrator for access.':
-      'Contacta a tu administrador para obtener acceso.',
+const Map<String, String> _roleGateZhCn = <String, String>{
+  'Access Denied': '拒绝访问',
+  "You don't have permission to access this page.": '你没有权限访问此页面。',
+  'Your current role:': '你当前的角色：',
+  'Go Back': '返回',
+  'This feature requires an upgrade': '此功能需要升级',
+  'Contact your administrator for access.': '请联系管理员获取访问权限。',
+};
+
+const Map<String, String> _roleGateZhTw = <String, String>{
+  'Access Denied': '拒絕存取',
+  "You don't have permission to access this page.": '你沒有權限存取此頁面。',
+  'Your current role:': '你目前的角色：',
+  'Go Back': '返回',
+  'This feature requires an upgrade': '此功能需要升級',
+  'Contact your administrator for access.': '請聯絡管理員取得存取權限。',
 };
 
 String _tRoleGate(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _roleGateEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _roleGateZhCn,
+    zhTw: _roleGateZhTw,
+  );
 }
 
 /// Gate that restricts access to routes based on user role

@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
+import '../localization/inline_locale_text.dart';
 
-const Map<String, String> _fatalErrorEs = <String, String>{
-  'Something went wrong': 'Algo salió mal',
-  'Try Again': 'Intentar de nuevo',
+const Map<String, String> _fatalErrorZhCn = <String, String>{
+  'Something went wrong': '出现了一些问题',
+  'Try Again': '再试一次',
+};
+
+const Map<String, String> _fatalErrorZhTw = <String, String>{
+  'Something went wrong': '出現了一些問題',
+  'Try Again': '再試一次',
 };
 
 String _tFatalError(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _fatalErrorEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _fatalErrorZhCn,
+    zhTw: _fatalErrorZhTw,
+  );
 }
 
 /// Fatal error screen with retry option

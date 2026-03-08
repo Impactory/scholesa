@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import '../missions/mission_service.dart';
 
@@ -115,12 +116,9 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                 ),
                 SliverToBoxAdapter(
                   child: BosLearnerLoopInsightsCard(
-                    title:
-                        _tEducatorMissionReview(context, 'BOS/MIA Learner Loop'),
-                    subtitle: _tEducatorMissionReview(
-                        context, 'Latest individual improvement signal'),
-                    emptyLabel: _tEducatorMissionReview(
-                        context, 'No learner loop data yet'),
+                  title: BosCoachingI18n.sessionLoopTitle(context),
+                  subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                  emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                     learnerId: loopSubmission?.learnerId,
                     learnerName: loopSubmission?.learnerName,
                     accentColor: ScholesaColors.educator,

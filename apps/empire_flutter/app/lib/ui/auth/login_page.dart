@@ -6,25 +6,36 @@ import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/app_strings.dart';
+import '../localization/inline_locale_text.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
-const Map<String, String> _loginEs = <String, String>{
-  'Education 2.0\nPlatform': 'Plataforma\nEducación 2.0',
+const Map<String, String> _loginZhCn = <String, String>{
+  'Education 2.0\nPlatform': '教育 2.0\n平台',
   'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.':
-      'Impulsando estudios de aprendizaje K-9 con Habilidades del futuro,\nLiderazgo y agencia, e Impacto e innovación.',
-  'Mission-based learning': 'Aprendizaje basado en misiones',
-  'Habit coaching': 'Coaching de hábitos',
-  'Portfolio showcase': 'Muestra de portafolio',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
+      '以未来技能、\n领导力与自主性、影响力与创新\n赋能 K-9 学习工作室。',
+  'Mission-based learning': '任务式学习',
+  'Habit coaching': '习惯教练',
+  'Portfolio showcase': '作品集展示',
+  'Future Skills': '未来技能',
+  'Leadership': '领导力',
+  'Impact': '影响力',
+};
+
+const Map<String, String> _loginZhTw = <String, String>{
+  'Education 2.0\nPlatform': '教育 2.0\n平台',
+  'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.':
+      '以未來技能、\n領導力與自主性、影響力與創新\n賦能 K-9 學習工作室。',
+  'Mission-based learning': '任務式學習',
+  'Habit coaching': '習慣教練',
+  'Portfolio showcase': '作品集展示',
+  'Future Skills': '未來技能',
+  'Leadership': '領導力',
+  'Impact': '影響力',
 };
 
 String _tLogin(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _loginEs[input] ?? input;
+  return InlineLocaleText.of(context, input, zhCn: _loginZhCn, zhTw: _loginZhTw);
 }
 
 class LoginPage extends StatefulWidget {

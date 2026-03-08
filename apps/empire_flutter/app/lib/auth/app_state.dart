@@ -132,8 +132,6 @@ class AppState extends ChangeNotifier {
         return const Locale('zh', 'CN');
       case 'zh-TW':
         return const Locale('zh', 'TW');
-      case 'th':
-        return const Locale('th');
       default:
         return const Locale('en');
     }
@@ -275,8 +273,6 @@ class AppState extends ChangeNotifier {
       case 'zh-TW':
       case 'zh-Hant':
         return 'zh-TW';
-      case 'th':
-        return 'th';
       default:
         return 'en';
     }

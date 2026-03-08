@@ -177,7 +177,7 @@ module.exports = {
 | Blocker | Status | Implementation |
 |---------|--------|-----------------|
 | #1: Firestore Indexes | ✅ Code Ready | Added 3 composite indexes to firestore.indexes.json |
-| #2: i18n Architecture | ✅ Partial (1/7) | Centralized BosCoachingI18n class; 1 page migrated |
+| #2: i18n Architecture | ✅ Complete | Centralized BosCoachingI18n class; educator and parent BOS/MIA surfaces migrated |
 | #3: Callable Error Handling | ✅ Live | Enhanced bosRuntime callable with error wrapping + graceful degradation |
 | **#4: Unit Tests** | ✅ **COMPLETE** | **Jest suite: 15/15 tests passing; callable fully tested** |
 

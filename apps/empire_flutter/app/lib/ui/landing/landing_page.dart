@@ -1,74 +1,133 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/telemetry_service.dart';
+import '../localization/inline_locale_text.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
-const Map<String, String> _landingEs = <String, String>{
-  'Features': 'Funciones',
-  'Pillars': 'Pilares',
-  'For Schools': 'Para escuelas',
+const Map<String, String> _landingZhCn = <String, String>{
+  'Features': '功能',
+  'Pillars': '支柱',
+  'For Schools': '面向学校',
   'Mission-based learning, AI coaching, portfolios, analytics, and offline support.':
-    'Aprendizaje basado en misiones, coaching con IA, portafolios, analítica y soporte sin conexión.',
+      '任务式学习、AI 教练、作品集、分析与离线支持。',
   'Future Skills, Leadership & Agency, and Impact & Innovation.':
-    'Habilidades del futuro, Liderazgo y agencia, e Impacto e innovación.',
+      '未来技能、领导力与自主性，以及影响力与创新。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
-    'Paneles por rol para estudiantes, educadores, familias, equipos de sede y HQ.',
-  'Sign In': 'Iniciar sesión',
-  'Education 2.0 Platform': 'Plataforma Educación 2.0',
-  "Unlock Every\nLearner's Potential":
-    'Desbloquea el\npotencial de cada estudiante',
+      '为学习者、教育者、家长、站点团队和 HQ 提供按角色划分的仪表板。',
+  'Sign In': '登录',
+  'Education 2.0 Platform': '教育 2.0 平台',
+  "Unlock Every\nLearner's Potential": '释放每位\n学习者的潜能',
   'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.':
-    'Scholesa impulsa estudios de aprendizaje K-9 con educación basada en misiones, coaching de hábitos y portafolios, construido sobre tres pilares que preparan a los estudiantes para el futuro.',
-  'Watch Demo': 'Ver demo',
-  'Scholesa Demo': 'Demo de Scholesa',
+      'Scholesa 通过任务式教育、习惯教练和作品集展示赋能 K-9 学习工作室，并以三大支柱帮助学生面向未来。',
+  'Watch Demo': '观看演示',
+  'Scholesa Demo': 'Scholesa 演示',
   'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
-    'La demo incluye:\n• Paneles por rol\n• Flujos de acciones CTA\n• Ciclo de vida de misiones y asistencia',
-  'Close': 'Cerrar',
-  'Try Live': 'Probar en vivo',
-  'AI Coaching': 'Coaching con IA',
-  'Achievements': 'Logros',
-  'Missions': 'Misiones',
-  'Community': 'Comunidad',
-  'The Three Pillars': 'Los tres pilares',
-  'Building Future-Ready Learners':
-    'Formando estudiantes listos para el futuro',
+      '演示包含：\n• 角色仪表板\n• CTA 操作流程\n• 任务与出勤生命周期',
+  'Close': '关闭',
+  'Try Live': '立即体验',
+  'AI Coaching': 'AI 教练',
+  'Achievements': '成就',
+  'Missions': '任务',
+  'Community': '社区',
+  'The Three Pillars': '三大支柱',
+  'Building Future-Ready Learners': '培养面向未来的学习者',
   'Our curriculum is built on three foundational pillars that prepare students for success.':
-    'Nuestro currículo se construye sobre tres pilares fundamentales que preparan a los estudiantes para el éxito.',
-  'Future Skills': 'Habilidades del futuro',
+      '我们的课程建立在三大基础支柱之上，帮助学生迈向成功。',
+  'Future Skills': '未来技能',
   "AI, coding, robotics, research, and digital literacy for tomorrow's world.":
-    'IA, programación, robótica, investigación y alfabetización digital para el mundo de mañana.',
-  'Leadership & Agency': 'Liderazgo y agencia',
+      '为未来世界准备的 AI、编程、机器人、研究与数字素养。',
+  'Leadership & Agency': '领导力与自主性',
   'Self-direction, communication, collaboration, and decision-making skills.':
-    'Habilidades de autodirección, comunicación, colaboración y toma de decisiones.',
-  'Impact & Innovation': 'Impacto e innovación',
+      '培养自我驱动、沟通、协作与决策能力。',
+  'Impact & Innovation': '影响力与创新',
   'Social responsibility, creative problem-solving, and community contribution.':
-    'Responsabilidad social, resolución creativa de problemas y contribución comunitaria.',
-  'PLATFORM FEATURES': 'FUNCIONES DE LA PLATAFORMA',
-  'Everything You Need': 'Todo lo que necesitas',
-  'Mission-Based Learning': 'Aprendizaje basado en misiones',
-  'AI Habit Coaching': 'Coaching de hábitos con IA',
-  'Portfolio Showcase': 'Muestra de portafolio',
-  'Progress Analytics': 'Analítica de progreso',
-  'Parent Portal': 'Portal para familias',
-  'Offline-First': 'Primero sin conexión',
-  'FOR EVERYONE': 'PARA TODOS',
-  'Designed for Your Role': 'Diseñado para tu rol',
-  'Learners': 'Estudiantes',
-  'Educators': 'Educadores',
-  'Parents': 'Familias',
-  'Site Admins': 'Admins de sede',
-  'Ready to Transform Learning?': '¿Listo para transformar el aprendizaje?',
+      '社会责任、创造性解决问题与社区贡献。',
+  'PLATFORM FEATURES': '平台功能',
+  'Everything You Need': '所需尽在其中',
+  'Mission-Based Learning': '任务式学习',
+  'AI Habit Coaching': 'AI 习惯教练',
+  'Portfolio Showcase': '作品集展示',
+  'Progress Analytics': '进度分析',
+  'Parent Portal': '家长门户',
+  'Offline-First': '离线优先',
+  'FOR EVERYONE': '适用于所有人',
+  'Designed for Your Role': '为你的角色而设计',
+  'Learners': '学习者',
+  'Educators': '教育者',
+  'Parents': '家长',
+  'Site Admins': '站点管理员',
+  'Ready to Transform Learning?': '准备好改变学习方式了吗？',
   'Join hundreds of learning studios already using Scholesa.':
-    'Únete a cientos de estudios de aprendizaje que ya usan Scholesa.',
-  '© 2026 Scholesa. Education 2.0 Platform.':
-    '© 2026 Scholesa. Plataforma Educación 2.0.',
+      '加入已经在使用 Scholesa 的数百家学习工作室。',
+  '© 2026 Scholesa. Education 2.0 Platform.': '© 2026 Scholesa。教育 2.0 平台。',
+};
+
+const Map<String, String> _landingZhTw = <String, String>{
+  'Features': '功能',
+  'Pillars': '支柱',
+  'For Schools': '面向學校',
+  'Mission-based learning, AI coaching, portfolios, analytics, and offline support.':
+      '任務式學習、AI 教練、作品集、分析與離線支援。',
+  'Future Skills, Leadership & Agency, and Impact & Innovation.':
+      '未來技能、領導力與自主性，以及影響力與創新。',
+  'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
+      '為學習者、教育者、家長、站點團隊和 HQ 提供按角色劃分的儀表板。',
+  'Sign In': '登入',
+  'Education 2.0 Platform': '教育 2.0 平台',
+  "Unlock Every\nLearner's Potential": '釋放每位\n學習者的潛能',
+  'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.':
+      'Scholesa 透過任務式教育、習慣教練和作品集展示賦能 K-9 學習工作室，並以三大支柱幫助學生面向未來。',
+  'Watch Demo': '觀看示範',
+  'Scholesa Demo': 'Scholesa 示範',
+  'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
+      '示範包含：\n• 角色儀表板\n• CTA 操作流程\n• 任務與出勤生命週期',
+  'Close': '關閉',
+  'Try Live': '立即體驗',
+  'AI Coaching': 'AI 教練',
+  'Achievements': '成就',
+  'Missions': '任務',
+  'Community': '社群',
+  'The Three Pillars': '三大支柱',
+  'Building Future-Ready Learners': '培養面向未來的學習者',
+  'Our curriculum is built on three foundational pillars that prepare students for success.':
+      '我們的課程建立在三大基礎支柱之上，幫助學生邁向成功。',
+  'Future Skills': '未來技能',
+  "AI, coding, robotics, research, and digital literacy for tomorrow's world.":
+      '為未來世界準備的 AI、程式設計、機器人、研究與數位素養。',
+  'Leadership & Agency': '領導力與自主性',
+  'Self-direction, communication, collaboration, and decision-making skills.':
+      '培養自我驅動、溝通、協作與決策能力。',
+  'Impact & Innovation': '影響力與創新',
+  'Social responsibility, creative problem-solving, and community contribution.':
+      '社會責任、創造性解決問題與社群貢獻。',
+  'PLATFORM FEATURES': '平台功能',
+  'Everything You Need': '所需盡在其中',
+  'Mission-Based Learning': '任務式學習',
+  'AI Habit Coaching': 'AI 習慣教練',
+  'Portfolio Showcase': '作品集展示',
+  'Progress Analytics': '進度分析',
+  'Parent Portal': '家長入口',
+  'Offline-First': '離線優先',
+  'FOR EVERYONE': '適用於所有人',
+  'Designed for Your Role': '為你的角色而設計',
+  'Learners': '學習者',
+  'Educators': '教育者',
+  'Parents': '家長',
+  'Site Admins': '站點管理員',
+  'Ready to Transform Learning?': '準備好改變學習方式了嗎？',
+  'Join hundreds of learning studios already using Scholesa.':
+      '加入已經在使用 Scholesa 的數百家學習工作室。',
+  '© 2026 Scholesa. Education 2.0 Platform.': '© 2026 Scholesa。教育 2.0 平台。',
 };
 
 String _tLanding(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _landingEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _landingZhCn,
+    zhTw: _landingZhTw,
+  );
 }
 
 /// Landing Page - Public welcome page before login

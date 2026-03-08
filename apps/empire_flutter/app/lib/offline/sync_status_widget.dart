@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/telemetry_service.dart';
+import '../ui/localization/inline_locale_text.dart';
 import 'sync_coordinator.dart';
 
-const Map<String, String> _syncStatusEs = <String, String>{
-  'pending': 'pendientes',
-  'Offline': 'Sin conexión',
+const Map<String, String> _syncStatusZhCn = <String, String>{
+  'pending': '待同步',
+  'Offline': '离线',
   "You're offline. Changes will sync when you reconnect.":
-      'No tienes conexión. Los cambios se sincronizarán al reconectarte.',
-  'RETRY': 'REINTENTAR',
+      '你当前处于离线状态。重新连接后会自动同步更改。',
+  'RETRY': '重试',
+};
+
+const Map<String, String> _syncStatusZhTw = <String, String>{
+  'pending': '待同步',
+  'Offline': '離線',
+  "You're offline. Changes will sync when you reconnect.":
+      '你目前處於離線狀態。重新連線後會自動同步變更。',
+  'RETRY': '重試',
 };
 
 String _tSyncStatus(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _syncStatusEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _syncStatusZhCn,
+    zhTw: _syncStatusZhTw,
+  );
 }
 
 /// Sync status indicator widget

@@ -114,10 +114,10 @@ firebase deploy --only firestore:indexes
 1. ✅ Created centralized [BosCoachingI18n](apps/empire_flutter/app/lib/i18n/bos_coaching_i18n.dart) Dart class with 25+ keys
 2. ✅ Added English keys to [packages/i18n/locales/en.json](packages/i18n/locales/en.json)
 3. ✅ Created Spanish translations in [packages/i18n/locales/es.json](packages/i18n/locales/es.json) (NEW FILE)
-4. ✅ Refactored `educator_sessions_page.dart` as example migration
-5. ⏳ 6 pages pending migration (educator_mission_plans, educator_learner_supports, educator_integrations, parent_summary, parent_schedule, parent_billing)
+4. ✅ Refactored educator and parent BOS/MIA surfaces to consume `BosCoachingI18n`
+5. ✅ Active educator + parent loop cards now use centralized keys across all targeted surfaces
 
-**Migration Status**: 1 of 7 pages complete; 6 awaiting update
+**Migration Status**: Targeted educator + parent BOS/MIA surfaces migrated
 
 ---
 
@@ -177,8 +177,8 @@ firebase deploy --only firestore:indexes
 - Created [BosCoachingI18n](apps/empire_flutter/app/lib/i18n/bos_coaching_i18n.dart) centralized Dart library
 - Added English keys to [packages/i18n/locales/en.json](packages/i18n/locales/en.json)
 - Created Spanish i18n file:[packages/i18n/locales/es.json](packages/i18n/locales/es.json)
-- Refactored educator_sessions_page.dart as migration example
-- 6 pages pending migration (documented with checklist)
+- Refactored educator and parent BOS/MIA insight surfaces to use shared `BosCoachingI18n` keys
+- Active loop cards no longer depend on page-local BOS/MIA translation strings
 
 ### 5. Fixed Blocker #3 (Error Handling)
 - Enhanced [bosGetLearnerLoopInsights](functions/src/bosRuntime.ts) callable (lines ~2025–2194)
@@ -260,14 +260,8 @@ Status: ⚠️ Pre-existing issue; not caused by audit fixes
 
 ## NEXT STEPS (Immediate Action Items)
 
-### Today (Dec 26) – Finalize i18n Migration
-1. **30 min**: Refactor 6 remaining pages to use `BosCoachingI18n`
-   - educator_mission_plans_page.dart
-   - educator_learner_supports_page.dart
-   - educator_integrations_page.dart
-   - parent_summary_page.dart
-   - parent_schedule_page.dart
-   - parent_billing_page.dart
+### Today (Dec 26) – Validate completed i18n migration
+1. **30 min**: Verify `BosCoachingI18n` rendering across educator and parent BOS/MIA surfaces in `en` and `es`
 
 2. **15 min**: Run `flutter analyze` on all 10 surfaces (should all pass)
 

@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../services/telemetry_service.dart';
+import '../localization/inline_locale_text.dart';
 
-const Map<String, String> _errorStateEs = <String, String>{
-  'Error': 'Error',
-  'Retry': 'Reintentar',
+const Map<String, String> _errorStateZhCn = <String, String>{
+  'Error': '错误',
+  'Retry': '重试',
+};
+
+const Map<String, String> _errorStateZhTw = <String, String>{
+  'Error': '錯誤',
+  'Retry': '重試',
 };
 
 String _tErrorState(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _errorStateEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _errorStateZhCn,
+    zhTw: _errorStateZhTw,
+  );
 }
 
 /// Error state widget with retry

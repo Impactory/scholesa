@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
@@ -128,9 +129,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: BosLearnerLoopInsightsCard(
-                      title: _t('Family Learning Loop'),
-                      subtitle: _t('Your child\'s individual improvement signals'),
-                      emptyLabel: _t('No family learning data yet'),
+                      title: BosCoachingI18n.familyLearningTitle(context),
+                      subtitle: BosCoachingI18n.familyLearningSubtitle(context),
+                      emptyLabel: BosCoachingI18n.familyLearningEmpty(context),
                       learnerId: selectedLearner.learnerId,
                       learnerName: selectedLearner.learnerName,
                       accentColor: ScholesaColors.parent,
