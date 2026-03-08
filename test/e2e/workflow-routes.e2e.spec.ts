@@ -299,6 +299,11 @@ function workflowRecord(page: Page, text: string): Locator {
   return page.getByTestId('workflow-record-list').locator('li', { hasText: text }).first();
 }
 
+async function countDocsByField(collectionName: string, field: string, value: string): Promise<number> {
+  const snap = await adminDb.collection(collectionName).where(field, '==', value).get();
+  return snap.size;
+}
+
 test('learner workflow redirects to learner default and supports mission submit lifecycle', async ({ page }) => {
   await signInAs(page, USERS.learner);
 
@@ -317,6 +322,16 @@ test('learner workflow redirects to learner default and supports mission submit 
   await expect(record).toContainText('Status: started');
   await record.getByRole('button', { name: 'Submit attempt' }).click();
   await expect(record).toContainText('Status: submitted');
+  await expect.poll(async () => {
+    const attempts = await adminDb
+      .collection('missionAttempts')
+      .where('learnerId', '==', USERS.learner.uid)
+      .where('missionId', '==', MISSION_ID)
+      .get();
+    return attempts.docs.some((docSnap) => docSnap.data().status === 'submitted');
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
 });
 
 test('learner is denied HQ routes and returns to learner default', async ({ page }) => {
@@ -344,6 +359,19 @@ test('educator workflow redirects to educator default and records attendance', a
 
   const record = workflowRecord(page, USERS.learner.displayName);
   await expect(record).toContainText('Status: present');
+  await expect.poll(async () => {
+    const attendance = await adminDb
+      .collection('attendanceRecords')
+      .where('learnerId', '==', USERS.learner.uid)
+      .where('sessionOccurrenceId', '==', SESSION_ID)
+      .get();
+    return attendance.docs.some((docSnap) => {
+      const data = docSnap.data();
+      return data.status === 'present' && data.recordedBy === USERS.educator.uid && data.notes === 'Learner arrived prepared.';
+    });
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
 });
 
 test('educator is denied partner routes and returns to educator default', async ({ page }) => {
@@ -429,6 +457,19 @@ test('partner workflow redirects to partner default and publishes a listing', as
   await expect(record).toContainText('Status: draft');
   await record.getByRole('button', { name: 'Publish listing' }).click();
   await expect(record).toContainText('Status: published');
+  await expect.poll(async () => {
+    const listings = await adminDb
+      .collection('marketplaceListings')
+      .where('partnerId', '==', USERS.partner.uid)
+      .where('title', '==', 'Robotics Residency')
+      .get();
+    return listings.docs.some((docSnap) => {
+      const data = docSnap.data();
+      return data.status === 'published' && data.category === 'STEM';
+    });
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
 });
 
 test('partner is denied site routes and returns to partner default', async ({ page }) => {
@@ -455,6 +496,18 @@ test('hq workflow redirects to hq default and activates a new site', async ({ pa
   await expect(record).toContainText('Status: pending');
   await record.getByRole('button', { name: 'Activate site' }).click();
   await expect(record).toContainText('Status: active');
+  await expect.poll(async () => {
+    const sites = await adminDb
+      .collection('sites')
+      .where('name', '==', 'Site Gamma Campus')
+      .get();
+    return sites.docs.some((docSnap) => {
+      const data = docSnap.data();
+      return data.status === 'active' && data.location === 'Richmond';
+    });
+  }, {
+    timeout: 10_000,
+  }).toBe(true);
 });
 
 test('hq routes deny unauthenticated access', async ({ page }) => {
