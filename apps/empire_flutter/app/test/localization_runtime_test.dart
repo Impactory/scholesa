@@ -11,6 +11,8 @@ class _LocaleCase {
   const _LocaleCase({
     required this.locale,
     required this.signInLabel,
+    required this.learnerLoopTitle,
+    required this.learnerLoopSubtitle,
     required this.sessionLoopTitle,
     required this.sessionLoopSubtitle,
     required this.accessDeniedTitle,
@@ -19,6 +21,8 @@ class _LocaleCase {
 
   final Locale locale;
   final String signInLabel;
+  final String learnerLoopTitle;
+  final String learnerLoopSubtitle;
   final String sessionLoopTitle;
   final String sessionLoopSubtitle;
   final String accessDeniedTitle;
@@ -44,6 +48,8 @@ Widget _buildLocaleHarness(Locale locale) {
           body: Column(
             children: <Widget>[
               Text(AppStrings.of(context, 'auth.signIn')),
+              Text(BosCoachingI18n.learnerLoopTitle(context)),
+              Text(BosCoachingI18n.learnerLoopSubtitle(context)),
               Text(BosCoachingI18n.sessionLoopTitle(context)),
               Text(BosCoachingI18n.sessionLoopSubtitle(context)),
             ],
@@ -82,6 +88,8 @@ void main() {
     const _LocaleCase(
       locale: Locale('en'),
       signInLabel: 'Sign In',
+      learnerLoopTitle: 'BOS/MIA Learning Loop',
+      learnerLoopSubtitle: 'Latest individual improvement signal',
       sessionLoopTitle: 'BOS/MIA Session Loop',
       sessionLoopSubtitle:
           'Latest individual improvement signal for this session',
@@ -91,6 +99,8 @@ void main() {
     const _LocaleCase(
       locale: Locale('zh', 'CN'),
       signInLabel: '登录',
+      learnerLoopTitle: 'BOS/MIA 学习循环',
+      learnerLoopSubtitle: '最新的个人成长信号',
       sessionLoopTitle: 'BOS/MIA 课堂循环',
       sessionLoopSubtitle: '本次课堂最新的个人成长信号',
       accessDeniedTitle: '拒绝访问',
@@ -99,6 +109,8 @@ void main() {
     const _LocaleCase(
       locale: Locale('zh', 'TW'),
       signInLabel: '登入',
+      learnerLoopTitle: 'BOS/MIA 學習循環',
+      learnerLoopSubtitle: '最新的個人成長訊號',
       sessionLoopTitle: 'BOS/MIA 課堂循環',
       sessionLoopSubtitle: '本次課堂最新的個人成長訊號',
       accessDeniedTitle: '拒絕存取',
@@ -127,6 +139,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text(localeCase.signInLabel), findsOneWidget);
+  expect(find.text(localeCase.learnerLoopTitle), findsOneWidget);
+  expect(find.text(localeCase.learnerLoopSubtitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopTitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopSubtitle), findsOneWidget);
 

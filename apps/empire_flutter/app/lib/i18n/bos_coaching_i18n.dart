@@ -13,6 +13,9 @@ import 'package:flutter/material.dart';
 /// ```
 class BosCoachingI18n {
   static const Map<String, String> _zhCnTranslations = <String, String>{
+    'learnerLoopTitle': 'BOS/MIA 学习循环',
+    'learnerLoopSubtitle': '最新的个人成长信号',
+    'learnerLoopEmpty': '暂无学习循环数据',
     'sessionLoopTitle': 'BOS/MIA 课堂循环',
     'sessionLoopSubtitle': '本次课堂最新的个人成长信号',
     'sessionLoopEmpty': '暂无课堂循环数据',
@@ -40,6 +43,9 @@ class BosCoachingI18n {
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
+    'learnerLoopTitle': 'BOS/MIA 學習循環',
+    'learnerLoopSubtitle': '最新的個人成長訊號',
+    'learnerLoopEmpty': '目前沒有學習循環資料',
     'sessionLoopTitle': 'BOS/MIA 課堂循環',
     'sessionLoopSubtitle': '本次課堂最新的個人成長訊號',
     'sessionLoopEmpty': '目前沒有課堂循環資料',
@@ -67,6 +73,9 @@ class BosCoachingI18n {
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
+    'learnerLoopTitle': 'BOS/MIA Learning Loop',
+    'learnerLoopSubtitle': 'Latest individual improvement signal',
+    'learnerLoopEmpty': 'No learner loop data yet',
     'sessionLoopTitle': 'BOS/MIA Session Loop',
     'sessionLoopSubtitle': 'Latest individual improvement signal for this session',
     'sessionLoopEmpty': 'No session loop data yet',
@@ -114,6 +123,9 @@ class BosCoachingI18n {
   }
 
   // Convenience getters for commonly used keys
+  static String learnerLoopTitle(BuildContext context) => get(context, 'learnerLoopTitle');
+  static String learnerLoopSubtitle(BuildContext context) => get(context, 'learnerLoopSubtitle');
+  static String learnerLoopEmpty(BuildContext context) => get(context, 'learnerLoopEmpty');
   static String sessionLoopTitle(BuildContext context) => get(context, 'sessionLoopTitle');
   static String sessionLoopSubtitle(BuildContext context) => get(context, 'sessionLoopSubtitle');
   static String sessionLoopEmpty(BuildContext context) => get(context, 'sessionLoopEmpty');

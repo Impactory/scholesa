@@ -1,0 +1,65 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/dashboards/role_dashboard.dart';
+import 'package:scholesa_app/router/app_router.dart';
+
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
+AppState _buildStateForRole(UserRole role) {
+  final AppState appState = AppState();
+  appState.updateFromMeResponse(<String, dynamic>{
+    'userId': 'smoke-${role.name}',
+    'email': '${role.name}@scholesa.test',
+    'displayName': '${role.displayName} User',
+    'role': role.name,
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1', 'site-2'],
+    'entitlements': <dynamic>[],
+  });
+  return appState;
+}
+
+void main() {
+  group('Role workflow smoke', () {
+    test('every role maps to an enabled default route', () {
+      for (final UserRole role in UserRole.values) {
+        final String route = roleDefaultWorkflowRoute(role);
+        expect(route, isNotEmpty, reason: 'route should exist for ${role.name}');
+        expect(isRouteEnabled(route), isTrue,
+            reason: 'default route should be enabled for ${role.name}');
+      }
+    });
+
+    for (final UserRole role in UserRole.values) {
+      testWidgets('dashboard renders for ${role.name}',
+          (WidgetTester tester) async {
+        final AppState appState = _buildStateForRole(role);
+
+        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        addTearDown(() async {
+          await tester.binding.setSurfaceSize(null);
+        });
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<AppState>.value(
+            value: appState,
+            child: MaterialApp(
+              theme: _testTheme,
+              home: const RoleDashboard(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(RoleDashboard), findsOneWidget);
+        expect(find.text('${role.displayName} User'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+  });
+}

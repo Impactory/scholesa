@@ -5,6 +5,7 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import '../../i18n/bos_coaching_i18n.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
 
@@ -663,9 +664,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     final AppState appState = context.read<AppState>();
     final String? learnerId = appState.userId;
     return BosLearnerLoopInsightsCard(
-      title: _t('BOS/MIA Learning Loop'),
-      subtitle: _t('Latest individual improvement signal'),
-      emptyLabel: _t('No learner loop data yet'),
+      title: BosCoachingI18n.learnerLoopTitle(context),
+      subtitle: BosCoachingI18n.learnerLoopSubtitle(context),
+      emptyLabel: BosCoachingI18n.learnerLoopEmpty(context),
       learnerId: learnerId,
       learnerName: appState.displayName,
       accentColor: ScholesaColors.learner,
