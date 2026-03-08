@@ -1,0 +1,52 @@
+{
+  "landing": {
+    "title": "Scholesa – Future Skills Academy",
+    "subtitle": "The operating system for K–9 learning studios and schools.",
+    "tagline": "Learn with purpose. Build future-ready skills every day.",
+    "login": "Login",
+    "loginCta": "Login",
+    "register": "Register",
+    "registerArrow": "Register →",
+    "pillars": {
+      "title": "The 3 Pillars of Scholesa",
+      "future_skills": "Future Skills",
+      "leadership_agency": "Leadership & Agency",
+      "impact_innovation": "Impact & Innovation"
+    },
+    "stakeholders": {
+      "title": "One Platform for Every Stakeholder",
+      "learners": "Learners",
+      "educators": "Educators",
+      "parents": "Parents & Guardians",
+      "site_leads": "Site Leads & Principals",
+      "partners": "Partners",
+      "hq": "HQ & Network"
+    }
+  },
+  "navigation": {
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeLabel": "Theme"
+  },
+  "auth": {
+    "login": {
+      "title": "ยินดีต้อนรับกลับ",
+      "subtitle": "ลงชื่อเข้าใช้เพื่อไปยังเวิร์กโฟลว์ Scholesa ของคุณต่อ",
+      "emailLabel": "อีเมล",
+      "emailPlaceholder": "อีเมล",
+      "passwordLabel": "รหัสผ่าน",
+      "passwordPlaceholder": "รหัสผ่าน",
+      "submit": "ลงชื่อเข้าใช้",
+      "submitting": "กำลังลงชื่อเข้าใช้...",
+      "switchToRegister": "สร้างบัญชี",
+      "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+    }
+  },
+  "common": {
+    "loading": "กำลังโหลด..."
+  },
+  "dashboard": {
+    "redirecting": "กำลังพาไปยังพื้นที่ทำงานของคุณ..."
+  }
+}

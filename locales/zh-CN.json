@@ -1,0 +1,53 @@
+{
+  "landing": {
+    "title": "Scholesa – 未来技能学院",
+    "subtitle": "面向 K–9 学习工作室和学校的操作系统。",
+    "login": "登录",
+    "register": "注册",
+    "pillars": {
+      "title": "Scholesa 的三大支柱",
+      "future_skills": "未来技能",
+      "leadership_agency": "领导力与自主",
+      "impact_innovation": "影响力与创新"
+    },
+    "stakeholders": {
+      "title": "一站式平台服务所有角色",
+      "learners": "学习者",
+      "educators": "教育者",
+      "parents": "家长与监护人",
+      "site_leads": "站点负责人与校长",
+      "partners": "合作伙伴",
+      "hq": "总部与网络"
+    }
+  },
+  "educator_plan": {
+    "title": "规划课程",
+    "offline": "离线：操作将稍后同步",
+    "pending": "同步队列中有待处理",
+    "empty": "暂无课程。点击 + 创建。",
+    "add_occurrence": "添加课次",
+    "enroll_learner": "注册学习者",
+    "no_occurrences": "暂无课次。",
+    "no_enrollments": "暂无已注册学习者。"
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "登录以继续进入你的 Scholesa 工作流。",
+      "emailLabel": "邮箱地址",
+      "emailPlaceholder": "邮箱地址",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "密码",
+      "submit": "登录",
+      "submitting": "登录中...",
+      "switchToRegister": "创建账户",
+      "invalidCredentials": "邮箱或密码无效。"
+    }
+  },
+  "common": {
+    "loading": "加载中..."
+  },
+  "dashboard": {
+    "redirecting": "正在跳转到你的工作区..."
+  }
+}

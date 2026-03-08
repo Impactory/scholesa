@@ -36,6 +36,11 @@ yarn-error.log*
 !tsconfig.json
 !firebase.json
 !firestore.indexes.json
+!locales/en.json
+!locales/es.json
+!locales/zh-CN.json
+!locales/zh-TW.json
+!locales/th.json
 !.vscode/*.json
 client_secret_*.apps.googleusercontent.com.json
 *firebase-adminsdk*.json
