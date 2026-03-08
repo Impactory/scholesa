@@ -51,7 +51,9 @@ class AuthService {
       rethrow;
     } catch (e) {
       debugPrint('Email sign-in error: $e');
-      _appState.setError('An unexpected error occurred');
+      if ((_appState.error ?? '').isEmpty) {
+        _appState.setError('An unexpected error occurred');
+      }
       rethrow;
     }
   }
@@ -129,7 +131,9 @@ class AuthService {
       rethrow;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
-      _appState.setError('Failed to sign in with Google');
+      if ((_appState.error ?? '').isEmpty) {
+        _appState.setError('Failed to sign in with Google');
+      }
       rethrow;
     }
   }
@@ -166,7 +170,9 @@ class AuthService {
       rethrow;
     } catch (e) {
       debugPrint('Microsoft sign-in error: $e');
-      _appState.setError('Failed to sign in with Microsoft');
+      if ((_appState.error ?? '').isEmpty) {
+        _appState.setError('Failed to sign in with Microsoft');
+      }
       rethrow;
     }
   }
@@ -179,38 +185,22 @@ class AuthService {
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       } else {
-        final User? user = _auth.currentUser;
-        if (user != null) {
-          _appState.updateFromMeResponse(<String, dynamic>{
-            'userId': user.uid,
-            'email': user.email ?? '',
-            'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-            'role': 'learner',
-            'activeSiteId': null,
-            'siteIds': <String>[],
-            'entitlements': <Map<String, dynamic>>[],
-          });
-        }
+        throw StateError('Missing user profile and role claim');
       }
     } catch (e) {
       debugPrint('Error in _bootstrapSession: $e');
       debugPrintStack(label: '_bootstrapSession error stack');
       final User? user = _auth.currentUser;
       if (user != null) {
-        debugPrint('Falling back to Firebase user data for: ${user.email}');
-        _appState.updateFromMeResponse(<String, dynamic>{
-          'userId': user.uid,
-          'email': user.email ?? '',
-          'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-          'role': 'learner',
-          'activeSiteId': null,
-          'siteIds': <String>[],
-          'entitlements': <Map<String, dynamic>>[],
-        });
-      } else {
-        _appState.setError('Failed to load user profile');
-        rethrow;
+        try {
+          await _auth.signOut();
+        } catch (_) {
+          // Best effort sign-out only.
+        }
       }
+      _appState.clear();
+      _appState.setError('Failed to load user profile');
+      rethrow;
     }
   }
 

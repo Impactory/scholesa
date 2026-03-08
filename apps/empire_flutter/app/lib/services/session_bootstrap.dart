@@ -39,41 +39,27 @@ class SessionBootstrap {
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       } else {
-        _appState.updateFromMeResponse(<String, dynamic>{
-          'userId': user.uid,
-          'email': user.email ?? '',
-          'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-          'role': 'learner',
-          'activeSiteId': null,
-          'siteIds': <String>[],
-          'entitlements': <Map<String, dynamic>>[],
-        });
+        throw StateError('Missing user profile and role claim');
       }
     } on TimeoutException {
       debugPrint('Session bootstrap timed out while loading profile');
-      _appState.updateFromMeResponse(<String, dynamic>{
-        'userId': user.uid,
-        'email': user.email ?? '',
-        'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-        'role': 'learner',
-        'activeSiteId': null,
-        'siteIds': <String>[],
-        'entitlements': <Map<String, dynamic>>[],
-      });
+      await _failBootstrap();
     } catch (e) {
       debugPrint('Session bootstrap failed: $e');
-      _appState.updateFromMeResponse(<String, dynamic>{
-        'userId': user.uid,
-        'email': user.email ?? '',
-        'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-        'role': 'learner',
-        'activeSiteId': null,
-        'siteIds': <String>[],
-        'entitlements': <Map<String, dynamic>>[],
-      });
+      await _failBootstrap();
     } finally {
       _appState.setLoading(false);
     }
+  }
+
+  Future<void> _failBootstrap() async {
+    try {
+      await _auth.signOut();
+    } catch (_) {
+      // Best effort sign-out only.
+    }
+    _appState.clear();
+    _appState.setError('Failed to load user profile');
   }
 
   /// Listen to auth state changes and bootstrap/clear accordingly

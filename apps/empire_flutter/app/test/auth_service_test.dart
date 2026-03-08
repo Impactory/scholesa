@@ -83,6 +83,28 @@ void main() {
             )).called(1);
       });
 
+      test('signs out and surfaces profile error when profile is missing',
+          () async {
+        when(() => mockAuth.signInWithEmailAndPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            )).thenAnswer((_) async => mockCredential);
+        when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
+        when(() => mockAuth.signOut()).thenAnswer((_) async {});
+
+        await expectLater(
+          () => authService.signInWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+          throwsA(isA<StateError>()),
+        );
+
+        expect(appState.isAuthenticated, isFalse);
+        expect(appState.error, 'Failed to load user profile');
+        verify(() => mockAuth.signOut()).called(1);
+      });
+
       test('maps user-not-found error to friendly message', () async {
         when(() => mockAuth.signInWithEmailAndPassword(
               email: any(named: 'email'),
@@ -204,6 +226,21 @@ void main() {
 
       expect(appState.displayName, 'Updated Name');
       expect(appState.role, UserRole.hq);
+    });
+
+    test('refreshSession signs out when profile is missing', () async {
+      when(() => mockAuth.currentUser).thenReturn(mockUser);
+      when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
+      when(() => mockAuth.signOut()).thenAnswer((_) async {});
+
+      await expectLater(
+        authService.refreshSession(),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(appState.isAuthenticated, isFalse);
+      expect(appState.error, 'Failed to load user profile');
+      verify(() => mockAuth.signOut()).called(1);
     });
 
     test('refreshSession is no-op when no current user', () async {

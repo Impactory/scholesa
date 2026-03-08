@@ -75,8 +75,8 @@ class FirestoreService {
     };
   }
 
-  Future<Map<String, dynamic>> _buildFallbackProfile(User user) async {
-    String role = 'learner';
+  Future<Map<String, dynamic>?> _buildFallbackProfile(User user) async {
+    String? role;
     try {
       final IdTokenResult tokenResult = await user.getIdTokenResult(true);
       final Object? roleClaim = tokenResult.claims?['role'];
@@ -84,7 +84,11 @@ class FirestoreService {
         role = roleClaim;
       }
     } catch (_) {
-      // Non-blocking fallback: keep default learner role
+      // Ignore claim refresh failures and fall through to null.
+    }
+
+    if (role == null || role.isEmpty) {
+      return null;
     }
 
     return <String, dynamic>{
