@@ -29,9 +29,12 @@ function main() {
   const forwardedArgs = collectForwardedArgs();
 
   for (const suite of suites) {
-    const result = cp.spawnSync('node', [suite.script, ...forwardedArgs], {
+    const result = cp.spawnSync(process.execPath, [suite.script, ...forwardedArgs], {
+      cwd: process.cwd(),
+      env: process.env,
       stdio: 'pipe',
       encoding: 'utf8',
+      maxBuffer: 1024 * 1024 * 32,
     });
     const reportPath = path.resolve('audit-pack/reports', suite.report);
     let reportSummary = null;
@@ -42,6 +45,8 @@ function main() {
       name: suite.name,
       script: suite.script,
       exitCode: result.status,
+      signal: result.signal || null,
+      error: result.error ? String(result.error.message || result.error) : null,
       stdoutTail: (result.stdout || '').trim().split('\n').slice(-6),
       stderrTail: (result.stderr || '').trim().split('\n').slice(-6),
       report: reportSummary ? {
@@ -52,6 +57,21 @@ function main() {
     });
     if (result.status !== 0) {
       failures.push(`suite_failed:${suite.name}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    for (const suite of details.suites.filter((item) => item.exitCode !== 0 || item.error)) {
+      process.stderr.write(
+        [
+          `[vibe:voice:all] suite failed: ${suite.name}`,
+          `  exitCode: ${suite.exitCode}`,
+          `  signal: ${suite.signal || 'none'}`,
+          `  error: ${suite.error || 'none'}`,
+          `  stdoutTail: ${(suite.stdoutTail || []).join(' | ') || '(empty)'}`,
+          `  stderrTail: ${(suite.stderrTail || []).join(' | ') || '(empty)'}`,
+        ].join('\n') + '\n',
+      );
     }
   }
 

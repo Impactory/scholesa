@@ -80,6 +80,19 @@ function summarizeChecks(checkResults, externalSuiteResults) {
   return failures;
 }
 
+function emitExternalSuiteFailures(externalSuiteResults) {
+  for (const suite of externalSuiteResults.filter((item) => !item.passed)) {
+    process.stderr.write(
+      [
+        `[compliance] external suite failed: ${suite.command}`,
+        `  exitCode: ${suite.exitCode ?? 1}`,
+        `  stdoutTail: ${String(suite.stdout || '').trim().split('\n').slice(-10).join(' | ') || '(empty)'}`,
+        `  stderrTail: ${String(suite.stderr || '').trim().split('\n').slice(-10).join(' | ') || '(empty)'}`,
+      ].join('\n') + '\n',
+    );
+  }
+}
+
 function latestJson(fileName) {
   const content = readTextSafe(path.join(REPO_ROOT, 'audit-pack', 'reports', fileName));
   if (!content) return null;
@@ -114,6 +127,7 @@ function runComplianceSuite(trigger = 'manual') {
   ];
 
   const failures = summarizeChecks(checks, externalSuites);
+  emitExternalSuiteFailures(externalSuites);
   const passed = failures.length === 0;
 
   const policyPath = path.join(REPO_ROOT, 'services/scholesa-compliance/policies/controls.yaml');

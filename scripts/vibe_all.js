@@ -22,15 +22,38 @@ const suites = [
   { name: 'vibe:compliance:notice:i18n', script: 'scripts/vibe_compliance_notice_i18n.js', report: 'vibe-compliance-notice-i18n-report.json' },
 ];
 
+function resolveSuiteProcess(suite) {
+  if (suite.command === 'npm') {
+    const npmExecPath = process.env.npm_execpath;
+    if (npmExecPath) {
+      return {
+        bin: process.execPath,
+        args: [npmExecPath, ...(suite.args || [])],
+      };
+    }
+    return {
+      bin: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+      args: suite.args || [],
+    };
+  }
+
+  return {
+    bin: suite.command || process.execPath,
+    args: suite.args || [suite.script],
+  };
+}
+
 const failures = [];
 const details = { suites: [] };
 
 for (const suite of suites) {
-  const bin = suite.command || 'node';
-  const args = suite.args || [suite.script];
+  const { bin, args } = resolveSuiteProcess(suite);
   const result = cp.spawnSync(bin, args, {
+    cwd: process.cwd(),
+    env: process.env,
     stdio: 'pipe',
     encoding: 'utf8',
+    maxBuffer: 1024 * 1024 * 32,
   });
 
   const reportPath = suite.report ? path.resolve('audit-pack/reports', suite.report) : null;
@@ -43,6 +66,8 @@ for (const suite of suites) {
     name: suite.name,
     script: suite.script,
     exitCode: result.status,
+    signal: result.signal || null,
+    error: result.error ? String(result.error.message || result.error) : null,
     stdoutTail: (result.stdout || '').trim().split('\n').slice(-5),
     stderrTail: (result.stderr || '').trim().split('\n').slice(-5),
     report: reportSummary ? {
@@ -54,6 +79,21 @@ for (const suite of suites) {
 
   if (result.status !== 0) {
     failures.push(`suite_failed:${suite.name}`);
+  }
+}
+
+if (failures.length > 0) {
+  for (const suite of details.suites.filter((item) => item.exitCode !== 0 || item.error)) {
+    process.stderr.write(
+      [
+        `[vibe:all] suite failed: ${suite.name}`,
+        `  exitCode: ${suite.exitCode}`,
+        `  signal: ${suite.signal || 'none'}`,
+        `  error: ${suite.error || 'none'}`,
+        `  stdoutTail: ${(suite.stdoutTail || []).join(' | ') || '(empty)'}`,
+        `  stderrTail: ${(suite.stderrTail || []).join(' | ') || '(empty)'}`,
+      ].join('\n') + '\n',
+    );
   }
 }
 
