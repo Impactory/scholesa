@@ -58,6 +58,8 @@
 ## 6) Documentation Gates
 - [ ] Smoke checklist completed: `docs/VOICE_RUNTIME_SMOKE_TEST.md`
 - [ ] RC3 gate doc reviewed: `docs/vibe/RC3_RELEASE_GATE.md`
+- [ ] Platform live canary completed: `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- [ ] Platform release gate standard reviewed: `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
 - [ ] Dependency baseline reviewed: `DEPENDENCY_BASELINE_SCHOLESA.md`
 
 ---

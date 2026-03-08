@@ -4,6 +4,11 @@
 **Date:** 2026-03-02
 **Scope:** End-to-end wiring and release readiness for lower-right floating AI assistant
 
+For platform-wide March 8 live deployment criteria, also use:
+- `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
+- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
+
 ---
 
 ## Gate Summary
