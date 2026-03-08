@@ -11,10 +11,13 @@ const {
   resolveEnv,
   writeCanonicalReport,
 } = require('./vibe_audit_report_schema');
+const {
+  isServiceAccountCredentialPath,
+  resolveCredentialPath,
+} = require('./firebase_runtime_auth');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PROJECT = 'studio-3328096157-e3f79';
-const DEFAULT_CREDENTIALS = 'firebase-service-account.json';
 const DEFAULT_REPORT_NAME = 'tts-stt-bos-no-gap-assurance';
 const DEFAULT_VOICE_BASE_URL = 'https://voiceapi-gu5vyrn2tq-uc.a.run.app';
 const RETRYABLE_ERROR_PATTERNS = [
@@ -31,7 +34,7 @@ function parseArgs(argv) {
     hours: 168,
     limit: 25000,
     project: process.env.FIREBASE_PROJECT_ID || DEFAULT_PROJECT,
-    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || DEFAULT_CREDENTIALS,
+    credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
     baseUrl: process.env.VOICE_API_BASE_URL || DEFAULT_VOICE_BASE_URL,
     reportName: DEFAULT_REPORT_NAME,
     wiringReportName: 'firebase-ui-field-wiring-bulk-bos-noncore-latest',
@@ -69,9 +72,6 @@ function parseArgs(argv) {
   }
   if (!args.project) {
     throw new Error('Missing --project value.');
-  }
-  if (!args.credentials) {
-    throw new Error('Missing --credentials value.');
   }
   if (!args.reportName) {
     throw new Error('Missing --report-name value.');
@@ -211,10 +211,14 @@ function summarizeResult(checks) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const credentialsPath = path.resolve(ROOT, args.credentials);
-  if (!fs.existsSync(credentialsPath)) {
-    throw new Error(`Credentials file not found: ${credentialsPath}`);
-  }
+  const credentialsPath = resolveCredentialPath(args.credentials, [
+    path.resolve(ROOT, 'firebase-service-account.json'),
+    path.resolve(ROOT, 'studio-service-account.json'),
+  ]);
+  const sharedEnv = {
+    FIREBASE_PROJECT_ID: args.project,
+    ...(credentialsPath ? { GOOGLE_APPLICATION_CREDENTIALS: credentialsPath } : {}),
+  };
 
   const checks = [];
 
@@ -223,10 +227,7 @@ function main() {
       id: 'telemetry_smoke_full_168h',
       scriptPath: 'scripts/telemetry_smoke_check.js',
       args: ['--mode=full', `--hours=${args.hours}`, `--limit=${args.limit}`, '--strict'],
-      env: {
-        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
-        FIREBASE_PROJECT_ID: args.project,
-      },
+      env: sharedEnv,
       retries: 2,
       timeoutMs: 180000,
     }),
@@ -239,13 +240,12 @@ function main() {
       args: [
         `--hours=${args.hours}`,
         `--limit=${args.limit}`,
-        `--credentials=${args.credentials}`,
         `--project=${args.project}`,
         '--strict',
       ],
       env: {
-        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
-        FIREBASE_PROJECT_ID: args.project,
+        ...sharedEnv,
+        ...(isServiceAccountCredentialPath(credentialsPath || '') ? { QA_SERVICE_ACCOUNT_CREDENTIALS: credentialsPath } : {}),
       },
       retries: 2,
     }),
@@ -274,7 +274,9 @@ function main() {
 
   const liveRunnerArgs = ['--strict'];
   liveRunnerArgs.push(`--project=${args.project}`);
-  liveRunnerArgs.push(`--service-account=${args.credentials}`);
+  if (credentialsPath) {
+    liveRunnerArgs.push(`--service-account=${credentialsPath}`);
+  }
   if (args.baseUrl) {
     liveRunnerArgs.push(`--base-url=${args.baseUrl}`);
   }
@@ -283,10 +285,7 @@ function main() {
       id: 'voice_live_runner',
       scriptPath: 'scripts/vibe_voice_live_runner.js',
       args: liveRunnerArgs,
-      env: {
-        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
-        FIREBASE_PROJECT_ID: args.project,
-      },
+      env: sharedEnv,
       retries: 1,
       timeoutMs: 180000,
     }),
@@ -301,10 +300,7 @@ function main() {
         '--strict',
         `--report-name=${args.wiringReportName}`,
       ],
-      env: {
-        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
-        FIREBASE_PROJECT_ID: args.project,
-      },
+      env: sharedEnv,
       retries: 2,
       timeoutMs: 180000,
     }),
@@ -394,7 +390,7 @@ function main() {
     checks,
     metadata: {
       project: args.project,
-      credentials: args.credentials,
+      credentials: credentialsPath || '(applicationDefault)',
       hours: args.hours,
       limit: args.limit,
       baseUrl: args.baseUrl || '(default)',

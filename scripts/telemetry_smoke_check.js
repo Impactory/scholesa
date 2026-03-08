@@ -4,6 +4,14 @@
 const path = require('path');
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
+const {
+  initializeFirestoreRestFallback,
+  isCredentialAuthError,
+  isServiceAccountPayload,
+  readJsonFileSafe,
+  resolveCredentialPath,
+  resolveProjectId,
+} = require('./firebase_runtime_auth');
 
 const UNMAPPED_SITE_ID = 'unscoped';
 
@@ -205,8 +213,17 @@ function initializeAdminApp() {
   const credentialPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   const projectId = process.env.FIREBASE_PROJECT_ID;
   if (credentialPath) {
+    const resolvedCredentialPath = path.resolve(credentialPath);
+    const payload = readJsonFileSafe(resolvedCredentialPath);
+    if (isServiceAccountPayload(payload)) {
+      return initializeApp({
+        credential: cert(payload),
+        ...(projectId ? { projectId } : {}),
+      });
+    }
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = resolvedCredentialPath;
     return initializeApp({
-      credential: cert(require(path.resolve(credentialPath))),
+      credential: applicationDefault(),
       ...(projectId ? { projectId } : {}),
     });
   }
@@ -215,6 +232,37 @@ function initializeAdminApp() {
     credential: applicationDefault(),
     ...(projectId ? { projectId } : {}),
   });
+}
+
+async function loadTelemetrySnapshot(args, since) {
+  initializeAdminApp();
+  const db = getFirestore();
+
+  try {
+    const snapshot = await db
+      .collection('telemetryEvents')
+      .where('createdAt', '>=', Timestamp.fromDate(since))
+      .orderBy('createdAt', 'desc')
+      .limit(args.limit)
+      .get();
+    return { snapshot, transport: 'firebaseAdmin' };
+  } catch (error) {
+    if (!isCredentialAuthError(error)) {
+      throw error;
+    }
+    const projectId = resolveProjectId(
+      process.env.FIREBASE_PROJECT_ID,
+      resolveCredentialPath(process.env.GOOGLE_APPLICATION_CREDENTIALS),
+    );
+    const fallback = initializeFirestoreRestFallback(projectId);
+    const snapshot = await fallback.db
+      .collection('telemetryEvents')
+      .where('createdAt', '>=', since)
+      .orderBy('createdAt', 'desc')
+      .limit(args.limit)
+      .get();
+    return { snapshot, transport: fallback.transport };
+  }
 }
 
 async function run() {
@@ -226,21 +274,13 @@ async function run() {
   }
 
   validateOptions(args);
-  initializeAdminApp();
-  const db = getFirestore();
 
   const requiredEvents =
     args.mode === 'core'
       ? CORE_AND_EXTENDED_EVENTS
       : [...CORE_AND_EXTENDED_EVENTS, ...NON_CORE_EVENTS];
   const since = new Date(Date.now() - args.hours * 60 * 60 * 1000);
-
-  const snapshot = await db
-    .collection('telemetryEvents')
-    .where('createdAt', '>=', Timestamp.fromDate(since))
-    .orderBy('createdAt', 'desc')
-    .limit(args.limit)
-    .get();
+  const { snapshot, transport } = await loadTelemetrySnapshot(args, since);
 
   const docs = snapshot.docs
     .map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -313,6 +353,7 @@ async function run() {
     `limit=${args.limit}`,
     `siteFilter=${args.site || '(none)'}`,
     `strict=${args.strict}`,
+    `transport=${transport}`,
   ]);
 
   printSection('Dataset', [

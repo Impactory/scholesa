@@ -3,6 +3,7 @@
 const path = require('path');
 const { finish } = require('./vibe_report_utils');
 const {
+  ROLE_ALLOWED_TOOLS,
   detectLanguageCompatibility,
   defaultVoiceApiBaseUrl,
   loadVoiceFixtures,
@@ -13,6 +14,10 @@ const {
 function ensureStringArray(value) {
   if (!Array.isArray(value)) return [];
   return value.filter((entry) => typeof entry === 'string');
+}
+
+function uniqueStrings(values) {
+  return Array.from(new Set(ensureStringArray(values)));
 }
 
 function validateFixtureResponse(fixture, response) {
@@ -47,9 +52,11 @@ function validateFixtureResponse(fixture, response) {
 
   const allowedTools = ensureStringArray(expected.allowedTools);
   const disallowedTools = ensureStringArray(expected.disallowedTools);
+  const rolePolicyTools = ensureStringArray(ROLE_ALLOWED_TOOLS[String(fixture.role || '').toLowerCase()]);
+  const effectiveAllowedTools = uniqueStrings([...allowedTools, ...rolePolicyTools]);
 
   for (const toolId of toolsInvoked) {
-    if (allowedTools.length > 0 && !allowedTools.includes(toolId)) {
+    if (effectiveAllowedTools.length > 0 && !effectiveAllowedTools.includes(toolId)) {
       failures.push(`tool_not_allowed:${toolId}`);
     }
   }
@@ -156,4 +163,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

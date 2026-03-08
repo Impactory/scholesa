@@ -16,6 +16,9 @@ class LearnerSummary extends Equatable {
     this.recentActivities = const [],
     this.upcomingEvents = const [],
     this.pillarProgress = const {},
+    this.capabilitySnapshot = const CapabilitySnapshot(),
+    this.portfolioSnapshot = const PortfolioSnapshot(),
+    this.ideationPassport = const IdeationPassport(),
   });
   final String learnerId;
   final String learnerName;
@@ -28,6 +31,9 @@ class LearnerSummary extends Equatable {
   final List<RecentActivity> recentActivities;
   final List<UpcomingEvent> upcomingEvents;
   final Map<String, double> pillarProgress;
+  final CapabilitySnapshot capabilitySnapshot;
+  final PortfolioSnapshot portfolioSnapshot;
+  final IdeationPassport ideationPassport;
 
   @override
   List<Object?> get props => <Object?>[
@@ -42,6 +48,87 @@ class LearnerSummary extends Equatable {
         recentActivities,
         upcomingEvents,
         pillarProgress,
+        capabilitySnapshot,
+        portfolioSnapshot,
+        ideationPassport,
+      ];
+}
+
+class CapabilitySnapshot extends Equatable {
+  const CapabilitySnapshot({
+    this.futureSkills = 0,
+    this.leadership = 0,
+    this.impact = 0,
+    this.overall = 0,
+    this.band = 'emerging',
+  });
+
+  final double futureSkills;
+  final double leadership;
+  final double impact;
+  final double overall;
+  final String band;
+
+  @override
+  List<Object?> get props => <Object?>[
+        futureSkills,
+        leadership,
+        impact,
+        overall,
+        band,
+      ];
+}
+
+class PortfolioSnapshot extends Equatable {
+  const PortfolioSnapshot({
+    this.artifactCount = 0,
+    this.publishedArtifactCount = 0,
+    this.badgeCount = 0,
+    this.projectCount = 0,
+    this.latestArtifactAt,
+  });
+
+  final int artifactCount;
+  final int publishedArtifactCount;
+  final int badgeCount;
+  final int projectCount;
+  final DateTime? latestArtifactAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        artifactCount,
+        publishedArtifactCount,
+        badgeCount,
+        projectCount,
+        latestArtifactAt,
+      ];
+}
+
+class IdeationPassport extends Equatable {
+  const IdeationPassport({
+    this.missionAttempts = 0,
+    this.completedMissions = 0,
+    this.reflectionsSubmitted = 0,
+    this.voiceInteractions = 0,
+    this.collaborationSignals = 0,
+    this.lastReflectionAt,
+  });
+
+  final int missionAttempts;
+  final int completedMissions;
+  final int reflectionsSubmitted;
+  final int voiceInteractions;
+  final int collaborationSignals;
+  final DateTime? lastReflectionAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        missionAttempts,
+        completedMissions,
+        reflectionsSubmitted,
+        voiceInteractions,
+        collaborationSignals,
+        lastReflectionAt,
       ];
 }
 

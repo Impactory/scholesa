@@ -13,6 +13,7 @@ import { isCoppaConsentActive } from './coppaGuards';
 export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
 export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
 type VoiceRole = 'student' | 'teacher' | 'admin';
+type VoiceRequesterRole = VoiceRole | 'parent';
 type SafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
 type GradeBand = 'K-5' | '6-8' | '9-12' | 'All';
 type VoiceIntent =
@@ -78,6 +79,7 @@ interface VoiceSettings {
 interface VoiceAuthContext {
   uid: string;
   role: VoiceRole;
+  requesterRole: VoiceRequesterRole;
   siteId: string;
   siteIds: string[];
   gradeBand: GradeBand;
@@ -157,13 +159,37 @@ interface VoiceLearningSnapshot {
   frustrationSignalCount: number;
 }
 
+interface RoleIntelligenceLearnerProfile {
+  learnerId: string;
+  linkedEducatorCount: number;
+  linkedParentCount: number;
+  assignedMissionCount: number;
+  recentInteractionCount: number;
+  lastIntent?: string;
+  lastResponseMode?: string;
+  lastNeedsScaffold?: boolean;
+  lastEmotionalState?: string;
+  lastUnderstandingConfidence?: number;
+}
+
+interface RoleSiteIntelligenceProfile {
+  learnerCount: number;
+  educatorCount: number;
+  parentCount: number;
+  openMvlCount: number;
+  activeMissionCount: number;
+}
+
 interface RoleIntelligenceContext {
-  version: 'role-intel-v1';
+  version: 'role-intel-v2';
   role: VoiceRole;
+  requesterRole: VoiceRequesterRole;
   siteId: string;
   actorId: string;
   selectedLearnerId?: string;
   signalCount: number;
+  siteProfile?: RoleSiteIntelligenceProfile;
+  selectedLearnerProfile?: RoleIntelligenceLearnerProfile;
   learnerProfile?: {
     linkedEducatorCount: number;
     linkedParentCount: number;
@@ -174,6 +200,13 @@ interface RoleIntelligenceContext {
     rosterCount: number;
     selectedLearnerLinkedParentCount: number;
     selectedLearnerMissionCount: number;
+    selectedLearnerRecentInteractionCount: number;
+  };
+  parentProfile?: {
+    linkedLearnerCount: number;
+    selectedLearnerLinkedEducatorCount: number;
+    selectedLearnerMissionCount: number;
+    selectedLearnerRecentInteractionCount: number;
   };
   adminProfile?: {
     learnerCount: number;
@@ -384,9 +417,10 @@ const PHONE_PATTERN = /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
 const ADDRESS_PATTERN = /\b\d+\s+[A-Za-z0-9.\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln)\b/gi;
 const ID_PATTERN = /\b(?:site|learner|submission|attempt|session)[-_]?[A-Za-z0-9]{4,}\b/gi;
 
-const ROLE_ALLOWED_TOOLS: Record<VoiceRole, readonly string[]> = {
+const ROLE_ALLOWED_TOOLS: Record<VoiceRequesterRole, readonly string[]> = {
   student: ['glossary', 'hint_ladder', 'read_aloud', 'translate'],
   teacher: ['class_summary', 'rubric_feedback_draft', 'differentiate_lesson', 'read_aloud', 'translate'],
+  parent: ['class_summary', 'read_aloud', 'translate'],
   admin: ['setup_help', 'troubleshooting_guide', 'read_aloud', 'translate'],
 };
 
@@ -671,12 +705,18 @@ function normalizeGradeBand(rawBand: unknown, rawGrade: unknown): GradeBand {
   return '9-12';
 }
 
-function normalizeRole(rawRole: unknown): VoiceRole {
+function normalizeRequesterRole(rawRole: unknown): VoiceRequesterRole {
   const role = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : '';
   if (role === 'learner' || role === 'student') return 'student';
   if (role === 'educator' || role === 'teacher') return 'teacher';
+  if (role === 'parent' || role === 'guardian') return 'parent';
   if (role === 'hq' || role === 'site' || role === 'partner' || role === 'admin') return 'admin';
   return 'student';
+}
+
+function normalizeRole(rawRole: unknown): VoiceRole {
+  const requesterRole = normalizeRequesterRole(rawRole);
+  return requesterRole === 'parent' ? 'admin' : requesterRole;
 }
 
 function parseJsonBody(req: Request): Record<string, unknown> {
@@ -762,6 +802,7 @@ async function resolveAuthContext(req: Request, body: Record<string, unknown>): 
   }
 
   const profile = await fetchUserProfile(decoded.uid);
+  const requesterRole = normalizeRequesterRole((decoded as Record<string, unknown>).role ?? profile.role);
   const role = normalizeRole((decoded as Record<string, unknown>).role ?? profile.role);
   const siteIds = dedupeStrings([
     ...collectSiteIdsFromClaims(decoded),
@@ -784,6 +825,7 @@ async function resolveAuthContext(req: Request, body: Record<string, unknown>): 
   const context: VoiceAuthContext = {
     uid: decoded.uid,
     role,
+    requesterRole,
     siteId,
     siteIds,
     gradeBand,
@@ -885,7 +927,7 @@ function isRoleEnabled(settings: VoiceSettings, role: VoiceRole): boolean {
   return settings.adminVoiceEnabled;
 }
 
-function inferCategory(message: string, role: VoiceRole): SafetyDecision['category'] {
+function inferCategory(message: string, role: VoiceRequesterRole): SafetyDecision['category'] {
   if (role === 'student' && FOCUS_NUDGE_PATTERNS.some((pattern) => pattern.test(message))) return 'focus_nudge';
   if (role === 'teacher' && TEACHER_PRODUCTIVITY_PATTERNS.some((pattern) => pattern.test(message))) {
     return 'teacher_productivity';
@@ -894,7 +936,7 @@ function inferCategory(message: string, role: VoiceRole): SafetyDecision['catego
   return 'generic';
 }
 
-function evaluateSafetyDecision(message: string, role: VoiceRole, locale: VoiceLocale): SafetyDecision {
+function evaluateSafetyDecision(message: string, role: VoiceRequesterRole, locale: VoiceLocale): SafetyDecision {
   const normalized = message.trim();
   const category = inferCategory(normalized, role);
   if (SELF_HARM_PATTERNS.some((pattern) => pattern.test(normalized))) {
@@ -943,7 +985,7 @@ function clampProbability(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function inferVoiceIntent(message: string, role: VoiceRole, safetyOutcome: SafetyOutcome): VoiceIntent {
+function inferVoiceIntent(message: string, role: VoiceRequesterRole, safetyOutcome: SafetyOutcome): VoiceIntent {
   if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return 'safety_support';
   if (TRANSLATION_PATTERNS.some((pattern) => pattern.test(message))) return 'translation_request';
   if (HINT_REQUEST_PATTERNS.some((pattern) => pattern.test(message))) return 'hint_request';
@@ -991,7 +1033,7 @@ function responseModeForIntent(intent: VoiceIntent): VoiceResponseMode {
 
 function deriveUnderstandingSignal(input: {
   message: string;
-  role: VoiceRole;
+  role: VoiceRequesterRole;
   safety: SafetyDecision;
 }): VoiceUnderstandingSignal {
   const intent = inferVoiceIntent(input.message, input.role, input.safety.safetyOutcome);
@@ -1113,7 +1155,7 @@ function mergeUnderstandingSignal(
 }
 
 function buildAdaptiveLocalizedResponse(
-  role: VoiceRole,
+  role: VoiceRequesterRole,
   locale: VoiceLocale,
   category: SafetyDecision['category'],
   understanding: VoiceUnderstandingSignal,
@@ -1134,12 +1176,12 @@ function buildAdaptiveLocalizedResponse(
   return pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 }
 
-function generateLocalizedResponse(role: VoiceRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
+function generateLocalizedResponse(role: VoiceRequesterRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
   const localized = LOCALE_TEXT[locale];
   if (role === 'student' && category === 'focus_nudge') return localized.focusNudge;
   if (role === 'student') return localized.studentGeneric;
   if (role === 'teacher' && category === 'teacher_productivity') return localized.teacherProductive;
-  if (role === 'teacher') return localized.teacherGeneric;
+  if (role === 'teacher' || role === 'parent') return localized.teacherGeneric;
   return localized.adminGeneric;
 }
 
@@ -1162,7 +1204,7 @@ function applyStudentConversationalTone(
 }
 
 function selectToolCalls(
-  role: VoiceRole,
+  role: VoiceRequesterRole,
   category: SafetyDecision['category'],
   safetyOutcome: SafetyOutcome,
   understanding?: VoiceUnderstandingSignal,
@@ -1184,13 +1226,17 @@ function selectToolCalls(
   if (understanding?.responseMode === 'plan' && role === 'teacher') {
     return ['differentiate_lesson', 'class_summary'];
   }
+  if (understanding?.responseMode === 'plan' && role === 'parent') {
+    return ['class_summary'];
+  }
   if (role === 'student' && category === 'focus_nudge') return ['hint_ladder', 'read_aloud'];
   if (role === 'teacher' && category === 'teacher_productivity') return ['differentiate_lesson', 'rubric_feedback_draft'];
+  if (role === 'parent') return ['class_summary'];
   if (role === 'admin') return ['setup_help'];
   return [allowedTools[0]];
 }
 
-function deriveBosModeToolHints(role: VoiceRole, policyHint: BosPolicyHint): string[] {
+function deriveBosModeToolHints(role: VoiceRequesterRole, policyHint: BosPolicyHint): string[] {
   if (!policyHint.mode) return [];
   if (role === 'student') {
     if (policyHint.mode === 'hint') return ['hint_ladder'];
@@ -1204,6 +1250,13 @@ function deriveBosModeToolHints(role: VoiceRole, policyHint: BosPolicyHint): str
     if (policyHint.mode === 'verify') return ['rubric_feedback_draft'];
     if (policyHint.mode === 'explain') return ['class_summary'];
     if (policyHint.mode === 'debug') return ['rubric_feedback_draft'];
+    return [];
+  }
+  if (role === 'parent') {
+    if (policyHint.mode === 'hint') return ['read_aloud'];
+    if (policyHint.mode === 'verify') return ['class_summary'];
+    if (policyHint.mode === 'explain') return ['class_summary'];
+    if (policyHint.mode === 'debug') return ['translate'];
     return [];
   }
   return ['setup_help'];
@@ -1483,13 +1536,13 @@ function isInternalAudioUrl(urlValue: string): boolean {
   }
 }
 
-function chooseVoiceProfile(locale: VoiceLocale, role: VoiceRole, gradeBand: GradeBand): string {
+function chooseVoiceProfile(locale: VoiceLocale, role: VoiceRequesterRole, gradeBand: GradeBand): string {
   if (role === 'student' && gradeBand === 'K-5') return `${locale}.k5_safe_neutral`;
-  if (role === 'teacher' || role === 'admin') return `${locale}.professional_concise`;
+  if (role === 'teacher' || role === 'parent' || role === 'admin') return `${locale}.professional_concise`;
   return `${locale}.student_neutral`;
 }
 
-function prosodyPolicyTag(role: VoiceRole, gradeBand: GradeBand): string {
+function prosodyPolicyTag(role: VoiceRequesterRole, gradeBand: GradeBand): string {
   if (role === 'student' && gradeBand === 'K-5') return 'k5_safe_mode';
   if (role === 'student') return 'student_standard_mode';
   return 'professional_mode';
@@ -1498,7 +1551,7 @@ function prosodyPolicyTag(role: VoiceRole, gradeBand: GradeBand): string {
 function buildTtsStyleHints(input: {
   understanding: VoiceUnderstandingSignal;
   learningSnapshot: VoiceLearningSnapshot | null;
-  role: VoiceRole;
+  role: VoiceRequesterRole;
 }): Record<string, unknown> {
   const hasPersistentSupportSignal = Boolean(input.learningSnapshot) && (
     input.learningSnapshot!.lastNeedsScaffold ||
@@ -1512,7 +1565,7 @@ function buildTtsStyleHints(input: {
     : 'normal';
   const tone = input.understanding.emotionalState === 'frustrated'
     ? 'supportive'
-    : input.role === 'teacher' || input.role === 'admin'
+    : input.role === 'teacher' || input.role === 'parent' || input.role === 'admin'
     ? 'professional'
     : 'encouraging';
 
@@ -1761,11 +1814,99 @@ function parseJsonObjectField(rawValue: string | undefined): Record<string, unkn
   }
 }
 
-async function maybeValidateTeacherLearnerScope(
+function userHasSiteAccess(profile: Record<string, unknown>, siteId: string): boolean {
+  const siteIds = dedupeStrings([
+    ...normalizeStringArray(profile.siteIds),
+    ...(normalizeString(profile.activeSiteId) ? [String(profile.activeSiteId)] : []),
+  ]);
+  return siteIds.includes(siteId);
+}
+
+async function collectParentLinkedLearnerIds(parentId: string, siteId: string): Promise<string[]> {
+  const learnerIds = new Set<string>();
+  const parentSnap = await admin.firestore().collection('users').doc(parentId).get().catch(() => null);
+  const parentData = parentSnap?.exists ? (parentSnap.data() as Record<string, unknown>) : {};
+  normalizeStringArray(parentData?.learnerIds).forEach((learnerId) => learnerIds.add(learnerId));
+
+  try {
+    const guardianLinks = await admin.firestore()
+      .collection('guardianLinks')
+      .where('parentId', '==', parentId)
+      .where('siteId', '==', siteId)
+      .get();
+    for (const doc of guardianLinks.docs) {
+      const learnerId = normalizeString(doc.data().learnerId);
+      if (learnerId) learnerIds.add(learnerId);
+    }
+  } catch {
+    // Keep deterministic fallback behavior for legacy schemas.
+  }
+
+  try {
+    const learnersByParent = await admin.firestore()
+      .collection('users')
+      .where('parentIds', 'array-contains', parentId)
+      .get();
+    for (const doc of learnersByParent.docs) {
+      if (!userHasSiteAccess(doc.data() as Record<string, unknown>, siteId)) continue;
+      if (normalizeRequesterRole(doc.data().role) === 'student') {
+        learnerIds.add(doc.id);
+      }
+    }
+  } catch {
+    // Legacy fallback is best effort only.
+  }
+
+  return Array.from(learnerIds.values());
+}
+
+async function collectEducatorLinkedLearnerIds(educatorId: string, siteId: string): Promise<string[]> {
+  const learnerIds = new Set<string>();
+  const educatorSnap = await admin.firestore().collection('users').doc(educatorId).get().catch(() => null);
+  const educatorData = educatorSnap?.exists ? (educatorSnap.data() as Record<string, unknown>) : {};
+  dedupeStrings([
+    ...normalizeStringArray(educatorData?.learnerIds),
+    ...normalizeStringArray(educatorData?.studentIds),
+  ]).forEach((learnerId) => learnerIds.add(learnerId));
+
+  try {
+    const links = await admin.firestore()
+      .collection('educatorLearnerLinks')
+      .where('educatorId', '==', educatorId)
+      .where('siteId', '==', siteId)
+      .get();
+    for (const doc of links.docs) {
+      const learnerId = normalizeString(doc.data().learnerId);
+      if (learnerId) learnerIds.add(learnerId);
+    }
+  } catch {
+    // Keep deterministic fallback behavior.
+  }
+
+  for (const field of ['educatorIds', 'teacherIds']) {
+    try {
+      const linkedLearners = await admin.firestore()
+        .collection('users')
+        .where(field, 'array-contains', educatorId)
+        .get();
+      for (const doc of linkedLearners.docs) {
+        if (!userHasSiteAccess(doc.data() as Record<string, unknown>, siteId)) continue;
+        if (normalizeRequesterRole(doc.data().role) === 'student') {
+          learnerIds.add(doc.id);
+        }
+      }
+    } catch {
+      // Continue with the remaining sources.
+    }
+  }
+
+  return Array.from(learnerIds.values());
+}
+
+async function maybeValidateSelectedLearnerScope(
   context: VoiceAuthContext,
   body: Record<string, unknown>,
 ): Promise<void> {
-  if (context.role !== 'teacher') return;
   const selectedLearnerId = normalizeString((body.context as Record<string, unknown> | undefined)?.selectedLearnerId);
   if (!selectedLearnerId) return;
   const learnerSnap = await admin.firestore().collection('users').doc(selectedLearnerId).get();
@@ -1773,16 +1914,27 @@ async function maybeValidateTeacherLearnerScope(
     throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is not accessible in this tenant scope.');
   }
   const learner = learnerSnap.data() as Record<string, unknown>;
-  const learnerRole = normalizeRole(learner.role);
+  const learnerRole = normalizeRequesterRole(learner.role);
   if (learnerRole !== 'student') {
     throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId must refer to a student.');
   }
-  const learnerSiteIds = dedupeStrings([
-    ...normalizeStringArray(learner.siteIds),
-    ...(normalizeString(learner.activeSiteId) ? [String(learner.activeSiteId)] : []),
-  ]);
-  if (!learnerSiteIds.includes(context.siteId)) {
-    throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is outside the teacher tenant scope.');
+  if (!userHasSiteAccess(learner, context.siteId)) {
+    throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is outside the authenticated tenant scope.');
+  }
+  if (context.requesterRole === 'student' && selectedLearnerId !== context.uid) {
+    throw new VoiceHttpError(403, 'permission_denied', 'Students may only scope voice context to their own learner record.');
+  }
+  if (context.requesterRole === 'teacher') {
+    const learnerIds = await collectEducatorLinkedLearnerIds(context.uid, context.siteId);
+    if (!learnerIds.includes(selectedLearnerId)) {
+      throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is outside the teacher roster scope.');
+    }
+  }
+  if (context.requesterRole === 'parent') {
+    const learnerIds = await collectParentLinkedLearnerIds(context.uid, context.siteId);
+    if (!learnerIds.includes(selectedLearnerId)) {
+      throw new VoiceHttpError(403, 'permission_denied', 'selectedLearnerId is outside the parent linkage scope.');
+    }
   }
 }
 
@@ -1816,6 +1968,7 @@ async function recordVoiceAuditEvent(payload: {
     env: telemetryEnv,
     uid: payload.authContext.uid,
     role: payload.authContext.role,
+    requesterRole: payload.authContext.requesterRole,
     siteId: payload.authContext.siteId,
     gradeBand: payload.authContext.gradeBand,
     gradeBandCanonical: canonicalGradeBand,
@@ -1856,7 +2009,7 @@ async function recordVoiceTelemetryEvent(payload: {
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
   roleIntelligenceSignals?: number;
-  roleIntelligenceRole?: VoiceRole;
+  roleIntelligenceRole?: VoiceRequesterRole;
 }) {
   const canonicalGradeBand = toCanonicalGradeBand(payload.authContext.gradeBand);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1887,6 +2040,7 @@ async function recordVoiceTelemetryEvent(payload: {
       env: telemetryEnv,
       siteId: payload.authContext.siteId,
       role: payload.authContext.role,
+      requesterRole: payload.authContext.requesterRole,
       gradeBand: canonicalGradeBand,
       locale: payload.locale,
       eventType: payload.event,
@@ -1929,7 +2083,7 @@ async function recordVoiceTelemetryEvent(payload: {
       modelToolHintCount: payload.modelToolHintCount ?? 0,
       personalizationContextUsed: payload.personalizationContextUsed ?? false,
       roleIntelligenceSignals: payload.roleIntelligenceSignals ?? 0,
-      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
+      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.requesterRole,
     },
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -1956,7 +2110,7 @@ async function recordBosInteractionEvent(payload: {
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
   roleIntelligenceSignals?: number;
-  roleIntelligenceRole?: VoiceRole;
+  roleIntelligenceRole?: VoiceRequesterRole;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const telemetryEnv = resolveTelemetryEnv();
@@ -1991,6 +2145,7 @@ async function recordBosInteractionEvent(payload: {
       requestId: payload.requestId,
       traceId: payload.traceId,
       role: payload.authContext.role,
+      requesterRole: payload.authContext.requesterRole,
       gradeBand: gradeBandCanonical,
     },
     payload: {
@@ -2006,7 +2161,7 @@ async function recordBosInteractionEvent(payload: {
       transcriptLength: payload.transcriptLength ?? 0,
       audioPresent: (payload.audioBytes ?? 0) > 0,
       ttsAvailable: payload.ttsAvailable ?? false,
-      requesterRole: payload.authContext.role,
+      requesterRole: payload.authContext.requesterRole,
       contextMode: bosContext.contextMode,
       conceptTags: bosContext.conceptTags,
       understandingIntent: payload.understanding?.intent ?? 'general_support',
@@ -2026,7 +2181,7 @@ async function recordBosInteractionEvent(payload: {
       modelToolHintCount: payload.modelToolHintCount ?? 0,
       personalizationContextUsed: payload.personalizationContextUsed ?? false,
       roleIntelligenceSignals: payload.roleIntelligenceSignals ?? 0,
-      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
+      roleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.requesterRole,
     },
     timestampIso: new Date().toISOString(),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -2048,7 +2203,7 @@ async function upsertBosLearningProfile(payload: {
   modelToolHintCount?: number;
   personalizationContextUsed?: boolean;
   roleIntelligenceSignals?: number;
-  roleIntelligenceRole?: VoiceRole;
+  roleIntelligenceRole?: VoiceRequesterRole;
 }) {
   const bosContext = resolveBosInteractionContext(payload.body, payload.authContext);
   const profileId = `${payload.authContext.siteId}__${bosContext.actorId}`;
@@ -2126,7 +2281,7 @@ async function upsertBosLearningProfile(payload: {
     lastSafetyOutcome: payload.safetyOutcome,
     lastContextMode: bosContext.contextMode,
     lastUnderstandingSource: payload.understandingSource ?? 'heuristic',
-    lastRoleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.role,
+    lastRoleIntelligenceRole: payload.roleIntelligenceRole ?? payload.authContext.requesterRole,
     updatedAtIso: nowIso,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     metrics,
@@ -2178,6 +2333,12 @@ async function enforceVoiceAccess(
   authContext: VoiceAuthContext,
   settings: VoiceSettings,
 ): Promise<void> {
+  if (authContext.requesterRole === 'parent') {
+    if (!settings.voiceEnabled || (!settings.teacherVoiceEnabled && !settings.adminVoiceEnabled)) {
+      throw new VoiceHttpError(403, 'permission_denied', 'Voice is disabled for this role or tenant.');
+    }
+    return;
+  }
   if (!isRoleEnabled(settings, authContext.role)) {
     throw new VoiceHttpError(403, 'permission_denied', 'Voice is disabled for this role or tenant.');
   }
@@ -2241,14 +2402,63 @@ function nonZeroSignalCount(values: number[]): number {
   return values.filter((value) => Number.isFinite(value) && value > 0).length;
 }
 
+async function buildRoleIntelligenceLearnerProfile(
+  siteId: string,
+  learnerId: string,
+): Promise<RoleIntelligenceLearnerProfile> {
+  const learnerSnap = await admin.firestore().collection('users').doc(learnerId).get().catch(() => null);
+  const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
+  const linkedEducatorCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.educatorIds),
+    ...normalizeStringArray(learnerData?.teacherIds),
+  ]).length;
+  const linkedParentCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.parentIds),
+    ...normalizeStringArray(learnerData?.guardianIds),
+  ]).length;
+  const assignedMissionCount = dedupeStrings([
+    ...normalizeStringArray(learnerData?.missionIds),
+    ...normalizeStringArray(learnerData?.activeMissionIds),
+  ]).length;
+  const recentInteractionCount = await safeQueryCount(
+    admin.firestore()
+      .collection(BOS_INTERACTION_COLLECTION)
+      .where('siteId', '==', siteId)
+      .where('actorId', '==', learnerId)
+      .limit(30),
+  ) ?? 0;
+  const learningSnapshot = await admin.firestore()
+    .collection('bosLearningProfiles')
+    .doc(`${siteId}__${learnerId}`)
+    .get()
+    .catch(() => null);
+  const learning = learningSnapshot?.exists
+    ? asRecord(learningSnapshot.data()?.learning) ?? {}
+    : {};
+
+  return {
+    learnerId,
+    linkedEducatorCount,
+    linkedParentCount,
+    assignedMissionCount,
+    recentInteractionCount,
+    lastIntent: normalizeString(learning.lastIntent),
+    lastResponseMode: normalizeString(learning.lastResponseMode),
+    lastNeedsScaffold: typeof learning.lastNeedsScaffold === 'boolean' ? learning.lastNeedsScaffold : undefined,
+    lastEmotionalState: normalizeString(learning.lastEmotionalState),
+    lastUnderstandingConfidence:
+      typeof learning.lastUnderstandingConfidence === 'number'
+        ? clampProbability(learning.lastUnderstandingConfidence)
+        : undefined,
+  };
+}
+
 async function loadRoleIntelligenceContext(
   authContext: VoiceAuthContext,
   body: Record<string, unknown>,
 ): Promise<RoleIntelligenceContext> {
   const bosContext = resolveBosInteractionContext(body, authContext);
-  const selectedLearnerId = authContext.role === 'teacher' && bosContext.actorRole === 'learner'
-    ? bosContext.actorId
-    : undefined;
+  const requestedSelectedLearnerId = normalizeString((body.context as Record<string, unknown> | undefined)?.selectedLearnerId);
   const siteRef = admin.firestore().collection('sites').doc(authContext.siteId);
   const siteSnap = await siteRef.get().catch(() => null);
   const siteData = siteSnap?.exists ? (siteSnap.data() as Record<string, unknown>) : {};
@@ -2263,89 +2473,6 @@ async function loadRoleIntelligenceContext(
     ...normalizeStringArray(siteData?.siteLeadIds),
   ]).length;
   const siteParentCount = normalizeStringArray(siteData?.parentIds).length;
-
-  const context: RoleIntelligenceContext = {
-    version: 'role-intel-v1',
-    role: authContext.role,
-    siteId: authContext.siteId,
-    actorId: bosContext.actorId,
-    ...(selectedLearnerId ? { selectedLearnerId } : {}),
-    signalCount: 0,
-  };
-
-  if (authContext.role === 'student') {
-    const learnerSnap = await admin.firestore().collection('users').doc(bosContext.actorId).get().catch(() => null);
-    const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
-    const linkedEducatorCount = dedupeStrings([
-      ...normalizeStringArray(learnerData?.educatorIds),
-      ...normalizeStringArray(learnerData?.teacherIds),
-    ]).length;
-    const linkedParentCount = dedupeStrings([
-      ...normalizeStringArray(learnerData?.parentIds),
-      ...normalizeStringArray(learnerData?.guardianIds),
-    ]).length;
-    const assignedMissionFromProfile = dedupeStrings([
-      ...normalizeStringArray(learnerData?.missionIds),
-      ...normalizeStringArray(learnerData?.activeMissionIds),
-    ]).length;
-    const recentInteractionCount = await safeQueryCount(
-      admin.firestore()
-        .collection(BOS_INTERACTION_COLLECTION)
-        .where('siteId', '==', authContext.siteId)
-        .where('actorId', '==', bosContext.actorId)
-        .limit(30),
-    ) ?? 0;
-    context.learnerProfile = {
-      linkedEducatorCount,
-      linkedParentCount,
-      assignedMissionCount: assignedMissionFromProfile,
-      recentInteractionCount,
-    };
-    context.signalCount = nonZeroSignalCount([
-      linkedEducatorCount,
-      linkedParentCount,
-      assignedMissionFromProfile,
-      recentInteractionCount,
-    ]);
-    return context;
-  }
-
-  if (authContext.role === 'teacher') {
-    const educatorSnap = await admin.firestore().collection('users').doc(authContext.uid).get().catch(() => null);
-    const educatorData = educatorSnap?.exists ? (educatorSnap.data() as Record<string, unknown>) : {};
-    const rosterCount = dedupeStrings([
-      ...normalizeStringArray(educatorData?.learnerIds),
-      ...normalizeStringArray(educatorData?.studentIds),
-    ]).length;
-
-    let selectedLearnerLinkedParentCount = 0;
-    let selectedLearnerMissionCount = 0;
-    if (selectedLearnerId) {
-      const learnerSnap = await admin.firestore().collection('users').doc(selectedLearnerId).get().catch(() => null);
-      const learnerData = learnerSnap?.exists ? (learnerSnap.data() as Record<string, unknown>) : {};
-      selectedLearnerLinkedParentCount = dedupeStrings([
-        ...normalizeStringArray(learnerData?.parentIds),
-        ...normalizeStringArray(learnerData?.guardianIds),
-      ]).length;
-      selectedLearnerMissionCount = dedupeStrings([
-        ...normalizeStringArray(learnerData?.missionIds),
-        ...normalizeStringArray(learnerData?.activeMissionIds),
-      ]).length;
-    }
-
-    context.educatorProfile = {
-      rosterCount,
-      selectedLearnerLinkedParentCount,
-      selectedLearnerMissionCount,
-    };
-    context.signalCount = nonZeroSignalCount([
-      rosterCount,
-      selectedLearnerLinkedParentCount,
-      selectedLearnerMissionCount,
-    ]);
-    return context;
-  }
-
   const openMvlCount = await safeQueryCount(
     admin.firestore()
       .collection('mvlEpisodes')
@@ -2360,20 +2487,105 @@ async function loadRoleIntelligenceContext(
       .where('status', '==', 'active')
       .limit(100),
   ) ?? 0;
-
-  context.adminProfile = {
+  const siteProfile: RoleSiteIntelligenceProfile = {
     learnerCount: siteLearnerCount,
     educatorCount: siteEducatorCount,
     parentCount: siteParentCount,
     openMvlCount,
     activeMissionCount,
   };
+
+  const context: RoleIntelligenceContext = {
+    version: 'role-intel-v2',
+    role: authContext.role,
+    requesterRole: authContext.requesterRole,
+    siteId: authContext.siteId,
+    actorId: bosContext.actorId,
+    siteProfile,
+    signalCount: 0,
+  };
+
+  if (authContext.requesterRole === 'student') {
+    const learnerProfile = await buildRoleIntelligenceLearnerProfile(authContext.siteId, bosContext.actorId);
+    context.learnerProfile = {
+      linkedEducatorCount: learnerProfile.linkedEducatorCount,
+      linkedParentCount: learnerProfile.linkedParentCount,
+      assignedMissionCount: learnerProfile.assignedMissionCount,
+      recentInteractionCount: learnerProfile.recentInteractionCount,
+    };
+    context.selectedLearnerProfile = learnerProfile;
+    context.signalCount = nonZeroSignalCount([
+      learnerProfile.linkedEducatorCount,
+      learnerProfile.linkedParentCount,
+      learnerProfile.assignedMissionCount,
+      learnerProfile.recentInteractionCount,
+      siteProfile.activeMissionCount,
+    ]);
+    return context;
+  }
+
+  if (authContext.requesterRole === 'teacher') {
+    const learnerIds = await collectEducatorLinkedLearnerIds(authContext.uid, authContext.siteId);
+    const selectedLearnerId = requestedSelectedLearnerId ?? (learnerIds.length === 1 ? learnerIds[0] : undefined);
+    const selectedLearnerProfile = selectedLearnerId
+      ? await buildRoleIntelligenceLearnerProfile(authContext.siteId, selectedLearnerId)
+      : undefined;
+    if (selectedLearnerId) context.selectedLearnerId = selectedLearnerId;
+    if (selectedLearnerProfile) context.selectedLearnerProfile = selectedLearnerProfile;
+
+    context.educatorProfile = {
+      rosterCount: learnerIds.length,
+      selectedLearnerLinkedParentCount: selectedLearnerProfile?.linkedParentCount ?? 0,
+      selectedLearnerMissionCount: selectedLearnerProfile?.assignedMissionCount ?? 0,
+      selectedLearnerRecentInteractionCount: selectedLearnerProfile?.recentInteractionCount ?? 0,
+    };
+    context.signalCount = nonZeroSignalCount([
+      learnerIds.length,
+      selectedLearnerProfile?.linkedParentCount ?? 0,
+      selectedLearnerProfile?.assignedMissionCount ?? 0,
+      selectedLearnerProfile?.recentInteractionCount ?? 0,
+      siteProfile.learnerCount,
+    ]);
+    return context;
+  }
+
+  if (authContext.requesterRole === 'parent') {
+    const learnerIds = await collectParentLinkedLearnerIds(authContext.uid, authContext.siteId);
+    const selectedLearnerId = requestedSelectedLearnerId ?? (learnerIds.length === 1 ? learnerIds[0] : undefined);
+    const selectedLearnerProfile = selectedLearnerId
+      ? await buildRoleIntelligenceLearnerProfile(authContext.siteId, selectedLearnerId)
+      : undefined;
+    if (selectedLearnerId) context.selectedLearnerId = selectedLearnerId;
+    if (selectedLearnerProfile) context.selectedLearnerProfile = selectedLearnerProfile;
+    context.parentProfile = {
+      linkedLearnerCount: learnerIds.length,
+      selectedLearnerLinkedEducatorCount: selectedLearnerProfile?.linkedEducatorCount ?? 0,
+      selectedLearnerMissionCount: selectedLearnerProfile?.assignedMissionCount ?? 0,
+      selectedLearnerRecentInteractionCount: selectedLearnerProfile?.recentInteractionCount ?? 0,
+    };
+    context.signalCount = nonZeroSignalCount([
+      learnerIds.length,
+      selectedLearnerProfile?.linkedEducatorCount ?? 0,
+      selectedLearnerProfile?.assignedMissionCount ?? 0,
+      selectedLearnerProfile?.recentInteractionCount ?? 0,
+      siteProfile.learnerCount,
+    ]);
+    return context;
+  }
+
+  context.adminProfile = {
+    learnerCount: siteProfile.learnerCount,
+    educatorCount: siteProfile.educatorCount,
+    parentCount: siteProfile.parentCount,
+    openMvlCount: siteProfile.openMvlCount,
+    activeMissionCount: siteProfile.activeMissionCount,
+  };
   context.signalCount = nonZeroSignalCount([
-    siteLearnerCount,
-    siteEducatorCount,
-    siteParentCount,
-    openMvlCount,
-    activeMissionCount,
+    siteProfile.learnerCount,
+    siteProfile.educatorCount,
+    siteProfile.parentCount,
+    siteProfile.openMvlCount,
+    siteProfile.activeMissionCount,
   ]);
   return context;
 }
@@ -2391,7 +2603,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
-    await maybeValidateTeacherLearnerScope(authContext, body);
+    await maybeValidateSelectedLearnerScope(authContext, body);
 
     const locale = resolveLocale(body.locale, req, settings.allowedLocales);
     const message = normalizeSpeechText(normalizeString(body.message) ?? '');
@@ -2401,10 +2613,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
 
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
-    const safety = evaluateSafetyDecision(message, authContext.role, locale);
+    const safety = evaluateSafetyDecision(message, authContext.requesterRole, locale);
     const heuristicUnderstanding = deriveUnderstandingSignal({
       message,
-      role: authContext.role,
+      role: authContext.requesterRole,
       safety,
     });
     let understanding = heuristicUnderstanding;
@@ -2420,7 +2632,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
-      ? buildAdaptiveLocalizedResponse(authContext.role, locale, safety.category, understanding)
+      ? buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, safety.category, understanding)
       : safety.localizedMessage;
     let candidateText = baselineCandidateText;
     let llmModelVersion = VOICE_MODEL_VERSION;
@@ -2440,6 +2652,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           message,
           locale,
           role: authContext.role,
+          requesterRole: authContext.requesterRole,
           gradeBand: authContext.gradeBand,
           safety: {
             outcome: safety.safetyOutcome,
@@ -2484,7 +2697,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHints = llmPayload?.toolSuggestions ?? [];
       }
       if (llmResult.ok && suggestedText) {
-        const outputSafety = evaluateSafetyDecision(suggestedText, authContext.role, locale);
+        const outputSafety = evaluateSafetyDecision(suggestedText, authContext.requesterRole, locale);
         if (outputSafety.safetyOutcome === 'allowed') {
           candidateText = suggestedText;
           inferenceMeta = buildInferenceMeta('llm', llmResult);
@@ -2509,6 +2722,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           message,
           locale,
           role: authContext.role,
+          requesterRole: authContext.requesterRole,
           gradeBand: authContext.gradeBand,
           actorId: bosContext.actorId,
           actorRole: bosContext.actorRole,
@@ -2540,7 +2754,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           bosPolicyHint = policyHint;
           const applyPolicyHint = policyHint.confidence >= 0.35;
           if (applyPolicyHint) {
-            const bosModeToolHints = deriveBosModeToolHints(authContext.role, policyHint);
+            const bosModeToolHints = deriveBosModeToolHints(authContext.requesterRole, policyHint);
             modelToolHints = dedupeStrings([...modelToolHints, ...bosModeToolHints]).slice(0, 6);
           }
           bosInferenceMeta = buildInferenceMeta(
@@ -2556,7 +2770,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       }
     }
 
-    if (authContext.role === 'student') {
+    if (authContext.requesterRole === 'student') {
       candidateText = applyStudentConversationalTone(candidateText, locale);
     }
     if (personaInstructions && /kid|child|friendly|conversational|spoken/i.test(personaInstructions)) {
@@ -2564,7 +2778,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     }
 
     const toolsInvoked = selectToolCalls(
-      authContext.role,
+      authContext.requesterRole,
       safety.category,
       safety.safetyOutcome,
       understanding,
@@ -2578,7 +2792,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const quietModeActive = isQuietModeActive(settings, new Date());
     const knownNames = extractKnownNames(body);
     const preparedSpeech = redactTextForSpeech(candidateText, knownNames);
-    const voiceProfile = chooseVoiceProfile(locale, authContext.role, authContext.gradeBand);
+    const voiceProfile = chooseVoiceProfile(locale, authContext.requesterRole, authContext.gradeBand);
     const shouldSpeak = voiceOutputEnabled && !quietModeActive && preparedSpeech.speechText.length > 0;
 
     let audioUrl: string | undefined;
@@ -2598,7 +2812,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       audioUrl = buildAudioUrl(req, token);
     }
 
-    const adaptiveFallback = buildAdaptiveLocalizedResponse(authContext.role, locale, 'generic', understanding);
+    const adaptiveFallback = buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, 'generic', understanding);
     const responseText = detectLanguageCompatibility(candidateText, locale)
       ? candidateText
       : adaptiveFallback;
@@ -2646,7 +2860,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ];
 
@@ -2664,7 +2878,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -2684,7 +2898,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_used',
@@ -2704,7 +2918,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -2724,7 +2938,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -2745,7 +2959,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_used',
@@ -2766,7 +2980,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -2786,6 +3000,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         understandingSource,
         modelToolHintCount,
         personalizationContextUsed,
+        roleIntelligenceSignals,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ];
 
@@ -2812,7 +3028,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           modelToolHintCount,
           personalizationContextUsed,
           roleIntelligenceSignals,
-          roleIntelligenceRole: roleIntelligence.role,
+          roleIntelligenceRole: roleIntelligence.requesterRole,
         }),
       );
     }
@@ -2830,7 +3046,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         policyVersion: VOICE_POLICY_VERSION,
         modelVersion: llmModelVersion,
         locale,
-        role: authContext.role,
+        role: authContext.requesterRole,
         gradeBand: authContext.gradeBand,
         toolsInvoked,
         quietModeActive,
@@ -2840,7 +3056,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
         bosPolicy: bosPolicyHint
           ? {
             mode: bosPolicyHint.mode ?? null,
@@ -2949,6 +3165,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
+    await maybeValidateSelectedLearnerScope(authContext, resolvedBody);
 
     if (!transcriptRaw && uploadedAudioLength === 0) {
       throw new VoiceHttpError(400, 'invalid_argument', 'audio or transcript input is required.');
@@ -2981,6 +3198,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
           locale,
           partial,
           role: authContext.role,
+          requesterRole: authContext.requesterRole,
           gradeBand: authContext.gradeBand,
           learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
           roleIntelligenceContext: roleIntelligence,
@@ -3021,10 +3239,10 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     if (confidence === undefined) {
       confidence = Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
     }
-    const transcribeSafety = evaluateSafetyDecision(transcript, authContext.role, locale);
+    const transcribeSafety = evaluateSafetyDecision(transcript, authContext.requesterRole, locale);
     const heuristicUnderstanding = deriveUnderstandingSignal({
       message: transcript,
-      role: authContext.role,
+      role: authContext.requesterRole,
       safety: transcribeSafety,
     });
     const understanding = mergeUnderstandingSignal(heuristicUnderstanding, sttModelUnderstanding);
@@ -3059,7 +3277,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ]);
     await Promise.allSettled([
@@ -3075,7 +3293,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_help_opened',
@@ -3096,7 +3314,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_help_opened',
@@ -3115,7 +3333,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ]);
 
@@ -3131,7 +3349,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
         modelVersion: sttModelVersion,
         inference: {
           service: inferenceMeta.service,
@@ -3171,16 +3389,17 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     await assertActiveSchoolConsent(authContext.siteId);
     const settings = await loadVoiceSettings(authContext.siteId);
     await enforceVoiceAccess(authContext, settings);
+    await maybeValidateSelectedLearnerScope(authContext, body);
     const locale = resolveLocale(body.locale, req, settings.allowedLocales);
 
     const rawText = normalizeSpeechText(normalizeString(body.text) ?? '');
     if (!rawText) {
       throw new VoiceHttpError(400, 'invalid_argument', 'text is required.');
     }
-    const ttsSafety = evaluateSafetyDecision(rawText, authContext.role, locale);
+    const ttsSafety = evaluateSafetyDecision(rawText, authContext.requesterRole, locale);
     let understanding = deriveUnderstandingSignal({
       message: rawText,
-      role: authContext.role,
+      role: authContext.requesterRole,
       safety: ttsSafety,
     });
     let understandingSource: UnderstandingSource = 'heuristic';
@@ -3189,10 +3408,10 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         ? ttsSafety.localizedMessage
         : rawText;
     const requestedGradeBand = normalizeGradeBand(body.gradeBand, body.grade);
-    const effectiveGradeBand = authContext.role === 'student' ? authContext.gradeBand : requestedGradeBand;
+    const effectiveGradeBand = authContext.requesterRole === 'student' ? authContext.gradeBand : requestedGradeBand;
     const knownNames = extractKnownNames(body);
     const speech = redactTextForSpeech(ttsInputText, knownNames);
-    const voiceProfile = chooseVoiceProfile(locale, authContext.role, effectiveGradeBand);
+    const voiceProfile = chooseVoiceProfile(locale, authContext.requesterRole, effectiveGradeBand);
     const requestId = resolveRequestId(req);
     const traceId = resolveTraceId(req, body);
     const [learningSnapshot, roleIntelligence] = await Promise.all([
@@ -3224,13 +3443,14 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         text: speech.speechText,
         locale,
         role: authContext.role,
+        requesterRole: authContext.requesterRole,
         gradeBand: effectiveGradeBand,
         voiceProfile,
-        prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+        prosodyPolicy: prosodyPolicyTag(authContext.requesterRole, effectiveGradeBand),
         styleHints: buildTtsStyleHints({
           understanding,
           learningSnapshot,
-          role: authContext.role,
+          role: authContext.requesterRole,
         }),
         learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
         roleIntelligenceContext: roleIntelligence,
@@ -3307,7 +3527,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ]);
     await Promise.allSettled([
@@ -3323,7 +3543,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordVoiceTelemetryEvent({
         event: 'ai_coach_response',
@@ -3343,7 +3563,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
       recordBosInteractionEvent({
         eventType: 'ai_coach_response',
@@ -3362,7 +3582,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
       }),
     ]);
 
@@ -3375,14 +3595,14 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
         latencyMs,
         locale,
         voiceProfile: effectiveVoiceProfile,
-        prosodyPolicy: prosodyPolicyTag(authContext.role, effectiveGradeBand),
+        prosodyPolicy: prosodyPolicyTag(authContext.requesterRole, effectiveGradeBand),
         safetyOutcome: ttsSafety.safetyOutcome,
         redactionApplied: speech.redactionApplied,
         redactionCount: speech.redactionCount,
         understandingSource,
         personalizationContextUsed,
         roleIntelligenceSignals,
-        roleIntelligenceRole: roleIntelligence.role,
+        roleIntelligenceRole: roleIntelligence.requesterRole,
         inference: {
           service: inferenceMeta.service,
           route: inferenceMeta.route,
@@ -3472,6 +3692,8 @@ export const __voiceSystemInternals = {
   detectLanguageCompatibility,
   extractInternalBosPayload,
   evaluateSafetyDecision,
+  normalizeRequesterRole,
+  normalizeRole,
   normalizeVoiceLocale,
   redactTextForSpeech,
   resolveBosInteractionContext,

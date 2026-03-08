@@ -11,6 +11,11 @@ const {
   reportPath,
   writeCanonicalReport,
 } = require('./vibe_audit_report_schema');
+const {
+  initializeFirebaseAdmin,
+  initializeFirestoreRestFallback,
+  isCredentialAuthError,
+} = require('./firebase_runtime_auth');
 
 const SINGLE_AUDIT_SCRIPT = path.resolve(__dirname, 'audit_firebase_ui_field_wiring.js');
 const DEFAULT_SITE_LIMIT = Number(process.env.FIREBASE_UI_FIELD_AUDIT_SITE_LIMIT || 30);
@@ -114,30 +119,15 @@ function resolveExcludedSiteIds(args) {
   ]));
 }
 
-function resolveServiceAccount() {
-  for (const candidate of SERVICE_ACCOUNT_PATHS) {
-    if (!candidate) continue;
-    if (!fs.existsSync(candidate)) continue;
-    return {
-      credentialPath: candidate,
-      json: JSON.parse(fs.readFileSync(candidate, 'utf8')),
-    };
-  }
-  throw new Error(`No service account JSON found. Checked: ${SERVICE_ACCOUNT_PATHS.join(', ')}`);
-}
-
 function initializeAdmin() {
-  const serviceAccount = resolveServiceAccount();
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount.json),
-      projectId: serviceAccount.json.project_id,
-    });
-  }
+  const runtime = initializeFirebaseAdmin(admin, {
+    extraCredentialPaths: SERVICE_ACCOUNT_PATHS,
+  });
   return {
     db: admin.firestore(),
-    credentialPath: path.relative(process.cwd(), serviceAccount.credentialPath),
-    projectId: serviceAccount.json.project_id,
+    credentialPath: runtime.credentialPath,
+    projectId: runtime.projectId,
+    transport: 'firebaseAdmin',
   };
 }
 
@@ -233,8 +223,17 @@ function runSingleAudit(siteId, args) {
 
 async function run() {
   const args = parseArgs(process.argv.slice(2));
-  const { db, credentialPath, projectId } = initializeAdmin();
-  const discovery = await discoverSiteIds(db, args);
+  let runtime = initializeAdmin();
+  let discovery;
+  try {
+    discovery = await discoverSiteIds(runtime.db, args);
+  } catch (error) {
+    if (!isCredentialAuthError(error)) {
+      throw error;
+    }
+    runtime = initializeFirestoreRestFallback(runtime.projectId);
+    discovery = await discoverSiteIds(runtime.db, args);
+  }
   const siteIds = discovery.siteIds;
 
   if (siteIds.length === 0) {
@@ -273,8 +272,9 @@ async function run() {
       siteLimit: args.siteLimit,
       strict: args.strict,
       includeExcluded: args.includeExcluded,
-      projectId,
-      credentialPath,
+      projectId: runtime.projectId,
+      credentialPath: runtime.credentialPath,
+      transport: runtime.transport,
       excludedSiteIds: discovery.excludedSiteIds,
       exclusionSource: discovery.exclusionSource,
       siteResults,

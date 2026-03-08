@@ -9,6 +9,9 @@ const {
   resolveEnv,
   writeCanonicalReport,
 } = require('./vibe_audit_report_schema');
+const {
+  initializeFirebaseAdmin,
+} = require('./firebase_runtime_auth');
 
 const ROLE_FIELD_MAP = {
   learner: 'learnerIds',
@@ -132,41 +135,19 @@ function resolveProjectId(argsProjectId, credentialPath) {
 function initializeAdmin(args) {
   const credentialPath = resolveCredentialPath(args.credentials);
   const projectId = resolveProjectId(args.project, credentialPath);
-
-  if (!admin.apps.length) {
-    if (credentialPath) {
-      const credentialsPayload = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
-      const credentialType = credentialsPayload && typeof credentialsPayload.type === 'string'
-        ? credentialsPayload.type
-        : '';
-
-      if (credentialType === 'service_account') {
-        const serviceAccount = { ...credentialsPayload };
-        if (!serviceAccount.project_id && projectId) {
-          serviceAccount.project_id = projectId;
-        }
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          projectId: projectId || serviceAccount.project_id,
-        });
-      } else {
-        process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialPath;
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault(),
-          projectId,
-        });
-      }
-    } else {
-      admin.initializeApp({
-        projectId,
-      });
-    }
-  }
+  const runtime = initializeFirebaseAdmin(admin, {
+    credentialPath: credentialPath || undefined,
+    projectId,
+    extraCredentialPaths: [
+      path.resolve(process.cwd(), 'firebase-service-account.json'),
+      path.resolve(process.cwd(), 'studio-service-account.json'),
+    ],
+  });
 
   return {
     db: admin.firestore(),
-    credentialPath,
-    projectId: projectId || admin.app().options.projectId || null,
+    credentialPath: runtime.credentialPath,
+    projectId: runtime.projectId,
   };
 }
 

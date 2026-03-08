@@ -84,6 +84,8 @@ const BOS_EVENT_TYPES = new Set([
   'focus_restored',
 ]);
 
+const BOS_ALLOWED_SERVICES = new Set(['scholesa-ai', 'scholesa-stt', 'scholesa-tts']);
+
 const BOS_GRADE_BANDS = new Set(['G1_3', 'G4_6', 'G7_9', 'G10_12', 'K_5', 'G6_8', 'G9_12']);
 
 function parseArgs(argv) {
@@ -1068,7 +1070,7 @@ async function checkVoiceBosTelemetrySupport(db, siteId) {
       bosFailures.push(`bos_locale_invalid:${doc.id}:${effectiveLocale || 'missing'}`);
     }
     const service = typeof data.service === 'string' ? data.service.trim() : '';
-    if (service && service !== 'scholesa-ai') {
+    if (service && !BOS_ALLOWED_SERVICES.has(service)) {
       bosFailures.push(`bos_service_invalid:${doc.id}:${service}`);
     }
     const env = typeof data.env === 'string' ? data.env.trim() : '';

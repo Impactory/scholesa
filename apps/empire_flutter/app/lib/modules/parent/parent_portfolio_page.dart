@@ -25,8 +25,19 @@ const Map<String, String> _parentPortfolioEs = <String, String>{
   'activity': 'actividad',
   'Completed by': 'Completado por',
   'Getting AI Guidance': 'Obteniendo orientación de IA',
-  'Get personalized coaching on supporting your child': 'Obtén asesoramiento personalizado sobre cómo apoyar a tu hijo',
+  'Get personalized coaching on supporting your child':
+      'Obtén asesoramiento personalizado sobre cómo apoyar a tu hijo',
   'Hide AI Guidance': 'Ocultar orientación de IA',
+  'Capability Snapshot': 'Resumen de capacidades',
+  'Portfolio Snapshot': 'Resumen del portafolio',
+  'Ideation Passport': 'Pasaporte de ideación',
+  'Artifacts': 'Artefactos',
+  'Published': 'Publicados',
+  'Voice': 'Voz',
+  'Reflections': 'Reflexiones',
+  'Emerging': 'Emergente',
+  'Developing': 'En desarrollo',
+  'Strong': 'Fuerte',
 };
 
 /// Parent portfolio page for viewing learner's work and achievements
@@ -91,6 +102,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           return Column(
             children: <Widget>[
               _buildAiCoachingSection(context),
+              if (service.learnerSummaries.isNotEmpty)
+                _buildLearnerSnapshotStrip(service),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -108,7 +121,144 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     );
   }
 
-  Widget _buildPortfolioGrid(List<_PortfolioItem> portfolioItems, _ItemType? typeFilter) {
+  Widget _buildLearnerSnapshotStrip(ParentService service) {
+    return SizedBox(
+      height: 204,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: service.learnerSummaries.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (BuildContext context, int index) =>
+            _buildLearnerSnapshotCard(service.learnerSummaries[index]),
+      ),
+    );
+  }
+
+  Widget _buildLearnerSnapshotCard(LearnerSummary learner) {
+    final Color accent = _getBandColor(learner.capabilitySnapshot.band);
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            learner.learnerName,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              _buildSnapshotChip(_t('Capability Snapshot'),
+                  _t(_titleCaseBand(learner.capabilitySnapshot.band)), accent),
+              const SizedBox(width: 8),
+              _buildSnapshotChip(
+                _t('Portfolio Snapshot'),
+                '${learner.portfolioSnapshot.artifactCount}',
+                ScholesaColors.parentGradient.colors.first,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildSnapshotMetric(
+            _t('Artifacts'),
+            '${learner.portfolioSnapshot.artifactCount}',
+          ),
+          _buildSnapshotMetric(
+            _t('Published'),
+            '${learner.portfolioSnapshot.publishedArtifactCount}',
+          ),
+          _buildSnapshotMetric(
+            _t('Reflections'),
+            '${learner.ideationPassport.reflectionsSubmitted}',
+          ),
+          _buildSnapshotMetric(
+            _t('Voice'),
+            '${learner.ideationPassport.voiceInteractions}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSnapshotChip(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: ScholesaColors.textSecondary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSnapshotMetric(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortfolioGrid(
+      List<_PortfolioItem> portfolioItems, _ItemType? typeFilter) {
     final List<_PortfolioItem> filtered = typeFilter == null
         ? portfolioItems
         : portfolioItems
@@ -198,7 +348,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                            _t(item.pillar),
+                          _t(item.pillar),
                           style: const TextStyle(
                               fontSize: 11,
                               color: ScholesaColors.textSecondary),
@@ -312,9 +462,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    item.type == _ItemType.badge
-                        ? _t('Badge')
-                        : _t('Project'),
+                    item.type == _ItemType.badge ? _t('Badge') : _t('Project'),
                     style: const TextStyle(
                         fontSize: 12, color: ScholesaColors.textSecondary),
                   ),
@@ -432,6 +580,28 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     return 'Future Skills';
   }
 
+  String _titleCaseBand(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'strong':
+        return 'Strong';
+      case 'developing':
+        return 'Developing';
+      default:
+        return 'Emerging';
+    }
+  }
+
+  Color _getBandColor(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'strong':
+        return Colors.green;
+      case 'developing':
+        return Colors.orange;
+      default:
+        return Colors.blue;
+    }
+  }
+
   Widget _buildAiCoachingSection(BuildContext context) {
     final AppState appState = context.read<AppState>();
     final UserRole? role = appState.role;
@@ -460,7 +630,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                 color: parentColor,
               ),
               title: Text(_t('Getting AI Guidance')),
-              subtitle: Text(_t('Get personalized coaching on supporting your child')),
+              subtitle: Text(
+                  _t('Get personalized coaching on supporting your child')),
               trailing: IconButton(
                 icon: Icon(
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,

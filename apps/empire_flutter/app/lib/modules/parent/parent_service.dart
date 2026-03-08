@@ -69,8 +69,7 @@ class ParentService extends ChangeNotifier {
           FirebaseFunctions.instance.httpsCallable('getParentDashboardBundle');
       final HttpsCallableResult<dynamic> result =
           await callable.call(<String, dynamic>{'range': 'week'});
-      final Map<String, dynamic>? payload =
-          _asStringDynamicMap(result.data);
+      final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
       if (payload == null) {
         return <LearnerSummary>[];
       }
@@ -102,6 +101,12 @@ class ParentService extends ChangeNotifier {
             currentStreak: _toInt(learner['currentStreak']) ?? 0,
             attendanceRate: _toDouble(learner['attendanceRate']) ?? 0.0,
             pillarProgress: _parsePillarProgress(learner['pillarProgress']),
+            capabilitySnapshot:
+                _parseCapabilitySnapshot(learner['capabilitySnapshot']),
+            portfolioSnapshot:
+                _parsePortfolioSnapshot(learner['portfolioSnapshot']),
+            ideationPassport:
+                _parseIdeationPassport(learner['ideationPassport']),
             recentActivities: activities,
             upcomingEvents: events,
           ),
@@ -109,7 +114,8 @@ class ParentService extends ChangeNotifier {
       }
       return parsed;
     } catch (error) {
-      debugPrint('Parent callable bundle unavailable, using Firestore fallback: $error');
+      debugPrint(
+          'Parent callable bundle unavailable, using Firestore fallback: $error');
       return <LearnerSummary>[];
     }
   }
@@ -122,8 +128,10 @@ class ParentService extends ChangeNotifier {
           .collection('guardianLinks')
           .where('parentId', isEqualTo: parentId)
           .get();
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in links.docs) {
-        final String learnerId = (doc.data()['learnerId'] as String? ?? '').trim();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in links.docs) {
+        final String learnerId =
+            (doc.data()['learnerId'] as String? ?? '').trim();
         if (learnerId.isNotEmpty) {
           learnerIds.add(learnerId);
         }
@@ -137,17 +145,22 @@ class ParentService extends ChangeNotifier {
           await _firestore.collection('users').doc(parentId).get();
       final List<String> parentLearnerIds = List<String>.from(
         parentDoc.data()?['learnerIds'] as List<dynamic>? ?? <dynamic>[],
-      ).map((String value) => value.trim()).where((String value) => value.isNotEmpty).toList();
+      )
+          .map((String value) => value.trim())
+          .where((String value) => value.isNotEmpty)
+          .toList();
       learnerIds.addAll(parentLearnerIds);
     } catch (error) {
-      debugPrint('parent learnerIds lookup failed for parent $parentId: $error');
+      debugPrint(
+          'parent learnerIds lookup failed for parent $parentId: $error');
     }
 
     try {
-      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
-          .collection('users')
-          .where('parentIds', arrayContains: parentId)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot =
+          await _firestore
+              .collection('users')
+              .where('parentIds', arrayContains: parentId)
+              .get();
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in learnersSnapshot.docs) {
         final String role = _canonicalRole(doc.data()['role']);
@@ -156,7 +169,8 @@ class ParentService extends ChangeNotifier {
         }
       }
     } catch (error) {
-      debugPrint('users parentIds fallback lookup failed for parent $parentId: $error');
+      debugPrint(
+          'users parentIds fallback lookup failed for parent $parentId: $error');
     }
 
     return learnerIds.toList();
@@ -166,7 +180,8 @@ class ParentService extends ChangeNotifier {
     final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
         await _firestore.collection('users').doc(learnerId).get();
     if (!learnerDoc.exists) return null;
-    final Map<String, dynamic> learnerData = learnerDoc.data() ?? <String, dynamic>{};
+    final Map<String, dynamic> learnerData =
+        learnerDoc.data() ?? <String, dynamic>{};
     final String role = _canonicalRole(learnerData['role']);
     if (role.isNotEmpty && role != 'learner') return null;
 
@@ -174,12 +189,13 @@ class ParentService extends ChangeNotifier {
         await _firestore.collection('learnerProgress').doc(learnerId).get();
     final Map<String, dynamic>? progressData = progressDoc.data();
 
-    final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot = await _firestore
-        .collection('activities')
-        .where('learnerId', isEqualTo: learnerId)
-        .orderBy('timestamp', descending: true)
-        .limit(10)
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> activitiesSnapshot =
+        await _firestore
+            .collection('activities')
+            .where('learnerId', isEqualTo: learnerId)
+            .orderBy('timestamp', descending: true)
+            .limit(10)
+            .get();
 
     final List<RecentActivity> activities = activitiesSnapshot.docs.map(
       (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -296,9 +312,10 @@ class ParentService extends ChangeNotifier {
           currentBalance: _toDouble(summary['currentBalance']) ?? 0.0,
           nextPaymentAmount: _toDouble(summary['nextPaymentAmount']) ?? 0.0,
           nextPaymentDate: _parseTimestamp(summary['nextPaymentDate']),
-          subscriptionPlan: _asTrimmedString(summary['subscriptionPlan']).isEmpty
-              ? 'Basic'
-              : _asTrimmedString(summary['subscriptionPlan']),
+          subscriptionPlan:
+              _asTrimmedString(summary['subscriptionPlan']).isEmpty
+                  ? 'Basic'
+                  : _asTrimmedString(summary['subscriptionPlan']),
           recentPayments: payments,
         );
         return;
@@ -345,7 +362,8 @@ class ParentService extends ChangeNotifier {
               emoji: _asTrimmedString(activity['emoji']).isEmpty
                   ? '📝'
                   : _asTrimmedString(activity['emoji']),
-              timestamp: _parseTimestamp(activity['timestamp']) ?? DateTime.now(),
+              timestamp:
+                  _parseTimestamp(activity['timestamp']) ?? DateTime.now(),
             ))
         .toList();
   }
@@ -382,6 +400,42 @@ class ParentService extends ChangeNotifier {
       'impact': _toDouble(value['impact']) ?? 0,
     };
     return parsed;
+  }
+
+  CapabilitySnapshot _parseCapabilitySnapshot(dynamic value) {
+    if (value is! Map) return const CapabilitySnapshot();
+    return CapabilitySnapshot(
+      futureSkills: _toDouble(value['futureSkills']) ?? 0,
+      leadership: _toDouble(value['leadership']) ?? 0,
+      impact: _toDouble(value['impact']) ?? 0,
+      overall: _toDouble(value['overall']) ?? 0,
+      band: _asTrimmedString(value['band']).isEmpty
+          ? 'emerging'
+          : _asTrimmedString(value['band']),
+    );
+  }
+
+  PortfolioSnapshot _parsePortfolioSnapshot(dynamic value) {
+    if (value is! Map) return const PortfolioSnapshot();
+    return PortfolioSnapshot(
+      artifactCount: _toInt(value['artifactCount']) ?? 0,
+      publishedArtifactCount: _toInt(value['publishedArtifactCount']) ?? 0,
+      badgeCount: _toInt(value['badgeCount']) ?? 0,
+      projectCount: _toInt(value['projectCount']) ?? 0,
+      latestArtifactAt: _parseTimestamp(value['latestArtifactAt']),
+    );
+  }
+
+  IdeationPassport _parseIdeationPassport(dynamic value) {
+    if (value is! Map) return const IdeationPassport();
+    return IdeationPassport(
+      missionAttempts: _toInt(value['missionAttempts']) ?? 0,
+      completedMissions: _toInt(value['completedMissions']) ?? 0,
+      reflectionsSubmitted: _toInt(value['reflectionsSubmitted']) ?? 0,
+      voiceInteractions: _toInt(value['voiceInteractions']) ?? 0,
+      collaborationSignals: _toInt(value['collaborationSignals']) ?? 0,
+      lastReflectionAt: _parseTimestamp(value['lastReflectionAt']),
+    );
   }
 
   String _asTrimmedString(dynamic value) {

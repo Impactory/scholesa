@@ -368,6 +368,7 @@ function normalizeTelemetryRole(value) {
   if (normalized === 'teacher' || normalized === 'educator') return 'teacher';
   if (
     normalized === 'admin' ||
+    normalized === 'parent' ||
     normalized === 'site' ||
     normalized === 'hq' ||
     normalized === 'partner'

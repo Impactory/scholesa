@@ -9,6 +9,7 @@ export interface CopilotVoiceRequest {
   siteId?: string;
   locale?: SupportedLocale | string;
   screenId?: string;
+  traceId?: string;
   context?: Record<string, unknown>;
   voice?: {
     enabled?: boolean;
@@ -27,7 +28,7 @@ export interface CopilotVoiceResponse {
     policyVersion: string;
     modelVersion: string;
     locale: SupportedLocale;
-    role: 'student' | 'teacher' | 'admin';
+    role: 'student' | 'teacher' | 'parent' | 'admin';
     gradeBand: string;
     toolsInvoked: string[];
     quietModeActive: boolean;
@@ -116,6 +117,9 @@ async function postJson<TResponse>(path: string, idToken: string, body: Record<s
   if (!baseUrl) throw new Error('Voice API base URL is not configured.');
   const localeHeader = typeof body.locale === 'string' ? normalizeLocale(body.locale) : 'en';
   const requestId = createVoiceRequestId('voice-json');
+  const traceId = typeof body.traceId === 'string' && body.traceId.trim().length > 0
+    ? body.traceId.trim()
+    : undefined;
   const response = await withTimeout(
     aiSafeFetch(`${baseUrl}${path}`, {
       method: 'POST',
@@ -124,6 +128,7 @@ async function postJson<TResponse>(path: string, idToken: string, body: Record<s
         'Content-Type': 'application/json',
         'x-request-id': requestId,
         'x-scholesa-locale': localeHeader,
+        ...(traceId ? { 'x-trace-id': traceId } : {}),
       },
       body: JSON.stringify(body),
     }, 'voiceService.postJson'),
@@ -141,6 +146,7 @@ export async function sendCopilotVoiceMessage(req: CopilotVoiceRequest): Promise
     message: req.message,
     siteId: req.siteId,
     screenId: req.screenId || 'ai_coach_popup',
+    traceId: req.traceId,
     context: req.context || {},
     locale,
     gradeBand: req.gradeBand,

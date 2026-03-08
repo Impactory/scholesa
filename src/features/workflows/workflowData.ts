@@ -205,6 +205,46 @@ async function loadSiteUserOptions(params: {
     });
 }
 
+async function loadSiteSelectorOptions(limitSize = 200): Promise<WorkflowFieldOption[]> {
+  const snap = await getDocs(
+    query(
+      collection(firestore, 'sites'),
+      orderBy('name', 'asc'),
+      limit(limitSize),
+    ),
+  ).catch(() => null);
+
+  if (!snap) return [];
+  return snap.docs.map((siteDoc) => {
+    const data = (siteDoc.data() || {}) as Record<string, unknown>;
+    return {
+      value: siteDoc.id,
+      label: optionLabelFromRecord(data, siteDoc.id),
+    };
+  });
+}
+
+async function loadKpiPackOptions(limitSize = 80): Promise<WorkflowFieldOption[]> {
+  const snap = await getDocs(
+    query(
+      collection(firestore, 'kpiPacks'),
+      orderBy('updatedAt', 'desc'),
+      limit(limitSize),
+    ),
+  ).catch(() => null);
+
+  if (!snap) return [];
+  return snap.docs.map((packDoc) => {
+    const data = (packDoc.data() || {}) as Record<string, unknown>;
+    const siteId = asString(data.siteId, '');
+    const period = asString(data.period, 'month');
+    return {
+      value: packDoc.id,
+      label: `${optionLabelFromRecord(data, packDoc.id)}${siteId ? ` • ${siteId}` : ''} • ${period}`,
+    };
+  });
+}
+
 async function loadLearnerOptionsForActor(ctx: WorkflowContext, siteId: string | null): Promise<WorkflowFieldOption[]> {
   if (ctx.role === 'educator') {
     const linksSnap = await getDocs(
@@ -393,6 +433,119 @@ async function loadParentSchedule(ctx: WorkflowContext): Promise<WorkflowRecord[
   return records.sort((left, right) => Date.parse(left.updatedAt) - Date.parse(right.updatedAt));
 }
 
+function sortWorkflowRecords(records: WorkflowRecord[]): WorkflowRecord[] {
+  return [...records].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+}
+
+async function loadParentDashboardBundlePayload(ctx: WorkflowContext): Promise<Record<string, unknown>> {
+  const callable = httpsCallable(functions, 'getParentDashboardBundle');
+  const payload = await callable({
+    siteId: activeSiteId(ctx.profile) || undefined,
+    locale: ctx.locale,
+    range: 'week',
+  });
+  return (payload.data || {}) as Record<string, unknown>;
+}
+
+async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const payload = await loadParentDashboardBundlePayload(ctx);
+  const learners = Array.isArray(payload.learners) ? payload.learners : [];
+  const learnerIds: string[] = [];
+  const summaryRecords: WorkflowRecord[] = [];
+
+  for (const rawLearner of learners) {
+    if (!rawLearner || typeof rawLearner !== 'object' || Array.isArray(rawLearner)) continue;
+    const learner = rawLearner as Record<string, unknown>;
+    const learnerId = asString(learner.learnerId, '');
+    const learnerName = asString(learner.learnerName, learnerId);
+    if (!learnerId) continue;
+    learnerIds.push(learnerId);
+
+    const capability = learner.capabilitySnapshot as Record<string, unknown> | undefined;
+    const portfolio = learner.portfolioSnapshot as Record<string, unknown> | undefined;
+    const ideation = learner.ideationPassport as Record<string, unknown> | undefined;
+
+    summaryRecords.push(
+      buildRecord({
+        routePath: '/parent/portfolio',
+        collectionName: 'parentCapabilitySnapshots',
+        id: `capability:${learnerId}`,
+        raw: {
+          title: `${learnerName} capability graph`,
+          summary: `Future ${Math.round(Number(capability?.futureSkills || 0) * 100)}% • Leadership ${Math.round(Number(capability?.leadership || 0) * 100)}% • Impact ${Math.round(Number(capability?.impact || 0) * 100)}%`,
+          status: asString(capability?.band, 'emerging'),
+          updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
+          siteId: activeSiteId(ctx.profile),
+          futureSkills: String(capability?.futureSkills ?? 0),
+          leadership: String(capability?.leadership ?? 0),
+          impact: String(capability?.impact ?? 0),
+          overall: String(capability?.overall ?? 0),
+        },
+        titleKeys: ['title'],
+        subtitleKeys: ['summary'],
+        statusKeys: ['status'],
+        editable: false,
+        deletable: false,
+      }),
+    );
+
+    summaryRecords.push(
+      buildRecord({
+        routePath: '/parent/portfolio',
+        collectionName: 'parentPortfolioSnapshots',
+        id: `portfolio:${learnerId}`,
+        raw: {
+          title: `${learnerName} portfolio snapshot`,
+          summary: `Artifacts ${String(portfolio?.artifactCount || 0)} • Published ${String(portfolio?.publishedArtifactCount || 0)} • Badges ${String(portfolio?.badgeCount || 0)}`,
+          status: 'active',
+          updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
+          siteId: activeSiteId(ctx.profile),
+          artifactCount: String(portfolio?.artifactCount ?? 0),
+          publishedArtifactCount: String(portfolio?.publishedArtifactCount ?? 0),
+          badgeCount: String(portfolio?.badgeCount ?? 0),
+          projectCount: String(portfolio?.projectCount ?? 0),
+        },
+        titleKeys: ['title'],
+        subtitleKeys: ['summary'],
+        statusKeys: ['status'],
+        editable: false,
+        deletable: false,
+      }),
+    );
+
+    summaryRecords.push(
+      buildRecord({
+        routePath: '/parent/portfolio',
+        collectionName: 'parentIdeationPassports',
+        id: `passport:${learnerId}`,
+        raw: {
+          title: `${learnerName} ideation passport`,
+          summary: `Missions ${String(ideation?.completedMissions || 0)} • Reflections ${String(ideation?.reflectionsSubmitted || 0)} • Voice ${String(ideation?.voiceInteractions || 0)}`,
+          status: 'active',
+          updatedAt: ideation?.lastReflectionAt || portfolio?.latestArtifactAt || new Date().toISOString(),
+          siteId: activeSiteId(ctx.profile),
+          missionAttempts: String(ideation?.missionAttempts ?? 0),
+          completedMissions: String(ideation?.completedMissions ?? 0),
+          reflectionsSubmitted: String(ideation?.reflectionsSubmitted ?? 0),
+          voiceInteractions: String(ideation?.voiceInteractions ?? 0),
+          collaborationSignals: String(ideation?.collaborationSignals ?? 0),
+        },
+        titleKeys: ['title'],
+        subtitleKeys: ['summary'],
+        statusKeys: ['status'],
+        editable: false,
+        deletable: false,
+      }),
+    );
+  }
+
+  const portfolioRecords = await loadPortfolioRecordsForLearners({
+    routePath: ctx.routePath,
+    learnerIds,
+  });
+  return sortWorkflowRecords([...summaryRecords, ...portfolioRecords]);
+}
+
 async function loadWorkflowContacts(ctx: WorkflowContext): Promise<WorkflowFieldOption[]> {
   const callable = httpsCallable(functions, 'listWorkflowContacts');
   const response = await callable({
@@ -458,8 +611,12 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
         primaryActionLabel = record.status === 'active' ? 'Archive plan' : 'Activate plan';
         break;
       case '/site/provisioning':
-        primaryActionLabel = record.status === 'active' ? 'Suspend link' : 'Activate link';
-        deleteActionLabel = 'Remove link';
+        if (record.collectionName === 'cohortLaunches') {
+          primaryActionLabel = record.status === 'active' ? 'Pause cohort' : 'Start cohort';
+        } else {
+          primaryActionLabel = record.status === 'active' ? 'Suspend link' : 'Activate link';
+          deleteActionLabel = 'Remove link';
+        }
         break;
       case '/site/ops':
         primaryActionLabel = record.status === 'resolved' ? 'Reopen event' : 'Resolve event';
@@ -468,7 +625,22 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
         primaryActionLabel = record.status === 'published' ? 'Archive listing' : 'Publish listing';
         break;
       case '/partner/contracts':
-        primaryActionLabel = record.status === 'submitted' ? 'Return to draft' : 'Submit contract';
+        if (record.collectionName === 'partnerLaunches') {
+          primaryActionLabel = record.status === 'active' ? 'Pause launch' : 'Start launch';
+        } else {
+          primaryActionLabel = record.status === 'submitted' ? 'Return to draft' : 'Submit contract';
+        }
+        break;
+      case '/hq/curriculum':
+        if (record.collectionName === 'trainingCycles') {
+          primaryActionLabel = record.status === 'completed' ? 'Reopen cycle' : 'Complete cycle';
+        } else {
+          primaryActionLabel = record.status === 'published'
+            ? 'Refresh published unit'
+            : record.status === 'in_review'
+            ? 'Publish unit'
+            : 'Submit for review';
+        }
         break;
       case '/hq/sites':
         primaryActionLabel = record.status === 'active' ? 'Pause site' : 'Activate site';
@@ -621,13 +793,7 @@ async function loadLearnerToday(ctx: WorkflowContext): Promise<WorkflowRecord[]>
 }
 
 async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
-  const callable = httpsCallable(functions, 'getParentDashboardBundle');
-  const payload = await callable({
-    siteId: activeSiteId(ctx.profile) || undefined,
-    locale: ctx.locale,
-    range: 'week',
-  });
-  const data = (payload.data || {}) as Record<string, unknown>;
+  const data = await loadParentDashboardBundlePayload(ctx);
   const learners = Array.isArray(data.learners) ? data.learners : [];
   return learners
     .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object' && !Array.isArray(item))
@@ -649,6 +815,9 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
           missionsCompleted: String(learner.missionsCompleted || 0),
           currentStreak: String(learner.currentStreak || 0),
           attendanceRate: String(learner.attendanceRate || 0),
+          capabilityBand: asString((learner.capabilitySnapshot as Record<string, unknown> | undefined)?.band, 'emerging'),
+          artifactCount: String((learner.portfolioSnapshot as Record<string, unknown> | undefined)?.artifactCount || 0),
+          reflectionsSubmitted: String((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted || 0),
         },
       } as WorkflowRecord;
     })
@@ -828,7 +997,20 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
     });
   }
 
-  return trendRecords;
+  const kpiPackRecords = await loadCallableRows({
+    routePath: ctx.routePath,
+    callableName: 'listKpiPacks',
+    args: { limit: 40 },
+    rowArrayField: 'packs',
+    collectionName: 'kpiPacks',
+    titleKeys: ['title', 'siteId', 'id'],
+    subtitleKeys: ['recommendation', 'period'],
+    statusKeys: ['status', 'portfolioQualityGrade'],
+    editable: false,
+    deletable: false,
+  }).catch(() => []);
+
+  return sortWorkflowRecords([...trendRecords, ...kpiPackRecords]);
 }
 
 async function loadHqRoleSwitcherRecords(): Promise<WorkflowRecord[]> {
@@ -879,6 +1061,8 @@ async function loadCallableRows(params: {
   titleKeys: string[];
   subtitleKeys: string[];
   statusKeys: string[];
+  editable?: boolean;
+  deletable?: boolean;
 }): Promise<WorkflowRecord[]> {
   const callable = httpsCallable(functions, params.callableName);
   const response = await callable(params.args);
@@ -899,8 +1083,8 @@ async function loadCallableRows(params: {
         titleKeys: params.titleKeys,
         subtitleKeys: params.subtitleKeys,
         statusKeys: params.statusKeys,
-        editable: false,
-        deletable: false,
+        editable: params.editable,
+        deletable: params.deletable,
       });
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
@@ -1330,12 +1514,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createConfig: null,
       };
     case '/parent/portfolio': {
-      const learnerLinks = await loadParentLinkRecords(ctx);
       return {
-        records: await loadPortfolioRecordsForLearners({
-          routePath: ctx.routePath,
-          learnerIds: learnerLinks.map((row) => row.learnerId),
-        }),
+        records: await loadParentPortfolioWorkflowRecords(ctx),
         canCreate: false,
         canRefresh: true,
         createLabel: 'Create',
@@ -1388,22 +1568,39 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       };
     }
     case '/site/provisioning': {
-      const [learnerOptions, parentOptions] = await Promise.all([
+      const [learnerOptions, parentOptions, cohortLaunchRecords] = await Promise.all([
         loadSiteUserOptions({ siteId, roles: ['learner'], limitSize: 160 }),
         loadSiteUserOptions({ siteId, roles: ['parent'], limitSize: 160 }),
-      ]);
-      return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
+        loadCallableRows({
           routePath: ctx.routePath,
-          collectionName: 'guardianLinks',
-          constraints: siteId ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')] : [orderBy('createdAt', 'desc')],
-          titleKeys: ['parentId', 'learnerId'],
-          subtitleKeys: ['relationship', 'status'],
-          statusKeys: ['status'],
+          callableName: 'listCohortLaunches',
+          args: { siteId: siteId || undefined, limit: 80 },
+          rowArrayField: 'launches',
+          collectionName: 'cohortLaunches',
+          titleKeys: ['cohortName', 'title', 'id'],
+          subtitleKeys: ['scheduleLabel', 'curriculumTerm', 'programFormat'],
+          statusKeys: ['status', 'rosterStatus'],
           editable: true,
-          deletable: true,
-          limitSize: 100,
-        }), ctx.routePath),
+          deletable: false,
+        }).catch(() => []),
+      ]);
+      const guardianLinkRecords = await queryCollectionRecords({
+        routePath: ctx.routePath,
+        collectionName: 'guardianLinks',
+        constraints: siteId ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')] : [orderBy('createdAt', 'desc')],
+        titleKeys: ['parentId', 'learnerId'],
+        subtitleKeys: ['relationship', 'status'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: true,
+        limitSize: 100,
+      });
+
+      return {
+        records: applyRouteActionLabels(sortWorkflowRecords([
+          ...guardianLinkRecords,
+          ...cohortLaunchRecords,
+        ]), ctx.routePath),
         canCreate: true,
         canRefresh: true,
         createLabel: 'Run provisioning action',
@@ -1418,6 +1615,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
               { value: 'learner', label: 'Create learner' },
               { value: 'parent', label: 'Create parent' },
               { value: 'guardianLink', label: 'Create guardian link' },
+              { value: 'cohortLaunch', label: 'Create cohort launch' },
             ],
           },
           {
@@ -1478,27 +1676,142 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             type: 'checkbox',
             defaultValue: false,
           },
+          {
+            name: 'cohortName',
+            label: 'Cohort name',
+            type: 'text',
+            placeholder: 'Required for cohort launch',
+          },
+          {
+            name: 'ageBand',
+            label: 'Age band',
+            type: 'text',
+            placeholder: 'K-5, middle school, mixed...',
+          },
+          {
+            name: 'scheduleLabel',
+            label: 'Schedule label',
+            type: 'text',
+            placeholder: 'Mon/Wed 4:00 PM',
+          },
+          {
+            name: 'programFormat',
+            label: 'Program format',
+            type: 'select',
+            defaultValue: 'gold',
+            options: [
+              { value: 'gold', label: 'Gold' },
+              { value: 'silver', label: 'Silver' },
+              { value: 'pilot', label: 'Pilot' },
+            ],
+          },
+          {
+            name: 'curriculumTerm',
+            label: 'Curriculum term',
+            type: 'text',
+            placeholder: 'Term 1',
+          },
+          {
+            name: 'rosterStatus',
+            label: 'Roster status',
+            type: 'select',
+            defaultValue: 'draft',
+            options: [
+              { value: 'draft', label: 'Draft' },
+              { value: 'ready', label: 'Ready' },
+              { value: 'active', label: 'Active' },
+            ],
+          },
+          {
+            name: 'parentCommunicationStatus',
+            label: 'Parent comms',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'sent', label: 'Sent' },
+              { value: 'confirmed', label: 'Confirmed' },
+            ],
+          },
+          {
+            name: 'baselineSurveyStatus',
+            label: 'Baseline survey',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'ready', label: 'Ready' },
+              { value: 'completed', label: 'Completed' },
+            ],
+          },
+          {
+            name: 'kickoffStatus',
+            label: 'Kickoff status',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'scheduled', label: 'Scheduled' },
+              { value: 'completed', label: 'Completed' },
+            ],
+          },
+          {
+            name: 'learnerCount',
+            label: 'Learner count',
+            type: 'number',
+            placeholder: 'Optional cohort size',
+          },
         ]),
       };
     }
     case '/site/dashboard':
-      return {
-        records: await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'sites',
-          constraints: siteId ? [where(documentId(), '==', siteId)] : [],
-          titleKeys: ['name'],
-          subtitleKeys: ['location'],
-          statusKeys: ['status'],
-          editable: false,
-          deletable: false,
-          limitSize: 1,
-        }),
-        canCreate: false,
-        canRefresh: true,
-        createLabel: 'Create',
-        createConfig: null,
-      };
+      {
+        const [siteRecords, kpiPackRecords] = await Promise.all([
+          queryCollectionRecords({
+            routePath: ctx.routePath,
+            collectionName: 'sites',
+            constraints: siteId ? [where(documentId(), '==', siteId)] : [],
+            titleKeys: ['name'],
+            subtitleKeys: ['location'],
+            statusKeys: ['status'],
+            editable: false,
+            deletable: false,
+            limitSize: 1,
+          }),
+          loadCallableRows({
+            routePath: ctx.routePath,
+            callableName: 'listKpiPacks',
+            args: { siteId: siteId || undefined, limit: 20 },
+            rowArrayField: 'packs',
+            collectionName: 'kpiPacks',
+            titleKeys: ['title', 'siteId', 'id'],
+            subtitleKeys: ['recommendation', 'period'],
+            statusKeys: ['status', 'portfolioQualityGrade'],
+            editable: false,
+            deletable: false,
+          }).catch(() => []),
+        ]);
+        return {
+          records: sortWorkflowRecords([...siteRecords, ...kpiPackRecords]),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Generate KPI pack',
+          createConfig: buildCreateConfig('Generate KPI pack', 'Generate pack', [
+            {
+              name: 'period',
+              label: 'Period',
+              type: 'select',
+              required: true,
+              defaultValue: 'month',
+              options: [
+                { value: 'month', label: 'Month' },
+                { value: 'quarter', label: 'Quarter' },
+                { value: 'year', label: 'Year' },
+              ],
+            },
+          ]),
+        };
+      }
     case '/site/sessions':
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({
@@ -1584,8 +1897,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           rowArrayField: 'incidents',
           collectionName: 'incidents',
           titleKeys: ['title', 'type'],
-          subtitleKeys: ['summary', 'siteId'],
-          statusKeys: ['status', 'severity'],
+          subtitleKeys: ['summary', 'location', 'siteId'],
+          statusKeys: ['status', 'severity', 'investigationStatus'],
         }),
         canCreate: true,
         canRefresh: true,
@@ -1602,6 +1915,51 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             label: 'Summary',
             type: 'textarea',
             required: true,
+          },
+          {
+            name: 'incidentType',
+            label: 'Incident type',
+            type: 'text',
+            placeholder: 'safeguarding, medical, behavior...',
+          },
+          {
+            name: 'severity',
+            label: 'Severity',
+            type: 'select',
+            defaultValue: 'medium',
+            options: [
+              { value: 'low', label: 'Low' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'high', label: 'High' },
+              { value: 'critical', label: 'Critical' },
+            ],
+          },
+          {
+            name: 'happenedAt',
+            label: 'Date and time',
+            type: 'datetime-local',
+            defaultValue: toDateInputValue(new Date()),
+          },
+          {
+            name: 'location',
+            label: 'Location',
+            type: 'text',
+          },
+          {
+            name: 'involvedNames',
+            label: 'People involved',
+            type: 'text',
+            placeholder: 'Use staff-safe identifiers only',
+          },
+          {
+            name: 'immediateAction',
+            label: 'Immediate action',
+            type: 'textarea',
+          },
+          {
+            name: 'correctiveAction',
+            label: 'Corrective action',
+            type: 'textarea',
           },
         ]),
       };
@@ -1690,33 +2048,63 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     case '/partner/contracts':
-      return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'partnerContracts',
-          constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
-          titleKeys: ['title', 'contractNumber', 'name'],
-          subtitleKeys: ['summary', 'siteId'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 100,
-        }), ctx.routePath),
+      {
+        const [contractRecords, launchRecords] = await Promise.all([
+          queryCollectionRecords({
+            routePath: ctx.routePath,
+            collectionName: 'partnerContracts',
+            constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
+            titleKeys: ['title', 'contractNumber', 'name'],
+            subtitleKeys: ['summary', 'siteId'],
+            statusKeys: ['status'],
+            editable: true,
+            deletable: false,
+            limitSize: 100,
+          }),
+          loadCallableRows({
+            routePath: ctx.routePath,
+            callableName: 'listPartnerLaunches',
+            args: { limit: 80 },
+            rowArrayField: 'launches',
+            collectionName: 'partnerLaunches',
+            titleKeys: ['partnerName', 'title', 'id'],
+            subtitleKeys: ['region', 'siteId', 'locale'],
+            statusKeys: ['status', 'contractStatus'],
+            editable: true,
+            deletable: false,
+          }).catch(() => []),
+        ]);
+        return {
+        records: applyRouteActionLabels(sortWorkflowRecords([
+          ...contractRecords,
+          ...launchRecords,
+        ]), ctx.routePath),
         canCreate: true,
         canRefresh: true,
-        createLabel: 'Create contract',
-        createConfig: buildCreateConfig('Create contract', 'Create contract', [
+        createLabel: 'Create workflow',
+        createConfig: buildCreateConfig('Create contract or partner launch', 'Save workflow', [
+          {
+            name: 'action',
+            label: 'Workflow',
+            type: 'select',
+            required: true,
+            defaultValue: 'contract',
+            options: [
+              { value: 'contract', label: 'Contract' },
+              { value: 'partnerLaunch', label: 'Partner launch' },
+            ],
+          },
           {
             name: 'title',
             label: 'Contract title',
             type: 'text',
-            required: true,
+            placeholder: 'Required for contract creation',
           },
           {
             name: 'summary',
             label: 'Summary',
             type: 'textarea',
-            required: true,
+            placeholder: 'Required for contract creation',
           },
           {
             name: 'siteId',
@@ -1724,8 +2112,76 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             type: 'text',
             placeholder: 'Optional site reference',
           },
+          {
+            name: 'partnerName',
+            label: 'Partner name',
+            type: 'text',
+            placeholder: 'Required for partner launch',
+          },
+          {
+            name: 'region',
+            label: 'Region',
+            type: 'text',
+            placeholder: 'Required for partner launch',
+          },
+          {
+            name: 'locale',
+            label: 'Locale',
+            type: 'select',
+            defaultValue: 'en',
+            options: [
+              { value: 'en', label: 'English' },
+              { value: 'zh-CN', label: 'Chinese (Simplified)' },
+              { value: 'zh-TW', label: 'Chinese (Traditional)' },
+              { value: 'th', label: 'Thai' },
+            ],
+          },
+          {
+            name: 'pilotCohortCount',
+            label: 'Pilot cohort count',
+            type: 'number',
+          },
+          {
+            name: 'dueDiligenceStatus',
+            label: 'Due diligence',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'in_review', label: 'In review' },
+              { value: 'complete', label: 'Complete' },
+            ],
+          },
+          {
+            name: 'trainerOfTrainersStatus',
+            label: 'Trainer-of-trainers',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'scheduled', label: 'Scheduled' },
+              { value: 'completed', label: 'Completed' },
+            ],
+          },
+          {
+            name: 'review90DayStatus',
+            label: '90-day review',
+            type: 'select',
+            defaultValue: 'pending',
+            options: [
+              { value: 'pending', label: 'Pending' },
+              { value: 'scheduled', label: 'Scheduled' },
+              { value: 'completed', label: 'Completed' },
+            ],
+          },
+          {
+            name: 'notes',
+            label: 'Launch notes',
+            type: 'textarea',
+          },
         ]),
-      };
+        };
+      }
     case '/partner/payouts':
       return {
         records: await loadCallableRows({
@@ -1800,13 +2256,37 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     case '/hq/analytics':
-      return {
-        records: await loadHqAnalyticsRecords(ctx),
-        canCreate: false,
-        canRefresh: true,
-        createLabel: 'Create',
-        createConfig: null,
-      };
+      {
+        const siteOptions = await loadSiteSelectorOptions();
+        return {
+          records: await loadHqAnalyticsRecords(ctx),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Generate KPI pack',
+          createConfig: buildCreateConfig('Generate KPI pack', 'Generate pack', [
+            {
+              name: 'siteId',
+              label: 'Site',
+              type: 'select',
+              required: true,
+              options: siteOptions,
+              defaultValue: activeSiteId(ctx.profile) || siteOptions[0]?.value || '',
+            },
+            {
+              name: 'period',
+              label: 'Period',
+              type: 'select',
+              required: true,
+              defaultValue: 'month',
+              options: [
+                { value: 'month', label: 'Month' },
+                { value: 'quarter', label: 'Quarter' },
+                { value: 'year', label: 'Year' },
+              ],
+            },
+          ]),
+        };
+      }
     case '/hq/billing':
       return { records: await loadHqBillingRecords(), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
     case '/hq/approvals':
@@ -1827,22 +2307,104 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createConfig: null,
       };
     case '/hq/audit':
-      return {
-        records: await loadCallableRows({
-          routePath: ctx.routePath,
-          callableName: 'listAuditLogs',
-          args: { limit: 120 },
-          rowArrayField: 'logs',
-          collectionName: 'auditLogs',
-          titleKeys: ['action', 'entityType', 'id'],
-          subtitleKeys: ['entityId', 'actorId'],
-          statusKeys: ['actorRole'],
-        }),
-        canCreate: false,
-        canRefresh: true,
-        createLabel: 'Create',
-        createConfig: null,
-      };
+      {
+        const [siteOptions, kpiPackOptions, auditLogRecords, redTeamRecords] = await Promise.all([
+          loadSiteSelectorOptions(),
+          loadKpiPackOptions(),
+          loadCallableRows({
+            routePath: ctx.routePath,
+            callableName: 'listAuditLogs',
+            args: { limit: 120 },
+            rowArrayField: 'logs',
+            collectionName: 'auditLogs',
+            titleKeys: ['action', 'entityType', 'id'],
+            subtitleKeys: ['entityId', 'actorId'],
+            statusKeys: ['actorRole'],
+          }),
+          loadCallableRows({
+            routePath: ctx.routePath,
+            callableName: 'listRedTeamReviews',
+            args: { limit: 60 },
+            rowArrayField: 'reviews',
+            collectionName: 'redTeamReviews',
+            titleKeys: ['title', 'siteId', 'id'],
+            subtitleKeys: ['recommendations', 'nextAction'],
+            statusKeys: ['decision', 'partnerStatus'],
+            editable: false,
+            deletable: false,
+          }).catch(() => []),
+        ]);
+        return {
+          records: sortWorkflowRecords([...auditLogRecords, ...redTeamRecords]),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Create red team review',
+          createConfig: buildCreateConfig('Create red team review', 'Save review', [
+            {
+              name: 'title',
+              label: 'Review title',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'siteId',
+              label: 'Site',
+              type: 'select',
+              options: siteOptions,
+              defaultValue: activeSiteId(ctx.profile) || siteOptions[0]?.value || '',
+            },
+            {
+              name: 'kpiPackId',
+              label: 'KPI pack',
+              type: 'select',
+              options: kpiPackOptions,
+            },
+            {
+              name: 'period',
+              label: 'Period',
+              type: 'select',
+              defaultValue: 'term',
+              options: [
+                { value: 'term', label: 'Term' },
+                { value: 'quarter', label: 'Quarter' },
+                { value: 'year', label: 'Year' },
+              ],
+            },
+            {
+              name: 'decision',
+              label: 'Decision',
+              type: 'select',
+              defaultValue: 'continue',
+              options: [
+                { value: 'continue', label: 'Continue' },
+                { value: 'stabilize', label: 'Stabilize' },
+                { value: 'intervene', label: 'Intervene' },
+              ],
+            },
+            {
+              name: 'partnerStatus',
+              label: 'Partner status',
+              type: 'select',
+              defaultValue: 'active',
+              options: [
+                { value: 'active', label: 'Active' },
+                { value: 'watch', label: 'Watch' },
+                { value: 'hold', label: 'Hold' },
+              ],
+            },
+            {
+              name: 'recommendations',
+              label: 'Recommendations',
+              type: 'textarea',
+            },
+            {
+              name: 'nextAction',
+              label: 'Next action',
+              type: 'textarea',
+            },
+          ]),
+        };
+      }
     case '/hq/safety':
       return {
         records: await loadCallableRows({
@@ -1891,48 +2453,125 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     case '/hq/curriculum':
-      return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'missions',
-          constraints: [orderBy('title', 'asc')],
-          titleKeys: ['title', 'name'],
-          subtitleKeys: ['description', 'difficulty'],
-          statusKeys: ['status', 'isActive'],
-          editable: true,
-          deletable: false,
-          limitSize: 150,
-        }), ctx.routePath),
-        canCreate: true,
-        canRefresh: true,
-        createLabel: 'Create curriculum unit',
-        createConfig: buildCreateConfig('Create curriculum unit', 'Create mission', [
-          {
-            name: 'title',
-            label: 'Mission title',
-            type: 'text',
-            required: true,
-          },
-          {
-            name: 'description',
-            label: 'Description',
-            type: 'textarea',
-            required: true,
-          },
-          {
-            name: 'difficulty',
-            label: 'Difficulty',
-            type: 'select',
-            required: true,
-            defaultValue: 'beginner',
-            options: [
-              { value: 'beginner', label: 'Beginner' },
-              { value: 'intermediate', label: 'Intermediate' },
-              { value: 'advanced', label: 'Advanced' },
-            ],
-          },
-        ]),
-      };
+      {
+        const siteOptions = await loadSiteSelectorOptions();
+        const [missionRecords, trainingCycleRecords] = await Promise.all([
+          queryCollectionRecords({
+            routePath: ctx.routePath,
+            collectionName: 'missions',
+            constraints: [orderBy('title', 'asc')],
+            titleKeys: ['title', 'name'],
+            subtitleKeys: ['description', 'difficulty'],
+            statusKeys: ['status', 'isActive'],
+            editable: true,
+            deletable: false,
+            limitSize: 150,
+          }),
+          loadCallableRows({
+            routePath: ctx.routePath,
+            callableName: 'listTrainingCycles',
+            args: { limit: 80 },
+            rowArrayField: 'cycles',
+            collectionName: 'trainingCycles',
+            titleKeys: ['title', 'trainingType', 'id'],
+            subtitleKeys: ['audience', 'termLabel', 'siteId'],
+            statusKeys: ['status'],
+            editable: true,
+            deletable: false,
+          }).catch(() => []),
+        ]);
+        return {
+          records: applyRouteActionLabels(sortWorkflowRecords([
+            ...missionRecords,
+            ...trainingCycleRecords,
+          ]), ctx.routePath),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Create curriculum workflow',
+          createConfig: buildCreateConfig('Create curriculum unit or training cycle', 'Save workflow', [
+            {
+              name: 'action',
+              label: 'Workflow',
+              type: 'select',
+              required: true,
+              defaultValue: 'mission',
+              options: [
+                { value: 'mission', label: 'Mission' },
+                { value: 'trainingCycle', label: 'Training cycle' },
+              ],
+            },
+            {
+              name: 'title',
+              label: 'Mission title',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'description',
+              label: 'Description',
+              type: 'textarea',
+              placeholder: 'Required for mission creation',
+            },
+            {
+              name: 'difficulty',
+              label: 'Difficulty',
+              type: 'select',
+              defaultValue: 'beginner',
+              options: [
+                { value: 'beginner', label: 'Beginner' },
+                { value: 'intermediate', label: 'Intermediate' },
+                { value: 'advanced', label: 'Advanced' },
+              ],
+            },
+            {
+              name: 'siteId',
+              label: 'Site',
+              type: 'select',
+              options: siteOptions,
+              defaultValue: activeSiteId(ctx.profile) || siteOptions[0]?.value || '',
+            },
+            {
+              name: 'trainingType',
+              label: 'Training type',
+              type: 'select',
+              defaultValue: 'term_launch',
+              options: [
+                { value: 'term_launch', label: 'Term launch' },
+                { value: 'mid_term_clinic', label: 'Mid-term clinic' },
+                { value: 'trainer_of_trainers', label: 'Trainer of trainers' },
+              ],
+            },
+            {
+              name: 'audience',
+              label: 'Audience',
+              type: 'select',
+              defaultValue: 'educators',
+              options: [
+                { value: 'educators', label: 'Educators' },
+                { value: 'parents', label: 'Parents' },
+                { value: 'site_leads', label: 'Site leads' },
+              ],
+            },
+            {
+              name: 'termLabel',
+              label: 'Term label',
+              type: 'text',
+              placeholder: 'Current term',
+            },
+            {
+              name: 'startsAt',
+              label: 'Start time',
+              type: 'datetime-local',
+              defaultValue: toDateInputValue(new Date()),
+            },
+            {
+              name: 'notes',
+              label: 'Notes',
+              type: 'textarea',
+            },
+          ]),
+        };
+      }
     case '/hq/feature-flags':
       return {
         records: applyRouteActionLabels(await loadCallableRows({
@@ -2442,6 +3081,24 @@ export async function createWorkflowRecord(
         throw new Error('Active site context is required for provisioning.');
       }
       const action = requireStringValue(input, 'action', 'Provisioning action');
+      if (action === 'cohortLaunch') {
+        const callable = httpsCallable(functions, 'upsertCohortLaunch');
+        await callable({
+          siteId,
+          cohortName: requireStringValue(input, 'cohortName', 'Cohort name'),
+          ageBand: optionalStringValue(input, 'ageBand') || undefined,
+          scheduleLabel: optionalStringValue(input, 'scheduleLabel') || undefined,
+          programFormat: optionalStringValue(input, 'programFormat') || undefined,
+          curriculumTerm: optionalStringValue(input, 'curriculumTerm') || undefined,
+          rosterStatus: optionalStringValue(input, 'rosterStatus') || undefined,
+          parentCommunicationStatus: optionalStringValue(input, 'parentCommunicationStatus') || undefined,
+          baselineSurveyStatus: optionalStringValue(input, 'baselineSurveyStatus') || undefined,
+          kickoffStatus: optionalStringValue(input, 'kickoffStatus') || undefined,
+          learnerCount: optionalStringValue(input, 'learnerCount') || undefined,
+          notes: optionalStringValue(input, 'notes') || undefined,
+        });
+        return;
+      }
       if (action === 'learner') {
         await createOrLinkLearnerProfile({
           siteId,
@@ -2498,6 +3155,13 @@ export async function createWorkflowRecord(
         siteId: siteId || '',
         title: requireStringValue(input, 'title', 'Incident title'),
         summary: requireStringValue(input, 'summary', 'Summary'),
+        incidentType: optionalStringValue(input, 'incidentType') || undefined,
+        severity: optionalStringValue(input, 'severity') || undefined,
+        happenedAt: optionalStringValue(input, 'happenedAt') || undefined,
+        location: optionalStringValue(input, 'location') || undefined,
+        involvedNames: optionalStringValue(input, 'involvedNames') || undefined,
+        immediateAction: optionalStringValue(input, 'immediateAction') || undefined,
+        correctiveAction: optionalStringValue(input, 'correctiveAction') || undefined,
       });
       return;
     }
@@ -2522,6 +3186,21 @@ export async function createWorkflowRecord(
       });
       return;
     case '/partner/contracts':
+      if (optionalStringValue(input, 'action') === 'partnerLaunch') {
+        const callable = httpsCallable(functions, 'upsertPartnerLaunch');
+        await callable({
+          siteId: optionalStringValue(input, 'siteId') || undefined,
+          partnerName: requireStringValue(input, 'partnerName', 'Partner name'),
+          region: requireStringValue(input, 'region', 'Region'),
+          locale: optionalStringValue(input, 'locale') || 'en',
+          pilotCohortCount: optionalStringValue(input, 'pilotCohortCount') || undefined,
+          dueDiligenceStatus: optionalStringValue(input, 'dueDiligenceStatus') || undefined,
+          trainerOfTrainersStatus: optionalStringValue(input, 'trainerOfTrainersStatus') || undefined,
+          review90DayStatus: optionalStringValue(input, 'review90DayStatus') || undefined,
+          notes: optionalStringValue(input, 'notes') || undefined,
+        });
+        return;
+      }
       await addDoc(collection(firestore, 'partnerContracts'), {
         ...payloadBase,
         partnerId: ctx.uid,
@@ -2540,7 +3219,50 @@ export async function createWorkflowRecord(
         status: 'pending',
       });
       return;
+    case '/hq/analytics': {
+      const callable = httpsCallable(functions, 'generateKpiPack');
+      await callable({
+        siteId: requireStringValue(input, 'siteId', 'Site'),
+        period: requireStringValue(input, 'period', 'Period'),
+      });
+      return;
+    }
+    case '/hq/audit': {
+      const callable = httpsCallable(functions, 'upsertRedTeamReview');
+      await callable({
+        title: requireStringValue(input, 'title', 'Review title'),
+        siteId: optionalStringValue(input, 'siteId') || undefined,
+        kpiPackId: optionalStringValue(input, 'kpiPackId') || undefined,
+        period: optionalStringValue(input, 'period') || 'term',
+        decision: optionalStringValue(input, 'decision') || 'continue',
+        partnerStatus: optionalStringValue(input, 'partnerStatus') || 'active',
+        recommendations: optionalStringValue(input, 'recommendations') || '',
+        nextAction: optionalStringValue(input, 'nextAction') || '',
+      });
+      return;
+    }
+    case '/site/dashboard': {
+      const callable = httpsCallable(functions, 'generateKpiPack');
+      await callable({
+        siteId: siteId || undefined,
+        period: requireStringValue(input, 'period', 'Period'),
+      });
+      return;
+    }
     case '/hq/curriculum':
+      if (optionalStringValue(input, 'action') === 'trainingCycle') {
+        const callable = httpsCallable(functions, 'upsertTrainingCycle');
+        await callable({
+          siteId: optionalStringValue(input, 'siteId') || undefined,
+          title: requireStringValue(input, 'title', 'Training cycle title'),
+          trainingType: optionalStringValue(input, 'trainingType') || 'term_launch',
+          audience: optionalStringValue(input, 'audience') || 'educators',
+          termLabel: optionalStringValue(input, 'termLabel') || 'Current term',
+          startsAt: optionalStringValue(input, 'startsAt') || undefined,
+          notes: optionalStringValue(input, 'notes') || undefined,
+        });
+        return;
+      }
       await addDoc(collection(firestore, 'missions'), {
         ...payloadBase,
         title: requireStringValue(input, 'title', 'Mission title'),
@@ -2742,6 +3464,27 @@ export async function updateWorkflowRecord(
       return;
     }
     case '/site/provisioning': {
+      if (target.collectionName === 'cohortLaunches') {
+        const callable = httpsCallable(functions, 'upsertCohortLaunch');
+        const currentStatus = asString(data.status, 'planning');
+        await callable({
+          id: target.id,
+          siteId: activeSiteId(ctx.profile) || undefined,
+          cohortName: asString(data.cohortName, target.id),
+          ageBand: asString(data.ageBand, ''),
+          scheduleLabel: asString(data.scheduleLabel, ''),
+          programFormat: asString(data.programFormat, 'gold'),
+          curriculumTerm: asString(data.curriculumTerm, 'Term 1'),
+          rosterStatus: asString(data.rosterStatus, 'draft'),
+          parentCommunicationStatus: asString(data.parentCommunicationStatus, 'pending'),
+          baselineSurveyStatus: asString(data.baselineSurveyStatus, 'pending'),
+          kickoffStatus: asString(data.kickoffStatus, 'pending'),
+          learnerCount: asString(data.learnerCount, '0'),
+          notes: asString(data.notes, ''),
+          status: currentStatus === 'active' ? 'planning' : 'active',
+        });
+        return;
+      }
       const currentStatus = asString(data.status, 'active');
       const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
       await updateDoc(ref, {
@@ -2775,11 +3518,63 @@ export async function updateWorkflowRecord(
       return;
     }
     case '/partner/contracts': {
+      if (target.collectionName === 'partnerLaunches') {
+        const callable = httpsCallable(functions, 'upsertPartnerLaunch');
+        const currentStatus = asString(data.status, 'planning');
+        await callable({
+          id: target.id,
+          siteId: asString(data.siteId, '') || undefined,
+          partnerName: asString(data.partnerName, target.id),
+          region: asString(data.region, 'global'),
+          locale: asString(data.locale, 'en'),
+          pilotCohortCount: asString(data.pilotCohortCount, '0'),
+          dueDiligenceStatus: asString(data.dueDiligenceStatus, 'pending'),
+          trainerOfTrainersStatus: asString(data.trainerOfTrainersStatus, 'pending'),
+          review90DayStatus: asString(data.review90DayStatus, 'pending'),
+          notes: asString(data.notes, ''),
+          status: currentStatus === 'active' ? 'planning' : 'active',
+        });
+        return;
+      }
       const currentStatus = asString(data.status, 'draft');
       await updateDoc(ref, {
         updatedAt: serverTimestamp(),
         status: currentStatus === 'submitted' ? 'draft' : 'submitted',
         submittedAt: currentStatus === 'submitted' ? null : serverTimestamp(),
+      });
+      return;
+    }
+    case '/hq/curriculum': {
+      if (target.collectionName === 'trainingCycles') {
+        const callable = httpsCallable(functions, 'upsertTrainingCycle');
+        const currentStatus = asString(data.status, 'scheduled');
+        await callable({
+          id: target.id,
+          siteId: asString(data.siteId, '') || undefined,
+          title: asString(data.title, target.id),
+          trainingType: asString(data.trainingType, 'term_launch'),
+          audience: asString(data.audience, 'educators'),
+          termLabel: asString(data.termLabel, 'Current term'),
+          startsAt: asString(data.startsAt, '') || undefined,
+          completionCount: asString(data.completionCount, '0'),
+          notes: asString(data.notes, ''),
+          status: currentStatus === 'completed' ? 'scheduled' : 'completed',
+        });
+        return;
+      }
+
+      const currentStatus = asString(data.status, 'draft');
+      const nextStatus = currentStatus === 'draft'
+        ? 'in_review'
+        : currentStatus === 'in_review'
+        ? 'published'
+        : 'published';
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: nextStatus,
+        ...(nextStatus === 'published'
+          ? { publishedAt: serverTimestamp() }
+          : { reviewSubmittedAt: serverTimestamp() }),
       });
       return;
     }

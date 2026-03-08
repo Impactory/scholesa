@@ -28,15 +28,21 @@ import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { sendCopilotVoiceMessage, transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
+import type { UserRole } from '@/src/types/user';
 
 interface AICoachPopupProps {
-  learnerId: string;
-  studentName: string;
+  actorId: string;
+  actorRole: UserRole;
+  actorDisplayName: string;
   siteId: string;
   grade: number;
   studentLevel?: 'emerging' | 'proficient' | 'advanced';
   sprintSessionId?: string;
   missionId?: string;
+  selectedLearnerId?: string;
+  linkedLearnerIds?: string[];
+  linkedParentIds?: string[];
+  linkedEducatorIds?: string[];
 }
 
 type CoachMode = 'hint' | 'rubric_check' | 'debug' | 'critique';
@@ -76,13 +82,18 @@ function buildModeConfig(t: (key: string) => string) {
 }
 
 export function AICoachPopup({
-  learnerId,
-  studentName,
+  actorId,
+  actorRole,
+  actorDisplayName,
   siteId,
   grade,
   studentLevel = 'proficient',
   sprintSessionId,
-  missionId
+  missionId,
+  selectedLearnerId,
+  linkedLearnerIds = [],
+  linkedParentIds = [],
+  linkedEducatorIds = []
 }: AICoachPopupProps) {
   const [isMinimized, setIsMinimized] = useState(true);
   const [mode, setMode] = useState<CoachMode | null>(null);
@@ -106,25 +117,37 @@ export function AICoachPopup({
   const { locale, t } = useI18n();
   const { user, profile } = useAuthContext();
   const modeConfig = buildModeConfig((key) => t(key));
+  const intelligenceLearnerId = actorRole === 'learner' ? actorId : selectedLearnerId;
   const hasVoiceInputControl = typeof window !== 'undefined'
     && typeof MediaRecorder !== 'undefined'
     && Boolean(navigator.mediaDevices?.getUserMedia)
     && Boolean(user)
     && voiceApiConfigured();
 
-  // Fetch SDT profile for personalization
+  // Fetch learner-only SDT profile for self-scaffolding prompts.
   useEffect(() => {
+    if (actorRole !== 'learner' || !intelligenceLearnerId) {
+      setSdtProfile(null);
+      return;
+    }
+
+    let active = true;
     const fetchSDT = async () => {
       try {
-        const profile = await TelemetryService.getSDTProfile(learnerId, siteId);
-        setSdtProfile(profile);
+        const profile = await TelemetryService.getSDTProfile(intelligenceLearnerId, siteId);
+        if (active) {
+          setSdtProfile(profile);
+        }
       } catch (err) {
         console.error('Failed to load SDT profile:', err);
       }
     };
     
-    fetchSDT();
-  }, [learnerId, siteId]);
+    void fetchSDT();
+    return () => {
+      active = false;
+    };
+  }, [actorRole, intelligenceLearnerId, siteId]);
 
   // Recorder cleanup
   useEffect(() => {
@@ -261,20 +284,30 @@ export function AICoachPopup({
       metadata: {
         locale,
         surface: 'ai_coach_popup',
+        actorRole,
+        selectedLearnerId: selectedLearnerId || undefined,
+        linkedLearnerCount: linkedLearnerIds.length || undefined,
         ...metadata,
       },
     });
   };
 
   const buildBosVoiceContext = (traceId?: string | null) => ({
-    learnerId,
-    selectedLearnerId: learnerId,
+    actorId,
+    actorRole,
+    learnerId: intelligenceLearnerId,
+    selectedLearnerId: selectedLearnerId || (actorRole === 'learner' ? actorId : undefined),
+    linkedLearnerIds: linkedLearnerIds.slice(0, 12),
+    linkedParentIds: linkedParentIds.slice(0, 12),
+    linkedEducatorIds: linkedEducatorIds.slice(0, 12),
+    knownNames: actorDisplayName ? [actorDisplayName] : [],
     sessionOccurrenceId: sprintSessionId,
     missionId,
     contextMode: sprintSessionId ? 'in_class' : 'homework',
     conceptTags: [
       'ai_coach_popup',
       'voice',
+      `role:${actorRole}`,
       mode ? `mode:${mode}` : 'mode:general',
     ],
     traceId: traceId || undefined,
@@ -321,9 +354,9 @@ export function AICoachPopup({
         critique: 'critique_feedback' as const
       };
 
-      // Build personalized context from SDT profile
+      // Build learner-only personalization from self telemetry.
       let personalizedContext = '';
-      if (sdtProfile) {
+      if (sdtProfile && actorRole === 'learner') {
         const weakDimensions: string[] = [];
         if (sdtProfile.autonomy < 40) weakDimensions.push('autonomy (needs choice-making support)');
         if (sdtProfile.competence < 40) weakDimensions.push('competence (needs skill-building)');
@@ -375,12 +408,15 @@ Guidance: ${
         siteId,
         locale,
         screenId: 'ai_coach_popup',
+        traceId: voiceInputTraceId || undefined,
         gradeBand: grade <= 5 ? 'K-5' : grade <= 8 ? '6-8' : '9-12',
         context: {
           ...buildBosVoiceContext(voiceInputTraceId),
           taskType: taskTypeMap[mode],
           studentLevel,
-          studentName,
+          linkedLearnerCount: linkedLearnerIds.length,
+          linkedParentCount: linkedParentIds.length,
+          linkedEducatorCount: linkedEducatorIds.length,
         },
         voice: {
           enabled: true,
@@ -432,6 +468,8 @@ Guidance: ${
       // Track telemetry
       trackAI('ai_hint_requested', {
         mode,
+        actorRole,
+        selectedLearnerId: selectedLearnerId || undefined,
         questionLength: resolvedQuestion.length,
         missionId,
         sessionId: sprintSessionId,

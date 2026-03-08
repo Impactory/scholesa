@@ -366,12 +366,27 @@ export const resolveSafetyIncident = onCall(async (request: CallableRequest) => 
     }
     const title = typeof request.data?.title === 'string' ? request.data.title : 'Incident';
     const summary = typeof request.data?.summary === 'string' ? request.data.summary : '';
+    const happenedAt = toDateValue(request.data?.happenedAt);
+    const location = asTrimmedString(request.data?.location) || null;
+    const involvedNames = asTrimmedString(request.data?.involvedNames) || null;
+    const immediateAction = asTrimmedString(request.data?.immediateAction) || null;
+    const correctiveAction = asTrimmedString(request.data?.correctiveAction) || null;
+    const incidentType = asTrimmedString(request.data?.incidentType) || 'general';
+    const severity = asTrimmedString(request.data?.severity) || 'medium';
+    const investigationStatus = asTrimmedString(request.data?.investigationStatus) || 'open';
     const createdRef = await admin.firestore().collection('incidents').add({
       siteId,
       title,
       summary,
       status: 'open',
-      severity: 'medium',
+      severity,
+      incidentType,
+      happenedAt: happenedAt || null,
+      location,
+      involvedNames,
+      immediateAction,
+      correctiveAction,
+      investigationStatus,
       createdBy: actor.uid,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -1070,4 +1085,572 @@ export const createHqInvoice = onCall(async (request: CallableRequest) => {
   });
 
   return { success: true, id: payoutRef.id, invoiceId };
+});
+
+function normalizeLifecycleStatus(value: unknown, fallback: string): string {
+  const normalized = asTrimmedString(value).toLowerCase();
+  return normalized.length > 0 ? normalized : fallback;
+}
+
+function toPositiveInteger(value: unknown, fallback = 0): number {
+  const parsed = asNumber(value);
+  if (parsed === null || !Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.round(parsed));
+}
+
+async function writeWorkflowAuditLog(params: {
+  actor: { uid: string; role: Role };
+  action: string;
+  entityType: string;
+  entityId: string;
+  siteId?: string | null;
+  details?: Record<string, unknown>;
+}): Promise<void> {
+  await admin.firestore().collection('auditLogs').add({
+    actorId: params.actor.uid,
+    actorRole: params.actor.role,
+    action: params.action,
+    entityType: params.entityType,
+    entityId: params.entityId,
+    siteId: params.siteId ?? null,
+    details: params.details || {},
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
+function resolveActorSiteId(actor: { role: Role; profile: UserRecord }, requestedSiteId: unknown): string {
+  const requested = asTrimmedString(requestedSiteId);
+  const candidate = requested || asTrimmedString(actor.profile.activeSiteId) || toStringArray(actor.profile.siteIds)[0] || '';
+  if (!candidate || !actorCanAccessSite(actor, candidate)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+  return candidate;
+}
+
+function resolveOptionalActorSiteId(
+  actor: { role: Role; profile: UserRecord },
+  requestedSiteId: unknown,
+): string | null {
+  const requested = asTrimmedString(requestedSiteId);
+  if (requested.length > 0) {
+    if (!actorCanAccessSite(actor, requested)) {
+      throw new HttpsError('permission-denied', 'No access to requested site.');
+    }
+    return requested;
+  }
+
+  const fallback = asTrimmedString(actor.profile.activeSiteId) || toStringArray(actor.profile.siteIds)[0] || '';
+  return fallback.length > 0 ? fallback : null;
+}
+
+export const listCohortLaunches = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = resolveActorSiteId(actor, request.data?.siteId);
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 200
+    ? request.data.limit
+    : 80;
+
+  const snap = await admin.firestore()
+    .collection('cohortLaunches')
+    .where('siteId', '==', siteId)
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue)
+    .get()
+    .catch(() => admin.firestore().collection('cohortLaunches').where('siteId', '==', siteId).limit(limitValue).get());
+
+  const launches = snap.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Record<string, unknown>),
+  }));
+
+  return { launches };
+});
+
+export const upsertCohortLaunch = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = resolveActorSiteId(actor, request.data?.siteId);
+  const requestedId = asTrimmedString(request.data?.id);
+  const ref = requestedId
+    ? admin.firestore().collection('cohortLaunches').doc(requestedId)
+    : admin.firestore().collection('cohortLaunches').doc();
+  const id = ref.id;
+  const payload = {
+    siteId,
+    cohortName: asTrimmedString(request.data?.cohortName) || `Cohort ${id.slice(-6)}`,
+    ageBand: asTrimmedString(request.data?.ageBand) || 'mixed',
+    scheduleLabel: asTrimmedString(request.data?.scheduleLabel) || 'TBD',
+    programFormat: asTrimmedString(request.data?.programFormat) || 'gold',
+    curriculumTerm: asTrimmedString(request.data?.curriculumTerm) || 'Term 1',
+    instructorId: asTrimmedString(request.data?.instructorId) || null,
+    rosterStatus: normalizeLifecycleStatus(request.data?.rosterStatus, 'draft'),
+    parentCommunicationStatus: normalizeLifecycleStatus(request.data?.parentCommunicationStatus, 'pending'),
+    welcomePackStatus: normalizeLifecycleStatus(request.data?.welcomePackStatus, 'pending'),
+    baselineSurveyStatus: normalizeLifecycleStatus(request.data?.baselineSurveyStatus, 'pending'),
+    kickoffStatus: normalizeLifecycleStatus(request.data?.kickoffStatus, 'pending'),
+    deviceReadinessStatus: normalizeLifecycleStatus(request.data?.deviceReadinessStatus, 'pending'),
+    kitReadinessStatus: normalizeLifecycleStatus(request.data?.kitReadinessStatus, 'not_required'),
+    learnerCount: toPositiveInteger(request.data?.learnerCount),
+    notes: asTrimmedString(request.data?.notes) || null,
+    status: normalizeLifecycleStatus(request.data?.status, requestedId ? 'planning' : 'planning'),
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor.uid,
+  };
+  const writePayload: Record<string, unknown> = { ...payload };
+  if (!requestedId) {
+    writePayload.createdBy = actor.uid;
+    writePayload.createdAt = FieldValue.serverTimestamp();
+  }
+
+  await ref.set(writePayload, { merge: true });
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: requestedId ? 'cohort_launch.updated' : 'cohort_launch.created',
+    entityType: 'cohortLaunches',
+    entityId: id,
+    siteId,
+    details: {
+      cohortName: payload.cohortName,
+      status: payload.status,
+      learnerCount: payload.learnerCount,
+    },
+  });
+
+  return { success: true, id };
+});
+
+export const listPartnerLaunches = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['partner', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Partner or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 200
+    ? request.data.limit
+    : 80;
+  let query: FirebaseFirestore.Query = admin.firestore().collection('partnerLaunches').limit(limitValue);
+
+  if (actor.role === 'partner') {
+    query = query.where('partnerId', '==', actor.uid);
+  }
+  if (requestedSiteId.length > 0) {
+    query = query.where('siteId', '==', requestedSiteId);
+  }
+
+  const snap = await query.get();
+  const launches = snap.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Record<string, unknown>),
+  }));
+  return { launches };
+});
+
+export const upsertPartnerLaunch = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['partner', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Partner or HQ role required.');
+  }
+
+  const siteId = actor.role === 'hq'
+    ? asTrimmedString(request.data?.siteId) || null
+    : resolveOptionalActorSiteId(actor, request.data?.siteId);
+
+  const requestedId = asTrimmedString(request.data?.id);
+  const ref = requestedId
+    ? admin.firestore().collection('partnerLaunches').doc(requestedId)
+    : admin.firestore().collection('partnerLaunches').doc();
+  const id = ref.id;
+  const partnerId = actor.role === 'partner' ? actor.uid : asTrimmedString(request.data?.partnerId);
+  if (!partnerId) {
+    throw new HttpsError('invalid-argument', 'partnerId is required.');
+  }
+
+  const writePayload: Record<string, unknown> = {
+    partnerId,
+    siteId,
+    partnerName: asTrimmedString(request.data?.partnerName) || partnerId,
+    region: asTrimmedString(request.data?.region) || 'global',
+    locale: asTrimmedString(request.data?.locale) || 'en',
+    dueDiligenceStatus: normalizeLifecycleStatus(request.data?.dueDiligenceStatus, 'pending'),
+    contractStatus: normalizeLifecycleStatus(request.data?.contractStatus, 'draft'),
+    planningWorkshopStatus: normalizeLifecycleStatus(request.data?.planningWorkshopStatus, 'pending'),
+    trainerOfTrainersStatus: normalizeLifecycleStatus(request.data?.trainerOfTrainersStatus, 'pending'),
+    kpiLoggingStatus: normalizeLifecycleStatus(request.data?.kpiLoggingStatus, 'pending'),
+    review90DayStatus: normalizeLifecycleStatus(request.data?.review90DayStatus, 'pending'),
+    pilotCohortCount: toPositiveInteger(request.data?.pilotCohortCount),
+    notes: asTrimmedString(request.data?.notes) || null,
+    status: normalizeLifecycleStatus(request.data?.status, 'planning'),
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor.uid,
+  };
+  if (!requestedId) {
+    writePayload.createdAt = FieldValue.serverTimestamp();
+    writePayload.createdBy = actor.uid;
+  }
+
+  await ref.set(writePayload, { merge: true });
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: requestedId ? 'partner_launch.updated' : 'partner_launch.created',
+    entityType: 'partnerLaunches',
+    entityId: id,
+    siteId,
+    details: {
+      partnerId,
+      status: normalizeLifecycleStatus(request.data?.status, 'planning'),
+    },
+  });
+
+  return { success: true, id };
+});
+
+export const listKpiPacks = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+    ? request.data.limit
+    : 40;
+  let query: FirebaseFirestore.Query = admin.firestore().collection('kpiPacks').limit(limitValue);
+  if (requestedSiteId) {
+    if (!actorCanAccessSite(actor, requestedSiteId)) {
+      throw new HttpsError('permission-denied', 'No access to requested site.');
+    }
+    query = query.where('siteId', '==', requestedSiteId);
+  } else if (actor.role === 'site') {
+    const siteId = resolveActorSiteId(actor, request.data?.siteId);
+    query = query.where('siteId', '==', siteId);
+  }
+  const snap = await query.get();
+  return {
+    packs: snap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
+    })),
+  };
+});
+
+export const generateKpiPack = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = resolveActorSiteId(actor, request.data?.siteId);
+  const period = asTrimmedString(request.data?.period) || 'month';
+  const now = new Date();
+  const start = periodStart(period, now);
+
+  const [
+    usersSnap,
+    attendanceSnap,
+    progressSnap,
+    portfolioSnap,
+    missionAssignmentsSnap,
+    telemetrySnap,
+    trainingSnap,
+  ] = await Promise.all([
+    admin.firestore().collection('users').where('siteIds', 'array-contains', siteId).limit(500).get(),
+    admin.firestore().collection('attendanceRecords').where('siteId', '==', siteId).limit(500).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin.firestore().collection('learnerProgress').where('siteId', '==', siteId).limit(500).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin.firestore().collection('portfolioItems').where('siteId', '==', siteId).limit(500).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin.firestore().collection('missionAssignments').where('siteId', '==', siteId).limit(500).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin.firestore().collection('telemetryEvents').where('siteId', '==', siteId).limit(800).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    admin.firestore().collection('trainingCycles').where('siteId', '==', siteId).limit(200).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+  ]);
+
+  const learnerCount = usersSnap.docs.filter((docSnap) => normalizeRoleValue((docSnap.data() as UserRecord).role) === 'learner').length;
+
+  const filteredAttendance = attendanceSnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const timestamp = toDateValue(data.recordedAt || data.timestamp);
+    return !timestamp || timestamp >= start;
+  });
+  const presentCount = filteredAttendance.filter((docSnap) => asTrimmedString((docSnap.data() as Record<string, unknown>).status) === 'present').length;
+  const attendanceRate = filteredAttendance.length > 0 ? presentCount / filteredAttendance.length : 0;
+
+  const filteredPortfolio = portfolioSnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const timestamp = toDateValue(data.updatedAt || data.createdAt);
+    return !timestamp || timestamp >= start;
+  });
+  const artifactCount = filteredPortfolio.length;
+
+  const filteredAssignments = missionAssignmentsSnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const timestamp = toDateValue(data.updatedAt || data.createdAt);
+    return !timestamp || timestamp >= start;
+  });
+  const completedAssignments = filteredAssignments.filter((docSnap) => asTrimmedString((docSnap.data() as Record<string, unknown>).status) === 'completed').length;
+
+  let avgFuture = 0;
+  let avgLeadership = 0;
+  let avgImpact = 0;
+  if (progressSnap.docs.length > 0) {
+    const futureScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).futureSkillsProgress) ?? 0);
+    const leadershipScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).leadershipProgress) ?? 0);
+    const impactScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).impactProgress) ?? 0);
+    avgFuture = futureScores.reduce((sum, value) => sum + value, 0) / Math.max(futureScores.length, 1);
+    avgLeadership = leadershipScores.reduce((sum, value) => sum + value, 0) / Math.max(leadershipScores.length, 1);
+    avgImpact = impactScores.reduce((sum, value) => sum + value, 0) / Math.max(impactScores.length, 1);
+  }
+
+  const filteredTelemetry = telemetrySnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const timestamp = toDateValue(data.timestamp || data.createdAt);
+    return !timestamp || timestamp >= start;
+  });
+  const reflectionCount = filteredTelemetry.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const event = asTrimmedString(data.event || data.eventType);
+    return event === 'reflection.submitted';
+  }).length;
+  const aiCollabCount = filteredTelemetry.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const event = asTrimmedString(data.event || data.eventType);
+    return ['ai_help_used', 'ai_coach_response', 'voice.message', 'voice.tts'].includes(event);
+  }).length;
+
+  const trainingDocs = trainingSnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    const timestamp = toDateValue(data.updatedAt || data.createdAt || data.startsAt);
+    return !timestamp || timestamp >= start;
+  });
+  const teacherSurveyCount = trainingDocs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    return asTrimmedString(data.audience) === 'educators';
+  }).length;
+  const parentSurveyCount = trainingDocs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    return asTrimmedString(data.audience) === 'parents';
+  }).length;
+
+  const artifactCompletionRate = learnerCount > 0 ? Math.min(1, artifactCount / learnerCount) : 0;
+  const reflectionQuality = artifactCount > 0 ? Math.min(1, reflectionCount / artifactCount) : 0;
+  const aiCollaborationQuality = completedAssignments > 0 ? Math.min(1, aiCollabCount / completedAssignments) : Math.min(1, aiCollabCount / Math.max(artifactCount, 1));
+  const capabilityGrowth = (avgFuture + avgLeadership + avgImpact) / 3;
+  const tripleHelixCoverage = [avgFuture, avgLeadership, avgImpact].filter((value) => value > 0.2).length / 3;
+  const fidelityScore = (attendanceRate * 0.25) + (artifactCompletionRate * 0.2) + (reflectionQuality * 0.15) + (capabilityGrowth * 0.2) + (tripleHelixCoverage * 0.1) + (aiCollaborationQuality * 0.1);
+  const portfolioQualityGrade = fidelityScore >= 0.8 ? 'A' : fidelityScore >= 0.65 ? 'B' : fidelityScore >= 0.5 ? 'C' : 'D';
+
+  const ref = admin.firestore().collection('kpiPacks').doc();
+  await ref.set({
+    siteId,
+    period,
+    title: `KPI Pack ${siteId} ${period}`,
+    periodStart: start,
+    periodEnd: now,
+    learnerCount,
+    attendanceRate,
+    artifactCount,
+    artifactCompletionRate,
+    missionCompletionCount: completedAssignments,
+    reflectionCount,
+    reflectionQuality,
+    aiCollaborationQuality,
+    capabilityGrowth,
+    tripleHelixCoverage,
+    pillarCoverage: {
+      futureSkills: avgFuture,
+      leadership: avgLeadership,
+      impact: avgImpact,
+    },
+    parentSurveyCount,
+    teacherSurveyCount,
+    fidelityScore,
+    portfolioQualityGrade,
+    recommendation: fidelityScore >= 0.75 ? 'scale' : fidelityScore >= 0.55 ? 'stabilize' : 'intervene',
+    generatedBy: actor.uid,
+    status: 'generated',
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: 'kpi_pack.generated',
+    entityType: 'kpiPacks',
+    entityId: ref.id,
+    siteId,
+    details: {
+      period,
+      fidelityScore,
+      portfolioQualityGrade,
+    },
+  });
+
+  return { success: true, id: ref.id };
+});
+
+export const listRedTeamReviews = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+    ? request.data.limit
+    : 60;
+  const snap = await admin.firestore().collection('redTeamReviews').limit(limitValue).get();
+  return {
+    reviews: snap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
+    })),
+  };
+});
+
+export const upsertRedTeamReview = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const requestedId = asTrimmedString(request.data?.id);
+  const ref = requestedId
+    ? admin.firestore().collection('redTeamReviews').doc(requestedId)
+    : admin.firestore().collection('redTeamReviews').doc();
+  const id = ref.id;
+  const kpiPackId = asTrimmedString(request.data?.kpiPackId);
+  let siteId = asTrimmedString(request.data?.siteId);
+  let fidelityScore = asNumber(request.data?.fidelityScore);
+  let portfolioQualityGrade = asTrimmedString(request.data?.portfolioQualityGrade);
+
+  if (kpiPackId) {
+    const kpiDoc = await admin.firestore().collection('kpiPacks').doc(kpiPackId).get();
+    if (kpiDoc.exists) {
+      const data = kpiDoc.data() as Record<string, unknown>;
+      if (!siteId) siteId = asTrimmedString(data.siteId);
+      if (fidelityScore === null) fidelityScore = asNumber(data.fidelityScore);
+      if (!portfolioQualityGrade) portfolioQualityGrade = asTrimmedString(data.portfolioQualityGrade);
+    }
+  }
+
+  const writePayload: Record<string, unknown> = {
+    siteId: siteId || null,
+    kpiPackId: kpiPackId || null,
+    period: asTrimmedString(request.data?.period) || 'term',
+    title: asTrimmedString(request.data?.title) || `Red Team Review ${id.slice(-6)}`,
+    fidelityScore: fidelityScore ?? 0,
+    portfolioQualityGrade: portfolioQualityGrade || 'C',
+    decision: normalizeLifecycleStatus(request.data?.decision, 'continue'),
+    partnerStatus: normalizeLifecycleStatus(request.data?.partnerStatus, 'active'),
+    recommendations: asTrimmedString(request.data?.recommendations) || '',
+    nextAction: asTrimmedString(request.data?.nextAction) || '',
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor.uid,
+  };
+  if (!requestedId) {
+    writePayload.createdAt = FieldValue.serverTimestamp();
+    writePayload.createdBy = actor.uid;
+  }
+
+  await ref.set(writePayload, { merge: true });
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: requestedId ? 'red_team_review.updated' : 'red_team_review.created',
+    entityType: 'redTeamReviews',
+    entityId: id,
+    siteId: siteId || null,
+    details: {
+      kpiPackId,
+      decision: normalizeLifecycleStatus(request.data?.decision, 'continue'),
+    },
+  });
+
+  return { success: true, id };
+});
+
+export const listTrainingCycles = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['educator', 'site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Educator, Site, or HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+    ? request.data.limit
+    : 60;
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  let query: FirebaseFirestore.Query = admin.firestore().collection('trainingCycles').limit(limitValue);
+  if (requestedSiteId) {
+    if (!actorCanAccessSite(actor, requestedSiteId)) {
+      throw new HttpsError('permission-denied', 'No access to requested site.');
+    }
+    query = query.where('siteId', '==', requestedSiteId);
+  } else if (actor.role !== 'hq') {
+    query = query.where('siteId', '==', resolveActorSiteId(actor, request.data?.siteId));
+  }
+
+  const snap = await query.get();
+  return {
+    cycles: snap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
+    })),
+  };
+});
+
+export const upsertTrainingCycle = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['educator', 'site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Educator, Site, or HQ role required.');
+  }
+
+  const siteId = actor.role === 'hq'
+    ? asTrimmedString(request.data?.siteId) || null
+    : resolveActorSiteId(actor, request.data?.siteId);
+  const requestedId = asTrimmedString(request.data?.id);
+  const ref = requestedId
+    ? admin.firestore().collection('trainingCycles').doc(requestedId)
+    : admin.firestore().collection('trainingCycles').doc();
+  const id = ref.id;
+  const startsAt = toDateValue(request.data?.startsAt);
+
+  const writePayload: Record<string, unknown> = {
+    siteId,
+    title: asTrimmedString(request.data?.title) || `Training Cycle ${id.slice(-6)}`,
+    trainingType: asTrimmedString(request.data?.trainingType) || 'term_launch',
+    audience: asTrimmedString(request.data?.audience) || 'educators',
+    termLabel: asTrimmedString(request.data?.termLabel) || 'Current term',
+    status: normalizeLifecycleStatus(request.data?.status, 'scheduled'),
+    startsAt: startsAt || null,
+    completionCount: toPositiveInteger(request.data?.completionCount),
+    notes: asTrimmedString(request.data?.notes) || null,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor.uid,
+  };
+  if (!requestedId) {
+    writePayload.createdAt = FieldValue.serverTimestamp();
+    writePayload.createdBy = actor.uid;
+  }
+
+  await ref.set(writePayload, { merge: true });
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: requestedId ? 'training_cycle.updated' : 'training_cycle.created',
+    entityType: 'trainingCycles',
+    entityId: id,
+    siteId,
+    details: {
+      trainingType: asTrimmedString(request.data?.trainingType) || 'term_launch',
+      audience: asTrimmedString(request.data?.audience) || 'educators',
+    },
+  });
+
+  return { success: true, id };
 });

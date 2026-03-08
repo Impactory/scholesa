@@ -11,19 +11,49 @@ const {
   writeRoleCrossLinksReport,
 } = require('./role_cross_links_common');
 const { buildCanonicalReport } = require('./vibe_audit_report_schema');
+const {
+  initializeFirestoreRestFallback,
+  isCredentialAuthError,
+} = require('./firebase_runtime_auth');
+
+function normalizeCredentialLabel(value) {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  if (value === 'applicationDefault' || value === 'gcloud-auth-user') {
+    return value;
+  }
+  if (!path.isAbsolute(value)) {
+    return value;
+  }
+  return path.relative(process.cwd(), value);
+}
 
 async function run() {
   const args = parseArgs(process.argv.slice(2), { allowApply: false });
   let report;
 
   try {
-    const { db, credentialPath, projectId } = initializeAdmin(args);
-    const state = await loadCrossLinkState(db, args.siteId);
+    let { db, credentialPath, projectId } = initializeAdmin(args);
+    let transport = 'firebaseAdmin';
+    let state;
+    try {
+      state = await loadCrossLinkState(db, args.siteId);
+    } catch (error) {
+      if (!isCredentialAuthError(error)) {
+        throw error;
+      }
+      const fallback = initializeFirestoreRestFallback(projectId);
+      db = fallback.db;
+      credentialPath = fallback.credentialPath;
+      projectId = fallback.projectId;
+      transport = fallback.transport;
+      state = await loadCrossLinkState(db, args.siteId);
+    }
     const analysis = analyzeCrossLinks(state);
     report = buildRoleCrossLinksReport(args, analysis, {
       mode: 'verify',
-      credentialPath: credentialPath ? path.relative(process.cwd(), credentialPath) : null,
+      credentialPath: normalizeCredentialLabel(credentialPath),
       projectId: projectId || null,
+      transport,
     });
   } catch (error) {
     report = buildCanonicalReport({

@@ -332,6 +332,7 @@ function runTelemetrySchemaValid(env, args) {
   const roleMap = {
     learner: 'student',
     educator: 'teacher',
+    parent: 'admin',
     site: 'admin',
     hq: 'admin',
     partner: 'admin',

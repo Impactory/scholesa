@@ -29,7 +29,9 @@ async function main() {
     details.checks = {
       hasSiteClaimsCollector: /collectSiteIdsFromClaims/.test(source),
       hasSiteAccessValidation: /validateSiteAccess/.test(source),
-      hasTeacherLearnerScopeValidation: /maybeValidateTeacherLearnerScope/.test(source),
+      hasLearnerScopeValidation:
+        /maybeValidateTeacherLearnerScope/.test(source) ||
+        /maybeValidateSelectedLearnerScope/.test(source),
       hasCrossTenantPatternBlock: /CROSS_TENANT_PATTERNS/.test(source),
     };
     for (const [check, passed] of Object.entries(details.checks)) {
@@ -82,4 +84,3 @@ main().catch((error) => {
     error: error instanceof Error ? error.message : String(error),
   });
 });
-

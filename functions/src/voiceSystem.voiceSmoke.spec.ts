@@ -76,6 +76,7 @@ function runVoiceSmokeRegressionSuite(): void {
     {
       uid: 'teacher-1',
       role: 'teacher',
+      requesterRole: 'teacher',
       siteId: 'site-1',
       siteIds: ['site-1'],
       gradeBand: '6-8',
@@ -124,6 +125,20 @@ function runVoiceSmokeRegressionSuite(): void {
     ['rubric_feedback_draft'],
     'teacher verify mode should map to rubric_feedback_draft',
   );
+
+  const parentRequesterRole = __voiceSystemInternals.normalizeRequesterRole('guardian');
+  assertEqual(parentRequesterRole, 'parent', 'guardian should normalize to parent requester role');
+
+  const canonicalParentRole = __voiceSystemInternals.normalizeRole('parent');
+  assertEqual(canonicalParentRole, 'admin', 'parent should map to canonical admin telemetry role');
+
+  const parentHints = __voiceSystemInternals.deriveBosModeToolHints('parent', {
+    mode: 'explain',
+    triggerMvl: false,
+    confidence: 0.8,
+    reasonCodes: [],
+  });
+  assertDeepEqual(parentHints, ['class_summary'], 'parent explain mode should map to class_summary');
 }
 
 runVoiceSmokeRegressionSuite();

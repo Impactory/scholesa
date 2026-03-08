@@ -76,6 +76,16 @@ export {
   requestSiteBillingPlanChange,
   listHqBillingRecords,
   createHqInvoice,
+  listCohortLaunches,
+  upsertCohortLaunch,
+  listPartnerLaunches,
+  upsertPartnerLaunch,
+  listKpiPacks,
+  generateKpiPack,
+  listRedTeamReviews,
+  upsertRedTeamReview,
+  listTrainingCycles,
+  upsertTrainingCycle,
 } from './workflowOps';
 
 // Voice-first API surface (scholesa-api + scholesa-stt + scholesa-tts)
@@ -1335,7 +1345,7 @@ async function persistTelemetryEvent(params: {
     event,
     eventType: event,
     userId: effectiveUserId,
-    role: effectiveRole,
+    role: schemaRole,
     roleCanonical: schemaRole,
     actorRole: effectiveRole,
     service: telemetryService,
@@ -1352,6 +1362,7 @@ async function persistTelemetryEvent(params: {
       env: telemetryEnv,
       siteId: effectiveSiteId,
       role: schemaRole,
+      requesterRole: effectiveRole,
       locale,
       gradeBand,
       roleCanonical: schemaRole,
@@ -1942,6 +1953,140 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = 0;
   }
 
+  let portfolioSnapshot: Record<string, unknown> = {
+    artifactCount: 0,
+    publishedArtifactCount: 0,
+    badgeCount: 0,
+    projectCount: 0,
+    latestArtifactAt: null,
+  };
+  try {
+    const portfolioSnap = await admin
+      .firestore()
+      .collection('portfolioItems')
+      .where('learnerId', '==', learnerId)
+      .limit(100)
+      .get();
+    const portfolioRows = portfolioSnap.docs.map((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      const mediaType = typeof data.mediaType === 'string' ? data.mediaType.trim().toLowerCase() : '';
+      const status = typeof data.status === 'string' ? data.status.trim().toLowerCase() : '';
+      const updatedAt = parseDateFromUnknown(data.updatedAt || data.createdAt);
+      const title = typeof data.title === 'string' ? data.title.trim().toLowerCase() : '';
+      const type = typeof data.type === 'string' ? data.type.trim().toLowerCase() : '';
+      return {
+        mediaType,
+        status,
+        updatedAt,
+        isBadge: mediaType === 'badge' || type === 'badge' || title.includes('badge'),
+      };
+    });
+    const artifactCount = portfolioRows.length;
+    const publishedArtifactCount = portfolioRows.filter((row) => row.status === 'published').length;
+    const badgeCount = portfolioRows.filter((row) => row.isBadge).length;
+    const projectCount = Math.max(0, artifactCount - badgeCount);
+    const latestArtifactAt = portfolioRows
+      .map((row) => row.updatedAt)
+      .filter((value): value is Date => value instanceof Date)
+      .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
+
+    portfolioSnapshot = {
+      artifactCount,
+      publishedArtifactCount,
+      badgeCount,
+      projectCount,
+      latestArtifactAt: latestArtifactAt ? latestArtifactAt.toISOString() : null,
+    };
+  } catch {
+    portfolioSnapshot = {
+      artifactCount: 0,
+      publishedArtifactCount: 0,
+      badgeCount: 0,
+      projectCount: 0,
+      latestArtifactAt: null,
+    };
+  }
+
+  let ideationPassport: Record<string, unknown> = {
+    missionAttempts: 0,
+    completedMissions: 0,
+    reflectionsSubmitted: 0,
+    voiceInteractions: 0,
+    collaborationSignals: 0,
+    lastReflectionAt: null,
+  };
+  try {
+    const [missionAttemptsSnap, telemetrySnap] = await Promise.all([
+      admin
+        .firestore()
+        .collection('missionAttempts')
+        .where('learnerId', '==', learnerId)
+        .limit(80)
+        .get()
+        .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      admin
+        .firestore()
+        .collection(TELEMETRY_COLLECTION)
+        .where('userId', '==', learnerId)
+        .limit(200)
+        .get()
+        .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+    ]);
+
+    const completedMissions = missionAttemptsSnap.docs.filter((doc) => {
+      const status = typeof doc.data().status === 'string' ? doc.data().status.trim().toLowerCase() : '';
+      return status === 'completed' || status === 'submitted' || status === 'reviewed';
+    }).length;
+
+    const telemetryRows = telemetrySnap.docs.map((doc) => doc.data() as Record<string, unknown>);
+    const reflectionRows = telemetryRows.filter((row) => {
+      const eventType = typeof row.eventType === 'string'
+        ? row.eventType.trim().toLowerCase()
+        : typeof row.event === 'string'
+        ? row.event.trim().toLowerCase()
+        : '';
+      return eventType === 'reflection.submitted' || eventType === 'reflection_submitted';
+    });
+    const voiceInteractions = telemetryRows.filter((row) => {
+      const eventType = typeof row.eventType === 'string'
+        ? row.eventType.trim().toLowerCase()
+        : typeof row.event === 'string'
+        ? row.event.trim().toLowerCase()
+        : '';
+      return eventType.startsWith('voice.');
+    }).length;
+    const collaborationSignals = telemetryRows.filter((row) => {
+      const eventType = typeof row.eventType === 'string'
+        ? row.eventType.trim().toLowerCase()
+        : typeof row.event === 'string'
+        ? row.event.trim().toLowerCase()
+        : '';
+      return ['ai_help_used', 'ai_help_opened', 'ai_coach_response', 'voice.message'].includes(eventType);
+    }).length;
+    const lastReflectionAt = reflectionRows
+      .map((row) => parseDateFromUnknown(row.timestamp || row.createdAt))
+      .filter((value): value is Date => value instanceof Date)
+      .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
+
+    ideationPassport = {
+      missionAttempts: missionAttemptsSnap.docs.length,
+      completedMissions,
+      reflectionsSubmitted: reflectionRows.length,
+      voiceInteractions,
+      collaborationSignals,
+      lastReflectionAt: lastReflectionAt ? lastReflectionAt.toISOString() : null,
+    };
+  } catch {
+    ideationPassport = {
+      missionAttempts: 0,
+      completedMissions: 0,
+      reflectionsSubmitted: 0,
+      voiceInteractions: 0,
+      collaborationSignals: 0,
+      lastReflectionAt: null,
+    };
+  }
+
   const currentLevel =
     typeof progressData.level === 'number' && Number.isFinite(progressData.level)
       ? Math.round(progressData.level)
@@ -1960,6 +2105,24 @@ async function buildParentLearnerSummary(params: {
     Number.isFinite(progressData.currentStreak)
       ? Math.round(progressData.currentStreak)
       : 0;
+  const futureSkills =
+    typeof progressData.futureSkillsProgress === 'number'
+      ? progressData.futureSkillsProgress
+      : 0;
+  const leadership =
+    typeof progressData.leadershipProgress === 'number'
+      ? progressData.leadershipProgress
+      : 0;
+  const impact =
+    typeof progressData.impactProgress === 'number'
+      ? progressData.impactProgress
+      : 0;
+  const capabilityOverall = (futureSkills + leadership + impact) / 3;
+  const capabilityBand = capabilityOverall >= 0.75
+    ? 'strong'
+    : capabilityOverall >= 0.45
+    ? 'developing'
+    : 'emerging';
 
   return {
     learnerId,
@@ -1971,19 +2134,19 @@ async function buildParentLearnerSummary(params: {
     currentStreak,
     attendanceRate,
     pillarProgress: {
-      futureSkills:
-        typeof progressData.futureSkillsProgress === 'number'
-          ? progressData.futureSkillsProgress
-          : 0,
-      leadership:
-        typeof progressData.leadershipProgress === 'number'
-          ? progressData.leadershipProgress
-          : 0,
-      impact:
-        typeof progressData.impactProgress === 'number'
-          ? progressData.impactProgress
-          : 0,
+      futureSkills,
+      leadership,
+      impact,
     },
+    capabilitySnapshot: {
+      futureSkills,
+      leadership,
+      impact,
+      overall: capabilityOverall,
+      band: capabilityBand,
+    },
+    portfolioSnapshot,
+    ideationPassport,
     recentActivities,
     upcomingEvents,
   };

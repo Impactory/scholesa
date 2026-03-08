@@ -56,6 +56,29 @@ export interface ParentDashboardBundle {
     missionsCompleted: number;
     currentStreak: number;
     attendanceRate: number;
+    pillarProgress?: Record<string, number>;
+    capabilitySnapshot?: {
+      futureSkills: number;
+      leadership: number;
+      impact: number;
+      overall: number;
+      band: string;
+    };
+    portfolioSnapshot?: {
+      artifactCount: number;
+      publishedArtifactCount: number;
+      badgeCount: number;
+      projectCount: number;
+      latestArtifactAt?: string | null;
+    };
+    ideationPassport?: {
+      missionAttempts: number;
+      completedMissions: number;
+      reflectionsSubmitted: number;
+      voiceInteractions: number;
+      collaborationSignals: number;
+      lastReflectionAt?: string | null;
+    };
     recentActivities: Array<Record<string, unknown>>;
     upcomingEvents: Array<Record<string, unknown>>;
   }>;
@@ -91,6 +114,16 @@ function normalizeRosterEntry(raw: unknown): RosterEntry | null {
     siteIds: Array.isArray(input.siteIds) ? input.siteIds.filter((item): item is string => typeof item === 'string') : [],
     activeSiteId: typeof input.activeSiteId === 'string' ? input.activeSiteId : null
   };
+}
+
+function normalizeNumberMap(raw: unknown): Record<string, number> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  return Object.entries(raw as Record<string, unknown>).reduce<Record<string, number>>((acc, [key, value]) => {
+    if (typeof value === 'number') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
 }
 
 export async function fetchRoleDashboardSnapshot(params: {
@@ -170,6 +203,54 @@ export async function fetchParentDashboardBundle(params: {
     range: params.range || 'week'
   });
   const payload = (response.data || {}) as Record<string, unknown>;
+  const learners: ParentDashboardBundle['learners'] = [];
+  if (Array.isArray(payload.learners)) {
+    for (const item of payload.learners) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+      const row = item as Record<string, unknown>;
+      if (typeof row.learnerId !== 'string' || typeof row.learnerName !== 'string') continue;
+      learners.push({
+        learnerId: row.learnerId,
+        learnerName: row.learnerName,
+        currentLevel: typeof row.currentLevel === 'number' ? row.currentLevel : 0,
+        totalXp: typeof row.totalXp === 'number' ? row.totalXp : 0,
+        missionsCompleted: typeof row.missionsCompleted === 'number' ? row.missionsCompleted : 0,
+        currentStreak: typeof row.currentStreak === 'number' ? row.currentStreak : 0,
+        attendanceRate: typeof row.attendanceRate === 'number' ? row.attendanceRate : 0,
+        pillarProgress: normalizeNumberMap(row.pillarProgress),
+        capabilitySnapshot: row.capabilitySnapshot && typeof row.capabilitySnapshot === 'object' && !Array.isArray(row.capabilitySnapshot)
+          ? {
+              futureSkills: typeof (row.capabilitySnapshot as Record<string, unknown>).futureSkills === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).futureSkills as number : 0,
+              leadership: typeof (row.capabilitySnapshot as Record<string, unknown>).leadership === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).leadership as number : 0,
+              impact: typeof (row.capabilitySnapshot as Record<string, unknown>).impact === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).impact as number : 0,
+              overall: typeof (row.capabilitySnapshot as Record<string, unknown>).overall === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).overall as number : 0,
+              band: typeof (row.capabilitySnapshot as Record<string, unknown>).band === 'string' ? (row.capabilitySnapshot as Record<string, unknown>).band as string : 'emerging'
+            }
+          : undefined,
+        portfolioSnapshot: row.portfolioSnapshot && typeof row.portfolioSnapshot === 'object' && !Array.isArray(row.portfolioSnapshot)
+          ? {
+              artifactCount: typeof (row.portfolioSnapshot as Record<string, unknown>).artifactCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).artifactCount as number : 0,
+              publishedArtifactCount: typeof (row.portfolioSnapshot as Record<string, unknown>).publishedArtifactCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).publishedArtifactCount as number : 0,
+              badgeCount: typeof (row.portfolioSnapshot as Record<string, unknown>).badgeCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).badgeCount as number : 0,
+              projectCount: typeof (row.portfolioSnapshot as Record<string, unknown>).projectCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).projectCount as number : 0,
+              latestArtifactAt: typeof (row.portfolioSnapshot as Record<string, unknown>).latestArtifactAt === 'string' ? (row.portfolioSnapshot as Record<string, unknown>).latestArtifactAt as string : null
+            }
+          : undefined,
+        ideationPassport: row.ideationPassport && typeof row.ideationPassport === 'object' && !Array.isArray(row.ideationPassport)
+          ? {
+              missionAttempts: typeof (row.ideationPassport as Record<string, unknown>).missionAttempts === 'number' ? (row.ideationPassport as Record<string, unknown>).missionAttempts as number : 0,
+              completedMissions: typeof (row.ideationPassport as Record<string, unknown>).completedMissions === 'number' ? (row.ideationPassport as Record<string, unknown>).completedMissions as number : 0,
+              reflectionsSubmitted: typeof (row.ideationPassport as Record<string, unknown>).reflectionsSubmitted === 'number' ? (row.ideationPassport as Record<string, unknown>).reflectionsSubmitted as number : 0,
+              voiceInteractions: typeof (row.ideationPassport as Record<string, unknown>).voiceInteractions === 'number' ? (row.ideationPassport as Record<string, unknown>).voiceInteractions as number : 0,
+              collaborationSignals: typeof (row.ideationPassport as Record<string, unknown>).collaborationSignals === 'number' ? (row.ideationPassport as Record<string, unknown>).collaborationSignals as number : 0,
+              lastReflectionAt: typeof (row.ideationPassport as Record<string, unknown>).lastReflectionAt === 'string' ? (row.ideationPassport as Record<string, unknown>).lastReflectionAt as string : null
+            }
+          : undefined,
+        recentActivities: Array.isArray(row.recentActivities) ? row.recentActivities.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry)) : [],
+        upcomingEvents: Array.isArray(row.upcomingEvents) ? row.upcomingEvents.filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry)) : []
+      });
+    }
+  }
 
   return {
     parentId: typeof payload.parentId === 'string' ? payload.parentId : '',
@@ -178,12 +259,6 @@ export async function fetchParentDashboardBundle(params: {
     range: typeof payload.range === 'string' ? payload.range : 'week',
     linkedLearnerCount:
       typeof payload.linkedLearnerCount === 'number' ? payload.linkedLearnerCount : 0,
-    learners: Array.isArray(payload.learners)
-      ? (payload.learners.filter((item): item is ParentDashboardBundle['learners'][number] => {
-          if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
-          const row = item as Record<string, unknown>;
-          return typeof row.learnerId === 'string' && typeof row.learnerName === 'string';
-        }) as ParentDashboardBundle['learners'])
-      : []
+    learners
   };
 }
