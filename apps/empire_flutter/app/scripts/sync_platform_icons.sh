@@ -18,9 +18,6 @@ WINDOWS_ICON="$ROOT_DIR/windows/runner/resources/app_icon.ico"
 FLUTTER_WEB_DIR="$ROOT_DIR/web"
 NEXT_PUBLIC_DIR="$REPO_ROOT/public"
 
-echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
-python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
-
 require_file() {
   local path="$1"
   if [[ ! -f "$path" ]]; then
@@ -32,6 +29,22 @@ require_file() {
 has_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
+
+python_has_pillow() {
+  python3 - <<'PY' >/dev/null 2>&1
+import importlib.util
+import sys
+
+sys.exit(0 if importlib.util.find_spec("PIL") else 1)
+PY
+}
+
+echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
+if python_has_pillow; then
+  python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
+else
+  echo "[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets" >&2
+fi
 
 resize_png() {
   local height="$1"

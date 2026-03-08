@@ -97,8 +97,40 @@ jobs:
       - name: Run full platform gates (no deploy)
         run: npm run flow:platform:gates
 
-  platform-full:
+  deploy-readiness:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')))
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check deploy secret availability
+        id: check
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ secrets.GCP_REGION }}
+          CLOUD_RUN_SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          COMPLIANCE_RUN_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          missing=()
+          for key in FIREBASE_TOKEN GCP_PROJECT_ID GCP_REGION CLOUD_RUN_SERVICE COMPLIANCE_RUN_SERVICE GCP_SA_KEY_JSON; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if [[ ${#missing[@]} -eq 0 ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Deploy secrets available." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping platform-full; missing deploy secrets: ${missing[*]}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  platform-full:
+    needs: deploy-readiness
+    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')))) && needs.deploy-readiness.outputs.ready == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
