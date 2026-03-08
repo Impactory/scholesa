@@ -18,15 +18,20 @@ warn() { echo -e "${YELLOW}[flow]${NC} $*"; }
 fail() { echo -e "${RED}[flow]${NC} $*"; exit 1; }
 
 ensure_node24() {
+  local node_major
+  node_major="$(node -p "process.versions.node.split('.')[0]")"
+  if [[ "$node_major" == "24" ]]; then
+    return 0
+  fi
+
   if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
     export NVM_DIR="$HOME/.nvm"
     # shellcheck disable=SC1090
     . "$NVM_DIR/nvm.sh"
     nvm use 24 >/dev/null || fail "Node 24 is required. Install/use with: nvm install 24 && nvm use 24"
+    node_major="$(node -p "process.versions.node.split('.')[0]")"
   fi
 
-  local node_major
-  node_major="$(node -p "process.versions.node.split('.')[0]")"
   [[ "$node_major" == "24" ]] || fail "Node 24.x required (detected $(node -v))"
 }
 
