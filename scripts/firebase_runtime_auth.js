@@ -94,12 +94,71 @@ function isCredentialAuthError(error) {
   return (
     /unable to impersonate/i.test(message) ||
     /Could not refresh access token/i.test(message) ||
+    /invalid_grant/i.test(message) ||
+    /invalid_rapt/i.test(message) ||
+    /reauth related error/i.test(message) ||
     /iam\.serviceAccounts\.getAccessToken/i.test(message) ||
     /iam\.serviceAccounts\.signBlob/i.test(message) ||
     /Failed to determine service account/i.test(message) ||
     /\bUNAUTHENTICATED\b/i.test(message) ||
     /invalid authentication credentials/i.test(message)
   );
+}
+
+function resolveFirebaseApiKey(explicitApiKey) {
+  const directEnv = [
+    explicitApiKey,
+    process.env.FIREBASE_API_KEY,
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    process.env.VOICE_LIVE_API_KEY,
+  ].find((value) => typeof value === 'string' && value.trim().length > 0);
+  if (directEnv) {
+    return directEnv.trim();
+  }
+
+  const candidateFiles = [
+    path.resolve(process.cwd(), 'apps/empire_flutter/app/lib/firebase_options.dart'),
+    path.resolve(process.cwd(), 'src/firebase/client-init.ts'),
+    path.resolve(process.cwd(), 'src/firebase/client-init-impactory.ts'),
+  ];
+
+  for (const candidate of candidateFiles) {
+    if (!fs.existsSync(candidate)) continue;
+    const source = fs.readFileSync(candidate, 'utf8');
+    const singleQuoteMatch = source.match(/apiKey:\s*'([^']+)'/);
+    if (singleQuoteMatch && singleQuoteMatch[1]) {
+      return singleQuoteMatch[1].trim();
+    }
+    const envMatch = source.match(/NEXT_PUBLIC_FIREBASE_API_KEY.*\|\|\s*'([^']+)'/);
+    if (envMatch && envMatch[1]) {
+      return envMatch[1].trim();
+    }
+  }
+
+  return null;
+}
+
+async function signInWithPassword(apiKey, email, password) {
+  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      password,
+      returnSecureToken: true,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message =
+      (payload && payload.error && payload.error.message) ||
+      `${response.status} ${response.statusText}`;
+    throw new Error(`Firebase password sign-in failed: ${message}`);
+  }
+  if (!payload.idToken || typeof payload.idToken !== 'string') {
+    throw new Error('Firebase password sign-in returned no idToken.');
+  }
+  return payload.idToken;
 }
 
 function getGcloudAccessToken() {
@@ -432,15 +491,49 @@ function initializeFirestoreRestFallback(projectId) {
   };
 }
 
+async function initializeFirestoreUserRestFallback(projectId, options = {}) {
+  if (!projectId) {
+    throw new Error('Unable to initialize Firebase user Firestore fallback without a resolved project ID.');
+  }
+
+  const apiKey = resolveFirebaseApiKey(options.apiKey);
+  const email =
+    (typeof options.email === 'string' && options.email.trim()) ||
+    process.env.FIREBASE_REST_FALLBACK_EMAIL ||
+    process.env.CROSS_LINK_FALLBACK_EMAIL ||
+    'hq@scholesa.test';
+  const password =
+    (typeof options.password === 'string' && options.password.trim()) ||
+    process.env.FIREBASE_REST_FALLBACK_PASSWORD ||
+    process.env.TEST_USER_PASSWORD ||
+    'Test123!';
+
+  if (!apiKey) {
+    throw new Error('Unable to resolve a Firebase Web API key for Firestore REST user fallback.');
+  }
+
+  const accessToken = await signInWithPassword(apiKey, email, password);
+  return {
+    db: buildFirestoreRestClient(projectId, accessToken),
+    projectId,
+    credentialPath: 'firebase-user-auth',
+    transport: 'firestoreRestUserAuth',
+    email,
+  };
+}
+
 module.exports = {
   buildFirestoreRestClient,
   getGcloudAccessToken,
   initializeFirebaseAdmin,
   initializeFirestoreRestFallback,
+  initializeFirestoreUserRestFallback,
   isCredentialAuthError,
   isServiceAccountCredentialPath,
   isServiceAccountPayload,
   readJsonFileSafe,
+  resolveFirebaseApiKey,
   resolveCredentialPath,
   resolveProjectId,
+  signInWithPassword,
 };

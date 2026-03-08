@@ -153,7 +153,7 @@ async function mintRoleToken({ role, claims, apiKey }) {
   return signInWithCustomToken(apiKey, customToken);
 }
 
-function loginCandidatesForRole(role, options) {
+function loginCandidatesForRole(role) {
   if (role === 'student') {
     return [
       process.env.VOICE_LIVE_STUDENT_EMAIL,
@@ -181,7 +181,7 @@ function loginCandidatesForRole(role, options) {
 }
 
 async function signInWithSeededRole(role, options) {
-  const candidates = loginCandidatesForRole(role, options);
+  const candidates = loginCandidatesForRole(role);
   let lastError = null;
   for (const email of candidates) {
     try {

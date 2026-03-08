@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/firestore_service.dart';
+import '../../services/workflow_bridge_service.dart';
 import 'partner_models.dart';
 
 /// Service for partner operations
@@ -8,22 +9,30 @@ class PartnerService extends ChangeNotifier {
   PartnerService({
     required FirestoreService firestoreService,
     required String partnerId,
+    WorkflowBridgeService? workflowBridgeService,
   })  : _firestoreService = firestoreService,
-        _partnerId = partnerId;
+        _partnerId = partnerId,
+        _workflowBridgeService =
+            workflowBridgeService ?? WorkflowBridgeService.instance;
 
   final FirestoreService _firestoreService;
   final String _partnerId;
+  final WorkflowBridgeService _workflowBridgeService;
 
   List<MarketplaceListing> _listings = <MarketplaceListing>[];
   List<PartnerContract> _contracts = <PartnerContract>[];
+  List<PartnerLaunch> _partnerLaunches = <PartnerLaunch>[];
   List<Payout> _payouts = <Payout>[];
   bool _isLoading = false;
   String? _error;
 
+  String get partnerId => _partnerId;
   List<MarketplaceListing> get listings =>
       List<MarketplaceListing>.unmodifiable(_listings);
   List<PartnerContract> get contracts =>
       List<PartnerContract>.unmodifiable(_contracts);
+  List<PartnerLaunch> get partnerLaunches =>
+      List<PartnerLaunch>.unmodifiable(_partnerLaunches);
   List<Payout> get payouts => List<Payout>.unmodifiable(_payouts);
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -113,6 +122,7 @@ class PartnerService extends ChangeNotifier {
   /// Load contracts for this partner
   Future<void> loadContracts() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
@@ -136,7 +146,119 @@ class PartnerService extends ChangeNotifier {
           .toList();
     } catch (e) {
       debugPrint('Failed to load contracts: $e');
+      _error = 'Failed to load contracts';
       _contracts = <PartnerContract>[];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadPartnerLaunches() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final List<Map<String, dynamic>> data =
+          await _workflowBridgeService.listPartnerLaunches(limit: 80);
+      _partnerLaunches = data
+          .map((Map<String, dynamic> doc) => PartnerLaunch(
+                id: doc['id'] as String? ?? '',
+                partnerId: doc['partnerId'] as String? ?? _partnerId,
+                siteId: doc['siteId'] as String?,
+                partnerName: doc['partnerName'] as String? ?? '',
+                region: doc['region'] as String? ?? 'global',
+                locale: doc['locale'] as String? ?? 'en',
+                dueDiligenceStatus:
+                    doc['dueDiligenceStatus'] as String? ?? 'pending',
+                contractStatus: doc['contractStatus'] as String? ?? 'draft',
+                planningWorkshopStatus:
+                    doc['planningWorkshopStatus'] as String? ?? 'pending',
+                trainerOfTrainersStatus:
+                    doc['trainerOfTrainersStatus'] as String? ?? 'pending',
+                kpiLoggingStatus:
+                    doc['kpiLoggingStatus'] as String? ?? 'pending',
+                review90DayStatus:
+                    doc['review90DayStatus'] as String? ?? 'pending',
+                pilotCohortCount: (doc['pilotCohortCount'] as num?)?.toInt(),
+                notes: doc['notes'] as String?,
+                status: doc['status'] as String? ?? 'planning',
+                updatedAt: WorkflowBridgeService.toDateTime(doc['updatedAt']) ??
+                    WorkflowBridgeService.toDateTime(doc['createdAt']),
+              ))
+          .toList()
+        ..sort((PartnerLaunch a, PartnerLaunch b) {
+          final DateTime aTime =
+              a.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final DateTime bTime =
+              b.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+    } catch (e) {
+      debugPrint('Failed to load partner launches: $e');
+      _error = 'Failed to load partner launches';
+      _partnerLaunches = <PartnerLaunch>[];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<PartnerLaunch?> createPartnerLaunch({
+    required String partnerName,
+    required String region,
+    required String locale,
+    required int pilotCohortCount,
+    String? siteId,
+    String? notes,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final String? id = await _workflowBridgeService.upsertPartnerLaunch(
+        <String, dynamic>{
+          if ((siteId ?? '').trim().isNotEmpty) 'siteId': siteId!.trim(),
+          if (_partnerId.trim().isNotEmpty) 'partnerId': _partnerId.trim(),
+          'partnerName': partnerName.trim(),
+          'region': region.trim(),
+          'locale': locale.trim(),
+          'pilotCohortCount': pilotCohortCount,
+          if ((notes ?? '').trim().isNotEmpty) 'notes': notes!.trim(),
+        },
+      );
+      await loadPartnerLaunches();
+      if (id == null || id.isEmpty) {
+        return null;
+      }
+      return _partnerLaunches.firstWhere(
+        (PartnerLaunch launch) => launch.id == id,
+        orElse: () => PartnerLaunch(
+          id: id,
+          partnerId: _partnerId,
+          siteId: siteId,
+          partnerName: partnerName.trim(),
+          region: region.trim(),
+          locale: locale.trim(),
+          dueDiligenceStatus: 'pending',
+          contractStatus: 'draft',
+          planningWorkshopStatus: 'pending',
+          trainerOfTrainersStatus: 'pending',
+          kpiLoggingStatus: 'pending',
+          review90DayStatus: 'pending',
+          pilotCohortCount: pilotCohortCount,
+          notes: notes?.trim(),
+          status: 'planning',
+          updatedAt: DateTime.now(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to create partner launch: $e');
+      _error = 'Failed to create partner launch';
+      notifyListeners();
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -155,11 +277,12 @@ class PartnerService extends ChangeNotifier {
           await callable.call(<String, dynamic>{'limit': 200});
       final Map<String, dynamic> payload =
           Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
-      final List<dynamic> rows = payload['payouts'] as List<dynamic>? ?? <dynamic>[];
+      final List<dynamic> rows =
+          payload['payouts'] as List<dynamic>? ?? <dynamic>[];
       final List<Map<String, dynamic>> data = rows
           .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> row) =>
-              row.map((dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
           .toList();
 
       _payouts = data

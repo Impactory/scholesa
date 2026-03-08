@@ -3,6 +3,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_DEPLOY=1
+TEMP_GCP_CREDENTIALS=""
 
 if [[ "${1:-}" == "--no-deploy" ]]; then
   RUN_DEPLOY=0
@@ -16,6 +17,51 @@ NC='\033[0m'
 log()  { echo -e "${GREEN}[flow]${NC} $*"; }
 warn() { echo -e "${YELLOW}[flow]${NC} $*"; }
 fail() { echo -e "${RED}[flow]${NC} $*"; exit 1; }
+
+cleanup() {
+  if [[ -n "$TEMP_GCP_CREDENTIALS" && -f "$TEMP_GCP_CREDENTIALS" ]]; then
+    rm -f "$TEMP_GCP_CREDENTIALS"
+  fi
+}
+trap cleanup EXIT
+
+firebase_cmd() {
+  if [[ -n "${FIREBASE_TOKEN:-}" ]]; then
+    firebase "$@" --token "$FIREBASE_TOKEN"
+  else
+    firebase "$@"
+  fi
+}
+
+is_service_account_json_file() {
+  local candidate="${1:-}"
+  [[ -n "$candidate" && -f "$candidate" ]] || return 1
+  node -e '
+    const fs = require("fs");
+    try {
+      const payload = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      process.exit(payload && payload.type === "service_account" ? 0 : 1);
+    } catch {
+      process.exit(1);
+    }
+  ' "$candidate"
+}
+
+materialize_service_account_from_env() {
+  if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" && -f "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+    return 0
+  fi
+
+  local raw_json="${GCP_SA_KEY_JSON:-${GOOGLE_CREDENTIALS:-}}"
+  if [[ -z "$raw_json" ]]; then
+    return 1
+  fi
+
+  TEMP_GCP_CREDENTIALS="$(mktemp)"
+  printf '%s' "$raw_json" > "$TEMP_GCP_CREDENTIALS"
+  export GOOGLE_APPLICATION_CREDENTIALS="$TEMP_GCP_CREDENTIALS"
+  return 0
+}
 
 ensure_node24() {
   local node_major
@@ -38,10 +84,37 @@ ensure_node24() {
 ensure_firebase_auth() {
   local auth_log
   auth_log="$(mktemp)"
-  if ! (cd "$REPO_ROOT" && firebase projects:list --json >"$auth_log" 2>&1); then
+  if ! (cd "$REPO_ROOT" && firebase_cmd projects:list --json >"$auth_log" 2>&1); then
     cat "$auth_log" >&2
     rm -f "$auth_log"
-    fail "Firebase auth invalid. Run: firebase login --reauth"
+    fail "Firebase auth invalid. Run: firebase login --reauth, or set FIREBASE_TOKEN"
+  fi
+  rm -f "$auth_log"
+}
+
+ensure_gcloud_auth() {
+  local auth_log
+  auth_log="$(mktemp)"
+  materialize_service_account_from_env || true
+
+  if ! gcloud auth print-access-token --quiet >"$auth_log" 2>&1; then
+    if is_service_account_json_file "${GOOGLE_APPLICATION_CREDENTIALS:-}"; then
+      if ! gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS" --quiet >"$auth_log" 2>&1; then
+        cat "$auth_log" >&2
+        rm -f "$auth_log"
+        fail "Unable to activate service account from GOOGLE_APPLICATION_CREDENTIALS/GCP_SA_KEY_JSON"
+      fi
+      if gcloud auth print-access-token --quiet >"$auth_log" 2>&1; then
+        rm -f "$auth_log"
+        return 0
+      fi
+    fi
+  fi
+
+  if ! gcloud auth print-access-token --quiet >"$auth_log" 2>&1; then
+    cat "$auth_log" >&2
+    rm -f "$auth_log"
+    fail "gcloud auth invalid. Run: gcloud auth login, or set GOOGLE_APPLICATION_CREDENTIALS/GCP_SA_KEY_JSON"
   fi
   rm -f "$auth_log"
 }
@@ -99,6 +172,7 @@ main() {
   fi
 
   ensure_firebase_auth
+  ensure_gcloud_auth
 
   log "Deploying web service to Cloud Run..."
   (cd "$REPO_ROOT" && bash ./scripts/deploy.sh cloudrun-web)

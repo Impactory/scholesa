@@ -1,5 +1,28 @@
 import 'package:equatable/equatable.dart';
 
+DateTime? _coerceDateTime(dynamic value) {
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  if (value is String && value.trim().isNotEmpty) {
+    return DateTime.tryParse(value.trim());
+  }
+  if (value is Map) {
+    final dynamic secondsRaw = value['seconds'] ?? value['_seconds'];
+    final dynamic nanosRaw = value['nanoseconds'] ?? value['_nanoseconds'];
+    final int? seconds =
+        secondsRaw is int ? secondsRaw : int.tryParse('$secondsRaw');
+    final int nanos =
+        nanosRaw is int ? nanosRaw : int.tryParse('$nanosRaw') ?? 0;
+    if (seconds != null) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        (seconds * 1000) + (nanos ~/ 1000000),
+      );
+    }
+  }
+  return null;
+}
+
 /// User profile types
 class UserProfile extends Equatable {
   const UserProfile({
@@ -172,4 +195,91 @@ class GuardianLink extends Equatable {
   @override
   List<Object?> get props =>
       <Object?>[id, siteId, parentId, learnerId, relationship];
+}
+
+/// Cohort launch workflow for site provisioning.
+class CohortLaunch extends Equatable {
+  const CohortLaunch({
+    required this.id,
+    required this.siteId,
+    required this.cohortName,
+    required this.ageBand,
+    required this.scheduleLabel,
+    required this.programFormat,
+    required this.curriculumTerm,
+    required this.rosterStatus,
+    required this.parentCommunicationStatus,
+    required this.baselineSurveyStatus,
+    required this.kickoffStatus,
+    required this.status,
+    this.instructorId,
+    this.welcomePackStatus,
+    this.deviceReadinessStatus,
+    this.kitReadinessStatus,
+    this.learnerCount,
+    this.notes,
+    this.updatedAt,
+  });
+
+  factory CohortLaunch.fromJson(Map<String, dynamic> json) => CohortLaunch(
+        id: json['id'] as String,
+        siteId: json['siteId'] as String? ?? '',
+        cohortName: json['cohortName'] as String? ?? 'Cohort',
+        ageBand: json['ageBand'] as String? ?? 'mixed',
+        scheduleLabel: json['scheduleLabel'] as String? ?? 'TBD',
+        programFormat: json['programFormat'] as String? ?? 'gold',
+        curriculumTerm: json['curriculumTerm'] as String? ?? 'Term 1',
+        rosterStatus: json['rosterStatus'] as String? ?? 'draft',
+        parentCommunicationStatus:
+            json['parentCommunicationStatus'] as String? ?? 'pending',
+        baselineSurveyStatus:
+            json['baselineSurveyStatus'] as String? ?? 'pending',
+        kickoffStatus: json['kickoffStatus'] as String? ?? 'pending',
+        status: json['status'] as String? ?? 'planning',
+        instructorId: json['instructorId'] as String?,
+        welcomePackStatus: json['welcomePackStatus'] as String?,
+        deviceReadinessStatus: json['deviceReadinessStatus'] as String?,
+        kitReadinessStatus: json['kitReadinessStatus'] as String?,
+        learnerCount: (json['learnerCount'] as num?)?.toInt(),
+        notes: json['notes'] as String?,
+        updatedAt: _coerceDateTime(json['updatedAt'] ?? json['createdAt']),
+      );
+
+  final String id;
+  final String siteId;
+  final String cohortName;
+  final String ageBand;
+  final String scheduleLabel;
+  final String programFormat;
+  final String curriculumTerm;
+  final String rosterStatus;
+  final String parentCommunicationStatus;
+  final String baselineSurveyStatus;
+  final String kickoffStatus;
+  final String status;
+  final String? instructorId;
+  final String? welcomePackStatus;
+  final String? deviceReadinessStatus;
+  final String? kitReadinessStatus;
+  final int? learnerCount;
+  final String? notes;
+  final DateTime? updatedAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        id,
+        siteId,
+        cohortName,
+        ageBand,
+        scheduleLabel,
+        programFormat,
+        curriculumTerm,
+        rosterStatus,
+        parentCommunicationStatus,
+        baselineSurveyStatus,
+        kickoffStatus,
+        status,
+        learnerCount,
+        updatedAt,
+      ];
 }

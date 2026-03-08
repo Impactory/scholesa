@@ -32,6 +32,7 @@ import 'modules/provisioning/provisioning_service.dart';
 import 'modules/missions/missions.dart';
 import 'modules/habits/habits.dart';
 import 'modules/messages/messages.dart';
+import 'modules/partner/partner_service.dart';
 import 'modules/parent/parent.dart';
 import 'modules/educator/educator.dart';
 // Firebase options
@@ -287,7 +288,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
               siteId: siteId,
             );
             if (siteId.isNotEmpty &&
-                (appState.role == UserRole.site || appState.role == UserRole.hq)) {
+                (appState.role == UserRole.site ||
+                    appState.role == UserRole.hq)) {
               Future<void>.microtask(service.loadTodayData);
             }
             return service;
@@ -301,6 +303,35 @@ class _ScholesaAppState extends State<ScholesaApp> {
             auth: FirebaseAuth.instance,
           ),
         ),
+        ChangeNotifierProxyProvider<AppState, PartnerService>(
+          create: (_) => PartnerService(
+            firestoreService: _firestoreService,
+            partnerId: '',
+          ),
+          update:
+              (_, AppState appState, PartnerService? previousPartnerService) {
+            final String partnerId = _normalizeContextValue(appState.userId);
+            if (previousPartnerService != null &&
+                previousPartnerService.partnerId == partnerId) {
+              return previousPartnerService;
+            }
+            final PartnerService service = PartnerService(
+              firestoreService: _firestoreService,
+              partnerId: partnerId,
+            );
+            if (partnerId.isNotEmpty &&
+                (appState.role == UserRole.partner ||
+                    appState.role == UserRole.hq)) {
+              Future<void>.microtask(() async {
+                await Future.wait(<Future<void>>[
+                  service.loadContracts(),
+                  service.loadPartnerLaunches(),
+                ]);
+              });
+            }
+            return service;
+          },
+        ),
         // Learner Missions services
         ChangeNotifierProxyProvider<AppState, MissionService>(
           create: (_) => MissionService(
@@ -309,7 +340,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
           ),
           update: (_, AppState appState, MissionService? previousMission) {
             final String learnerId = _normalizeContextValue(appState.userId);
-            if (previousMission != null && previousMission.learnerId == learnerId) {
+            if (previousMission != null &&
+                previousMission.learnerId == learnerId) {
               return previousMission;
             }
             final MissionService service = MissionService(
@@ -317,7 +349,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
               learnerId: learnerId,
             );
             if (learnerId.isNotEmpty &&
-                (appState.role == UserRole.learner || appState.role == UserRole.hq)) {
+                (appState.role == UserRole.learner ||
+                    appState.role == UserRole.hq)) {
               Future<void>.microtask(service.loadMissions);
             }
             return service;
@@ -340,7 +373,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
               learnerId: learnerId,
             );
             if (learnerId.isNotEmpty &&
-                (appState.role == UserRole.learner || appState.role == UserRole.hq)) {
+                (appState.role == UserRole.learner ||
+                    appState.role == UserRole.hq)) {
               Future<void>.microtask(service.loadHabits);
             }
             return service;
@@ -352,7 +386,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
             firestoreService: _firestoreService,
             userId: '',
           ),
-          update: (_, AppState appState, MessageService? previousMessageService) {
+          update:
+              (_, AppState appState, MessageService? previousMessageService) {
             final String userId = _normalizeContextValue(appState.userId);
             if (previousMessageService != null &&
                 previousMessageService.userId == userId) {
@@ -385,7 +420,8 @@ class _ScholesaAppState extends State<ScholesaApp> {
               parentId: parentId,
             );
             if (parentId.isNotEmpty &&
-                (appState.role == UserRole.parent || appState.role == UserRole.hq)) {
+                (appState.role == UserRole.parent ||
+                    appState.role == UserRole.hq)) {
               Future<void>.microtask(service.loadParentData);
             }
             return service;

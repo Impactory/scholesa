@@ -1,56 +1,47 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../services/telemetry_service.dart';
+import 'package:flutter/material.dart';
+
+import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 const Map<String, String> _hqAuditEs = <String, String>{
   'Audit Logs': 'Registros de auditoría',
+  'Red Team Reviews': 'Revisiones red team',
   'Exporting audit logs...': 'Exportando registros de auditoría...',
   'Total': 'Total',
   'Auth': 'Auth',
   'Admin': 'Admin',
   'System': 'Sistema',
+  'Reviews': 'Revisiones',
   'Filter by Category': 'Filtrar por categoría',
   'All': 'Todas',
   'Data': 'Datos',
-  'Category': 'Categoría',
-  'Actor': 'Actor',
-  'Time': 'Hora',
-  'IP Address': 'Dirección IP',
-  'Details': 'Detalles',
   'Close': 'Cerrar',
-  'm ago': 'min atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'User Login': 'Inicio de sesión de usuario',
-  'Role Changed': 'Rol modificado',
-  'Data Export': 'Exportación de datos',
-  'Config Update': 'Actualización de configuración',
-  'Successful login from web client':
-      'Inicio de sesión exitoso desde cliente web',
-  'Changed user jane@school.edu role from educator to site_lead':
-      'Rol del usuario jane@school.edu cambiado de educador a site_lead',
-  'Exported learner progress report for Site: Downtown':
-      'Se exportó el informe de progreso de estudiantes para la sede: Centro',
-  'Feature flag "new_dashboard" enabled globally':
-      'Bandera de función "new_dashboard" habilitada globalmente',
   'Loading...': 'Cargando...',
   'No audit logs found': 'No se encontraron registros de auditoría',
+  'No red team reviews yet': 'Aún no hay revisiones red team',
+  'Create Review': 'Crear revisión',
+  'Title': 'Título',
+  'Site ID': 'ID de sede',
+  'KPI Pack ID': 'ID del KPI Pack',
+  'Decision': 'Decisión',
+  'Partner Status': 'Estado del partner',
+  'Recommendations': 'Recomendaciones',
+  'Next Action': 'Siguiente acción',
+  'Review created': 'Revisión creada',
+  'Failed to create review': 'No se pudo crear la revisión',
+  'Continue': 'Continuar',
+  'Stabilize': 'Estabilizar',
+  'Intervene': 'Intervenir',
+  'Active': 'Activo',
+  'Watch': 'Observación',
+  'Hold': 'Pausa',
 };
 
 String _tHqAudit(BuildContext context, String input) {
   final String locale = Localizations.localeOf(context).languageCode;
   if (locale != 'es') return input;
   return _hqAuditEs[input] ?? input;
-}
-
-/// HQ Audit page for viewing audit logs and compliance reports
-/// Based on docs/43_EXPORT_RETENTION_BACKUP_SPEC.md
-class HqAuditPage extends StatefulWidget {
-  const HqAuditPage({super.key});
-
-  @override
-  State<HqAuditPage> createState() => _HqAuditPageState();
 }
 
 enum _AuditCategory { auth, data, admin, system }
@@ -63,7 +54,6 @@ class _AuditLog {
     required this.actor,
     required this.timestamp,
     required this.details,
-    this.ipAddress,
   });
 
   final String id;
@@ -72,25 +62,62 @@ class _AuditLog {
   final String actor;
   final DateTime timestamp;
   final String details;
-  final String? ipAddress;
+}
+
+class _RedTeamReview {
+  const _RedTeamReview({
+    required this.id,
+    required this.title,
+    required this.decision,
+    required this.partnerStatus,
+    required this.recommendations,
+    required this.nextAction,
+    required this.updatedAt,
+    this.siteId,
+  });
+
+  final String id;
+  final String title;
+  final String decision;
+  final String partnerStatus;
+  final String recommendations;
+  final String nextAction;
+  final DateTime updatedAt;
+  final String? siteId;
+}
+
+class HqAuditPage extends StatefulWidget {
+  const HqAuditPage({super.key});
+
+  @override
+  State<HqAuditPage> createState() => _HqAuditPageState();
 }
 
 class _HqAuditPageState extends State<HqAuditPage> {
-  List<_AuditLog> _auditLogs = <_AuditLog>[];
-  bool _isLoading = false;
+  final WorkflowBridgeService _workflowBridgeService =
+      WorkflowBridgeService.instance;
 
+  List<_AuditLog> _auditLogs = <_AuditLog>[];
+  List<_RedTeamReview> _redTeamReviews = <_RedTeamReview>[];
+  bool _isLoading = false;
   _AuditCategory? _filterCategory;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadAuditLogs();
+      _loadData();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<_AuditLog> filteredLogs = _filterCategory == null
+        ? _auditLogs
+        : _auditLogs
+            .where((_AuditLog log) => log.category == _filterCategory)
+            .toList();
+
     return Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
@@ -100,43 +127,61 @@ class _HqAuditPageState extends State<HqAuditPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'hq_audit',
-                  'cta_id': 'open_filter_dialog',
-                  'surface': 'appbar',
-                },
-              );
-              _showFilterDialog();
-            },
+            onPressed: _showFilterDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_task_rounded),
+            onPressed: _showCreateReviewDialog,
           ),
           IconButton(
             icon: const Icon(Icons.download_rounded),
             onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'hq_audit',
-                  'cta_id': 'export_audit_logs',
-                  'surface': 'appbar',
-                },
-              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content:
-                        Text(_tHqAudit(context, 'Exporting audit logs...'))),
+                  content: Text(_tHqAudit(context, 'Exporting audit logs...')),
+                ),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          _buildSummaryHeader(),
-          Expanded(child: _buildAuditList()),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            _buildSummaryHeader(),
+            const SizedBox(height: 16),
+            _buildSectionHeader(
+              title: _tHqAudit(context, 'Audit Logs'),
+              count: filteredLogs.length,
+            ),
+            const SizedBox(height: 8),
+            if (_isLoading && filteredLogs.isEmpty)
+              _buildLoadingCard()
+            else if (filteredLogs.isEmpty)
+              _buildEmptyCard(_tHqAudit(context, 'No audit logs found'))
+            else
+              ...filteredLogs.map(_buildAuditCard),
+            const SizedBox(height: 20),
+            _buildSectionHeader(
+              title: _tHqAudit(context, 'Red Team Reviews'),
+              count: _redTeamReviews.length,
+              trailing: TextButton.icon(
+                onPressed: _showCreateReviewDialog,
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                label: Text(_tHqAudit(context, 'Create Review')),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_isLoading && _redTeamReviews.isEmpty)
+              _buildLoadingCard()
+            else if (_redTeamReviews.isEmpty)
+              _buildEmptyCard(_tHqAudit(context, 'No red team reviews yet'))
+            else
+              ..._redTeamReviews.map(_buildReviewCard),
+          ],
+        ),
       ),
     );
   }
@@ -144,38 +189,48 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildSummaryHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: ScholesaColors.surface,
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: <Widget>[
           Expanded(
-              child: _buildSummaryStat(_tHqAudit(context, 'Total'),
-                  _auditLogs.length.toString(), Colors.blue)),
+            child: _buildSummaryStat(
+              _tHqAudit(context, 'Total'),
+              _auditLogs.length.toString(),
+              Colors.blue,
+            ),
+          ),
           Expanded(
-              child: _buildSummaryStat(
-                  _tHqAudit(context, 'Auth'),
-                  _auditLogs
-                      .where((_AuditLog l) => l.category == _AuditCategory.auth)
-                      .length
-                      .toString(),
-                  Colors.green)),
+            child: _buildSummaryStat(
+              _tHqAudit(context, 'Auth'),
+              _auditLogs
+                  .where((_AuditLog log) => log.category == _AuditCategory.auth)
+                  .length
+                  .toString(),
+              Colors.green,
+            ),
+          ),
           Expanded(
-              child: _buildSummaryStat(
-                  _tHqAudit(context, 'Admin'),
-                  _auditLogs
-                      .where(
-                          (_AuditLog l) => l.category == _AuditCategory.admin)
-                      .length
-                      .toString(),
-                  Colors.orange)),
+            child: _buildSummaryStat(
+              _tHqAudit(context, 'Admin'),
+              _auditLogs
+                  .where(
+                    (_AuditLog log) => log.category == _AuditCategory.admin,
+                  )
+                  .length
+                  .toString(),
+              Colors.orange,
+            ),
+          ),
           Expanded(
-              child: _buildSummaryStat(
-                  _tHqAudit(context, 'System'),
-                  _auditLogs
-                      .where(
-                          (_AuditLog l) => l.category == _AuditCategory.system)
-                      .length
-                      .toString(),
-                  Colors.purple)),
+            child: _buildSummaryStat(
+              _tHqAudit(context, 'Reviews'),
+              _redTeamReviews.length.toString(),
+              Colors.purple,
+            ),
+          ),
         ],
       ),
     );
@@ -184,81 +239,103 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildSummaryStat(String label, String value, Color color) {
     return Column(
       children: <Widget>[
-        Text(value,
-            style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11, color: ScholesaColors.textSecondary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: ScholesaColors.textSecondary,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildAuditList() {
-    if (_isLoading) {
-      return Center(
+  Widget _buildSectionHeader({
+    required String title,
+    required int count,
+    Widget? trailing,
+  }) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            '$title ($count)',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    );
+  }
+
+  Widget _buildLoadingCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Text(_tHqAudit(context, 'Loading...')),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard(String label) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Text(
-          _tHqAudit(context, 'Loading...'),
+          label,
           style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
-      );
-    }
-
-    final List<_AuditLog> filtered = _filterCategory == null
-        ? _auditLogs
-        : _auditLogs
-            .where((_AuditLog l) => l.category == _filterCategory)
-            .toList();
-
-    if (filtered.isEmpty) {
-      return Center(
-        child: Text(
-          _tHqAudit(context, 'No audit logs found'),
-          style: const TextStyle(color: ScholesaColors.textSecondary),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) =>
-          _buildAuditCard(filtered[index]),
+      ),
     );
   }
 
   Widget _buildAuditCard(_AuditLog log) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: ScholesaColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: _buildCategoryIcon(log.category),
-        title: Text(_tHqAudit(context, log.action),
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(_tHqAudit(context, log.details),
-                style: const TextStyle(
-                    fontSize: 12, color: ScholesaColors.textSecondary)),
-            const SizedBox(height: 4),
-            Text(
-              '${log.actor} • ${_formatTime(log.timestamp)}',
-              style: const TextStyle(
-                  fontSize: 11, color: ScholesaColors.textSecondary),
-            ),
-          ],
-        ),
-        isThreeLine: true,
+        title: Text(log.action),
+        subtitle: Text('${log.actor} • ${_formatTime(log.timestamp)}'),
         onTap: () => _showLogDetails(log),
       ),
     );
   }
 
+  Widget _buildReviewCard(_RedTeamReview review) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const Icon(Icons.security_update_good_rounded),
+        title: Text(review.title),
+        subtitle: Text(
+          '${review.siteId ?? 'global'} • ${review.decision} • ${_formatTime(review.updatedAt)}',
+        ),
+        trailing: _AuditPill(
+          label: review.partnerStatus,
+          color: review.partnerStatus == 'active'
+              ? Colors.green
+              : review.partnerStatus == 'watch'
+                  ? Colors.orange
+                  : Colors.red,
+        ),
+        onTap: () => _showReviewDetails(review),
+      ),
+    );
+  }
+
   Widget _buildCategoryIcon(_AuditCategory category) {
-    IconData icon;
-    Color color;
+    late final IconData icon;
+    late final Color color;
     switch (category) {
       case _AuditCategory.auth:
         icon = Icons.login_rounded;
@@ -273,7 +350,6 @@ class _HqAuditPageState extends State<HqAuditPage> {
         icon = Icons.settings_rounded;
         color = Colors.purple;
     }
-
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -284,22 +360,96 @@ class _HqAuditPageState extends State<HqAuditPage> {
     );
   }
 
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('listAuditLogs');
+      final HttpsCallableResult<dynamic> result =
+          await callable.call(<String, dynamic>{'limit': 120});
+      final Map<String, dynamic> payload =
+          WorkflowBridgeService.asMap(result.data);
+      final List<Map<String, dynamic>> rows =
+          (payload['logs'] as List<dynamic>? ?? <dynamic>[])
+              .map(WorkflowBridgeService.asMap)
+              .toList(growable: false);
+      final List<_AuditLog> loadedLogs = rows
+          .map((Map<String, dynamic> row) {
+            final String actionRaw =
+                (row['action'] as String? ?? 'unknown').trim();
+            return _AuditLog(
+              id: row['id'] as String? ?? '',
+              action: _titleFromAction(actionRaw),
+              category: _categoryFromAction(actionRaw),
+              actor: (row['actorEmail'] as String?)?.trim().isNotEmpty == true
+                  ? (row['actorEmail'] as String).trim()
+                  : (row['actorId'] as String? ?? 'system'),
+              timestamp: WorkflowBridgeService.toDateTime(
+                    row['createdAt'] ?? row['timestamp'] ?? row['updatedAt'],
+                  ) ??
+                  DateTime.now(),
+              details: _detailsToText(row['details']),
+            );
+          })
+          .where((_AuditLog log) => log.id.isNotEmpty)
+          .toList(growable: false)
+        ..sort(
+            (_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
+
+      final List<Map<String, dynamic>> reviewsRaw =
+          await _workflowBridgeService.listRedTeamReviews(limit: 80);
+      final List<_RedTeamReview> loadedReviews =
+          reviewsRaw.map((Map<String, dynamic> row) {
+        return _RedTeamReview(
+          id: row['id'] as String? ?? '',
+          title: row['title'] as String? ?? 'Red Team Review',
+          decision: row['decision'] as String? ?? 'continue',
+          partnerStatus: row['partnerStatus'] as String? ?? 'active',
+          recommendations: row['recommendations'] as String? ?? '',
+          nextAction: row['nextAction'] as String? ?? '',
+          updatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
+              WorkflowBridgeService.toDateTime(row['createdAt']) ??
+              DateTime.now(),
+          siteId: row['siteId'] as String?,
+        );
+      }).toList(growable: false)
+            ..sort(
+              (_RedTeamReview a, _RedTeamReview b) =>
+                  b.updatedAt.compareTo(a.updatedAt),
+            );
+
+      if (!mounted) return;
+      setState(() {
+        _auditLogs = loadedLogs;
+        _redTeamReviews = loadedReviews;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _auditLogs = <_AuditLog>[];
+        _redTeamReviews = <_RedTeamReview>[];
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _showFilterDialog() {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        backgroundColor: ScholesaColors.surface,
         title: Text(_tHqAudit(context, 'Filter by Category')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _buildFilterOption(_tHqAudit(context, 'All'), null),
-            _buildFilterOption(_tHqAudit(context, 'Auth'), _AuditCategory.auth),
+            _buildFilterOption('Auth', _AuditCategory.auth),
             _buildFilterOption(_tHqAudit(context, 'Data'), _AuditCategory.data),
-            _buildFilterOption(
-                _tHqAudit(context, 'Admin'), _AuditCategory.admin),
-            _buildFilterOption(
-                _tHqAudit(context, 'System'), _AuditCategory.system),
+            _buildFilterOption('Admin', _AuditCategory.admin),
+            _buildFilterOption('System', _AuditCategory.system),
           ],
         ),
       ),
@@ -309,35 +459,12 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Widget _buildFilterOption(String label, _AuditCategory? category) {
     return ListTile(
       title: Text(label),
-      leading: RadioGroup<_AuditCategory?>(
-        groupValue: _filterCategory,
-        onChanged: (_AuditCategory? value) {
-          TelemetryService.instance.logEvent(
-            event: 'cta.clicked',
-            metadata: <String, dynamic>{
-              'module': 'hq_audit',
-              'cta_id': 'apply_filter',
-              'surface': 'filter_dialog',
-              'category': value?.name ?? 'all',
-            },
-          );
-          setState(() => _filterCategory = value);
-          Navigator.pop(context);
-        },
-        child: Radio<_AuditCategory?>(
-          value: category,
-        ),
+      leading: Icon(
+        _filterCategory == category
+            ? Icons.radio_button_checked
+            : Icons.radio_button_off,
       ),
       onTap: () {
-        TelemetryService.instance.logEvent(
-          event: 'cta.clicked',
-          metadata: <String, dynamic>{
-            'module': 'hq_audit',
-            'cta_id': 'apply_filter',
-            'surface': 'filter_dialog',
-            'category': category?.name ?? 'all',
-          },
-        );
         setState(() => _filterCategory = category);
         Navigator.pop(context);
       },
@@ -345,61 +472,32 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   void _showLogDetails(_AuditLog log) {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'module': 'hq_audit',
-        'cta_id': 'open_audit_log_details',
-        'surface': 'audit_list',
-        'log_id': log.id,
-        'category': log.category.name,
-      },
-    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(_tHqAudit(context, log.action),
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              log.action,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
-            _buildDetailRow(_tHqAudit(context, 'Category'),
-                log.category.name.toUpperCase()),
-            _buildDetailRow(_tHqAudit(context, 'Actor'), log.actor),
-            _buildDetailRow(
-                _tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
-            if (log.ipAddress != null)
-              _buildDetailRow(_tHqAudit(context, 'IP Address'), log.ipAddress!),
+            _buildDetailRow('Actor', log.actor),
+            _buildDetailRow('Time', _formatTime(log.timestamp)),
             const SizedBox(height: 8),
-            Text(_tHqAudit(context, 'Details'),
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: ScholesaColors.textSecondary)),
-            const SizedBox(height: 4),
-            Text(_tHqAudit(context, log.details)),
+            Text(log.details),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'module': 'hq_audit',
-                      'cta_id': 'close_audit_log_details',
-                      'surface': 'audit_log_details_sheet',
-                      'log_id': log.id,
-                    },
-                  );
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 child: Text(_tHqAudit(context, 'Close')),
               ),
             ),
@@ -409,89 +507,245 @@ class _HqAuditPageState extends State<HqAuditPage> {
     );
   }
 
+  void _showReviewDetails(_RedTeamReview review) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: ScholesaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: ListView(
+          shrinkWrap: true,
+          children: <Widget>[
+            Text(
+              review.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow(_tHqAudit(context, 'Decision'), review.decision),
+            _buildDetailRow(
+              _tHqAudit(context, 'Partner Status'),
+              review.partnerStatus,
+            ),
+            if ((review.siteId ?? '').trim().isNotEmpty)
+              _buildDetailRow(_tHqAudit(context, 'Site ID'), review.siteId!),
+            const SizedBox(height: 8),
+            Text(
+              _tHqAudit(context, 'Recommendations'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(review.recommendations),
+            const SizedBox(height: 12),
+            Text(
+              _tHqAudit(context, 'Next Action'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(review.nextAction),
+            const SizedBox(height: 24),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(_tHqAudit(context, 'Close')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCreateReviewDialog() async {
+    final BuildContext pageContext = context;
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(pageContext);
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController siteIdController = TextEditingController();
+    final TextEditingController kpiPackIdController = TextEditingController();
+    final TextEditingController recommendationsController =
+        TextEditingController();
+    final TextEditingController nextActionController = TextEditingController();
+    String decision = 'continue';
+    String partnerStatus = 'active';
+    bool isSubmitting = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            title: Text(_tHqAudit(context, 'Create Review')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Title'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: siteIdController,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Site ID'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: kpiPackIdController,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'KPI Pack ID'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: decision,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Decision'),
+                    ),
+                    items: const <String>['continue', 'stabilize', 'intervene']
+                        .map((String value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ))
+                        .toList(),
+                    onChanged: (String? value) =>
+                        setLocalState(() => decision = value ?? 'continue'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: partnerStatus,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Partner Status'),
+                    ),
+                    items: const <String>['active', 'watch', 'hold']
+                        .map((String value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ))
+                        .toList(),
+                    onChanged: (String? value) =>
+                        setLocalState(() => partnerStatus = value ?? 'active'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: recommendationsController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Recommendations'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nextActionController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: _tHqAudit(context, 'Next Action'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed:
+                    isSubmitting ? null : () => Navigator.pop(dialogContext),
+                child: Text(_tHqAudit(context, 'Close')),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        if (titleController.text.trim().isEmpty) {
+                          return;
+                        }
+                        final String reviewCreatedLabel =
+                            _tHqAudit(pageContext, 'Review created');
+                        final String reviewFailedLabel =
+                            _tHqAudit(pageContext, 'Failed to create review');
+                        setLocalState(() => isSubmitting = true);
+                        try {
+                          await _workflowBridgeService.upsertRedTeamReview(
+                            <String, dynamic>{
+                              'title': titleController.text.trim(),
+                              if (siteIdController.text.trim().isNotEmpty)
+                                'siteId': siteIdController.text.trim(),
+                              if (kpiPackIdController.text.trim().isNotEmpty)
+                                'kpiPackId': kpiPackIdController.text.trim(),
+                              'decision': decision,
+                              'partnerStatus': partnerStatus,
+                              'recommendations':
+                                  recommendationsController.text.trim(),
+                              'nextAction': nextActionController.text.trim(),
+                            },
+                          );
+                          if (!mounted || !dialogContext.mounted) {
+                            return;
+                          }
+                          Navigator.pop(dialogContext);
+                          await _loadData();
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(reviewCreatedLabel),
+                            ),
+                          );
+                        } catch (_) {
+                          if (!mounted) return;
+                          setLocalState(() => isSubmitting = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(reviewFailedLabel),
+                            ),
+                          );
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(_tHqAudit(context, 'Create Review')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    titleController.dispose();
+    siteIdController.dispose();
+    kpiPackIdController.dispose();
+    recommendationsController.dispose();
+    nextActionController.dispose();
+  }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label,
-              style: const TextStyle(color: ScholesaColors.textSecondary)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    final Duration diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}${_tHqAudit(context, 'm ago')}';
-    }
-    if (diff.inHours < 24) {
-      return '${diff.inHours}${_tHqAudit(context, 'h ago')}';
-    }
-    return '${diff.inDays}${_tHqAudit(context, 'd ago')}';
-  }
-
-  Future<void> _loadAuditLogs() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-    try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listAuditLogs');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'limit': 100});
-      final Map<String, dynamic> payload = _asMap(result.data);
-      final List<dynamic> rows =
-          payload['logs'] as List<dynamic>? ?? <dynamic>[];
-
-      final List<_AuditLog> loaded = rows
-          .map((dynamic row) {
-            final Map<String, dynamic> data = _asMap(row);
-            final String id = ((data['id'] as String?) ?? '').trim();
-            if (id.isEmpty) return null;
-            final String actionRaw =
-                ((data['action'] as String?) ?? 'unknown').trim();
-            final String actionTitle = _titleFromAction(actionRaw);
-            final String actor =
-                ((data['actorEmail'] as String?)?.trim().isNotEmpty == true)
-                    ? (data['actorEmail'] as String).trim()
-                    : ((data['actorId'] as String?)?.trim().isNotEmpty == true)
-                        ? (data['actorId'] as String).trim()
-                        : 'system';
-            final DateTime timestamp = _toDateTime(data['createdAt']) ??
-                _toDateTime(data['timestamp']) ??
-                _toDateTime(data['updatedAt']) ??
-                DateTime.now();
-            final String details = _detailsToText(data['details']);
-
-            return _AuditLog(
-              id: id,
-              action: actionTitle,
-              category: _categoryFromAction(actionRaw),
-              actor: actor,
-              timestamp: timestamp,
-              details: details,
-              ipAddress: data['ipAddress'] as String?,
-            );
-          })
-          .whereType<_AuditLog>()
-          .toList(growable: false);
-
-      loaded.sort(
-          (_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
-
-      if (!mounted) return;
-      setState(() => _auditLogs = loaded);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _auditLogs = <_AuditLog>[]);
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   _AuditCategory _categoryFromAction(String action) {
@@ -509,68 +763,72 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   String _titleFromAction(String action) {
-    final String value = action.trim();
-    if (value.isEmpty) return 'Unknown Action';
-    final List<String> parts = value
+    final List<String> parts = action
         .replaceAll('_', ' ')
         .replaceAll('.', ' ')
         .split(' ')
-        .where((String p) => p.isNotEmpty)
-        .toList();
+        .where((String part) => part.isNotEmpty)
+        .toList(growable: false);
     return parts
-        .map((String p) =>
-            '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
+        .map(
+          (String part) =>
+              '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+        )
         .join(' ');
   }
 
   String _detailsToText(dynamic details) {
-    if (details is String && details.trim().isNotEmpty) return details.trim();
+    if (details is String && details.trim().isNotEmpty) {
+      return details.trim();
+    }
     if (details is Map) {
-      final Map<String, dynamic> asMap = _asMap(details);
-      final Iterable<String> pairs = asMap.entries
-          .where((MapEntry<String, dynamic> e) => e.value != null)
-          .map((MapEntry<String, dynamic> e) => '${e.key}: ${e.value}');
-      return pairs.isEmpty ? 'No additional details' : pairs.join(', ');
+      final Map<String, dynamic> asMap = WorkflowBridgeService.asMap(details);
+      return asMap.entries
+          .where((MapEntry<String, dynamic> entry) => entry.value != null)
+          .map((MapEntry<String, dynamic> entry) =>
+              '${entry.key}: ${entry.value}')
+          .join(', ');
     }
-    return 'No additional details';
+    return '';
   }
 
-  DateTime? _toDateTime(dynamic value) {
-    if (value is Map) {
-      final dynamic secondsRaw = value['seconds'] ?? value['_seconds'];
-      final dynamic nanosRaw = value['nanoseconds'] ?? value['_nanoseconds'];
-      final int? seconds =
-          secondsRaw is int ? secondsRaw : int.tryParse('$secondsRaw');
-      final int nanos =
-          nanosRaw is int ? nanosRaw : int.tryParse('$nanosRaw') ?? 0;
-      if (seconds != null) {
-        return DateTime.fromMillisecondsSinceEpoch(
-          (seconds * 1000) + (nanos ~/ 1000000),
-        );
-      }
+  String _formatTime(DateTime time) {
+    final Duration diff = DateTime.now().difference(time);
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m';
     }
-    if (value != null &&
-        value is Object &&
-        value.runtimeType.toString().contains('Timestamp') &&
-        (value as dynamic).toDate is Function) {
-      return (value as dynamic).toDate() as DateTime?;
+    if (diff.inHours < 24) {
+      return '${diff.inHours}h';
     }
-    if (value is DateTime) return value;
-    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-    if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    if (value is String && value.trim().isNotEmpty) {
-      return DateTime.tryParse(value.trim());
-    }
-    return null;
+    return '${diff.inDays}d';
   }
+}
 
-  Map<String, dynamic> _asMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) {
-      return value.map(
-        (dynamic key, dynamic mapValue) => MapEntry(key.toString(), mapValue),
-      );
-    }
-    return <String, dynamic>{};
+class _AuditPill extends StatelessWidget {
+  const _AuditPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

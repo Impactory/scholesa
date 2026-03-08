@@ -5,18 +5,19 @@ import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 const Map<String, String> _siteDashboardEs = <String, String>{
   'New enrollment': 'Nueva inscripción',
   'Emma Johnson joined AI Explorers':
-    'Emma Johnson se unió a Exploradores de IA',
+      'Emma Johnson se unió a Exploradores de IA',
   'Mission completed': 'Misión completada',
   'Liam Chen completed "Build a Robot"':
-    'Liam Chen completó "Construye un robot"',
+      'Liam Chen completó "Construye un robot"',
   'Achievement unlocked': 'Logro desbloqueado',
   'Sofia Martinez earned "Code Master" badge':
-    'Sofia Martinez obtuvo la insignia "Maestro de código"',
+      'Sofia Martinez obtuvo la insignia "Maestro de código"',
   '2 hours ago': 'Hace 2 horas',
   '4 hours ago': 'Hace 4 horas',
   '6 hours ago': 'Hace 6 horas',
@@ -27,7 +28,7 @@ const Map<String, String> _siteDashboardEs = <String, String>{
   'This Month': 'Este mes',
   'Term': 'Periodo',
   'Unable to load telemetry metrics:':
-    'No se pudieron cargar las métricas de telemetría:',
+      'No se pudieron cargar las métricas de telemetría:',
   'Telemetry KPIs': 'KPIs de telemetría',
   'Telemetry feed pending': 'Feed de telemetría pendiente',
   'Waiting for first data sync from BOS-MIA telemetry.':
@@ -41,18 +42,25 @@ const Map<String, String> _siteDashboardEs = <String, String>{
   'Attendance Trend': 'Tendencia de asistencia',
   'Attendance data unavailable': 'Datos de asistencia no disponibles',
   'No attendance telemetry for this period':
-    'No hay telemetría de asistencia para este periodo',
+      'No hay telemetría de asistencia para este periodo',
   'Latest attendance:': 'Asistencia más reciente:',
   'Pillar Progress (Site Average)': 'Progreso por pilar (promedio del sitio)',
   'Future Skills': 'Habilidades del futuro',
   'Leadership': 'Liderazgo',
   'Impact': 'Impacto',
   'Recent Activity': 'Actividad reciente',
+  'KPI Packs': 'Packs KPI',
+  'Latest KPI pack': 'Último pack KPI',
+  'No KPI packs yet': 'Aún no hay packs KPI',
+  'Generate Pack': 'Generar pack',
+  'Fidelity Score': 'Puntaje de fidelidad',
+  'Portfolio Grade': 'Calidad de portafolio',
+  'Recommendation': 'Recomendación',
   'View All': 'Ver todo',
   'Export Site Report': 'Exportar reporte del sitio',
   'Generate a': 'Generar un',
   'summary report for this site dashboard.':
-    'reporte resumido para este panel del sitio.',
+      'reporte resumido para este panel del sitio.',
   'Cancel': 'Cancelar',
   'Report generated': 'Reporte generado',
   'report ready for download': 'reporte listo para descargar',
@@ -77,10 +85,14 @@ class SiteDashboardPage extends StatefulWidget {
 class _SiteDashboardPageState extends State<SiteDashboardPage> {
   String _selectedPeriod = 'week';
   final AnalyticsService _analyticsService = AnalyticsService.instance;
+  final WorkflowBridgeService _workflowBridgeService =
+      WorkflowBridgeService.instance;
   TelemetryDashboardMetrics? _metrics;
   bool _isLoadingMetrics = true;
+  bool _isLoadingKpiPacks = true;
   bool _isLoadingActivities = true;
   String? _metricsError;
+  List<_KpiPackSummary> _kpiPacks = <_KpiPackSummary>[];
   List<_SiteActivity> _activities = <_SiteActivity>[];
 
   String _t(String input) {
@@ -99,8 +111,12 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         'insight_type': 'site_overview',
       },
     );
-    _loadMetrics();
-    _loadRecentActivity();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadMetrics();
+      _loadKpiPacks();
+      _loadRecentActivity();
+    });
   }
 
   Future<void> _loadMetrics() async {
@@ -109,7 +125,15 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       _metricsError = null;
     });
     try {
-      final AppState appState = context.read<AppState>();
+      final AppState? appState = _maybeAppState();
+      if (appState == null || (appState.activeSiteId ?? '').trim().isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _metrics = null;
+          _isLoadingMetrics = false;
+        });
+        return;
+      }
       final String period = _selectedPeriodToTelemetryPeriod(_selectedPeriod);
       final TelemetryDashboardMetrics metrics =
           await _analyticsService.getTelemetryDashboardMetrics(
@@ -144,6 +168,63 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
   }
 
+  String _selectedPeriodToKpiPackPeriod(String selectedPeriod) {
+    switch (selectedPeriod) {
+      case 'term':
+        return 'quarter';
+      case 'today':
+      case 'week':
+      case 'month':
+      default:
+        return 'month';
+    }
+  }
+
+  Future<void> _loadKpiPacks() async {
+    final String? siteId = _maybeAppState()?.activeSiteId;
+    if (!mounted) return;
+    setState(() => _isLoadingKpiPacks = true);
+    try {
+      final List<Map<String, dynamic>> rows =
+          await _workflowBridgeService.listKpiPacks(
+        siteId: siteId,
+        limit: 12,
+      );
+      final List<_KpiPackSummary> packs = rows
+          .map(
+            (Map<String, dynamic> row) => _KpiPackSummary(
+              id: row['id'] as String? ?? '',
+              title: row['title'] as String? ?? 'KPI Pack',
+              period: row['period'] as String? ?? 'month',
+              recommendation: row['recommendation'] as String? ?? 'stabilize',
+              status: row['status'] as String? ?? 'generated',
+              fidelityScore: (row['fidelityScore'] as num?)?.toDouble() ?? 0,
+              portfolioQualityGrade:
+                  row['portfolioQualityGrade'] as String? ?? 'C',
+              generatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
+                  WorkflowBridgeService.toDateTime(row['createdAt']),
+            ),
+          )
+          .toList()
+        ..sort((_KpiPackSummary a, _KpiPackSummary b) {
+          final DateTime aTime =
+              a.generatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final DateTime bTime =
+              b.generatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+      if (!mounted) return;
+      setState(() => _kpiPacks = packs);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _kpiPacks = <_KpiPackSummary>[]);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingKpiPacks = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,6 +245,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildPeriodSelector()),
             SliverToBoxAdapter(child: _buildKeyMetrics()),
+            SliverToBoxAdapter(child: _buildKpiPackSection()),
             SliverToBoxAdapter(child: _buildAttendanceChart()),
             SliverToBoxAdapter(child: _buildPillarBreakdown()),
             SliverToBoxAdapter(child: _buildRecentActivity()),
@@ -249,6 +331,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               );
               setState(() => _selectedPeriod = 'today');
               _loadMetrics();
+              _loadKpiPacks();
             },
           ),
           const SizedBox(width: 8),
@@ -264,6 +347,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               );
               setState(() => _selectedPeriod = 'week');
               _loadMetrics();
+              _loadKpiPacks();
             },
           ),
           const SizedBox(width: 8),
@@ -279,6 +363,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               );
               setState(() => _selectedPeriod = 'month');
               _loadMetrics();
+              _loadKpiPacks();
             },
           ),
           const SizedBox(width: 8),
@@ -294,8 +379,127 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               );
               setState(() => _selectedPeriod = 'term');
               _loadMetrics();
+              _loadKpiPacks();
             },
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiPackSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    _t('KPI Packs'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _generateKpiPack,
+                  icon: const Icon(Icons.auto_graph_rounded),
+                  label: Text(_t('Generate Pack')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingKpiPacks)
+              const Center(child: CircularProgressIndicator())
+            else if (_kpiPacks.isEmpty)
+              Text(
+                _t('No KPI packs yet'),
+                style: TextStyle(color: Colors.grey[600]),
+              )
+            else ...<Widget>[
+              Text(
+                _t('Latest KPI pack'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildKpiPackCard(_kpiPacks.first),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiPackCard(_KpiPackSummary pack) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.site.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  pack.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              _DashboardPill(
+                label: pack.status,
+                color: pack.status == 'generated'
+                    ? ScholesaColors.success
+                    : ScholesaColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _DashboardPill(
+                label:
+                    '${_t('Fidelity Score')}: ${(pack.fidelityScore * 100).toStringAsFixed(0)}%',
+                color: ScholesaColors.site,
+              ),
+              _DashboardPill(
+                label:
+                    '${_t('Portfolio Grade')}: ${pack.portfolioQualityGrade}',
+                color: ScholesaColors.futureSkills,
+              ),
+              _DashboardPill(
+                label: '${_t('Recommendation')}: ${pack.recommendation}',
+                color: ScholesaColors.warning,
+              ),
+            ],
+          ),
+          if (pack.generatedAt != null) ...<Widget>[
+            const SizedBox(height: 12),
+            Text(
+              '${pack.period} • ${_formatShortDateTime(pack.generatedAt!)}',
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+          ],
         ],
       ),
     );
@@ -344,7 +548,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             children: <Widget>[
               Text(
                 _t('Telemetry KPIs'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 8),
               Text(
@@ -423,7 +628,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: _MetricCard(
                   icon: Icons.timer,
                   value: reviewSlaRate,
-                  label: '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
+                  label:
+                      '${_t('Review SLA')} (${metrics.educatorReviewSlaHours}h)',
                   trend: _t('within SLA'),
                   trendUp: true,
                   color: ScholesaColors.warning,
@@ -689,6 +895,41 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
   }
 
+  Future<void> _generateKpiPack() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'site_dashboard_generate_kpi_pack',
+        'period': _selectedPeriod,
+      },
+    );
+    try {
+      final String? siteId = _maybeAppState()?.activeSiteId;
+      await _workflowBridgeService.generateKpiPack(
+        siteId: siteId,
+        period: _selectedPeriodToKpiPackPeriod(_selectedPeriod),
+      );
+      await _loadKpiPacks();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_t('KPI Packs')}: ${_t('Generate')} ${_selectedPeriodToKpiPackPeriod(_selectedPeriod)}',
+          ),
+          backgroundColor: ScholesaColors.site,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to load telemetry metrics:')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
   String _shortDateLabel(String rawDate) {
     final DateTime? date = DateTime.tryParse(rawDate);
     if (date == null) return rawDate;
@@ -858,7 +1099,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$_selectedPeriod ${_t('report prepared for download')}'),
+          content:
+              Text('$_selectedPeriod ${_t('report prepared for download')}'),
           backgroundColor: ScholesaColors.site,
         ),
       );
@@ -940,9 +1182,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             _toDateTime(data['createdAt']) ??
             _toDateTime(data['updatedAt']);
         if (at == null) continue;
-        final String summary = (data['title'] as String?)?.trim().isNotEmpty == true
-            ? (data['title'] as String).trim()
-            : (data['description'] as String?) ?? _t('Incident reported');
+        final String summary =
+            (data['title'] as String?)?.trim().isNotEmpty == true
+                ? (data['title'] as String).trim()
+                : (data['description'] as String?) ?? _t('Incident reported');
         feed.add(
           _TimedSiteActivity(
             at: at,
@@ -974,8 +1217,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         final Map<String, dynamic> data = doc.data();
         final DateTime? at = _toDateTime(data['createdAt']);
         if (at == null) continue;
-        final String action = (data['action'] as String?)?.trim() ?? _t('Site operation event');
-        final ({IconData icon, Color color}) visual = _mapActivityVisual(action);
+        final String action =
+            (data['action'] as String?)?.trim() ?? _t('Site operation event');
+        final ({IconData icon, Color color}) visual =
+            _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
             ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}'
             : _t('Site operation event');
@@ -990,7 +1235,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         );
       }
 
-      feed.sort((_TimedSiteActivity a, _TimedSiteActivity b) => b.at.compareTo(a.at));
+      feed.sort(
+          (_TimedSiteActivity a, _TimedSiteActivity b) => b.at.compareTo(a.at));
       final List<_SiteActivity> activities = feed
           .take(8)
           .map(
@@ -1085,6 +1331,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       ),
     ];
   }
+
+  String _formatShortDateTime(DateTime value) {
+    return '${value.month}/${value.day}/${value.year}';
+  }
 }
 
 class _TimedSiteActivity {
@@ -1101,6 +1351,57 @@ class _TimedSiteActivity {
   final String title;
   final String subtitle;
   final Color color;
+}
+
+class _KpiPackSummary {
+  const _KpiPackSummary({
+    required this.id,
+    required this.title,
+    required this.period,
+    required this.recommendation,
+    required this.status,
+    required this.fidelityScore,
+    required this.portfolioQualityGrade,
+    this.generatedAt,
+  });
+
+  final String id;
+  final String title;
+  final String period;
+  final String recommendation;
+  final String status;
+  final double fidelityScore;
+  final String portfolioQualityGrade;
+  final DateTime? generatedAt;
+}
+
+class _DashboardPill extends StatelessWidget {
+  const _DashboardPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
 class _SiteActivity {

@@ -13,6 +13,7 @@ const {
 const { buildCanonicalReport } = require('./vibe_audit_report_schema');
 const {
   initializeFirestoreRestFallback,
+  initializeFirestoreUserRestFallback,
   isCredentialAuthError,
 } = require('./firebase_runtime_auth');
 
@@ -41,7 +42,18 @@ async function run() {
       if (!isCredentialAuthError(error)) {
         throw error;
       }
-      const fallback = initializeFirestoreRestFallback(projectId);
+      let fallback;
+      try {
+        fallback = await initializeFirestoreUserRestFallback(projectId, {
+          email: process.env.CROSS_LINK_FALLBACK_EMAIL,
+          password: process.env.TEST_USER_PASSWORD,
+        });
+      } catch (userFallbackError) {
+        if (!isCredentialAuthError(userFallbackError)) {
+          throw userFallbackError;
+        }
+        fallback = initializeFirestoreRestFallback(projectId);
+      }
       db = fallback.db;
       credentialPath = fallback.credentialPath;
       projectId = fallback.projectId;

@@ -13,13 +13,19 @@ resolve_local_gcloud_auth() {
   fi
 
   if [[ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
-    local gcloud_account
-    gcloud_account="$(gcloud config get-value account 2>/dev/null || true)"
-    if [[ -n "$gcloud_account" ]]; then
-      local legacy_adc="$HOME/.config/gcloud/legacy_credentials/${gcloud_account}/adc.json"
-      if [[ -f "$legacy_adc" ]]; then
-        export GOOGLE_APPLICATION_CREDENTIALS="$legacy_adc"
-        echo "Using gcloud legacy ADC: $legacy_adc"
+    local standard_adc="$HOME/.config/gcloud/application_default_credentials.json"
+    if [[ -f "$standard_adc" ]]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="$standard_adc"
+      echo "Using gcloud application-default ADC: $standard_adc"
+    else
+      local gcloud_account
+      gcloud_account="$(gcloud config get-value account 2>/dev/null || true)"
+      if [[ -n "$gcloud_account" ]]; then
+        local legacy_adc="$HOME/.config/gcloud/legacy_credentials/${gcloud_account}/adc.json"
+        if [[ -f "$legacy_adc" ]]; then
+          export GOOGLE_APPLICATION_CREDENTIALS="$legacy_adc"
+          echo "Using gcloud legacy ADC: $legacy_adc"
+        fi
       fi
     fi
   fi

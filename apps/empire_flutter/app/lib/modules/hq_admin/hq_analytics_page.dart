@@ -5,10 +5,16 @@ import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 const Map<String, String> _hqAnalyticsEs = <String, String>{
   'Platform Analytics': 'Analítica de la plataforma',
+  'KPI Packs': 'Packs KPI',
+  'No KPI packs yet': 'Aún no hay packs KPI',
+  'Generate KPI Pack': 'Generar pack KPI',
+  'Select a site to generate a KPI pack':
+      'Selecciona una sede para generar un pack KPI',
   'Comprehensive performance insights': 'Insights integrales de desempeño',
   'All Sites': 'Todas las sedes',
   'Singapore': 'Singapur',
@@ -95,9 +101,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   String _selectedPeriod = 'month';
   String _selectedSite = 'all';
   final AnalyticsService _analyticsService = AnalyticsService.instance;
+  final WorkflowBridgeService _workflowBridgeService =
+      WorkflowBridgeService.instance;
   TelemetryDashboardMetrics? _metrics;
   bool _isLoadingMetrics = true;
   bool _isLoadingSupplemental = true;
+  bool _isLoadingKpiPacks = true;
   String? _metricsError;
   List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
     const _SiteFilterOption(id: 'all', name: 'All Sites'),
@@ -105,6 +114,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   List<_PillarAnalyticsData> _pillarAnalyticsData = <_PillarAnalyticsData>[];
   List<_SiteComparisonData> _siteComparisonData = <_SiteComparisonData>[];
   List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
+  List<_HqKpiPackSummary> _kpiPacks = <_HqKpiPackSummary>[];
   _BosMiaFeedbackSummary? _bosMiaFeedbackSummary;
   int _usabilityScore = 4;
   int _usefulnessScore = 4;
@@ -131,6 +141,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     );
     _loadMetrics();
     _loadSupplementalData();
+    _loadKpiPacks();
   }
 
   Future<void> _loadMetrics() async {
@@ -199,6 +210,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildFilters()),
             SliverToBoxAdapter(child: _buildKeyMetrics()),
+            SliverToBoxAdapter(child: _buildKpiPackSection()),
             SliverToBoxAdapter(child: _buildBosMiaFeedbackSummaryCard()),
             SliverToBoxAdapter(child: _buildGrowthChart()),
             SliverToBoxAdapter(child: _buildPillarAnalytics()),
@@ -319,6 +331,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     setState(() => _selectedSite = value);
                     _loadMetrics();
                     _loadSupplementalData();
+                    _loadKpiPacks();
                   }
                 },
               ),
@@ -359,6 +372,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     setState(() => _selectedPeriod = value);
                     _loadMetrics();
                     _loadSupplementalData();
+                    _loadKpiPacks();
                   }
                 },
               ),
@@ -528,6 +542,58 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildKpiPackSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    _t('KPI Packs'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _generateKpiPack,
+                  icon: const Icon(Icons.auto_graph_rounded),
+                  label: Text(_t('Generate KPI Pack')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingKpiPacks)
+              const Center(child: CircularProgressIndicator())
+            else if (_kpiPacks.isEmpty)
+              Text(
+                _t('No KPI packs yet'),
+                style: TextStyle(color: Colors.grey[600]),
+              )
+            else
+              ..._kpiPacks.take(3).map(((_HqKpiPackSummary pack) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _HqKpiPackCard(pack: pack),
+                );
+              })),
+          ],
+        ),
       ),
     );
   }
@@ -1030,6 +1096,44 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _generateKpiPack() async {
+    final String? siteId = _selectedSite == 'all'
+        ? null
+        : _resolveSiteId(_selectedSite, context.read<AppState>());
+    if ((siteId ?? '').trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Select a site to generate a KPI pack')),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _workflowBridgeService.generateKpiPack(
+        siteId: siteId,
+        period: _selectedPeriod == 'week' ? 'month' : _selectedPeriod,
+      );
+      await _loadKpiPacks();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Generate KPI Pack')),
+          backgroundColor: ScholesaColors.hq,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to load telemetry metrics:')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
   }
 
   Future<void> _openBosMiaFeedbackDialog() async {
@@ -1568,6 +1672,49 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingSupplemental = false);
+      }
+    }
+  }
+
+  Future<void> _loadKpiPacks() async {
+    if (!mounted) return;
+    setState(() => _isLoadingKpiPacks = true);
+    try {
+      final String? siteId = _selectedSite == 'all'
+          ? null
+          : _resolveSiteId(_selectedSite, context.read<AppState>());
+      final List<Map<String, dynamic>> rows =
+          await _workflowBridgeService.listKpiPacks(
+        siteId: siteId,
+        limit: 24,
+      );
+      final List<_HqKpiPackSummary> packs =
+          rows.map((Map<String, dynamic> row) {
+        return _HqKpiPackSummary(
+          id: row['id'] as String? ?? '',
+          title: row['title'] as String? ?? 'KPI Pack',
+          siteId: row['siteId'] as String? ?? 'site',
+          period: row['period'] as String? ?? 'month',
+          recommendation: row['recommendation'] as String? ?? 'stabilize',
+          fidelityScore: (row['fidelityScore'] as num?)?.toDouble() ?? 0,
+          portfolioQualityGrade: row['portfolioQualityGrade'] as String? ?? 'C',
+          updatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
+              WorkflowBridgeService.toDateTime(row['createdAt']) ??
+              DateTime.now(),
+        );
+      }).toList(growable: false)
+            ..sort(
+              (_HqKpiPackSummary a, _HqKpiPackSummary b) =>
+                  b.updatedAt.compareTo(a.updatedAt),
+            );
+      if (!mounted) return;
+      setState(() => _kpiPacks = packs);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _kpiPacks = <_HqKpiPackSummary>[]);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingKpiPacks = false);
       }
     }
   }
@@ -2321,6 +2468,120 @@ class _TopPerformerCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HqKpiPackSummary {
+  const _HqKpiPackSummary({
+    required this.id,
+    required this.title,
+    required this.siteId,
+    required this.period,
+    required this.recommendation,
+    required this.fidelityScore,
+    required this.portfolioQualityGrade,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String title;
+  final String siteId;
+  final String period;
+  final String recommendation;
+  final double fidelityScore;
+  final String portfolioQualityGrade;
+  final DateTime updatedAt;
+}
+
+class _HqKpiPackCard extends StatelessWidget {
+  const _HqKpiPackCard({required this.pack});
+
+  final _HqKpiPackSummary pack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.hq.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  pack.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              Text(
+                '${pack.updatedAt.month}/${pack.updatedAt.day}',
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _HqPackPill(
+                label: pack.siteId,
+                color: ScholesaColors.hq,
+              ),
+              _HqPackPill(
+                label:
+                    'fidelity ${(pack.fidelityScore * 100).toStringAsFixed(0)}%',
+                color: ScholesaColors.futureSkills,
+              ),
+              _HqPackPill(
+                label: 'grade ${pack.portfolioQualityGrade}',
+                color: ScholesaColors.warning,
+              ),
+              _HqPackPill(
+                label: pack.recommendation,
+                color: ScholesaColors.success,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HqPackPill extends StatelessWidget {
+  const _HqPackPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

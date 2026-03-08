@@ -11,8 +11,10 @@ const Map<String, String> _provisioningEs = <String, String>{
   'Learners': 'Estudiantes',
   'Parents': 'Padres',
   'Links': 'Vínculos',
+  'Cohorts': 'Cohortes',
   'No learners yet': 'Aún no hay estudiantes',
-  'Add learners to your site to get started.': 'Agrega estudiantes a tu sede para comenzar.',
+  'Add learners to your site to get started.':
+      'Agrega estudiantes a tu sede para comenzar.',
   'No parents yet': 'Aún no hay padres',
   'Add parent accounts to link with learners.':
       'Agrega cuentas de padres para vincularlas con estudiantes.',
@@ -66,6 +68,36 @@ const Map<String, String> _provisioningEs = <String, String>{
   'Create Link': 'Crear vínculo',
   'Save': 'Guardar',
   'Phone': 'Teléfono',
+  'No cohort launches yet': 'Aún no hay lanzamientos de cohorte',
+  'Track launch readiness, parent comms, and kickoff status here.':
+      'Da seguimiento a la preparación, comunicación con familias y estado de arranque aquí.',
+  'Create Cohort Launch': 'Crear lanzamiento de cohorte',
+  'Cohort Name': 'Nombre de cohorte',
+  'Age Band': 'Rango de edad',
+  'Schedule': 'Horario',
+  'Program Format': 'Formato del programa',
+  'Curriculum Term': 'Periodo curricular',
+  'Roster Status': 'Estado de lista',
+  'Parent Comms': 'Comunicación con familias',
+  'Baseline Survey': 'Encuesta inicial',
+  'Kickoff': 'Inicio',
+  'Learner Count': 'Cantidad de estudiantes',
+  'Mixed Ages': 'Edades mixtas',
+  'Gold': 'Gold',
+  'Silver': 'Silver',
+  'Pilot': 'Piloto',
+  'Draft': 'Borrador',
+  'Ready': 'Lista',
+  'Active': 'Activa',
+  'Pending': 'Pendiente',
+  'Sent': 'Enviado',
+  'Confirmed': 'Confirmado',
+  'Completed': 'Completado',
+  'Scheduled': 'Programado',
+  'Cohort launch created successfully':
+      'Lanzamiento de cohorte creado correctamente',
+  'Failed to create cohort launch':
+      'No se pudo crear el lanzamiento de cohorte',
 };
 
 String _tProvisioning(BuildContext context, String input) {
@@ -101,7 +133,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         return;
@@ -110,6 +142,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
         0 => 'learners',
         1 => 'parents',
         2 => 'links',
+        3 => 'cohorts',
         _ => 'unknown',
       };
       TelemetryService.instance.logEvent(
@@ -144,6 +177,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
       service.loadLearners(siteId),
       service.loadParents(siteId),
       service.loadGuardianLinks(siteId),
+      service.loadCohortLaunches(siteId),
     ]);
   }
 
@@ -170,6 +204,9 @@ class _ProvisioningPageState extends State<ProvisioningPage>
             Tab(
                 icon: const Icon(Icons.link),
                 text: _tProvisioning(context, 'Links')),
+            Tab(
+                icon: const Icon(Icons.rocket_launch_rounded),
+                text: _tProvisioning(context, 'Cohorts')),
           ],
         ),
       ),
@@ -179,6 +216,7 @@ class _ProvisioningPageState extends State<ProvisioningPage>
           _LearnersTab(),
           _ParentsTab(),
           _LinksTab(),
+          _CohortsTab(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -212,10 +250,16 @@ class _ProvisioningPageState extends State<ProvisioningPage>
     switch (currentTab) {
       case 0:
         _showCreateLearnerDialog(context);
+        return;
       case 1:
         _showCreateParentDialog(context);
+        return;
       case 2:
         _showCreateLinkDialog(context);
+        return;
+      case 3:
+        _showCreateCohortDialog(context);
+        return;
     }
   }
 
@@ -258,6 +302,20 @@ class _ProvisioningPageState extends State<ProvisioningPage>
     showDialog(
       context: context,
       builder: (BuildContext context) => const _CreateLinkDialog(),
+    );
+  }
+
+  void _showCreateCohortDialog(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'module': 'provisioning',
+        'cta_id': 'open_create_cohort_launch_dialog',
+      },
+    );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => const _CreateCohortDialog(),
     );
   }
 }
@@ -317,7 +375,7 @@ class _LearnersTab extends StatelessWidget {
                   title: Text(learner.displayName),
                   subtitle: learner.gradeLevel != null
                       ? Text(
-                        '${_tProvisioning(context, 'Grade')} ${learner.gradeLevel}')
+                          '${_tProvisioning(context, 'Grade')} ${learner.gradeLevel}')
                       : null,
                   trailing: IconButton(
                     icon: const Icon(Icons.more_vert),
@@ -662,10 +720,9 @@ class _LinksTab extends StatelessWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                        success
-                            ? _tProvisioning(context, 'Link removed')
-                            : _tProvisioning(context, 'Failed to remove link')),
+                    content: Text(success
+                        ? _tProvisioning(context, 'Link removed')
+                        : _tProvisioning(context, 'Failed to remove link')),
                   ),
                 );
               }
@@ -676,6 +733,205 @@ class _LinksTab extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _CohortsTab extends StatelessWidget {
+  const _CohortsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ProvisioningService>(
+      builder:
+          (BuildContext context, ProvisioningService service, Widget? child) {
+        if (service.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final List<CohortLaunch> launches = service.cohortLaunches;
+        if (launches.isEmpty) {
+          return EmptyState(
+            icon: Icons.rocket_launch_rounded,
+            title: _tProvisioning(context, 'No cohort launches yet'),
+            message: _tProvisioning(
+              context,
+              'Track launch readiness, parent comms, and kickoff status here.',
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            _logProvisioningCta('refresh_cohort_launches_tab');
+            final String? siteId = context.read<AppState>().activeSiteId;
+            if (siteId != null) {
+              await service.loadCohortLaunches(siteId);
+            }
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: launches.length,
+            itemBuilder: (BuildContext context, int index) {
+              final CohortLaunch launch = launches[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.rocket_launch_rounded,
+                              color: Colors.indigo,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  launch.cohortName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${launch.scheduleLabel} • ${launch.curriculumTerm}',
+                                  style: const TextStyle(
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _StatusPill(
+                            label: launch.status,
+                            color: _cohortStatusColor(launch.status),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _StatusPill(
+                            label:
+                                '${_tProvisioning(context, 'Roster Status')}: ${launch.rosterStatus}',
+                            color: _cohortStatusColor(launch.rosterStatus),
+                          ),
+                          _StatusPill(
+                            label:
+                                '${_tProvisioning(context, 'Parent Comms')}: ${launch.parentCommunicationStatus}',
+                            color: _cohortStatusColor(
+                                launch.parentCommunicationStatus),
+                          ),
+                          _StatusPill(
+                            label:
+                                '${_tProvisioning(context, 'Baseline Survey')}: ${launch.baselineSurveyStatus}',
+                            color:
+                                _cohortStatusColor(launch.baselineSurveyStatus),
+                          ),
+                          _StatusPill(
+                            label:
+                                '${_tProvisioning(context, 'Kickoff')}: ${launch.kickoffStatus}',
+                            color: _cohortStatusColor(launch.kickoffStatus),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              '${_tProvisioning(context, 'Age Band')}: ${launch.ageBand}',
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                          ),
+                          Text(
+                            '${_tProvisioning(context, 'Learner Count')}: ${launch.learnerCount ?? 0}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if ((launch.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Text(
+                          launch.notes!.trim(),
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+Color _cohortStatusColor(String value) {
+  switch (value.trim().toLowerCase()) {
+    case 'completed':
+    case 'active':
+    case 'confirmed':
+    case 'sent':
+    case 'ready':
+      return Colors.green;
+    case 'scheduled':
+    case 'planning':
+      return Colors.indigo;
+    case 'pending':
+    case 'draft':
+      return Colors.orange;
+    default:
+      return Colors.blueGrey;
   }
 }
 
@@ -764,8 +1020,9 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                 labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) =>
-                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
+              validator: (String? v) => v?.isEmpty ?? true
+                  ? _tProvisioning(context, 'Required')
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -776,7 +1033,9 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? true) return _tProvisioning(context, 'Required');
+                if (v?.isEmpty ?? true) {
+                  return _tProvisioning(context, 'Required');
+                }
                 if (!v!.contains('@')) {
                   return _tProvisioning(context, 'Invalid email');
                 }
@@ -886,7 +1145,8 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(_tProvisioning(context, 'Parent created successfully'))),
+            content:
+                Text(_tProvisioning(context, 'Parent created successfully'))),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -912,8 +1172,9 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                 labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) =>
-                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
+              validator: (String? v) => v?.isEmpty ?? true
+                  ? _tProvisioning(context, 'Required')
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -924,7 +1185,9 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
                 prefixIcon: Icon(Icons.email),
               ),
               validator: (String? v) {
-                if (v?.isEmpty ?? true) return _tProvisioning(context, 'Required');
+                if (v?.isEmpty ?? true) {
+                  return _tProvisioning(context, 'Required');
+                }
                 if (!v!.contains('@')) {
                   return _tProvisioning(context, 'Invalid email');
                 }
@@ -1037,8 +1300,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                service.error ?? _tProvisioning(context, 'Failed to create link'))),
+            content: Text(service.error ??
+                _tProvisioning(context, 'Failed to create link'))),
       );
     }
   }
@@ -1066,8 +1329,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                     ? <DropdownMenuItem<String>>[
                         DropdownMenuItem(
                           enabled: false,
-                          child:
-                              Text(_tProvisioning(context, 'No parents available')),
+                          child: Text(
+                              _tProvisioning(context, 'No parents available')),
                         ),
                       ]
                     : parents
@@ -1089,8 +1352,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
                     ? <DropdownMenuItem<String>>[
                         DropdownMenuItem(
                           enabled: false,
-                          child:
-                              Text(_tProvisioning(context, 'No learners available')),
+                          child: Text(
+                              _tProvisioning(context, 'No learners available')),
                         ),
                       ]
                     : learners
@@ -1153,6 +1416,320 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
           ],
         );
       },
+    );
+  }
+}
+
+class _CreateCohortDialog extends StatefulWidget {
+  const _CreateCohortDialog();
+
+  @override
+  State<_CreateCohortDialog> createState() => _CreateCohortDialogState();
+}
+
+class _CreateCohortDialogState extends State<_CreateCohortDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _cohortNameController = TextEditingController();
+  final TextEditingController _scheduleController = TextEditingController(
+    text: 'Mon/Wed 4:00 PM',
+  );
+  final TextEditingController _termController = TextEditingController(
+    text: 'Term 1',
+  );
+  final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _learnerCountController = TextEditingController();
+
+  String _ageBand = 'Mixed Ages';
+  String _programFormat = 'gold';
+  String _rosterStatus = 'draft';
+  String _parentCommunicationStatus = 'pending';
+  String _baselineSurveyStatus = 'pending';
+  String _kickoffStatus = 'pending';
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _cohortNameController.dispose();
+    _scheduleController.dispose();
+    _termController.dispose();
+    _notesController.dispose();
+    _learnerCountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    _logProvisioningCta('submit_create_cohort_launch');
+    setState(() => _isSubmitting = true);
+
+    final String? siteId = context.read<AppState>().activeSiteId;
+    if (siteId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tProvisioning(context, 'No site selected'))),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+
+    final int? learnerCount = int.tryParse(_learnerCountController.text.trim());
+    final ProvisioningService service = context.read<ProvisioningService>();
+    final CohortLaunch? result = await service.createCohortLaunch(
+      siteId: siteId,
+      cohortName: _cohortNameController.text.trim(),
+      ageBand: _ageBand,
+      scheduleLabel: _scheduleController.text.trim(),
+      programFormat: _programFormat,
+      curriculumTerm: _termController.text.trim(),
+      rosterStatus: _rosterStatus,
+      parentCommunicationStatus: _parentCommunicationStatus,
+      baselineSurveyStatus: _baselineSurveyStatus,
+      kickoffStatus: _kickoffStatus,
+      learnerCount: learnerCount,
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tProvisioning(context, 'Cohort launch created successfully'),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            service.error ??
+                _tProvisioning(context, 'Failed to create cohort launch'),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_tProvisioning(context, 'Create Cohort Launch')),
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextFormField(
+                  controller: _cohortNameController,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Cohort Name'),
+                    prefixIcon: const Icon(Icons.group_rounded),
+                  ),
+                  validator: (String? value) => (value?.trim().isEmpty ?? true)
+                      ? _tProvisioning(context, 'Required')
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _ageBand,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Age Band'),
+                    prefixIcon: const Icon(Icons.groups_rounded),
+                  ),
+                  items: <String>[
+                    'Mixed Ages',
+                    'K-5',
+                    'Middle School',
+                    'High School',
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(_tProvisioning(context, value)),
+                    );
+                  }).toList(),
+                  onChanged: (String? value) =>
+                      setState(() => _ageBand = value ?? 'Mixed Ages'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _scheduleController,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Schedule'),
+                    prefixIcon: const Icon(Icons.schedule_rounded),
+                  ),
+                  validator: (String? value) => (value?.trim().isEmpty ?? true)
+                      ? _tProvisioning(context, 'Required')
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _programFormat,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Program Format'),
+                    prefixIcon: const Icon(Icons.rocket_rounded),
+                  ),
+                  items: const <String>['gold', 'silver', 'pilot']
+                      .map((String value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              _tProvisioning(
+                                context,
+                                value[0].toUpperCase() + value.substring(1),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) =>
+                      setState(() => _programFormat = value ?? 'gold'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _termController,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Curriculum Term'),
+                    prefixIcon: const Icon(Icons.flag_rounded),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _learnerCountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Learner Count'),
+                    prefixIcon: const Icon(Icons.countertops_rounded),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _rosterStatus,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Roster Status'),
+                    prefixIcon: const Icon(Icons.fact_check_rounded),
+                  ),
+                  items: const <String>['draft', 'ready', 'active']
+                      .map((String value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              _tProvisioning(
+                                context,
+                                value[0].toUpperCase() + value.substring(1),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) =>
+                      setState(() => _rosterStatus = value ?? 'draft'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _parentCommunicationStatus,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Parent Comms'),
+                    prefixIcon: const Icon(Icons.mark_email_read_rounded),
+                  ),
+                  items: const <String>['pending', 'sent', 'confirmed']
+                      .map((String value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              _tProvisioning(
+                                context,
+                                value[0].toUpperCase() + value.substring(1),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) => setState(
+                    () => _parentCommunicationStatus = value ?? 'pending',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _baselineSurveyStatus,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Baseline Survey'),
+                    prefixIcon: const Icon(Icons.assignment_rounded),
+                  ),
+                  items: const <String>['pending', 'ready', 'completed']
+                      .map((String value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              _tProvisioning(
+                                context,
+                                value[0].toUpperCase() + value.substring(1),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) => setState(
+                    () => _baselineSurveyStatus = value ?? 'pending',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _kickoffStatus,
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Kickoff'),
+                    prefixIcon: const Icon(Icons.celebration_rounded),
+                  ),
+                  items: const <String>['pending', 'scheduled', 'completed']
+                      .map((String value) => DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              _tProvisioning(
+                                context,
+                                value[0].toUpperCase() + value.substring(1),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) =>
+                      setState(() => _kickoffStatus = value ?? 'pending'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    prefixIcon: Icon(Icons.notes_rounded),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  _logProvisioningCta('cancel_create_cohort_launch');
+                  Navigator.pop(context);
+                },
+          child: Text(_tProvisioning(context, 'Cancel')),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(_tProvisioning(context, 'Create')),
+        ),
+      ],
     );
   }
 }
@@ -1242,8 +1819,9 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
                 labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) =>
-                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
+              validator: (String? v) => v?.isEmpty ?? true
+                  ? _tProvisioning(context, 'Required')
+                  : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
@@ -1384,8 +1962,9 @@ class _EditParentDialogState extends State<_EditParentDialog> {
                 labelText: _tProvisioning(context, 'Full Name'),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (String? v) =>
-                  v?.isEmpty ?? true ? _tProvisioning(context, 'Required') : null,
+              validator: (String? v) => v?.isEmpty ?? true
+                  ? _tProvisioning(context, 'Required')
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../../app_config.dart';
 import '../../services/api_client.dart';
+import '../../services/workflow_bridge_service.dart';
 import 'provisioning_models.dart';
 
 /// Service for user provisioning operations
@@ -11,26 +12,32 @@ class ProvisioningService extends ChangeNotifier {
     required ApiClient apiClient,
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
+    WorkflowBridgeService? workflowBridgeService,
     bool? useProvisioningApi,
   })  : _apiClient = apiClient,
         _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance,
+        _workflowBridgeService =
+            workflowBridgeService ?? WorkflowBridgeService.instance,
         _useProvisioningApi =
             useProvisioningApi ?? AppConfig.enableProvisioningApi;
   final ApiClient _apiClient;
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final WorkflowBridgeService _workflowBridgeService;
   final bool _useProvisioningApi;
 
   List<LearnerProfile> _learners = <LearnerProfile>[];
   List<ParentProfile> _parents = <ParentProfile>[];
   List<GuardianLink> _guardianLinks = <GuardianLink>[];
+  List<CohortLaunch> _cohortLaunches = <CohortLaunch>[];
   bool _isLoading = false;
   String? _error;
 
   List<LearnerProfile> get learners => _learners;
   List<ParentProfile> get parents => _parents;
   List<GuardianLink> get guardianLinks => _guardianLinks;
+  List<CohortLaunch> get cohortLaunches => _cohortLaunches;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -130,6 +137,105 @@ class ProvisioningService extends ChangeNotifier {
       } catch (fallbackError) {
         debugPrint('Failed to load guardian links: $fallbackError');
       }
+    }
+  }
+
+  Future<void> loadCohortLaunches(String siteId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final List<Map<String, dynamic>> items =
+          await _workflowBridgeService.listCohortLaunches(
+        siteId: siteId,
+        limit: 80,
+      );
+      _cohortLaunches = items.map(CohortLaunch.fromJson).toList()
+        ..sort((CohortLaunch a, CohortLaunch b) {
+          final DateTime aTime =
+              a.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final DateTime bTime =
+              b.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+    } catch (e) {
+      debugPrint('Failed to load cohort launches: $e');
+      _error = 'Failed to load cohort launches';
+      _cohortLaunches = <CohortLaunch>[];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<CohortLaunch?> createCohortLaunch({
+    required String siteId,
+    required String cohortName,
+    required String ageBand,
+    required String scheduleLabel,
+    required String programFormat,
+    required String curriculumTerm,
+    required String rosterStatus,
+    required String parentCommunicationStatus,
+    required String baselineSurveyStatus,
+    required String kickoffStatus,
+    int? learnerCount,
+    String? notes,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final String? id = await _workflowBridgeService.upsertCohortLaunch(
+        <String, dynamic>{
+          'siteId': siteId,
+          'cohortName': cohortName.trim(),
+          'ageBand': ageBand.trim(),
+          'scheduleLabel': scheduleLabel.trim(),
+          'programFormat': programFormat.trim(),
+          'curriculumTerm': curriculumTerm.trim(),
+          'rosterStatus': rosterStatus.trim(),
+          'parentCommunicationStatus': parentCommunicationStatus.trim(),
+          'baselineSurveyStatus': baselineSurveyStatus.trim(),
+          'kickoffStatus': kickoffStatus.trim(),
+          if (learnerCount != null) 'learnerCount': learnerCount,
+          if ((notes ?? '').trim().isNotEmpty) 'notes': notes!.trim(),
+        },
+      );
+      await loadCohortLaunches(siteId);
+      if (id == null || id.isEmpty) {
+        return null;
+      }
+      return _cohortLaunches.firstWhere(
+        (CohortLaunch launch) => launch.id == id,
+        orElse: () => CohortLaunch(
+          id: id,
+          siteId: siteId,
+          cohortName: cohortName.trim(),
+          ageBand: ageBand.trim(),
+          scheduleLabel: scheduleLabel.trim(),
+          programFormat: programFormat.trim(),
+          curriculumTerm: curriculumTerm.trim(),
+          rosterStatus: rosterStatus.trim(),
+          parentCommunicationStatus: parentCommunicationStatus.trim(),
+          baselineSurveyStatus: baselineSurveyStatus.trim(),
+          kickoffStatus: kickoffStatus.trim(),
+          status: 'planning',
+          learnerCount: learnerCount,
+          notes: notes?.trim(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to create cohort launch: $e');
+      _error = 'Failed to create cohort launch';
+      notifyListeners();
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -572,7 +678,8 @@ class ProvisioningService extends ChangeNotifier {
         .collection('learnerProfiles')
         .where('siteId', isEqualTo: siteId)
         .get();
-    final List<LearnerProfile> profileLearners = profileSnapshot.docs.map((doc) {
+    final List<LearnerProfile> profileLearners =
+        profileSnapshot.docs.map((doc) {
       final Map<String, dynamic> data = doc.data();
       final String userId =
           (data['userId'] as String?)?.trim().isNotEmpty == true

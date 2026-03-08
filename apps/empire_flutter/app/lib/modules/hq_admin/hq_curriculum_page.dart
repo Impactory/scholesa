@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 const Map<String, String> _hqCurriculumEs = <String, String>{
@@ -58,6 +59,17 @@ const Map<String, String> _hqCurriculumEs = <String, String>{
   'Moved to In Review': 'Movido a En revisión',
   'Curriculum published': 'Currículo publicado',
   'Transition failed': 'Error al cambiar estado',
+  'Training Cycles': 'Ciclos de formación',
+  'No training cycles yet': 'Aún no hay ciclos de formación',
+  'Create Training Cycle': 'Crear ciclo de formación',
+  'Training Type': 'Tipo de formación',
+  'Audience': 'Audiencia',
+  'Term Label': 'Etiqueta de periodo',
+  'Start Date': 'Fecha de inicio',
+  'Scheduled': 'Programado',
+  'Training cycle created': 'Ciclo de formación creado',
+  'Training cycle create failed': 'No se pudo crear el ciclo de formación',
+  'Notes': 'Notas',
 };
 
 String _tHqCurriculum(BuildContext context, String input) {
@@ -99,12 +111,41 @@ class _Curriculum {
   final DateTime lastUpdated;
 }
 
+class _TrainingCycle {
+  const _TrainingCycle({
+    required this.id,
+    required this.title,
+    required this.trainingType,
+    required this.audience,
+    required this.termLabel,
+    required this.status,
+    required this.updatedAt,
+    this.siteId,
+    this.startsAt,
+    this.notes,
+  });
+
+  final String id;
+  final String title;
+  final String trainingType;
+  final String audience;
+  final String termLabel;
+  final String status;
+  final DateTime updatedAt;
+  final String? siteId;
+  final DateTime? startsAt;
+  final String? notes;
+}
+
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
+  final WorkflowBridgeService _workflowBridgeService =
+      WorkflowBridgeService.instance;
   late TabController _tabController;
   bool _isLoading = false;
 
   List<_Curriculum> _curricula = <_Curriculum>[];
+  List<_TrainingCycle> _trainingCycles = <_TrainingCycle>[];
 
   @override
   void initState() {
@@ -112,6 +153,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCurricula();
+      _loadTrainingCycles();
     });
   }
 
@@ -129,6 +171,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         title: Text(_tHqCurriculum(context, 'Curriculum Manager')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: <Widget>[
+          IconButton(
+            onPressed: _showTrainingCyclesSheet,
+            icon: const Icon(Icons.school_rounded),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           onTap: (int index) {
@@ -953,6 +1001,287 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     );
   }
 
+  Future<void> _showTrainingCyclesSheet() async {
+    await _loadTrainingCycles();
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: ScholesaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      _tHqCurriculum(context, 'Training Cycles'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showCreateTrainingCycleDialog();
+                    },
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    label:
+                        Text(_tHqCurriculum(context, 'Create Training Cycle')),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_trainingCycles.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    _tHqCurriculum(context, 'No training cycles yet'),
+                    style: const TextStyle(
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _trainingCycles.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (BuildContext context, int index) {
+                      final _TrainingCycle cycle = _trainingCycles[index];
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: ScholesaColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    cycle.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                _TrainingPill(
+                                  label: cycle.status,
+                                  color: cycle.status == 'completed'
+                                      ? ScholesaColors.success
+                                      : ScholesaColors.hq,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${cycle.trainingType} • ${cycle.audience} • ${cycle.termLabel}',
+                              style: const TextStyle(
+                                color: ScholesaColors.textSecondary,
+                              ),
+                            ),
+                            if (cycle.startsAt != null) ...<Widget>[
+                              const SizedBox(height: 6),
+                              Text(
+                                '${_tHqCurriculum(context, 'Start Date')}: ${cycle.startsAt!.month}/${cycle.startsAt!.day}/${cycle.startsAt!.year}',
+                              ),
+                            ],
+                            if ((cycle.notes ?? '')
+                                .trim()
+                                .isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 6),
+                              Text(
+                                cycle.notes!.trim(),
+                                style: const TextStyle(
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCreateTrainingCycleDialog() async {
+    final BuildContext pageContext = context;
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(pageContext);
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController termController =
+        TextEditingController(text: 'Current term');
+    final TextEditingController notesController = TextEditingController();
+    String trainingType = 'term_launch';
+    String audience = 'educators';
+    bool isSubmitting = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context,
+            void Function(void Function()) setLocalState) {
+          return AlertDialog(
+            title: Text(_tHqCurriculum(context, 'Create Training Cycle')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: _tHqCurriculum(context, 'Title'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: trainingType,
+                    decoration: InputDecoration(
+                      labelText: _tHqCurriculum(context, 'Training Type'),
+                    ),
+                    items: const <String>[
+                      'term_launch',
+                      'mid_term_clinic',
+                      'trainer_of_trainers',
+                    ]
+                        .map((String value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ))
+                        .toList(),
+                    onChanged: (String? value) => setLocalState(
+                      () => trainingType = value ?? 'term_launch',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: audience,
+                    decoration: InputDecoration(
+                      labelText: _tHqCurriculum(context, 'Audience'),
+                    ),
+                    items: const <String>['educators', 'parents', 'site']
+                        .map((String value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ))
+                        .toList(),
+                    onChanged: (String? value) => setLocalState(
+                      () => audience = value ?? 'educators',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: termController,
+                    decoration: InputDecoration(
+                      labelText: _tHqCurriculum(context, 'Term Label'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: _tHqCurriculum(context, 'Notes'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed:
+                    isSubmitting ? null : () => Navigator.pop(dialogContext),
+                child: Text(_tHqCurriculum(context, 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final String title = titleController.text.trim();
+                        if (title.isEmpty) {
+                          return;
+                        }
+                        final String createdLabel = _tHqCurriculum(
+                          pageContext,
+                          'Training cycle created',
+                        );
+                        final String failedLabel = _tHqCurriculum(
+                          pageContext,
+                          'Training cycle create failed',
+                        );
+                        setLocalState(() => isSubmitting = true);
+                        try {
+                          final AppState? appState = _maybeAppState();
+                          await _workflowBridgeService.upsertTrainingCycle(
+                            <String, dynamic>{
+                              'title': title,
+                              'trainingType': trainingType,
+                              'audience': audience,
+                              'termLabel': termController.text.trim(),
+                              'status': 'scheduled',
+                              if ((appState?.activeSiteId ?? '').isNotEmpty)
+                                'siteId': appState!.activeSiteId,
+                              if (notesController.text.trim().isNotEmpty)
+                                'notes': notesController.text.trim(),
+                            },
+                          );
+                          if (!mounted || !dialogContext.mounted) return;
+                          Navigator.pop(dialogContext);
+                          await _loadTrainingCycles();
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(createdLabel),
+                            ),
+                          );
+                        } catch (_) {
+                          if (!mounted) return;
+                          setLocalState(() => isSubmitting = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(failedLabel),
+                            ),
+                          );
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(_tHqCurriculum(context, 'Create')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    titleController.dispose();
+    termController.dispose();
+    notesController.dispose();
+  }
+
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
     if (diff.inHours < 24) {
@@ -1020,6 +1349,39 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadTrainingCycles() async {
+    try {
+      final List<Map<String, dynamic>> rows =
+          await _workflowBridgeService.listTrainingCycles(limit: 80);
+      final List<_TrainingCycle> cycles = rows.map((Map<String, dynamic> row) {
+        return _TrainingCycle(
+          id: row['id'] as String? ?? '',
+          title: row['title'] as String? ?? 'Training Cycle',
+          trainingType: row['trainingType'] as String? ?? 'term_launch',
+          audience: row['audience'] as String? ?? 'educators',
+          termLabel: row['termLabel'] as String? ?? 'Current term',
+          status: row['status'] as String? ?? 'scheduled',
+          updatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
+              WorkflowBridgeService.toDateTime(row['createdAt']) ??
+              WorkflowBridgeService.toDateTime(row['startsAt']) ??
+              DateTime.now(),
+          siteId: row['siteId'] as String?,
+          startsAt: WorkflowBridgeService.toDateTime(row['startsAt']),
+          notes: row['notes'] as String?,
+        );
+      }).toList(growable: false)
+        ..sort(
+          (_TrainingCycle a, _TrainingCycle b) =>
+              b.updatedAt.compareTo(a.updatedAt),
+        );
+      if (!mounted) return;
+      setState(() => _trainingCycles = cycles);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _trainingCycles = <_TrainingCycle>[]);
     }
   }
 
@@ -1611,5 +1973,34 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     } catch (_) {
       return null;
     }
+  }
+}
+
+class _TrainingPill extends StatelessWidget {
+  const _TrainingPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

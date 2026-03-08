@@ -92,6 +92,45 @@ class PartnerContract {
   final List<PartnerDeliverable> deliverables;
 }
 
+/// Partner launch workflow model
+class PartnerLaunch {
+  const PartnerLaunch({
+    required this.id,
+    required this.partnerId,
+    required this.partnerName,
+    required this.region,
+    required this.locale,
+    required this.dueDiligenceStatus,
+    required this.contractStatus,
+    required this.planningWorkshopStatus,
+    required this.trainerOfTrainersStatus,
+    required this.kpiLoggingStatus,
+    required this.review90DayStatus,
+    required this.status,
+    this.siteId,
+    this.pilotCohortCount,
+    this.notes,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String partnerId;
+  final String partnerName;
+  final String region;
+  final String locale;
+  final String dueDiligenceStatus;
+  final String contractStatus;
+  final String planningWorkshopStatus;
+  final String trainerOfTrainersStatus;
+  final String kpiLoggingStatus;
+  final String review90DayStatus;
+  final String status;
+  final String? siteId;
+  final int? pilotCohortCount;
+  final String? notes;
+  final DateTime? updatedAt;
+}
+
 /// Partner deliverable model
 class PartnerDeliverable {
   const PartnerDeliverable({

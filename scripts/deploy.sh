@@ -20,6 +20,7 @@ FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 FUNCTIONS_DIR="$REPO_ROOT/functions"
 TARGET="${1:-all}"
 FLUTTER_GATE_DONE=0
+TEMP_GCP_CREDENTIALS=""
 
 export CLOUDSDK_CORE_DISABLE_PROMPTS="${CLOUDSDK_CORE_DISABLE_PROMPTS:-1}"
 export COPYFILE_DISABLE="${COPYFILE_DISABLE:-1}"
@@ -34,6 +35,77 @@ NC='\033[0m' # No Color
 log()  { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn() { echo -e "${YELLOW}[deploy]${NC} $*"; }
 fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
+
+cleanup() {
+  if [[ -n "$TEMP_GCP_CREDENTIALS" && -f "$TEMP_GCP_CREDENTIALS" ]]; then
+    rm -f "$TEMP_GCP_CREDENTIALS"
+  fi
+}
+trap cleanup EXIT
+
+is_service_account_json_file() {
+  local candidate="${1:-}"
+  [[ -n "$candidate" && -f "$candidate" ]] || return 1
+  node -e '
+    const fs = require("fs");
+    try {
+      const payload = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      process.exit(payload && payload.type === "service_account" ? 0 : 1);
+    } catch {
+      process.exit(1);
+    }
+  ' "$candidate"
+}
+
+materialize_service_account_from_env() {
+  if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" && -f "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+    return 0
+  fi
+
+  local raw_json="${GCP_SA_KEY_JSON:-${GOOGLE_CREDENTIALS:-}}"
+  if [[ -z "$raw_json" ]]; then
+    return 1
+  fi
+
+  TEMP_GCP_CREDENTIALS="$(mktemp)"
+  printf '%s' "$raw_json" > "$TEMP_GCP_CREDENTIALS"
+  export GOOGLE_APPLICATION_CREDENTIALS="$TEMP_GCP_CREDENTIALS"
+  return 0
+}
+
+ensure_gcloud_auth() {
+  if gcloud auth print-access-token --quiet >/dev/null 2>&1; then
+    return 0
+  fi
+
+  materialize_service_account_from_env || true
+
+  if is_service_account_json_file "${GOOGLE_APPLICATION_CREDENTIALS:-}"; then
+    gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS" --quiet >/dev/null 2>&1 \
+      || fail "Unable to activate service account from GOOGLE_APPLICATION_CREDENTIALS/GCP_SA_KEY_JSON."
+    gcloud auth print-access-token --quiet >/dev/null 2>&1 \
+      || fail "gcloud service-account auth is configured but access token minting still failed."
+    return 0
+  fi
+
+  fail "gcloud auth invalid. Run: gcloud auth login, or set GOOGLE_APPLICATION_CREDENTIALS/GCP_SA_KEY_JSON."
+}
+
+firebase_cmd() {
+  if [[ -n "${FIREBASE_TOKEN:-}" ]]; then
+    firebase "$@" --token "$FIREBASE_TOKEN"
+  else
+    firebase "$@"
+  fi
+}
+
+ensure_firebase_auth() {
+  if firebase_cmd projects:list --json >/dev/null 2>&1; then
+    return 0
+  fi
+
+  fail "Firebase auth invalid. Run: firebase login --reauth, or set FIREBASE_TOKEN."
+}
 
 # ── Pre-flight checks ──────────────────────────────────────────
 preflight() {
@@ -52,6 +124,11 @@ preflight() {
 
   if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
     command -v gcloud >/dev/null 2>&1 || fail "gcloud not found on PATH"
+    ensure_gcloud_auth
+  fi
+
+  if [[ "$TARGET" == "functions" || "$TARGET" == "rules" || "$TARGET" == "all" ]]; then
+    ensure_firebase_auth
   fi
 }
 
@@ -106,23 +183,38 @@ resolve_project_id() {
     return 0
   fi
 
-  cd "$REPO_ROOT" && firebase use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})'
+  if [[ -n "${GOOGLE_CLOUD_PROJECT:-}" ]]; then
+    printf '%s' "$GOOGLE_CLOUD_PROJECT"
+    return 0
+  fi
+
+  if [[ -n "${GCLOUD_PROJECT:-}" ]]; then
+    printf '%s' "$GCLOUD_PROJECT"
+    return 0
+  fi
+
+  if [[ -n "${FIREBASE_PROJECT_ID:-}" ]]; then
+    printf '%s' "$FIREBASE_PROJECT_ID"
+    return 0
+  fi
+
+  cd "$REPO_ROOT" && firebase_cmd use --json | node -e 'let data="";process.stdin.on("data",d=>data+=d).on("end",()=>{try{const j=JSON.parse(data);process.stdout.write(j.result || "");}catch{process.stdout.write("");}})'
 }
 
 # ── Deploy targets ─────────────────────────────────────────────
 deploy_functions() {
   functions_build
   log "Deploying Cloud Functions..."
-  (cd "$REPO_ROOT" && firebase deploy --only functions)
+  (cd "$REPO_ROOT" && firebase_cmd deploy --only functions)
   log "Functions deployed ✓"
 }
 
 deploy_rules() {
   log "Deploying Firestore rules + indexes..."
-  (cd "$REPO_ROOT" && firebase deploy --only firestore)
+  (cd "$REPO_ROOT" && firebase_cmd deploy --only firestore)
 
   log "Deploying Storage rules..."
-  (cd "$REPO_ROOT" && firebase deploy --only storage)
+  (cd "$REPO_ROOT" && firebase_cmd deploy --only storage)
 
   log "Rules deployed ✓"
 }
