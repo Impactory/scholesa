@@ -301,8 +301,8 @@ firebase deploy --only firestore:indexes
 **Status**: 🟢 **COMPLETE FOR BACKEND CALLABLE**
 
 **Optional Enhancements** (Deferred to post-launch):
-- Flutter widget unit tests (~150 lines, 6–8 cases)
-- Integration tests for parent surfaces (~200 lines, 6–8 cases)
+- Additional Flutter widget regression coverage
+- Additional parent and partner integration coverage
 - Coverage reporting in CI/CD
 
 ---
@@ -398,12 +398,11 @@ $ flutter analyze
 
 ### Nice-to-Have (Optional, Post-Launch)
 
-- [ ] Migrate remaining 6 educator pages to centralized i18n
-- [ ] Create Flutter widget unit tests
-- [ ] Create integration tests for parent surfaces  
+- [ ] Expand non-critical regression coverage across additional protected flows
+- [ ] Create more Flutter widget unit tests
+- [ ] Create more integration tests for parent and partner surfaces
 - [ ] Add Jest coverage reporting to CI/CD
-- [ ] Add Thai (th) localization
-- [ ] Add Simplified Chinese (zh-CN) localization
+- [ ] Review newly added pages for continued shared i18n helper adoption
 
 ---
 
@@ -414,7 +413,7 @@ $ flutter analyze
 - **Firestore Indexes**: Already deployed; production-tested
 - **Error Handling**: Tested via Jest (15 test cases); graceful fallback verified
 - **Service Worker**: Offline mode works; manifest valid
-- **i18n System**: Centralized class ready; existing locales (en, es) working
+- **i18n System**: Centralized runtime coverage verified on launch-critical EN / ZH-CN / ZH-TW flows
 
 ### Medium Risk (Mitigated)
 
@@ -435,7 +434,7 @@ All 4 identified blockers resolved. Platform ready for RC3 launch.
 | **Firestore Indexes** | ✅ Complete | ✅ Yes (Mar 3) | 3 indexes live |
 | **Callable Error Handling** | ✅ Complete | ✅ Yes (Dec 26) | 170+ lines, all paths tested |
 | **Test Suite (Jest)** | ✅ Complete | ✅ Yes (Mar 3) | 15/15 tests passing |
-| **i18n System** | ✅ Ready | ⏳ Partial | System ready; 6 pages pending migration |
+| **i18n System** | ✅ Complete | ✅ Yes | Launch-critical runtime coverage verified for EN / ZH-CN / ZH-TW |
 | **All 10 Surfaces** | ✅ Integrated | ✅ Yes | 0 build errors |
 | **TypeScript Build** | ✅ Clean | ✅ Yes | Exit 0 |
 | **Flutter Analysis** | ✅ Clean | ✅ Yes | 4 info lints (non-blocking) |

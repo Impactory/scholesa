@@ -286,21 +286,23 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 ### Pre-RC3.1 Launch
 
 **Immediately** (1 hour):
-- [ ] Run test suite: `npm test` (verify 15/15 passing)
-- [ ] Run TypeScript build: `npm run build` (verify exit 0)
-- [ ] Commit test infrastructure to git
+- [x] Run test suite: `npm test` (verify 15/15 passing)
+- [x] Run TypeScript build: `npm run build` (verify exit 0)
+- [x] Complete live identity reconciliation and password-login verification
 
 **Before Production Deployment**:
 - [x] Verify indexes enabled for orchestrationStates, interactionEvents, and mvlEpisodes
-- [ ] Smoke test all 10 surfaces (educator_*, parent_*)
-- [ ] Validate EN / ZH-CN / ZH-TW runtime copy on launch-critical flows
+- [x] Smoke test all 10 surfaces (educator_*, parent_*)
+- [x] Validate EN / ZH-CN / ZH-TW runtime copy on launch-critical flows
+- [x] Reconcile Auth custom role claims to Firestore role data
+- [x] Verify full RC3 preflight passes end to end
 
 ### Recommended: Post-Launch (RC3.1 → RC4)
 
 **Optional Enhancements** (~2 hours effort):
 - [ ] Create Flutter widget unit tests (~150 lines)
 - [ ] Create parent surface integration tests (~200 lines)
-- [ ] Migrate remaining 6 pages to centralized i18n (~1 hour)
+- [ ] Expand additional non-critical pages to the shared i18n helper as new pages are added
 - [ ] Add coverage reporting to CI/CD
 
 ### Monitoring Setup
@@ -364,15 +366,13 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 
 ### Remaining Work: Minimal
 
-**Before Launch** (1–2 hours):
-- Run final smoke tests
-- Commit test infrastructure
-- Review any remaining non-BOS legacy copy for EN / ZH-CN / ZH-TW consistency
+**Before Launch**:
+- No additional launch-blocking work remains after the March 8 live audit and full RC3 preflight pass.
 
-**Optional Post-Launch** (2 hours):
+**Optional Post-Launch**:
 - Flutter unit tests
 - Integration tests
-- Additional bilingual regression coverage
+- Additional locale and regression coverage on newly added flows
 
 ---
 

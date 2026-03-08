@@ -131,7 +131,6 @@ Active BOS, auth, and role-gated Flutter runtime flows are aligned with this tri
 No live end-to-end blocker remains open.
 
 Non-blocking observations from preflight:
-- Next.js static build logs that Firebase Admin credentials are unavailable during build-time static evaluation and safely falls back rather than failing the build.
 - Flutter reports outdated packages within current pinned constraints, but the release build completes successfully.
 
 These are not launch blockers under the current RC3 gate.
