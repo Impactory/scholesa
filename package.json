@@ -42,6 +42,8 @@
     "qa:firebase-role-e2e": "node scripts/firebase_role_e2e_audit.js --strict",
     "qa:firebase-role-displaynames": "node scripts/repair_missing_user_display_names.js --strict",
     "qa:firebase-role-displaynames:apply": "node scripts/repair_missing_user_display_names.js --apply",
+    "qa:firebase-identity-artifacts": "node scripts/cleanup_identity_artifacts.js",
+    "qa:firebase-identity-artifacts:apply": "node scripts/cleanup_identity_artifacts.js --apply",
     "docs:telemetry:wiring:sync": "node scripts/docs_telemetry_wiring_sync.js",
     "vibe:i18n:lint": "node scripts/vibe_i18n_lint.js",
     "vibe:i18n:keys": "node scripts/vibe_i18n_keys.js",
