@@ -53,6 +53,7 @@ run_step() {
 }
 
 run_step "Role cross-link verification" node scripts/verify_role_cross_links.js --env="$ENV_NAME" --site-id="$SITE_ID" --strict
+run_step "Live Firebase role identity audit" node scripts/firebase_role_e2e_audit.js --strict
 run_step "Role dashboard smoke checks" node scripts/role_dashboard_smoke.js --env="$ENV_NAME" --strict
 run_step "Workflow no-mock/no-synthetic audit" npm run qa:workflow:no-mock
 run_step "Web browser workflow E2E" npm run test:e2e:web
