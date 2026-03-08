@@ -1,0 +1,571 @@
+{
+  "common": {
+    "appName": "Scholesa",
+    "loading": "กำลังโหลด...",
+    "viewAll": "ดูทั้งหมด",
+    "noData": "ไม่มีข้อมูล",
+    "active": "ใช้งานอยู่",
+    "operational": "กำลังทำงาน",
+    "healthy": "ปกติ",
+    "general": "ทั่วไป",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "close": "ปิด",
+    "userLabel": "ผู้ใช้",
+    "tbd": "รอยืนยัน",
+    "liveStats": "สถิติสด",
+    "liveRoster": "รายชื่อสด",
+    "liveMetrics": "เมตริกสด",
+    "learners": "ผู้เรียน",
+    "parents": "ผู้ปกครอง",
+    "educators": "ครู"
+  },
+  "landing": {
+    "title": "Scholesa",
+    "tagline": "สถาบันทักษะแห่งอนาคต สนับสนุนผู้เรียน ครู และชุมชน",
+    "loginCta": "เข้าสู่ระบบ",
+    "registerCta": "สมัครสมาชิก",
+    "registerArrow": "สมัครสมาชิก →"
+  },
+  "auth": {
+    "login": {
+      "title": "เข้าสู่ระบบบัญชีของคุณ",
+      "subtitle": "ยินดีต้อนรับกลับสู่ Scholesa",
+      "emailLabel": "อีเมล",
+      "emailPlaceholder": "อีเมล",
+      "passwordLabel": "รหัสผ่าน",
+      "passwordPlaceholder": "รหัสผ่าน",
+      "submit": "เข้าสู่ระบบ",
+      "submitting": "กำลังเข้าสู่ระบบ...",
+      "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+      "switchToRegister": "ยังไม่มีบัญชี? สมัครสมาชิก"
+    },
+    "register": {
+      "title": "สร้างบัญชี",
+      "subtitle": "เข้าร่วม Scholesa วันนี้",
+      "nameLabel": "ชื่อ-นามสกุล",
+      "namePlaceholder": "ชื่อ-นามสกุล",
+      "emailLabel": "อีเมล",
+      "emailPlaceholder": "อีเมล",
+      "passwordLabel": "รหัสผ่าน",
+      "passwordPlaceholder": "รหัสผ่าน",
+      "roleLabel": "ฉันคือ:",
+      "role": {
+        "learner": "ผู้เรียน",
+        "educator": "ครู",
+        "parent": "ผู้ปกครอง",
+        "site": "หัวหน้าศูนย์",
+        "partner": "พาร์ทเนอร์"
+      },
+      "submit": "สมัครสมาชิก",
+      "submitting": "กำลังสร้างบัญชี...",
+      "fallbackError": "สมัครสมาชิกไม่สำเร็จ โปรดลองอีกครั้ง",
+      "switchToLogin": "มีบัญชีแล้ว? เข้าสู่ระบบ"
+    },
+    "legacyLogin": {
+      "title": "เข้าสู่ระบบบัญชีของคุณ",
+      "submit": "เข้าสู่ระบบ",
+      "orContinueWith": "หรือดำเนินการต่อด้วย",
+      "google": "Google",
+      "emailPasswordNotReady": "การเข้าสู่ระบบด้วยอีเมล/รหัสผ่านยังไม่พร้อมใช้งานเต็มรูปแบบ กรุณาใช้ Google"
+    }
+  },
+  "navigation": {
+    "signedInAs": "ลงชื่อเข้าใช้เป็น {{identity}}",
+    "signOut": "ออกจากระบบ",
+    "themeLabel": "ธีม",
+    "themeSystem": "ตามระบบ",
+    "themeLight": "สว่าง",
+    "themeDark": "มืด"
+  },
+  "dashboard": {
+    "redirecting": "กำลังพาไปยังแดชบอร์ดของคุณ..."
+  },
+  "role": {
+    "educator": {
+      "loading": "กำลังโหลดแดชบอร์ดครู...",
+      "hello": "สวัสดี {{name}}",
+      "defaultName": "ครู",
+      "subtitle": "จัดการเซสชันและติดตามความก้าวหน้าของผู้เรียน",
+      "assignedSessions": "เซสชันที่ฉันรับผิดชอบ",
+      "noSessions": "คุณยังไม่ได้รับมอบหมายเซสชัน",
+      "viewDetails": "ดูรายละเอียด",
+      "quickActions": "การทำงานด่วน",
+      "takeAttendance": "เช็กชื่อ",
+      "createMission": "สร้างภารกิจ",
+      "linkedLearners": "ผู้เรียนที่เชื่อมโยง",
+      "fallback": {
+        "studentsToday": "นักเรียนวันนี้",
+        "attendance": "การเข้าเรียน",
+        "toReview": "รอตรวจ"
+      }
+    },
+    "parent": {
+      "loading": "กำลังโหลดแดชบอร์ดผู้ปกครอง...",
+      "welcome": "ยินดีต้อนรับ {{name}}",
+      "defaultName": "ผู้ปกครอง",
+      "subtitle": "ติดตามความก้าวหน้าและกิจกรรมของบุตรหลาน",
+      "children": "บุตรหลานของฉัน",
+      "emptyWelcome": "ยินดีต้อนรับผู้ปกครอง",
+      "emptyMessage": "บัญชีของคุณยังไม่เชื่อมโยงกับผู้เรียน",
+      "registerLearner": "ลงทะเบียนผู้เรียน",
+      "viewProgress": "ดูความก้าวหน้า",
+      "quickActions": "การทำงานด่วน",
+      "messageEducator": "ส่งข้อความถึงครู",
+      "viewSchedule": "ดูตาราง",
+      "defaultLearnerInitial": "ผ",
+      "askSiteLinkLearner": "ขอให้ศูนย์เชื่อมโยงผู้เรียน",
+      "levelXp": "ระดับ {{level}} • XP {{xp}}",
+      "missionsCount": "ภารกิจ: {{count}}",
+      "streakCount": "สตรีค: {{count}}",
+      "fallback": {
+        "linkedLearners": "ผู้เรียนที่เชื่อมโยง",
+        "upcomingSessions": "เซสชันที่กำลังจะมาถึง",
+        "alerts": "การแจ้งเตือน"
+      }
+    },
+    "site": {
+      "loading": "กำลังโหลดแดชบอร์ด...",
+      "noSiteTitle": "ไม่พบศูนย์",
+      "noSiteMessage": "คุณเข้าสู่ระบบในบทบาทหัวหน้าศูนย์ แต่ยังไม่มีศูนย์ที่เชื่อมกับบัญชี",
+      "subtitle": "แดชบอร์ดหัวหน้าศูนย์ • {{location}}",
+      "noLocation": "ยังไม่ได้ตั้งค่าสถานที่",
+      "totalLearners": "จำนวนผู้เรียนทั้งหมด",
+      "activeSessions": "เซสชันที่ใช้งาน",
+      "manageSchedule": "จัดการตาราง",
+      "recentActivity": "กิจกรรมล่าสุด",
+      "noRecentActivity": "ยังไม่มีกิจกรรมล่าสุด",
+      "fallback": {
+        "onSite": "อยู่ในศูนย์",
+        "checkedIn": "เช็กอินแล้ว",
+        "openIncidents": "เหตุการณ์ที่ยังเปิดอยู่"
+      }
+    },
+    "hq": {
+      "loading": "กำลังโหลดแดชบอร์ดส่วนกลาง...",
+      "title": "ภาพรวมส่วนกลาง",
+      "subtitle": "ยินดีต้อนรับ {{name}} การติดตามและบริหารทั้งระบบ",
+      "defaultName": "ผู้ดูแลระบบ",
+      "networkSites": "ศูนย์ในเครือข่าย",
+      "noSites": "ไม่พบศูนย์ในเครือข่าย",
+      "locationFallback": "ไม่ระบุสถานที่",
+      "manageSite": "จัดการศูนย์",
+      "systemHealth": "สุขภาพระบบ",
+      "totalSites": "จำนวนศูนย์ทั้งหมด",
+      "activeUsers": "ผู้ใช้ที่ใช้งาน",
+      "systemStatus": "สถานะระบบ",
+      "adminActions": "งานผู้ดูแล",
+      "addSite": "เพิ่มศูนย์ใหม่",
+      "userManagement": "จัดการผู้ใช้",
+      "globalSettings": "การตั้งค่าทั้งระบบ",
+      "siteIdPrefix": "รหัส",
+      "activeSiteRoster": "รายชื่อศูนย์ที่ใช้งาน",
+      "fallback": {
+        "activeSites": "ศูนย์ที่ใช้งาน",
+        "totalUsers": "ผู้ใช้ทั้งหมด",
+        "pending": "รอดำเนินการ"
+      }
+    },
+    "partner": {
+      "loading": "กำลังโหลดแดชบอร์ดพาร์ทเนอร์...",
+      "title": "พอร์ทัลพาร์ทเนอร์",
+      "subtitle": "ยินดีต้อนรับ {{name}}",
+      "defaultName": "พาร์ทเนอร์",
+      "organization": "องค์กร: {{organizationId}}",
+      "associatedSites": "ศูนย์ที่เชื่อมโยง",
+      "noSites": "ไม่มีศูนย์ที่เชื่อมกับบัญชีของคุณ",
+      "noLocation": "ไม่ระบุสถานที่",
+      "viewReports": "ดูรายงาน",
+      "impactOverview": "ภาพรวมผลลัพธ์",
+      "totalLearnersSupported": "จำนวนผู้เรียนที่สนับสนุน",
+      "activePrograms": "โปรแกรมที่ใช้งาน",
+      "resources": "ทรัพยากร",
+      "downloadImpactReport": "ดาวน์โหลดรายงานผลลัพธ์",
+      "partnerGuidelines": "แนวทางพาร์ทเนอร์",
+      "selectedSiteParents": "ผู้ปกครองของศูนย์ที่เลือก",
+      "fallback": {
+        "associatedSites": "ศูนย์ที่เชื่อมโยง",
+        "learnersSupported": "ผู้เรียนที่สนับสนุน",
+        "activePrograms": "โปรแกรมที่ใช้งาน"
+      }
+    },
+    "learner": {
+      "loading": "Loading your learning journey...",
+      "welcome": "Welcome back, {{name}}!",
+      "defaultName": "Learner",
+      "subtitle": "Ready to continue your future skills journey?",
+      "activeSessions": "Your Active Sessions",
+      "noSessions": "You are not enrolled in any active sessions yet.",
+      "recentMissions": "Recent Missions",
+      "noRecentMissions": "No recent missions started. Check with your educator!",
+      "myStats": "My Stats",
+      "sessionsAttended": "Sessions Attended",
+      "skillsMastered": "Skills Mastered",
+      "viewSession": "ดูเซสชัน",
+      "openMissionBoard": "เปิดบอร์ดภารกิจ",
+      "activeMissionsThisWeek": "ภารกิจที่กำลังทำสัปดาห์นี้: {{count}}",
+      "fallback": {
+        "activeSessions": "เซสชันที่ใช้งาน",
+        "activeMissions": "ภารกิจที่ใช้งาน",
+        "unreadMessages": "ข้อความที่ยังไม่อ่าน"
+      }
+    }
+  },
+  "i18n": {
+    "missingKey": "ไม่มีคำแปล"
+  },
+  "meta": {
+    "learnerProfile": {
+      "title": "My Learning Profile | Scholesa",
+      "description": "Your motivation, skills, and learning journey"
+    },
+    "educatorAnalytics": {
+      "title": "Analytics Dashboard | Scholesa",
+      "description": "Student engagement and motivation analytics for educators"
+    }
+  },
+  "analytics": {
+    "educator": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Track student engagement, SDT metrics, and learning progress",
+      "loadError": "Failed to load analytics. Please try again.",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "exportCsv": "Export CSV",
+      "never": "Never",
+      "period": {
+        "week": "week",
+        "month": "month"
+      },
+      "summary": {
+        "totalLearners": "Total Learners",
+        "avgEngagement": "Avg Engagement",
+        "highPerformers": "High Performers",
+        "atRisk": "At Risk"
+      },
+      "atRiskTitle": "{{count}} learners may need support",
+      "atRiskBody": "Students with engagement below 60% have low recent activity or participation.",
+      "table": {
+        "title": "Student Motivation Profiles (SDT)",
+        "subtitle": "Self-Determination Theory metrics by student",
+        "student": "Student",
+        "autonomy": "Autonomy",
+        "competence": "Competence",
+        "belonging": "Belonging",
+        "engagement": "Engagement",
+        "lastActive": "Last Active"
+      },
+      "eventsCount": "{{count}} events",
+      "scoreAria": "Score: {{score}}%",
+      "relative": {
+        "justNow": "Just now",
+        "minutesAgo": "{{count}}m ago",
+        "hoursAgo": "{{count}}h ago",
+        "daysAgo": "{{count}}d ago"
+      },
+      "csvHeaders": {
+        "learnerName": "Learner Name",
+        "engagement": "Engagement %",
+        "autonomy": "Autonomy %",
+        "competence": "Competence %",
+        "belonging": "Belonging %",
+        "events": "Events",
+        "lastActive": "Last Active"
+      },
+      "trendUp": "Improving vs last {{period}}",
+      "trendDown": "Below target vs last {{period}}"
+    },
+    "student": {
+      "headerTitle": "My Learning Analytics",
+      "headerSubtitle": "Track your growth and celebrate your achievements",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "sdt": {
+        "autonomy": {
+          "title": "Autonomy",
+          "subtitle": "My Choices"
+        },
+        "competence": {
+          "title": "Competence",
+          "subtitle": "Skills Mastered"
+        },
+        "belonging": {
+          "title": "Belonging",
+          "subtitle": "Community"
+        },
+        "overall": {
+          "title": "Overall",
+          "subtitle": "Total Score"
+        }
+      },
+      "stats": {
+        "goalsSet": "Goals Set",
+        "goalsAchieved": "Goals Achieved",
+        "checkpointsPassed": "Checkpoints Passed",
+        "badgesEarned": "Badges Earned",
+        "recognition": "Recognition",
+        "currentStreak": "Current Streak"
+      },
+      "currentStreakValue": "{{count}} days",
+      "activityTitle": "My Learning Activity",
+      "activityEmpty": "Start learning to see your activity!",
+      "totalActivity": "Total Activity",
+      "keepGoingTitle": "Keep Going!",
+      "motivation": {
+        "veryHigh": "You are doing amazing! Your dedication is inspiring. Keep up the excellent work!",
+        "high": "Great progress! You are building momentum. Try setting a new goal to keep growing.",
+        "medium": "You are on the right path! Consider completing more missions to boost your skills.",
+        "low": "Every journey starts somewhere! Set a small goal and take one step at a time. You can do this!"
+      }
+    }
+  },
+  "goalForm": {
+    "title": "Set a Learning Goal",
+    "subtitle": "What do you want to achieve? Setting goals helps you stay motivated and track your progress.",
+    "goalLabel": "My Goal",
+    "goalPlaceholder": "Example: Master Python loops and conditionals",
+    "targetDateLabel": "Target Date",
+    "characters": "{{count}}/200 characters",
+    "setting": "Setting Goal...",
+    "submit": "Set Goal",
+    "error": {
+      "descriptionRequired": "Please describe your goal",
+      "dateRequired": "Please select a target date",
+      "saveFailed": "Failed to save goal. Please try again."
+    }
+  },
+  "motivation": {
+    "noData": "No data available yet. Start learning to see your progress!",
+    "headerTitle": "My Learning Journey",
+    "headerSubtitle": "Track your growth, skills, and achievements",
+    "sdt": {
+      "autonomy": {
+        "title": "Autonomy",
+        "subtitle": "Your Choices"
+      },
+      "competence": {
+        "title": "Competence",
+        "subtitle": "Skills Mastered"
+      },
+      "belonging": {
+        "title": "Belonging",
+        "subtitle": "Community"
+      },
+      "overall": {
+        "title": "Overall",
+        "subtitle": "Total Score"
+      }
+    },
+    "skills": {
+      "title": "Skills I'm Developing",
+      "empty": "No skills tracked yet. Complete missions to build your skill profile!"
+    },
+    "badges": {
+      "title": "Badges Earned",
+      "empty": "No badges earned yet. Keep learning to unlock achievements!"
+    },
+    "goals": {
+      "title": "My Learning Goals",
+      "setNew": "+ Set New Goal",
+      "empty": "No goals set yet. Set goals to guide your learning journey!"
+    },
+    "recognitionCount": "Times recognized by peers",
+    "unnamedSkill": "Unnamed Skill",
+    "badgeFallback": "Badge",
+    "goalFallback": "Learning goal",
+    "skillLevel": {
+      "emerging": "Emerging",
+      "developing": "Developing",
+      "proficient": "Proficient",
+      "mastery": "Mastery"
+    },
+    "evidenceCollected": "{{count}} evidence collected",
+    "goalTargetDate": "Target: {{date}}"
+  },
+  "aiInsights": {
+    "panelTitle": "AI Insights",
+    "countLabel": "{{count}} insights",
+    "empty": "No insights available yet. Check back after students engage more with the platform.",
+    "showLess": "Show less",
+    "showDetails": "Show details",
+    "affectedLearners": "Affected Learners:",
+    "recommendedActions": "Recommended Actions:",
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "dimension": {
+      "autonomy": "Autonomy",
+      "competence": "Competence",
+      "belonging": "Belonging"
+    },
+    "atRisk": {
+      "title": "{{count}} learners at risk",
+      "description": "These learners show very low engagement and may need immediate attention.",
+      "actions": {
+        "checkIn": "Schedule one-on-one check-ins",
+        "reviewHistory": "Review mission history for blockers",
+        "adjustPath": "Adjust learning path to match interests"
+      }
+    },
+    "lowAutonomy": {
+      "title": "Learners Need More Choice",
+      "description": "{{count}} learners show low autonomy scores.",
+      "actions": {
+        "choiceBoards": "Offer mission choice boards",
+        "goalSetting": "Encourage goal-setting activities",
+        "projectOptions": "Provide interest-based project options"
+      }
+    },
+    "lowCompetence": {
+      "title": "Skill Mastery Support Needed",
+      "description": "{{count}} learners need more skill-building opportunities.",
+      "actions": {
+        "scaffoldedPractice": "Provide scaffolded practice activities",
+        "smallWins": "Celebrate small wins with badges",
+        "peerMentoring": "Offer peer mentoring opportunities"
+      }
+    },
+    "lowBelonging": {
+      "title": "Community Connection Needed",
+      "description": "{{count}} learners show low belonging scores.",
+      "actions": {
+        "peerCollaboration": "Facilitate peer collaboration activities",
+        "showcase": "Encourage showcase submissions",
+        "recognition": "Create recognition opportunities"
+      }
+    },
+    "thriving": {
+      "title": "{{count}} learners thriving",
+      "description": "These learners show exceptional engagement across SDT dimensions.",
+      "actions": {
+        "advancedChallenges": "Offer advanced challenges",
+        "mentorPeers": "Invite them to mentor peers",
+        "showcaseWork": "Showcase their work as examples"
+      }
+    },
+    "classLow": {
+      "title": "Class Engagement Below Target",
+      "description": "Average class engagement is {{score}}%. Consider adjusting pacing.",
+      "actions": {
+        "survey": "Survey learners about interests and challenges",
+        "variety": "Introduce more variety in mission types",
+        "choice": "Increase opportunities for student choice"
+      }
+    },
+    "classHigh": {
+      "title": "Strong Class Engagement",
+      "description": "Class is highly engaged ({{score}}%). Keep up the strong work.",
+      "actions": {
+        "document": "Document successful strategies",
+        "share": "Share best practices with other educators",
+        "continue": "Continue the current approach"
+      }
+    },
+    "inactive": {
+      "title": "{{count}} inactive students",
+      "description": "These students have not logged in for over a week.",
+      "actions": {
+        "reengage": "Send re-engagement message",
+        "contactParents": "Contact parents or guardians",
+        "investigateBarriers": "Investigate potential access barriers"
+      }
+    },
+    "sdtImbalance": {
+      "title": "{{dimension}} dimension needs attention",
+      "description": "Class shows stronger {{strong}} than {{weak}}.",
+      "actions": {
+        "autonomy": {
+          "choice": "Increase student choice in missions",
+          "goals": "Allow learners to set personal goals",
+          "selfPaced": "Offer self-paced learning paths"
+        },
+        "competence": {
+          "checkpoints": "Provide more skill-building checkpoints",
+          "badges": "Celebrate mastery with badges",
+          "challenges": "Offer progressive challenges"
+        },
+        "belonging": {
+          "collaboration": "Increase peer collaboration opportunities",
+          "showcase": "Encourage showcase submissions",
+          "recognition": "Facilitate peer recognition activities"
+        }
+      }
+    }
+  },
+  "aiCoach": {
+    "title": "AI Coach",
+    "tooltip": "Ask AI Coach",
+    "openAria": "Open AI Coach",
+    "minimizeAria": "Minimize AI Coach",
+    "teacherGuidance": "Ask your teacher before using AI Coach.",
+    "howCanIHelp": "How can I help you today?",
+    "mode": {
+      "hint": {
+        "label": "Get a Hint",
+        "placeholder": "What are you stuck on?"
+      },
+      "rubric": {
+        "label": "Check My Work",
+        "placeholder": "What did you complete?"
+      },
+      "debug": {
+        "label": "Help Me Debug",
+        "placeholder": "What is not working?"
+      },
+      "critique": {
+        "label": "Give Feedback",
+        "placeholder": "What would you like feedback on?"
+      }
+    },
+    "back": "Back",
+    "questionPlaceholder": "Type your question or use the microphone...",
+    "listening": "Listening...",
+    "speakQuestion": "Speak Your Question",
+    "thinking": "Thinking...",
+    "ask": "Ask",
+    "responseLabel": "AI Coach:",
+    "poweredBy": "Powered by {{model}}",
+    "wasHelpful": "Was this helpful?",
+    "helpfulYes": "Yes",
+    "helpfulNo": "No",
+    "feedbackThanks": "Thanks for the feedback!",
+    "feedbackTryDifferent": "Thanks for the feedback. Try asking differently.",
+    "basedOn": "Based on:",
+    "tryNext": "Try these next:",
+    "explainBackPrompt": "Now explain it back!",
+    "explainBackPlaceholder": "Tell me what you learned...",
+    "submitExplanation": "Submit Explanation",
+    "explainBackSuccess": "Great explanation!",
+    "askAnother": "Ask another question",
+    "footerTip": "Remember: AI helps you think, not do the work.",
+    "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help."
+  },
+  "bosCoaching": {
+    "sessionLoopTitle": "BOS/MIA Session Loop",
+    "sessionLoopSubtitle": "Latest individual improvement signal for this session",
+    "sessionLoopEmpty": "No session loop data yet",
+    "familyLearningTitle": "Family Learning Loop",
+    "familyLearningSubtitle": "Your child's learning readiness and improvement signals",
+    "familyLearningEmpty": "No family learning data yet",
+    "familyScheduleTitle": "Family Schedule Loop",
+    "familyScheduleSubtitle": "Your child's learning readiness and attendance signals",
+    "familyScheduleEmpty": "No schedule learning data yet",
+    "familyBillingTitle": "Family Billing Loop",
+    "familyBillingSubtitle": "Learning engagement and progress metrics",
+    "familyBillingEmpty": "No billing loop data yet",
+    "cognition": "Cognition",
+    "engagement": "Engagement",
+    "integrity": "Integrity",
+    "improvementScore": "Improvement Score",
+    "activeGoals": "Active Learning Goals",
+    "mvlStatus": "Mastery Validation",
+    "mvlActive": "In Progress",
+    "mvlPassed": "Passed",
+    "mvlFailed": "Challenged",
+    "loadingInsights": "Loading learning insights...",
+    "errorLoadingInsights": "Unable to load insights; try again later",
+    "latestSignal": "Latest Signal"
+  }
+}
