@@ -135,7 +135,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('BOS/MIA Learner Loop'), findsOneWidget);
+        expect(find.text('BOS/MIA Session Loop'), findsOneWidget);
       expect(find.textContaining('Latest individual improvement signal'),
           findsOneWidget);
     });

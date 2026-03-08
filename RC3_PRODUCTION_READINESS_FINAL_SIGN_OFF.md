@@ -12,11 +12,11 @@
 | # | Blocker | Status | Deployed | Tested |
 |---|---------|--------|----------|--------|
 | 1 | Firestore Indexes | ✅ COMPLETE | ✅ Live (Mar 3) | ✅ Verified |
-| 2 | i18n Architecture | ✅ READY | ⏳ Partial* | ✅ System tested |
+| 2 | i18n Architecture | ✅ COMPLETE | ✅ Active surfaces live | ✅ EN / ZH-CN / ZH-TW runtime tested |
 | 3 | Error Handling | ✅ COMPLETE | ✅ Live (Dec 26) | ✅ 6 tests passing |
 | 4 | Unit Tests | ✅ COMPLETE | ✅ Live (Mar 3) | ✅ 15/15 passing |
 
-**\* Partial = System ready; 6 remaining pages in migration guide (optional, post-launch)*
+**Current locale baseline**: EN, ZH-CN, and ZH-TW are wired through the Flutter runtime and shared BOS coaching helper.
 
 ---
 
@@ -31,7 +31,7 @@
 - **Integration**: All 10 surfaces working
 - **Error Handling**: Comprehensive (COPPA + graceful degradation)
 - **PWA/Offline**: Service worker verified
-- **i18n**: Centralized system ready (en + es locales)
+- **i18n**: Centralized system live for EN / ZH-CN / ZH-TW on launch-critical BOS and auth surfaces
 
 ---
 
@@ -45,9 +45,9 @@ Choose one of the following:
 
 ```
 1. Smoke test all 10 surfaces (load learner loop card)
-2. Verify Firestore indexes in Firebase Console
+2. Verify role-based smoke suite stays green
 3. Test offline mode (service worker)
-4. Verify English/Spanish translations
+4. Verify EN / ZH-CN / ZH-TW translations
 5. Load test: 5+ concurrent learner queries
 ```
 
@@ -58,7 +58,7 @@ Choose one of the following:
 **Scope**: Code quality improvements after RC3 launch
 
 ```
-1. Migrate 6 educator pages to centralized i18n (~90 min)
+1. Extend centralized tri-locale coverage to remaining legacy pages (~90 min)
 2. Create Flutter widget unit tests (~150 min)
 3. Create integration tests for parent surfaces (~200 min)
 ```

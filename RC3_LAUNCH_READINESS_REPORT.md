@@ -17,7 +17,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 | Blocker | Title | Status | Action |
 |---------|-------|--------|--------|
 | **#1** | Firestore Composite Indexes | ✅ **DEPLOYED** | 3 indexes live in production |
-| **#2** | i18n Architecture Mismatch | ✅ **SYSTEM READY** | Migration guide prepared for post-launch |
+| **#2** | i18n Architecture Mismatch | ✅ **COMPLETE** | EN / ZH-CN / ZH-TW runtime validated on active BOS/auth flows |
 | **#3** | Callable Error Handling | ✅ **LIVE** | Deployed & working (Dec 26) |
 | **#4** | Unit Test Coverage | ✅ **COMPLETE** | 15/15 Jest tests passing (Mar 3) |
 
@@ -26,7 +26,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **Backend Callable**: `bosGetLearnerLoopInsights` fully tested (15 Jest tests, all passing)  
 ✅ **Firestore Indexes**: 3 composite indexes deployed for sub-second query performance  
 ✅ **Error Handling**: All error paths validated; graceful degradation working  
-✅ **i18n Architecture**: Centralized system created; migration path documented  
+✅ **i18n Architecture**: Centralized system live; EN / ZH-CN / ZH-TW runtime validated on launch-critical flows  
 ✅ **All 10 Surfaces**: Educator (7) + Parent (3) integrate cleanly; 0 build errors  
 ✅ **TypeScript Build**: Cloud Functions clean (exit 0); Jest configured  
 ✅ **Flutter Analysis**: App clean (4 non-blocking info lints)  
@@ -93,55 +93,46 @@ firebase deploy --only firestore:indexes
 
 **Identified**: December 26, 2025  
 **System Created**: December 26, 2025 ✅  
-**Migration Status**: 1 of 7 pages (ready for post-launch)
+**Migration Status**: Active educator + parent BOS/MIA surfaces migrated; runtime locale coverage verified for EN / ZH-CN / ZH-TW
 
 **Problem**:
-- Flutter had hardcoded local `_*Es` translation maps (Spain Spanish)
-- Next.js had centralized system in `packages/i18n/locales/`
-- No shared translation keys; translations duplicated across platforms
-- Unsustainable for adding new languages (th, zh-CN pending)
+- BOS/MIA copy had diverged across Flutter pages instead of resolving through a shared helper
+- Locale expansion required a canonical runtime path for EN / ZH-CN / ZH-TW
+- Role-gated and auth-adjacent copy needed explicit runtime verification, not just static file presence
 
 **Solution Implemented**:
 
 1. **Created Centralized i18n Class**:
    ```dart
    File: lib/i18n/bos_coaching_i18n.dart (105 lines)
-   - 25 translation keys translated to English + Spanish
-   - Locale detection: automatic fallback to English
+   - Shared translation keys translated to EN / ZH-CN / ZH-TW
+   - Locale detection: zh canonicalization + English fallback
    - Convenience getters: cognition(), engagement(), integrity(), etc.
    ```
 
-2. **Added Firebase i18n Namespace**:
+2. **Migrated Active Surfaces**:
    ```
-   packages/i18n/locales/en.json — Added "bosCoaching" section (25 keys)
-   packages/i18n/locales/es.json — Created (NEW FILE, full Spanish translations)
+   Educator: today, mission review, mission plans, learner supports, integrations
+   Parent: summary, schedule, billing
    ```
 
 3. **Documented Migration Path**:
    ```
    I18N_MIGRATION_GUIDE_REMAINING_PAGES.md
-   - Step-by-step guide for 6 remaining educator pages
+   - Remaining legacy page guidance for follow-on cleanup
    - Before/after examples
    - Mapping of old strings to BosCoachingI18n keys
-   - Expected effort: 90 minutes total (~15 min per page)
+   - Expected effort: 90 minutes total for non-launch-critical cleanup
    ```
 
 **Current Implementation Status**:
-- ✅ Centralized class ready
-- ✅ Firebase i18n keys live
-- ✅ 1 example migration documented (educator_sessions_page)
-- ⏳ 6 remaining pages pending migration (optional, post-launch)
+- ✅ Centralized class live
+- ✅ Active educator + parent BOS/MIA surfaces migrated
+- ✅ Auth and role-gate locale paths wired for EN / ZH-CN / ZH-TW
+- ✅ Runtime smoke test coverage added for tri-locale resolution
 
-**Pages Pending Migration** (Optional):
-1. educator_learners_page.dart
-2. educator_today_page.dart
-3. educator_mission_review_page.dart
-4. educator_mission_plans_page.dart
-5. educator_learner_supports_page.dart
-6. educator_integrations_page.dart
-
-**Status**: 🟡 **SYSTEM READY, PARTIAL IMPLEMENTATION** (60% complete)  
-**Recommendation**: Defer page migrations to post-RC3 phase (code quality optimization, not blocker)
+**Status**: 🟢 **COMPLETE FOR RC3 LAUNCH PATHS**  
+**Recommendation**: Keep migrating any residual legacy copy as post-RC3 code quality work, not as a launch blocker
 
 ---
 

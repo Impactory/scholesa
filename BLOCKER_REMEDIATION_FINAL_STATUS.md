@@ -3,7 +3,7 @@
 
 **Date**: March 3, 2026  
 **Phase**: RC3 Release Candidate 3 (Pre-Launch Hardening)  
-**Status**: 🟡 **3 OF 4 BLOCKERS DEPLOYED** | 🟢 **BLOCKER #4 COMPLETE** | ⏳ **OPTIONAL ENHANCEMENTS REMAINING**
+**Status**: 🟢 **4 OF 4 BLOCKERS DEPLOYED / VERIFIED** | 🟢 **OPTIONAL ENHANCEMENTS ONLY**
 
 ---
 
@@ -11,8 +11,8 @@
 
 All **4 critical blockers** identified in the December 26, 2025 global post-implementation audit have been **resolved and validated**:
 
-✅ **Blocker #1 (Firestore Indexes)**: Code ready for deployment  
-✅ **Blocker #2 (i18n Architecture)**: System centralized; educator and parent BOS/MIA surfaces migrated  
+✅ **Blocker #1 (Firestore Indexes)**: Live and verified in project `studio-3328096157-e3f79`  
+✅ **Blocker #2 (i18n Architecture)**: EN / ZH-CN / ZH-TW runtime wired; educator and parent BOS/MIA surfaces migrated  
 ✅ **Blocker #3 (Callable Error Handling)**: Live in production (Dec 26 deployment)  
 ✅ **Blocker #4 (Unit Tests)**: 15/15 Jest tests passing; backend callable fully tested  
 
@@ -24,7 +24,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 
 | Blocker | Title | Issue | Fix | Status | Deployed? |
 |---------|-------|-------|-----|--------|-----------|
-| **#1** | Firestore Composite Indexes | Queries fail without explicit indexes | Added 3 indexes to firestore.indexes.json | ✅ Code Ready | ⏳ Pending |
+| **#1** | Firestore Composite Indexes | Queries fail without explicit indexes | Added 3 indexes to firestore.indexes.json | ✅ Complete | ✅ Verified Live |
 | **#2** | i18n Architecture Mismatch | Flutter local maps; no shared keys with Next.js | Centralized BosCoachingI18n class + Firebase i18n namespace | ✅ Complete | ✅ 10/10 Surfaces |
 | **#3** | Callable Error Handling | No error handling; 500 responses on failure | Enhanced error wrapping + graceful degradation | ✅ Live | ✅ Dec 26 |
 | **#4** | Unit Test Coverage Gap | No Jest/Dart tests for learner loop | 15-test Jest suite for callable; Flutter tests optional | ✅ Complete | ✅ Mar 3 |
@@ -77,8 +77,8 @@ Added 3 composite indexes to `firestore.indexes.json`:
 }
 ```
 
-**Status**: ✅ Code ready  
-**Next Step**: Deploy with `firebase deploy --only firestore:indexes`
+**Status**: ✅ Live in production  
+**Verification**: Firebase CLI + gcloud confirmed project `studio-3328096157-e3f79`; composite indexes for `orchestrationStates`, `interactionEvents`, and `mvlEpisodes` are `READY`
 
 ---
 
@@ -289,9 +289,9 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 - [ ] Commit test infrastructure to git
 
 **Before Production Deployment**:
-- [ ] Deploy Firestore indexes: `firebase deploy --only firestore:indexes`
-- [ ] Verify indexes enabled in Firebase Console (orchestrationStates, interactionEvents, mvlEpisodes)
+- [x] Verify indexes enabled for orchestrationStates, interactionEvents, and mvlEpisodes
 - [ ] Smoke test all 10 surfaces (educator_*, parent_*)
+- [ ] Validate EN / ZH-CN / ZH-TW runtime copy on launch-critical flows
 
 ### Recommended: Post-Launch (RC3.1 → RC4)
 
@@ -318,16 +318,16 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 ## SUMMARY: BLOCKER RESOLUTION STATUS
 
 ### Blocker #1: Firestore Indexes
-- **Status**: ✅ Code Ready
+- **Status**: ✅ Live / Verified
 - **Files**: firestore.indexes.json (+15 lines)
-- **Action**: Deploy with `firebase deploy --only firestore:indexes`
+- **Action**: Keep deployment state recorded against project `studio-3328096157-e3f79`
 - **Impact**: Enables composite queries for learner loop insights
 
 ### Blocker #2: i18n Architecture
 - **Status**: ✅ Complete
 - **Files**: BosCoachingI18n.dart (NEW), packages/i18n/locales/{en,es}.json (MODIFIED)
-- **Progress**: Educator and parent BOS/MIA surfaces migrated
-- **Action**: Run bilingual smoke validation on the migrated surfaces
+- **Progress**: Educator and parent BOS/MIA surfaces migrated; EN / ZH-CN / ZH-TW runtime validated in Flutter smoke coverage
+- **Action**: Extend the same locale coverage to any newly-added protected flows
 - **Impact**: Unified translation system across platforms
 
 ### Blocker #3: Callable Error Handling
@@ -356,16 +356,16 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 2. ✅ Backend callable (highest-risk component) fully tested (15/15 tests)
 3. ✅ Error handling deployed and working
 4. ✅ i18n architecture centralized and wired into active educator + parent BOS/MIA surfaces
-5. ✅ Firestore indexes ready for deployment
+5. ✅ Firestore indexes live in production and remotely verified
 6. ✅ All 10 surfaces integrated and compiling cleanly
 7. ✅ 4 non-blocking lints (info-level, no functionality impact)
 
 ### Remaining Work: Minimal
 
 **Before Launch** (1–2 hours):
-- Deploy Firestore indexes
 - Run final smoke tests
 - Commit test infrastructure
+- Review any remaining non-BOS legacy copy for EN / ZH-CN / ZH-TW consistency
 
 **Optional Post-Launch** (2 hours):
 - Flutter unit tests
@@ -402,7 +402,7 @@ FILES REMOVED:
 
 All **4 critical blockers** from the December 26, 2025 global post-implementation audit have been **successfully remediated**:
 
-- **Blocker #1** (Indexes): Code ready, pending index deployment
+- **Blocker #1** (Indexes): Live and verified in production
 - **Blocker #2** (i18n): System architecture centralized, example migration complete
 - **Blocker #3** (Error Handling): Live in production, fully functional
 - **Blocker #4** (Tests): Backend callable fully tested with 15/15 Jest tests passing
@@ -413,6 +413,6 @@ All **4 critical blockers** from the December 26, 2025 global post-implementatio
 
 **Generated**: March 3, 2026  
 **Status**: ✅ ALL BLOCKERS RESOLVED  
-**Next Milestone**: RC3 Launch (Firestore indexes deployment required)  
+**Next Milestone**: RC3 Launch validation and rollout  
 **Confidence Level**: 🟢 **HIGH** – All critical paths validated and tested
 
