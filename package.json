@@ -16,14 +16,14 @@
     "lint:fix": "eslint . --fix",
     "test": "jest --runInBand",
     "test:e2e:web:install": "npx playwright install chromium",
-    "test:e2e:web": "bash -lc 'npm --prefix functions run build && GCLOUD_PROJECT=scholesa-e2e GOOGLE_CLOUD_PROJECT=scholesa-e2e FIREBASE_PROJECT_ID=scholesa-e2e STRIPE_PRICE_LEARNER=price_learner_seat STRIPE_PRICE_EDUCATOR=price_educator_seat STRIPE_PRICE_PARENT=price_parent_seat STRIPE_PRICE_SITE=price_site_license NOTIFY_ENDPOINT=http://127.0.0.1:0 npx --yes firebase-tools emulators:exec --project scholesa-e2e --only auth,firestore,functions \"npx playwright test --config playwright.config.ts\"'",
+    "test:e2e:web": "bash -lc 'npm --prefix functions ci && npm --prefix functions run build && GCLOUD_PROJECT=scholesa-e2e GOOGLE_CLOUD_PROJECT=scholesa-e2e FIREBASE_PROJECT_ID=scholesa-e2e STRIPE_PRICE_LEARNER=price_learner_seat STRIPE_PRICE_EDUCATOR=price_educator_seat STRIPE_PRICE_PARENT=price_parent_seat STRIPE_PRICE_SITE=price_site_license NOTIFY_ENDPOINT=http://127.0.0.1:0 npx --yes firebase-tools emulators:exec --project scholesa-e2e --only auth,firestore,functions \"npx playwright test --config playwright.config.ts\"'",
     "test:integration:rules": "npx --yes firebase-tools emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
     "test:integration:analytics": "npx --yes firebase-tools emulators:exec --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand --config jest.analytics.config.js\"",
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
     "test:flutter:full": "bash -lc 'cd apps/empire_flutter/app && flutter test'",
     "deploy:clean:full": "bash -lc 'cd apps/empire_flutter/app && flutter clean && flutter pub get' && bash ./scripts/deploy.sh all",
     "flow:platform:full": "bash ./scripts/full_platform_flow.sh",
-    "flow:platform:gates": "bash ./scripts/full_platform_flow.sh --no-deploy",
+    "flow:platform:gates": "FLUTTER_TEST_SCRIPT=test:flutter:ci bash ./scripts/full_platform_flow.sh --no-deploy",
     "qa:telemetry-smoke": "node scripts/telemetry_smoke_check.js --mode=full --strict",
     "qa:telemetry-live-audit": "node scripts/telemetry_live_regression_audit.js --strict",
     "qa:telemetry-live-audit:coverage": "node scripts/telemetry_live_regression_audit.js --strict",
@@ -80,7 +80,8 @@
     "test:cta-report": "python3 -m unittest scripts/test_cta_report_policy.py",
     "test:cta-report:generate": "npm run test:cta-report && python3 scripts/generate_cta_report.py",
     "test:cta-report:gate": "npm run test:cta-report:generate && python3 scripts/check_cta_report_gate.py",
-    "qa:dependency-drift": "node scripts/dependency_drift_audit.js"
+    "qa:dependency-drift": "node scripts/dependency_drift_audit.js",
+    "test:flutter:ci": "bash -lc 'cd apps/empire_flutter/app && flutter test $(find test -name \"*_test.dart\" ! -name \"ui_golden_test.dart\")'"
   },
   "dependencies": {
     "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",

@@ -83,10 +83,12 @@ retry_functions_deploy() {
 }
 
 main() {
+  local flutter_test_script="${FLUTTER_TEST_SCRIPT:-test:flutter:full}"
+
   ensure_node24
 
-  log "Running full Flutter suite..."
-  (cd "$REPO_ROOT" && npm run test:flutter:full)
+  log "Running Flutter suite via ${flutter_test_script}..."
+  (cd "$REPO_ROOT" && npm run "$flutter_test_script")
 
   log "Running web production build..."
   (cd "$REPO_ROOT" && npm run build)
