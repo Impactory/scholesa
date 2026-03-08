@@ -6,6 +6,7 @@ const {
   writeJson,
   nowIso,
   readTextSafe,
+  resolveExecShell,
   toCanonicalReport,
 } = require('../utils');
 
@@ -26,7 +27,7 @@ function readAiDependencyReport() {
       stdio: 'pipe',
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 16,
-      shell: '/bin/zsh',
+      shell: resolveExecShell(),
     });
   } catch {
     // The script exits non-zero when violations are detected. We still read the report artifact.

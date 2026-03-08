@@ -1,5 +1,5 @@
 const cp = require('child_process');
-const { reportPath, writeJson, nowIso } = require('../utils');
+const { reportPath, resolveExecShell, writeJson, nowIso } = require('../utils');
 
 const COMMANDS = [
   'pwd && git rev-parse --show-toplevel',
@@ -16,7 +16,7 @@ function runCommand(command) {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       maxBuffer: 1024 * 1024 * 32,
-      shell: '/bin/zsh',
+      shell: resolveExecShell(),
     });
     const lines = stdout.split(/\r?\n/).filter(Boolean);
     return {

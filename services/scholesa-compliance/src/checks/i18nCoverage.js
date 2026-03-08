@@ -7,6 +7,7 @@ const {
   writeJson,
   nowIso,
   readTextSafe,
+  resolveExecShell,
   toCanonicalReport,
 } = require('../utils');
 
@@ -29,7 +30,7 @@ function runCommand(command) {
       stdio: 'pipe',
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 16,
-      shell: '/bin/zsh',
+      shell: resolveExecShell(),
     });
     return { passed: true, command };
   } catch (error) {

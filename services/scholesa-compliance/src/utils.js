@@ -19,6 +19,17 @@ function readTextSafe(filePath) {
   return fs.readFileSync(filePath, 'utf8');
 }
 
+function resolveExecShell() {
+  if (process.platform === 'win32') {
+    return process.env.ComSpec || 'cmd.exe';
+  }
+  if (typeof process.env.SHELL === 'string' && process.env.SHELL.trim()) {
+    return process.env.SHELL.trim();
+  }
+  if (fs.existsSync('/bin/bash')) return '/bin/bash';
+  return '/bin/sh';
+}
+
 function writeJson(filePath, payload) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
@@ -149,6 +160,7 @@ module.exports = {
   readText,
   readTextSafe,
   relativeRepoPath,
+  resolveExecShell,
   resolveAuditEnv,
   reportPath,
   toCanonicalReport,

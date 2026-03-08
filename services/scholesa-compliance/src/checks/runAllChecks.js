@@ -6,6 +6,7 @@ const {
   writeJson,
   nowIso,
   readTextSafe,
+  resolveExecShell,
 } = require('../utils');
 const { runRepoScan } = require('./repoScan');
 const { runVendorDependencyBan } = require('./vendorDependencyBan');
@@ -29,7 +30,7 @@ function runCommand(command) {
       stdio: 'pipe',
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 32,
-      shell: '/bin/zsh',
+      shell: resolveExecShell(),
     });
     return { command, passed: true };
   } catch (error) {

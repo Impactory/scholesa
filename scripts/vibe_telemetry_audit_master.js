@@ -31,6 +31,17 @@ const { VIBE_BLOCKER_REPORTS } = require('./vibe_blockers');
 
 const BLOCKER_REPORTS = VIBE_BLOCKER_REPORTS;
 
+function resolveExecShell() {
+  if (process.platform === 'win32') {
+    return process.env.ComSpec || 'cmd.exe';
+  }
+  if (typeof process.env.SHELL === 'string' && process.env.SHELL.trim()) {
+    return process.env.SHELL.trim();
+  }
+  if (fs.existsSync('/bin/bash')) return '/bin/bash';
+  return '/bin/sh';
+}
+
 function isServiceAccountCredentialPath(candidate) {
   if (typeof candidate !== 'string' || !candidate.trim()) return false;
   const resolved = path.resolve(process.cwd(), candidate);
@@ -103,7 +114,7 @@ function runCommand(command) {
       stdio: 'pipe',
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 64,
-      shell: '/bin/zsh',
+      shell: resolveExecShell(),
     });
     return {
       command,
