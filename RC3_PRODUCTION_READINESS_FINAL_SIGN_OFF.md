@@ -2,7 +2,7 @@
 ## All Blockers Resolved | Ready for Launch
 
 **Status**: ✅ **PRODUCTION READY**  
-**Date**: March 3, 2026  
+**Date**: March 8, 2026  
 **Approval**: User Confirmed (Mar 3, 15:30 UTC)
 
 ---
@@ -18,6 +18,8 @@
 
 **Current locale baseline**: EN, ZH-CN, and ZH-TW are wired through the Flutter runtime and shared BOS coaching helper.
 
+**Live identity baseline**: Firebase Auth and Firestore are fully reconciled for login-capable profiles; `0` Firestore-only users, `0` Auth-only login-capable users, and the remaining legacy HQ/partner profiles now support password login with the standard RC3 test credential.
+
 ---
 
 ## PRODUCTION DEPLOYMENT VERIFICATION
@@ -28,10 +30,12 @@
 - **Tests**: Jest 15/15 passing (1.844s)
 - **Analysis**: Flutter clean (0 errors, 4 info lints)
 - **Indexes**: Firestore 3 live in production
+- **Identity**: Firestore/Auth reconciled (`143` Firestore users, `143` Auth users, `0` Firestore-only, `0` Auth-only)
 - **Integration**: All 10 surfaces working
 - **Error Handling**: Comprehensive (COPPA + graceful degradation)
 - **PWA/Offline**: Service worker verified
 - **i18n**: Centralized system live for EN / ZH-CN / ZH-TW on launch-critical BOS and auth surfaces
+- **Login Verification**: `amelda@scholesa.com`, `ameldalin561@gmail.com`, and `partner@example.com` verified with `Test123!`
 
 ---
 

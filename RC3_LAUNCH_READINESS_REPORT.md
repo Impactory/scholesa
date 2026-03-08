@@ -1,7 +1,7 @@
 # SCHOLESA RC3 LAUNCH READINESS REPORT
 ## Comprehensive Post-Audit Remediation Summary
 
-**Date**: March 3, 2026  
+**Date**: March 8, 2026  
 **Current Phase**: RC3 Release Candidate 3  
 **Overall Status**: 🟢 **PRODUCTION READY**  
 **Confidence Level**: **HIGH**
@@ -31,10 +31,38 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **TypeScript Build**: Cloud Functions clean (exit 0); Jest configured  
 ✅ **Flutter Analysis**: App clean (4 non-blocking info lints)  
 ✅ **Service Worker**: PWA manifest + offline support verified  
+✅ **Live Identity Reconciliation**: Auth and Firestore now aligned one-to-one for all login-capable production profiles  
 
 ---
 
 ## DETAILED BLOCKER RESOLUTION TIMELINE
+
+### LIVE IDENTITY RECONCILIATION: COMPLETE
+
+**Completed**: March 8, 2026
+
+**Problem**:
+- Live Firebase contained orphaned or synthetic identities that did not represent valid end-to-end login paths
+- Three Firestore user profiles still existed without matching Auth users
+- RC3 needed proof that real password login works for the remaining legacy HQ and partner profiles
+
+**Solution**:
+- Removed `183` anonymous `voice-live-*` Auth artifacts and `27` seeded or E2E Firestore user artifacts with a conservative pattern-based cleanup
+- Reconciled the remaining Firestore-only profiles into Auth using their existing UIDs, correct role claims, and password `Test123!`
+- Verified password login against Firebase Auth REST for:
+   - `amelda@scholesa.com`
+   - `ameldalin561@gmail.com`
+   - `partner@example.com`
+
+**Verification**:
+- `node scripts/firebase_role_e2e_audit.js --strict` → PASS
+- Post-fix live counts: `143` Firestore users, `143` Auth users
+- `0` Firestore-only users
+- `0` Auth-only login-capable users
+- `0` Auth-only ephemeral users
+- `0` mismatched roles
+
+**Status**: 🟢 **LIVE & VERIFIED**
 
 ### BLOCKER #1: Firestore Composite Indexes
 
