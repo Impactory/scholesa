@@ -55,6 +55,7 @@ run_step() {
 run_step "Role cross-link verification" node scripts/verify_role_cross_links.js --env="$ENV_NAME" --site-id="$SITE_ID" --strict
 run_step "Identity artifact hygiene" node scripts/cleanup_identity_artifacts.js --strict
 run_step "Login profile reconciliation" node scripts/reconcile_login_profiles.js --strict
+run_step "Auth role claim reconciliation" node scripts/reconcile_auth_role_claims.js --strict
 run_step "Live Firebase role identity audit" node scripts/firebase_role_e2e_audit.js --strict
 run_step "Firebase password login verification" node scripts/verify_login_profiles.js --strict
 run_step "Role dashboard smoke checks" node scripts/role_dashboard_smoke.js --env="$ENV_NAME" --strict

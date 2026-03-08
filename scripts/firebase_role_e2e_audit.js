@@ -60,6 +60,7 @@ async function main() {
     missingFirestoreRoles: [],
     missingDisplayNames: [],
     missingSiteContext: [],
+    missingAuthRoleClaims: [],
     firestoreOnly: [],
     authOnlyLoginCapable: [],
     authOnlyEphemeral: [],
@@ -97,6 +98,9 @@ async function main() {
     const claimRole = typeof authUser.customClaims?.role === 'string'
       ? authUser.customClaims.role.trim()
       : '';
+    if (role && !claimRole) {
+      report.missingAuthRoleClaims.push({ uid, email: data.email || authUser.email || null, role });
+    }
     if (claimRole && role && claimRole !== role) {
       report.mismatchedRoles.push({ uid, email: data.email || authUser.email || null, firestoreRole: role, claimRole });
     }
@@ -133,6 +137,7 @@ async function main() {
   const blockers = [];
   if (report.invalidFirestoreRoles.length > 0) blockers.push('invalid-firestore-roles');
   if (report.missingFirestoreRoles.length > 0) blockers.push('missing-firestore-roles');
+  if (report.missingAuthRoleClaims.length > 0) blockers.push('missing-auth-role-claims');
   if (report.mismatchedRoles.length > 0) blockers.push('mismatched-role-claims');
   if (report.authOnlyLoginCapable.length > 0) blockers.push('login-capable-auth-users-without-profiles');
   if (report.missingSiteContext.length > 0) blockers.push('site-scoped-users-without-site-context');
@@ -147,6 +152,7 @@ async function main() {
     console.log(`Auth role claims: ${JSON.stringify(report.authRoleClaims)}`);
     console.log(`Invalid Firestore roles: ${report.invalidFirestoreRoles.length}`);
     console.log(`Missing Firestore roles: ${report.missingFirestoreRoles.length}`);
+    console.log(`Missing auth role claims: ${report.missingAuthRoleClaims.length}`);
     console.log(`Missing display names: ${report.missingDisplayNames.length}`);
     console.log(`Missing site context: ${report.missingSiteContext.length}`);
     console.log(`Firestore-only users: ${report.firestoreOnly.length}`);
@@ -164,6 +170,13 @@ async function main() {
     if (report.missingSiteContext.length > 0) {
       console.log('Sample site-context gaps:');
       for (const item of report.missingSiteContext.slice(0, 10)) {
+        console.log(`- ${item.uid} role=${item.role} email=${item.email ?? 'null'}`);
+      }
+    }
+
+    if (report.missingAuthRoleClaims.length > 0) {
+      console.log('Sample missing auth role claims:');
+      for (const item of report.missingAuthRoleClaims.slice(0, 10)) {
         console.log(`- ${item.uid} role=${item.role} email=${item.email ?? 'null'}`);
       }
     }

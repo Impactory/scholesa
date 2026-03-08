@@ -18,7 +18,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 
 **Production Readiness**: Scholesa BOS/MIA + AI Coaching integration is **stable and ready for final launch**.
 
-**Identity hygiene status**: Production Firebase identity data has been reconciled and cleaned. The environment now reports `0` Firestore-only users, `0` Auth-only login-capable users, `0` Auth-only ephemeral users, and validated password login for the remaining legacy HQ and partner profiles.
+**Identity hygiene status**: Production Firebase identity data has been reconciled and cleaned. The environment now reports `0` Firestore-only users, `0` Auth-only login-capable users, `0` Auth-only ephemeral users, `0` missing Auth role claims, and validated password login for the remaining legacy HQ and partner profiles.
 
 ---
 

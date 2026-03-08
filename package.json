@@ -47,6 +47,8 @@
     "qa:firebase-login-profiles": "node scripts/reconcile_login_profiles.js --strict",
     "qa:firebase-login-profiles:apply": "node scripts/reconcile_login_profiles.js --apply",
     "qa:firebase-login-verify": "node scripts/verify_login_profiles.js --strict",
+    "qa:firebase-role-claims": "node scripts/reconcile_auth_role_claims.js --strict",
+    "qa:firebase-role-claims:apply": "node scripts/reconcile_auth_role_claims.js --apply",
     "docs:telemetry:wiring:sync": "node scripts/docs_telemetry_wiring_sync.js",
     "vibe:i18n:lint": "node scripts/vibe_i18n_lint.js",
     "vibe:i18n:keys": "node scripts/vibe_i18n_keys.js",

@@ -31,7 +31,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **TypeScript Build**: Cloud Functions clean (exit 0); Jest configured  
 ✅ **Flutter Analysis**: App clean (4 non-blocking info lints)  
 ✅ **Service Worker**: PWA manifest + offline support verified  
-✅ **Live Identity Reconciliation**: Auth and Firestore now aligned one-to-one for all login-capable production profiles  
+✅ **Live Identity Reconciliation**: Auth, Firestore, and Auth role claims now aligned one-to-one for all login-capable production profiles  
 
 ---
 
@@ -49,6 +49,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 **Solution**:
 - Removed `183` anonymous `voice-live-*` Auth artifacts and `27` seeded or E2E Firestore user artifacts with a conservative pattern-based cleanup
 - Reconciled the remaining Firestore-only profiles into Auth using their existing UIDs, correct role claims, and password `Test123!`
+- Reconciled `12` missing Auth custom role claims from Firestore role data so token claims match live role routing and backend authorization expectations
 - Verified password login against Firebase Auth REST for:
    - `amelda@scholesa.com`
    - `ameldalin561@gmail.com`
@@ -60,6 +61,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 - `0` Firestore-only users
 - `0` Auth-only login-capable users
 - `0` Auth-only ephemeral users
+- `0` missing Auth role claims
 - `0` mismatched roles
 
 **Status**: 🟢 **LIVE & VERIFIED**

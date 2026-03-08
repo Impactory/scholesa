@@ -18,7 +18,7 @@
 
 **Current locale baseline**: EN, ZH-CN, and ZH-TW are wired through the Flutter runtime and shared BOS coaching helper.
 
-**Live identity baseline**: Firebase Auth and Firestore are fully reconciled for login-capable profiles; `0` Firestore-only users, `0` Auth-only login-capable users, and the remaining legacy HQ/partner profiles now support password login with the standard RC3 test credential.
+**Live identity baseline**: Firebase Auth and Firestore are fully reconciled for login-capable profiles; `0` Firestore-only users, `0` Auth-only login-capable users, `0` missing auth role claims, and the remaining legacy HQ/partner profiles now support password login with the standard RC3 test credential.
 
 ---
 
@@ -30,7 +30,7 @@
 - **Tests**: Jest 15/15 passing (1.844s)
 - **Analysis**: Flutter clean (0 errors, 4 info lints)
 - **Indexes**: Firestore 3 live in production
-- **Identity**: Firestore/Auth reconciled (`143` Firestore users, `143` Auth users, `0` Firestore-only, `0` Auth-only)
+- **Identity**: Firestore/Auth reconciled (`143` Firestore users, `143` Auth users, `0` Firestore-only, `0` Auth-only, `0` missing role claims)
 - **Integration**: All 10 surfaces working
 - **Error Handling**: Comprehensive (COPPA + graceful degradation)
 - **PWA/Offline**: Service worker verified
