@@ -85,15 +85,20 @@ class _ProvisioningPageState extends State<ProvisioningPage>
     final String? activeSiteId = context.read<AppState>().activeSiteId;
     if (activeSiteId != null && activeSiteId != _lastLoadedSiteId) {
       _lastLoadedSiteId = activeSiteId;
-      _loadData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        final String? currentSiteId = context.read<AppState>().activeSiteId;
+        if (currentSiteId != activeSiteId) {
+          return;
+        }
+        _loadDataForSite(activeSiteId);
+      });
     }
   }
 
-  Future<void> _loadData() async {
-    final appState = context.read<AppState>();
-    final siteId = appState.activeSiteId;
-    if (siteId == null) return;
-
+  Future<void> _loadDataForSite(String siteId) async {
     final service = context.read<ProvisioningService>();
     await Future.wait(<Future<void>>[
       service.loadLearners(siteId),
