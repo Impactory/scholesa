@@ -7,6 +7,15 @@
 
 ---
 
+## MARCH 8 RELEASE NOTE
+
+- Live canary auth precheck executed successfully for all six operator accounts with `Test123!`
+- HQ operator credential reference corrected to `hq@scholesa.test` (`3hGfzDVbhyc5mDCgbLEPhZtDxCH2`)
+- Release gate, canary checklist, operator script, and live signoff docs are now aligned to the same six-account set
+- Final step for literal `100% against gate`: complete the manual browser canary in `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+
+---
+
 ## FINAL BLOCKER STATUS
 
 | # | Blocker | Status | Deployed | Tested |

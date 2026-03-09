@@ -8,6 +8,15 @@
 
 ---
 
+## MARCH 8 RELEASE NOTE
+
+- Re-verified the current six-account production canary set against live Firebase Auth with `Test123!`; all six accounts authenticated successfully
+- Correct live HQ canary account is `hq@scholesa.test`, and the operator runbook now matches that production identity
+- Top-level readiness docs, gate docs, and canary docs now point to the same live account set and evidence chain
+- Remaining step for full `100% against gate`: human execution of the manual browser canary
+
+---
+
 ## EXECUTIVE SUMMARY
 
 All **4 critical blockers** identified in the December 26, 2025 global post-implementation audit have been successfully **resolved and validated**. The Scholesa BOS/MIA + AI coaching platform is **production-ready for RC3 launch** with the following status:

@@ -7,6 +7,15 @@
 
 ---
 
+## MARCH 8 RELEASE NOTE
+
+- Production canary auth precheck completed for learner, educator, parent, site, partner, and HQ accounts with `Test123!`
+- HQ runbook account corrected from a stale non-working reference to `hq@scholesa.test`
+- Readiness docs and canary docs now share one consistent operator account set
+- Remaining launch action is manual browser execution of `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+
+---
+
 ## EXECUTIVE SUMMARY
 
 All **4 critical blockers** identified in the December 26, 2025 global post-implementation audit have been **resolved and validated**:

@@ -24,6 +24,7 @@ Use the exact role accounts and route sequence in `RC3_OPERATOR_CANARY_SCRIPT_MA
 |---|---|
 | Operator | ____________________ |
 | Environment | Production |
+| Pre-Canary Auth Check | Verified March 8, 2026 for all 6 role accounts with `Test123!` |
 | Start Time | ____________________ |
 | End Time | ____________________ |
 | Result | GO / NO-GO |
@@ -32,7 +33,7 @@ Use the exact role accounts and route sequence in `RC3_OPERATOR_CANARY_SCRIPT_MA
 
 ## 1. Learner Canary
 
-Account: use a live learner account for an active site.
+Account: `learner@scholesa.test`
 
 - [ ] Log in successfully
 - [ ] Land on learner default route
@@ -49,7 +50,7 @@ Pass evidence:
 
 ## 2. Educator Canary
 
-Account: use a live educator account for an active site.
+Account: `teacher01.demo@scholesa.org`
 
 - [ ] Log in successfully
 - [ ] Land on educator default route
@@ -66,7 +67,7 @@ Pass evidence:
 
 ## 3. Parent Canary
 
-Account: use a live parent account linked to at least one learner.
+Account: `parent001.demo@scholesa.org`
 
 - [ ] Log in successfully
 - [ ] Land on parent summary route
@@ -83,7 +84,7 @@ Pass evidence:
 
 ## 4. Site Canary
 
-Account: use a live site admin account.
+Account: `site001.demo@scholesa.org`
 
 - [ ] Log in successfully
 - [ ] Land on site dashboard route
@@ -100,7 +101,7 @@ Pass evidence:
 
 ## 5. Partner Canary
 
-Account: use a live partner account.
+Account: `partner@scholesa.dev`
 
 - [ ] Log in successfully
 - [ ] Land on partner listings route
@@ -117,7 +118,7 @@ Pass evidence:
 
 ## 6. HQ Canary
 
-Account: use a live HQ account.
+Account: `hq@scholesa.test`
 
 - [ ] Log in successfully
 - [ ] Land on HQ sites route
@@ -134,6 +135,7 @@ Pass evidence:
 
 ## 7. Final Decision
 
+- [ ] Pre-canary auth check still matches the documented six-account set
 - [ ] All six role canaries passed
 - [ ] No unexpected permission errors observed
 - [ ] No redirect loops observed

@@ -62,6 +62,10 @@ This must be completed:
 - `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
 - `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
 
+Prerequisite evidence already captured for the current role set:
+- six live canary accounts authenticate successfully with `Test123!`
+- verified accounts are learner, educator, parent, site, partner, and HQ as listed in `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+
 Required result:
 - learner, educator, parent, site, partner, and HQ all pass live canary
 - no refresh-time persistence failures
@@ -79,6 +83,7 @@ A release is not `100% against gate` unless the repo contains or references:
 3. Successful gate output for the strict live audit
 4. Successful gate output for login verification
 5. Successful gate output for RC3 preflight
+6. Recorded six-account live auth execution for the current canary account set
 
 Current signoff references:
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`

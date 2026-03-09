@@ -60,6 +60,21 @@ The last legacy Firestore-only profiles were reconciled into real Auth users and
 | `ameldalin561@gmail.com` | `i7dq6t07N8MTR22eTVbg` | `hq` | ✅ |
 | `partner@example.com` | `u-partner` | `partner` | ✅ |
 
+### Current Canary Account Auth Execution
+
+The current production canary account set was re-verified on March 8, 2026 with password `Test123!` before manual operator execution.
+
+| Email | UID | Role | Auth Verified |
+|---|---|---|---|
+| `learner@scholesa.test` | `FD3V35hureMivVtjxQ7fZNsQvnI3` | `learner` | ✅ |
+| `teacher01.demo@scholesa.org` | `U-TEACH-001` | `educator` | ✅ |
+| `parent001.demo@scholesa.org` | `U-PAR-001` | `parent` | ✅ |
+| `site001.demo@scholesa.org` | `U-SITE-001` | `site` | ✅ |
+| `partner@scholesa.dev` | `test-partner-001` | `partner` | ✅ |
+| `hq@scholesa.test` | `3hGfzDVbhyc5mDCgbLEPhZtDxCH2` | `hq` | ✅ |
+
+This does not replace the manual browser canary. It establishes that the documented role accounts are currently login-capable and match the production operator runbook.
+
 ---
 
 ## Live Fixes Applied
@@ -150,3 +165,6 @@ Operational follow-through:
 - `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
 - `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
 - `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+
+Final human release step still required for `100% against gate`:
+- complete the manual browser canary in `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
