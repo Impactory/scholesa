@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'checkin_models.dart';
 import 'checkin_service.dart';
 
-import '../../i18n/workflow_surface_i18n.dart';
-const Map<String, String> _checkinEs = <String, String>{
-  'Check-in / Check-out': 'Registro de entrada / salida',
-  'Manage arrivals and pickups': 'Gestiona llegadas y recogidas',
-  'Refresh': 'Actualizar',
-  'Total': 'Total',
-}
+String _tCheckin(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
+}
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
 
