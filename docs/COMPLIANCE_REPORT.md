@@ -1,17 +1,19 @@
 # Compliance Report
 
 ## Status Summary
-- Deferred items logged in DEFERMENT_LOG.md (web stack paused: REQ-001–036, 039–040, 043, 045).
-- Schema parity: Flutter models/repos implemented for core LMS (users, sessions, occurrences, enrollments, attendance, missions, attempts, portfolios, accountability, audit logs); web stack still paused.
+- Deferred items logged in DEFERMENT_LOG.md, but the locale-first web track is active and validated for routing, protected access, and tri-locale entry coverage.
+- Schema parity: Flutter models/repos implemented for core LMS (users, sessions, occurrences, enrollments, attendance, missions, attempts, portfolios, accountability, audit logs); active web routing and dashboard entry coverage is validated, while some broader web requirements remain deferred.
 - Role routing (web): implemented with tests (✅).
-- Dashboards (web) paused; Flutter dashboards (learner/educator/parent/site/partner/hq) styled and live (✅ for Flutter UI, data wiring partial).
-- Offline: Flutter connectivity banner + persistent queue with dedup + auto-flush (✅ in app); web offline queue remains paused.
+- Dashboards (web): protected role entry and redirects validated end-to-end; Flutter dashboards (learner/educator/parent/site/partner/hq) styled and live (✅ for Flutter UI, data wiring partial).
+- Offline: Flutter connectivity banner + persistent queue with dedup + auto-flush (✅ in app); web offline queue remains partially deferred.
 - Invariants: docId/pillarCodes/accountability dates enforced in services (🟡 extend to all repos).
 - Audit logs: privileged writes for attempts/attendance/portfolio items (🟡 extend to others).
-- Tests: routing/invariants/models/audit helper present (web); Flutter tests not added yet (🟡 overall).
-- Build/PWA/Cloud Run (web): not validated (🔴 until run). Flutter builds locally via `flutter run`/`flutter build` pending CI.
+- Tests: emulator-backed Playwright role-routing and locale-entry workflow suite is green on web; focused Flutter localization/workflow suites are green (🟡 broader coverage still expandable).
+- Build/PWA/Cloud Run (web): production build and emulator-backed E2E route validation executed; broader deployment validation remains open. Flutter builds locally via `flutter run`/`flutter build` pending CI.
 
 ## Evidence (current)
+- Web emulator-backed workflow suite: test/e2e/workflow-routes.e2e.spec.ts
+- Web i18n key audit: scripts/vibe_i18n_keys.js
 - Web routing test: src/__tests__/routing.test.ts
 - Invariants test: src/__tests__/invariants.test.ts
 - Models test: src/__tests__/models.test.ts
@@ -24,8 +26,8 @@
 ## Blockers / Next
 - Complete pending web repos (Skill, SkillMastery, MissionPlan, Portfolio, Credential) or formally defer.
 - Add more unit roundtrips (web) and Flutter widget/unit tests.
-- Execute QA runbook (web paused; Flutter flows) and attach evidence.
-- Run `npm test`, `npm run build` (web) if re-enabled; add `flutter test`/`flutter build` pipeline.
+- Execute QA runbook and attach evidence for broader non-routing web surfaces.
+- Run remaining broad web/unit/build gates and add sustained `flutter test`/`flutter build` pipeline coverage.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

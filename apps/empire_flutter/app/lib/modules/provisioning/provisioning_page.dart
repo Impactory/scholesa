@@ -4,6 +4,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/common/empty_state.dart';
+import '../../ui/localization/inline_locale_text.dart';
 import 'provisioning_models.dart';
 import 'provisioning_service.dart';
 
@@ -20,6 +21,22 @@ void _logProvisioningCta(String ctaId, {Map<String, dynamic>? metadata}) {
       ...?metadata,
     },
   );
+}
+
+String _deleteGuardianLinkCopy(
+  BuildContext context,
+  GuardianLink link,
+) {
+  final String parentName = link.parentName ?? link.parentId;
+  final String learnerName = link.learnerName ?? link.learnerId;
+  switch (InlineLocaleText.canonicalLocale(Localizations.localeOf(context))) {
+    case 'zh-CN':
+      return '要移除 $parentName 与 $learnerName 之间的监护人关联吗？';
+    case 'zh-TW':
+      return '要移除 $parentName 與 $learnerName 之間的監護人關聯嗎？';
+    default:
+      return 'Remove the guardian link between $parentName and $learnerName?';
+  }
 }
 
 /// Provisioning page for site admins
@@ -590,11 +607,7 @@ class _LinksTab extends StatelessWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(_tProvisioning(context, 'Delete Link')),
-        content: Text(
-          Localizations.localeOf(context).languageCode == 'es'
-              ? '¿Eliminar el vínculo de tutor entre ${link.parentName ?? link.parentId} y ${link.learnerName ?? link.learnerId}?'
-              : 'Remove the guardian link between ${link.parentName ?? link.parentId} and ${link.learnerName ?? link.learnerId}?',
-        ),
+        content: Text(_deleteGuardianLinkCopy(context, link)),
         actions: <Widget>[
           TextButton(
             onPressed: () {
