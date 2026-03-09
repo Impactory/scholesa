@@ -2,39 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'message_models.dart';
 import 'message_service.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _notificationsEs = <String, String>{
-  'Notifications': 'Notificaciones',
-  'Mark all read': 'Marcar todo como leído',
-  'No notifications': 'Sin notificaciones',
-  'You\'re all caught up!': '¡Ya estás al día!',
-  'Notification dismissed': 'Notificación descartada',
-  'Opening:': 'Abriendo:',
-  'All notifications marked as read':
-    'Todas las notificaciones se marcaron como leídas',
-  'm ago': 'min atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'New Mission Available': 'Nueva misión disponible',
-  'Check out the new AI Fundamentals mission for your learners!':
-    '¡Revisa la nueva misión de Fundamentos de IA para tus estudiantes!',
-  'Session Reminder': 'Recordatorio de sesión',
-  'Robotics Club starts in 1 hour at Room 204':
-    'El Club de Robótica comienza en 1 hora en el Aula 204',
-  'Message from Ms. Johnson': 'Mensaje de la profesora Johnson',
-  'Great progress on the coding project! Keep it up.':
-    '¡Gran progreso en el proyecto de programación! Sigue así.',
-  'System Update': 'Actualización del sistema',
-  'Scholesa has been updated with new features. Check out what\'s new!':
-    'Scholesa se actualizó con nuevas funciones. ¡Mira qué hay de nuevo!',
-};
-
 String _tNotifications(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _notificationsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Notifications page for all user roles

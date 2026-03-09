@@ -1,44 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqSafetyEs = <String, String>{
-  'Safety Overview': 'Resumen de seguridad',
-  'Open': 'Abiertos',
-  'Escalated': 'Escalados',
-  'Critical': 'Críticos',
-  'Escalated to HQ': 'Escalado a HQ',
-  'All Recent Incidents': 'Todos los incidentes recientes',
-  'Site': 'Sede',
-  'Severity': 'Severidad',
-  'Reported': 'Reportado',
-  'Yes': 'Sí',
-  'No': 'No',
-  'Close': 'Cerrar',
-  'Opening full incident report...':
-      'Abriendo informe completo del incidente...',
-  'View Full Report': 'Ver informe completo',
-  'm ago': 'min atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'Medical emergency - handled': 'Emergencia médica - atendida',
-  'Minor bump during play': 'Golpe leve durante el juego',
-  'Behavioral concern': 'Preocupación conductual',
-  'Downtown Studio': 'Estudio Centro',
-  'Westside Campus': 'Campus Oeste',
-  'minor': 'leve',
-  'major': 'grave',
-  'critical': 'crítico',
-  'Loading...': 'Cargando...',
-  'No incidents found': 'No se encontraron incidentes',
-  'Unknown Site': 'Sede desconocida',
-};
-
 String _tHqSafety(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqSafetyEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Safety page for monitoring safety incidents across all sites

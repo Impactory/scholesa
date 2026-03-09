@@ -1,37 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqFeatureFlagsEs = <String, String>{
-  'Feature Flags': 'Banderas de funciones',
-  'Opening change history...': 'Abriendo historial de cambios...',
-  'Feature flags control which features are available to users. Changes take effect immediately.':
-    'Las banderas de funciones controlan qué funciones están disponibles para los usuarios. Los cambios surten efecto de inmediato.',
-  'enabled': 'activado',
-  'disabled': 'desactivado',
-  'global': 'global',
-  'site': 'sede',
-  'user': 'usuario',
-  'Enable redesigned dashboard layout with improved metrics':
-    'Habilitar diseño renovado del panel con métricas mejoradas',
-  'Enable AI-powered reflection prompts for learners':
-    'Habilitar sugerencias de reflexión con IA para estudiantes',
-  'Enable GitHub classroom integration for coding missions':
-    'Habilitar integración de aula GitHub para misiones de programación',
-  'Allow parents to view detailed learner portfolios':
-    'Permitir a las familias ver portafolios detallados de estudiantes',
-  'Show beta missions to selected educators':
-    'Mostrar misiones beta a educadores seleccionados',
-  'Loading...': 'Cargando...',
-  'Feature flag update failed': 'Error al actualizar bandera',
-  'No feature flags found': 'No se encontraron banderas',
-};
-
 String _tHqFeatureFlags(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqFeatureFlagsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Feature Flags page for managing feature toggles

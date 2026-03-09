@@ -514,3 +514,21 @@ test('hq routes deny unauthenticated access', async ({ page }) => {
   await page.goto('/en/hq/sites');
   await expect(page).toHaveURL(/\/en\/login\?from=%2Fen%2Fhq%2Fsites$/);
 });
+
+test('zh-CN landing and login render localized copy', async ({ page }) => {
+  await page.goto('/zh-CN');
+  await expect(page.getByText('Scholesa – 未来技能学院')).toBeVisible();
+  await expect(page.getByRole('link', { name: '登录' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '注册 →' })).toBeVisible();
+
+  await page.goto('/zh-CN/login');
+  await expect(page.getByRole('heading', { name: '欢迎回来' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
+});
+
+test('zh-TW protected routes keep locale on unauthenticated redirect', async ({ page }) => {
+  await page.goto('/zh-TW/hq/sites');
+  await expect(page).toHaveURL(/\/zh-TW\/login\?from=%2Fzh-TW%2Fhq%2Fsites$/);
+  await expect(page.getByRole('heading', { name: '歡迎回來' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '登入' })).toBeVisible();
+});

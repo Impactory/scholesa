@@ -1,47 +1,12 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqAuditEs = <String, String>{
-  'Audit Logs': 'Registros de auditoría',
-  'Red Team Reviews': 'Revisiones red team',
-  'Exporting audit logs...': 'Exportando registros de auditoría...',
-  'Total': 'Total',
-  'Auth': 'Auth',
-  'Admin': 'Admin',
-  'System': 'Sistema',
-  'Reviews': 'Revisiones',
-  'Filter by Category': 'Filtrar por categoría',
-  'All': 'Todas',
-  'Data': 'Datos',
-  'Close': 'Cerrar',
-  'Loading...': 'Cargando...',
-  'No audit logs found': 'No se encontraron registros de auditoría',
-  'No red team reviews yet': 'Aún no hay revisiones red team',
-  'Create Review': 'Crear revisión',
-  'Title': 'Título',
-  'Site ID': 'ID de sede',
-  'KPI Pack ID': 'ID del KPI Pack',
-  'Decision': 'Decisión',
-  'Partner Status': 'Estado del partner',
-  'Recommendations': 'Recomendaciones',
-  'Next Action': 'Siguiente acción',
-  'Review created': 'Revisión creada',
-  'Failed to create review': 'No se pudo crear la revisión',
-  'Continue': 'Continuar',
-  'Stabilize': 'Estabilizar',
-  'Intervene': 'Intervenir',
-  'Active': 'Activo',
-  'Watch': 'Observación',
-  'Hold': 'Pausa',
-};
-
 String _tHqAudit(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqAuditEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 enum _AuditCategory { auth, data, admin, system }

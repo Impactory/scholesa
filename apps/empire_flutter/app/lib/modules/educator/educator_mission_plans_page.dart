@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -9,39 +10,8 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorMissionPlansEs = <String, String>{
-  'Mission Plans': 'Planes de misión',
-  'New Mission': 'Nueva misión',
-  'Grade': 'Grado',
-  'sessions': 'sesiones',
-  'done': 'completadas',
-  'Draft': 'Borrador',
-  'Active': 'Activa',
-  'Archived': 'Archivada',
-  'Filter Missions': 'Filtrar misiones',
-  'All Pillars': 'Todos los pilares',
-  'Close': 'Cerrar',
-  'Edit': 'Editar',
-  'Assigning to sessions...': 'Asignando a sesiones...',
-  'Assign': 'Asignar',
-  'Create New Mission': 'Crear nueva misión',
-  'Mission Title': 'Título de la misión',
-  'Pillar': 'Pilar',
-  'Cancel': 'Cancelar',
-  'Mission title is required': 'El título de la misión es obligatorio',
-  'Mission created and added to list': 'Misión creada y agregada a la lista',
-  'Create': 'Crear',
-  'No missions yet': 'Aún no hay misiones',
-  'Loading...': 'Cargando...',
-  'Apply': 'Aplicar',
-  'Failed to load missions': 'No se pudieron cargar las misiones',
-  'Failed to create mission': 'No se pudo crear la misión',
-};
-
 String _tEducatorMissionPlans(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorMissionPlansEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator mission plans page for planning and managing missions

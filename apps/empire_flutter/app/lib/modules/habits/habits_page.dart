@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -7,56 +8,8 @@ import '../../auth/app_state.dart';
 import 'habit_models.dart';
 import 'habit_service.dart';
 
-const Map<String, String> _habitsEs = <String, String>{
-  'Habit Coach': 'Entrenador de hábitos',
-  'Build powerful daily routines': 'Crea rutinas diarias poderosas',
-  'Today': 'Hoy',
-  'Weekly Progress': 'Progreso semanal',
-  'completions': 'completaciones',
-  'Rate': 'Tasa',
-  'All': 'Todas',
-  'No': 'No',
-  'habits yet': 'hábitos aún',
-  'Start building your habits!': '¡Comienza a construir tus hábitos!',
-  'Tap + to create your first habit': 'Pulsa + para crear tu primer hábito',
-  'min': 'min',
-  'completed!': '¡completado!',
-  'New Habit': 'Nuevo hábito',
-  'Current Streak': 'Racha actual',
-  'Best Streak': 'Mejor racha',
-  'Total Done': 'Total completado',
-  'Target Time': 'Tiempo objetivo',
-  'Settings': 'Configuración',
-  'Frequency': 'Frecuencia',
-  'Preferred Time': 'Horario preferido',
-  'Started': 'Iniciado',
-  'Create Habit': 'Crear hábito',
-  'Choose an emoji': 'Elige un emoji',
-  'Habit name': 'Nombre del hábito',
-  'e.g., Morning Reading': 'ej., Lectura matutina',
-  'Description (optional)': 'Descripción (opcional)',
-  'What does this habit involve?': '¿En qué consiste este hábito?',
-  'Category': 'Categoría',
-  'Target time': 'Tiempo objetivo',
-  'minutes': 'minutos',
-  'Please enter a habit name': 'Ingresa un nombre de hábito',
-  'created!': '¡creado!',
-  'Reflect with AI': 'Reflexiona con IA',
-  'Get coaching on your progress': 'Obtén orientación sobre tu progreso',
-  'Hide AI Reflection': 'Ocultar reflexión de IA',
-  'Building Phase': 'Fase de construcción',
-  'days': 'días',
-  'Day': 'Día',
-  'of 30-day building phase': 'de fase de 30 días',
-  'Keep going to build this habit!': '¡Sigue así para construir este hábito!',
-  'Building phase complete!': '¡Fase de construcción completada!',
-  'This habit is now part of your routine': 'Este hábito ya es parte de tu rutina',
-};
-
 String _tHabits(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _habitsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Beautiful habit tracking page for learners

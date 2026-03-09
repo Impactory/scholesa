@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -7,49 +8,8 @@ import '../../auth/app_state.dart';
 import 'mission_models.dart';
 import 'mission_service.dart';
 
-const Map<String, String> _missionsEs = <String, String>{
-  'My Missions': 'Mis misiones',
-  'Learn, grow, and level up!': '¡Aprende, crece y sube de nivel!',
-  'to next level': 'para el siguiente nivel',
-  'Completed': 'Completadas',
-  'Day Streak': 'Racha de días',
-  'Active': 'Activas',
-  'All': 'Todas',
-  'Available': 'Disponibles',
-  'In Progress': 'En progreso',
-  'No missions available': 'No hay misiones disponibles',
-  'Check back soon for new challenges!':
-      '¡Vuelve pronto para nuevos desafíos!',
-  'No active missions': 'No hay misiones activas',
-  'Start a mission to begin your journey!':
-      '¡Inicia una misión para comenzar tu camino!',
-  'No completed missions yet': 'Aún no hay misiones completadas',
-  'Complete missions to see them here!':
-      '¡Completa misiones para verlas aquí!',
-  'No missions': 'Sin misiones',
-  'steps': 'pasos',
-  'Steps': 'Pasos',
-  'Description': 'Descripción',
-  "Skills You'll Learn": 'Habilidades que aprenderás',
-  'Mission Steps': 'Pasos de la misión',
-  'Educator Feedback': 'Comentarios del educador',
-  'Started': 'Iniciada',
-  'Start Mission': 'Iniciar misión',
-    'Unable to start mission right now':
-      'No se puede iniciar la misión en este momento',
-  'Unable to submit mission right now':
-      'No se puede enviar la misión en este momento',
-  'Submitted': 'Enviada',
-  'Submit for Review': 'Enviar para revisión',
-  'Get AI Help': 'Obtener ayuda de IA',
-  'Ask for hints, explanations, or debugging help': 'Pide pistas, explicaciones o ayuda para depuración',
-  'Hide AI Coach': 'Ocultar AI Coach',
-};
-
 String _tMissions(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _missionsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Learner Missions Page

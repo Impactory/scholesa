@@ -1,39 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqSitesEs = <String, String>{
-  'Add Site': 'Agregar sede',
-  'Sites Management': 'Gestión de sedes',
-  'Manage all platform sites': 'Gestiona todas las sedes de la plataforma',
-  'Search sites...': 'Buscar sedes...',
-  'All Sites': 'Todas las sedes',
-  'Active': 'Activas',
-  'Onboarding': 'En incorporación',
-  'Pending': 'Pendientes',
-  'Total Sites': 'Total de sedes',
-  'Total Learners': 'Total de estudiantes',
-  'Educators': 'Educadores',
-  'Opening site': 'Abriendo sede',
-  'Learners': 'Estudiantes',
-  'Health': 'Salud',
-  'Add New Site': 'Agregar nueva sede',
-  'Site Name': 'Nombre de la sede',
-  'Location': 'Ubicación',
-  'Site created successfully': 'Sede creada correctamente',
-  'Create Site': 'Crear sede',
-  'Loading...': 'Cargando...',
-  'No sites found': 'No se encontraron sedes',
-  'Create site failed': 'Error al crear la sede',
-};
-
 String _tHqSites(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqSitesEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Sites Page - Manage all sites across the platform

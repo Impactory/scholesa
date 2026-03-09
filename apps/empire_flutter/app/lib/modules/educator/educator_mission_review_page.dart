@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -8,43 +9,8 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import '../missions/mission_service.dart';
 
-const Map<String, String> _educatorMissionReviewEs = <String, String>{
-  'Mission Review': 'Revisión de misiones',
-  'submissions pending review': 'entregas pendientes de revisión',
-  'Pending': 'Pendientes',
-  'Reviewed': 'Revisadas',
-  'Needs Revision': 'Necesita revisión',
-  'Approved': 'Aprobadas',
-  'Reviewed Today': 'Revisadas hoy',
-  'All caught up!': '¡Todo al día!',
-  'No submissions matching this filter':
-      'No hay entregas que coincidan con este filtro',
-  'PENDING': 'PENDIENTE',
-  'REVIEWED': 'REVISADA',
-  'APPROVED': 'APROBADA',
-  'REVISION': 'REVISIÓN',
-  'Submission': 'Entrega',
-  'Rating': 'Calificación',
-  'Feedback': 'Comentarios',
-  'Write your feedback for the learner...':
-      'Escribe tus comentarios para el estudiante...',
-  'Revision requested': 'Revisión solicitada',
-  'Request Revision': 'Solicitar revisión',
-  'Mission approved!': '¡Misión aprobada!',
-  'Approve': 'Aprobar',
-  'Review AI Coach': 'Coach IA de revisión',
-  'Keep BOS/MIA loop active while reviewing learner submissions':
-      'Mantén activo el ciclo BOS/MIA al revisar entregas de estudiantes',
-  'BOS/MIA Learner Loop': 'Ciclo BOS/MIA del estudiante',
-  'Latest individual improvement signal':
-      'Señal más reciente de mejora individual',
-  'No learner loop data yet': 'Aún no hay datos del ciclo del estudiante',
-};
-
 String _tEducatorMissionReview(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorMissionReviewEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator Mission Review Page - Review and assess learner submissions

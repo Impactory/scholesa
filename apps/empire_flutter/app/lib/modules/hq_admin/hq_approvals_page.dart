@@ -1,40 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqApprovalsEs = <String, String>{
-  'Approvals': 'Aprobaciones',
-  'Pending': 'Pendientes',
-  'Completed': 'Completadas',
-  'No pending approvals': 'No hay aprobaciones pendientes',
-  'No completed approvals': 'No hay aprobaciones completadas',
-  'By': 'Por',
-  'Reject': 'Rechazar',
-  'Approve': 'Aprobar',
-  'Approved': 'Aprobado',
-  'Rejected': 'Rechazado',
-  'Approved:': 'Aprobado:',
-  'Rejected:': 'Rechazado:',
-  'New Partner: TechEd Solutions': 'Nuevo socio: TechEd Solutions',
-  'Payout Request: TechEd Solutions (Q1)':
-      'Solicitud de pago: TechEd Solutions (T1)',
-  'Curriculum: AI Fundamentals v2.0':
-      'Currículo: Fundamentos de IA v2.0',
-  'Role Change: Jane D. → Site Lead':
-      'Cambio de rol: Jane D. → Líder de sede',
-  'Site Lead - Downtown': 'Líder de sede - Centro',
-  'Finance Ops': 'Operaciones financieras',
-  'Curriculum Team': 'Equipo curricular',
-  'HR Admin': 'Admin de RR. HH.',
-  'Loading...': 'Cargando...',
-  'Approval update failed': 'Error al actualizar aprobación',
-};
-
 String _tHqApprovals(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqApprovalsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Approvals page for approving partner contracts, curriculum, etc.

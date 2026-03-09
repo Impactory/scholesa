@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart' show UserRole, UserRoleExtension;
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -7,63 +8,8 @@ import '../../ui/widgets/cards.dart';
 import 'user_models.dart';
 import 'user_admin_service.dart';
 
-const Map<String, String> _userAdminEs = <String, String>{
-  'User Administration': 'Administración de usuarios',
-  'Manage all platform users': 'Gestiona todos los usuarios de la plataforma',
-  'Refresh': 'Actualizar',
-  'Change Role': 'Cambiar rol',
-  'Role changed to': 'Rol cambiado a',
-  'Edit User Profile': 'Editar perfil de usuario',
-  'Display Name': 'Nombre visible',
-  'Cancel': 'Cancelar',
-  'Save': 'Guardar',
-  'Profile update requested for': 'Actualización de perfil solicitada para',
-  'Create New User': 'Crear nuevo usuario',
-  'Email': 'Correo electrónico',
-  'Invalid email': 'Correo electrónico inválido',
-  'Required': 'Obligatorio',
-  'Role': 'Rol',
-  'Sites': 'Sedes',
-  'Create': 'Crear',
-  'Total Users': 'Usuarios totales',
-  'Active': 'Activo',
-  'Learners': 'Estudiantes',
-  'Educators': 'Educadores',
-  'Search users by name or email...':
-      'Buscar usuarios por nombre o correo electrónico...',
-  'All Roles': 'Todos los roles',
-  'All Status': 'Todos los estados',
-  'All Users': 'Todos los usuarios',
-  'Audit Log': 'Registro de auditoría',
-  'No users found': 'No se encontraron usuarios',
-  'Try adjusting your filters': 'Intenta ajustar tus filtros',
-  'No sites available': 'No hay sedes disponibles',
-  'Sites will appear here': 'Las sedes aparecerán aquí',
-  'Add User': 'Agregar usuario',
-  'Users': 'Usuarios',
-  'by': 'por',
-  'No Name': 'Sin nombre',
-  'Quick Actions': 'Acciones rápidas',
-  'Edit': 'Editar',
-  'Activate': 'Activar',
-  'Suspend': 'Suspender',
-  'Account Details': 'Detalles de la cuenta',
-  'User ID': 'ID de usuario',
-  'Created': 'Creado',
-  'Last Login': 'Último acceso',
-  'Site Access': 'Acceso a sedes',
-  'No sites assigned': 'Sin sedes asignadas',
-  'User': 'Usuario',
-  'created': 'creado',
-  'm ago': 'm atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-};
-
 String _tUserAdmin(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _userAdminEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ User Administration Page
@@ -1056,15 +1002,13 @@ class _AuditLogCard extends StatelessWidget {
 
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
-    final bool es = WidgetsBinding.instance.platformDispatcher.locale.languageCode ==
-        'es';
     if (diff.inMinutes < 60) {
-      return es ? '${diff.inMinutes}${_userAdminEs['m ago']}' : '${diff.inMinutes}m ago';
+      return '${diff.inMinutes}m ago';
     }
     if (diff.inHours < 24) {
-      return es ? '${diff.inHours}${_userAdminEs['h ago']}' : '${diff.inHours}h ago';
+      return '${diff.inHours}h ago';
     }
-    return es ? '${diff.inDays}${_userAdminEs['d ago']}' : '${diff.inDays}d ago';
+    return '${diff.inDays}d ago';
   }
 }
 

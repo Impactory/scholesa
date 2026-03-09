@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -7,33 +8,8 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorIntegrationsEs = <String, String>{
-  'My Integrations': 'Mis integraciones',
-  'Connected Services': 'Servicios conectados',
-  'Available Integrations': 'Integraciones disponibles',
-  'Connect external tools to sync assignments, grades, and learner progress automatically.':
-      'Conecta herramientas externas para sincronizar tareas, calificaciones y progreso del estudiante automáticamente.',
-  'Last synced 15 min ago': 'Última sincronización hace 15 min',
-  '3 repos connected': '3 repositorios conectados',
-  'Sync': 'Sincronizar',
-  'Sync Now': 'Sincronizar ahora',
-  'Settings': 'Configuración',
-  'Disconnect': 'Desconectar',
-  'Connect': 'Conectar',
-  'Connecting': 'Conectando',
-  'Integrations AI Coach': 'Coach IA de integraciones',
-  'Keep BOS/MIA loop active while syncing learner systems':
-      'Mantén activo el ciclo BOS/MIA al sincronizar sistemas de estudiantes',
-  'BOS/MIA Integration Loop': 'Ciclo de integración BOS/MIA',
-  'Latest individual improvement signal across integrated systems':
-      'Señal de mejora individual más reciente en sistemas integrados',
-  'No integration loop data yet': 'Sin datos de ciclo de integración aún',
-};
-
 String _tEducatorIntegrations(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorIntegrationsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator integrations page for managing external tool connections

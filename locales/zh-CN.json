@@ -2,8 +2,11 @@
   "landing": {
     "title": "Scholesa – 未来技能学院",
     "subtitle": "面向 K–9 学习工作室和学校的操作系统。",
+    "tagline": "带着目标学习。每天建立面向未来的能力。",
     "login": "登录",
+    "loginCta": "登录",
     "register": "注册",
+    "registerArrow": "注册 →",
     "pillars": {
       "title": "Scholesa 的三大支柱",
       "future_skills": "未来技能",
@@ -42,6 +45,28 @@
       "submitting": "登录中...",
       "switchToRegister": "创建账户",
       "invalidCredentials": "邮箱或密码无效。"
+    },
+    "register": {
+      "title": "创建账户",
+      "subtitle": "创建你的 Scholesa 账户并开始你的工作流。",
+      "nameLabel": "姓名",
+      "namePlaceholder": "姓名",
+      "emailLabel": "邮箱地址",
+      "emailPlaceholder": "邮箱地址",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "密码",
+      "roleLabel": "角色",
+      "submit": "创建账户",
+      "submitting": "创建中...",
+      "switchToLogin": "返回登录",
+      "fallbackError": "无法创建账户。",
+      "role": {
+        "learner": "学习者",
+        "educator": "教育者",
+        "parent": "家长",
+        "site": "站点管理员",
+        "partner": "合作伙伴"
+      }
     }
   },
   "common": {

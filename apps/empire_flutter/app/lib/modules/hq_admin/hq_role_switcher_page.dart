@@ -1,59 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqRoleSwitcherEs = <String, String>{
-  'Role Impersonation': 'Suplantación de rol',
-  'Test the platform as different user roles':
-    'Prueba la plataforma como diferentes roles de usuario',
-  'Your actual role': 'Tu rol real',
-  'HQ': 'HQ',
-  'Viewing as': 'Viendo como',
-  'Exit impersonation': 'Salir de la suplantación',
-  'Learner': 'Estudiante',
-  'View missions, habits, and portfolio':
-    'Ver misiones, hábitos y portafolio',
-  "Today's schedule": 'Horario de hoy',
-  'Mission progress': 'Progreso de misiones',
-  'Habit tracking': 'Seguimiento de hábitos',
-  'Portfolio showcase': 'Muestra de portafolio',
-  'Educator': 'Educador',
-  'Manage classes and review submissions':
-    'Gestionar clases y revisar entregas',
-  'Class rosters': 'Listas de clase',
-  'Attendance': 'Asistencia',
-  'Mission planning': 'Planificación de misiones',
-  'Student reviews': 'Revisiones de estudiantes',
-  'Parent': 'Familia',
-  'Monitor child progress and billing':
-    'Monitorear progreso del niño y facturación',
-  'Child summary': 'Resumen del niño',
-  'Schedule view': 'Vista de horario',
-  'Portfolio highlights': 'Aspectos destacados del portafolio',
-  'Billing & invoices': 'Facturación y facturas',
-  'Site Admin': 'Admin de sede',
-  'Manage site operations': 'Gestionar operaciones de la sede',
-  'Check-in/out': 'Registro entrada/salida',
-  'Provisioning': 'Aprovisionamiento',
-  'Incidents': 'Incidentes',
-  'Site billing': 'Facturación de sede',
-  'Partner': 'Socio',
-  'Marketplace and contracts': 'Marketplace y contratos',
-  'Listings': 'Publicaciones',
-  'Contracts': 'Contratos',
-  'Payouts': 'Pagos',
-  'Impersonation is logged for audit purposes. Any actions taken will be attributed to your HQ account.':
-    'La suplantación se registra para fines de auditoría. Cualquier acción realizada se atribuirá a tu cuenta HQ.',
-  'Active': 'Activo',
-};
-
 String _tHqRoleSwitcher(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqRoleSwitcherEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Role Switcher Page

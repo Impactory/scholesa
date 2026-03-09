@@ -1,38 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqIntegrationsEs = <String, String>{
-  'Integrations Health': 'Estado de integraciones',
-  'Attention Needed': 'Se requiere atención',
-  'All Systems Operational': 'Todos los sistemas operativos',
-  'healthy': 'saludables',
-  'warning': 'advertencia',
-  'errors': 'errores',
-  'total': 'total',
-  'Sites': 'Sedes',
-  'integrations': 'integraciones',
-  'Last sync:': 'Última sincronización:',
-  'Retry': 'Reintentar',
-  'just now': 'justo ahora',
-  'Integrations health refreshed': 'Estado de integraciones actualizado',
-  'recovered successfully': 'recuperada correctamente',
-  '5 min ago': '5 min atrás',
-  '15 min ago': '15 min atrás',
-  '2 hrs ago': '2 h atrás',
-  '30 min ago': '30 min atrás',
-  'Failed': 'Falló',
-  'Loading...': 'Cargando...',
-  'No integration telemetry available':
-      'No hay telemetría de integración disponible',
-  'Unknown Site': 'Sede desconocida',
-};
-
 String _tHqIntegrations(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqIntegrationsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// HQ Integrations Health page for monitoring all site integrations
