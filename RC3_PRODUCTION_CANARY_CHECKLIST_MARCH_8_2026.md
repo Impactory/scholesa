@@ -4,6 +4,8 @@
 **Project**: `studio-3328096157-e3f79`  
 **Purpose**: Manual live canary pass for launch-critical workflows after deploy or before GO/NO-GO.
 
+Use the exact role accounts and route sequence in `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`.
+
 ---
 
 ## Operator Rules
@@ -12,6 +14,7 @@
 - Record start time, operator, and result for each role.
 - Treat any failed primary CTA, redirect loop, or persistence failure as a release blocker.
 - If any role fails, stop rollout and run the release gate in `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`.
+- Follow `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md` for the exact role order, accounts, routes, and evidence to capture.
 
 ---
 

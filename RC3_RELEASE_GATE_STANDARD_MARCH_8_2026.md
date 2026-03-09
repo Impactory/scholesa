@@ -60,6 +60,7 @@ Required result:
 This must be completed:
 
 - `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
 
 Required result:
 - learner, educator, parent, site, partner, and HQ all pass live canary
@@ -83,6 +84,7 @@ Current signoff references:
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
 - `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
 - `RC3_LAUNCH_READINESS_REPORT.md`
+- `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
 
 ---
 
