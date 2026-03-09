@@ -6,62 +6,8 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
-
-const Map<String, String> _parentScheduleEs = <String, String>{
-  'No learner links found yet. Ask your site admin to link parent and learner accounts.':
-      'Aún no se encontraron vínculos de estudiantes. Pide al administrador del sitio que vincule las cuentas de padres y estudiantes.',
-  'Schedule': 'Horario',
-  'View upcoming sessions': 'Ver próximas sesiones',
-  'Refresh': 'Actualizar',
-  'All Learners': 'Todos los estudiantes',
-  'No upcoming sessions': 'No hay próximas sesiones',
-  'Next session': 'Próxima sesión',
-  'Check back later for learner schedules':
-      'Vuelve más tarde para ver los horarios de los estudiantes',
-  'Details': 'Detalles',
-  'Today\'s Schedule': 'Horario de hoy',
-  'session': 'sesión',
-  'sessions': 'sesiones',
-  'No sessions on this date.': 'No hay sesiones en esta fecha.',
-  'Next Session Details': 'Detalles de la próxima sesión',
-  'Location': 'Ubicación',
-  'Starts': 'Empieza',
-  'Learner': 'Estudiante',
-  'Close': 'Cerrar',
-  'Session reminder set': 'Recordatorio de sesión establecido',
-  'Set Reminder': 'Establecer recordatorio',
-  'This Week': 'Esta semana',
-  'Monday': 'Lunes',
-  'Tuesday': 'Martes',
-  'Wednesday': 'Miércoles',
-  'Thursday': 'Jueves',
-  'Friday': 'Viernes',
-  'Total Sessions': 'Sesiones totales',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Unassigned': 'Sin asignar',
-  'Mon': 'Lun',
-  'Tue': 'Mar',
-  'Wed': 'Mié',
-  'Thu': 'Jue',
-  'Fri': 'Vie',
-  'Sat': 'Sáb',
-  'Sun': 'Dom',
-  'now': 'ahora',
-  'in': 'en',
-  'min': 'min',
-  'hr': 'h',
-  'on': 'el',
-  'Schedule AI Coach': 'Coach IA de horario',
-  'Keep BOS/MIA loop active for each learner schedule':
-      'Mantén activo el ciclo BOS/MIA para el horario de cada estudiante',
-  'Family Schedule Loop': 'Ciclo de horario familiar',
-  'Your child\'s learning readiness and attendance signals':
-      'Señales de disponibilidad de aprendizaje y asistencia de tu hijo',
-  'No schedule learning data yet': 'Sin datos de aprendizaje de horario aún',
-};
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
 class ParentSchedulePage extends StatefulWidget {
@@ -77,9 +23,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   String _viewMode = 'week'; // day, week, month
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _parentScheduleEs[input] ?? input;
+    return ParentSurfaceI18n.text(context, input);
   }
 
   @override

@@ -6,73 +6,8 @@ import '../../services/analytics_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../i18n/site_dashboard_i18n.dart';
 import '../../ui/theme/scholesa_theme.dart';
-
-const Map<String, String> _siteDashboardEs = <String, String>{
-  'New enrollment': 'Nueva inscripción',
-  'Emma Johnson joined AI Explorers':
-      'Emma Johnson se unió a Exploradores de IA',
-  'Mission completed': 'Misión completada',
-  'Liam Chen completed "Build a Robot"':
-      'Liam Chen completó "Construye un robot"',
-  'Achievement unlocked': 'Logro desbloqueado',
-  'Sofia Martinez earned "Code Master" badge':
-      'Sofia Martinez obtuvo la insignia "Maestro de código"',
-  '2 hours ago': 'Hace 2 horas',
-  '4 hours ago': 'Hace 4 horas',
-  '6 hours ago': 'Hace 6 horas',
-  'Site Dashboard': 'Panel de sede',
-  'Pilot Studio Overview': 'Resumen del estudio piloto',
-  'Today': 'Hoy',
-  'This Week': 'Esta semana',
-  'This Month': 'Este mes',
-  'Term': 'Periodo',
-  'Unable to load telemetry metrics:':
-      'No se pudieron cargar las métricas de telemetría:',
-  'Telemetry KPIs': 'KPIs de telemetría',
-  'Telemetry feed pending': 'Feed de telemetría pendiente',
-  'Waiting for first data sync from BOS-MIA telemetry.':
-      'Esperando la primera sincronización de datos de telemetría BOS-MIA.',
-  'Weekly Accountability': 'Responsabilidad semanal',
-  'within SLA': 'dentro del SLA',
-  'Avg Review Turnaround': 'Promedio de revisión',
-  'Review SLA': 'SLA de revisión',
-  'Interventions Helped': 'Intervenciones efectivas',
-  'outcomes': 'resultados',
-  'Attendance Trend': 'Tendencia de asistencia',
-  'Attendance data unavailable': 'Datos de asistencia no disponibles',
-  'No attendance telemetry for this period':
-      'No hay telemetría de asistencia para este periodo',
-  'Latest attendance:': 'Asistencia más reciente:',
-  'Pillar Progress (Site Average)': 'Progreso por pilar (promedio del sitio)',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Recent Activity': 'Actividad reciente',
-  'KPI Packs': 'Packs KPI',
-  'Latest KPI pack': 'Último pack KPI',
-  'No KPI packs yet': 'Aún no hay packs KPI',
-  'Generate Pack': 'Generar pack',
-  'Fidelity Score': 'Puntaje de fidelidad',
-  'Portfolio Grade': 'Calidad de portafolio',
-  'Recommendation': 'Recomendación',
-  'View All': 'Ver todo',
-  'Export Site Report': 'Exportar reporte del sitio',
-  'Generate a': 'Generar un',
-  'summary report for this site dashboard.':
-      'reporte resumido para este panel del sitio.',
-  'Cancel': 'Cancelar',
-  'Report generated': 'Reporte generado',
-  'report ready for download': 'reporte listo para descargar',
-  'just now': 'justo ahora',
-  'report prepared for download': 'reporte preparado para descargar',
-  'Generate': 'Generar',
-  'All Recent Activity': 'Toda la actividad reciente',
-  'Loading...': 'Cargando...',
-  'No recent activity yet': 'Aún no hay actividad reciente',
-  'Incident reported': 'Incidente reportado',
-  'Site operation event': 'Evento de operación del sitio',
-};
 
 /// Site Dashboard Page - Analytics and overview for site administrators
 class SiteDashboardPage extends StatefulWidget {
@@ -96,9 +31,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   List<_SiteActivity> _activities = <_SiteActivity>[];
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _siteDashboardEs[input] ?? input;
+    return SiteDashboardI18n.text(context, input);
   }
 
   @override

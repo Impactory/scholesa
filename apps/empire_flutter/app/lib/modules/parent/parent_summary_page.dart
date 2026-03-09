@@ -4,52 +4,10 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
-
-const Map<String, String> _parentSummaryEs = <String, String>{
-  'Family Dashboard': 'Panel familiar',
-  'learner': 'estudiante',
-  'learners': 'estudiantes',
-  'Level': 'Nivel',
-  'XP earned': 'XP obtenidos',
-  'Missions': 'Misiones',
-  'Day Streak': 'Racha de días',
-  'Attendance': 'Asistencia',
-  'Learning Pillars': 'Pilares de aprendizaje',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership & Agency': 'Liderazgo y agencia',
-  'Impact & Innovation': 'Impacto e innovación',
-  'Recent Activity': 'Actividad reciente',
-  'See all': 'Ver todo',
-  'Upcoming': 'Próximamente',
-  'All Recent Activity': 'Toda la actividad reciente',
-  'No learners linked': 'No hay estudiantes vinculados',
-  'Contact your school to link your children':
-      'Contacta a tu escuela para vincular a tus hijos',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'JAN': 'ENE',
-  'APR': 'ABR',
-  'AUG': 'AGO',
-  'DEC': 'DIC',
-  'Family AI Coach': 'Coach IA familiar',
-  'Keep BOS/MIA loop active for each child’s progress':
-      'Mantén activo el ciclo BOS/MIA para el progreso de cada hijo',
-    'No recent activity yet': 'Aún no hay actividad reciente',
-    'Recent learner updates will appear here once missions or habits are completed.':
-      'Las actualizaciones recientes aparecerán aquí cuando se completen misiones o hábitos.',
-    'No upcoming events yet': 'Aún no hay próximos eventos',
-    'Upcoming sessions and school events will appear here.':
-      'Las próximas sesiones y eventos escolares aparecerán aquí.',
-};
-
-String _tParentSummary(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _parentSummaryEs[input] ?? input;
-}
 
 /// Parent Summary Page - Safe view for parents to see their children's progress
 class ParentSummaryPage extends StatefulWidget {
@@ -63,7 +21,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   int _selectedLearnerIndex = 0;
 
   String _t(String input) {
-    return _tParentSummary(context, input);
+    return ParentSurfaceI18n.text(context, input);
   }
 
   @override
@@ -841,9 +799,9 @@ class _ActivityItem extends StatelessWidget {
     final DateTime now = DateTime.now();
     final Duration diff = now.difference(time);
     if (diff.inHours < 24) {
-      return '${diff.inHours}${_tParentSummary(context, 'h ago')}';
+      return '${diff.inHours}${ParentSurfaceI18n.text(context, 'h ago')}';
     }
-    return '${diff.inDays}${_tParentSummary(context, 'd ago')}';
+    return '${diff.inDays}${ParentSurfaceI18n.text(context, 'd ago')}';
   }
 }
 
@@ -979,7 +937,7 @@ class _EventCard extends StatelessWidget {
       'NOV',
       'DEC'
     ];
-    return _tParentSummary(context, months[date.month - 1]);
+    return ParentSurfaceI18n.text(context, months[date.month - 1]);
   }
 
   String _formatTime(BuildContext context, DateTime time) {

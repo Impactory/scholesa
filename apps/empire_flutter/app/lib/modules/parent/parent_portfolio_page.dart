@@ -1,44 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/parent_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
-
-const Map<String, String> _parentPortfolioEs = <String, String>{
-  'Portfolio': 'Portafolio',
-  'All': 'Todo',
-  'Projects': 'Proyectos',
-  'Badges': 'Insignias',
-  'No items yet': 'Aún no hay elementos',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership & Agency': 'Liderazgo y agencia',
-  'Impact & Innovation': 'Impacto e innovación',
-  'Badge': 'Insignia',
-  'Project': 'Proyecto',
-  'Completed': 'Completado',
-  'Sharing...': 'Compartiendo...',
-  'Share': 'Compartir',
-  'Download': 'Descargar',
-  'activity': 'actividad',
-  'Completed by': 'Completado por',
-  'Getting AI Guidance': 'Obteniendo orientación de IA',
-  'Get personalized coaching on supporting your child':
-      'Obtén asesoramiento personalizado sobre cómo apoyar a tu hijo',
-  'Hide AI Guidance': 'Ocultar orientación de IA',
-  'Capability Snapshot': 'Resumen de capacidades',
-  'Portfolio Snapshot': 'Resumen del portafolio',
-  'Ideation Passport': 'Pasaporte de ideación',
-  'Artifacts': 'Artefactos',
-  'Published': 'Publicados',
-  'Voice': 'Voz',
-  'Reflections': 'Reflexiones',
-  'Emerging': 'Emergente',
-  'Developing': 'En desarrollo',
-  'Strong': 'Fuerte',
-};
 
 /// Parent portfolio page for viewing learner's work and achievements
 /// Based on docs/01_SUPREME_SPEC_EMPIRE_PLATFORM.md - Portfolio features
@@ -55,9 +23,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   bool _showAiCoach = false;
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _parentPortfolioEs[input] ?? input;
+    return ParentSurfaceI18n.text(context, input);
   }
 
   @override
