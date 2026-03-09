@@ -1,0 +1,17 @@
+This is the Google Pub/Sub fake.
+Implementation may be incomplete or differ from the real system.
+Mar 09, 2026 10:06:35 A.M. com.google.cloud.pubsub.testing.v1.Main main
+INFO: IAM integration is disabled. IAM policy methods and ACL checks are not supported
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2 (file:/Users/simonluke/dev/scholesa%2011.39.23%e2%80%afAM/.tmp/firebase-demo-home/.cache/firebase/emulators/pubsub-emulator-0.8.27/pubsub-emulator/lib/cloud-pubsub-emulator-0.8.27-all.jar)
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+Mar 09, 2026 10:06:35 A.M. com.google.cloud.pubsub.testing.v1.Main main
+INFO: Server started, listening on 8085
+Mar 09, 2026 10:06:41 A.M. io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+*** shutting down gRPC server since JVM is shutting down
+*** server shut down
