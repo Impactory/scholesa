@@ -90,7 +90,7 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 | Tool | Current version | Supported range | Notes |
 | --- | --- | --- | --- |
 | jest | ^29.7.0 | 29.x only | Root and functions should remain on the same major. |
-| @playwright/test | ^1.58.2 | 1.x only | Browser automation baseline. |
+| @playwright/test | ^1.58.2 | 1.x only | Browser automation baseline. `npm run test:e2e:web` is intentionally non-emulator and depends on the `NEXT_PUBLIC_E2E_TEST_MODE` fake auth/data backend instead of Firebase emulators. |
 | @firebase/rules-unit-testing | ^4.0.1 | 4.x only | Rules harness baseline. |
 | eslint | ^9.39.4 | 9.x only | Do not jump to 10.x without config migration. |
 | @eslint/js | ^9.39.4 | 9.x only | Must track eslint major. |

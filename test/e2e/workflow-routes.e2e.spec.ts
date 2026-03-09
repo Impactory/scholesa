@@ -1,7 +1,4 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
-import { Timestamp, getFirestore } from 'firebase-admin/firestore';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -16,9 +13,6 @@ type SeedUser = {
   parentIds?: string[];
 };
 
-const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID || 'demo-scholesa-e2e';
-const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
-const FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
 const SITE_ALPHA = 'site-alpha';
 const SITE_BETA = 'site-beta';
 const MISSION_ID = 'mission-robotics';
@@ -93,202 +87,48 @@ const USERS: Record<Role | 'otherLearner' | 'secondParent', SeedUser> = {
   },
 };
 
-if (!getApps().length) {
-  initializeApp({ projectId: PROJECT_ID });
-}
+type CollectionRecord = Record<string, unknown>;
 
-const adminDb = getFirestore();
-const adminAuth = getAuth();
+type E2EWindowApi = {
+  signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
+  reset: (locale?: string) => Promise<void>;
+  signOut: (locale?: string) => Promise<void>;
+  currentUid: () => string | null;
+  getCollection: (collectionName: string) => CollectionRecord[];
+};
 
 test.describe.configure({ mode: 'serial' });
 
-test.beforeEach(async () => {
-  await resetEmulators();
-  await seedBaseData();
-});
-
-async function resetEmulators(): Promise<void> {
-  const firestoreReset = await fetch(
-    `http://${FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`,
-    { method: 'DELETE' },
-  );
-  if (!firestoreReset.ok) {
-    throw new Error(`Failed to clear Firestore emulator: ${firestoreReset.status}`);
-  }
-
-  const authReset = await fetch(
-    `http://${FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${PROJECT_ID}/accounts`,
-    { method: 'DELETE' },
-  );
-  if (!authReset.ok) {
-    throw new Error(`Failed to clear Auth emulator: ${authReset.status}`);
-  }
-}
-
-async function ensureAuthUser(user: SeedUser): Promise<void> {
-  await adminAuth.createUser({
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-  });
-}
-
-async function seedUserProfile(user: SeedUser): Promise<void> {
-  await adminDb.collection('users').doc(user.uid).set({
-    email: user.email,
-    displayName: user.displayName,
-    role: user.role,
-    siteIds: user.siteIds || [],
-    activeSiteId: user.activeSiteId || null,
-    learnerIds: user.learnerIds || [],
-    parentIds: user.parentIds || [],
-    isActive: true,
-    preferences: {
-      locale: 'en',
-      timeZone: 'America/Vancouver',
-      notificationsEnabled: true,
-      emailNotifications: true,
-      pushNotifications: true,
-    },
-    createdAt: Timestamp.fromDate(new Date('2026-03-07T17:00:00.000Z')),
-    updatedAt: Timestamp.fromDate(new Date('2026-03-07T17:00:00.000Z')),
-  });
-}
-
-async function seedBaseData(): Promise<void> {
-  await Promise.all(Object.values(USERS).map(async (user) => {
-    await ensureAuthUser(user);
-    await seedUserProfile(user);
-  }));
-
-  const now = new Date('2026-03-07T18:00:00.000Z');
-  const sessionStart = new Date(now.getTime() + 60 * 60 * 1000);
-  const sessionEnd = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-
-  await Promise.all([
-    adminDb.collection('sites').doc(SITE_ALPHA).set({
-      name: 'Site Alpha Campus',
-      location: 'Vancouver',
-      status: 'active',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('sites').doc(SITE_BETA).set({
-      name: 'Site Beta Campus',
-      location: 'Burnaby',
-      status: 'active',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('missions').doc(MISSION_ID).set({
-      title: 'Robotics Mission',
-      description: 'Build and document a robotics prototype.',
-      status: 'active',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('sessions').doc(SESSION_ID).set({
-      siteId: SITE_ALPHA,
-      title: 'Future Skills Studio',
-      description: 'Daily problem-solving block',
-      educatorIds: [USERS.educator.uid],
-      status: 'scheduled',
-      startDate: Timestamp.fromDate(sessionStart),
-      endDate: Timestamp.fromDate(sessionEnd),
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('enrollments').doc('enrollment-alpha').set({
-      learnerId: USERS.learner.uid,
-      userId: USERS.learner.uid,
-      sessionId: SESSION_ID,
-      siteId: SITE_ALPHA,
-      status: 'active',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('educatorLearnerLinks').doc('educator-link-alpha').set({
-      educatorId: USERS.educator.uid,
-      learnerId: USERS.learner.uid,
-      siteId: SITE_ALPHA,
-      status: 'active',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('guardianLinks').doc('guardian-link-alpha').set({
-      parentId: USERS.parent.uid,
-      parentName: USERS.parent.displayName,
-      learnerId: USERS.learner.uid,
-      learnerName: USERS.learner.displayName,
-      siteId: SITE_ALPHA,
-      relationship: 'guardian',
-      status: 'active',
-      isPrimary: true,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('learnerProgress').doc(USERS.learner.uid).set({
-      level: 7,
-      totalXp: 420,
-      missionsCompleted: 5,
-      currentStreak: 3,
-      futureSkillsProgress: 0.72,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('attendanceRecords').doc('attendance-parent-summary').set({
-      learnerId: USERS.learner.uid,
-      userId: USERS.learner.uid,
-      learnerName: USERS.learner.displayName,
-      siteId: SITE_ALPHA,
-      sessionOccurrenceId: SESSION_ID,
-      status: 'present',
-      timestamp: Timestamp.fromDate(now),
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('portfolioItems').doc('portfolio-linked-alpha').set({
-      learnerId: USERS.learner.uid,
-      siteId: SITE_ALPHA,
-      title: 'Learner Build Log',
-      description: 'Documented the prototype iteration.',
-      mediaType: 'document',
-      status: 'published',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-    adminDb.collection('portfolioItems').doc('portfolio-unlinked-beta').set({
-      learnerId: USERS.otherLearner.uid,
-      siteId: SITE_ALPHA,
-      title: 'Other Learner Artifact',
-      description: 'Should remain hidden from unrelated parents.',
-      mediaType: 'image',
-      status: 'published',
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-    }),
-  ]);
-}
-
 async function signInAs(page: Page, user: SeedUser): Promise<void> {
-  const customToken = await adminAuth.createCustomToken(user.uid);
   await page.goto('/en/login');
   await page.waitForFunction(() => Boolean((window as Window & {
-    __scholesaE2E?: { currentUid: () => string | null };
+    __scholesaE2E?: E2EWindowApi;
   }).__scholesaE2E));
-  await page.evaluate(async ({ token, locale }) => {
+  await page.evaluate(async ({ uid, locale }) => {
     await (window as Window & {
-      __scholesaE2E: { signInWithCustomToken: (customToken: string, locale?: string) => Promise<unknown> };
-    }).__scholesaE2E.signInWithCustomToken(token, locale);
-  }, { token: customToken, locale: 'en' });
+      __scholesaE2E: E2EWindowApi;
+    }).__scholesaE2E.signInAs(uid, locale);
+  }, { uid: user.uid, locale: 'en' });
   await page.waitForFunction(
     (expectedUid) =>
       (window as Window & {
-        __scholesaE2E?: { currentUid: () => string | null };
+        __scholesaE2E?: E2EWindowApi;
       }).__scholesaE2E?.currentUid() === expectedUid,
     user.uid,
   );
 }
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/en/login');
+  await page.waitForFunction(() => Boolean((window as Window & {
+    __scholesaE2E?: E2EWindowApi;
+  }).__scholesaE2E));
+  await page.evaluate(async () => {
+    await (window as Window & {
+      __scholesaE2E: E2EWindowApi;
+    }).__scholesaE2E.reset('en');
+  });
+});
 
 async function openWorkflowCreateForm(page: Page): Promise<void> {
   await page.getByTestId('workflow-create-toggle').click();
@@ -299,9 +139,12 @@ function workflowRecord(page: Page, text: string): Locator {
   return page.getByTestId('workflow-record-list').locator('li', { hasText: text }).first();
 }
 
-async function countDocsByField(collectionName: string, field: string, value: string): Promise<number> {
-  const snap = await adminDb.collection(collectionName).where(field, '==', value).get();
-  return snap.size;
+async function getCollection(page: Page, collectionName: string): Promise<CollectionRecord[]> {
+  return page.evaluate((name) => {
+    return (window as Window & {
+      __scholesaE2E: E2EWindowApi;
+    }).__scholesaE2E.getCollection(name);
+  }, collectionName);
 }
 
 test('learner workflow redirects to learner default and supports mission submit lifecycle', async ({ page }) => {
@@ -323,12 +166,12 @@ test('learner workflow redirects to learner default and supports mission submit 
   await record.getByRole('button', { name: 'Submit attempt' }).click();
   await expect(record).toContainText('Status: submitted');
   await expect.poll(async () => {
-    const attempts = await adminDb
-      .collection('missionAttempts')
-      .where('learnerId', '==', USERS.learner.uid)
-      .where('missionId', '==', MISSION_ID)
-      .get();
-    return attempts.docs.some((docSnap) => docSnap.data().status === 'submitted');
+    const attempts = await getCollection(page, 'missionAttempts');
+    return attempts.some((entry) => (
+      entry.learnerId === USERS.learner.uid &&
+      entry.missionId === MISSION_ID &&
+      entry.status === 'submitted'
+    ));
   }, {
     timeout: 10_000,
   }).toBe(true);
@@ -360,15 +203,14 @@ test('educator workflow redirects to educator default and records attendance', a
   const record = workflowRecord(page, USERS.learner.displayName);
   await expect(record).toContainText('Status: present');
   await expect.poll(async () => {
-    const attendance = await adminDb
-      .collection('attendanceRecords')
-      .where('learnerId', '==', USERS.learner.uid)
-      .where('sessionOccurrenceId', '==', SESSION_ID)
-      .get();
-    return attendance.docs.some((docSnap) => {
-      const data = docSnap.data();
-      return data.status === 'present' && data.recordedBy === USERS.educator.uid && data.notes === 'Learner arrived prepared.';
-    });
+    const attendance = await getCollection(page, 'attendanceRecords');
+    return attendance.some((entry) => (
+      entry.learnerId === USERS.learner.uid &&
+      entry.sessionOccurrenceId === SESSION_ID &&
+      entry.status === 'present' &&
+      entry.recordedBy === USERS.educator.uid &&
+      entry.notes === 'Learner arrived prepared.'
+    ));
   }, {
     timeout: 10_000,
   }).toBe(true);
@@ -421,11 +263,8 @@ test('site workflow redirects to site default and provisions guardian links', as
 
   const record = workflowRecord(page, USERS.secondParent.uid);
   await expect.poll(async () => {
-    const guardianLinks = await adminDb
-      .collection('guardianLinks')
-      .where('parentId', '==', USERS.secondParent.uid)
-      .get();
-    return guardianLinks.docs.filter((docSnap) => docSnap.data().relationship === 'caregiver').length;
+    const guardianLinks = await getCollection(page, 'guardianLinks');
+    return guardianLinks.filter((entry) => entry.parentId === USERS.secondParent.uid && entry.relationship === 'caregiver').length;
   }, {
     timeout: 10_000,
   }).toBeGreaterThan(0);
@@ -458,15 +297,13 @@ test('partner workflow redirects to partner default and publishes a listing', as
   await record.getByRole('button', { name: 'Publish listing' }).click();
   await expect(record).toContainText('Status: published');
   await expect.poll(async () => {
-    const listings = await adminDb
-      .collection('marketplaceListings')
-      .where('partnerId', '==', USERS.partner.uid)
-      .where('title', '==', 'Robotics Residency')
-      .get();
-    return listings.docs.some((docSnap) => {
-      const data = docSnap.data();
-      return data.status === 'published' && data.category === 'STEM';
-    });
+    const listings = await getCollection(page, 'marketplaceListings');
+    return listings.some((entry) => (
+      entry.partnerId === USERS.partner.uid &&
+      entry.title === 'Robotics Residency' &&
+      entry.status === 'published' &&
+      entry.category === 'STEM'
+    ));
   }, {
     timeout: 10_000,
   }).toBe(true);
@@ -497,14 +334,12 @@ test('hq workflow redirects to hq default and activates a new site', async ({ pa
   await record.getByRole('button', { name: 'Activate site' }).click();
   await expect(record).toContainText('Status: active');
   await expect.poll(async () => {
-    const sites = await adminDb
-      .collection('sites')
-      .where('name', '==', 'Site Gamma Campus')
-      .get();
-    return sites.docs.some((docSnap) => {
-      const data = docSnap.data();
-      return data.status === 'active' && data.location === 'Richmond';
-    });
+    const sites = await getCollection(page, 'sites');
+    return sites.some((entry) => (
+      entry.name === 'Site Gamma Campus' &&
+      entry.status === 'active' &&
+      entry.location === 'Richmond'
+    ));
   }, {
     timeout: 10_000,
   }).toBe(true);

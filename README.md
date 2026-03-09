@@ -36,6 +36,14 @@ npm run dev
 firebase emulators:start
 ```
 
+### Running Web E2E
+
+```bash
+npm run test:e2e:web
+```
+
+This Playwright gate is browser-only and does not start Firebase emulators. It uses the repository's `NEXT_PUBLIC_E2E_TEST_MODE` fake auth/data backend to validate locale-first routing, role redirects, and critical workflow mutations without external services.
+
 ### Building for Production
 
 ```bash

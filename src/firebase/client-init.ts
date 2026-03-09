@@ -3,8 +3,6 @@ import {
   connectAuthEmulator,
   getAuth,
   GoogleAuthProvider,
-  signInWithCustomToken as firebaseSignInWithCustomToken,
-  signOut as firebaseSignOut,
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -15,7 +13,13 @@ import {
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
-import { clearSessionCookie, syncSessionCookie } from '@/src/firebase/auth/sessionClient';
+import {
+  currentE2EUid,
+  getE2ECollection,
+  resetE2EState,
+  signInE2EUser,
+  signOutE2EUser,
+} from '@/src/testing/e2e/fakeWebBackend';
 
 const hasFullFirebaseClientConfig = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
@@ -102,23 +106,23 @@ if (functionsEmulatorHost && typeof window !== 'undefined' && !(globalThis as Re
 if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
   (window as typeof window & {
     __scholesaE2E?: {
-      signInWithCustomToken: (customToken: string, locale?: string) => Promise<{ uid: string | null }>;
+      signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
+      reset: (locale?: string) => Promise<void>;
       signOut: (locale?: string) => Promise<void>;
       currentUid: () => string | null;
+      getCollection: (collectionName: string) => Array<Record<string, unknown>>;
     };
   }).__scholesaE2E = {
-    signInWithCustomToken: async (customToken: string, locale?: string) => {
-      const credential = await firebaseSignInWithCustomToken(auth, customToken);
-      await syncSessionCookie(credential.user, locale);
-      return { uid: credential.user.uid };
+    signInAs: async (uid: string, locale?: string) => {
+      return signInE2EUser(uid, locale);
+    },
+    reset: async (locale?: string) => {
+      await resetE2EState(locale);
     },
     signOut: async (locale?: string) => {
-      try {
-        await clearSessionCookie(locale);
-      } finally {
-        await firebaseSignOut(auth).catch(() => undefined);
-      }
+      await signOutE2EUser(locale);
     },
-    currentUid: () => auth.currentUser?.uid || null,
+    currentUid: () => currentE2EUid(),
+    getCollection: (collectionName: string) => getE2ECollection(collectionName),
   };
 }

@@ -9,6 +9,11 @@ export async function getUserRoleServer(): Promise<string | null> {
     return null;
   }
 
+  const e2eRole = (user as { customClaims?: { role?: string } }).customClaims?.role;
+  if (typeof e2eRole === 'string' && e2eRole.length > 0) {
+    return e2eRole;
+  }
+
   try {
     const firestore = getAdminDb();
     const userDocRef = firestore.collection('users').doc(user.uid);

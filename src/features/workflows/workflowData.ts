@@ -24,6 +24,12 @@ import {
 import { firestore, functions } from '@/src/firebase/client-init';
 import type { UserProfile, UserRole } from '@/src/types/user';
 import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
+import {
+  createE2EWorkflowRecord,
+  deleteE2EWorkflowRecord,
+  loadE2EWorkflowRecords,
+  updateE2EWorkflowRecord,
+} from '@/src/testing/e2e/fakeWebBackend';
 
 export interface WorkflowContext {
   routePath: WorkflowPath;
@@ -1091,6 +1097,10 @@ async function loadCallableRows(params: {
 }
 
 export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    return loadE2EWorkflowRecords(ctx);
+  }
+
   const siteId = activeSiteId(ctx.profile);
 
   switch (ctx.routePath) {
@@ -2950,6 +2960,11 @@ export async function createWorkflowRecord(
   ctx: WorkflowContext,
   input: WorkflowCreateInput,
 ): Promise<void> {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    await createE2EWorkflowRecord(ctx, input);
+    return;
+  }
+
   const siteId = activeSiteId(ctx.profile);
   const payloadBase: Record<string, unknown> = {
     updatedAt: serverTimestamp(),
@@ -3371,6 +3386,11 @@ export async function updateWorkflowRecord(
   ctx: WorkflowContext,
   target: WorkflowMutationTarget,
 ): Promise<void> {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    await updateE2EWorkflowRecord(ctx, target);
+    return;
+  }
+
   const ref = doc(collection(firestore, target.collectionName), target.id);
   const existing = await getDoc(ref).catch(() => null);
   const data = (existing?.data() || {}) as Record<string, unknown>;
@@ -3611,6 +3631,11 @@ export async function updateWorkflowRecord(
 }
 
 export async function deleteWorkflowRecord(target: WorkflowMutationTarget): Promise<void> {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    await deleteE2EWorkflowRecord(target);
+    return;
+  }
+
   const deletableCollections = new Set(['portfolioItems', 'guardianLinks']);
   if (!deletableCollections.has(target.collectionName)) {
     return;

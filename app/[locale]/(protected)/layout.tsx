@@ -9,6 +9,8 @@ import { Navigation } from '@/src/features/navigation/components/Navigation';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { GlobalAIAssistantDock } from '@/src/components/sdt/GlobalAIAssistantDock';
 
+const showAssistantDock = process.env.NEXT_PUBLIC_E2E_TEST_MODE !== '1';
+
 export default function ProtectedLayout({
   children,
 }: {
@@ -47,7 +49,7 @@ export default function ProtectedLayout({
           {children}
         </div>
       </main>
-      <GlobalAIAssistantDock />
+      {showAssistantDock ? <GlobalAIAssistantDock /> : null}
     </div>
   );
 }

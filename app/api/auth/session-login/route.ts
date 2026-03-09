@@ -1,10 +1,36 @@
 import { NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/src/firebase/admin-init';
 import { resolveRequestLocale } from '@/src/lib/i18n/localeHeaders';
+import { encodeE2ESession } from '@/src/testing/e2e/fakeSession';
 
 export async function POST(request: Request) {
   const resolvedLocale = resolveRequestLocale(request.headers);
-  const { idToken } = await request.json();
+  const { idToken, e2eSession } = await request.json();
+  const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
+
+  if (isE2ETestMode && e2eSession) {
+    const expiresIn = 60 * 60 * 24 * 5 * 1000;
+    const response = NextResponse.json({ status: 'success' }, { status: 200 });
+    response.cookies.set({
+      name: '__session',
+      value: encodeE2ESession(e2eSession),
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+    response.cookies.set({
+      name: 'scholesa_locale',
+      value: resolvedLocale,
+      maxAge: expiresIn,
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+    return response;
+  }
 
   if (!idToken) {
     return NextResponse.json({ error: 'idToken is required' }, { status: 400 });

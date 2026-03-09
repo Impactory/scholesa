@@ -1,6 +1,6 @@
 # Traceability Matrix
 
-> Current status: Flutter and locale-first web tracks are active. Role-routing, protected-route, and tri-locale web coverage are validated through the emulator-backed Playwright workflow suite and i18n key audit.
+> Current status: Flutter and locale-first web tracks are active. Role-routing, protected-route, and tri-locale web coverage are validated through the non-emulator Playwright workflow suite and i18n key audit.
 
 | Req ID | Requirement | Implementation Files | Verification | Status |
 | --- | --- | --- | --- | --- |
@@ -24,7 +24,7 @@
 | REQ-018 | Dart/Flutter models/repos for AccountabilityCommitment | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ |
 | REQ-019 | Dart/Flutter models/repos for AccountabilityReview | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ |
 | REQ-020 | AuditLog model/repos + logging | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ (AuditLogRepository.log) |
-| REQ-021 | Role routing map | apps/empire_flutter/app/lib/features/auth/role_routes.dart, app/lib/features/dashboards/role_selector_page.dart, app/[locale]/(protected)/*, middleware.ts | Manual: FL-ROUTE-01; Playwright: workflow-routes.e2e.spec.ts | ✅ (Flutter role map + guard; web locale-first protected routing validated under emulators) |
+| REQ-021 | Role routing map | apps/empire_flutter/app/lib/features/auth/role_routes.dart, app/lib/features/dashboards/role_selector_page.dart, app/[locale]/(protected)/*, middleware.ts | Manual: FL-ROUTE-01; Playwright: workflow-routes.e2e.spec.ts | ✅ (Flutter role map + guard; web locale-first protected routing validated in non-emulator browser E2E) |
 | REQ-022 | Learner dashboard E2E slice | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, offline/offline_actions.dart, offline/offline_dispatchers.dart | Manual: FL-LRN-01 | ✅ (Flutter mission + portfolio flows, offline-aware) |
 | REQ-023 | Educator dashboard E2E slice | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, offline/offline_actions.dart, offline/offline_dispatchers.dart | Manual: FL-EDU-01 | ✅ (Flutter attendance flow with deterministic IDs) |
 | REQ-024 | Parent dashboard E2E slice | app/[locale]/(protected)/parent/page.tsx, src/repositories/userRepository.ts, test/e2e/workflow-routes.e2e.spec.ts | Playwright: parent workflow + parent route denial | ✅ (parent default routing, linked portfolio visibility, and denied site-route fallback validated) |
@@ -46,7 +46,7 @@
 | REQ-040 | i18n coverage (en/zh-CN/zh-TW) for landing, auth, and protected route entry | locales/en.json, locales/zh-CN.json, locales/zh-TW.json, src/lib/i18n/config.ts, src/lib/i18n/messages.ts, test/e2e/workflow-routes.e2e.spec.ts, scripts/vibe_i18n_keys.js | Playwright: zh-CN landing/login + zh-TW redirect; Audit: vibe_i18n_keys.js | ✅ (tri-locale key consistency passes; locale-first runtime behavior validated end-to-end) |
 | REQ-041 | Dependency baseline maintained | DEPENDENCY_BASELINE_SCHOLESA.md | Review: DEP-BASELINE-CHK | ✅ (updated with flutter + google_fonts) |
 | REQ-042 | Firestore/Storage rules test harness | firestore.rules, storage.rules, src/__tests__/rules.test.ts | Jest: RULES-TEST-01 | ✅ |
-| REQ-043 | CI checks (lint, type, test) | .github/workflows/ci.yml, package.json scripts | CI run: CI-01 (web pipeline skipped) | ⏸️ |
+| REQ-043 | CI checks (lint, type, test) | .github/workflows/ci.yml, package.json scripts | CI run: CI-01; local proof: npm run test:e2e:web, npm run build | 🟠 (web Playwright gate now runs without emulators; full CI evidence still pending) |
 | REQ-044 | Route uniqueness audit (App Router) | app/[locale]/*, middleware.ts | Script: scaffold-routing.js | ✅ (audited: locale root + (auth) + (protected) dashboards only; no duplicate login/root pages) |
 | REQ-045 | PWA cache strategy documented | next.config.mjs (runtimeCaching, offline fallback) | Review: PWA-STRAT-01 | ⏸️ (web stack paused) |
 | REQ-046 | Flutter app setup (baseline) | scholesa_app/pubspec.yaml, scholesa_app/lib/main.dart, scholesa_app/lib/app.dart | Manual: FL-SETUP-01 | ✅ (baseline routing) |
