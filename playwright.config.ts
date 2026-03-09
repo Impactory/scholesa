@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const projectId = process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID || 'scholesa-e2e';
+const projectId = process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT_ID || 'demo-scholesa-e2e';
 const authEmulatorHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
 const firestoreEmulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 const functionsEmulatorHost = process.env.FIREBASE_FUNCTIONS_EMULATOR_HOST || '127.0.0.1:5001';

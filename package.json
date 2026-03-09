@@ -16,7 +16,7 @@
     "lint:fix": "eslint . --fix",
     "test": "jest --runInBand",
     "test:e2e:web:install": "npx playwright install chromium",
-    "test:e2e:web": "bash -lc 'npm --prefix functions ci && npm --prefix functions run build && GCLOUD_PROJECT=scholesa-e2e GOOGLE_CLOUD_PROJECT=scholesa-e2e FIREBASE_PROJECT_ID=scholesa-e2e STRIPE_PRICE_LEARNER=price_learner_seat STRIPE_PRICE_EDUCATOR=price_educator_seat STRIPE_PRICE_PARENT=price_parent_seat STRIPE_PRICE_SITE=price_site_license NOTIFY_ENDPOINT=http://127.0.0.1:0 npx --yes firebase-tools emulators:exec --project scholesa-e2e --only auth,firestore,functions \"npx playwright test --config playwright.config.ts\"'",
+    "test:e2e:web": "bash -lc 'npm --prefix functions ci && npm --prefix functions run build && GCLOUD_PROJECT=demo-scholesa-e2e GOOGLE_CLOUD_PROJECT=demo-scholesa-e2e FIREBASE_PROJECT_ID=demo-scholesa-e2e STRIPE_PRICE_LEARNER=price_learner_seat STRIPE_PRICE_EDUCATOR=price_educator_seat STRIPE_PRICE_PARENT=price_parent_seat STRIPE_PRICE_SITE=price_site_license NOTIFY_ENDPOINT=http://127.0.0.1:0 npx --yes firebase-tools emulators:exec --project demo-scholesa-e2e --only auth,firestore,functions \"npx playwright test --config playwright.config.ts\"'",
     "test:integration:rules": "npx --yes firebase-tools emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
     "test:integration:analytics": "npx --yes firebase-tools emulators:exec --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand --config jest.analytics.config.js\"",
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
