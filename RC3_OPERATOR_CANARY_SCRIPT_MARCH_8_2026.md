@@ -207,4 +207,14 @@ Operator evidence:
 | End Time | ____________________ |
 | GO / NO-GO | ____________________ |
 
+Final decision notes:
+
+________________________________________________________________________________
+________________________________________________________________________________
+________________________________________________________________________________
+
+Post-run handoff:
+- Update `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- Copy the final GO / NO-GO outcome into `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
+
 Release may only proceed if all six roles pass and `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md` is fully completed.

@@ -168,3 +168,24 @@ Operational follow-through:
 
 Final human release step still required for `100% against gate`:
 - complete the manual browser canary in `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+
+---
+
+## Post-Canary Release Decision
+
+Complete this immediately after the manual browser canary:
+
+| Field | Value |
+|---|---|
+| Operator | ____________________ |
+| Browser Canary Time | ____________________ |
+| Canary Result | GO / NO-GO |
+| Checklist Completed | Yes / No |
+| Release Approved | Yes / No |
+| Blocking Issues | None / ____________________ |
+
+Release decision notes:
+
+________________________________________________________________________________
+________________________________________________________________________________
+________________________________________________________________________________
