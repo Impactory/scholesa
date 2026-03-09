@@ -5,59 +5,14 @@ import '../../ui/theme/scholesa_theme.dart';
 import 'checkin_models.dart';
 import 'checkin_service.dart';
 
+import '../../i18n/workflow_surface_i18n.dart';
 const Map<String, String> _checkinEs = <String, String>{
   'Check-in / Check-out': 'Registro de entrada / salida',
   'Manage arrivals and pickups': 'Gestiona llegadas y recogidas',
   'Refresh': 'Actualizar',
   'Total': 'Total',
-  'Present': 'Presentes',
-  'Left': 'Se fueron',
-  'Absent': 'Ausentes',
-  'Search learners...': 'Buscar estudiantes...',
-  'All': 'Todos',
-  'Late': 'Tarde',
-  'Checked Out': 'Salida registrada',
-  'Learners': 'Estudiantes',
-  "Today's Log": 'Registro de hoy',
-  'No learners found': 'No se encontraron estudiantes',
-  'Try adjusting your search': 'Prueba ajustando tu búsqueda',
-  'No records today': 'No hay registros hoy',
-  'Check-in/out activity will appear here':
-      'La actividad de entrada/salida aparecerá aquí',
-  'Scan QR': 'Escanear QR',
-  'Late pickup flagged for': 'Recogida tardía marcada para',
-  'Use camera scanner or enter pickup code manually.':
-      'Usa el escáner de cámara o ingresa el código manualmente.',
-  'Close': 'Cerrar',
-  'Camera scanner started': 'Escáner de cámara iniciado',
-  'Use Camera': 'Usar cámara',
-  'Manual pickup code entry opened':
-      'Entrada manual de código de recogida abierta',
-  'Enter Code': 'Ingresar código',
-  'Not arrived': 'Sin llegada',
-  'In:': 'Entrada:',
-  'Out:': 'Salida:',
-  'by': 'por',
-  'Check In': 'Registrar entrada',
-  'Check Out': 'Registrar salida',
-  'Flag late pickup': 'Marcar recogida tardía',
-  'Authorized pickups': 'Recogidas autorizadas',
-  'Authorized Pickups': 'Recogidas autorizadas',
-  'For': 'Para',
-  'Primary': 'Principal',
-  'No authorized contacts on file':
-      'No hay contactos autorizados registrados',
-  'Add any notes...': 'Agrega notas...',
-};
-
-String _tCheckin(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _checkinEs[input] ?? input;
 }
-
-/// Site Check-in / Check-out Page
-/// Beautiful colorful UI for managing learner arrivals and departures
+  return WorkflowSurfaceI18n.text(context, input);
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
 

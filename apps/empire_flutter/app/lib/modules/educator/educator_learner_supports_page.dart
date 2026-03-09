@@ -4,68 +4,13 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorLearnerSupportsEs = <String, String>{
-  'Learner Supports': 'Apoyos del estudiante',
-  'Active Support Plans': 'Planes de apoyo activos',
-  'High Priority': 'Alta prioridad',
-  'Active Plans': 'Planes activos',
-  'Reviews Due': 'Revisiones pendientes',
-  'High': 'Alta',
-  'Medium': 'Media',
-  'Low': 'Baja',
-  'Academic': 'Académico',
-  'Social-Emotional': 'Socioemocional',
-  'Behavioral': 'Conductual',
-  'Extended time': 'Tiempo extendido',
-  'Quiet space': 'Espacio tranquilo',
-  'Check-in support': 'Apoyo de seguimiento',
-  'Peer buddy': 'Compañero de apoyo',
-  'Movement breaks': 'Pausas de movimiento',
-  'Clear transitions': 'Transiciones claras',
-  'Responds well to visual aids': 'Responde bien a ayudas visuales',
-  'Building confidence in group settings':
-      'Fortaleciendo la confianza en entornos grupales',
-  'Use positive reinforcement': 'Usar refuerzo positivo',
-  'Note': 'Nota',
-  'Support Plan': 'Plan de apoyo',
-  'Accommodations': 'Adaptaciones',
-  'Notes': 'Notas',
-  'No notes': 'Sin notas',
-  'Close': 'Cerrar',
-  'Edit Plan': 'Editar plan',
-  'Search Learner Supports': 'Buscar apoyos del estudiante',
-  'Enter learner name or support tag':
-      'Ingresa el nombre del estudiante o etiqueta de apoyo',
-  'Cancel': 'Cancelar',
-  'Search': 'Buscar',
-  'Found': 'Se encontraron',
-  'matching support plans': 'planes de apoyo coincidentes',
-  'Log Support Outcome': 'Registrar resultado del apoyo',
-  'Select the outcome from this support action.':
-      'Selecciona el resultado de esta acción de apoyo.',
-  'Partial': 'Parcial',
-  'No Change': 'Sin cambios',
-  'Helped': 'Ayudó',
-  'Support outcome logged': 'Resultado de apoyo registrado',
-  'No support plans yet': 'Aún no hay planes de apoyo',
-  'Loading...': 'Cargando...',
-  'Support AI Coach': 'Coach IA de apoyos',
-  'Keep BOS/MIA loop active for each learner support plan':
-      'Mantén activo el ciclo BOS/MIA para cada plan de apoyo del estudiante',
-  'BOS/MIA Support Loop': 'Ciclo de apoyo BOS/MIA',
-  'Latest individual improvement signal for support planning':
-      'Señal de mejora individual más reciente para planificación de apoyos',
-  'No support loop data yet': 'Sin datos de ciclo de apoyo aún',
-};
-
 String _tEducatorLearnerSupports(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorLearnerSupportsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator learner supports page for tracking learner wellbeing & accommodations

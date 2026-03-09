@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../offline/sync_status_widget.dart';
 import '../../services/telemetry_service.dart';
@@ -10,38 +11,8 @@ import '../../ui/common/error_state.dart';
 import 'attendance_models.dart';
 import 'attendance_service.dart';
 
-const Map<String, String> _attendanceEs = <String, String>{
-  'Take Attendance': 'Tomar asistencia',
-  'Attendance service not available': 'Servicio de asistencia no disponible',
-  'No classes today': 'No hay clases hoy',
-  'You have no scheduled classes for today.':
-      'No tienes clases programadas para hoy.',
-  'Refresh': 'Actualizar',
-  'students': 'estudiantes',
-  'Class Roster': 'Lista de clase',
-  'Service not available': 'Servicio no disponible',
-  'No roster found': 'No se encontró lista',
-  'Could not load the class roster.':
-      'No se pudo cargar la lista de clase.',
-  'All Present': 'Todos presentes',
-  'All Absent': 'Todos ausentes',
-  'No learners enrolled': 'No hay estudiantes inscritos',
-  'There are no learners enrolled in this class.':
-      'No hay estudiantes inscritos en esta clase.',
-  'Save Attendance': 'Guardar asistencia',
-  'Attendance saved successfully': 'Asistencia guardada correctamente',
-  'Pending sync': 'Sincronización pendiente',
-  'Present': 'Presente',
-  'Late': 'Tarde',
-  'Absent': 'Ausente',
-  'Excused': 'Justificado',
-  'Add a note (optional)': 'Agregar una nota (opcional)',
-};
-
 String _tAttendance(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _attendanceEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Attendance taking page

@@ -5,33 +5,12 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorLearnersEs = <String, String>{
-  'My Learners': 'Mis estudiantes',
-  'Track progress and engagement': 'Sigue progreso y compromiso',
-  'Search learners...': 'Buscar estudiantes...',
-  'All Sessions': 'Todas las sesiones',
-  'Total Learners': 'Total de estudiantes',
-  'Active Today': 'Activos hoy',
-  'ACTIVE': 'ACTIVO',
-  'Pillar Progress': 'Progreso por pilar',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Message': 'Mensaje',
-  'Full Profile': 'Perfil completo',
-  'Learner AI Coach': 'Coach IA para estudiantes',
-  'Keep BOS/MIA loop active for each learner':
-      'Mantén activo el ciclo BOS/MIA para cada estudiante',
-  'delta': 'delta',
-};
-
 String _tEducatorLearnersPageSpecific(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorLearnersEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 // Alias for backward compatibility
