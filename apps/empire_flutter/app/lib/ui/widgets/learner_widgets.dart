@@ -1,32 +1,58 @@
 import 'package:flutter/material.dart';
+
 import '../../services/telemetry_service.dart';
+import '../localization/inline_locale_text.dart';
 import '../theme/scholesa_theme.dart';
 
-const Map<String, String> _learnerWidgetsEs = <String, String>{
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Not Started': 'No iniciado',
-  'In Progress': 'En progreso',
-  'Submitted': 'Enviado',
-  'Reviewed': 'Revisado',
-  'Progress': 'Progreso',
-  'Start': 'Iniciar',
-  'Continue': 'Continuar',
-  'Due:': 'Vence:',
-  'day streak': 'días seguidos',
-  'Current': 'Actual',
-  'Longest': 'Más largo',
-  'M': 'L',
-  'T': 'M',
-  'W': 'X',
-  'F': 'V',
+const Map<String, String> _learnerWidgetsZhCn = <String, String>{
+  'Future Skills': '未来技能',
+  'Leadership': '领导力',
+  'Impact': '影响力',
+  'Not Started': '未开始',
+  'In Progress': '进行中',
+  'Submitted': '已提交',
+  'Reviewed': '已审核',
+  'Progress': '进度',
+  'Start': '开始',
+  'Continue': '继续',
+  'Due:': '截止：',
+  'day streak': '连续天数',
+  'Current': '当前',
+  'Longest': '最长',
+  'M': '一',
+  'T': '二',
+  'W': '三',
+  'F': '五',
+};
+
+const Map<String, String> _learnerWidgetsZhTw = <String, String>{
+  'Future Skills': '未來技能',
+  'Leadership': '領導力',
+  'Impact': '影響力',
+  'Not Started': '未開始',
+  'In Progress': '進行中',
+  'Submitted': '已提交',
+  'Reviewed': '已審核',
+  'Progress': '進度',
+  'Start': '開始',
+  'Continue': '繼續',
+  'Due:': '截止：',
+  'day streak': '連續天數',
+  'Current': '目前',
+  'Longest': '最長',
+  'M': '一',
+  'T': '二',
+  'W': '三',
+  'F': '五',
 };
 
 String _tLearnerWidgets(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _learnerWidgetsEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _learnerWidgetsZhCn,
+    zhTw: _learnerWidgetsZhTw,
+  );
 }
 
 /// A beautiful mission card for displaying learning missions

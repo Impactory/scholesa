@@ -1,44 +1,69 @@
 import 'package:flutter/material.dart';
+
+import '../ui/localization/inline_locale_text.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
 
-const Map<String, String> _mvlGateEs = <String, String>{
+const Map<String, String> _mvlGateZhCn = <String, String>{
   "Great work! You've demonstrated your understanding. Keep going!":
-    '¡Excelente trabajo! Has demostrado tu comprensión. ¡Sigue adelante!',
+      '做得很好！你已经展示了自己的理解。继续保持！',
   'Almost there — can you provide one more piece of evidence?':
-    'Casi lo logras: ¿puedes aportar una evidencia más?',
+      '快完成了，还能再提供一项证据吗？',
   'Good start! Share one more insight to complete the verification.':
-    '¡Buen comienzo! Comparte una idea más para completar la verificación.',
-  'Something went wrong. Please try again.':
-    'Algo salió mal. Inténtalo de nuevo.',
-  'Learner disagrees with verification requirement':
-    'El estudiante no está de acuerdo con el requisito de verificación',
-  'Your feedback has been sent to your educator for review.':
-    'Tu comentario se envió a tu educador para revisión.',
-  'Unable to send feedback right now.':
-    'No se puede enviar el comentario en este momento.',
-  'Show Your Understanding': 'Muestra tu comprensión',
-  "Take a moment to demonstrate what you've learned.":
-    'Tómate un momento para demostrar lo que has aprendido.',
-  'Explain in your own words:': 'Explica con tus propias palabras:',
+      '开了个好头！再分享一个见解即可完成验证。',
+  'Something went wrong. Please try again.': '发生了一些问题，请重试。',
+  'Learner disagrees with verification requirement': '学习者不同意该验证要求',
+  'Your feedback has been sent to your educator for review.': '你的反馈已发送给导师审核。',
+  'Unable to send feedback right now.': '目前无法发送反馈。',
+  'Show Your Understanding': '展示你的理解',
+  "Take a moment to demonstrate what you've learned.": '花一点时间展示你学到了什么。',
+  'Explain in your own words:': '用你自己的话解释：',
   'What have you learned? How would you explain this concept to a friend?':
-    '¿Qué has aprendido? ¿Cómo le explicarías este concepto a un amigo?',
-  ' evidence item': ' evidencia',
-  's': 's',
-  ' submitted': ' enviada',
-  ' — scoring...': ' — evaluando...',
-  ' — 1 more needed': ' — falta 1 más',
-  'Submitting...': 'Enviando...',
-  'Submit Evidence': 'Enviar evidencia',
-  "I think this check isn't needed":
-    'Creo que esta verificación no es necesaria',
+      '你学到了什么？你会如何向朋友解释这个概念？',
+  ' evidence item': ' 条证据',
+  's': '',
+  ' submitted': ' 已提交',
+  ' — scoring...': '，正在评分...',
+  ' — 1 more needed': '，还需要 1 条',
+  'Submitting...': '提交中...',
+  'Submit Evidence': '提交证据',
+  "I think this check isn't needed": '我认为这项检查没有必要',
+};
+
+const Map<String, String> _mvlGateZhTw = <String, String>{
+  "Great work! You've demonstrated your understanding. Keep going!":
+      '做得很好！你已經展示了自己的理解。繼續保持！',
+  'Almost there — can you provide one more piece of evidence?':
+      '快完成了，還能再提供一項證據嗎？',
+  'Good start! Share one more insight to complete the verification.':
+      '開了個好頭！再分享一個見解即可完成驗證。',
+  'Something went wrong. Please try again.': '發生了一些問題，請再試一次。',
+  'Learner disagrees with verification requirement': '學習者不同意這項驗證要求',
+  'Your feedback has been sent to your educator for review.': '你的回饋已送交導師審核。',
+  'Unable to send feedback right now.': '目前無法送出回饋。',
+  'Show Your Understanding': '展示你的理解',
+  "Take a moment to demonstrate what you've learned.": '花一點時間展示你學到了什麼。',
+  'Explain in your own words:': '用你自己的話解釋：',
+  'What have you learned? How would you explain this concept to a friend?':
+      '你學到了什麼？你會如何向朋友解釋這個概念？',
+  ' evidence item': ' 項證據',
+  's': '',
+  ' submitted': ' 已提交',
+  ' — scoring...': '，正在評分...',
+  ' — 1 more needed': '，還需要 1 項',
+  'Submitting...': '提交中...',
+  'Submit Evidence': '提交證據',
+  "I think this check isn't needed": '我認為這項檢查沒有必要',
 };
 
 String _tMvlGate(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _mvlGateEs[input] ?? input;
+  return InlineLocaleText.of(
+    context,
+    input,
+    zhCn: _mvlGateZhCn,
+    zhTw: _mvlGateZhTw,
+  );
 }
 
 // ──────────────────────────────────────────────────────
