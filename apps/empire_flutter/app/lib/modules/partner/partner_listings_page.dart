@@ -1,47 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
-const Map<String, String> _partnerListingsEs = <String, String>{
-  'My Listings': 'Mis publicaciones',
-  'No Listings Yet': 'Aún no hay publicaciones',
-  'Create your first marketplace listing':
-      'Crea tu primera publicación del marketplace',
-  'Create Listing': 'Crear publicación',
-  'Draft': 'Borrador',
-  'Submitted': 'Enviada',
-  'Approved': 'Aprobada',
-  'Published': 'Publicada',
-  'Rejected': 'Rechazada',
-  'Archived': 'Archivada',
-  'Create': 'Crear',
-  'Edit': 'Editar',
-  'Close': 'Cerrar',
-  'Save': 'Guardar',
-  'Title': 'Título',
-  'Description': 'Descripción',
-  'Category': 'Categoría',
-  'Programs': 'Programas',
-  'Workshops': 'Talleres',
-  'Resources': 'Recursos',
-  'General': 'General',
-  'Price (optional)': 'Precio (opcional)',
-  'Cancel': 'Cancelar',
-  'Title and description are required':
-      'El título y la descripción son obligatorios',
-  'Failed to create listing': 'No se pudo crear la publicación',
-  'Listing created and added to list': 'Publicación creada y agregada a la lista',
-  'Edit Listing': 'Editar publicación',
-  'Listing updated': 'Publicación actualizada',
-};
-
 String _tPartnerListings(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _partnerListingsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Partner listings management page

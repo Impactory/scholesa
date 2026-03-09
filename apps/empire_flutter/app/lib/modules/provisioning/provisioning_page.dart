@@ -1,109 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/common/empty_state.dart';
 import 'provisioning_models.dart';
 import 'provisioning_service.dart';
 
-const Map<String, String> _provisioningEs = <String, String>{
-  'Provisioning': 'Aprovisionamiento',
-  'Learners': 'Estudiantes',
-  'Parents': 'Padres',
-  'Links': 'Vínculos',
-  'Cohorts': 'Cohortes',
-  'No learners yet': 'Aún no hay estudiantes',
-  'Add learners to your site to get started.':
-      'Agrega estudiantes a tu sede para comenzar.',
-  'No parents yet': 'Aún no hay padres',
-  'Add parent accounts to link with learners.':
-      'Agrega cuentas de padres para vincularlas con estudiantes.',
-  'No guardian links': 'No hay vínculos de tutores',
-  'Link parents to learners to enable family access.':
-      'Vincula padres con estudiantes para habilitar acceso familiar.',
-  'Grade': 'Grado',
-  'Edit Learner': 'Editar estudiante',
-  'Manage Guardian Links': 'Gestionar vínculos de tutores',
-  'Edit Parent': 'Editar padre',
-  'Manage Learner Links': 'Gestionar vínculos de estudiantes',
-  'Primary': 'Principal',
-  'Delete Link': 'Eliminar vínculo',
-  'Cancel': 'Cancelar',
-  'Delete': 'Eliminar',
-  'No site selected': 'No hay sede seleccionada',
-  'Learner created successfully': 'Estudiante creado correctamente',
-  'Failed to create learner': 'No se pudo crear el estudiante',
-  'Add Learner': 'Agregar estudiante',
-  'Full Name': 'Nombre completo',
-  'Required': 'Obligatorio',
-  'Email': 'Correo electrónico',
-  'Invalid email': 'Correo electrónico inválido',
-  'Grade Level': 'Nivel de grado',
-  'Create': 'Crear',
-  'Parent created successfully': 'Padre creado correctamente',
-  'Failed to create parent': 'No se pudo crear el padre',
-  'Add Parent': 'Agregar padre',
-  'Phone (optional)': 'Teléfono (opcional)',
-  'Link removed': 'Vínculo eliminado',
-  'Failed to remove link': 'No se pudo eliminar el vínculo',
-  'Guardian link created successfully': 'Vínculo de tutor creado correctamente',
-  'Failed to create link': 'No se pudo crear el vínculo',
-  'Learner updated': 'Estudiante actualizado',
-  'Failed to update learner': 'No se pudo actualizar el estudiante',
-  'Parent updated': 'Padre actualizado',
-  'Failed to update parent': 'No se pudo actualizar el padre',
-  'Father': 'Padre',
-  'Mother': 'Madre',
-  'Guardian': 'Tutor',
-  'Grandparent': 'Abuelo/Abuela',
-  'Other': 'Otro',
-  'Create Guardian Link': 'Crear vínculo de tutor',
-  'Parent': 'Padre',
-  'No parents available': 'No hay padres disponibles',
-  'Learner': 'Estudiante',
-  'No learners available': 'No hay estudiantes disponibles',
-  'Relationship': 'Relación',
-  'Primary guardian': 'Tutor principal',
-  'Receives all notifications': 'Recibe todas las notificaciones',
-  'Create Link': 'Crear vínculo',
-  'Save': 'Guardar',
-  'Phone': 'Teléfono',
-  'No cohort launches yet': 'Aún no hay lanzamientos de cohorte',
-  'Track launch readiness, parent comms, and kickoff status here.':
-      'Da seguimiento a la preparación, comunicación con familias y estado de arranque aquí.',
-  'Create Cohort Launch': 'Crear lanzamiento de cohorte',
-  'Cohort Name': 'Nombre de cohorte',
-  'Age Band': 'Rango de edad',
-  'Schedule': 'Horario',
-  'Program Format': 'Formato del programa',
-  'Curriculum Term': 'Periodo curricular',
-  'Roster Status': 'Estado de lista',
-  'Parent Comms': 'Comunicación con familias',
-  'Baseline Survey': 'Encuesta inicial',
-  'Kickoff': 'Inicio',
-  'Learner Count': 'Cantidad de estudiantes',
-  'Mixed Ages': 'Edades mixtas',
-  'Gold': 'Gold',
-  'Silver': 'Silver',
-  'Pilot': 'Piloto',
-  'Draft': 'Borrador',
-  'Ready': 'Lista',
-  'Active': 'Activa',
-  'Pending': 'Pendiente',
-  'Sent': 'Enviado',
-  'Confirmed': 'Confirmado',
-  'Completed': 'Completado',
-  'Scheduled': 'Programado',
-  'Cohort launch created successfully':
-      'Lanzamiento de cohorte creado correctamente',
-  'Failed to create cohort launch':
-      'No se pudo crear el lanzamiento de cohorte',
-};
-
 String _tProvisioning(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _provisioningEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 void _logProvisioningCta(String ctaId, {Map<String, dynamic>? metadata}) {

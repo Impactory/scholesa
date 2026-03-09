@@ -1,59 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
-const Map<String, String> _partnerContractsEs = <String, String>{
-  'Partner Workflows': 'Flujos de partner',
-  'Contracts': 'Contratos',
-  'Launches': 'Lanzamientos',
-  'My Contracts': 'Mis contratos',
-  'No Contracts Yet': 'Aún no hay contratos',
-  'Your contracts will appear here': 'Tus contratos aparecerán aquí',
-  'No Launches Yet': 'Aún no hay lanzamientos',
-  'Partner launch plans will appear here':
-      'Los planes de lanzamiento del partner aparecerán aquí',
-  'Site:': 'Sede:',
-  'Total Value': 'Valor total',
-  'Deliverables': 'Entregables',
-  'Draft': 'Borrador',
-  'Submitted': 'Enviado',
-  'Negotiation': 'Negociación',
-  'Approved': 'Aprobado',
-  'Active': 'Activo',
-  'Completed': 'Completado',
-  'Terminated': 'Terminado',
-  'Site ID': 'ID de sede',
-  'Start Date': 'Fecha de inicio',
-  'End Date': 'Fecha de fin',
-  'No deliverables defined': 'No hay entregables definidos',
-  'Close': 'Cerrar',
-  'Region': 'Región',
-  'Locale': 'Locale',
-  'Pilot Cohorts': 'Cohortes piloto',
-  'Due Diligence': 'Due diligence',
-  'Planning Workshop': 'Workshop de planificación',
-  'Trainer of Trainers': 'Trainer of trainers',
-  'KPI Logging': 'Registro KPI',
-  '90-Day Review': 'Revisión 90 días',
-  'Create Launch': 'Crear lanzamiento',
-  'Partner Name': 'Nombre del partner',
-  'Notes': 'Notas',
-  'Launch created': 'Lanzamiento creado',
-  'Failed to create launch': 'No se pudo crear el lanzamiento',
-  'Planning': 'Planificación',
-  'Pending': 'Pendiente',
-  'Sent': 'Enviado',
-  'Confirmed': 'Confirmado',
-};
-
 String _tPartnerContracts(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _partnerContractsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 class PartnerContractsPage extends StatefulWidget {

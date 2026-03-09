@@ -1,66 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _profileEs = <String, String>{
-  'Profile': 'Perfil',
-  'User': 'Usuario',
-  'Settings': 'Configuración',
-  'Notifications': 'Notificaciones',
-  'Manage notification preferences': 'Gestiona las preferencias de notificación',
-  'Privacy & Security': 'Privacidad y seguridad',
-  'Password, two-factor auth': 'Contraseña, autenticación en dos pasos',
-  'Language': 'Idioma',
-  'English': 'Español',
-  'Appearance': 'Apariencia',
-  'Light mode': 'Modo claro',
-  'Sync & Data': 'Sincronización y datos',
-  'Last synced: Just now': 'Última sincronización: ahora mismo',
-  'About': 'Acerca de',
-  'Help & Support': 'Ayuda y soporte',
-  'Terms of Service': 'Términos del servicio',
-  'Privacy Policy': 'Política de privacidad',
-  'Version': 'Versión',
-  'Sign Out': 'Cerrar sesión',
-  'Are you sure you want to sign out?':
-    '¿Seguro que deseas cerrar sesión?',
-  'Cancel': 'Cancelar',
-  'Edit Profile': 'Editar perfil',
-  'Display Name': 'Nombre visible',
-  'Save': 'Guardar',
-  'No profile changes applied': 'No se aplicaron cambios al perfil',
-  'Profile update request saved for':
-    'Solicitud de actualización del perfil guardada para',
-  'Close': 'Cerrar',
-  'Open': 'Abrir',
-  'opened': 'abierto',
-  'Open notification preferences and delivery channels.':
-    'Abre preferencias de notificación y canales de entrega.',
-  'Review password, MFA, and device session settings.':
-    'Revisa contraseña, MFA y configuración de sesiones del dispositivo.',
-  'Choose your preferred language for the app.':
-    'Elige tu idioma preferido para la app.',
-  'Switch between light and dark display modes.':
-    'Cambia entre modos de visualización claro y oscuro.',
-  'Manage sync cadence and data usage options.':
-    'Gestiona la frecuencia de sincronización y opciones de uso de datos.',
-  'Open help docs and contact support.':
-    'Abre documentos de ayuda y contacta soporte.',
-  'Review terms and platform usage rules.':
-    'Revisa términos y reglas de uso de la plataforma.',
-  'Review data handling and privacy commitments.':
-    'Revisa el manejo de datos y compromisos de privacidad.',
-  'App version 1.0.0 (Build 1).': 'Versión de la app 1.0.0 (Build 1).',
-};
-
 String _tProfile(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _profileEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Profile Page - User profile and settings

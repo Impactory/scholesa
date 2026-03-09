@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -8,39 +9,8 @@ import '../../i18n/bos_coaching_i18n.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorSessionsEs = <String, String>{
-  'New Session': 'Nueva sesión',
-  'My Sessions': 'Mis sesiones',
-  'Manage your teaching schedule': 'Gestiona tu horario de enseñanza',
-  'Upcoming': 'Próximas',
-  'Ongoing': 'En curso',
-  'Past': 'Pasadas',
-  'All': 'Todas',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Failed to create session': 'No se pudo crear la sesión',
-  'Session created and added to your list': 'Sesión creada y agregada a tu lista',
-  'Create Session': 'Crear sesión',
-  'Session title': 'Título de la sesión',
-  'Title is required': 'El título es obligatorio',
-  'Description (optional)': 'Descripción (opcional)',
-  'Location (optional)': 'Ubicación (opcional)',
-  'Pillar': 'Pilar',
-  'Cancel': 'Cancelar',
-  'Create': 'Crear',
-  'learners enrolled': 'estudiantes inscritos',
-  'Enrolled': 'Inscritos',
-  'Schedule': 'Horario',
-  'Substitute request submitted for approval': 'Solicitud de sustituto enviada para aprobación',
-  'Request Substitute': 'Solicitar sustituto',
-  'View Full Details': 'Ver detalles completos',
-};
-
 String _tEducatorSessions(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorSessionsEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator Sessions Page - Manage and view all sessions

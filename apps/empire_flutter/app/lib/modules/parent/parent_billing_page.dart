@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -8,70 +9,8 @@ import '../../auth/app_state.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
-const Map<String, String> _parentBillingEs = <String, String>{
-  'Billing & Payments': 'Facturación y pagos',
-  'Manage your payments': 'Administra tus pagos',
-  'All Learners': 'Todos los estudiantes',
-  'Current Balance': 'Saldo actual',
-  'All paid': 'Todo pagado',
-  'This Month': 'Este mes',
-  'Next Due': 'Próximo vencimiento',
-  'Total Paid': 'Total pagado',
-  'Invoices': 'Facturas',
-  'Payments': 'Pagos',
-  'Plan': 'Plan',
-  'PREMIUM PLAN': 'PLAN PREMIUM',
-  'Active': 'Activo',
-  'For Emma Johnson • Billed monthly': 'Para Emma Johnson • Facturación mensual',
-  'Plan Includes:': 'El plan incluye:',
-  'Unlimited session access': 'Acceso ilimitado a sesiones',
-  'All 3 pillars curriculum': 'Currículo de los 3 pilares',
-  '1-on-1 educator support': 'Apoyo 1 a 1 con educador',
-  'Real-time progress reports': 'Reportes de progreso en tiempo real',
-  'Certificates & badges': 'Certificados e insignias',
-  'Payment Method': 'Método de pago',
-  'Update': 'Actualizar',
-  'Manage Plan': 'Gestionar plan',
-  'Downloading statements...': 'Descargando estados de cuenta...',
-  'Paying invoice': 'Pagando factura',
-  'Viewing invoice': 'Viendo factura',
-  'Update Payment Method': 'Actualizar método de pago',
-  'Select your preferred payment method update action.':
-      'Selecciona la acción para actualizar tu método de pago.',
-  'Cancel': 'Cancelar',
-  'Continue': 'Continuar',
-  'Payment method update request submitted':
-      'Solicitud de actualización del método de pago enviada',
-  'You can review your current subscription and request plan changes.':
-      'Puedes revisar tu suscripción actual y solicitar cambios de plan.',
-  'Close': 'Cerrar',
-  'Request Change': 'Solicitar cambio',
-  'Plan review request sent to billing team':
-      'Solicitud de revisión del plan enviada al equipo de facturación',
-  'PAID': 'PAGADO',
-  'DUE': 'PENDIENTE',
-  'View': 'Ver',
-  'Pay Now': 'Pagar ahora',
-  'Loading...': 'Cargando...',
-  'No invoices yet': 'Aún no hay facturas',
-  'No payments yet': 'Aún no hay pagos',
-  'STANDARD PLAN': 'PLAN ESTÁNDAR',
-  'On file': 'En archivo',
-  'Billed monthly': 'Facturación mensual',
-  'month': 'mes',
-  'Billing AI Coach': 'Coach IA de facturación',
-  'Keep BOS/MIA loop active around family billing and learner continuity':
-      'Mantén activo el ciclo BOS/MIA alrededor de la facturación familiar y la continuidad del estudiante',
-  'Family Billing Loop': 'Ciclo de facturación familiar',
-  'Your child\'s learning continuity and engagement signals':
-      'Señales de continuidad de aprendizaje e insistencia de tu hijo',
-  'No billing learning data yet': 'Sin datos de aprendizaje de facturación aún',
-};
-
 String _tParentBilling(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _parentBillingEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Parent Billing Page - View payment history and invoices

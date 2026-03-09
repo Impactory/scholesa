@@ -5,69 +5,13 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
-const Map<String, String> _educatorTodayEs = <String, String>{
-  'Good morning': 'Buenos días',
-  'Good afternoon': 'Buenas tardes',
-  'Good evening': 'Buenas noches',
-  "Today's Schedule": 'Horario de hoy',
-  'Classes': 'Clases',
-  'Attendance': 'Asistencia',
-  'To Review': 'Por revisar',
-  'Take Attendance': 'Tomar asistencia',
-  'Review Missions': 'Revisar misiones',
-  'Messages': 'Mensajes',
-  'NOW': 'AHORA',
-  'No location': 'Sin ubicación',
-  'present': 'presentes',
-  'Manage Attendance': 'Gestionar asistencia',
-  'Full Schedule': 'Horario completo',
-  'Week View': 'Vista semanal',
-  'Week View Summary': 'Resumen de vista semanal',
-  'This week:': 'Esta semana:',
-  'classes loaded from your current schedule.':
-      'clases cargadas desde tu horario actual.',
-  'Close': 'Cerrar',
-  'Mission Review Queue': 'Cola de revisión de misiones',
-  'You have': 'Tienes',
-  'missions pending review today.': 'misiones pendientes de revisión hoy.',
-  'Mission review queue opened': 'Cola de revisión de misiones abierta',
-  'Open Queue': 'Abrir cola',
-  'Mon': 'Lun',
-  'Tue': 'Mar',
-  'Wed': 'Mié',
-  'Thu': 'Jue',
-  'Fri': 'Vie',
-  'Sat': 'Sáb',
-  'Sun': 'Dom',
-  'Jan': 'Ene',
-  'Apr': 'Abr',
-  'Aug': 'Ago',
-  'Dec': 'Dic',
-  'Enrolled Learners': 'Estudiantes inscritos',
-  'Not recorded': 'No registrado',
-  'AI Classroom Coach': 'Entrenador de aula con IA',
-  'Get personalized coaching for classroom management':
-      'Obtén asesoramiento personalizado para la gestión del aula',
-  'Hide Coaching': 'Ocultar asesoramiento',
-  'No class in progress': 'No hay clase en progreso',
-  'Your next class will appear here when schedule data syncs.':
-      'Tu próxima clase aparecerá aquí cuando se sincronice el horario.',
-  'No classes scheduled yet': 'Aún no hay clases programadas',
-  'Add or sync classes to populate today’s schedule.':
-      'Agrega o sincroniza clases para poblar el horario de hoy.',
-  'AI coaching is loading': 'El asesoramiento de IA se está cargando',
-  'Runtime context is syncing. Try again in a moment.':
-      'El contexto runtime se está sincronizando. Inténtalo en un momento.',
-};
-
 String _tEducatorToday(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _educatorTodayEs[input] ?? input;
+  return WorkflowSurfaceI18n.text(context, input);
 }
 
 /// Educator Today Page - Daily schedule and quick actions
