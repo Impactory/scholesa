@@ -418,6 +418,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
               .where('siteId', isEqualTo: resolvedSiteId)
               .limit(250)
               .get();
+        if (!mounted) return;
 
       final Set<String> presentLearners = <String>{};
       int pickupSignals = 0;
@@ -469,6 +470,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             .limit(100)
             .get();
       }
+      if (!mounted) return;
 
       int openIncidents = 0;
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
@@ -508,6 +510,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             .limit(100)
             .get();
       }
+      if (!mounted) return;
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in opsEventSnap.docs) {
