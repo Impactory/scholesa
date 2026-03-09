@@ -113,6 +113,13 @@ Future<void> _pumpPage(
   required Locale locale,
   required Widget home,
 }) async {
+  tester.view.physicalSize = const Size(1440, 2200);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
   final _FakeParentService service = _FakeParentService(
     parentId: 'parent-test-1',
     learnerSummaries: <LearnerSummary>[_sampleLearner()],

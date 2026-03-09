@@ -89,7 +89,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
 
   Widget _buildLearnerSnapshotStrip(ParentService service) {
     return SizedBox(
-      height: 204,
+      height: 272,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         scrollDirection: Axis.horizontal,

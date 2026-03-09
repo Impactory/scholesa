@@ -37,7 +37,7 @@ AppState _buildParentState() {
 }
 
 Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
-  final DateTime now = DateTime(2026, 3, 8, 10);
+  final DateTime now = DateTime.now();
   await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
     'role': 'parent',
     'displayName': 'Parent One',
@@ -109,6 +109,13 @@ Future<void> _pumpPage(
   required FakeFirebaseFirestore firestore,
   required Widget home,
 }) async {
+  tester.view.physicalSize = const Size(1440, 2200);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
   final FirestoreService firestoreService = FirestoreService(
     firestore: firestore,
     auth: _MockFirebaseAuth(),
@@ -162,8 +169,8 @@ void main() {
       );
 
       expect(find.text('Ava Learner'), findsOneWidget);
-      expect(find.text('Linked Update'), findsOneWidget);
-      expect(find.text('Hidden Update'), findsNothing);
+      expect(find.text('Build a Robot'), findsOneWidget);
+      expect(find.text('Hidden Project'), findsNothing);
     });
 
     testWidgets('schedule page shows linked session details and reminder flow',
@@ -180,11 +187,12 @@ void main() {
       expect(find.text('Robotics Studio'), findsOneWidget);
       expect(find.text('Hidden Session'), findsNothing);
 
+      await tester.ensureVisible(find.text('Details'));
       await tester.tap(find.text('Details'));
       await tester.pumpAndSettle();
 
       expect(find.text('Next Session Details'), findsOneWidget);
-      expect(find.textContaining('Lab 1'), findsOneWidget);
+      expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
       await tester.tap(find.text('Set Reminder'));
       await tester.pumpAndSettle();
@@ -206,13 +214,14 @@ void main() {
       expect(find.text('Build a Robot'), findsOneWidget);
       expect(find.text('Hidden Project'), findsNothing);
 
+      await tester.ensureVisible(find.text('Build a Robot').first);
       await tester.tap(find.text('Build a Robot').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Share'), findsOneWidget);
-      expect(find.text('Download'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
 
-      await tester.tap(find.text('Share'));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Share'));
       await tester.pumpAndSettle();
 
       expect(find.text('Sharing...'), findsOneWidget);
