@@ -4,7 +4,6 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/common/empty_state.dart';
-import '../../ui/localization/inline_locale_text.dart';
 import 'provisioning_models.dart';
 import 'provisioning_service.dart';
 
@@ -29,14 +28,14 @@ String _deleteGuardianLinkCopy(
 ) {
   final String parentName = link.parentName ?? link.parentId;
   final String learnerName = link.learnerName ?? link.learnerId;
-  switch (InlineLocaleText.canonicalLocale(Localizations.localeOf(context))) {
-    case 'zh-CN':
-      return '要移除 $parentName 与 $learnerName 之间的监护人关联吗？';
-    case 'zh-TW':
-      return '要移除 $parentName 與 $learnerName 之間的監護人關聯嗎？';
-    default:
-      return 'Remove the guardian link between $parentName and $learnerName?';
-  }
+  return WorkflowSurfaceI18n.textWithPlaceholders(
+    context,
+    'Remove the guardian link between {parentName} and {learnerName}?',
+    placeholders: <String, String>{
+      'parentName': parentName,
+      'learnerName': learnerName,
+    },
+  );
 }
 
 /// Provisioning page for site admins

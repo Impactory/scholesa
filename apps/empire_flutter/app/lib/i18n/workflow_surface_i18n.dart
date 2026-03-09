@@ -5,6 +5,17 @@ import '../ui/localization/inline_locale_text.dart';
 class WorkflowSurfaceI18n {
   WorkflowSurfaceI18n._();
 
+  static String _applyPlaceholders(
+    String value,
+    Map<String, String> placeholders,
+  ) {
+    String resolved = value;
+    placeholders.forEach((String key, String replacement) {
+      resolved = resolved.replaceAll('{$key}', replacement);
+    });
+    return resolved;
+  }
+
   static const Map<String, String> _zhCn = <String, String>{
     'Take Attendance': '记录出勤',
     'Attendance service not available': '出勤服务不可用',
@@ -209,6 +220,8 @@ class WorkflowSurfaceI18n {
     'Cohorts': '群组',
     'Delete': '删除',
     'Delete Link': '删除关联',
+    'Remove the guardian link between {parentName} and {learnerName}?':
+      '要移除 {parentName} 与 {learnerName} 之间的监护人关联吗？',
     'No guardian links': '暂无监护人关联',
     'Link parents to learners to enable family access.': '关联家长与学习者以启用家庭访问。',
     'Link removed': '关联已移除',
@@ -295,6 +308,8 @@ class WorkflowSurfaceI18n {
     'Cohorts': '群組',
     'Delete': '刪除',
     'Delete Link': '刪除關聯',
+    'Remove the guardian link between {parentName} and {learnerName}?':
+      '要移除 {parentName} 與 {learnerName} 之間的監護人關聯嗎？',
     'No guardian links': '尚無監護人關聯',
     'Link parents to learners to enable family access.': '將家長與學習者關聯以啟用家庭存取。',
     'Link removed': '關聯已移除',
@@ -310,5 +325,17 @@ class WorkflowSurfaceI18n {
       zhCn: _zhCn,
       zhTw: _zhTw,
     );
+  }
+
+  static String textWithPlaceholders(
+    BuildContext context,
+    String input, {
+    Map<String, String> placeholders = const <String, String>{},
+  }) {
+    final String localized = text(context, input);
+    if (placeholders.isEmpty) {
+      return localized;
+    }
+    return _applyPlaceholders(localized, placeholders);
   }
 }
