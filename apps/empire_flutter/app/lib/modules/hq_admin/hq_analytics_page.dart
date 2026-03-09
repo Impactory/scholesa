@@ -1,93 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/analytics_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
-
-const Map<String, String> _hqAnalyticsEs = <String, String>{
-  'Platform Analytics': 'Analítica de la plataforma',
-  'KPI Packs': 'Packs KPI',
-  'No KPI packs yet': 'Aún no hay packs KPI',
-  'Generate KPI Pack': 'Generar pack KPI',
-  'Select a site to generate a KPI pack':
-      'Selecciona una sede para generar un pack KPI',
-  'Comprehensive performance insights': 'Insights integrales de desempeño',
-  'All Sites': 'Todas las sedes',
-  'Singapore': 'Singapur',
-  'Kuala Lumpur': 'Kuala Lumpur',
-  'Jakarta': 'Yakarta',
-  'This Week': 'Esta semana',
-  'This Month': 'Este mes',
-  'This Quarter': 'Este trimestre',
-  'This Year': 'Este año',
-  'Unable to load telemetry metrics:':
-      'No se pudieron cargar las métricas de telemetría:',
-  'Telemetry KPIs': 'KPIs de telemetría',
-  'Telemetry feed pending': 'Feed de telemetría pendiente',
-  'Waiting for first data sync from BOS-MIA telemetry.':
-      'Esperando la primera sincronización de telemetría BOS-MIA.',
-  '7-day': '7 días',
-  'Weekly Accountability': 'Responsabilidad semanal',
-  'Review SLA': 'SLA de revisión',
-  'within SLA': 'dentro del SLA',
-  'Avg Review Turnaround': 'Promedio de revisión',
-  'hours': 'horas',
-  'Interventions Helped': 'Intervenciones efectivas',
-  'outcomes': 'resultados',
-  'Attendance Trend': 'Tendencia de asistencia',
-  'Attendance data unavailable': 'Datos de asistencia no disponibles',
-  'No attendance telemetry for this period':
-      'No hay telemetría de asistencia para este periodo',
-  'Latest attendance:': 'Asistencia más reciente:',
-  'Capture attendance records to render this trend.':
-      'Registra asistencias para mostrar esta tendencia.',
-  'Pillar Performance': 'Desempeño por pilar',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'No pillar data available': 'No hay datos de pilares disponibles',
-  'Site Comparison': 'Comparación de sedes',
-  'Top Performers': 'Mejor desempeño',
-  'View All': 'Ver todo',
-  'Export HQ Analytics': 'Exportar analítica HQ',
-  'Generate and export the current HQ analytics summary for cross-site review.':
-      'Genera y exporta el resumen actual de analítica HQ para revisión entre sedes.',
-  'Loading...': 'Cargando...',
-  'No comparison data available': 'No hay datos de comparación disponibles',
-  'No top performers available': 'No hay mejores desempeños disponibles',
-  'Cancel': 'Cancelar',
-  'BOS-MIA Feedback': 'Feedback de BOS-MIA',
-  'Rate real-world BOS-MIA usability': 'Califica la usabilidad real de BOS-MIA',
-  'Usability': 'Usabilidad',
-  'Usefulness': 'Utilidad',
-  'Reliability': 'Confiabilidad',
-  'Voice quality': 'Calidad de voz',
-  'Rollout recommendation': 'Recomendación de despliegue',
-  'Scale now': 'Escalar ahora',
-  'Scale with guardrails': 'Escalar con guardrails',
-  'Hold and fix': 'Pausar y corregir',
-  'Top issues observed': 'Principales issues observados',
-  'Over-triggering': 'Sobre-activación',
-  'Voice recognition misses': 'Fallas de reconocimiento de voz',
-  'Weak coaching quality': 'Calidad de coaching débil',
-  'Low learner re-engagement': 'Baja reactivación del learner',
-  'Telemetry gaps': 'Brechas de telemetría',
-  'Submit feedback': 'Enviar feedback',
-  'HQ feedback submitted': 'Feedback de HQ enviado',
-  'HQ BOS-MIA Usability': 'Usabilidad BOS-MIA (HQ)',
-  'Real-world HQ feedback (14-day)': 'Feedback real de HQ (14 días)',
-  'No HQ feedback submissions yet': 'Aún no hay feedback de HQ',
-  'submissions': 'envíos',
-  'Top recommendation': 'Recomendación principal',
-  'Most reported issue': 'Issue más reportado',
-  'HQ analytics report prepared for export':
-      'Reporte de analítica HQ preparado para exportar',
-  'Export': 'Exportar',
-};
 
 /// HQ Analytics Page - Platform-wide analytics and insights
 class HqAnalyticsPage extends StatefulWidget {
@@ -124,9 +45,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   Set<String> _topIssues = <String>{};
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _hqAnalyticsEs[input] ?? input;
+    return SharedRoleSurfaceI18n.text(context, input);
   }
 
   @override

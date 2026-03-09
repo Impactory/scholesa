@@ -1,29 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
 
-const Map<String, String> _partnerPayoutsEs = <String, String>{
-  'Payouts': 'Pagos',
-  'Total Paid': 'Total pagado',
-  'Pending': 'Pendiente',
-  'No Payouts Yet': 'Aún no hay pagos',
-  'Your payout history will appear here':
-      'Tu historial de pagos aparecerá aquí',
-  'Contract:': 'Contrato:',
-  'General payout': 'Pago general',
-  'Paid': 'Pagado',
-  'Requested': 'Solicitado',
-  'Approved': 'Aprobado',
-  'Failed': 'Fallido',
-};
-
 String _tPartnerPayouts(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _partnerPayoutsEs[input] ?? input;
+  return SharedRoleSurfaceI18n.text(context, input);
 }
 
 /// Partner payouts management page

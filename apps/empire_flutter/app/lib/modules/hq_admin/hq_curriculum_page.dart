@@ -1,81 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _hqCurriculumEs = <String, String>{
-  'Curriculum Manager': 'Gestor curricular',
-  'Published': 'Publicado',
-  'In Review': 'En revisión',
-  'Drafts': 'Borradores',
-  'New Curriculum': 'Nuevo currículo',
-  'No': 'No',
-  'curricula': 'currículos',
-  'Updated': 'Actualizado',
-  'Version': 'Versión',
-  'Status': 'Estado',
-  'Close': 'Cerrar',
-  'Opening curriculum editor...': 'Abriendo editor curricular...',
-  'Edit': 'Editar',
-  'Rubric applied to this curriculum': 'Rúbrica aplicada a este currículo',
-  'Apply Rubric': 'Aplicar rúbrica',
-  'Parent summary shared': 'Resumen para familias compartido',
-  'Share Parent Summary': 'Compartir resumen para familias',
-  'Create Snapshot': 'Crear snapshot',
-  'Snapshot created': 'Snapshot creado',
-  'Snapshot create failed': 'Error al crear snapshot',
-  'Create Rubric': 'Crear rúbrica',
-  'Rubric title': 'Título de rúbrica',
-  'Criteria (comma-separated)': 'Criterios (separados por coma)',
-  'Rubric title is required': 'El título de la rúbrica es obligatorio',
-  'At least one criterion is required': 'Se requiere al menos un criterio',
-  'Curriculum updated': 'Currículo actualizado',
-  'Update failed': 'Error al actualizar currículo',
-  'Rubric apply failed': 'Error al aplicar rúbrica',
-  'Share failed': 'Error al compartir resumen',
-  'Title': 'Título',
-  'Pillar': 'Pilar',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership & Agency': 'Liderazgo y agencia',
-  'Impact & Innovation': 'Impacto e innovación',
-  'Cancel': 'Cancelar',
-  'Curriculum created': 'Currículo creado',
-  'Create': 'Crear',
-  'Title is required': 'El título es obligatorio',
-  'v': 'v',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'draft': 'borrador',
-  'review': 'revisión',
-  'published': 'publicado',
-  'Loading...': 'Cargando...',
-  'Create failed': 'Error al crear currículo',
-  'Submit for Review': 'Enviar a revisión',
-  'Publish Curriculum': 'Publicar currículo',
-  'Moved to In Review': 'Movido a En revisión',
-  'Curriculum published': 'Currículo publicado',
-  'Transition failed': 'Error al cambiar estado',
-  'Training Cycles': 'Ciclos de formación',
-  'No training cycles yet': 'Aún no hay ciclos de formación',
-  'Create Training Cycle': 'Crear ciclo de formación',
-  'Training Type': 'Tipo de formación',
-  'Audience': 'Audiencia',
-  'Term Label': 'Etiqueta de periodo',
-  'Start Date': 'Fecha de inicio',
-  'Scheduled': 'Programado',
-  'Training cycle created': 'Ciclo de formación creado',
-  'Training cycle create failed': 'No se pudo crear el ciclo de formación',
-  'Notes': 'Notas',
-};
-
 String _tHqCurriculum(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _hqCurriculumEs[input] ?? input;
+  return SharedRoleSurfaceI18n.text(context, input);
 }
 
 /// HQ Curriculum page for managing curriculum versions and rubrics

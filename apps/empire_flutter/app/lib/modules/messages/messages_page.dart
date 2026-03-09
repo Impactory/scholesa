@@ -1,53 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'message_models.dart';
 import 'message_service.dart';
 
-const Map<String, String> _messagesEs = <String, String>{
-  'Messages': 'Mensajes',
-  'unread': 'sin leer',
-  'Mark all read': 'Marcar todo como leído',
-  'Notifications': 'Notificaciones',
-  'Conversations': 'Conversaciones',
-  'No notifications': 'Sin notificaciones',
-  'You\'re all caught up!': '¡Ya estás al día!',
-  'All': 'Todas',
-  'No conversations': 'Sin conversaciones',
-  'Start a conversation with your educators':
-      'Inicia una conversación con tus educadores',
-  'Unknown': 'Desconocido',
-  'From:': 'De:',
-  'View Details': 'Ver detalles',
-  'm ago': 'min atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'Mon': 'Lun',
-  'Tue': 'Mar',
-  'Wed': 'Mié',
-  'Thu': 'Jue',
-  'Fri': 'Vie',
-  'Sat': 'Sáb',
-  'Sun': 'Dom',
-  'January': 'Enero',
-  'February': 'Febrero',
-  'March': 'Marzo',
-  'April': 'Abril',
-  'May': 'Mayo',
-  'June': 'Junio',
-  'July': 'Julio',
-  'August': 'Agosto',
-  'September': 'Septiembre',
-  'October': 'Octubre',
-  'November': 'Noviembre',
-  'December': 'Diciembre',
-};
-
 String _tMessages(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _messagesEs[input] ?? input;
+  return SharedRoleSurfaceI18n.text(context, input);
 }
 
 /// Messages and Notifications Page
