@@ -38,6 +38,7 @@ AppState _buildParentState() {
 
 Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
   final DateTime now = DateTime.now();
+  final DateTime anchor = DateTime(now.year, now.month, now.day, 12);
   await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
     'role': 'parent',
     'displayName': 'Parent One',
@@ -71,7 +72,7 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'description': 'Linked Update',
     'type': 'mission',
     'emoji': '🤖',
-    'timestamp': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+    'timestamp': Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
   });
   await firestore.collection('activities').doc('activity-2').set(<String, dynamic>{
     'learnerId': 'learner-2',
@@ -79,13 +80,13 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'description': 'Hidden Update',
     'type': 'mission',
     'emoji': '🕶',
-    'timestamp': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+    'timestamp': Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
   });
   await firestore.collection('events').doc('event-1').set(<String, dynamic>{
     'learnerId': 'learner-1',
     'title': 'Robotics Studio',
     'description': 'Prototype review',
-    'dateTime': Timestamp.fromDate(now.add(const Duration(hours: 3))),
+    'dateTime': Timestamp.fromDate(now.add(const Duration(days: 1, hours: 1))),
     'type': 'future_skills',
     'location': 'Lab 1',
   });
@@ -93,14 +94,14 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'learnerId': 'learner-2',
     'title': 'Hidden Session',
     'description': 'Should not appear',
-    'dateTime': Timestamp.fromDate(now.add(const Duration(hours: 4))),
+    'dateTime': Timestamp.fromDate(now.add(const Duration(days: 1, hours: 2))),
     'type': 'future_skills',
     'location': 'Hidden Lab',
   });
   await firestore.collection('attendanceRecords').doc('attendance-1').set(<String, dynamic>{
     'learnerId': 'learner-1',
     'status': 'present',
-    'recordedAt': Timestamp.fromDate(now.subtract(const Duration(days: 1))),
+    'recordedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 1))),
   });
 }
 
@@ -184,7 +185,6 @@ void main() {
         home: const ParentSchedulePage(),
       );
 
-      expect(find.text('Robotics Studio'), findsOneWidget);
       expect(find.text('Hidden Session'), findsNothing);
 
       await tester.ensureVisible(find.text('Details'));
@@ -192,6 +192,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Next Session Details'), findsOneWidget);
+      expect(find.textContaining('Robotics Studio\nLocation: Lab 1'), findsOneWidget);
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
       await tester.tap(find.text('Set Reminder'));

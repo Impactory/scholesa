@@ -1,6 +1,6 @@
 # Traceability Matrix
 
-> Web stack paused. Deferred items are listed in DEFERMENT_LOG.md. Flutter track continues.
+> Current status: Flutter and locale-first web tracks are active. Role-routing, protected-route, and tri-locale web coverage are validated through the emulator-backed Playwright workflow suite and i18n key audit.
 
 | Req ID | Requirement | Implementation Files | Verification | Status |
 | --- | --- | --- | --- | --- |
@@ -24,13 +24,13 @@
 | REQ-018 | Dart/Flutter models/repos for AccountabilityCommitment | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ |
 | REQ-019 | Dart/Flutter models/repos for AccountabilityReview | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ |
 | REQ-020 | AuditLog model/repos + logging | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review | ✅ (AuditLogRepository.log) |
-| REQ-021 | Role routing map | apps/empire_flutter/app/lib/features/auth/role_routes.dart, app/lib/features/dashboards/role_selector_page.dart | Manual: FL-ROUTE-01 | ✅ (Flutter role map + guard; web map still paused) |
+| REQ-021 | Role routing map | apps/empire_flutter/app/lib/features/auth/role_routes.dart, app/lib/features/dashboards/role_selector_page.dart, app/[locale]/(protected)/*, middleware.ts | Manual: FL-ROUTE-01; Playwright: workflow-routes.e2e.spec.ts | ✅ (Flutter role map + guard; web locale-first protected routing validated under emulators) |
 | REQ-022 | Learner dashboard E2E slice | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, offline/offline_actions.dart, offline/offline_dispatchers.dart | Manual: FL-LRN-01 | ✅ (Flutter mission + portfolio flows, offline-aware) |
 | REQ-023 | Educator dashboard E2E slice | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, offline/offline_actions.dart, offline/offline_dispatchers.dart | Manual: FL-EDU-01 | ✅ (Flutter attendance flow with deterministic IDs) |
-| REQ-024 | Parent dashboard E2E slice | app/[locale]/(protected)/parent/page.tsx, userRepository.ts | Manual: PAR-01 | ⏸️ (web stack paused) |
-| REQ-025 | Site lead dashboard E2E slice | app/[locale]/(protected)/site/page.tsx | Manual: SITE-01 | ⏸️ (web stack paused) |
-| REQ-026 | Partner dashboard minimal flow | app/[locale]/(protected)/partner/page.tsx | Manual: PART-01 | ⏸️ (web stack paused) |
-| REQ-027 | HQ dashboard mission + KPI | app/[locale]/(protected)/hq/page.tsx, missionRepository.ts | Manual: HQ-01 | ⏸️ (web stack paused) |
+| REQ-024 | Parent dashboard E2E slice | app/[locale]/(protected)/parent/page.tsx, src/repositories/userRepository.ts, test/e2e/workflow-routes.e2e.spec.ts | Playwright: parent workflow + parent route denial | ✅ (parent default routing, linked portfolio visibility, and denied site-route fallback validated) |
+| REQ-025 | Site lead dashboard E2E slice | app/[locale]/(protected)/site/page.tsx, test/e2e/workflow-routes.e2e.spec.ts | Playwright: site workflow + site route denial | ✅ (site default routing, guardian-link provisioning flow, and denied partner-route fallback validated) |
+| REQ-026 | Partner dashboard minimal flow | app/[locale]/(protected)/partner/page.tsx, test/e2e/workflow-routes.e2e.spec.ts | Playwright: partner workflow + partner route denial | ✅ (partner default routing, listing publish flow, and denied site-route fallback validated) |
+| REQ-027 | HQ dashboard mission + KPI | app/[locale]/(protected)/hq/page.tsx, test/e2e/workflow-routes.e2e.spec.ts | Playwright: HQ workflow + unauthenticated denial | ✅ (HQ default routing, site activation flow, and unauthenticated denial validated) |
 | REQ-028 | Offline queue AttendanceRecord | apps/empire_flutter/app/lib/features/offline/offline_queue.dart, offline/offline_dispatchers.dart | Manual: OFF-EDU-01 | ✅ (Flutter offline queue dispatches via AttendanceRepository + audit) |
 | REQ-029 | Offline queue MissionAttempt | apps/empire_flutter/app/lib/features/offline/offline_queue.dart, offline/offline_dispatchers.dart | Manual: OFF-LRN-01 | ✅ (Flutter offline queue dispatches via MissionAttemptRepository + audit) |
 | REQ-030 | Offline queue PortfolioItem/reflection | apps/empire_flutter/app/lib/features/offline/offline_queue.dart, offline/offline_dispatchers.dart | Manual: OFF-LRN-02 | ✅ (Flutter offline queue dispatches via PortfolioItemRepository + audit) |
@@ -43,7 +43,7 @@
 | REQ-037 | Final artifact bundle | SCHEMA_PORT_REPORT.md, COMPLIANCE_REPORT.md, QA_RUNBOOK.md, OFFLINE_VERIFICATION.md | Review | ✅ (docs refreshed for Flutter progress, offline verification, QA steps) |
 | REQ-038 | Storage rules for portfolio media | storage.rules, firestore.rules, firebase.json | Jest: src/__tests__/rules.test.ts | ✅ |
 | REQ-039 | Offline fallback page | public/offline.html, next.config.mjs | Manual: OFFLINE-UX-01 | ⏸️ (web stack paused) |
-| REQ-040 | i18n coverage (en/es) for auth + dashboards | locales/en.json, locales/es.json, lib/i18n.ts | Manual: I18N-01 | ⏸️ (web stack paused) |
+| REQ-040 | i18n coverage (en/zh-CN/zh-TW) for landing, auth, and protected route entry | locales/en.json, locales/zh-CN.json, locales/zh-TW.json, src/lib/i18n/config.ts, src/lib/i18n/messages.ts, test/e2e/workflow-routes.e2e.spec.ts, scripts/vibe_i18n_keys.js | Playwright: zh-CN landing/login + zh-TW redirect; Audit: vibe_i18n_keys.js | ✅ (tri-locale key consistency passes; locale-first runtime behavior validated end-to-end) |
 | REQ-041 | Dependency baseline maintained | DEPENDENCY_BASELINE_SCHOLESA.md | Review: DEP-BASELINE-CHK | ✅ (updated with flutter + google_fonts) |
 | REQ-042 | Firestore/Storage rules test harness | firestore.rules, storage.rules, src/__tests__/rules.test.ts | Jest: RULES-TEST-01 | ✅ |
 | REQ-043 | CI checks (lint, type, test) | .github/workflows/ci.yml, package.json scripts | CI run: CI-01 (web pipeline skipped) | ⏸️ |
