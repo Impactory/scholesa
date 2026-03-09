@@ -2,40 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
-
-const Map<String, String> _siteIntegrationsEs = <String, String>{
-  'Integrations Health': 'Estado de integraciones',
-  'Connected Services': 'Servicios conectados',
-  'Healthy': 'Saludable',
-  'Warning': 'Advertencia',
-  'Issues': 'Incidencias',
-  'Last Sync': 'Última sincronización',
-  'Synced': 'Sincronizado',
-  'Errors': 'Errores',
-  'Never': 'Nunca',
-  'items': 'elementos',
-  'Connect': 'Conectar',
-  'Force Sync': 'Forzar sincronización',
-  'Retry Failed': 'Reintentar fallidos',
-  'Settings': 'Configuración',
-  'Disconnect': 'Desconectar',
-  'Error': 'Error',
-  'Disconnected': 'Desconectado',
-  'Integrations refreshed': 'Integraciones actualizadas',
-  'connected': 'conectado',
-  'synced successfully': 'sincronizado correctamente',
-  'Failed syncs retried successfully':
-      'Sincronizaciones fallidas reintentadas correctamente',
-  'disconnected': 'desconectado',
-  'm ago': 'm atrás',
-  'h ago': 'h atrás',
-  'd ago': 'd atrás',
-  'Loading...': 'Cargando...',
-  'No connected integrations found': 'No se encontraron integraciones conectadas',
-};
 
 /// Site integrations health page
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
@@ -50,9 +21,7 @@ class SiteIntegrationsHealthPage extends StatefulWidget {
 class _SiteIntegrationsHealthPageState
     extends State<SiteIntegrationsHealthPage> {
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _siteIntegrationsEs[input] ?? input;
+    return SiteSurfaceI18n.text(context, input);
   }
 
   List<_Integration> _integrations = <_Integration>[];

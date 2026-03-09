@@ -2,48 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _siteIncidentsEs = <String, String>{
-  'Safety & Incidents': 'Seguridad e incidentes',
-  'Open': 'Abiertos',
-  'Reviewed': 'Revisados',
-  'Closed': 'Cerrados',
-  'Report Incident': 'Reportar incidente',
-  'No incidents': 'Sin incidentes',
-  'Reported by': 'Reportado por',
-  'Minor': 'Menor',
-  'Major': 'Mayor',
-  'Critical': 'Crítico',
-  'Learner': 'Estudiante',
-  'Reported By': 'Reportado por',
-  'Date': 'Fecha',
-  'Status': 'Estado',
-  'Close': 'Cerrar',
-  'Incident updated': 'Incidente actualizado',
-  'Review': 'Revisar',
-  'Close Incident': 'Cerrar incidente',
-  'Report New Incident': 'Reportar nuevo incidente',
-  'Incident Title': 'Título del incidente',
-  'Severity': 'Severidad',
-  'Cancel': 'Cancelar',
-  'Incident reported': 'Incidente reportado',
-  'Submit': 'Enviar',
-  'submitted': 'enviado',
-  'reviewed': 'revisado',
-  'closed': 'cerrado',
-  'Loading...': 'Cargando...',
-  'Learner Name (optional)': 'Nombre del estudiante (opcional)',
-  'Unknown': 'Desconocido',
-};
-
 String _tSiteIncidents(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _siteIncidentsEs[input] ?? input;
+  return SiteSurfaceI18n.text(context, input);
 }
 
 /// Site incidents management page

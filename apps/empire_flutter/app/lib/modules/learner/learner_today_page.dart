@@ -6,43 +6,9 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/bos_coaching_i18n.dart';
+import '../../i18n/learner_surface_i18n.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
-
-const Map<String, String> _learnerTodayEs = <String, String>{
-  'Today': 'Hoy',
-  '🌟 Keep Going!': '🌟 ¡Sigue así!',
-  "You're making amazing progress. Complete today's habits to maintain your streak!":
-      'Estás avanzando increíblemente. Completa los hábitos de hoy para mantener tu racha.',
-  'day streak': 'días de racha',
-  'Habits': 'Hábitos',
-  'Missions': 'Misiones',
-  'Messages': 'Mensajes',
-  'active': 'activas',
-  "Today's Habits": 'Hábitos de hoy',
-  'See all': 'Ver todo',
-  'Active Missions': 'Misiones activas',
-  'Good morning': 'Buenos días',
-  'Good afternoon': 'Buenas tardes',
-  'Good evening': 'Buenas noches',
-  'done': 'hecho',
-  'Start': 'Iniciar',
-  'Daily Coaching': 'Asesoramiento diario',
-  'Get personalized guidance for today': 'Obtén orientación personalizada para hoy',
-  'Hide Coaching': 'Ocultar asesoramiento',
-    'No habits scheduled yet': 'Aún no hay hábitos programados',
-    'Set up a habit to start your daily streak.':
-      'Configura un hábito para iniciar tu racha diaria.',
-    'No active missions yet': 'Aún no hay misiones activas',
-    'Start a mission to activate your learning loop.':
-      'Inicia una misión para activar tu ciclo de aprendizaje.',
-    'AI coaching is loading': 'El asesoramiento de IA se está cargando',
-    'Runtime context is syncing. Try again in a moment.':
-      'El contexto runtime se está sincronizando. Inténtalo en un momento.',
-    'BOS/MIA Learning Loop': 'Ciclo de aprendizaje BOS/MIA',
-    'Latest individual improvement signal': 'Última señal individual de mejora',
-    'No learner loop data yet': 'Aún no hay datos del ciclo de aprendizaje',
-};
 
 /// Learner Today Page - Daily summary for learners
 class LearnerTodayPage extends StatefulWidget {
@@ -56,9 +22,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   bool _showAiCoach = false;
 
   String _t(String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _learnerTodayEs[input] ?? input;
+    return LearnerSurfaceI18n.text(context, input);
   }
 
   @override
@@ -693,11 +657,6 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String t(String input) {
-      final String locale = Localizations.localeOf(context).languageCode;
-      if (locale != 'es') return input;
-      return _learnerTodayEs[input] ?? input;
-    }
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final double progress = total > 0 ? completed / total : 0.0;
 
@@ -751,7 +710,7 @@ class _ProgressCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                t(label ?? 'done'),
+                LearnerSurfaceI18n.text(context, label ?? 'done'),
                 style: TextStyle(
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                   fontSize: 12,
@@ -833,11 +792,6 @@ class _HabitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String t(String input) {
-      final String locale = Localizations.localeOf(context).languageCode;
-      if (locale != 'es') return input;
-      return _learnerTodayEs[input] ?? input;
-    }
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -890,7 +844,7 @@ class _HabitTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                t('Start'),
+                LearnerSurfaceI18n.text(context, 'Start'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,

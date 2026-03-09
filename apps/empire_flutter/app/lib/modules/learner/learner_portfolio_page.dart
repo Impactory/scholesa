@@ -4,73 +4,10 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
-
-const Map<String, String> _learnerPortfolioEs = <String, String>{
-  'Share': 'Compartir',
-  'My Portfolio': 'Mi portafolio',
-  'Showcase your achievements': 'Muestra tus logros',
-  'Future Innovator • Singapore': 'Innovador del futuro • Singapur',
-  'day streak': 'días de racha',
-  'Level 12': 'Nivel 12',
-  'Rising Explorer': 'Explorador en ascenso',
-  '250 XP to Level 13 - Aspiring Trailblazer':
-    '250 XP para Nivel 13 - Pionero aspirante',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Badges': 'Insignias',
-  'Skills': 'Habilidades',
-  'Projects': 'Proyectos',
-  'First Mission': 'Primera misión',
-  'Completed your first mission': 'Completaste tu primera misión',
-  'Week Warrior': 'Guerrero semanal',
-  '7-day streak achievement': 'Logro de racha de 7 días',
-  'Code Master': 'Maestro del código',
-  'Complete 10 coding missions': 'Completa 10 misiones de programación',
-  'Team Leader': 'Líder de equipo',
-  'Lead a group project': 'Lidera un proyecto grupal',
-  'Eco Champion': 'Campeón ecológico',
-  'Complete 5 sustainability missions':
-    'Completa 5 misiones de sostenibilidad',
-  'Perfect Month': 'Mes perfecto',
-  '30-day streak achievement': 'Logro de racha de 30 días',
-  'Python Programming': 'Programación en Python',
-  'Creative Thinking': 'Pensamiento creativo',
-  'Public Speaking': 'Oratoria',
-  'Environmental Awareness': 'Conciencia ambiental',
-  'Robotics': 'Robótica',
-  'Weather Station App': 'App de estación meteorológica',
-  'Built a Python app to display local weather data':
-    'Creó una app en Python para mostrar datos meteorológicos locales',
-  'School Recycling Campaign': 'Campaña de reciclaje escolar',
-  'Led initiative to increase recycling by 40%':
-    'Lideró una iniciativa para aumentar el reciclaje en 40%',
-  'Team Presentation': 'Presentación en equipo',
-  'Presented AI research to parents and community':
-    'Presentó investigación de IA a padres y comunidad',
-  'Edit Portfolio Profile': 'Editar perfil del portafolio',
-  'Update your portfolio bio, goals, and featured highlights.':
-    'Actualiza tu biografía del portafolio, metas y logros destacados.',
-  'Cancel': 'Cancelar',
-  'Portfolio profile update queued': 'Actualización del perfil en cola',
-  'Save': 'Guardar',
-  'Share Portfolio': 'Compartir portafolio',
-  'Create a secure share link for parents or mentors.':
-    'Crea un enlace seguro para padres o mentores.',
-  'Share link generated': 'Enlace compartible generado',
-  'Generate Link': 'Generar enlace',
-  'missions': 'misiones',
-  'Level': 'Nivel',
-  'to next level': 'para el siguiente nivel',
-  'Reflect on Progress': 'Reflexiona sobre tu progreso',
-  'Get AI insights on your achievements': 'Obtén información de IA sobre tus logros',
-  'Hide AI Insights': 'Ocultar información de IA',
-};
+import '../../i18n/learner_surface_i18n.dart';
 
 String _tLearnerPortfolio(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _learnerPortfolioEs[input] ?? input;
+  return LearnerSurfaceI18n.text(context, input);
 }
 
 /// Learner Portfolio Page - Achievements, badges, and skill showcase

@@ -3,45 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _siteOpsEs = <String, String>{
-  'Today Operations': 'Operaciones de hoy',
-  'Day opened': 'Día abierto',
-  'Day closed': 'Día cerrado',
-  'Site is OPEN': 'El sitio está ABIERTO',
-  'Site is CLOSED': 'El sitio está CERRADO',
-  'Check-ins and operations active': 'Registros y operaciones activas',
-  'Toggle switch to open the day': 'Activa el interruptor para abrir el día',
-  'Present': 'Presentes',
-  'Pickups': 'Recogidas',
-  'Incidents': 'Incidentes',
-  'Quick Actions': 'Acciones rápidas',
-  'Check-in': 'Registro entrada',
-  'Check-out': 'Registro salida',
-  'New Incident': 'Nuevo incidente',
-  'View Roster': 'Ver lista',
-  'Recent Activity': 'Actividad reciente',
-  'Manual check-in recorded': 'Registro manual de entrada realizado',
-  'Manual check-out recorded': 'Registro manual de salida realizado',
-  'New incident created': 'Nuevo incidente creado',
-  'Roster viewed': 'Lista visualizada',
-  'completed': 'completado',
-  'Emma S. checked in': 'Emma S. registró entrada',
-  'Oliver T. checked in': 'Oliver T. registró entrada',
-  'Minor incident reported': 'Incidente menor reportado',
-  'Sophia M. picked up': 'Sophia M. fue recogida',
-  'Loading...': 'Cargando...',
-  'No recent activity yet': 'Aún no hay actividad reciente',
-  'Action failed': 'Acción fallida',
-};
-
 String _tSiteOps(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _siteOpsEs[input] ?? input;
+  return SiteSurfaceI18n.text(context, input);
 }
 
 /// Site operations page for daily operations overview
@@ -419,8 +387,6 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   Future<void> _loadOpsData() async {
     final AppState appState = context.read<AppState>();
     final FirestoreService firestoreService = context.read<FirestoreService>();
-    final bool isSpanish = Localizations.localeOf(context).languageCode == 'es';
-    String t(String input) => isSpanish ? (_siteOpsEs[input] ?? input) : input;
     final String resolvedSiteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
@@ -468,7 +434,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           presentLearners.add(learnerId);
           activities.add(
             _TimedActivity(
-              title: t('Manual check-in recorded'),
+              title: _tSiteOps(context, 'Manual check-in recorded'),
               at: eventAt,
               icon: Icons.login_rounded,
               color: Colors.green,
@@ -479,7 +445,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           pickupSignals += 1;
           activities.add(
             _TimedActivity(
-              title: t('Manual check-out recorded'),
+              title: _tSiteOps(context, 'Manual check-out recorded'),
               at: eventAt,
               icon: Icons.logout_rounded,
               color: Colors.blue,
@@ -519,7 +485,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
 
         activities.add(
           _TimedActivity(
-            title: t('New incident created'),
+            title: _tSiteOps(context, 'New incident created'),
             at: incidentAt,
             icon: Icons.warning_rounded,
             color: Colors.orange,
@@ -550,7 +516,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         if (at == null || at.isBefore(dayStart)) continue;
         final String action = (data['action'] as String?) ?? '';
         final ({String title, IconData icon, Color color}) mapped =
-          _mapActionToDisplay(action, isSpanish: isSpanish);
+          _mapActionToDisplay(action, context);
         activities.add(
           _TimedActivity(
             title: mapped.title,
@@ -604,26 +570,23 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   }
 
   ({String title, IconData icon, Color color}) _mapActionToDisplay(
-      String action, {
-      required bool isSpanish,
-    }) {
-    String t(String input) => isSpanish ? (_siteOpsEs[input] ?? input) : input;
+      String action, BuildContext context) {
     switch (action) {
       case 'Check-in':
         return (
-          title: t('Manual check-in recorded'),
+          title: _tSiteOps(context, 'Manual check-in recorded'),
           icon: Icons.login_rounded,
           color: Colors.green,
         );
       case 'Check-out':
         return (
-          title: t('Manual check-out recorded'),
+          title: _tSiteOps(context, 'Manual check-out recorded'),
           icon: Icons.logout_rounded,
           color: Colors.blue,
         );
       case 'View Roster':
         return (
-          title: t('Roster viewed'),
+          title: _tSiteOps(context, 'Roster viewed'),
           icon: Icons.list_alt_rounded,
           color: ScholesaColors.primary,
         );

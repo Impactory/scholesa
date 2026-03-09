@@ -2,34 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
-
-const Map<String, String> _siteBillingEs = <String, String>{
-  'Site Billing': 'Facturación del sitio',
-  'Pro Plan': 'Plan Pro',
-  'Active': 'Activo',
-  'Next billing date': 'Próxima fecha de cobro',
-  'Manage Plan': 'Gestionar plan',
-  'Current Usage': 'Uso actual',
-  'Active Learners': 'Estudiantes activos',
-  'Educators': 'Educadores',
-  'Storage Used': 'Almacenamiento usado',
-  'Recent Invoices': 'Facturas recientes',
-  'View All': 'Ver todo',
-  'Paid': 'Pagada',
-  'Pending': 'Pendiente',
-  'Manage Site Plan': 'Gestionar plan del sitio',
-  'Review current usage, upgrade limits, or contact HQ billing support.':
-      'Revisa el uso actual, amplía límites o contacta al equipo de facturación HQ.',
-  'Close': 'Cerrar',
-  'Plan management request submitted': 'Solicitud de gestión de plan enviada',
-  'Request Change': 'Solicitar cambio',
-  'All Invoices': 'Todas las facturas',
-  'Loading...': 'Cargando...',
-  'No invoices yet': 'Aún no hay facturas',
-};
 
 /// Site billing page
 /// Based on docs/13_PAYMENTS_BILLING_SPEC.md
@@ -63,9 +40,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
   }
 
   String _t(BuildContext context, String input) {
-    final String locale = Localizations.localeOf(context).languageCode;
-    if (locale != 'es') return input;
-    return _siteBillingEs[input] ?? input;
+    return SiteSurfaceI18n.text(context, input);
   }
 
   @override

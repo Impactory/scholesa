@@ -1,35 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
+
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _siteIdentityEs = <String, String>{
-  'Identity Resolution': 'Resolución de identidad',
-  'Review and confirm matches between local accounts and external provider accounts.':
-      'Revisa y confirma coincidencias entre cuentas locales y cuentas de proveedores externos.',
-  'All Identities Resolved': 'Todas las identidades resueltas',
-  'No pending identity matches to review':
-      'No hay coincidencias de identidad pendientes por revisar',
-  'Match confidence:': 'Confianza de coincidencia:',
-  'Local Account': 'Cuenta local',
-  'External Account': 'Cuenta externa',
-  'Ignore': 'Ignorar',
-  'Approve Match': 'Aprobar coincidencia',
-  'Matched': 'Emparejado',
-  'with': 'con',
-  'Match ignored': 'Coincidencia ignorada',
-  'Loading...': 'Cargando...',
-  'Unknown local account': 'Cuenta local desconocida',
-  'Unknown external account': 'Cuenta externa desconocida',
-  'Match update failed': 'Error al actualizar coincidencia',
-};
-
 String _tSiteIdentity(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _siteIdentityEs[input] ?? input;
+  return SiteSurfaceI18n.text(context, input);
 }
 
 /// Site identity resolution page

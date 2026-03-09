@@ -2,69 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-const Map<String, String> _siteSessionsEs = <String, String>{
-  'New Session': 'Nueva sesión',
-  'Session Schedule': 'Horario de sesiones',
-  'Manage site sessions and rooms': 'Gestiona sesiones y salas del sitio',
-  'Day': 'Día',
-  'Week': 'Semana',
-  'Month': 'Mes',
-  'Filter': 'Filtrar',
-  'Session Filters': 'Filtros de sesión',
-  'Showing': 'Mostrando',
-  'view': 'vista',
-  'Mon': 'Lun',
-  'Tue': 'Mar',
-  'Wed': 'Mié',
-  'Thu': 'Jue',
-  'Fri': 'Vie',
-  'Sat': 'Sáb',
-  'Sun': 'Dom',
-  'January': 'Enero',
-  'February': 'Febrero',
-  'March': 'Marzo',
-  'April': 'Abril',
-  'May': 'Mayo',
-  'June': 'Junio',
-  'July': 'Julio',
-  'August': 'Agosto',
-  'September': 'Septiembre',
-  'October': 'Octubre',
-  'November': 'Noviembre',
-  'December': 'Diciembre',
-  'Conflict detected: room or educator already assigned in this time slot':
-      'Conflicto detectado: sala o educador ya asignado en este horario',
-  'Session created successfully': 'Sesión creada correctamente',
-  'Future Skills': 'Habilidades del futuro',
-  'Leadership': 'Liderazgo',
-  'Impact': 'Impacto',
-  'Assign Substitute': 'Asignar sustituto',
-  'Substitute Pool A': 'Grupo de sustitutos A',
-  'Substitute Pool B': 'Grupo de sustitutos B',
-  'Substitute Pool C': 'Grupo de sustitutos C',
-  'assigned as substitute': 'asignado como sustituto',
-  'Create New Session': 'Crear nueva sesión',
-  'Session Title': 'Título de la sesión',
-  'Pillar': 'Pilar',
-  'Time Slot': 'Horario',
-  'Educator': 'Educador',
-  'Learner Count': 'Cantidad de estudiantes',
-  'Room': 'Sala',
-  'Session title is required': 'El título de la sesión es obligatorio',
-  'Unassigned': 'Sin asignar',
-  'Create Session': 'Crear sesión',
-  'Loading...': 'Cargando...',
-  'No sessions scheduled': 'No hay sesiones programadas',
-};
-
 String _tSiteSessions(BuildContext context, String input) {
-  final String locale = Localizations.localeOf(context).languageCode;
-  if (locale != 'es') return input;
-  return _siteSessionsEs[input] ?? input;
+  return SiteSurfaceI18n.text(context, input);
 }
 
 /// Site Sessions Page - Schedule and manage sessions
