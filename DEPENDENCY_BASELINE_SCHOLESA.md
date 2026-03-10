@@ -56,11 +56,11 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 
 | Package | Current locked version | Supported range | Notes |
 | --- | --- | --- | --- |
-| firebase_core | ^4.4.0 | 4.x only | Align all FlutterFire packages before major upgrades. |
-| firebase_auth | ^6.1.4 | 6.x only | Keep aligned with firebase_core and cloud_firestore. |
-| cloud_firestore | ^6.1.2 | 6.x only | Re-test offline sync and emulator flows on upgrades. |
-| firebase_storage | ^13.0.6 | 13.x only | Re-test upload rules and portfolio media flows on upgrades. |
-| cloud_functions | ^6.0.6 | 6.x only | Keep callable payloads validated against backend changes. |
+| firebase_core | ^4.5.0 | 4.x only | Align all FlutterFire packages before major upgrades. |
+| firebase_auth | ^6.2.0 | 6.x only | Keep aligned with firebase_core and cloud_firestore. |
+| cloud_firestore | ^6.1.3 | 6.x only | Re-test offline sync and emulator flows on upgrades. |
+| firebase_storage | ^13.1.0 | 13.x only | Re-test upload rules and portfolio media flows on upgrades. |
+| cloud_functions | ^6.0.7 | 6.x only | Keep callable payloads validated against backend changes. |
 | google_sign_in | ^7.2.0 | 7.x only | Re-check auth configuration on upgrades. |
 | provider | ^6.1.2 | 6.x only | Current state-management baseline. |
 | go_router | ^17.1.0 | 17.x only | Route refactors required before a major upgrade. |
@@ -70,7 +70,7 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 | audioplayers | ^6.1.0 | 6.x only | Validate BOS voice flows before major upgrades. |
 | record | ^6.0.0 | 6.x only | Validate microphone permissions and runtime flows before upgrade. |
 | speech_to_text | ^7.3.0 | 7.x only | Voice runtime sensitive. |
-| flutter_tts | ^4.2.3 | 4.x only | Voice runtime sensitive. |
+| flutter_tts | ^4.2.5 | 4.x only | Voice runtime sensitive. |
 | shared_preferences | ^2.2.3 | 2.x only | Storage behavior should stay compatible across mobile/web. |
 | equatable | ^2.0.5 | 2.x only | Model baseline. |
 | file_picker | ^10.3.10 | 10.x only | Re-test platform pickers on upgrade. |
