@@ -801,30 +801,31 @@ void main() {
   // ════════════════════════════════════════════════════════
 
   group('Cross-Cutting Consistency', () {
-    test('Bundle identifier is consistent across Android, iOS, macOS', () {
-      const String expectedBundleId = 'com.scholesa.app';
+    test('Bundle identifiers match their platform Firebase registrations', () {
+      const String expectedMobileBundleId = 'com.scholesa.app';
+      const String expectedMacosBundleId = 'com.scholesa.app.macos';
 
       // Android
       final String androidGradle =
           File('android/app/build.gradle.kts').readAsStringSync();
       expect(
-          androidGradle.contains('applicationId = "$expectedBundleId"'), isTrue,
-          reason: 'Android applicationId must be $expectedBundleId');
+          androidGradle.contains('applicationId = "$expectedMobileBundleId"'), isTrue,
+          reason: 'Android applicationId must be $expectedMobileBundleId');
 
       // iOS
       final File iosProject = File('ios/Runner.xcodeproj/project.pbxproj');
       if (iosProject.existsSync()) {
         final String iosContent = iosProject.readAsStringSync();
-        expect(iosContent.contains(expectedBundleId), isTrue,
-            reason: 'iOS bundle identifier must be $expectedBundleId');
+        expect(iosContent.contains(expectedMobileBundleId), isTrue,
+            reason: 'iOS bundle identifier must be $expectedMobileBundleId');
       }
 
       // macOS
       final File macosConfig = File('macos/Runner/Configs/AppInfo.xcconfig');
       if (macosConfig.existsSync()) {
         final String macosContent = macosConfig.readAsStringSync();
-        expect(macosContent.contains(expectedBundleId), isTrue,
-            reason: 'macOS bundle identifier must be $expectedBundleId');
+        expect(macosContent.contains(expectedMacosBundleId), isTrue,
+            reason: 'macOS bundle identifier must be $expectedMacosBundleId');
       }
     });
 
