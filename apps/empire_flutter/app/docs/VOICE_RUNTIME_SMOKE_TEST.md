@@ -274,3 +274,32 @@ Status:
 - Automated macOS runtime launch: pass
 - Interactive hardware/audio acceptance: still requires manual operator validation
 - macOS launch-time configuration/runtime follow-up: required for telemetry origin policy and Google sign-in configuration
+
+## macOS Live Launch Follow-up (2026-03-09, post runtime patch)
+
+After patching the Flutter client runtime behavior, the macOS debug build was rebuilt and launched again:
+
+```bash
+cd apps/empire_flutter/app
+.fvm/flutter_sdk/bin/flutter build macos --debug
+/Users/simonluke/dev/scholesa/apps/empire_flutter/app/build/macos/Build/Products/Debug/scholesa_app.app/Contents/MacOS/scholesa_app
+```
+
+Observed result:
+
+- The app rebuilt successfully.
+- The app launched cleanly again.
+- The previous anonymous telemetry permission-denied spam did not recur on unattended startup.
+- Startup emitted a single client-side notice instead: `TelemetryService: skipping anonymous native telemetry for public events until auth is established.`
+- No passive Google sign-in platform exception was observed during this unattended launch sample.
+
+Interpretation:
+
+- Anonymous native public telemetry is now suppressed client-side until Firebase auth exists, which avoids the impossible `origin` check path for macOS native callable traffic.
+- Apple Google sign-in still requires proper project configuration to fully work interactively. The Flutter app now surfaces that requirement through an explicit configuration path (`GOOGLE_SIGN_IN_CLIENT_ID` / Apple `CLIENT_ID`) instead of relying on the incomplete bundled plist.
+
+Current status after follow-up:
+
+- Telemetry startup noise on macOS: fixed
+- macOS build after patch: pass
+- Interactive Apple Google sign-in: still blocked until correct Apple OAuth client configuration is restored

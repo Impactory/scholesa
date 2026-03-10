@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
@@ -30,6 +31,10 @@ class TelemetryService {
   static final TelemetryService instance = TelemetryService._();
   static const String _defaultAppVersion =
       String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0-rc.2');
+  static const Set<String> _nativeUnsupportedAnonymousEvents = {
+    'cms.page.viewed',
+    'cta.clicked',
+  };
 
   static const Set<String> knownCoreEvents = {
     'auth.login',
@@ -112,6 +117,7 @@ class TelemetryService {
   final List<TelemetryFailure> _recentFailures = <TelemetryFailure>[];
   static const int _maxRetainedFailures = 100;
   bool _missingFirebaseAppNoticePrinted = false;
+  bool _nativeAnonymousTelemetryNoticePrinted = false;
   static Future<T> runWithDispatcher<T>(
     TelemetryDispatcher dispatcher,
     Future<T> Function() body,
@@ -179,6 +185,16 @@ class TelemetryService {
         return;
       }
 
+      if (_shouldSkipAnonymousNativeTelemetry(event)) {
+        if (!_nativeAnonymousTelemetryNoticePrinted) {
+          _nativeAnonymousTelemetryNoticePrinted = true;
+          debugPrint(
+            'TelemetryService: skipping anonymous native telemetry for public events until auth is established.',
+          );
+        }
+        return;
+      }
+
       await _requiredFunctions.httpsCallable('logTelemetryEvent').call(payload);
     } catch (error, stackTrace) {
       if (_isMissingFirebaseAppError(error)) {
@@ -206,6 +222,18 @@ class TelemetryService {
       }
       debugPrint('TelemetryService failure for "$event": $error');
       debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  bool _shouldSkipAnonymousNativeTelemetry(String event) {
+    if (kIsWeb || !_nativeUnsupportedAnonymousEvents.contains(event)) {
+      return false;
+    }
+
+    try {
+      return FirebaseAuth.instance.currentUser == null;
+    } catch (_) {
+      return false;
     }
   }
 }

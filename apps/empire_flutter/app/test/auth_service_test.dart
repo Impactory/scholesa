@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show TargetPlatform;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
@@ -14,18 +16,34 @@ class MockUser extends Mock implements User {}
 
 class MockFirestoreService extends Mock implements FirestoreService {}
 
+class MockGoogleSignIn extends Mock implements GoogleSignIn {}
+
+class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
+
+class MockGoogleSignInAuthentication extends Mock
+  implements GoogleSignInAuthentication {}
+
+class FakeAuthCredential extends Fake implements AuthCredential {}
+
 /// Test-accessible subclass of FirebaseAuthException (constructor is @protected)
 class TestAuthException extends FirebaseAuthException {
   TestAuthException({required super.code, super.message});
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeAuthCredential());
+  });
+
   late MockFirebaseAuth mockAuth;
   late MockFirestoreService mockFirestore;
   late AppState appState;
   late AuthService authService;
   late MockUserCredential mockCredential;
   late MockUser mockUser;
+  late MockGoogleSignIn mockGoogleSignIn;
+  late MockGoogleSignInAccount mockGoogleAccount;
+  late MockGoogleSignInAuthentication mockGoogleAuth;
 
   setUp(() {
     mockAuth = MockFirebaseAuth();
@@ -33,11 +51,16 @@ void main() {
     appState = AppState();
     mockCredential = MockUserCredential();
     mockUser = MockUser();
+    mockGoogleSignIn = MockGoogleSignIn();
+    mockGoogleAccount = MockGoogleSignInAccount();
+    mockGoogleAuth = MockGoogleSignInAuthentication();
 
     authService = AuthService(
       auth: mockAuth,
       firestoreService: mockFirestore,
       appState: appState,
+      googleSignIn: mockGoogleSignIn,
+      googleSignInPlatformOverride: TargetPlatform.iOS,
     );
 
     // Common stubs
@@ -137,6 +160,80 @@ void main() {
         );
 
         expect(appState.error, 'Incorrect password');
+      });
+    });
+
+    group('signInWithGoogle', () {
+      test('surfaces a clear Apple configuration error when client ID is missing',
+          () async {
+        await expectLater(
+          authService.signInWithGoogle(),
+          throwsA(isA<StateError>()),
+        );
+
+        expect(
+          appState.error,
+          'Google Sign-In is not configured for Apple platforms. Add GOOGLE_SIGN_IN_CLIENT_ID via --dart-define or restore CLIENT_ID in the Apple GoogleService-Info.plist.',
+        );
+        verifyNever(() => mockGoogleSignIn.initialize(
+              clientId: any(named: 'clientId'),
+              serverClientId: any(named: 'serverClientId'),
+              nonce: any(named: 'nonce'),
+              hostedDomain: any(named: 'hostedDomain'),
+            ));
+      });
+
+      test('initializes Google Sign-In with explicit Apple and server client IDs',
+          () async {
+        authService = AuthService(
+          auth: mockAuth,
+          firestoreService: mockFirestore,
+          appState: appState,
+          googleSignIn: mockGoogleSignIn,
+          googleSignInPlatformOverride: TargetPlatform.iOS,
+          googleClientId: 'apple-client-id.apps.googleusercontent.com',
+          googleServerClientId:
+              'server-client-id.apps.googleusercontent.com',
+        );
+
+        when(() => mockGoogleSignIn.initialize(
+              clientId: any(named: 'clientId'),
+              serverClientId: any(named: 'serverClientId'),
+              nonce: any(named: 'nonce'),
+              hostedDomain: any(named: 'hostedDomain'),
+            )).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.authenticate(
+              scopeHint: any(named: 'scopeHint'),
+            )).thenAnswer((_) async => mockGoogleAccount);
+        when(() => mockGoogleAccount.authentication).thenReturn(mockGoogleAuth);
+        when(() => mockGoogleAuth.idToken).thenReturn('google-id-token');
+        when(() => mockAuth.signInWithCredential(any()))
+            .thenAnswer((_) async => mockCredential);
+        when(() => mockFirestore.getUserProfile()).thenAnswer(
+          (_) async => <String, dynamic>{
+            'userId': 'uid-123',
+            'email': 'test@example.com',
+            'displayName': 'Test User',
+            'role': 'educator',
+            'activeSiteId': 'site1',
+            'siteIds': <String>['site1'],
+            'entitlements': <dynamic>[],
+          },
+        );
+
+        await authService.signInWithGoogle();
+
+        verify(() => mockGoogleSignIn.initialize(
+              clientId: 'apple-client-id.apps.googleusercontent.com',
+              serverClientId: 'server-client-id.apps.googleusercontent.com',
+              nonce: null,
+              hostedDomain: null,
+            )).called(1);
+        verify(() => mockGoogleSignIn.authenticate(
+              scopeHint: <String>['email', 'profile'],
+            )).called(1);
+        verify(() => mockAuth.signInWithCredential(any())).called(1);
+        expect(appState.isAuthenticated, isTrue);
       });
     });
 

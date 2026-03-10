@@ -6,6 +6,16 @@ import '../services/firestore_service.dart';
 import '../services/telemetry_service.dart';
 import 'app_state.dart';
 
+const String _defaultGoogleServerClientId =
+  String.fromEnvironment(
+  'GOOGLE_SIGN_IN_SERVER_CLIENT_ID',
+  defaultValue:
+    '97120825720-bbnvrtprshupk1qglnrtl34nj5jd1s5d.apps.googleusercontent.com',
+);
+
+const String _googleAppleClientId =
+  String.fromEnvironment('GOOGLE_SIGN_IN_CLIENT_ID', defaultValue: '');
+
 /// Service for handling Firebase authentication
 class AuthService {
   AuthService({
@@ -13,18 +23,69 @@ class AuthService {
     required FirestoreService firestoreService,
     required AppState appState,
     GoogleSignIn? googleSignIn,
+    String? googleClientId,
+    String? googleServerClientId,
+    TargetPlatform? googleSignInPlatformOverride,
   })  : _auth = auth,
         _firestoreService = firestoreService,
         _appState = appState,
-        _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+        _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+        _googleClientId = googleClientId,
+        _googleServerClientId = googleServerClientId,
+        _googleSignInPlatformOverride = googleSignInPlatformOverride;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
   final GoogleSignIn _googleSignIn;
+  final String? _googleClientId;
+  final String? _googleServerClientId;
+  final TargetPlatform? _googleSignInPlatformOverride;
   Future<void>? _googleInitialization;
 
   Future<void> _ensureGoogleInitialized() {
-    return _googleInitialization ??= _googleSignIn.initialize();
+    return _googleInitialization ??= _initializeGoogleSignIn();
+  }
+
+  Future<void> _initializeGoogleSignIn() {
+    final String? configuredServerClientId = _normalizedOrNull(
+      _googleServerClientId ?? _defaultGoogleServerClientId,
+    );
+
+    if (!_requiresAppleGoogleClientId()) {
+      return _googleSignIn.initialize(
+        serverClientId: configuredServerClientId,
+      );
+    }
+
+    final String? configuredClientId =
+        _normalizedOrNull(_googleClientId ?? _googleAppleClientId);
+    if (configuredClientId == null) {
+      throw StateError(
+        'Google Sign-In is not configured for Apple platforms. Add GOOGLE_SIGN_IN_CLIENT_ID via --dart-define or restore CLIENT_ID in the Apple GoogleService-Info.plist.',
+      );
+    }
+
+    return _googleSignIn.initialize(
+      clientId: configuredClientId,
+      serverClientId: configuredServerClientId,
+    );
+  }
+
+  bool _requiresAppleGoogleClientId() {
+    if (kIsWeb) {
+      return false;
+    }
+    final TargetPlatform platform =
+        _googleSignInPlatformOverride ?? defaultTargetPlatform;
+    return platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+  }
+
+  String? _normalizedOrNull(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final String trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   /// Current Firebase user
@@ -128,6 +189,9 @@ class AuthService {
         return;
       }
       _appState.setError('Failed to sign in with Google');
+      rethrow;
+    } on StateError catch (e) {
+      _appState.setError(e.message);
       rethrow;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
