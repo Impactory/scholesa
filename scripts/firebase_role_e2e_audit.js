@@ -21,14 +21,6 @@ if (!admin.apps.length) {
   });
 }
 
-function compactUser(user) {
-  return {
-    uid: user.uid,
-    email: user.email || null,
-    displayName: user.displayName || null,
-  };
-}
-
 async function listAuthUsers(auth) {
   const users = new Map();
   let nextPageToken;

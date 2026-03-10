@@ -470,7 +470,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -481,8 +481,15 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       );
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.download_rounded),
-                    label: Text(_t('Download')),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const Icon(Icons.download_rounded),
+                        const SizedBox(width: 8),
+                        Text(_t('Download')),
+                      ],
+                    ),
                   ),
                 ),
               ],
