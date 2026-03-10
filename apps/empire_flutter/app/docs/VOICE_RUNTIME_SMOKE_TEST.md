@@ -178,3 +178,99 @@ Use this format per platform:
   - Expected:
   - Repro rate:
 - Notes:
+
+## Automated Evidence Snapshot (2026-03-09)
+
+The following automated Flutter voice-runtime slice was executed against the current app baseline:
+
+```bash
+flutter test \
+  test/bos_voice_integration_test.dart \
+  test/ai_coach_widget_regression_test.dart \
+  test/ai_coach_regression_test.dart \
+  test/global_ai_assistant_overlay_regression_test.dart
+```
+
+Observed result:
+
+- 41 tests passed
+- 0 tests failed
+
+What this evidence covers:
+
+- Floating AI coach surface renders correctly.
+- AI coach contract and regression suite remains stable.
+- Auto greeting still speaks through the test override path.
+- BOS hesitation auto-assist still triggers a voiced response path.
+- Voice-only conversation mode still hides text controls correctly.
+- Global overlay auto-popup telemetry still records the BOS trigger metadata.
+
+Additional build-health evidence captured on the same date:
+
+```bash
+.fvm/flutter_sdk/bin/flutter analyze
+.fvm/flutter_sdk/bin/flutter build apk --debug
+.fvm/flutter_sdk/bin/flutter build macos --debug
+```
+
+Observed result:
+
+- Analyze: pass
+- Android debug build: pass
+- macOS debug build: pass
+
+Limits of this automated slice:
+
+- It does not substitute for a live microphone permission check on a physical device.
+- It does not prove end-user audio route behavior on Android, iOS, or macOS hardware.
+- It validates current control-surface behavior and regression coverage, not a full manual audio-session acceptance pass.
+
+## macOS Live Launch Evidence (2026-03-09)
+
+The built macOS app binary was launched directly from the generated debug product:
+
+```bash
+cd apps/empire_flutter/app
+build/macos/Build/Products/Debug/scholesa_app.app/Contents/MacOS/scholesa_app
+```
+
+Observed result:
+
+- The app process started successfully.
+- The process remained alive after launch verification.
+- Verified active process name/path matched `scholesa_app`.
+- Runtime logs showed repeated telemetry permission-denied responses for `cta.clicked` events.
+- Runtime logs also showed a Google sign-in configuration error: `No active configuration. Make sure GIDClientID is set in Info.plist.`
+
+Automated verification command:
+
+```bash
+pgrep -fl "scholesa_app|/Contents/MacOS/scholesa_app"
+```
+
+Observed result:
+
+- One active process was found for the launched app binary.
+
+What this proves:
+
+- The macOS app can launch beyond build time.
+- There is no immediate startup crash in the current debug product.
+
+What this still does not prove:
+
+- Mic permission UX on first interaction
+- Live transcript capture through `speech_to_text`
+- Real audio route playback through `audioplayers` or `flutter_tts`
+- User-interrupt behavior during active playback
+
+Runtime issues observed during unattended launch:
+
+- Telemetry Cloud Function calls can fail with `[firebase_functions/permission-denied] Telemetry origin not allowed.`
+- Google sign-in can fail on macOS startup if the platform config does not provide an active `GIDClientID` in the Apple configuration path.
+
+Status:
+
+- Automated macOS runtime launch: pass
+- Interactive hardware/audio acceptance: still requires manual operator validation
+- macOS launch-time configuration/runtime follow-up: required for telemetry origin policy and Google sign-in configuration
