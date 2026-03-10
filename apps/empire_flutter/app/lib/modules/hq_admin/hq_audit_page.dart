@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -67,6 +68,17 @@ class _HqAuditPageState extends State<HqAuditPage> {
   bool _isLoading = false;
   _AuditCategory? _filterCategory;
 
+  void _logAuditEvent(String cta, [Map<String, dynamic>? metadata]) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_audit',
+        'cta': cta,
+        if (metadata != null) ...metadata,
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -92,15 +104,22 @@ class _HqAuditPageState extends State<HqAuditPage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
-            onPressed: _showFilterDialog,
+            onPressed: () {
+              _logAuditEvent('hq_audit_filter_open');
+              _showFilterDialog();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.add_task_rounded),
-            onPressed: _showCreateReviewDialog,
+            onPressed: () {
+              _logAuditEvent('hq_audit_create_review_open');
+              _showCreateReviewDialog();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.download_rounded),
             onPressed: () {
+              _logAuditEvent('hq_audit_export_logs');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(_tHqAudit(context, 'Exporting audit logs...')),
@@ -133,7 +152,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
               title: _tHqAudit(context, 'Red Team Reviews'),
               count: _redTeamReviews.length,
               trailing: TextButton.icon(
-                onPressed: _showCreateReviewDialog,
+                onPressed: () {
+                  _logAuditEvent('hq_audit_create_review_open');
+                  _showCreateReviewDialog();
+                },
                 icon: const Icon(Icons.add_circle_outline_rounded),
                 label: Text(_tHqAudit(context, 'Create Review')),
               ),
@@ -326,6 +348,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   Future<void> _loadData() async {
+    _logAuditEvent('hq_audit_refresh');
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
@@ -430,6 +453,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
             : Icons.radio_button_off,
       ),
       onTap: () {
+        _logAuditEvent(
+          'hq_audit_filter_apply',
+          <String, dynamic>{'category': category?.name ?? 'all'},
+        );
         setState(() => _filterCategory = category);
         Navigator.pop(context);
       },
@@ -437,6 +464,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   void _showLogDetails(_AuditLog log) {
+    _logAuditEvent(
+      'hq_audit_log_open',
+      <String, dynamic>{'category': log.category.name, 'log_id': log.id},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -473,6 +504,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   void _showReviewDetails(_RedTeamReview review) {
+    _logAuditEvent(
+      'hq_audit_review_open',
+      <String, dynamic>{'review_id': review.id, 'decision': review.decision},
+    );
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: ScholesaColors.surface,
@@ -655,6 +690,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
                           Navigator.pop(dialogContext);
                           await _loadData();
                           if (!mounted) return;
+                          _logAuditEvent(
+                            'hq_audit_create_review_submit',
+                            <String, dynamic>{
+                              'decision': decision,
+                              'partner_status': partnerStatus,
+                              'has_site_id':
+                                  siteIdController.text.trim().isNotEmpty,
+                            },
+                          );
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text(reviewCreatedLabel),
@@ -662,6 +706,13 @@ class _HqAuditPageState extends State<HqAuditPage> {
                           );
                         } catch (_) {
                           if (!mounted) return;
+                          _logAuditEvent(
+                            'hq_audit_create_review_error',
+                            <String, dynamic>{
+                              'decision': decision,
+                              'partner_status': partnerStatus,
+                            },
+                          );
                           setLocalState(() => isSubmitting = false);
                           messenger.showSnackBar(
                             SnackBar(

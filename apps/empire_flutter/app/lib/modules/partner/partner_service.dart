@@ -4,6 +4,12 @@ import '../../services/firestore_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import 'partner_models.dart';
 
+bool _isMissingFirebaseAppError(Object error) {
+  final String message = error.toString();
+  return message.contains("No Firebase App '[DEFAULT]' has been created") ||
+      message.contains('core/no-app');
+}
+
 /// Service for partner operations
 class PartnerService extends ChangeNotifier {
   PartnerService({
@@ -295,7 +301,9 @@ class PartnerService extends ChangeNotifier {
               ))
           .toList();
     } catch (e) {
-      debugPrint('Failed to load payouts: $e');
+      if (!_isMissingFirebaseAppError(e)) {
+        debugPrint('Failed to load payouts: $e');
+      }
       _payouts = <Payout>[];
     } finally {
       _isLoading = false;

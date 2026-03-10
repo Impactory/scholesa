@@ -4,6 +4,12 @@ import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'parent_models.dart';
 
+bool _isMissingFirebaseAppError(Object error) {
+  final String message = error.toString();
+  return message.contains("No Firebase App '[DEFAULT]' has been created") ||
+      message.contains('core/no-app');
+}
+
 /// Service for parent-specific views
 class ParentService extends ChangeNotifier {
   ParentService({
@@ -114,8 +120,11 @@ class ParentService extends ChangeNotifier {
       }
       return parsed;
     } catch (error) {
-      debugPrint(
-          'Parent callable bundle unavailable, using Firestore fallback: $error');
+      if (!_isMissingFirebaseAppError(error)) {
+        debugPrint(
+          'Parent callable bundle unavailable, using Firestore fallback: $error',
+        );
+      }
       return <LearnerSummary>[];
     }
   }
@@ -321,7 +330,9 @@ class ParentService extends ChangeNotifier {
         return;
       }
     } catch (error) {
-      debugPrint('Parent billing callable request failed: $error');
+      if (!_isMissingFirebaseAppError(error)) {
+        debugPrint('Parent billing callable request failed: $error');
+      }
       _billingSummary = null;
     }
   }

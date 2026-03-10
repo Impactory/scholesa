@@ -7,6 +7,10 @@ NON_ACTIONABLE_WEB_PATHS = {
     "src/types/SubmissionGrader.tsx",
 }
 
+NON_ACTIONABLE_FLUTTER_PATHS = {
+    "apps/empire_flutter/app/lib/i18n/site_surface_i18n.dart",
+}
+
 NON_ACTIONABLE_BLOCKER_PATHS: dict[str, set[str]] = {
     "Flutter unimplemented handlers (`UnimplementedError`/`UnsupportedError`)": {
         "apps/empire_flutter/app/lib/firebase_options.dart",

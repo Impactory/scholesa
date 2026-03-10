@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable
 from cta_report_policy import (
     NON_ACTIONABLE_BLOCKER_PATHS,
+    NON_ACTIONABLE_FLUTTER_PATHS,
     NON_ACTIONABLE_WEB_PATHS,
     ROUTE_SURFACE_FILE_NAMES,
 )
@@ -104,6 +105,17 @@ def main() -> None:
     flutter_quick_action_entries = collect_entries(
         ROOT / "apps/empire_flutter/app/lib", DART_EXTS, flutter_quick_action_pattern
     )
+    excluded_flutter_entries = [
+        entry for entry in flutter_entries if entry[0] in NON_ACTIONABLE_FLUTTER_PATHS
+    ]
+    flutter_entries = [
+        entry for entry in flutter_entries if entry[0] not in NON_ACTIONABLE_FLUTTER_PATHS
+    ]
+    flutter_quick_action_entries = [
+        entry
+        for entry in flutter_quick_action_entries
+        if entry[0] not in NON_ACTIONABLE_FLUTTER_PATHS
+    ]
 
     web_telemetry_patterns = [
         re.compile(r"useTelemetry|usePageViewTracking|useAutonomyTracking|useCompetenceTracking|useBelongingTracking|useAITracking"),
@@ -181,6 +193,7 @@ def main() -> None:
     lines.append("")
     lines.append("- Actionable CTA coverage includes UI files with direct user-interaction markers and expected telemetry hooks/calls.")
     lines.append("- Excluded non-actionable web files are utility/type-only paths listed in `NON_ACTIONABLE_WEB_PATHS`.")
+    lines.append("- Excluded non-actionable Flutter files are localization/utility-only paths listed in `NON_ACTIONABLE_FLUTTER_PATHS`.")
     lines.append("- Blocker findings exclude known generated/framework stubs listed in `NON_ACTIONABLE_BLOCKER_PATHS`.")
     lines.append("- Route TODO/FIXME blocker scan is restricted to route surfaces (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `route.ts`).")
     lines.append("")
@@ -267,6 +280,13 @@ def main() -> None:
         lines.append("### Excluded Web Utility/Type Files")
         lines.append("")
         for path, _ in sorted(excluded_web_entries):
+            lines.append(f"- `{path}`: **excluded_non_actionable**")
+        lines.append("")
+
+    if excluded_flutter_entries:
+        lines.append("### Excluded Flutter Utility/Localization Files")
+        lines.append("")
+        for path, _ in sorted(excluded_flutter_entries):
             lines.append(f"- `{path}`: **excluded_non_actionable**")
         lines.append("")
 

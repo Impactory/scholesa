@@ -76,6 +76,12 @@ class AiCoachWidget extends StatefulWidget {
   State<AiCoachWidget> createState() => _AiCoachWidgetState();
 }
 
+bool _isMissingFirebaseAppError(Object error) {
+  final String message = error.toString();
+  return message.contains("No Firebase App '[DEFAULT]' has been created") ||
+      message.contains('core/no-app');
+}
+
 class _AiCoachWidgetState extends State<AiCoachWidget> {
   final TextEditingController _inputController = TextEditingController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
@@ -1164,7 +1170,7 @@ Response style:
         },
       );
 
-      if (kDebugMode) {
+      if (kDebugMode && !_isMissingFirebaseAppError(e)) {
         debugPrint('AI request failed, using local fallback: $e');
       }
 
