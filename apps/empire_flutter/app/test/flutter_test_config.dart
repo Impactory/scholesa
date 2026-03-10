@@ -7,6 +7,9 @@ import 'package:scholesa_app/services/telemetry_service.dart';
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
   debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+  TelemetryService.instance.configureDispatcher(
+    (Map<String, dynamic> _) async {},
+  );
   try {
     await TelemetryService.runWithDispatcher(
       (Map<String, dynamic> _) async {},
@@ -15,6 +18,7 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
       },
     );
   } finally {
+    TelemetryService.instance.clearDispatcherOverride();
     debugDefaultTargetPlatformOverride = null;
   }
 }
