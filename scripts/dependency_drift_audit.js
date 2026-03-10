@@ -10,9 +10,55 @@ const REPORT_DIR = path.join(ROOT, 'audit-pack', 'reports');
 const REPORT_PATH = path.join(REPORT_DIR, 'dependency-drift.json');
 const FLUTTER_APP = path.join(ROOT, 'apps', 'empire_flutter', 'app');
 const FUNCTIONS_DIR = path.join(ROOT, 'functions');
+const FVM_FLUTTER = path.join(FLUTTER_APP, '.fvm', 'flutter_sdk', 'bin', 'flutter');
 
 function ensureReportDir() {
   fs.mkdirSync(REPORT_DIR, { recursive: true });
+}
+
+function extractJsonDocument(output) {
+  const text = String(output || '').trim();
+  if (!text) {
+    return '{}';
+  }
+
+  try {
+    JSON.parse(text);
+    return text;
+  } catch {
+    // Fall through and attempt to isolate the JSON payload from CLI chatter.
+  }
+
+  const candidates = [];
+  const firstObject = text.indexOf('{');
+  const lastObject = text.lastIndexOf('}');
+  if (firstObject !== -1 && lastObject > firstObject) {
+    candidates.push(text.slice(firstObject, lastObject + 1));
+  }
+
+  const firstArray = text.indexOf('[');
+  const lastArray = text.lastIndexOf(']');
+  if (firstArray !== -1 && lastArray > firstArray) {
+    candidates.push(text.slice(firstArray, lastArray + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      // Continue scanning fallbacks.
+    }
+  }
+
+  throw new Error(`Unable to extract JSON payload from command output: ${text.slice(0, 200)}`);
+}
+
+function getFlutterCommand() {
+  if (fs.existsSync(FVM_FLUTTER)) {
+    return FVM_FLUTTER;
+  }
+  return 'flutter';
 }
 
 function runJsonCommand(command, args, cwd, options = {}) {
@@ -23,14 +69,23 @@ function runJsonCommand(command, args, cwd, options = {}) {
       stdio: ['ignore', 'pipe', 'pipe'],
       ...options,
     });
-    return JSON.parse(stdout || '{}');
+    return JSON.parse(extractJsonDocument(stdout));
   } catch (error) {
     const stdout = String(error.stdout || '').trim();
-    if (!stdout) {
-      const stderr = String(error.stderr || '').trim();
+    const stderr = String(error.stderr || '').trim();
+    const combinedOutput = [stdout, stderr].filter(Boolean).join('\n');
+
+    if (!combinedOutput) {
       throw new Error(`${command} ${args.join(' ')} failed: ${stderr || error.message}`);
     }
-    return JSON.parse(stdout);
+
+    try {
+      return JSON.parse(extractJsonDocument(combinedOutput));
+    } catch (parseError) {
+      throw new Error(
+          `${command} ${args.join(' ')} failed: ${parseError.message}`,
+      );
+    }
   }
 }
 
@@ -114,7 +169,9 @@ function topConcerns(rootNpm, functionsNpm, flutter) {
 function main() {
   const rootNpm = normalizeNpmOutdated(runJsonCommand('npm', ['outdated', '--json'], ROOT));
   const functionsNpm = normalizeNpmOutdated(runJsonCommand('npm', ['outdated', '--json'], FUNCTIONS_DIR));
-  const flutter = normalizeFlutterOutdated(runJsonCommand('flutter', ['pub', 'outdated', '--json'], FLUTTER_APP));
+  const flutter = normalizeFlutterOutdated(
+      runJsonCommand(getFlutterCommand(), ['pub', 'outdated', '--json'], FLUTTER_APP),
+  );
 
   const report = {
     reportName: 'dependency-drift',

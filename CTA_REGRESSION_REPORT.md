@@ -557,17 +557,17 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L204: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart` (11)
-- L105: `IconButton(`
-- L112: `IconButton(`
-- L119: `IconButton(`
-- L132: `body: RefreshIndicator(`
-- L292: `child: ListTile(`
-- L304: `child: ListTile(`
-- L448: `return ListTile(`
-- L495: `child: OutlinedButton(`
-- L549: `OutlinedButton(`
-- L655: `TextButton(`
-- L660: `ElevatedButton(`
+- L152: `IconButton(`
+- L159: `IconButton(`
+- L166: `IconButton(`
+- L179: `body: RefreshIndicator(`
+- L339: `child: ListTile(`
+- L351: `child: ListTile(`
+- L495: `return ListTile(`
+- L542: `child: OutlinedButton(`
+- L599: `OutlinedButton(`
+- L705: `TextButton(`
+- L710: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart` (8)
 - L136: `IconButton(`
@@ -832,14 +832,14 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L104: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` (8)
-- L964: `TextButton(`
-- L968: `FilledButton(`
-- L1389: `TextButton(`
-- L1493: `IconButton(`
-- L1502: `IconButton(`
-- L1579: `TextButton(`
-- L1809: `InkWell(`
-- L1818: `InkWell(`
+- L970: `TextButton(`
+- L974: `FilledButton(`
+- L1395: `TextButton(`
+- L1499: `IconButton(`
+- L1508: `IconButton(`
+- L1585: `TextButton(`
+- L1815: `InkWell(`
+- L1824: `InkWell(`
 
 ### `apps/empire_flutter/app/lib/runtime/ai_context_coach_section.dart` (2)
 - L82: `child: ListTile(`
