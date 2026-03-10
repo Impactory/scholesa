@@ -18,6 +18,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 FUNCTIONS_DIR="$REPO_ROOT/functions"
+FVM_FLUTTER="$FLUTTER_APP/.fvm/flutter_sdk/bin/flutter"
 TARGET="${1:-all}"
 FLUTTER_GATE_DONE=0
 TEMP_GCP_CREDENTIALS=""
@@ -35,6 +36,16 @@ NC='\033[0m' # No Color
 log()  { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn() { echo -e "${YELLOW}[deploy]${NC} $*"; }
 fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
+
+flutter_cmd() {
+  if [[ -x "$FVM_FLUTTER" ]]; then
+    "$FVM_FLUTTER" "$@"
+    return
+  fi
+
+  command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH and FVM SDK missing at $FVM_FLUTTER"
+  flutter "$@"
+}
 
 cleanup() {
   if [[ -n "$TEMP_GCP_CREDENTIALS" && -f "$TEMP_GCP_CREDENTIALS" ]]; then
@@ -119,7 +130,9 @@ preflight() {
   fi
 
   if [[ "$TARGET" == flutter-* || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
-    command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH"
+    if [[ ! -x "$FVM_FLUTTER" ]]; then
+      command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH and FVM SDK missing at $FVM_FLUTTER"
+    fi
   fi
 
   if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
@@ -137,10 +150,10 @@ flutter_gate() {
   sync_platform_icons
 
   log "Running flutter analyze..."
-  (cd "$FLUTTER_APP" && flutter analyze --no-pub) || fail "flutter analyze failed — fix issues before deploying"
+  (cd "$FLUTTER_APP" && flutter_cmd analyze --no-pub) || fail "flutter analyze failed — fix issues before deploying"
 
   log "Running flutter test..."
-  (cd "$FLUTTER_APP" && flutter test) || fail "flutter tests failed — fix before deploying"
+  (cd "$FLUTTER_APP" && flutter_cmd test) || fail "flutter tests failed — fix before deploying"
 
   log "Flutter gate passed ✓"
 }
@@ -271,21 +284,21 @@ deploy_flutter_web() {
 deploy_flutter_ios() {
   ensure_flutter_gate
   log "Building Flutter iOS (release)..."
-  (cd "$FLUTTER_APP" && flutter build ios --release --no-codesign --no-tree-shake-icons)
+  (cd "$FLUTTER_APP" && flutter_cmd build ios --release --no-codesign --no-tree-shake-icons)
   log "iOS build complete. Open Xcode to archive and distribute."
 }
 
 deploy_flutter_macos() {
   ensure_flutter_gate
   log "Building Flutter macOS (release)..."
-  (cd "$FLUTTER_APP" && flutter build macos --release --no-tree-shake-icons)
+  (cd "$FLUTTER_APP" && flutter_cmd build macos --release --no-tree-shake-icons)
   log "macOS build complete. Sign + notarize before distribution."
 }
 
 deploy_flutter_android() {
   ensure_flutter_gate
   log "Building Flutter Android APK (release)..."
-  (cd "$FLUTTER_APP" && flutter build apk --release)
+  (cd "$FLUTTER_APP" && flutter_cmd build apk --release)
   log "Android APK: $FLUTTER_APP/build/app/outputs/flutter-apk/app-release.apk"
 }
 
