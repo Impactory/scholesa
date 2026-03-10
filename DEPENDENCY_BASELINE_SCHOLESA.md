@@ -1,6 +1,6 @@
 # Dependency Baseline Scholesa
 
-Last reviewed: 2026-03-08
+Last reviewed: 2026-03-09
 Authority: repo root manifests and Flutter pubspecs
 
 ## Purpose
@@ -28,7 +28,7 @@ Source: [package.json](/Users/simonluke/dev/scholesa/package.json)
 | typescript | ^5.5.3 | 5.x only | Upgrade within 5.x unless tooling migration is planned. |
 | firebase | ^11.1.0 | 11.x only | Latest installed is 11.10.0; do not jump to 12.x without a compatibility pass. |
 | firebase-admin | ^13.7.0 | 13.x only | Shared by web/server and functions. |
-| firebase-functions | ^7.1.0 | 7.x only | Keep aligned with deployed Functions runtime behavior. |
+| firebase-functions | ^7.1.1 | 7.x only | Keep aligned with deployed Functions runtime behavior. |
 | next-pwa | ^5.6.0 | 5.x only | Re-validate service worker output on any upgrade. |
 | tailwindcss | ^3.4.6 | 3.x only | Do not mix with Tailwind 4 until config/plugins are migrated. |
 | tailwind-merge | ^2.3.0 | 2.x only | Upgrade together with Tailwind utility strategy. |
@@ -47,7 +47,7 @@ Source: [functions/package.json](/Users/simonluke/dev/scholesa/functions/package
 | ts-jest | ^29.1.2 | 29.x only | Must match the Jest major. |
 | ts-node | ^10.9.2 | 10.x only | Used by spec scripts and local tooling. |
 | firebase-admin | ^13.7.0 | 13.x only | Match root baseline. |
-| firebase-functions | ^7.1.0 | 7.x only | Match root baseline. |
+| firebase-functions | ^7.1.1 | 7.x only | Match root baseline. |
 | stripe | ^20.4.1 | 20.x only | Validate webhook and checkout flows before major upgrades. |
 
 ## Flutter App Baseline
