@@ -303,3 +303,35 @@ Current status after follow-up:
 - Telemetry startup noise on macOS: fixed
 - macOS build after patch: pass
 - Interactive Apple Google sign-in: still blocked until correct Apple OAuth client configuration is restored
+
+## macOS Apple Config Restoration (2026-03-09, Firebase export-backed)
+
+After retrieving the authoritative Apple SDK configs from the live Firebase project, the app-owned Apple configuration was updated and revalidated:
+
+```bash
+cd apps/empire_flutter/app
+flutter test test/auth_service_test.dart test/deploy_ops_regression_test.dart
+flutter build macos --debug
+build/macos/Build/Products/Debug/scholesa_app.app/Contents/MacOS/scholesa_app
+```
+
+Observed result:
+
+- The iOS Firebase plist now includes the exported `CLIENT_ID` and `REVERSED_CLIENT_ID` for `com.scholesa.app`.
+- The macOS Firebase plist now targets the registered Firebase macOS app and uses bundle ID `com.scholesa.app.macos`.
+- Apple `Info.plist` files now include `CFBundleURLTypes` and `GIDClientID` entries required by `google_sign_in` redirect handling.
+- Focused Flutter tests passed, including auth-service coverage for Apple Google Sign-In configuration.
+- `flutter build macos --debug` passed after the desktop bundle alignment.
+- Launching the built macOS binary directly produced a clean Firebase startup log and did not reproduce the prior `No active configuration. Make sure GIDClientID is set in Info.plist.` error on startup.
+
+Remaining limits:
+
+- This machine could not complete a fresh `flutter run -d macos` session because the temporary build volume hit `OS Error: No space left on device`.
+- Interactive Google Sign-In still needs one manual click-through validation on macOS to prove the OAuth redirect round-trip succeeds end to end.
+
+Current status after restoration:
+
+- Apple Firebase plist completeness: fixed
+- macOS Firebase app/bundle alignment: fixed
+- macOS startup-time Google config exception: no longer reproduced in unattended launch sample
+- Interactive Apple Google Sign-In: pending manual smoke verification

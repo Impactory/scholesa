@@ -244,12 +244,19 @@ class AuthService {
   /// Bootstrap session by fetching user profile from Firestore
   Future<void> _bootstrapSession() async {
     try {
+      final User? user = _auth.currentUser;
+      if (user == null) {
+        throw StateError('Not authenticated');
+      }
+
       final Map<String, dynamic>? profile =
           await _firestoreService.getUserProfile();
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       } else {
-        throw StateError('Missing user profile and role claim');
+        final Map<String, dynamic> fallbackProfile =
+            await _firestoreService.buildBootstrapFallbackProfile(user);
+        _appState.updateFromMeResponse(fallbackProfile);
       }
     } catch (e) {
       debugPrint('Error in _bootstrapSession: $e');

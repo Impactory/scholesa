@@ -27,13 +27,13 @@ class FirestoreService {
       if (e.code == 'permission-denied' ||
           e.code == 'unavailable' ||
           e.code == 'unauthenticated') {
-        return _buildFallbackProfile(user);
+        return buildBootstrapFallbackProfile(user);
       }
       rethrow;
     }
 
     if (!doc.exists) {
-      return _buildFallbackProfile(user);
+      return buildBootstrapFallbackProfile(user);
     }
 
     final Map<String, dynamic> data = doc.data()!;
@@ -75,7 +75,7 @@ class FirestoreService {
     };
   }
 
-  Future<Map<String, dynamic>?> _buildFallbackProfile(User user) async {
+  Future<Map<String, dynamic>> buildBootstrapFallbackProfile(User user) async {
     String? role;
     try {
       final IdTokenResult tokenResult = await user.getIdTokenResult(true);
@@ -84,12 +84,10 @@ class FirestoreService {
         role = roleClaim;
       }
     } catch (_) {
-      // Ignore claim refresh failures and fall through to null.
+      // Ignore claim refresh failures and fall back to the safest client role.
     }
 
-    if (role == null || role.isEmpty) {
-      return null;
-    }
+    role = (role == null || role.isEmpty) ? 'learner' : role;
 
     return <String, dynamic>{
       'userId': user.uid,

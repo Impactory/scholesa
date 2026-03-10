@@ -39,7 +39,9 @@ class SessionBootstrap {
       if (profile != null) {
         _appState.updateFromMeResponse(profile);
       } else {
-        throw StateError('Missing user profile and role claim');
+        final Map<String, dynamic> fallbackProfile =
+            await _firestoreService.buildBootstrapFallbackProfile(user);
+        _appState.updateFromMeResponse(fallbackProfile);
       }
     } on TimeoutException {
       debugPrint('Session bootstrap timed out while loading profile');
