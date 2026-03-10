@@ -18,7 +18,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
       },
     );
   } finally {
-    TelemetryService.instance.clearDispatcherOverride();
     debugDefaultTargetPlatformOverride = null;
   }
 }

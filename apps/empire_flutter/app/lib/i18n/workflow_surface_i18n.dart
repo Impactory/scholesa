@@ -305,6 +305,7 @@ class WorkflowSurfaceI18n {
     'Loading...': '載入中...',
     'My Sessions': '我的課程',
     'Create Session': '建立課程',
+    'Active': '活躍',
     'Good morning': '早安',
     'Good afternoon': '午安',
     'Good evening': '晚安',

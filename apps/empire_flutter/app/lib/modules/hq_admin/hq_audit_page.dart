@@ -79,6 +79,53 @@ class _HqAuditPageState extends State<HqAuditPage> {
     );
   }
 
+  String _categoryLabel(_AuditCategory category) {
+    switch (category) {
+      case _AuditCategory.auth:
+        return _tHqAudit(context, 'Auth');
+      case _AuditCategory.data:
+        return _tHqAudit(context, 'Data');
+      case _AuditCategory.admin:
+        return _tHqAudit(context, 'Admin');
+      case _AuditCategory.system:
+        return _tHqAudit(context, 'System');
+    }
+  }
+
+  String _decisionLabel(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'continue':
+        return _tHqAudit(context, 'Continue');
+      case 'stabilize':
+        return _tHqAudit(context, 'Stabilize');
+      case 'intervene':
+        return _tHqAudit(context, 'Intervene');
+      default:
+        return value;
+    }
+  }
+
+  String _partnerStatusLabel(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'active':
+        return _tHqAudit(context, 'Active');
+      case 'watch':
+        return _tHqAudit(context, 'Watch');
+      case 'hold':
+        return _tHqAudit(context, 'Hold');
+      default:
+        return value;
+    }
+  }
+
+  String _siteScopeLabel(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return _tHqAudit(context, 'Global');
+    }
+    return trimmed;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -305,10 +352,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
         leading: const Icon(Icons.security_update_good_rounded),
         title: Text(review.title),
         subtitle: Text(
-          '${review.siteId ?? 'global'} • ${review.decision} • ${_formatTime(review.updatedAt)}',
+          '${_siteScopeLabel(review.siteId)} • ${_decisionLabel(review.decision)} • ${_formatTime(review.updatedAt)}',
         ),
         trailing: _AuditPill(
-          label: review.partnerStatus,
+          label: _partnerStatusLabel(review.partnerStatus),
           color: review.partnerStatus == 'active'
               ? Colors.green
               : review.partnerStatus == 'watch'
@@ -391,7 +438,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
           reviewsRaw.map((Map<String, dynamic> row) {
         return _RedTeamReview(
           id: row['id'] as String? ?? '',
-          title: row['title'] as String? ?? 'Red Team Review',
+          title: row['title'] as String? ?? _tHqAudit(context, 'Red Team Review'),
           decision: row['decision'] as String? ?? 'continue',
           partnerStatus: row['partnerStatus'] as String? ?? 'active',
           recommendations: row['recommendations'] as String? ?? '',
@@ -434,10 +481,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _buildFilterOption(_tHqAudit(context, 'All'), null),
-            _buildFilterOption('Auth', _AuditCategory.auth),
-            _buildFilterOption(_tHqAudit(context, 'Data'), _AuditCategory.data),
-            _buildFilterOption('Admin', _AuditCategory.admin),
-            _buildFilterOption('System', _AuditCategory.system),
+            _buildFilterOption(_categoryLabel(_AuditCategory.auth), _AuditCategory.auth),
+            _buildFilterOption(_categoryLabel(_AuditCategory.data), _AuditCategory.data),
+            _buildFilterOption(_categoryLabel(_AuditCategory.admin), _AuditCategory.admin),
+            _buildFilterOption(_categoryLabel(_AuditCategory.system), _AuditCategory.system),
           ],
         ),
       ),
@@ -485,8 +532,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow('Actor', log.actor),
-            _buildDetailRow('Time', _formatTime(log.timestamp)),
+            _buildDetailRow(_tHqAudit(context, 'Actor'), log.actor),
+            _buildDetailRow(_tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
             const SizedBox(height: 8),
             Text(log.details),
             const SizedBox(height: 24),
@@ -524,10 +571,13 @@ class _HqAuditPageState extends State<HqAuditPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow(_tHqAudit(context, 'Decision'), review.decision),
+            _buildDetailRow(
+              _tHqAudit(context, 'Decision'),
+              _decisionLabel(review.decision),
+            ),
             _buildDetailRow(
               _tHqAudit(context, 'Partner Status'),
-              review.partnerStatus,
+              _partnerStatusLabel(review.partnerStatus),
             ),
             if ((review.siteId ?? '').trim().isNotEmpty)
               _buildDetailRow(_tHqAudit(context, 'Site ID'), review.siteId!),
@@ -609,7 +659,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                     items: const <String>['continue', 'stabilize', 'intervene']
                         .map((String value) => DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value),
+                              child: Text(_decisionLabel(value)),
                             ))
                         .toList(),
                     onChanged: (String? value) =>
@@ -624,7 +674,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                     items: const <String>['active', 'watch', 'hold']
                         .map((String value) => DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value),
+                              child: Text(_partnerStatusLabel(value)),
                             ))
                         .toList(),
                     onChanged: (String? value) =>
