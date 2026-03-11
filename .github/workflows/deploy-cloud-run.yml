@@ -95,9 +95,9 @@ jobs:
           set -euo pipefail
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           RESPONSE="$(curl -sS -X POST \
-            -H \"Authorization: Bearer ${ACCESS_TOKEN}\" \
-            -H \"Content-Type: application/json\" \
-            \"https://artifactregistry.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/us/repositories/gcr.io:testIamPermissions\" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://artifactregistry.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/us/repositories/gcr.io:testIamPermissions" \
             -d '{"permissions":["artifactregistry.repositories.uploadArtifacts"]}')"
 
           if ! printf '%s' "$RESPONSE" | grep -q 'artifactregistry.repositories.uploadArtifacts'; then
