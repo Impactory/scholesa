@@ -53,6 +53,7 @@ resize_png() {
   local dst="$4"
 
   require_file "$src"
+  mkdir -p "$(dirname "$dst")"
 
   if has_cmd sips; then
     sips -z "$height" "$width" "$src" --out "$dst" >/dev/null
@@ -78,6 +79,7 @@ convert_to_ico() {
   local dst="$2"
 
   require_file "$src"
+  mkdir -p "$(dirname "$dst")"
 
   if has_cmd sips; then
     sips -s format ico "$src" --out "$dst" >/dev/null
@@ -102,6 +104,7 @@ copy_png() {
   local src="$1"
   local dst="$2"
   require_file "$src"
+  mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
 }
 
@@ -109,6 +112,7 @@ convert_png_to_opaque() {
   local src="$1"
   local dst="$2"
   require_file "$src"
+  mkdir -p "$(dirname "$dst")"
 
   # Convert PNG to opaque RGB by removing alpha and filling transparent areas with white
   python3 -c "
