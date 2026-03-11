@@ -13,6 +13,14 @@ fail() {
   exit 1
 }
 
+require_local_ios_distribution_identity() {
+  local identities
+  identities="$(security find-identity -v -p codesigning 2>/dev/null || true)"
+  if ! printf '%s\n' "$identities" | grep -Eq '"(Apple|iOS) Distribution: .*\(' ; then
+    fail "Missing Apple Distribution signing identity with private key for iOS archive/TestFlight upload. Import the iOS distribution .p12 for team ${APPLE_DEVELOPER_TEAM_ID:-unknown} before running upload_testflight."
+  fi
+}
+
 [[ -f "$LOCAL_ENV_FILE" ]] || fail "Missing $LOCAL_ENV_FILE. Run ./scripts/setup_app_store_connect_key.sh first."
 
 set -a
@@ -27,6 +35,10 @@ export BUNDLE_PATH="${BUNDLE_PATH:-$BUNDLE_DIR}"
 export BUNDLE_APP_CONFIG
 
 [[ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ]] || fail "APP_STORE_CONNECT_ISSUER_ID is empty in $LOCAL_ENV_FILE. Add the issuer UUID from App Store Connect -> Users and Access -> Keys."
+
+if [[ "$LANE" == "upload_testflight" ]]; then
+  require_local_ios_distribution_identity
+fi
 
 cd "$IOS_DIR"
 mkdir -p "$BUNDLE_PATH" "$BUNDLE_APP_CONFIG"

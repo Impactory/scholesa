@@ -81,7 +81,7 @@ platform :ios do
       export_method: 'app-store',
       output_directory: output_directory,
       output_name: 'Scholesa.ipa',
-      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']}"
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']} -allowProvisioningUpdates"
     )
 
     upload_to_testflight(
