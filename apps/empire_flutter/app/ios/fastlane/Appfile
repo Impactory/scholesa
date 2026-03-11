@@ -1,0 +1,5 @@
+app_identifier(ENV['IOS_APP_IDENTIFIER'] || 'com.scholesa.app')
+team_id(ENV['APPLE_DEVELOPER_TEAM_ID'] || 'CEUD8LB243')
+
+apple_id(ENV['APPLE_ID']) unless ENV['APPLE_ID'].to_s.empty?
+itc_team_id(ENV['APP_STORE_CONNECT_TEAM_ID']) unless ENV['APP_STORE_CONNECT_TEAM_ID'].to_s.empty?

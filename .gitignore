@@ -18,6 +18,11 @@
 # misc
 .DS_Store
 *.pem
+*.p8
+.secrets/
+apps/empire_flutter/app/ios/.bundle/
+apps/empire_flutter/app/ios/vendor/bundle/
+apps/empire_flutter/app/ios/fastlane/report.xml
 
 # debug
 npm-debug.log*

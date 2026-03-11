@@ -1,0 +1,109 @@
+name: Apple Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: Upload the signed iOS build to TestFlight
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: apple-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+  APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+  APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+  APPLE_DEVELOPER_TEAM_ID: ${{ secrets.APPLE_DEVELOPER_TEAM_ID }}
+  IOS_SIGNING_CERT_P12_BASE64: ${{ secrets.IOS_SIGNING_CERT_P12_BASE64 }}
+  IOS_SIGNING_CERT_PASSWORD: ${{ secrets.IOS_SIGNING_CERT_PASSWORD }}
+  IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+
+jobs:
+  verify-app-store-connect:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate App Store Connect secrets
+        run: ./scripts/apple_release_ci.sh validate-app-store-connect
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/ios
+
+      - name: Install Flutter dependencies
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/apple_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Verify App Store Connect API key
+        run: |
+          cd apps/empire_flutter/app/ios
+          bundle exec fastlane ios verify_api_key
+
+  ios-testflight:
+    needs: verify-app-store-connect
+    if: ${{ inputs.upload_to_testflight }}
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate signing secrets
+        run: ./scripts/apple_release_ci.sh validate-ios-release
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/ios
+
+      - name: Install Flutter dependencies
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+
+      - name: Materialize App Store Connect API key
+        run: ./scripts/apple_release_ci.sh materialize-app-store-connect "$RUNNER_TEMP"
+
+      - name: Import signing certificate
+        run: ./scripts/apple_release_ci.sh import-signing-assets "$RUNNER_TEMP"
+
+      - name: Upload to TestFlight
+        run: |
+          cd apps/empire_flutter/app/ios
+          bundle exec fastlane ios upload_testflight

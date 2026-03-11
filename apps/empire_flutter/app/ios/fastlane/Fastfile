@@ -1,0 +1,94 @@
+default_platform(:ios)
+opt_out_usage
+
+require 'base64'
+
+def require_env_values!(keys)
+  missing = keys.select { |key| ENV[key].to_s.strip.empty? }
+  return if missing.empty?
+
+  UI.user_error!("Missing required environment values: #{missing.join(', ')}")
+end
+
+def app_root
+  File.expand_path('../..', __dir__)
+end
+
+def flutter_binary
+  configured = ENV['FLUTTER_BIN'].to_s.strip
+  return configured unless configured.empty?
+
+  fvm_binary = File.join(app_root, '.fvm', 'flutter_sdk', 'bin', 'flutter')
+  return fvm_binary if File.exist?(fvm_binary)
+
+  'flutter'
+end
+
+def app_store_connect_api_key_options
+  require_env_values!(%w[APP_STORE_CONNECT_KEY_ID APP_STORE_CONNECT_ISSUER_ID])
+
+  options = {
+    key_id: ENV['APP_STORE_CONNECT_KEY_ID'],
+    issuer_id: ENV['APP_STORE_CONNECT_ISSUER_ID'],
+    duration: 1200,
+    in_house: false,
+  }
+
+  key_path = ENV['APP_STORE_CONNECT_API_KEY_PATH'].to_s.strip
+  key_b64 = ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64'].to_s.strip
+
+  unless key_path.empty?
+    UI.user_error!("App Store Connect key file not found: #{key_path}") unless File.exist?(key_path)
+    options[:key_filepath] = key_path
+    return options
+  end
+
+  unless key_b64.empty?
+    options[:key_content] = Base64.strict_decode64(key_b64)
+    return options
+  end
+
+  UI.user_error!('Set APP_STORE_CONNECT_API_KEY_PATH or APP_STORE_CONNECT_API_KEY_P8_BASE64 before running Fastlane.')
+end
+
+def scholesa_api_key
+  app_store_connect_api_key(**app_store_connect_api_key_options)
+end
+
+platform :ios do
+  desc 'Validate local or CI App Store Connect API key configuration'
+  lane :verify_api_key do
+    scholesa_api_key
+    UI.success("Loaded App Store Connect API key #{ENV['APP_STORE_CONNECT_KEY_ID']} for issuer #{ENV['APP_STORE_CONNECT_ISSUER_ID']}")
+  end
+
+  desc 'Build a signed iOS release IPA and upload it to TestFlight'
+  lane :upload_testflight do
+    require_env_values!(%w[APPLE_DEVELOPER_TEAM_ID])
+    api_key = scholesa_api_key
+    output_directory = File.join(app_root, 'build', 'ios', 'fastlane')
+    ipa_path = File.join(output_directory, 'Scholesa.ipa')
+
+    Dir.chdir(app_root) do
+      sh("#{flutter_binary} pub get")
+    end
+
+    build_ios_app(
+      workspace: 'Runner.xcworkspace',
+      scheme: 'Runner',
+      configuration: 'Release',
+      clean: true,
+      export_method: 'app-store',
+      output_directory: output_directory,
+      output_name: 'Scholesa.ipa',
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_DEVELOPER_TEAM_ID']}"
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+    )
+  end
+end
