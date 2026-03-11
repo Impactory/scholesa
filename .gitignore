@@ -9,6 +9,8 @@
 /coverage
 
 # next.js
+*debug*.log
+.firebase/logs/
 /.next/
 /out/
 
@@ -16,6 +18,9 @@
 /build
 
 # misc
+.tmp/
+**/__pycache__/
+*.pyc
 .DS_Store
 *.pem
 *.p8
