@@ -88,6 +88,25 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Verify Artifact Registry push access
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          ACCESS_TOKEN="$(gcloud auth print-access-token)"
+          RESPONSE="$(curl -sS -X POST \
+            -H \"Authorization: Bearer ${ACCESS_TOKEN}\" \
+            -H \"Content-Type: application/json\" \
+            \"https://artifactregistry.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/us/repositories/gcr.io:testIamPermissions\" \
+            -d '{"permissions":["artifactregistry.repositories.uploadArtifacts"]}')"
+
+          if ! printf '%s' "$RESPONSE" | grep -q 'artifactregistry.repositories.uploadArtifacts'; then
+            echo "Artifact Registry push preflight failed for gcr.io/${GCP_PROJECT_ID}."
+            echo "Grant the deploy principal roles/artifactregistry.writer on the backing repository or project, and confirm the gcr.io repository exists in the us multi-region."
+            echo "API response: $RESPONSE"
+            exit 1
+          fi
+
       - name: Full RC2 regression chain
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

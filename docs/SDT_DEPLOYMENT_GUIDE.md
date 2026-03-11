@@ -111,6 +111,8 @@ gcloud run deploy scholesa-web \
   --allow-unauthenticated
 ```
 
+The deploy principal must be able to push to Artifact Registry. When `gcr.io/YOUR_PROJECT_ID/...` names are backed by Artifact Registry, grant `roles/artifactregistry.writer` and verify access to the `gcr.io` repository in the `us` multi-region before running the deploy.
+
 **Web deployment standard**
 ```bash
 ./scripts/deploy.sh cloudrun-web

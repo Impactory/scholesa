@@ -85,7 +85,7 @@ This repository includes a GitHub Actions workflow to build and deploy to Cloud 
 Overview steps (automatable via the workflow):
 
 1. Create or download the Firebase service account JSON (from Firebase Console → Project Settings → Service accounts → Generate new private key). This JSON will be used by server-side code (Admin SDK).
-2. Create a GCP service account for deployment and grant it permissions to deploy to Cloud Run and push images to Container Registry / Artifact Registry. Recommended roles: `roles/run.admin`, `roles/iam.serviceAccountUser`, `roles/storage.admin` (or `roles/storage.objectAdmin`), and `roles/cloudbuild.builds.editor`.
+2. Create a GCP service account for deployment and grant it permissions to deploy to Cloud Run and push images to Container Registry / Artifact Registry. Recommended roles: `roles/run.admin`, `roles/iam.serviceAccountUser`, `roles/artifactregistry.writer`, `roles/storage.admin` (or `roles/storage.objectAdmin`), and `roles/cloudbuild.builds.editor`. For `gcr.io` image names on Artifact Registry-backed projects, make sure the principal can upload artifacts to the `gcr.io` repository in the `us` multi-region.
 3. Add repository secrets in GitHub (Repository Settings → Secrets and variables → Actions):
     - `GCP_SA_KEY`: the JSON key for the GCP deploy service account (use the full JSON content).
     - `GCP_PROJECT_ID`: your GCP project id.
