@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOCAL_ENV_FILE="$REPO_ROOT/.env.app_store_connect.local"
 PROFILE_PATH_DEFAULT="$HOME/Library/MobileDevice/Provisioning Profiles/scholesa-app-store.mobileprovision"
 PROFILE_PATH="${IOS_PROVISIONING_PROFILE_PATH:-$PROFILE_PATH_DEFAULT}"
+XCODE_PROFILE_DIR="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 
 fail() {
   echo "[apple-gh-secrets] $*" >&2
@@ -24,6 +25,20 @@ set +a
 [[ -n "${APP_STORE_CONNECT_KEY_ID:-}" ]] || fail "APP_STORE_CONNECT_KEY_ID is missing in $LOCAL_ENV_FILE."
 [[ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ]] || fail "APP_STORE_CONNECT_ISSUER_ID is missing in $LOCAL_ENV_FILE."
 [[ -n "${APPLE_DEVELOPER_TEAM_ID:-}" ]] || fail "APPLE_DEVELOPER_TEAM_ID is missing in $LOCAL_ENV_FILE."
+
+if [[ ! -f "$PROFILE_PATH" && -d "$XCODE_PROFILE_DIR" ]]; then
+  while IFS= read -r candidate; do
+    PROFILE_PATH="$candidate"
+    break
+  done < <(for candidate in "$XCODE_PROFILE_DIR"/*.mobileprovision; do
+    [[ -f "$candidate" ]] || continue
+    app_id="$(security cms -D -i "$candidate" | plutil -extract Entitlements.application-identifier raw -o - - 2>/dev/null || true)"
+    if [[ "$app_id" == "${APPLE_DEVELOPER_TEAM_ID}.com.scholesa.app" ]]; then
+      printf '%s\n' "$candidate"
+    fi
+  done)
+fi
+
 [[ -f "$PROFILE_PATH" ]] || fail "Provisioning profile not found at $PROFILE_PATH"
 
 base64 < "$APP_STORE_CONNECT_API_KEY_PATH" | tr -d '\n' | gh secret set APP_STORE_CONNECT_API_KEY_P8_BASE64 -R "$REPO_SLUG" -b-
