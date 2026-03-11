@@ -58,7 +58,7 @@ function looksTranslatable(text) {
 
 function findHardcoded(source, relativePath) {
   const findings = [];
-  const textNodeRegex = /<[^>\n]+>\s*([^<{\\n]*[A-Za-z\u4e00-\u9fff\u0E00-\u0E7F][^<{\\n]*)\s*<\/[^>\n]+>/g;
+  const textNodeRegex = /<[^>\n]+>\s*([^<>{}\n]*[A-Za-z\u4e00-\u9fff\u0E00-\u0E7F][^<>{}\n]*)\s*<\/[^>\n]+>/g;
   let match;
   while ((match = textNodeRegex.exec(source)) !== null) {
     const text = match[1].trim();
