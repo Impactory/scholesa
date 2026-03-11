@@ -38,19 +38,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Full RC2 regression chain
-        env:
-          VIBE_ENV: prod
-        run: npm run rc2:regression
-
-      - name: VIBE telemetry blocker gate
-        env:
-          VIBE_ENV: prod
-        run: npm run qa:vibe-telemetry:blockers
-
-      - name: Compliance regression gate
-        run: npm run compliance:gate
-
       - name: Validate required deploy secrets
         env:
           GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
@@ -95,6 +82,21 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           create_credentials_file: true
           export_environment_variables: true
+
+      - name: Full RC2 regression chain
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          VIBE_ENV: prod
+        run: npm run rc2:regression
+
+      - name: VIBE telemetry blocker gate
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          VIBE_ENV: prod
+        run: npm run qa:vibe-telemetry:blockers
+
+      - name: Compliance regression gate
+        run: npm run compliance:gate
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
