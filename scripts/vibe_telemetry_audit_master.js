@@ -393,10 +393,13 @@ function runTelemetrySchemaValid(env, args) {
     reason: '',
   };
 
+  const requestedHours = Number.isFinite(args.hours) ? args.hours : 168;
+  const liveAuditHours = env === 'prod' ? Math.max(requestedHours, 24 * 45) : requestedHours;
+
   const commandParts = [
     'node scripts/telemetry_live_regression_audit.js',
     '--strict',
-    `--hours=${Number.isFinite(args.hours) ? args.hours : 168}`,
+    `--hours=${liveAuditHours}`,
     `--limit=${Number.isFinite(args.limit) ? args.limit : 20000}`,
   ];
   if (args.project) commandParts.push(`--project=${args.project}`);

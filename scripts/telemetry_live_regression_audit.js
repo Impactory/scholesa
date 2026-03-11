@@ -442,6 +442,9 @@ function isCredentialAuthError(error) {
   return (
     /unable to impersonate/i.test(message) ||
     /Could not refresh access token/i.test(message) ||
+    /Getting metadata from plugin failed/i.test(message) ||
+    /invalid_grant/i.test(message) ||
+    /invalid_rapt/i.test(message) ||
     /iam\.serviceAccounts\.getAccessToken/i.test(message) ||
     /\bUNAUTHENTICATED\b/i.test(message) ||
     /invalid authentication credentials/i.test(message)

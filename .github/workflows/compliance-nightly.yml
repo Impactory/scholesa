@@ -59,6 +59,11 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
       - name: Run full RC2 regression chain
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
