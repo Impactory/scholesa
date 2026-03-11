@@ -38,6 +38,9 @@ function includeByName(fullPath, relativePath) {
   // Compliance scanners intentionally contain banned markers for detection logic.
   if (relativePath.startsWith('scripts/compliance/')) return false;
   if (relativePath === 'scripts/scan.sh') return false;
+  // Ignore generated iOS Ruby/Bundler trees. They are tooling artifacts, not app runtime code.
+  if (relativePath.startsWith('apps/empire_flutter/app/ios/vendor/')) return false;
+  if (relativePath.startsWith('apps/empire_flutter/app/ios/.bundle/')) return false;
   const base = path.basename(fullPath);
   if (base.startsWith('.env')) return true;
   if (base === 'Dockerfile' || base === 'dockerfile') return true;

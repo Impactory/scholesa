@@ -156,7 +156,15 @@ retry_functions_deploy() {
 }
 
 main() {
-  local flutter_test_script="${FLUTTER_TEST_SCRIPT:-test:flutter:full}"
+  local flutter_test_script="${FLUTTER_TEST_SCRIPT:-}"
+
+  if [[ -z "$flutter_test_script" ]]; then
+    if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+      flutter_test_script="test:flutter:ci"
+    else
+      flutter_test_script="test:flutter:full"
+    fi
+  fi
 
   ensure_node24
 
