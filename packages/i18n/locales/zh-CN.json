@@ -538,6 +538,7 @@
     "explainBackPlaceholder": "Tell me what you learned...",
     "submitExplanation": "Submit Explanation",
     "explainBackSuccess": "Great explanation!",
+    "voiceRequirements": "请先登录、启用麦克风权限，并完成语音 API 配置后再使用 AI Coach 语音模式。",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
     "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help."

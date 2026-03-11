@@ -46,6 +46,9 @@
   "common": {
     "loading": "Loading..."
   },
+  "aiCoach": {
+    "voiceRequirements": "Sign in, enable microphone access, and configure voice API to use AI Coach voice mode."
+  },
   "dashboard": {
     "redirecting": "Redirecting to your workspace..."
   }

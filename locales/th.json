@@ -46,6 +46,9 @@
   "common": {
     "loading": "กำลังโหลด..."
   },
+  "aiCoach": {
+    "voiceRequirements": "ลงชื่อเข้าใช้ เปิดสิทธิ์ไมโครโฟน และตั้งค่า Voice API ก่อนใช้โหมดเสียงของ AI Coach"
+  },
   "dashboard": {
     "redirecting": "กำลังพาไปยังพื้นที่ทำงานของคุณ..."
   }

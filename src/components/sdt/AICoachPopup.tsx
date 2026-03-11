@@ -707,7 +707,7 @@ Guidance: ${
             </button>
 
             {!hasVoiceInputControl && (
-              <p className="text-xs text-red-500">Sign in, enable microphone access, and configure voice API to use AI Coach voice mode.</p>
+              <p className="text-xs text-red-500">{t('aiCoach.voiceRequirements')}</p>
             )}
           </div>
         )}

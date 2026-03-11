@@ -72,6 +72,9 @@
   "common": {
     "loading": "載入中..."
   },
+  "aiCoach": {
+    "voiceRequirements": "請先登入、啟用麥克風權限，並完成語音 API 設定後再使用 AI Coach 語音模式。"
+  },
   "dashboard": {
     "redirecting": "正在跳轉到你的工作區..."
   }
