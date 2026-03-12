@@ -32,9 +32,16 @@ PUBLIC_DIR = REPO_ROOT / "public"
 PUBLIC_ICONS_DIR = PUBLIC_DIR / "icons"
 PUBLIC_LOGO_DIR = PUBLIC_DIR / "logo"
 
-MASTER_SOURCE_CANDIDATES = [
+IOS_MASTER_SOURCE_CANDIDATES = [
     IOS_DIR / "1024.png",
     ASSETS_DIR / "scholesa_launcher.png",
+]
+
+ANDROID_MASTER_SOURCE_CANDIDATES = [
+    ANDROID_DIR / "scholesa_android_icon_master.png",
+    ANDROID_DIR / "android-launchericon-512-512.png",
+    ASSETS_DIR / "scholesa_launcher.png",
+    IOS_DIR / "1024.png",
 ]
 
 ANDROID_SIZES = [48, 72, 96, 144, 192, 512]
@@ -48,8 +55,8 @@ def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def pick_master_source() -> Path:
-    for candidate in MASTER_SOURCE_CANDIDATES:
+def pick_master_source(candidates: Iterable[Path]) -> Path:
+    for candidate in candidates:
         if candidate.exists():
             return candidate
     raise FileNotFoundError("No brand icon source found.")
@@ -213,8 +220,8 @@ def has_visible_transparency(img: Image.Image) -> bool:
     return mn < 255
 
 
-def load_normalized_master() -> Image.Image:
-    source = pick_master_source()
+def load_normalized_master(candidates: Iterable[Path]) -> Image.Image:
+    source = pick_master_source(candidates)
     img = Image.open(source).convert("RGBA")
 
     if not has_visible_transparency(img):
@@ -243,14 +250,14 @@ def write_many_png(master: Image.Image, outputs: Iterable[tuple[Path, int]]) -> 
         save_png(resize_icon(master, size), output)
 
 
-def generate_assets(master: Image.Image) -> None:
+def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> None:
     # Persist normalized transparent launcher source.
-    save_png(resize_icon(master, 512), ASSETS_DIR / "scholesa_launcher.png")
-    save_png(master, ASSETS_DIR / "scholesa_launcher_transparent.png")
+    save_png(resize_icon(ios_master, 512), ASSETS_DIR / "scholesa_launcher.png")
+    save_png(ios_master, ASSETS_DIR / "scholesa_launcher_transparent.png")
 
     # Android source icons.
     write_many_png(
-        master,
+        android_master,
         (
             (ANDROID_DIR / f"android-launchericon-{size}-{size}.png", size)
             for size in ANDROID_SIZES
@@ -259,7 +266,7 @@ def generate_assets(master: Image.Image) -> None:
 
     # iOS/macOS source icons.
     write_many_png(
-        master,
+        ios_master,
         (
             (IOS_DIR / f"{size}.png", size)
             for size in IOS_SIZES
@@ -268,7 +275,7 @@ def generate_assets(master: Image.Image) -> None:
 
     # Flutter web/PWA icons + favicon.
     write_many_png(
-        master,
+        ios_master,
         [
             (WEB_ICONS_DIR / "Icon-192.png", 192),
             (WEB_ICONS_DIR / "Icon-512.png", 512),
@@ -280,7 +287,7 @@ def generate_assets(master: Image.Image) -> None:
         ],
     )
 
-    favicon32 = resize_icon(master, 32)
+    favicon32 = resize_icon(ios_master, 32)
     ensure_dir(WEB_ICONS_DIR)
     favicon32.save(
         WEB_ICONS_DIR / "favicon.ico",
@@ -290,7 +297,7 @@ def generate_assets(master: Image.Image) -> None:
 
     # Next.js public icons + favicon.
     write_many_png(
-        master,
+        ios_master,
         [
             (PUBLIC_ICONS_DIR / "icon-192.png", 192),
             (PUBLIC_ICONS_DIR / "icon-512.png", 512),
@@ -298,7 +305,7 @@ def generate_assets(master: Image.Image) -> None:
         ],
     )
 
-    favicon64 = resize_icon(master, 64)
+    favicon64 = resize_icon(ios_master, 64)
     ensure_dir(PUBLIC_DIR)
     favicon64.save(
         PUBLIC_DIR / "favicon.ico",
@@ -308,7 +315,7 @@ def generate_assets(master: Image.Image) -> None:
 
     # Logo exports in multiple transparent formats.
     write_many_png(
-        master,
+        ios_master,
         [
             (PUBLIC_LOGO_DIR / "scholesa-logo-1024.png", 1024),
             (PUBLIC_LOGO_DIR / "scholesa-logo-512.png", 512),
@@ -318,12 +325,13 @@ def generate_assets(master: Image.Image) -> None:
             (PUBLIC_LOGO_DIR / "scholesa-logo-64.png", 64),
         ],
     )
-    save_webp(resize_icon(master, 512), PUBLIC_LOGO_DIR / "scholesa-logo-512.webp")
+    save_webp(resize_icon(ios_master, 512), PUBLIC_LOGO_DIR / "scholesa-logo-512.webp")
 
 
 def main() -> None:
-    master = load_normalized_master()
-    generate_assets(master)
+    ios_master = load_normalized_master(IOS_MASTER_SOURCE_CANDIDATES)
+    android_master = load_normalized_master(ANDROID_MASTER_SOURCE_CANDIDATES)
+    generate_assets(ios_master, android_master)
     print("Brand icon/logo assets converted with transparent background and regenerated.")
 
 
