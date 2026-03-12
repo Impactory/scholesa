@@ -18,8 +18,11 @@ void main() {
       );
 
       final DateTime now = DateTime.now();
-      final Timestamp start = Timestamp.fromDate(now.add(const Duration(hours: 1)));
-      final Timestamp end = Timestamp.fromDate(now.add(const Duration(hours: 2)));
+      final DateTime anchor = DateTime(now.year, now.month, now.day, 12);
+      final Timestamp start =
+          Timestamp.fromDate(anchor.add(const Duration(hours: 1)));
+      final Timestamp end =
+          Timestamp.fromDate(anchor.add(const Duration(hours: 2)));
 
       await firestore.collection('sessionOccurrences').doc('occ-site-a').set(
         <String, dynamic>{

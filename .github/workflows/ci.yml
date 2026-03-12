@@ -193,5 +193,5 @@ jobs:
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
-      - name: Run full platform flow (includes deploy)
-        run: npm run flow:platform:full
+      - name: Run full platform gates (deploy handled by deploy workflow)
+        run: npm run flow:platform:gates
