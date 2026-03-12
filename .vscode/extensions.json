@@ -2,6 +2,9 @@
     "recommendations": [
         "dart-code.flutter",
         "dart-code.dart-code",
-        "google.geminicodeassist"
+        "github.vscode-github-actions",
+        "google.geminicodeassist",
+        "redhat.java",
+        "vscjava.vscode-gradle"
     ]
 }
