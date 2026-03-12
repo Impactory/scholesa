@@ -1,4 +1,10 @@
 {
+  "cSpell.ignorePaths": [
+    "dataconnect/example/**",
+    "**/.vscode.configs.import.cspell.config.*",
+    "**/dataconnect-generated/**",
+    "**/dataconnect-admin-generated/**"
+  ],
   "chatgpt.openOnStartup": true,
   "cloudcode.project": "studio-3328096157-e3f79",
   "continue.enableConsole": false,
