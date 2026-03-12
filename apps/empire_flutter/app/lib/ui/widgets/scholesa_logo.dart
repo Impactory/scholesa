@@ -18,9 +18,8 @@ class ScholesaLogo extends StatelessWidget {
   final double? borderRadius;
 
   bool get _useRasterTestFallback {
-    final WidgetsBinding? binding = WidgetsBinding.instance;
-    return binding != null &&
-        binding.runtimeType.toString().contains('TestWidgetsFlutterBinding');
+    final WidgetsBinding binding = WidgetsBinding.instance;
+    return binding.runtimeType.toString().contains('TestWidgetsFlutterBinding');
   }
 
   @override

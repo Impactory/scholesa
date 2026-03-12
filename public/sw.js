@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/_next/precache.QJ-e9YQlYKdVCCN-eE1LH.16fdebe3fa27f73b98049aaa8e1670a4.js"
+  "/_next/precache.C2IS7GnCMvFy-zOECbstR.53520223116cf82d8c6ab1e4a3a51d9a.js"
 );
 
 workbox.core.skipWaiting();
@@ -28,16 +28,60 @@ workbox.core.clientsClaim();
  */
 self.__precacheManifest = [
   {
-    "url": "/scholesa.svg",
-    "revision": "brand-source-20260312"
+    "url": "/favicon.ico",
+    "revision": "afac47a23684d5e635d1fcc745a66659"
+  },
+  {
+    "url": "/favicon.png",
+    "revision": "eab5ce4b9559edf902e68f8d99129560"
+  },
+  {
+    "url": "/icons/icon-192.png",
+    "revision": "8152efe092c34589924781e70d837ee9"
+  },
+  {
+    "url": "/icons/icon-512.png",
+    "revision": "46a7f7a0f69c46ff1e569988c15ef70f"
+  },
+  {
+    "url": "/logo/scholesa-logo-1024.png",
+    "revision": "1e0f9626979491b22a65cec04e6c0efd"
+  },
+  {
+    "url": "/logo/scholesa-logo-128.png",
+    "revision": "ab669d274bb16d9a419f7b895a629b63"
+  },
+  {
+    "url": "/logo/scholesa-logo-192.png",
+    "revision": "8152efe092c34589924781e70d837ee9"
+  },
+  {
+    "url": "/logo/scholesa-logo-256.png",
+    "revision": "edd86db4c587cbb13f7f8455aefd40f9"
+  },
+  {
+    "url": "/logo/scholesa-logo-512.png",
+    "revision": "46a7f7a0f69c46ff1e569988c15ef70f"
+  },
+  {
+    "url": "/logo/scholesa-logo-512.webp",
+    "revision": "470b871dac2781862545cb7f1c31d39e"
+  },
+  {
+    "url": "/logo/scholesa-logo-64.png",
+    "revision": "e37b123cbdbd2eb518108e3e35e7346b"
   },
   {
     "url": "/manifest.webmanifest",
-    "revision": "0caa94e6656ba58ffb9a2d80947b00ed"
+    "revision": "84be2c61df6ff528613e1ecf8d4aa817"
   },
   {
     "url": "/offline.html",
     "revision": "81399209934aba9dcb01858b5fcce4a4"
+  },
+  {
+    "url": "/scholesa.svg",
+    "revision": "2cb43af40e8a99e3778bfb1d652a27b0"
   },
   {
     "url": "/workbox-4754cb34.js",
