@@ -6,12 +6,14 @@ import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { guardedFetch } from './security/egressGuard';
+import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import {
   handleVoiceApi,
   handleCopilotMessage,
   handleVoiceAudio,
   handleVoiceTranscribe,
   handleTtsSpeak,
+  __voiceSystemInternals,
 } from './voiceSystem';
 
 admin.initializeApp();
@@ -868,6 +870,222 @@ function generateCoachResponse(
   return { message, requiresExplainBack, suggestedNextSteps };
 }
 
+type AiCoachUnderstandingSignal = {
+  intent: string;
+  complexity: string;
+  needsScaffold: boolean;
+  emotionalState: string;
+  confidence: number;
+  responseMode: string;
+  topicTags: string[];
+};
+
+function extractInternalLlmPayload(data: unknown): {
+  text?: string;
+  modelVersion?: string;
+  toolSuggestions?: string[];
+  understanding?: Partial<AiCoachUnderstandingSignal>;
+} | undefined {
+  const root = (data && typeof data === 'object') ? data as Record<string, unknown> : undefined;
+  if (!root) return undefined;
+  const response = (root.response && typeof root.response === 'object') ? root.response as Record<string, unknown> : undefined;
+  const output = (response?.output && typeof response.output === 'object') ? response.output as Record<string, unknown> : undefined;
+  const result = (root.result && typeof root.result === 'object') ? root.result as Record<string, unknown> : undefined;
+  const metadata = (root.metadata && typeof root.metadata === 'object') ? root.metadata as Record<string, unknown> : undefined;
+
+  const text = [
+    root.text,
+    result?.text,
+    output?.text,
+    response?.text,
+    root.message,
+    result?.message,
+  ].find((value) => typeof value === 'string' && value.trim().length > 0) as string | undefined;
+
+  const rawToolSuggestions = [
+    root.toolSuggestions,
+    result?.toolSuggestions,
+    output?.toolSuggestions,
+    metadata?.toolSuggestions,
+  ].find((value) => Array.isArray(value)) as unknown[] | undefined;
+
+  const understandingSource = [
+    root.understanding,
+    result?.understanding,
+    output?.understanding,
+    response?.understanding,
+    metadata?.understanding,
+  ].find((value) => value && typeof value === 'object') as Record<string, unknown> | undefined;
+
+  const toStringArray = (input: unknown): string[] | undefined => {
+    if (!Array.isArray(input)) return undefined;
+    const values = input.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0);
+    return values.length > 0 ? values : undefined;
+  };
+
+  const toOptionalString = (input: unknown): string | undefined =>
+    typeof input === 'string' && input.trim().length > 0 ? input.trim() : undefined;
+
+  const toOptionalBoolean = (input: unknown): boolean | undefined =>
+    typeof input === 'boolean' ? input : undefined;
+
+  const toOptionalNumber = (input: unknown): number | undefined =>
+    typeof input === 'number' && Number.isFinite(input) ? input : undefined;
+
+  return {
+    text: toOptionalString(text),
+    modelVersion: toOptionalString(root.modelVersion ?? result?.modelVersion ?? output?.modelVersion ?? metadata?.modelVersion),
+    toolSuggestions: toStringArray(rawToolSuggestions),
+    understanding: understandingSource ? {
+      intent: toOptionalString(understandingSource.intent),
+      complexity: toOptionalString(understandingSource.complexity),
+      needsScaffold: toOptionalBoolean(understandingSource.needsScaffold),
+      emotionalState: toOptionalString(understandingSource.emotionalState),
+      confidence: toOptionalNumber(understandingSource.confidence),
+      responseMode: toOptionalString(understandingSource.responseMode),
+      topicTags: toStringArray(understandingSource.topicTags),
+    } : undefined,
+  };
+}
+
+function mergeAiCoachUnderstanding(
+  base: AiCoachUnderstandingSignal,
+  override?: Partial<AiCoachUnderstandingSignal>,
+): AiCoachUnderstandingSignal {
+  if (!override) return base;
+  return {
+    intent: override.intent ?? base.intent,
+    complexity: override.complexity ?? base.complexity,
+    needsScaffold: override.needsScaffold ?? base.needsScaffold,
+    emotionalState: override.emotionalState ?? base.emotionalState,
+    confidence: typeof override.confidence === 'number' ? override.confidence : base.confidence,
+    responseMode: override.responseMode ?? base.responseMode,
+    topicTags: Array.isArray(override.topicTags) && override.topicTags.length > 0 ? override.topicTags : base.topicTags,
+  };
+}
+
+function buildAiCoachInput(
+  coachMode: string,
+  studentInput: string | undefined,
+  tags: string[],
+  checkpointId?: string,
+): string {
+  const trimmedInput = typeof studentInput === 'string' ? studentInput.trim() : '';
+  const tagsSummary = tags.length > 0 ? `Focus concepts: ${tags.join(', ')}.` : '';
+  const checkpointSummary = checkpointId ? `Checkpoint: ${checkpointId}.` : '';
+  if (trimmedInput) {
+    return `${trimmedInput} ${tagsSummary} ${checkpointSummary}`.replace(/\s+/g, ' ').trim();
+  }
+  return `The learner needs ${coachMode} support. ${tagsSummary} ${checkpointSummary}`.replace(/\s+/g, ' ').trim();
+}
+
+async function generateCoachResponseWithInference(input: {
+  siteId: string;
+  coachMode: string;
+  gradeBand: string;
+  displayName: string;
+  locale: string;
+  studentInput?: string;
+  conceptTags: string[];
+  checkpointId?: string;
+  learnerState?: { cognition: number; engagement: number; integrity: number } | null;
+  coppaBand: string;
+}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string }> {
+  const applyLearnerConversationalTone = (text: string, locale: string): string => {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    if (!normalized) return normalized;
+    if (locale !== 'en') return normalized;
+    const hasEncouragement = /\b(great|good|nice|awesome|you can do this|you've got this|well done)\b/i.test(normalized);
+    const hasQuestion = /\?/.test(normalized);
+    let out = hasEncouragement ? normalized : `Nice effort. ${normalized}`;
+    if (!hasQuestion) {
+      out = `${out} What should we try first?`;
+    }
+    return out;
+  };
+
+  const learnerMessage = buildAiCoachInput(
+    input.coachMode,
+    input.studentInput,
+    input.conceptTags,
+    input.checkpointId,
+  );
+  const heuristicUnderstanding = __voiceSystemInternals.deriveUnderstandingSignal({
+    message: learnerMessage,
+    role: 'student',
+    safety: {
+      safetyOutcome: 'allowed',
+      safetyReasonCode: 'none',
+      localizedMessage: '',
+      category: 'generic',
+    },
+  });
+  const baselineText = __voiceSystemInternals.buildAdaptiveLocalizedResponse(
+    'student',
+    input.locale as 'en' | 'zh-CN' | 'zh-TW' | 'th',
+    'generic',
+    heuristicUnderstanding as Parameters<typeof __voiceSystemInternals.buildAdaptiveLocalizedResponse>[3],
+  );
+
+  const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
+    service: 'llm',
+    body: {
+      message: learnerMessage,
+      locale: input.locale,
+      role: 'learner',
+      requesterRole: 'student',
+      gradeBand: input.gradeBand,
+      maxTokens: 220,
+      coachMode: input.coachMode,
+      conceptTags: input.conceptTags,
+      learnerState: input.learnerState ?? undefined,
+      coppaBand: input.coppaBand,
+      understanding: {
+        intent: heuristicUnderstanding.intent,
+        complexity: heuristicUnderstanding.complexity,
+        needsScaffold: heuristicUnderstanding.needsScaffold,
+        emotionalState: heuristicUnderstanding.emotionalState,
+        confidence: heuristicUnderstanding.confidence,
+        responseMode: heuristicUnderstanding.responseMode,
+        topicTags: heuristicUnderstanding.topicTags,
+      },
+    },
+    context: {
+      traceId: `genAiCoach-${randomUUID()}`,
+      siteId: input.siteId,
+      role: 'learner',
+      gradeBand: input.gradeBand,
+      locale: input.locale,
+      policyVersion: 'gen-ai-coach-policy-2026-03-12',
+      callerService: 'genAiCoach',
+    },
+  });
+
+  if (isInternalInferenceRequired() && !llmResult.ok) {
+    throw new HttpsError('unavailable', 'Internal AI inference is required but unavailable.');
+  }
+
+  const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
+  const understanding = mergeAiCoachUnderstanding(
+    heuristicUnderstanding as AiCoachUnderstandingSignal,
+    llmPayload?.understanding,
+  );
+  const candidateText = llmPayload?.text?.trim()
+    ? applyLearnerConversationalTone(llmPayload.text.trim(), input.locale)
+    : applyLearnerConversationalTone(baselineText, input.locale);
+
+  const suggestedNextSteps = llmPayload?.toolSuggestions?.slice(0, 3)
+    ?? [];
+  const requiresExplainBack = input.coachMode === 'verify' || input.coachMode === 'explain' || input.coppaBand === 'G9_12';
+
+  return {
+    message: candidateText,
+    suggestedNextSteps,
+    requiresExplainBack,
+    modelVersion: llmPayload?.modelVersion ?? 'voice-orchestrator-v1',
+  };
+}
+
 function applyKidFriendlyConversationalTone(
   message: string,
   displayName: string,
@@ -978,6 +1196,7 @@ export const genAiCoach = onCall(async (request) => {
   let message: string;
   let requiresExplainBack = false;
   let suggestedNextSteps: string[] = [];
+  let modelVersion = 'coach-template-v1';
 
   // If MVL gate is active, intercept with verification prompt
   if (mvlResult.gateActive) {
@@ -989,10 +1208,30 @@ export const genAiCoach = onCall(async (request) => {
       'Try a different approach independently first',
     ];
   } else {
-    const generated = generateCoachResponse(coachMode, displayName, xHat, tagsStr, studentInput);
-    message = generated.message;
-    requiresExplainBack = generated.requiresExplainBack;
-    suggestedNextSteps = generated.suggestedNextSteps;
+    try {
+      const generated = await generateCoachResponseWithInference({
+        siteId,
+        coachMode,
+        gradeBand: gb,
+        displayName,
+        locale: 'en',
+        studentInput,
+        conceptTags: tags,
+        checkpointId,
+        learnerState: xHat,
+        coppaBand,
+      });
+      message = generated.message;
+      requiresExplainBack = generated.requiresExplainBack;
+      suggestedNextSteps = generated.suggestedNextSteps;
+      modelVersion = generated.modelVersion;
+    } catch (error) {
+      console.warn('genAiCoach inference fallback engaged', { coachMode, siteId, reason: error instanceof Error ? error.message : String(error) });
+      const generated = generateCoachResponse(coachMode, displayName, xHat, tagsStr, studentInput);
+      message = generated.message;
+      requiresExplainBack = generated.requiresExplainBack;
+      suggestedNextSteps = generated.suggestedNextSteps;
+    }
   }
 
   const personaHint = typeof personaInstructions === 'string' ? personaInstructions.trim() : '';
@@ -1073,6 +1312,7 @@ export const genAiCoach = onCall(async (request) => {
     },
     meta: {
       version: '1.0.0',
+      modelVersion,
       gradeBand: gb,
       gradeBandSource,
       coppaBand,
