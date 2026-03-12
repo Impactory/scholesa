@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const admin = require('firebase-admin');
+const { initializeFirebaseRestClients } = require('./firebase_runtime_auth');
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply');
@@ -14,12 +14,7 @@ const projectId =
   process.env.GCLOUD_PROJECT ||
   'studio-3328096157-e3f79';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId,
-  });
-}
+const { db, auth } = initializeFirebaseRestClients({ projectId });
 
 const VOICE_UID_PATTERN = /^voice-live-(admin|teacher|student)-\d+(?:-[a-f0-9]{4})?$/;
 const FIRESTORE_ARTIFACT_PATTERNS = [
@@ -57,8 +52,6 @@ async function listAuthUsers(auth) {
 }
 
 async function main() {
-  const db = admin.firestore();
-  const auth = admin.auth();
   const authUsers = await listAuthUsers(auth);
   const userDocsSnap = await db.collection('users').get();
 

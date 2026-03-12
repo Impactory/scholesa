@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const admin = require('firebase-admin');
+const { initializeFirebaseRestClients } = require('./firebase_runtime_auth');
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply');
@@ -13,12 +13,7 @@ const projectId =
   process.env.GCLOUD_PROJECT ||
   'studio-3328096157-e3f79';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId,
-  });
-}
+const { db } = initializeFirebaseRestClients({ projectId });
 
 function titleCaseRole(role) {
   switch ((role || '').trim()) {
@@ -79,7 +74,6 @@ function generatedDisplayName(uid, data) {
 }
 
 async function main() {
-  const db = admin.firestore();
   const snap = await db.collection('users').get();
   const targets = [];
 
@@ -114,7 +108,7 @@ async function main() {
     await db.collection('users').doc(target.uid).set(
       {
         displayName: target.displayName,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: new Date(),
       },
       { merge: true },
     );

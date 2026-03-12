@@ -365,6 +365,7 @@ function buildFirestoreRestClient(projectId, accessToken) {
       ...options,
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        'x-goog-user-project': projectId,
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
       },
@@ -438,9 +439,10 @@ function buildFirestoreRestClient(projectId, accessToken) {
     collection(collectionName) {
       return {
         doc(documentId) {
+          const documentPath = `${baseUrl}/${encodeDocumentPath(collectionName, documentId)}`;
+
           return {
             async get() {
-              const documentPath = `${baseUrl}/${encodeDocumentPath(collectionName, documentId)}`;
               try {
                 const document = await requestJson(documentPath);
                 return createDocSnapshot(documentId, true, decodeFirestoreDocument(document));
@@ -457,6 +459,24 @@ function buildFirestoreRestClient(projectId, accessToken) {
                 }
                 throw error;
               }
+            },
+            async set(data, options = {}) {
+              const fieldPaths = Object.keys(data || {});
+              const query = options && options.merge && fieldPaths.length > 0
+                ? `?${fieldPaths.map((field) => `updateMask.fieldPaths=${encodeURIComponent(field)}`).join('&')}`
+                : '';
+              const document = await requestJson(`${documentPath}${query}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                  fields: Object.fromEntries(
+                    Object.entries(data || {}).map(([key, value]) => [key, encodeFirestoreValue(value)]),
+                  ),
+                }),
+              });
+              return createDocSnapshot(documentId, true, decodeFirestoreDocument(document));
+            },
+            async delete() {
+              await requestJson(documentPath, { method: 'DELETE' });
             },
           };
         },
@@ -488,6 +508,221 @@ function initializeFirestoreRestFallback(projectId) {
     projectId,
     credentialPath: 'gcloud-auth-user',
     transport: 'firestoreRestOAuth',
+  };
+}
+
+function mapAuthErrorCode(serverMessage) {
+  const normalized = String(serverMessage || '').trim().toUpperCase();
+  switch (normalized) {
+    case 'EMAIL_EXISTS':
+      return 'auth/email-already-exists';
+    case 'USER_NOT_FOUND':
+    case 'EMAIL_NOT_FOUND':
+      return 'auth/user-not-found';
+    case 'INVALID_EMAIL':
+      return 'auth/invalid-email';
+    case 'PHONE_NUMBER_EXISTS':
+      return 'auth/phone-number-already-exists';
+    case 'INVALID_PHONE_NUMBER':
+      return 'auth/invalid-phone-number';
+    case 'DUPLICATE_LOCAL_ID':
+      return 'auth/uid-already-exists';
+    case 'INVALID_LOCAL_ID':
+      return 'auth/invalid-uid';
+    case 'OPERATION_NOT_ALLOWED':
+      return 'auth/operation-not-allowed';
+    default:
+      return 'auth/internal-error';
+  }
+}
+
+function createAuthRestError(serverMessage, status, payload) {
+  const error = new Error(serverMessage || `Firebase Auth REST request failed with status ${status}`);
+  error.code = mapAuthErrorCode(serverMessage);
+  error.status = status;
+  error.payload = payload;
+  return error;
+}
+
+function decodeCustomClaims(customAttributes) {
+  if (typeof customAttributes !== 'string' || !customAttributes.trim()) {
+    return {};
+  }
+
+  try {
+    const claims = JSON.parse(customAttributes);
+    return claims && typeof claims === 'object' ? claims : {};
+  } catch {
+    return {};
+  }
+}
+
+function normalizeUserMetadata(user) {
+  const createdAt = user && user.createdAt ? new Date(Number(user.createdAt)).toISOString() : null;
+  const lastLoginAt = user && user.lastLoginAt ? new Date(Number(user.lastLoginAt)).toISOString() : null;
+  return {
+    creationTime: createdAt,
+    lastSignInTime: lastLoginAt,
+  };
+}
+
+function normalizeProviderData(providerUserInfo) {
+  if (!Array.isArray(providerUserInfo)) {
+    return [];
+  }
+
+  return providerUserInfo.map((provider) => ({
+    providerId: provider.providerId || null,
+    uid: provider.rawId || provider.federatedId || null,
+    displayName: provider.displayName || null,
+    email: provider.email || null,
+    photoURL: provider.photoUrl || null,
+  }));
+}
+
+function normalizeAuthUser(user) {
+  return {
+    uid: user.localId,
+    email: user.email || null,
+    displayName: user.displayName || null,
+    disabled: Boolean(user.disabled || user.disableUser),
+    emailVerified: Boolean(user.emailVerified),
+    customClaims: decodeCustomClaims(user.customAttributes),
+    providerData: normalizeProviderData(user.providerUserInfo),
+    metadata: normalizeUserMetadata(user),
+  };
+}
+
+function buildAuthCreateRequest(properties) {
+  const request = { ...properties };
+  if (typeof request.uid !== 'undefined') {
+    request.localId = request.uid;
+    delete request.uid;
+  }
+  if (typeof request.photoURL !== 'undefined') {
+    request.photoUrl = request.photoURL;
+    delete request.photoURL;
+  }
+  return request;
+}
+
+function buildAuthUpdateRequest(uid, properties) {
+  const request = {
+    ...properties,
+    localId: uid,
+  };
+  if (typeof request.photoURL !== 'undefined') {
+    request.photoUrl = request.photoURL;
+    delete request.photoURL;
+  }
+  if (typeof request.disabled !== 'undefined') {
+    request.disableUser = request.disabled;
+    delete request.disabled;
+  }
+  return request;
+}
+
+function buildFirebaseAuthRestClient(projectId, accessToken) {
+  const baseUrl = `https://identitytoolkit.googleapis.com/v1/projects/${projectId}`;
+
+  async function requestJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'x-goog-user-project': projectId,
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.headers || {}),
+      },
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message =
+        (payload && payload.error && payload.error.message) ||
+        `${response.status} ${response.statusText}`;
+      throw createAuthRestError(message, response.status, payload);
+    }
+
+    return payload;
+  }
+
+  async function lookupUser(body) {
+    const payload = await requestJson(`${baseUrl}/accounts:lookup`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!Array.isArray(payload.users) || payload.users.length === 0) {
+      throw createAuthRestError('USER_NOT_FOUND', 404, payload);
+    }
+    return normalizeAuthUser(payload.users[0]);
+  }
+
+  return {
+    async listUsers(maxResults = 1000, pageToken) {
+      const search = new URLSearchParams({ maxResults: String(maxResults) });
+      if (pageToken) {
+        search.set('nextPageToken', pageToken);
+      }
+      const payload = await requestJson(`${baseUrl}/accounts:batchGet?${search.toString()}`, {
+        method: 'GET',
+      });
+      return {
+        users: Array.isArray(payload.users) ? payload.users.map((user) => normalizeAuthUser(user)) : [],
+        pageToken: payload.nextPageToken || undefined,
+      };
+    },
+    async getUser(uid) {
+      return lookupUser({ localId: [uid] });
+    },
+    async getUserByEmail(email) {
+      return lookupUser({ email: [email] });
+    },
+    async createUser(properties) {
+      const payload = await requestJson(`${baseUrl}/accounts`, {
+        method: 'POST',
+        body: JSON.stringify(buildAuthCreateRequest(properties)),
+      });
+      return this.getUser(payload.localId);
+    },
+    async updateUser(uid, properties) {
+      await requestJson(`${baseUrl}/accounts:update`, {
+        method: 'POST',
+        body: JSON.stringify(buildAuthUpdateRequest(uid, properties)),
+      });
+      return this.getUser(uid);
+    },
+    async deleteUser(uid) {
+      await requestJson(`${baseUrl}/accounts:delete`, {
+        method: 'POST',
+        body: JSON.stringify({ localId: uid }),
+      });
+    },
+    async setCustomUserClaims(uid, customClaims) {
+      await requestJson(`${baseUrl}/accounts:update`, {
+        method: 'POST',
+        body: JSON.stringify({
+          localId: uid,
+          customAttributes: JSON.stringify(customClaims || {}),
+        }),
+      });
+    },
+  };
+}
+
+function initializeFirebaseRestClients(options = {}) {
+  const projectId = resolveProjectId(options.projectId, options.credentialPath);
+  if (!projectId) {
+    throw new Error('Unable to resolve a Firebase project ID for REST fallback clients.');
+  }
+
+  const accessToken = getGcloudAccessToken();
+  return {
+    projectId,
+    credentialPath: 'gcloud-auth-user',
+    transport: 'firebaseRestOAuth',
+    db: buildFirestoreRestClient(projectId, accessToken),
+    auth: buildFirebaseAuthRestClient(projectId, accessToken),
   };
 }
 
@@ -526,6 +761,7 @@ module.exports = {
   buildFirestoreRestClient,
   getGcloudAccessToken,
   initializeFirebaseAdmin,
+  initializeFirebaseRestClients,
   initializeFirestoreRestFallback,
   initializeFirestoreUserRestFallback,
   isCredentialAuthError,

@@ -12,9 +12,33 @@ resolve_local_gcloud_auth() {
     return 0
   fi
 
+  local gcloud_project="${FIREBASE_PROJECT_ID:-}"
+  if [[ -z "$gcloud_project" ]]; then
+    gcloud_project="$(gcloud config get-value project 2>/dev/null || true)"
+    if [[ -n "$gcloud_project" && "$gcloud_project" != "(unset)" ]]; then
+      export FIREBASE_PROJECT_ID="$gcloud_project"
+      echo "Using gcloud project for FIREBASE_PROJECT_ID: $FIREBASE_PROJECT_ID"
+    fi
+  fi
+
   if [[ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
     local standard_adc="$HOME/.config/gcloud/application_default_credentials.json"
-    if [[ -f "$standard_adc" ]]; then
+    local service_account_adc=""
+    if [[ -n "$gcloud_project" ]]; then
+      local project_service_account_adc="$HOME/.config/gcloud/legacy_credentials/firebase-adminsdk-fbsvc@${gcloud_project}.iam.gserviceaccount.com/adc.json"
+      if [[ -f "$project_service_account_adc" ]]; then
+        service_account_adc="$project_service_account_adc"
+      fi
+    fi
+
+    if [[ -z "$service_account_adc" ]]; then
+      service_account_adc="$(find "$HOME/.config/gcloud/legacy_credentials" -maxdepth 2 -type f -path '*/firebase-adminsdk-*/*.json' 2>/dev/null | head -n 1 || true)"
+    fi
+
+    if [[ -n "$service_account_adc" ]]; then
+      export GOOGLE_APPLICATION_CREDENTIALS="$service_account_adc"
+      echo "Using gcloud service-account ADC: $service_account_adc"
+    elif [[ -f "$standard_adc" ]]; then
       export GOOGLE_APPLICATION_CREDENTIALS="$standard_adc"
       echo "Using gcloud application-default ADC: $standard_adc"
     else
@@ -27,15 +51,6 @@ resolve_local_gcloud_auth() {
           echo "Using gcloud legacy ADC: $legacy_adc"
         fi
       fi
-    fi
-  fi
-
-  if [[ -z "${FIREBASE_PROJECT_ID:-}" ]]; then
-    local gcloud_project
-    gcloud_project="$(gcloud config get-value project 2>/dev/null || true)"
-    if [[ -n "$gcloud_project" && "$gcloud_project" != "(unset)" ]]; then
-      export FIREBASE_PROJECT_ID="$gcloud_project"
-      echo "Using gcloud project for FIREBASE_PROJECT_ID: $FIREBASE_PROJECT_ID"
     fi
   fi
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const admin = require('firebase-admin');
+const { initializeFirebaseRestClients } = require('./firebase_runtime_auth');
 
 const VALID_ROLES = new Set(['learner', 'educator', 'parent', 'site', 'partner', 'hq']);
 const argv = process.argv.slice(2);
@@ -14,12 +14,7 @@ const projectId =
   process.env.GCLOUD_PROJECT ||
   'studio-3328096157-e3f79';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId,
-  });
-}
+const { db, auth } = initializeFirebaseRestClients({ projectId });
 
 async function listAuthUsers(auth) {
   const users = new Map();
@@ -35,9 +30,6 @@ async function listAuthUsers(auth) {
 }
 
 async function main() {
-  const db = admin.firestore();
-  const auth = admin.auth();
-
   const userDocsSnap = await db.collection('users').get();
   const firestoreUsers = new Map(userDocsSnap.docs.map((doc) => [doc.id, doc.data() || {}]));
   const authUsers = await listAuthUsers(auth);

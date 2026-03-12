@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const admin = require('firebase-admin');
+const { initializeFirebaseRestClients } = require('./firebase_runtime_auth');
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply');
@@ -19,12 +19,7 @@ const password =
   process.env.TEST_LOGIN_PASSWORD ||
   'Test123!';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId,
-  });
-}
+const { db, auth } = initializeFirebaseRestClients({ projectId });
 
 const TARGET_UIDS = new Set([
   'WXmnwwgFlpfQNeQ8ixVq',
@@ -133,8 +128,6 @@ async function ensureAuthUser(auth, userDoc) {
 }
 
 async function main() {
-  const db = admin.firestore();
-  const auth = admin.auth();
   const targets = [];
 
   for (const uid of TARGET_UIDS) {
