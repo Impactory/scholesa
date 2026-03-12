@@ -3,8 +3,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_audit_page.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 Widget _buildHarness(Locale locale) {
   return MaterialApp(
+    theme: _testTheme,
     locale: locale,
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       GlobalMaterialLocalizations.delegate,

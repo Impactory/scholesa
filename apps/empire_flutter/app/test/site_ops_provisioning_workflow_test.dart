@@ -14,6 +14,11 @@ import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/workflow_bridge_service.dart';
 
+final ThemeData _testTheme = ThemeData(
+  useMaterial3: true,
+  splashFactory: InkRipple.splashFactory,
+);
+
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeWorkflowBridgeService extends WorkflowBridgeService {
@@ -196,7 +201,8 @@ Future<void> _pumpSiteOpsPage(
         ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
         Provider<FirestoreService>.value(value: firestoreService),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
+        theme: _testTheme,
         supportedLocales: <Locale>[
           Locale('en'),
           Locale('zh', 'CN'),
@@ -248,6 +254,7 @@ Future<void> _pumpProvisioningPage(
         ChangeNotifierProvider<ProvisioningService>.value(value: service),
       ],
       child: MaterialApp(
+        theme: _testTheme,
         locale: locale,
         supportedLocales: const <Locale>[
           Locale('en'),
