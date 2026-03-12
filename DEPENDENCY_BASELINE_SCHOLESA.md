@@ -73,7 +73,7 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 | audioplayers | ^6.6.0 | 6.x only | Validate BOS voice flows before major upgrades. |
 | record | ^6.2.0 | 6.x only | Validate microphone permissions and runtime flows before upgrade. |
 | speech_to_text | ^7.3.0 | 7.x only | Voice runtime sensitive. |
-| flutter_tts | ^4.2.5 | 4.x only | Voice runtime sensitive. |
+| flutter_tts | ^4.2.5 | 4.x only | Voice runtime sensitive. Current upstream web implementation still trips Flutter's wasm dry-run JS interop lint, so Scholesa deploy/build scripts must stay on the stable non-WASM web path until that package becomes wasm-clean. |
 | shared_preferences | ^2.5.4 | 2.x only | Storage behavior should stay compatible across mobile/web. |
 | equatable | ^2.0.8 | 2.x only | Model baseline. |
 | file_picker | ^10.3.10 | 10.x only | Re-test platform pickers on upgrade. |
@@ -111,6 +111,7 @@ Key findings:
 - Next.js 17+, React 19, Tailwind 4, Firebase 12/13, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
 - March 12, 2026 cleanup verified that Next 16-specific app warnings were removed by migrating the route interceptor to `proxy.ts` and sanitizing the exported Next config. Remaining production-build warnings come from the approved `next-pwa` 2.x plugin internals, not from unsupported Scholesa config keys.
 - `build_resolvers` and `build_runner_core` remain reported as discontinued Flutter transitives; clearing that debt requires an explicit build-runner toolchain migration rather than another patch bump.
+- Flutter web deployment stays on `flutter build web --release --no-tree-shake-icons --no-wasm-dry-run` for now. The previous `--wasm` deploy path is intentionally retired because `flutter_tts` 4.2.5 still emits wasm dry-run interop violations outside Scholesa source.
 
 ## Upgrade Rules
 
