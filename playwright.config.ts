@@ -40,7 +40,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `bash -lc '${nextEnv} npx next build && ${nextEnv} PORT=3002 npx next start -H 127.0.0.1 -p 3002'`,
+    command: `bash -lc '${nextEnv} npx next build --webpack && ${nextEnv} PORT=3002 npx next start -H 127.0.0.1 -p 3002'`,
     url: baseURL,
     timeout: 300_000,
     reuseExistingServer: false,
