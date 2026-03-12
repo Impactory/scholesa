@@ -15,13 +15,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Scholesa">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" href="favicon.svg">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-  <link rel="icon" type="image/png" href="favicon.png">
 
   <title>Scholesa</title>
   <link rel="manifest" href="manifest.json">
@@ -269,24 +266,7 @@
     <!-- Logo -->
     <div class="logo-container">
       <div class="logo">
-        <img src="favicon.svg" alt="Scholesa Logo" />
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for (const registration of registrations) {
-            registration.unregister();
-          }
-        });
-        if ('caches' in window) {
-          caches.keys().then((keys) => {
-            for (const key of keys) {
-              caches.delete(key);
-            }
-          });
-        }
-      });
-    }
-
+        <img src="favicon.svg" alt="Scholesa mark" />
       </div>
     </div>
     
@@ -323,6 +303,23 @@
   <script>
     {{flutter_js}}
     {{flutter_build_config}}
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            for (const key of keys) {
+              caches.delete(key);
+            }
+          });
+        }
+      });
+    }
 
     function hideSplash() {
       const splash = document.getElementById('splash');

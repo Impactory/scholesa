@@ -36,7 +36,6 @@ dependencies:
   
   # UI
   cupertino_icons: ^1.0.8
-  flutter_svg: ^2.2.0
   intl: ^0.20.2
   google_fonts: ^8.0.2
   
@@ -70,4 +69,3 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/icons/
