@@ -8,6 +8,7 @@ must never rewrite it.
 
 Outputs:
 - apps/empire_flutter/app/assets/images/scholesa.svg
+- apps/empire_flutter/app/assets/images/scholesa-raster.png
 - apps/empire_flutter/app/web/scholesa.svg
 - public/scholesa.svg
 - apps/empire_flutter/app/assets/icons/android/*.png
@@ -337,6 +338,7 @@ def generate_assets(shared_master: Image.Image) -> None:
     write_many_png(
         shared_master,
         [
+            (APP_ROOT / "assets" / "images" / "scholesa-raster.png", 512),
             (PUBLIC_LOGO_DIR / "scholesa-logo-1024.png", 1024),
             (PUBLIC_LOGO_DIR / "scholesa-logo-512.png", 512),
             (PUBLIC_LOGO_DIR / "scholesa-logo-256.png", 256),

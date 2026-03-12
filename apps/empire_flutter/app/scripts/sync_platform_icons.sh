@@ -122,6 +122,8 @@ else
   echo "[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets" >&2
 fi
 
+copy_png "$ICONS_DIR/scholesa_launcher.png" "$ROOT_DIR/assets/images/scholesa-raster.png"
+
 convert_png_to_opaque() {
   local src="$1"
   local dst="$2"
