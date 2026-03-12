@@ -821,55 +821,9 @@ function generateMvlInterceptMessage(
 }
 
 /**
- * Generate AI Coach response.
- * Primary path: internal inference gateway with BOS/MVL safety controls.
- * Fallback path: deterministic scaffold if internal inference is unavailable.
- * Forbidden: final answers, doing student's work, punitive language.
+ * Generate AI Coach response from internal inference only.
+ * Forbidden: final answers, doing the learner's work, punitive language, or low-confidence autonomous help.
  */
-function generateCoachResponse(
-  mode: string,
-  displayName: string,
-  xHat: { cognition: number; engagement: number; integrity: number } | null,
-  tagsStr: string,
-  studentInput: string | undefined,
-): { message: string; requiresExplainBack: boolean; suggestedNextSteps: string[] } {
-  let message: string;
-  let requiresExplainBack = false;
-  const suggestedNextSteps: string[] = [];
-  const hasLearnerInput = Boolean(studentInput?.trim());
-
-  switch (mode) {
-    case 'hint':
-      if (xHat && xHat.cognition < 0.4) {
-        message = `${displayName}, let’s slow it down and take one small step. Start by rereading the checkpoint, then pick the one part that matters most${tagsStr ? ` and keep your eye on ${tagsStr}` : ''}.`;
-        suggestedNextSteps.push('Re-read the mission brief carefully', 'Identify one thing you already understand');
-      } else {
-        message = `${displayName}, you already have something to build from. Start with what you know, then use it to test the next small move${tagsStr ? ` while focusing on ${tagsStr}` : ''}.`;
-        suggestedNextSteps.push('Try connecting this to something you learned before');
-      }
-      break;
-    case 'verify':
-      message = `${displayName}, walk me through your thinking on this step. I want to hear how you decided what to do, not just the result.`;
-      requiresExplainBack = true;
-      suggestedNextSteps.push('Explain your reasoning', 'Show evidence of your approach');
-      break;
-    case 'explain':
-      message = `${displayName}, let’s unpack it together. ${tagsStr ? `A useful place to focus is ${tagsStr}. ` : ''}We’ll keep it simple and make sure each part makes sense before moving on.`;
-      requiresExplainBack = true;
-      suggestedNextSteps.push('Restate the concept in your own words', 'Give a real-world example');
-      break;
-    case 'debug':
-      message = hasLearnerInput
-        ? `${displayName}, let’s troubleshoot this together. Start with the first place where what you expected and what actually happened stopped matching.`
-        : `${displayName}, let’s troubleshoot this together. Check the first spot where the result stopped matching your plan.`;
-      suggestedNextSteps.push('Check your most recent change', 'Compare expected vs actual output');
-      break;
-    default:
-      message = `${displayName}, I’m here with you. What part should we work on first?`;
-  }
-
-  return { message, requiresExplainBack, suggestedNextSteps };
-}
 
 type AiCoachUnderstandingSignal = {
   intent: string;
