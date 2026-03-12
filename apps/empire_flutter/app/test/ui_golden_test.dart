@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
+import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
 import 'package:scholesa_app/ui/landing/landing_page.dart';
@@ -147,8 +148,13 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(1280, 800),
-        child: ChangeNotifierProvider<AppState>.value(
-          value: appState,
+        child: MultiProvider(
+          providers: <ChangeNotifierProvider<dynamic>>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<MessageService>.value(
+              value: _buildMessageService(appState.userId ?? ''),
+            ),
+          ],
           child: const RoleDashboard(),
         ),
       );
@@ -165,8 +171,13 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(1280, 800),
-        child: ChangeNotifierProvider<AppState>.value(
-          value: appState,
+        child: MultiProvider(
+          providers: <ChangeNotifierProvider<dynamic>>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<MessageService>.value(
+              value: _buildMessageService(appState.userId ?? ''),
+            ),
+          ],
           child: const RoleDashboard(),
         ),
       );
@@ -183,8 +194,13 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(1280, 800),
-        child: ChangeNotifierProvider<AppState>.value(
-          value: appState,
+        child: MultiProvider(
+          providers: <ChangeNotifierProvider<dynamic>>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<MessageService>.value(
+              value: _buildMessageService(appState.userId ?? ''),
+            ),
+          ],
           child: const RoleDashboard(),
         ),
       );
@@ -209,6 +225,13 @@ AppState _buildStateForRole(UserRole role) {
     'entitlements': <dynamic>[],
   });
   return appState;
+}
+
+MessageService _buildMessageService(String userId) {
+  return MessageService(
+    firestoreService: _MockFirestoreService(),
+    userId: userId,
+  );
 }
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
