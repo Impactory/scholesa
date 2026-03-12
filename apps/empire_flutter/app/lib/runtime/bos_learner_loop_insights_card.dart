@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth/app_state.dart';
+import '../i18n/bos_coaching_i18n.dart';
 import '../services/telemetry_service.dart';
 import '../ui/theme/scholesa_theme.dart';
 import 'bos_service.dart';
@@ -122,6 +123,7 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
     final Color accent = widget.accentColor ?? ScholesaColors.educator;
 
     return Padding(
@@ -129,22 +131,38 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: accent.withValues(alpha: 0.2)),
+          border: Border.all(color: accent.withValues(alpha: 0.18)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Row(
               children: <Widget>[
-                Icon(Icons.query_stats, color: accent, size: 18),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.query_stats, color: accent, size: 18),
+                ),
                 const SizedBox(width: 8),
-                Text(
-                  widget.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: accent,
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurface,
+                    ),
                   ),
                 ),
               ],
@@ -154,7 +172,11 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
               widget.learnerName == null || widget.learnerName!.isEmpty
                   ? widget.subtitle
                   : '${widget.subtitle}: ${widget.learnerName}',
-              style: theme.textTheme.bodySmall,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 10),
             FutureBuilder<Map<String, dynamic>?>(
@@ -162,11 +184,45 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
               builder: (BuildContext context,
                   AsyncSnapshot<Map<String, dynamic>?> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LinearProgressIndicator(minHeight: 4);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          minHeight: 6,
+                          color: accent,
+                          backgroundColor: accent.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        BosCoachingI18n.loadingInsights(context),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  );
                 }
                 final Map<String, dynamic>? insights = snapshot.data;
                 if (insights == null) {
-                  return Text(widget.emptyLabel);
+                  return _buildInfoState(
+                    context,
+                    icon: Icons.insights_outlined,
+                    message: widget.emptyLabel,
+                    accent: accent,
+                  );
+                }
+
+                if (insights['error'] != null) {
+                  return _buildInfoState(
+                    context,
+                    icon: Icons.error_outline_rounded,
+                    message: BosCoachingI18n.errorLoadingInsights(context),
+                    accent: accent,
+                  );
                 }
 
                 final Map<String, dynamic> trend =
@@ -199,26 +255,67 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
                       spacing: 8,
                       runSpacing: 8,
                       children: <Widget>[
-                        _metricChip('Cognition ${pct(state['cognition'])}', accent),
-                        _metricChip('Engagement ${pct(state['engagement'])}', accent),
-                        _metricChip('Integrity ${pct(state['integrity'])}', accent),
-                        _metricChip('Score ${delta(trend['improvementScore'])}', accent),
                         _metricChip(
-                          'MVL ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
+                          '${BosCoachingI18n.cognition(context)} ${pct(state['cognition'])}',
                           accent,
+                          context,
+                        ),
+                        _metricChip(
+                          '${BosCoachingI18n.engagement(context)} ${pct(state['engagement'])}',
+                          accent,
+                          context,
+                        ),
+                        _metricChip(
+                          '${BosCoachingI18n.integrity(context)} ${pct(state['integrity'])}',
+                          accent,
+                          context,
+                        ),
+                        _metricChip(
+                          '${BosCoachingI18n.improvementScore(context)} ${delta(trend['improvementScore'])}',
+                          accent,
+                          context,
+                        ),
+                        _metricChip(
+                          '${BosCoachingI18n.mvlStatus(context)} ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
+                          accent,
+                          context,
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Delta: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
-                      style: theme.textTheme.bodySmall,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${BosCoachingI18n.latestSignal(context)}: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
                     ),
                     if (goals.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 8),
-                      Text(
-                        'Goals: ${goals.take(3).join(' • ')}',
-                        style: theme.textTheme.bodySmall,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${BosCoachingI18n.activeGoals(context)}: ${goals.take(3).join(' • ')}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -231,16 +328,56 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
     );
   }
 
-  Widget _metricChip(String text, Color accent) {
+  Widget _metricChip(String text, Color accent, BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSurface,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoState(
+    BuildContext context, {
+    required IconData icon,
+    required String message,
+    required Color accent,
+  }) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, color: accent, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/learner_surface_i18n.dart';
 import '../missions/missions.dart';
 import '../habits/habits.dart';
+import '../messages/message_service.dart';
 
 /// Learner Today Page - Daily summary for learners
 class LearnerTodayPage extends StatefulWidget {
@@ -31,6 +32,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MissionService>().loadMissions();
       context.read<HabitService>().loadHabits();
+      context.read<MessageService>().loadMessages();
     });
   }
 
@@ -116,35 +118,66 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
               ],
             ),
             const Spacer(),
-            IconButton(
-              onPressed: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'learner_today_open_messages'
+            Consumer<MessageService>(
+              builder: (BuildContext context, MessageService service, _) {
+                final int unreadCount = service.unreadNotificationCount;
+                return IconButton(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'learner_today_open_notifications',
+                        'unread_count': unreadCount,
+                      },
+                    );
+                    context.push('/notifications');
                   },
-                );
-                context.push('/messages');
-              },
-              icon: Stack(
-                children: <Widget>[
-                  Icon(Icons.notifications_outlined,
-                      color: context.schTextSecondary, size: 28),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: ScholesaColors.error,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: <Widget>[
+                      Icon(
+                        unreadCount > 0
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_outlined,
+                        color: context.schTextSecondary,
+                        size: 28,
                       ),
-                    ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: -6,
+                          top: -4,
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ScholesaColors.error,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.surface,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : '$unreadCount',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -663,9 +696,9 @@ class _ProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surface,
+        color: scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.24)),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -684,8 +717,9 @@ class _ProgressCard extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: scheme.onSurfaceVariant,
+                  color: scheme.onSurface,
                   fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -705,7 +739,7 @@ class _ProgressCard extends StatelessWidget {
                 '/$total',
                 style: TextStyle(
                   fontSize: 18,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: 8),
@@ -714,6 +748,7 @@ class _ProgressCard extends StatelessWidget {
                 style: TextStyle(
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                   fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -750,8 +785,12 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
-      color: scheme.surfaceContainerLow,
+      color: scheme.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outline.withValues(alpha: 0.16)),
+      ),
       child: InkWell(
         onTap: () {
           TelemetryService.instance.logEvent(

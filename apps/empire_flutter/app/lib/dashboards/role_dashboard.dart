@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../auth/app_state.dart';
 import '../router/app_router.dart';
+import '../modules/messages/message_service.dart';
 import '../services/telemetry_service.dart';
 import '../ui/localization/inline_locale_text.dart';
 import '../ui/theme/scholesa_theme.dart';
@@ -715,10 +716,53 @@ class RoleDashboard extends StatelessWidget {
     return '$localizedRole ${_t(context, 'Dashboard')}';
   }
 
+  Widget? _buildDynamicBadge(
+    BuildContext context,
+    DashboardCard card,
+    MessageService messageService,
+    bool isEnabled,
+  ) {
+    if (!isEnabled) {
+      return null;
+    }
+
+    int? count;
+    if (card.id == 'notifications') {
+      count = messageService.unreadNotificationCount;
+    } else if (card.id == 'messages') {
+      count = messageService.unreadDirectCount;
+    }
+
+    if (count == null || count <= 0) {
+      return null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.32),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (BuildContext context, AppState appState, _) {
+    return Consumer2<AppState, MessageService>(
+      builder: (
+        BuildContext context,
+        AppState appState,
+        MessageService messageService,
+        _,
+      ) {
         final ColorScheme scheme = Theme.of(context).colorScheme;
         final UserRole? role = appState.role;
 
@@ -938,9 +982,23 @@ class RoleDashboard extends StatelessWidget {
                         icon: card.icon,
                         gradient: card.gradient,
                         isEnabled: isEnabled,
-                        badgeText: isEnabled && card.badgeText != null
+                        badgeText:
+                            _buildDynamicBadge(
+                                      context,
+                                      card,
+                                      messageService,
+                                      isEnabled,
+                                    ) ==
+                                    null &&
+                                card.badgeText != null
                             ? _t(context, card.badgeText!)
                             : null,
+                        badge: _buildDynamicBadge(
+                          context,
+                          card,
+                          messageService,
+                          isEnabled,
+                        ),
                         onTap: () => _handleCardTap(context, card, isEnabled),
                       );
                     },

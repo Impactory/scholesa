@@ -175,9 +175,7 @@ class _MessagesPageState extends State<MessagesPage>
           );
         }
 
-        final List<Message> notifications = service.messages
-            .where((Message m) => m.type != MessageType.direct)
-            .toList();
+        final List<Message> notifications = service.notificationMessages;
 
         if (notifications.isEmpty) {
           return _buildEmptyState(

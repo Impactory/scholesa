@@ -32,8 +32,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     return Consumer<MessageService>(
       builder: (BuildContext context, MessageService service, _) {
-        final List<Message> notifications = service.messages;
-        final int unreadCount = service.unreadCount;
+        final List<Message> notifications = service.notificationMessages;
+        final int unreadCount = service.unreadNotificationCount;
 
         return Scaffold(
           backgroundColor: ScholesaColors.background,

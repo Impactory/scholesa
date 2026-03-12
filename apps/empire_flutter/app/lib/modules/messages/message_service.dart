@@ -22,12 +22,25 @@ class MessageService extends ChangeNotifier {
 
   // Getters
   List<Message> get messages => _filteredMessages;
+    List<Message> get notificationMessages => _filteredMessages
+      .where((Message m) => m.type != MessageType.direct)
+      .toList();
+    List<Message> get directMessages =>
+      _filteredMessages.where((Message m) => m.type == MessageType.direct).toList();
   List<Message> get unreadMessages =>
       _messages.where((Message m) => !m.isRead).toList();
+    List<Message> get unreadNotificationMessages => _messages
+      .where((Message m) => m.type != MessageType.direct && !m.isRead)
+      .toList();
+    List<Message> get unreadDirectMessages => _messages
+      .where((Message m) => m.type == MessageType.direct && !m.isRead)
+      .toList();
   List<Conversation> get conversations => _conversations;
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get unreadCount => unreadMessages.length;
+    int get unreadNotificationCount => unreadNotificationMessages.length;
+    int get unreadDirectCount => unreadDirectMessages.length;
   MessageType? get typeFilter => _typeFilter;
 
   List<Message> get _filteredMessages {
