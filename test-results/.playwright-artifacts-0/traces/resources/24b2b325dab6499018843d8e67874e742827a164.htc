@@ -1,0 +1,8 @@
+1:"$Sreact.fragment"
+2:I[484,[],"ViewportBoundary"]
+4:I[484,[],"MetadataBoundary"]
+5:"$Sreact.suspense"
+0:{"b":"aABq3gRjKHhXygNNUQ4oN","f":[[["",{"children":[["locale","en","d"],{"children":["(protected)",{"children":["parent",{"children":["billing",{"children":["__PAGE__",{}]}]}]}]}]},"$undefined","$undefined",true],null,["$","$1","h",{"children":[null,["$","$L2","hjnrCCXGWujJwU2uFkTOxv",{"children":"$L3"}],["$","div","hjnrCCXGWujJwU2uFkTOxm",{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$L6"}]}]}]]}],false]],"q":"","i":false,"S":false}
+3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:I[6869,[],"IconMark"]
+6:[["$","title","0",{"children":"Scholesa"}],["$","meta","1",{"name":"description","content":"Future Skills Academy"}],["$","link","2",{"rel":"manifest","href":"/manifest.webmanifest","crossOrigin":"$undefined"}],["$","link","3",{"rel":"icon","href":"/favicon.png","sizes":"32x32","type":"image/png"}],["$","link","4",{"rel":"icon","href":"/icons/icon-192.png","sizes":"192x192","type":"image/png"}],["$","link","5",{"rel":"icon","href":"/icons/icon-512.png","sizes":"512x512","type":"image/png"}],["$","link","6",{"rel":"apple-touch-icon","href":"/icons/icon-192.png","sizes":"192x192","type":"image/png"}],["$","$L7","7",{}]]
