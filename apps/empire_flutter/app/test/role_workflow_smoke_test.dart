@@ -1,14 +1,22 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
+import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/router/app_router.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 
 final ThemeData _testTheme = ThemeData(
   useMaterial3: true,
   splashFactory: InkRipple.splashFactory,
 );
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 AppState _buildStateForRole(UserRole role) {
   final AppState appState = AppState();
@@ -39,6 +47,14 @@ void main() {
       testWidgets('dashboard renders for ${role.name}',
           (WidgetTester tester) async {
         final AppState appState = _buildStateForRole(role);
+        final FirestoreService firestoreService = FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        );
+        final MessageService messageService = MessageService(
+          firestoreService: firestoreService,
+          userId: appState.userId ?? 'smoke-${role.name}',
+        );
 
         await tester.binding.setSurfaceSize(const Size(1280, 800));
         addTearDown(() async {
@@ -46,8 +62,12 @@ void main() {
         });
 
         await tester.pumpWidget(
-          ChangeNotifierProvider<AppState>.value(
-            value: appState,
+          MultiProvider(
+            providers: <SingleChildWidget>[
+              Provider<FirestoreService>.value(value: firestoreService),
+              ChangeNotifierProvider<AppState>.value(value: appState),
+              ChangeNotifierProvider<MessageService>.value(value: messageService),
+            ],
             child: MaterialApp(
               theme: _testTheme,
               home: const RoleDashboard(),
