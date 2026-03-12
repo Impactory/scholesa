@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../theme/scholesa_theme.dart';
 
 /// Scholesa Logo widget - consistent branding across the app.
-/// Uses the shared launcher asset generated from the canonical SVG brand mark.
+/// Uses the canonical SVG brand mark directly.
 class ScholesaLogo extends StatelessWidget {
   const ScholesaLogo({
     super.key,
@@ -48,10 +50,9 @@ class ScholesaLogo extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
-        child: Image.asset(
-          'assets/icons/scholesa_launcher.png',
+        child: SvgPicture.asset(
+          'assets/icons/scholesa_brand_mark.svg',
           fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
         ),
       ),
     );
