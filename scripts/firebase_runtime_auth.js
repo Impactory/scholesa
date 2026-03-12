@@ -119,7 +119,6 @@ function resolveFirebaseApiKey(explicitApiKey) {
   const candidateFiles = [
     path.resolve(process.cwd(), 'apps/empire_flutter/app/lib/firebase_options.dart'),
     path.resolve(process.cwd(), 'src/firebase/client-init.ts'),
-    path.resolve(process.cwd(), 'src/firebase/client-init-impactory.ts'),
   ];
 
   for (const candidate of candidateFiles) {
