@@ -94,6 +94,9 @@ Current signoff references:
 - `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
 - `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
+Operator shortcut:
+- `npm run rc3:big-bang:guide`
+
 Historical-only references:
 - `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
 - `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`

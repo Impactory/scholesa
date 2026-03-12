@@ -85,6 +85,7 @@
     "vibe:all": "node scripts/vibe_all.js",
     "rc2:regression": "bash ./scripts/rc2_regression.sh",
     "rc3:preflight": "bash ./scripts/rc3_preflight.sh",
+    "rc3:big-bang:guide": "bash ./scripts/rc3_big_bang_cutover_entrypoint.sh --verify-artifacts",
     "qa:release:big-bang-docs": "node scripts/verify_big_bang_release_artifacts.js",
     "audit:coppa:no-ads": "bash ./scripts/coppa_no_ad_audit.sh",
     "qa:coppa:guards": "bash -lc 'cd functions && npm run test:coppa'",

@@ -1,6 +1,9 @@
 # SCHOLESA RC3 PHASE – BLOCKER REMEDIATION FINAL STATUS
 ## Complete Audit & Remediation Report
 
+> Historical remediation snapshot with March 12 alignment notes. This document is supporting evidence, not the authoritative release-control artifact.
+> Current release control is defined by `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
+
 **Date**: March 8, 2026  
 **Phase**: RC3 Release Candidate 3 (Pre-Launch Hardening)  
 **Status**: 🟢 **4 OF 4 BLOCKERS DEPLOYED / VERIFIED** | 🟢 **OPTIONAL ENHANCEMENTS ONLY**

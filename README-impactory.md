@@ -60,6 +60,8 @@ firebase deploy --only functions
 
 Production rollout policy is big-bang only. Scholesa production releases do not use partial canary exposure. Use `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` for launch control.
 
+For a single operator entry point, run `npm run rc3:big-bang:guide`.
+
 ### Learner AI Runtime Policy
 
 - Learner-facing BOS/MIA help is internal-inference only.
