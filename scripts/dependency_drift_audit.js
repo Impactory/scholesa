@@ -99,6 +99,13 @@ function semverType(from, to) {
   const current = parse(from);
   const next = parse(to);
   if (!current || !next) return 'unknown';
+  if (
+    next[0] < current[0] ||
+    (next[0] === current[0] && next[1] < current[1]) ||
+    (next[0] === current[0] && next[1] === current[1] && next[2] < current[2])
+  ) {
+    return 'downgrade';
+  }
   if (next[0] !== current[0]) return 'major';
   if (next[1] !== current[1]) return 'minor';
   if (next[2] !== current[2]) return 'patch';
