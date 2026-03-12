@@ -1,5 +1,12 @@
 # AI Services Quick Reference
 
+## Production Status (March 12, 2026)
+
+- Learner-facing BOS/MIA help is internal-inference only in production.
+- Autonomous learner help requires certified confidence `>= 0.97`.
+- Low-confidence, unavailable, or non-compliant inference escalates safely instead of fabricating help.
+- Test adapters and local mocks remain development-only and are not valid production signoff evidence.
+
 ## Basic Usage
 
 ### 1. Simple AI Request
@@ -364,11 +371,9 @@ function MyComponent() {
 ### Required
 
 ```bash
-# Client-side (NEXT_PUBLIC_*)
-NEXT_PUBLIC_GEMINI_API_KEY=AIza...
-
-# Server-side (optional, for OpenAI fallback)
-OPENAI_API_KEY=sk-...
+# Server-side runtime
+FIREBASE_SERVICE_ACCOUNT=...
+INTERNAL_INFERENCE_AUTH=...
 ```
 
 ### Model Router Config
@@ -377,10 +382,10 @@ OPENAI_API_KEY=sk-...
 import { modelRouter } from '@/src/lib/ai/modelAdapter';
 
 // Set default adapter
-modelRouter.setDefaultAdapter('gemini'); // or 'openai'
+modelRouter.setDefaultAdapter('internal');
 
-// Override for specific request
-const response = await modelRouter.complete(request, 'openai');
+// Override only for non-learner evaluation traffic where policy permits
+const response = await modelRouter.complete(request, 'internal');
 ```
 
 ---
@@ -402,15 +407,15 @@ const response = await modelRouter.complete(request, 'openai');
 - Don't hardcode rubrics in prompts (store in DB)
 - Don't skip feedback recording (you lose training signals)
 - Don't delete old rubric versions (breaks audit trail)
-- Don't expose API keys in client code (use NEXT_PUBLIC_* only for Gemini)
+- Don't expose inference credentials in client code
 
 ---
 
 ## Troubleshooting
 
 ### "Model request failed"
-**Check**: API key valid? Quota not exceeded?  
-**Fix**: Verify env vars, check API console for errors
+**Check**: Internal inference auth valid? Consent/site scope satisfied?  
+**Fix**: Verify server env vars, consent state, and internal inference health
 
 ### "No rubric found"
 **Check**: Does a rubric exist for this mission/grade/site?  
@@ -421,8 +426,8 @@ const response = await modelRouter.complete(request, 'openai');
 **Fix**: Always use `AIService.request()`, never call model adapters directly
 
 ### "Context not relevant"
-**Check**: Vector store not implemented yet (using mocks)  
-**Fix**: Wait for Phase 2 (vector DB integration) or manually curate exemplars
+**Check**: Retrieval corpus or rubric coverage is incomplete  
+**Fix**: Seed the relevant rubric/exemplar data and verify retrieval inputs before blaming the model
 
 ---
 

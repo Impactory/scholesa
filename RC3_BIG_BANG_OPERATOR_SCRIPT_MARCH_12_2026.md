@@ -1,33 +1,31 @@
-# RC3 Operator Canary Script (Historical, Superseded)
+# RC3 Big-Bang Operator Script
 
-**Date**: March 8, 2026  
+**Date**: March 12, 2026  
 **Project**: `studio-3328096157-e3f79`  
-**Purpose**: Historical one-page operator script for the live manual canary run.
-
-> Superseded on March 12, 2026 by `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`.
-> Do not use this document as the current production release-control artifact.
+**Purpose**: One-page operator script for the full production cutover verification. This replaces manual canary rollout for Scholesa production releases.
 
 ---
 
 ## Use This With
 
-- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md` (historical)
+- `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
-- `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
-- `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md` (current)
+- `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
 
 ---
 
 ## Operator Rules
 
-- Run in a clean browser profile or incognito window for each role.
-- Use production only.
+- Run only after the code, identity, compliance, BOS/MIA, and COPPA gates are already green.
+- Deploy the release fully, but keep traffic restricted to the release team until this script passes.
+- Use a clean browser profile or incognito window for each role.
 - Record the exact time, outcome, and any deviation.
-- Do not continue to the next role if a role fails its primary CTA or shows incorrect scope.
+- If any role fails its primary CTA, persistence check, or scope boundary, declare `NO-GO`, stop the cutover, and execute rollback.
+- Do not convert a failed big-bang cutover into a partial rollout or canary. The release either passes in full or rolls back in full.
 
 ---
 
-## Live Canary Accounts
+## Production Role Accounts
 
 | Role | Email | UID | Site Context | Default Route |
 |---|---|---|---|---|
@@ -39,8 +37,8 @@
 | HQ | `hq@scholesa.test` | `3hGfzDVbhyc5mDCgbLEPhZtDxCH2` | `site-1`, `site_001` / HQ | `/en/hq/sites` |
 
 **Credential note**:
-- The current live operator password verified for this canary set is `Test123!`.
-- If any account stops authenticating with that password, treat it as a release-blocking credential drift and rerun the live identity audit before proceeding.
+- The current production release-team password verified for this cutover set is `Test123!`.
+- If any account stops authenticating with that password, treat it as release-blocking identity drift and rerun the live identity audit before continuing.
 
 ---
 
@@ -55,7 +53,7 @@ Run roles in this order:
 5. Partner
 6. HQ
 
-This order minimizes cross-role contamination and ends with the highest-privilege surface.
+This sequence validates the lowest-privilege learner journey first and the highest-privilege surface last.
 
 ---
 
@@ -69,12 +67,14 @@ Steps:
 3. Open Missions.
 4. Create a mission attempt.
 5. Submit the mission attempt.
-6. Refresh the page.
-7. Confirm the attempt remains submitted.
+6. Trigger the AI coach on a learner-safe prompt and confirm the response is either high-confidence help or an explicit educator-review escalation, never fabricated help.
+7. Refresh the page.
+8. Confirm the attempt remains submitted.
 
 Expected outcome:
 - learner lands on learner route only
 - learner CTA persists after refresh
+- learner AI response is either compliant help or a confidence/COPPA escalation
 - no access to HQ route
 
 Operator evidence:
@@ -218,7 +218,7 @@ ________________________________________________________________________________
 ________________________________________________________________________________
 
 Post-run handoff:
-- Update `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
-- Copy the final GO / NO-GO outcome into `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
+- Update `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
+- Copy the final GO / NO-GO outcome into `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
 
-Release may only proceed under the current policy if all six roles pass `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
+Release may only remain live if all six roles pass and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` is fully completed.

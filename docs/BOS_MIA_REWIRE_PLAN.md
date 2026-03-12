@@ -3,6 +3,8 @@
 **Date:** 2026-02-07  
 **Purpose:** Rewire Scholesa so the product architecture directly supports the BOS+MIA research paper (closed-loop orchestration + metacognitive integrity), while remaining deployable in real classrooms.
 
+**Current production status (March 12, 2026):** the BOS/MIA runtime is live for learner-facing web, callable, and voice surfaces. Autonomous learner help is allowed only when certified confidence is `>= 0.97`; otherwise the runtime escalates safely for educator review or retry.
+
 ---
 
 ## 0) What “rewire” means
@@ -115,6 +117,13 @@ Scholesa supports the research paper when:
 - MVL gates enforce proof-of-work without punitive messaging
 - Contestability + fairness auditing exist and are operational
 - Experiment assignment (clusters/time windows) is supported for SW-CRT
+- Learner-facing AI never fabricates help below the production confidence/COPPA threshold
+
+## 6) Production deployment rule
+
+- Production rollout is big-bang, not canary.
+- All defined gates, BOS/MIA signoff, and six-role cutover verification must pass before broad traffic is opened.
+- Historical canary artifacts remain as evidence only and are not the current release policy.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

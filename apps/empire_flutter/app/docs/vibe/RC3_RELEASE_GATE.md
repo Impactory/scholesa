@@ -6,7 +6,7 @@
 
 For platform-wide March 8 live deployment criteria, also use:
 - `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
-- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
 
 ---
@@ -32,7 +32,7 @@ For platform-wide March 8 live deployment criteria, also use:
 ### BOS Integration
 - Runtime provider starts BOS listeners after session context resolution.
 - BOS events (`ai_help_opened`, `ai_help_used`, `ai_coach_response`) are emitted from assistant interactions.
-- Learner-only BOS fallback guard prevents role mismatch failures for non-learner roles.
+- Learner-only BOS confidence guard prevents role mismatch failures for non-learner roles and blocks low-confidence autonomous learner help.
 
 ### STT Integration
 - Primary STT path: audio recording upload to `/voice/transcribe` (multipart).
@@ -43,6 +43,7 @@ For platform-wide March 8 live deployment criteria, also use:
 - Primary AI path: `/copilot/message` via voice API with auth token.
 - Context includes role, mode, learner/site/session references, conversation turns, and learning-goals memory.
 - Conversational prompt shaping enforces coaching style and no-final-answer behavior.
+- Learner-facing responses require certified confidence `>= 0.97`; otherwise the UI must receive a safe escalation response.
 
 ### TTS Integration
 - Primary TTS path: play `tts.audioUrl` from voice API via `audioplayers`.
@@ -65,7 +66,7 @@ For platform-wide March 8 live deployment criteria, also use:
 ## Gap Fixes Applied for RC3
 
 1. Replaced obsolete broken BOS voice integration test with valid runtime widget test.
-2. Fixed non-learner fallback failure path (learner-only BOS fallback).
+2. Fixed non-learner failure path and removed low-confidence learner fallback behavior.
 3. Added session occurrence scoping resolver for BOS runtime context.
 4. Added platform microphone/speech permissions for Android/iOS/macOS.
 5. Added voice session lock/interrupt handling to prevent input race conditions.
@@ -108,6 +109,7 @@ For platform-wide March 8 live deployment criteria, also use:
 
 Required operational step before release promotion:
 - Execute on-device smoke checklist in `docs/VOICE_RUNTIME_SMOKE_TEST.md` across Android + iOS (and macOS if desktop release is included).
+- Execute the platform big-bang cutover checklist in `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
 
 Sign-off artifact:
 - Complete `docs/vibe/RC3_SIGNOFF_CHECKLIST.md` with Engineering, QA, Product, and Release approvals.

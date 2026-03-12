@@ -42,7 +42,9 @@ firebase emulators:start
 npm run test:e2e:web
 ```
 
-This Playwright gate is browser-only and does not start Firebase emulators. It uses the repository's `NEXT_PUBLIC_E2E_TEST_MODE` fake auth/data backend to validate locale-first routing, role redirects, and critical workflow mutations without external services.
+This Playwright gate is browser-only and does not start Firebase emulators. It uses the repository's `NEXT_PUBLIC_E2E_TEST_MODE` test harness to validate locale-first routing, role redirects, and critical workflow mutations without external services.
+
+This harness is test-only. Production deployment, BOS/MIA runtime validation, and launch signoff must run against real Firebase Auth, Firestore, Functions, and internal inference services.
 
 ### Building for Production
 
@@ -65,6 +67,15 @@ cd functions
 npm run build
 firebase deploy --only functions
 ```
+
+Production rollout policy is big-bang only. Scholesa production releases do not use partial canary exposure. Use `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` for launch control.
+
+### Learner AI Runtime Policy
+
+- Learner-facing BOS/MIA help is internal-inference only.
+- Autonomous learner help requires certified confidence `>= 0.97`.
+- Low-confidence, unavailable, or non-compliant inference must escalate safely instead of fabricating an answer.
+- Active school consent and site-scoped authorization are mandatory for learner AI and voice flows.
 
 ## Production & PWA notes
 

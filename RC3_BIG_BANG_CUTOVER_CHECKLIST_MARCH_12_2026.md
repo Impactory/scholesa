@@ -1,40 +1,37 @@
-# RC3 Production Canary Checklist (Historical, Superseded)
+# RC3 Big-Bang Cutover Checklist
 
-**Date**: March 8, 2026  
+**Date**: March 12, 2026  
 **Project**: `studio-3328096157-e3f79`  
-**Purpose**: Historical manual live canary pass for launch-critical workflows after deploy or before GO/NO-GO.
+**Purpose**: Manual full-system production cutover verification after deploy and before broad traffic is opened. This is the release-control artifact that replaces production canary rollout for Scholesa.
 
-> Superseded on March 12, 2026 by `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
-> Do not use this document as the current production release-control artifact.
-
-Use the exact role accounts and route sequence in `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md` only when reviewing the historical March 8 canary evidence. Use `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md` for the current release policy.
+Use the exact role accounts and route sequence in `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`.
 
 ---
 
 ## Operator Rules
 
-- Use live accounts only.
+- Use production accounts only.
 - Record start time, operator, and result for each role.
-- Treat any failed primary CTA, redirect loop, or persistence failure as a release blocker.
-- If any role fails, stop rollout and run the release gate in `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`.
-- Follow `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md` for the exact role order, accounts, routes, and evidence to capture.
+- Treat any failed primary CTA, redirect loop, persistence failure, low-confidence learner AI fabrication, or scope violation as a release blocker.
+- If any role fails, stop the cutover, rollback the full release, and rerun the release gate in `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md` before another attempt.
+- Do not use this checklist to justify partial traffic exposure.
 
 ---
 
-## Canary Metadata
+## Cutover Metadata
 
 | Field | Value |
 |---|---|
 | Operator | ____________________ |
 | Environment | Production |
-| Pre-Canary Auth Check | Verified March 8, 2026 for all 6 role accounts with `Test123!` |
+| Pre-Cutover Auth Check | Verified March 12, 2026 for all 6 role accounts with `Test123!` |
 | Start Time | ____________________ |
 | End Time | ____________________ |
 | Result | GO / NO-GO |
 
 ---
 
-## 1. Learner Canary
+## 1. Learner Cutover
 
 Account: `learner@scholesa.test`
 
@@ -43,15 +40,17 @@ Account: `learner@scholesa.test`
 - [ ] Open missions successfully
 - [ ] Create a mission attempt
 - [ ] Submit the mission attempt
+- [ ] Confirm learner AI returns compliant help or an explicit escalation, never fabricated low-confidence output
 - [ ] Confirm the submitted state remains visible after refresh
 
 Pass evidence:
 - Route resolves to learner area
 - Primary learner CTA persists after page refresh
+- AI assistance respects the `0.97` confidence/COPPA guard
 
 ---
 
-## 2. Educator Canary
+## 2. Educator Cutover
 
 Account: `teacher01.demo@scholesa.org`
 
@@ -68,7 +67,7 @@ Pass evidence:
 
 ---
 
-## 3. Parent Canary
+## 3. Parent Cutover
 
 Account: `parent001.demo@scholesa.org`
 
@@ -85,7 +84,7 @@ Pass evidence:
 
 ---
 
-## 4. Site Canary
+## 4. Site Cutover
 
 Account: `site001.demo@scholesa.org`
 
@@ -102,7 +101,7 @@ Pass evidence:
 
 ---
 
-## 5. Partner Canary
+## 5. Partner Cutover
 
 Account: `partner@scholesa.dev`
 
@@ -119,7 +118,7 @@ Pass evidence:
 
 ---
 
-## 6. HQ Canary
+## 6. HQ Cutover
 
 Account: `hq@scholesa.test`
 
@@ -138,12 +137,13 @@ Pass evidence:
 
 ## 7. Final Decision
 
-- [ ] Pre-canary auth check still matches the documented six-account set
-- [ ] All six role canaries passed
+- [ ] Pre-cutover auth check still matches the documented six-account set
+- [ ] All six role cutovers passed
 - [ ] No unexpected permission errors observed
 - [ ] No redirect loops observed
 - [ ] No broken primary CTA observed
 - [ ] No persistence failure observed after refresh
+- [ ] No learner-facing AI response violated the confidence/COPPA guardrail
 
 **GO / NO-GO**: ____________________
 
@@ -162,7 +162,7 @@ ________________________________________________________________________________
 | Operator | ____________________ |
 | Decision Time | ____________________ |
 | Final Decision | GO / NO-GO |
-| Evidence Reviewed | Live auth precheck / Manual browser canary / RC3 gate docs |
+| Evidence Reviewed | Live auth precheck / Full production cutover / RC3 gate docs |
 | Blocking Issue IDs | None / ____________________ |
 | Rollback Needed | No / Yes |
 

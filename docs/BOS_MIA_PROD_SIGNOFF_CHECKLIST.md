@@ -7,6 +7,7 @@ Latest execution evidence: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`
 - [ ] `npm run rc3:preflight` passes.
 - [ ] `npm run compliance:gate` passes.
 - [ ] No open BOS/COPPA blockers in release notes.
+- [ ] `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` is ready for execution.
 
 ## 2) Required Environment & Secrets
 
@@ -35,6 +36,7 @@ Latest execution evidence: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`
 2. [ ] Deploy web app (Next.js).
 3. [ ] Deploy/update Flutter web/mobile artifact as applicable.
 4. [ ] Run post-deploy smoke checks (below) before opening traffic.
+5. [ ] Run the six-role big-bang cutover sweep before opening broad traffic.
 
 ## 5) Post-Deploy Smoke Checks (Critical)
 
@@ -48,11 +50,13 @@ Latest execution evidence: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`
 - [ ] `/copilot/message` returns text + TTS metadata where enabled.
 - [ ] `/voice/transcribe` and `/tts/speak` succeed for valid authorized requests.
 - [ ] Redaction/safety metadata present in telemetry for voice flows.
+- [ ] Learner-facing spoken AI escalates safely when confidence is below `0.97`.
 
 ### COPPA Enforcement
 - [ ] Request with inactive/missing school consent fails with precondition error.
 - [ ] Cross-site request fails with permission error.
 - [ ] `npm run qa:coppa:guards` passes in prod-like environment.
+- [ ] Learner-facing AI does not fabricate low-confidence help in web, callable, or voice surfaces.
 
 ## 6) Telemetry & Traceability Validation
 - [ ] AI events present: `ai_help_opened`, `ai_help_used`, `ai_coach_response`.
@@ -72,4 +76,5 @@ Latest execution evidence: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`
 - [ ] Environment:
 - [ ] QA gate evidence links:
 - [ ] Compliance approval:
+- [ ] Big-bang cutover evidence links:
 - [ ] Go-live decision: APPROVED / HOLD

@@ -12,8 +12,9 @@ RC3 is considered `100% against gate` only when all of the following are true at
 1. Code gates pass.
 2. Data and identity gates pass against the live Firebase project.
 3. Launch-critical role workflows pass in automation.
-4. Manual production canary passes for all six core roles.
+4. Manual big-bang production cutover verification passes for all six core roles.
 5. Current signoff documentation matches the real system state.
+6. Learner-facing AI paths prove compliant confidence/COPPA behavior and never fabricate help below the autonomous threshold.
 
 This is a release standard, not a claim that production risk is literally zero.
 
@@ -55,22 +56,23 @@ Required result:
 - Flutter release build passes
 - compliance, COPPA, voice, i18n, and telemetry gates pass
 
-### C. Manual Production Canary
+### C. Manual Big-Bang Production Cutover
 
 This must be completed:
 
-- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
-- `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+- `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
+- `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
 
 Prerequisite evidence already captured for the current role set:
-- six live canary accounts authenticate successfully with `Test123!`
-- verified accounts are learner, educator, parent, site, partner, and HQ as listed in `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+- six live cutover accounts authenticate successfully with `Test123!`
+- verified accounts are learner, educator, parent, site, partner, and HQ as listed in `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
 
 Required result:
-- learner, educator, parent, site, partner, and HQ all pass live canary
+- learner, educator, parent, site, partner, and HQ all pass full production cutover verification
 - no refresh-time persistence failures
 - no redirect loops
 - no unauthorized data exposure
+- no learner AI response violates the `0.97` confidence/COPPA guardrail
 
 ---
 
@@ -79,17 +81,22 @@ Required result:
 A release is not `100% against gate` unless the repo contains or references:
 
 1. A current signoff artifact
-2. A current canary checklist result
+2. A current big-bang cutover checklist result
 3. Successful gate output for the strict live audit
 4. Successful gate output for login verification
 5. Successful gate output for RC3 preflight
-6. Recorded six-account live auth execution for the current canary account set
+6. Recorded six-account live auth execution for the current cutover account set
 
 Current signoff references:
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
 - `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
 - `RC3_LAUNCH_READINESS_REPORT.md`
+- `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
+- `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
+
+Historical-only references:
 - `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
 
 ---
 
@@ -99,10 +106,11 @@ Treat release as `NO-GO` if any of the following occur:
 
 1. Any strict identity script reports pending updates or blockers.
 2. Any role workflow fails in Playwright or protected-route validation.
-3. Any manual canary role cannot complete its primary CTA.
+3. Any manual cutover role cannot complete its primary CTA.
 4. Any role sees data outside its allowed scope.
 5. Any role lands on the wrong dashboard or enters a redirect loop.
 6. Documentation claims a greener state than the live system actually has.
+7. Any learner-facing AI flow returns low-confidence help instead of an escalation or educator-review prompt.
 
 ---
 
@@ -113,7 +121,7 @@ For this repo, `100%` means:
 - all known launch-critical blockers are closed
 - all defined gates are green
 - no known live data drift exists in Auth or Firestore
-- launch-critical workflows have both automated and manual evidence
+- launch-critical workflows have both automated and full cutover evidence
 - rollback and monitoring remain available if production behavior diverges
 
 It does not mean unknown unknowns are impossible. It means the release meets the full agreed deployment standard.

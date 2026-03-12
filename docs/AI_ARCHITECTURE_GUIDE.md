@@ -1,15 +1,26 @@
 # AI Architecture Guide - Vendor-Agnostic Intelligence Layer
 
+## Production Status (March 12, 2026)
+
+The current production runtime is no longer a permissive multi-provider fallback surface for learner-facing help.
+
+- Learner-facing web and callable BOS/MIA flows are internal-inference only.
+- Autonomous learner help requires certified confidence `>= 0.97`.
+- Low-confidence, unavailable, or non-compliant inference escalates safely instead of fabricating help.
+- Active school consent and site-scoped authorization are mandatory for learner AI and voice flows.
+- Test harnesses and adapter-level mocks remain test-only and are not part of the production release path.
+
 ## Overview
 
 This architecture makes **your app the system of record** and **AI providers stateless reasoning services**. This means:
 
-✅ **Swap Gemini ↔ OpenAI ↔ Claude** without losing intelligence  
+✅ **Keep provider choice abstracted behind your own contracts**  
 ✅ **Your rubrics/policies** stored in your DB, not hardcoded prompts  
 ✅ **Your retrieval/memory** via vector store (not vendor lock-in)  
 ✅ **Training dataset** collected for future fine-tuning  
 ✅ **PII redaction** before ANY model call  
-✅ **Audit trail** for every AI interaction
+✅ **Audit trail** for every AI interaction  
+✅ **Learner-safe confidence gating and COPPA enforcement**
 
 ---
 
@@ -39,11 +50,11 @@ class OpenAIAdapter implements ModelAdapter {
   complete(request: ModelRequest): Promise<ModelResponse>
 }
 
-// Router handles fallback
-modelRouter.complete(request) // Auto-fallback if primary fails
+// Router handles guarded orchestration
+modelRouter.complete(request) // Internal inference first; learner-facing failures escalate safely
 ```
 
-**Key Insight**: Model receives YOUR rubrics/policies as context (not baked into training).
+**Key Insight**: Model receives YOUR rubrics/policies as context (not baked into training), but learner-facing production responses must still pass confidence and compliance gates before they can be shown autonomously.
 
 ---
 
@@ -200,7 +211,7 @@ const response = await AIService.request({
 // 1. Redact PII from question
 // 2. Retrieve context (rubric, exemplars, misconceptions, past work)
 // 3. Build ModelRequest with YOUR rules
-// 4. Call model via router (fallback if primary fails)
+// 4. Call internal inference via router; if confidence/compliance is insufficient, escalate safely
 // 5. Parse response & extract citations
 // 6. Log everything (request, response, context, outcomes)
 // 7. Return to UI
@@ -284,22 +295,20 @@ const debug = await getDebugHelp(learnerId, studentName, siteId, grade, missionI
 
 ## Environment Setup
 
-### Required API Keys
+### Required Runtime Configuration
 ```bash
-# Client-side (browser)
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_key_here
-
-# Server-side (optional, for OpenAI fallback)
-OPENAI_API_KEY=your_openai_key_here
+# Server-side internal inference credentials only
+FIREBASE_SERVICE_ACCOUNT=...
+INTERNAL_INFERENCE_AUTH=...
 ```
 
 ### Model Router Configuration
 ```typescript
-// Default: Gemini primary, OpenAI fallback
-modelRouter.setDefaultAdapter('gemini');
+// Default: internal inference gateway for production learner flows
+modelRouter.setDefaultAdapter('internal');
 
-// Override for specific request
-await modelRouter.complete(request, 'openai');
+// Non-learner or offline eval traffic may override adapter selection where policy permits
+await modelRouter.complete(request, 'internal');
 ```
 
 ---
@@ -400,19 +409,19 @@ const ids = await seedDefaultRubrics('admin-user-id');
 - Redaction Service: Ensure PII removed
 - Retrieval Service: Verify context relevance
 - Model Adapter: Mock API responses
-- AI Service: End-to-end flow
+- AI Service: Guarded end-to-end flow with confidence escalation
 
 ### Integration Tests (TODO)
 - Full AI request → response → logging flow
 - Rubric retrieval hierarchy (mission > skill > pillar > grade > site > global)
-- Fallback behavior (Gemini fails → OpenAI succeeds)
+- Confidence/COPPA behavior (high confidence help vs guarded escalation)
 - Feedback recording → training dataset
 
 ### Manual Testing
 1. **AI Coach Popup**: Ask question → See response → Click "helpful" → Check log
 2. **Rubric Retrieval**: Create mission-specific rubric → Request AI help → Verify context includes rubric
 3. **Redaction**: Student asks "My name is X" → Verify "STUDENT_A" sent to model
-4. **Fallback**: Disable Gemini API key → Verify OpenAI used
+4. **Guardrail**: Force low-confidence learner inference → Verify safe escalation instead of fabricated help
 
 ---
 
@@ -467,9 +476,9 @@ const ids = await seedDefaultRubrics('admin-user-id');
 **Cause**: Redaction service not called or misconfigured  
 **Fix**: Ensure `AIService.request()` is used (not direct model calls); check redaction config
 
-### "Model fallback not working"
-**Cause**: Both Gemini and OpenAI API keys invalid/expired  
-**Fix**: Verify env vars, check API key quotas
+### "Learner AI keeps escalating"
+**Cause**: Confidence is below `0.97`, consent is inactive, or site scope is invalid  
+**Fix**: Verify consent, identity scoping, and internal inference health before lowering risk posture
 
 ### "Training dataset too large"
 **Cause**: Logs not filtered before export  
@@ -483,7 +492,7 @@ const ids = await seedDefaultRubrics('admin-user-id');
 A: Vendor lock-in. If Gemini changes pricing/policies or you want to switch to OpenAI/Claude, you lose all your "smartness."
 
 **Q: Can I use multiple models for the same request?**  
-A: Yes! Use `modelRouter.complete(request)` which tries primary, falls back to secondary. You can also A/B test by randomly assigning adapters.
+A: Only behind your own routing policy. For learner-facing production flows, the system must still enforce internal policy gates, confidence `>= 0.97`, and COPPA/site checks before showing an autonomous answer.
 
 **Q: How do I know which rubric version was used?**  
 A: Check `aiInteractionLogs` → `contextUsed` → find rubric block → `metadata.rubricVersion`.
@@ -507,9 +516,9 @@ A: `await AIInteractionLogger.exportForTraining(siteId, { minHelpfulRating: 0.7 
 
 ---
 
-**Documentation Date**: December 2024  
-**Architecture Version**: 1.0  
-**Status**: Phase 1 Complete ✅
+**Documentation Date**: March 2026  
+**Architecture Version**: 1.1  
+**Status**: Production learner guardrails active; retrieval/tooling roadmap still in progress ✅
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

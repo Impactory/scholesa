@@ -7,12 +7,13 @@
 
 ---
 
-## MARCH 8 RELEASE NOTE
+## MARCH 12 RELEASE NOTE
 
-- Live canary auth precheck executed successfully for all six operator accounts with `Test123!`
+- Live production auth precheck executed successfully for all six operator accounts with `Test123!`
 - HQ operator credential reference corrected to `hq@scholesa.test` (`3hGfzDVbhyc5mDCgbLEPhZtDxCH2`)
-- Release gate, canary checklist, operator script, and live signoff docs are now aligned to the same six-account set
-- Final step for literal `100% against gate`: complete the manual browser canary in `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- Release gate, big-bang cutover checklist, operator script, and live signoff docs are now aligned to the same six-account set
+- BOS/MIA learner AI is now internal-inference only, enforces a `0.97` autonomous confidence threshold, and escalates safely when confidence or consent requirements are not met
+- Final step for literal `100% against gate`: complete the manual browser cutover in `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---
 
@@ -45,6 +46,7 @@
 - **PWA/Offline**: Service worker verified
 - **i18n**: Centralized system live for EN / ZH-CN / ZH-TW on launch-critical BOS and auth surfaces
 - **Login Verification**: `amelda@scholesa.com`, `ameldalin561@gmail.com`, and `partner@example.com` verified with `Test123!`
+- **Learner AI Safety**: Autonomous learner help hard-gated at confidence `>= 0.97`; low-confidence or unavailable inference escalates instead of fabricating coaching
 
 ---
 
@@ -64,7 +66,7 @@ Choose one of the following:
 5. Load test: 5+ concurrent learner queries
 ```
 
-**Then**: Ready for production deployment
+**Then**: Ready for big-bang production cutover
 
 ### Option B: Post-Launch Enhancements (Optional)
 **Duration**: 3–4 hours  
@@ -78,11 +80,11 @@ Choose one of the following:
 
 **Timeline**: Can be done in RC3.1 (post-launch)
 
-### Option C: Direct Deployment
-**Duration**: Immediate  
-**Scope**: Go straight to production (for experienced teams)
+### Option C: Big-Bang Production Cutover
+**Duration**: Immediate after final smoke pass  
+**Scope**: Deploy fully, hold traffic to the release team, execute the full six-role cutover sweep, then open traffic if all checks pass
 
-**Requires**: Confidence in current state + monitoring setup
+**Requires**: `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---
 
@@ -101,7 +103,7 @@ All blocker remediation has been documented:
 
 1️⃣ **Smoke test the platform** (Option A)  
 2️⃣ **Begin post-launch enhancements** (Option B)  
-3️⃣ **Proceed to production deployment** (Option C)  
+3️⃣ **Proceed to big-bang production cutover** (Option C)  
 4️⃣ **Something else?**
 
 ---
@@ -111,5 +113,5 @@ All blocker remediation has been documented:
 - ✅ 3 commits ahead of origin/main
 - ✅ Ready to push to production repository
 
-**Recommendation**: **Option A (Smoke Testing) → Option C (Deploy)** for maximum confidence before launch.
+**Recommendation**: **Option A (Smoke Testing) → Option C (Big-Bang Cutover)** for maximum confidence before launch.
 

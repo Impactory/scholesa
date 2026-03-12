@@ -13,6 +13,7 @@ Status: GO (all listed gates passing)
 - BOS runtime listeners are initialized with resolved session context.
 - STT supports API transcription path plus local speech fallback.
 - AI chat path is wired through authenticated copilot endpoint with role/session context.
+- Learner-facing autonomous AI now requires certified confidence `>= 0.97`; low-confidence or unavailable inference escalates safely instead of fabricating help.
 - TTS supports remote audio URL playback with local synthesis fallback.
 - Interrupt controls and runtime lock handling are implemented to prevent race conditions.
 - Multi-turn coaching context, mode-aware guidance, BOS snapshot context, and in-session goal chips are included.
@@ -75,7 +76,7 @@ Status: GO (all listed gates passing)
   - Floating AI runtime path
   - HQ curriculum lifecycle and workflows
 - Persistence, UI reflection, and regression coverage are in place.
-- Current RC3 recommendation remains GO for candidate ship.
+- Current RC3 recommendation remains GO for candidate ship under the big-bang production cutover policy.
 
 ---
 

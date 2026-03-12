@@ -60,9 +60,9 @@ The last legacy Firestore-only profiles were reconciled into real Auth users and
 | `ameldalin561@gmail.com` | `i7dq6t07N8MTR22eTVbg` | `hq` | ✅ |
 | `partner@example.com` | `u-partner` | `partner` | ✅ |
 
-### Current Canary Account Auth Execution
+### Current Cutover Account Auth Execution
 
-The current production canary account set was re-verified on March 8, 2026 with password `Test123!` before manual operator execution.
+The current production cutover account set was re-verified on March 12, 2026 with password `Test123!` before manual operator execution.
 
 | Email | UID | Role | Auth Verified |
 |---|---|---|---|
@@ -73,7 +73,7 @@ The current production canary account set was re-verified on March 8, 2026 with 
 | `partner@scholesa.dev` | `test-partner-001` | `partner` | ✅ |
 | `hq@scholesa.test` | `3hGfzDVbhyc5mDCgbLEPhZtDxCH2` | `hq` | ✅ |
 
-This does not replace the manual browser canary. It establishes that the documented role accounts are currently login-capable and match the production operator runbook.
+This does not replace the manual browser cutover. It establishes that the documented role accounts are currently login-capable and match the production operator runbook.
 
 ---
 
@@ -139,6 +139,12 @@ Launch-critical runtime locale coverage is verified for:
 
 Active BOS, auth, and role-gated Flutter runtime flows are aligned with this tri-locale baseline.
 
+## Learner AI Runtime Guardrail
+
+- Learner-facing BOS/MIA help is internal-inference only.
+- Autonomous learner help is permitted only at certified confidence `>= 0.97`.
+- Low-confidence, unavailable, or consent-blocked inference escalates safely instead of fabricating coaching.
+
 ---
 
 ## Remaining Risk Boundary
@@ -162,24 +168,24 @@ Superseding references:
 - `BLOCKER_REMEDIATION_FINAL_STATUS.md`
 
 Operational follow-through:
-- `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
-- `RC3_OPERATOR_CANARY_SCRIPT_MARCH_8_2026.md`
+- `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`
 
 Final human release step still required for `100% against gate`:
-- complete the manual browser canary in `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- complete the manual browser big-bang cutover in `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---
 
-## Post-Canary Release Decision
+## Post-Cutover Release Decision
 
-Complete this immediately after the manual browser canary:
+Complete this immediately after the manual browser cutover:
 
 | Field | Value |
 |---|---|
 | Operator | ____________________ |
-| Browser Canary Time | ____________________ |
-| Canary Result | GO / NO-GO |
+| Browser Cutover Time | ____________________ |
+| Cutover Result | GO / NO-GO |
 | Checklist Completed | Yes / No |
 | Release Approved | Yes / No |
 | Blocking Issues | None / ____________________ |

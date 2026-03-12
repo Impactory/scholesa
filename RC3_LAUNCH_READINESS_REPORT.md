@@ -8,12 +8,13 @@
 
 ---
 
-## MARCH 8 RELEASE NOTE
+## MARCH 12 RELEASE NOTE
 
-- Re-verified the current six-account production canary set against live Firebase Auth with `Test123!`; all six accounts authenticated successfully
-- Correct live HQ canary account is `hq@scholesa.test`, and the operator runbook now matches that production identity
-- Top-level readiness docs, gate docs, and canary docs now point to the same live account set and evidence chain
-- Remaining step for full `100% against gate`: human execution of the manual browser canary
+- Re-verified the current six-account production cutover set against live Firebase Auth with `Test123!`; all six accounts authenticated successfully
+- Correct live HQ production account is `hq@scholesa.test`, and the operator runbook now matches that production identity
+- Top-level readiness docs, gate docs, and big-bang cutover docs now point to the same live account set and evidence chain
+- BOS/MIA learner AI now enforces a `0.97` autonomous confidence threshold and safe escalation under low confidence or missing consent
+- Remaining step for full `100% against gate`: human execution of the manual browser big-bang cutover
 
 ---
 

@@ -11,6 +11,7 @@
 3) **Privacy-minimized telemetry.** Default to derived features + buckets; avoid raw student text storage unless explicitly allowed.  
 4) **Sensor fusion rule:** No single proxy triggers high-salience actions (MVL/teacher alerts). Needs corroboration.
 5) **COPPA-first gating:** BOS + voice AI access requires active school consent (`coppaSchoolConsents/{siteId}`) and site-scoped authorization.
+6) **Confidence-first learner autonomy:** learner-facing BOS/MIA responses may be autonomous only when certified confidence is `>= 0.97`; otherwise the runtime must escalate safely instead of fabricating help.
 
 **Source spine:**
 - Rewire Plan (runtime modules + sequence)  
@@ -57,6 +58,7 @@ AI is “fully implemented” only when all are true:
 - Reliability risk + autonomy risk gates exist (even as v1 heuristics).
 - You can reconstruct a learner timeline: events → features → state → interventions → outcomes.
 - Teacher override + contestability workflow exists (minimum viable).
+- Learner-facing low-confidence or unavailable inference degrades to escalation/review, not deterministic fake help.
 
 ---
 
@@ -120,11 +122,16 @@ The deployed runtime exposes the same contract through Firebase callable names:
   - server-side writes only.
 - Voice paths (`/copilot/message`, `/voice/transcribe`, `/tts/speak`) enforce active school consent before model/tool execution.
 - Student-facing payloads remain privacy-minimized through server-side sanitization/redaction.
+- Learner-facing BOS/MIA responses enforce a certified confidence threshold of `0.97` before autonomous delivery.
 - Regression gate: run `cd functions && npm run test:coppa` to verify consent + cross-site denial guards.
 - Full completion gate: run `npm run qa:bos:mia:complete` from repo root.
 - Production signoff report: run `npm run qa:bos:mia:signoff` to generate `audit-pack/reports/bos-mia-signoff.json`.
 - Latest release certificate: `docs/BOS_MIA_RELEASE_CERTIFICATE_2026-03-03.md`.
 - Production sign-off checklist: `docs/BOS_MIA_PROD_SIGNOFF_CHECKLIST.md`.
+
+### Production rollout rule
+- Production releases use a full big-bang cutover after all gates are green.
+- Use `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md` and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` for the manual release-control sweep.
 
 ---
 

@@ -58,6 +58,15 @@ npm run build
 firebase deploy --only functions
 ```
 
+Production rollout policy is big-bang only. Scholesa production releases do not use partial canary exposure. Use `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` for launch control.
+
+### Learner AI Runtime Policy
+
+- Learner-facing BOS/MIA help is internal-inference only.
+- Autonomous learner help requires certified confidence `>= 0.97`.
+- Low-confidence, unavailable, or non-compliant inference must escalate safely instead of fabricating an answer.
+- Active school consent and site-scoped authorization are mandatory for learner AI and voice flows.
+
 ## Production & PWA notes
 
 This project expects runtime configuration via environment variables. Do NOT commit secrets into the repository. Use your hosting provider's secret store (Vercel, Netlify, Firebase, GCP Secret Manager, etc.).
