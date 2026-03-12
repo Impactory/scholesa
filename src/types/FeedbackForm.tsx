@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 
 interface Props {
   attemptId: string;
@@ -13,11 +14,18 @@ interface Props {
 
 export function FeedbackForm({ attemptId, onSuccess, onCancel }: Props) {
   const { user } = useAuthContext();
+  const trackInteraction = useInteractionTracking();
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleGrade = async (status: 'completed' | 'started') => {
     if (!user) return;
+    trackInteraction('help_accessed', {
+      cta: 'mission_attempt_review',
+      attemptId,
+      reviewStatus: status,
+      hasFeedback: feedback.trim().length > 0,
+    });
     setIsSubmitting(true);
     try {
       await updateDoc(doc(missionAttemptsCollection, attemptId), {
@@ -47,7 +55,13 @@ export function FeedbackForm({ attemptId, onSuccess, onCancel }: Props) {
       />
       <div className="mt-3 flex justify-end gap-2">
         <button 
-          onClick={onCancel} 
+          onClick={() => {
+            trackInteraction('feature_discovered', {
+              cta: 'mission_attempt_review_cancel',
+              attemptId,
+            });
+            onCancel();
+          }} 
           disabled={isSubmitting} 
           className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
         >

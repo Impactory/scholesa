@@ -27,7 +27,8 @@ from generate_cta_report import (
 class CtaReportPolicyTests(unittest.TestCase):
     def test_policy_contains_expected_non_actionable_entries(self) -> None:
         self.assertIn("src/components/ui/Button.tsx", NON_ACTIONABLE_WEB_PATHS)
-        self.assertIn("src/types/FeedbackForm.tsx", NON_ACTIONABLE_WEB_PATHS)
+        self.assertNotIn("src/types/FeedbackForm.tsx", NON_ACTIONABLE_WEB_PATHS)
+        self.assertNotIn("src/types/SubmissionGrader.tsx", NON_ACTIONABLE_WEB_PATHS)
 
         blocker_key = "Flutter unimplemented handlers (`UnimplementedError`/`UnsupportedError`)"
         self.assertIn(blocker_key, NON_ACTIONABLE_BLOCKER_PATHS)

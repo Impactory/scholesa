@@ -12,9 +12,9 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 ## Summary
 
-- Web files with CTA markers: **37**
+- Web files with CTA markers: **39**
 - Flutter files with CTA markers: **53**
-- Web CTA marker instances: **206**
+- Web CTA marker instances: **214**
 - Flutter CTA marker instances: **335**
 - Web files with quick-action markers: **0**
 - Flutter files with quick-action markers: **6**
@@ -31,7 +31,7 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 ## CTA Telemetry Coverage
 
-- Web CTA files with direct telemetry hooks/calls: **37/37**
+- Web CTA files with direct telemetry hooks/calls: **39/39**
 - Flutter CTA files with direct telemetry import/calls: **53/53**
 
 ## Quick Actions Coverage
@@ -91,13 +91,13 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `src/features/workflows/WorkflowRoutePage.tsx`: **covered**
 - `src/hooks/useTelemetry.ts`: **covered**
 - `src/lib/theme/ThemeModeToggle.tsx`: **covered**
+- `src/types/FeedbackForm.tsx`: **covered**
+- `src/types/SubmissionGrader.tsx`: **covered**
 
 ### Excluded Web Utility/Type Files
 
 - `src/components/ui/Button.tsx`: **excluded_non_actionable**
 - `src/types/FeedbackForm-impactory.tsx`: **excluded_non_actionable**
-- `src/types/FeedbackForm.tsx`: **excluded_non_actionable**
-- `src/types/SubmissionGrader.tsx`: **excluded_non_actionable**
 
 ### Flutter Coverage Matrix
 
@@ -214,13 +214,13 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L230: `onClick={() => setTimeRange('month')}`
 
 ### `src/components/checkpoints/CheckpointSubmission.tsx` (7)
-- L125: `<button`
-- L126: `onClick={onClose}`
-- L150: `<button`
-- L151: `onClick={onClose}`
-- L187: `<button`
+- L170: `<button`
+- L171: `onClick={onClose}`
 - L195: `<button`
-- L197: `onClick={onClose}`
+- L196: `onClick={onClose}`
+- L232: `<button`
+- L240: `<button`
+- L242: `onClick={onClose}`
 
 ### `src/components/goals/GoalSettingForm.tsx` (5)
 - L100: `<button`
@@ -278,24 +278,24 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L199: `onClick={onClose}`
 
 ### `src/components/sdt/AICoachPopup.tsx` (18)
-- L549: `<button`
-- L550: `onClick={handleOpenPopup}`
-- L571: `<button`
-- L572: `onClick={handleMinimizePopup}`
-- L634: `<button`
-- L636: `onClick={() => setMode(modeKey)}`
-- L655: `<button`
-- L656: `onClick={reset}`
-- L677: `<button`
-- L678: `onClick={isListening ? stopListening : startListening}`
-- L734: `<button`
-- L735: `onClick={async () => {`
-- L747: `<button`
-- L748: `onClick={async () => {`
-- L797: `<button`
-- L798: `onClick={handleSubmitExplainBack}`
-- L807: `<button`
-- L808: `onClick={reset}`
+- L550: `<button`
+- L551: `onClick={handleOpenPopup}`
+- L572: `<button`
+- L573: `onClick={handleMinimizePopup}`
+- L635: `<button`
+- L637: `onClick={() => setMode(modeKey)}`
+- L656: `<button`
+- L657: `onClick={reset}`
+- L678: `<button`
+- L679: `onClick={isListening ? stopListening : startListening}`
+- L735: `<button`
+- L736: `onClick={async () => {`
+- L748: `<button`
+- L749: `onClick={async () => {`
+- L798: `<button`
+- L799: `onClick={handleSubmitExplainBack}`
+- L808: `<button`
+- L809: `onClick={reset}`
 
 ### `src/components/sdt/AICoachScreen.tsx` (14)
 - L130: `<button`
@@ -443,6 +443,18 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 ### `src/lib/theme/ThemeModeToggle.tsx` (2)
 - L44: `<button`
 - L49: `onClick={() => {`
+
+### `src/types/FeedbackForm.tsx` (6)
+- L57: `<button`
+- L58: `onClick={() => {`
+- L70: `<button`
+- L71: `onClick={() => handleGrade('started')}`
+- L77: `<button`
+- L78: `onClick={() => handleGrade('completed')}`
+
+### `src/types/SubmissionGrader.tsx` (2)
+- L59: `<button`
+- L60: `onClick={() => {`
 
 ## Flutter CTA Files
 
@@ -832,14 +844,14 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L104: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` (8)
-- L970: `TextButton(`
-- L974: `FilledButton(`
-- L1395: `TextButton(`
-- L1499: `IconButton(`
-- L1508: `IconButton(`
-- L1585: `TextButton(`
-- L1815: `InkWell(`
-- L1824: `InkWell(`
+- L1010: `TextButton(`
+- L1014: `FilledButton(`
+- L1370: `TextButton(`
+- L1474: `IconButton(`
+- L1483: `IconButton(`
+- L1560: `TextButton(`
+- L1790: `InkWell(`
+- L1799: `InkWell(`
 
 ### `apps/empire_flutter/app/lib/runtime/ai_context_coach_section.dart` (2)
 - L82: `child: ListTile(`

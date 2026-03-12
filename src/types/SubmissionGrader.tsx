@@ -5,9 +5,12 @@ import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { query, where, doc } from 'firebase/firestore';
 import { missionAttemptsCollection, usersCollection, missionsCollection } from '@/src/firebase/firestore/collections';
 import { MissionAttempt } from '@/src/types/schema';
+import { useInteractionTracking, usePageViewTracking } from '@/src/hooks/useTelemetry';
 import { FeedbackForm } from './FeedbackForm';
 
 export function SubmissionGrader() {
+  usePageViewTracking('submission_grader_queue');
+
   // Fetch all submitted attempts
   const [attemptsSnap, loading] = useCollection(
     query(missionAttemptsCollection, where('status', '==', 'submitted'))
@@ -29,6 +32,7 @@ export function SubmissionGrader() {
 
 function SubmissionItem({ attempt }: { attempt: MissionAttempt }) {
   const [isGrading, setIsGrading] = useState(false);
+  const trackInteraction = useInteractionTracking();
   
   // Fetch Learner Name
   const [learnerSnap] = useDocument(doc(usersCollection, attempt.learnerId));
@@ -53,7 +57,15 @@ function SubmissionItem({ attempt }: { attempt: MissionAttempt }) {
         </div>
         {!isGrading && (
           <button 
-            onClick={() => setIsGrading(true)}
+            onClick={() => {
+              trackInteraction('help_accessed', {
+                cta: 'mission_attempt_grade_open',
+                attemptId: attempt.id,
+                missionId: attempt.missionId,
+                learnerId: attempt.learnerId,
+              });
+              setIsGrading(true);
+            }}
             className="rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
           >
             Grade

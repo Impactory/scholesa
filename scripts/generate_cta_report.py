@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB_EXTS = {".tsx", ".ts", ".jsx", ".js"}
 DART_EXTS = {".dart"}
 OUTPUT_REPORT = "CTA_FULL_INVENTORY.md"
+DOC_OUTPUT_REPORT = "docs/CTA_FULL_INVENTORY.md"
+LEGACY_REPORT = "CTA_REGRESSION_REPORT.md"
+DOC_LEGACY_REPORT = "docs/CTA_REGRESSION_REPORT.md"
 
 FLUTTER_WIDGET_MARKER_PATTERN = re.compile(
     r"(\bElevatedButton\(|\bTextButton\(|\bOutlinedButton\(|\bFilledButton\(|\bIconButton\(|\bFloatingActionButton\(|\bInkWell\(|\bGestureDetector\(|\bListTile\(|\bRefreshIndicator\()"
@@ -118,8 +121,8 @@ def main() -> None:
     ]
 
     web_telemetry_patterns = [
-        re.compile(r"useTelemetry|usePageViewTracking|useAutonomyTracking|useCompetenceTracking|useBelongingTracking|useAITracking"),
-        re.compile(r"TelemetryService\.track\(|trackClick\(|trackPageView\(|trackAutonomy\(|trackCompetence\(|trackBelonging\(|trackAI\("),
+        re.compile(r"useTelemetry|usePageViewTracking|useInteractionTracking|useAutonomyTracking|useCompetenceTracking|useBelongingTracking|useAITracking"),
+        re.compile(r"TelemetryService\.track\(|trackUnifiedEvent\(|trackClick\(|trackPageView\(|trackAutonomy\(|trackCompetence\(|trackBelonging\(|trackAI\("),
     ]
     flutter_telemetry_patterns = [
         re.compile(r"TelemetryService\.instance\.logEvent\("),
@@ -360,13 +363,17 @@ def main() -> None:
             lines.append(f"- ... {len(hits) - 20} more")
         lines.append("")
 
-    out_path = ROOT / OUTPUT_REPORT
-    legacy_path = ROOT / "CTA_REGRESSION_REPORT.md"
+    output_paths = [
+        ROOT / OUTPUT_REPORT,
+        ROOT / DOC_OUTPUT_REPORT,
+        ROOT / LEGACY_REPORT,
+        ROOT / DOC_LEGACY_REPORT,
+    ]
 
     rendered = "\n".join(lines) + "\n"
-    out_path.write_text(rendered)
-    legacy_path.write_text(rendered)
-    print(out_path.as_posix())
+    for output_path in output_paths:
+        output_path.write_text(rendered)
+    print((ROOT / OUTPUT_REPORT).as_posix())
 
 
 if __name__ == "__main__":

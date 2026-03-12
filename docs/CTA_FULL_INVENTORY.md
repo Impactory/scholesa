@@ -6,19 +6,20 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 - Actionable CTA coverage includes UI files with direct user-interaction markers and expected telemetry hooks/calls.
 - Excluded non-actionable web files are utility/type-only paths listed in `NON_ACTIONABLE_WEB_PATHS`.
+- Excluded non-actionable Flutter files are localization/utility-only paths listed in `NON_ACTIONABLE_FLUTTER_PATHS`.
 - Blocker findings exclude known generated/framework stubs listed in `NON_ACTIONABLE_BLOCKER_PATHS`.
 - Route TODO/FIXME blocker scan is restricted to route surfaces (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `route.ts`).
 
 ## Summary
 
-- Web files with CTA markers: **38**
-- Flutter files with CTA markers: **51**
-- Web CTA marker instances: **198**
-- Flutter CTA marker instances: **271**
-- Web files with quick-action markers: **2**
+- Web files with CTA markers: **39**
+- Flutter files with CTA markers: **53**
+- Web CTA marker instances: **214**
+- Flutter CTA marker instances: **335**
+- Web files with quick-action markers: **0**
 - Flutter files with quick-action markers: **6**
-- Web quick-action marker instances: **2**
-- Flutter quick-action marker instances: **13**
+- Web quick-action marker instances: **0**
+- Flutter quick-action marker instances: **17**
 
 ## Blocker Scan
 
@@ -30,18 +31,17 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 ## CTA Telemetry Coverage
 
-- Web CTA files with direct telemetry hooks/calls: **38/38**
-- Flutter CTA files with direct telemetry import/calls: **51/51**
+- Web CTA files with direct telemetry hooks/calls: **39/39**
+- Flutter CTA files with direct telemetry import/calls: **53/53**
 
 ## Quick Actions Coverage
 
-- Web quick-action files with direct telemetry hooks/calls: **2/2**
+- Web quick-action files with direct telemetry hooks/calls: **0/0**
 - Flutter quick-action files with direct telemetry import/calls: **6/6**
 
 ### Web Quick Actions Coverage Matrix
 
-- `app/[locale]/(protected)/educator/page.tsx`: **covered**
-- `app/[locale]/(protected)/parent/page.tsx`: **covered**
+- _none detected_
 
 ### Flutter Quick Actions Coverage Matrix
 
@@ -56,11 +56,6 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 
 - `app/[locale]/(auth)/login/page.tsx`: **covered**
 - `app/[locale]/(auth)/register/page.tsx`: **covered**
-- `app/[locale]/(protected)/educator/page.tsx`: **covered**
-- `app/[locale]/(protected)/hq/page.tsx`: **covered**
-- `app/[locale]/(protected)/parent/page.tsx`: **covered**
-- `app/[locale]/(protected)/partner/page.tsx`: **covered**
-- `app/[locale]/(protected)/site/page.tsx`: **covered**
 - `app/[locale]/page.tsx`: **covered**
 - `app/not-found.tsx`: **covered**
 - `src/components/SignOutButton.tsx`: **covered**
@@ -71,7 +66,9 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `src/components/analytics/StudentAnalyticsDashboard.tsx`: **covered**
 - `src/components/checkpoints/CheckpointSubmission.tsx`: **covered**
 - `src/components/goals/GoalSettingForm.tsx`: **covered**
+- `src/components/motivation/ClassInsights.tsx`: **covered**
 - `src/components/motivation/EducatorFeedbackForm.tsx`: **covered**
+- `src/components/motivation/MotivationNudges.tsx`: **covered**
 - `src/components/motivation/StudentMotivationProfile.tsx`: **covered**
 - `src/components/recognition/PeerRecognitionForm.tsx`: **covered**
 - `src/components/sdt/AICoachPopup.tsx`: **covered**
@@ -91,14 +88,16 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `src/components/stripe/WebhookMonitor.tsx`: **covered**
 - `src/features/auth/components/LoginForm.tsx`: **covered**
 - `src/features/navigation/components/Navigation.tsx`: **covered**
+- `src/features/workflows/WorkflowRoutePage.tsx`: **covered**
 - `src/hooks/useTelemetry.ts`: **covered**
+- `src/lib/theme/ThemeModeToggle.tsx`: **covered**
+- `src/types/FeedbackForm.tsx`: **covered**
+- `src/types/SubmissionGrader.tsx`: **covered**
 
 ### Excluded Web Utility/Type Files
 
 - `src/components/ui/Button.tsx`: **excluded_non_actionable**
 - `src/types/FeedbackForm-impactory.tsx`: **excluded_non_actionable**
-- `src/types/FeedbackForm.tsx`: **excluded_non_actionable**
-- `src/types/SubmissionGrader.tsx`: **excluded_non_actionable**
 
 ### Flutter Coverage Matrix
 
@@ -149,6 +148,8 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - `apps/empire_flutter/app/lib/offline/sync_status_widget.dart`: **covered**
 - `apps/empire_flutter/app/lib/router/role_gate.dart`: **covered**
 - `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart`: **covered**
+- `apps/empire_flutter/app/lib/runtime/ai_context_coach_section.dart`: **covered**
+- `apps/empire_flutter/app/lib/runtime/global_ai_assistant_overlay.dart`: **covered**
 - `apps/empire_flutter/app/lib/ui/auth/login_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/ui/landing/landing_page.dart`: **covered**
 - `apps/empire_flutter/app/lib/ui/widgets/cards.dart`: **covered**
@@ -164,64 +165,37 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 ## Web CTA Files
 
 ### `app/[locale]/(auth)/login/page.tsx` (3)
-- L84: `<button`
-- L87: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_login_submit' })}`
-- L98: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_login_to_register' })}`
+- L102: `<button`
+- L105: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_login_submit' })}`
+- L116: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_login_to_register' })}`
 
 ### `app/[locale]/(auth)/register/page.tsx` (3)
-- L134: `<button`
-- L137: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}`
-- L148: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}`
-
-### `app/[locale]/(protected)/educator/page.tsx` (3)
-- L94: `onClick={() => trackInteraction('feature_discovered', { cta: 'educator_view_details', sessionId: session.id })}`
-- L116: `onClick={() => trackInteraction('feature_discovered', { cta: 'educator_take_attendance' })}`
-- L123: `onClick={() => trackInteraction('feature_discovered', { cta: 'educator_create_mission' })}`
-
-### `app/[locale]/(protected)/hq/page.tsx` (5)
-- L73: `onClick={() => trackInteraction('feature_discovered', { cta: 'hq_view_all_sites' })}`
-- L104: `onClick={() => trackInteraction('feature_discovered', { cta: 'hq_manage_site', siteId: site.id })}`
-- L148: `onClick={() => trackInteraction('feature_discovered', { cta: 'hq_add_new_site' })}`
-- L155: `onClick={() => trackInteraction('feature_discovered', { cta: 'hq_user_management' })}`
-- L162: `onClick={() => trackInteraction('feature_discovered', { cta: 'hq_global_settings' })}`
-
-### `app/[locale]/(protected)/parent/page.tsx` (4)
-- L78: `onClick={() => trackInteraction('feature_discovered', { cta: 'parent_register_learner' })}`
-- L103: `onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_progress', learnerId: learner.uid })}`
-- L125: `onClick={() => trackInteraction('feature_discovered', { cta: 'parent_message_educator' })}`
-- L132: `onClick={() => trackInteraction('feature_discovered', { cta: 'parent_view_schedule' })}`
-
-### `app/[locale]/(protected)/partner/page.tsx` (3)
-- L99: `onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_reports', siteId: site.id })}`
-- L139: `onClick={() => trackInteraction('feature_discovered', { cta: 'partner_download_impact_report' })}`
-- L146: `onClick={() => trackInteraction('feature_discovered', { cta: 'partner_view_guidelines' })}`
-
-### `app/[locale]/(protected)/site/page.tsx` (2)
-- L107: `onClick={() => trackInteraction('feature_discovered', { cta: 'site_view_all' })}`
-- L139: `onClick={() => trackInteraction('feature_discovered', { cta: 'site_manage_schedule' })}`
+- L153: `<button`
+- L156: `onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}`
+- L167: `onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}`
 
 ### `app/[locale]/page.tsx` (2)
-- L25: `onClick={() => trackInteraction('feature_discovered', { cta: 'landing_login' })}`
-- L32: `onClick={() => trackInteraction('feature_discovered', { cta: 'landing_register' })}`
+- L28: `onClick={() => trackInteraction('feature_discovered', { cta: 'landing_login' })}`
+- L35: `onClick={() => trackInteraction('feature_discovered', { cta: 'landing_register' })}`
 
 ### `app/not-found.tsx` (1)
-- L16: `onClick={() => trackInteraction('help_accessed', { cta: 'not_found_home' })}`
+- L20: `onClick={() => trackInteraction('help_accessed', { cta: 'not_found_home' })}`
 
 ### `src/components/SignOutButton.tsx` (2)
-- L24: `<button`
-- L25: `onClick={() => {`
+- L27: `<button`
+- L28: `onClick={() => {`
 
 ### `src/components/analytics/AIInsightsPanel.tsx` (2)
-- L345: `<button`
-- L346: `onClick={() => {`
+- L359: `<button`
+- L360: `onClick={() => {`
 
 ### `src/components/analytics/AnalyticsDashboard.tsx` (6)
-- L132: `<button`
-- L133: `onClick={() => {`
-- L145: `<button`
-- L146: `onClick={() => {`
+- L147: `<button`
+- L148: `onClick={() => {`
 - L160: `<button`
-- L161: `onClick={handleExportCSV}`
+- L161: `onClick={() => {`
+- L175: `<button`
+- L176: `onClick={handleExportCSV}`
 
 ### `src/components/analytics/HQAnalyticsDashboard.tsx` (4)
 - L222: `<button`
@@ -230,30 +204,36 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L303: `onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}`
 
 ### `src/components/analytics/ParentAnalyticsDashboard.tsx` (2)
-- L230: `<button`
-- L232: `onClick={() => setSelectedChild(child.childId)}`
+- L253: `<button`
+- L255: `onClick={() => setSelectedChild(child.childId)}`
 
 ### `src/components/analytics/StudentAnalyticsDashboard.tsx` (4)
-- L217: `<button`
-- L218: `onClick={() => setTimeRange('week')}`
-- L227: `<button`
-- L228: `onClick={() => setTimeRange('month')}`
+- L219: `<button`
+- L220: `onClick={() => setTimeRange('week')}`
+- L229: `<button`
+- L230: `onClick={() => setTimeRange('month')}`
 
 ### `src/components/checkpoints/CheckpointSubmission.tsx` (7)
-- L125: `<button`
-- L126: `onClick={onClose}`
-- L150: `<button`
-- L151: `onClick={onClose}`
-- L187: `<button`
+- L170: `<button`
+- L171: `onClick={onClose}`
 - L195: `<button`
-- L197: `onClick={onClose}`
+- L196: `onClick={onClose}`
+- L232: `<button`
+- L240: `<button`
+- L242: `onClick={onClose}`
 
 ### `src/components/goals/GoalSettingForm.tsx` (5)
-- L98: `<button`
-- L99: `onClick={onClose}`
-- L159: `<button`
-- L167: `<button`
-- L169: `onClick={onClose}`
+- L100: `<button`
+- L101: `onClick={onClose}`
+- L161: `<button`
+- L169: `<button`
+- L171: `onClick={onClose}`
+
+### `src/components/motivation/ClassInsights.tsx` (4)
+- L90: `<button`
+- L94: `onClick={() => {`
+- L129: `<button`
+- L132: `onClick={() => {`
 
 ### `src/components/motivation/EducatorFeedbackForm.tsx` (21)
 - L163: `<button`
@@ -278,9 +258,17 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L426: `onClick={onCancel}`
 - ... 1 more
 
+### `src/components/motivation/MotivationNudges.tsx` (6)
+- L95: `<button`
+- L98: `onClick={() => {`
+- L109: `<button`
+- L112: `onClick={() => {`
+- L134: `<button`
+- L137: `onClick={() => {`
+
 ### `src/components/motivation/StudentMotivationProfile.tsx` (2)
-- L272: `<button`
-- L273: `onClick={() => setShowGoalForm(true)}`
+- L276: `<button`
+- L277: `onClick={() => setShowGoalForm(true)}`
 
 ### `src/components/recognition/PeerRecognitionForm.tsx` (5)
 - L113: `<button`
@@ -289,27 +277,25 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L197: `<button`
 - L199: `onClick={onClose}`
 
-### `src/components/sdt/AICoachPopup.tsx` (20)
-- L314: `<button`
-- L315: `onClick={() => setIsMinimized(false)}`
-- L339: `<button`
-- L340: `onClick={() => setIsMinimized(true)}`
-- L402: `<button`
-- L404: `onClick={() => setMode(modeKey)}`
-- L423: `<button`
-- L424: `onClick={reset}`
-- L445: `<button`
-- L446: `onClick={isListening ? stopListening : startListening}`
-- L469: `<button`
-- L470: `onClick={handleAsk}`
-- L506: `<button`
-- L507: `onClick={async () => {`
-- L516: `<button`
-- L517: `onClick={async () => {`
-- L563: `<button`
-- L564: `onClick={handleSubmitExplainBack}`
-- L573: `<button`
-- L574: `onClick={reset}`
+### `src/components/sdt/AICoachPopup.tsx` (18)
+- L550: `<button`
+- L551: `onClick={handleOpenPopup}`
+- L572: `<button`
+- L573: `onClick={handleMinimizePopup}`
+- L635: `<button`
+- L637: `onClick={() => setMode(modeKey)}`
+- L656: `<button`
+- L657: `onClick={reset}`
+- L678: `<button`
+- L679: `onClick={isListening ? stopListening : startListening}`
+- L735: `<button`
+- L736: `onClick={async () => {`
+- L748: `<button`
+- L749: `onClick={async () => {`
+- L798: `<button`
+- L799: `onClick={handleSubmitExplainBack}`
+- L808: `<button`
+- L809: `onClick={reset}`
 
 ### `src/components/sdt/AICoachScreen.tsx` (14)
 - L130: `<button`
@@ -427,426 +413,514 @@ Generated from first-party source in `app/`, `src/`, and `apps/empire_flutter/ap
 - L121: `onClick={fetchLogs}`
 
 ### `src/features/auth/components/LoginForm.tsx` (1)
-- L79: `<Button onClick={handleGoogleSignIn} className='w-full' variant='outline'>`
+- L82: `<Button onClick={handleGoogleSignIn} className='w-full' variant='outline'>`
 
-### `src/features/navigation/components/Navigation.tsx` (1)
-- L36: `onClick={() => {`
+### `src/features/navigation/components/Navigation.tsx` (3)
+- L60: `onClick={() =>`
+- L92: `onClick={async () => {`
+- L111: `onClick={() =>`
+
+### `src/features/workflows/WorkflowRoutePage.tsx` (13)
+- L198: `onClick={() =>`
+- L218: `<button`
+- L221: `onClick={() => {`
+- L233: `<button`
+- L236: `onClick={() => setCreateOpen((prev) => !prev)}`
+- L356: `<button`
+- L360: `onClick={() => {`
+- L367: `<button`
+- L370: `onClick={() => {`
+- L417: `<button`
+- L421: `onClick={() => {`
+- L430: `<button`
+- L434: `onClick={() => {`
 
 ### `src/hooks/useTelemetry.ts` (3)
-- L101: `*     <button onClick={() => trackClick('feature_discovered', { missionId })}>`
-- L171: `*   return <button onClick={handleSubmit}>Submit</button>;`
-- L204: `*   return <button onClick={handleGiveRecognition}>Give Props</button>;`
+- L145: `*     <button onClick={() => trackClick('feature_discovered', { missionId })}>`
+- L215: `*   return <button onClick={handleSubmit}>Submit</button>;`
+- L248: `*   return <button onClick={handleGiveRecognition}>Give Props</button>;`
+
+### `src/lib/theme/ThemeModeToggle.tsx` (2)
+- L44: `<button`
+- L49: `onClick={() => {`
+
+### `src/types/FeedbackForm.tsx` (6)
+- L57: `<button`
+- L58: `onClick={() => {`
+- L70: `<button`
+- L71: `onClick={() => handleGrade('started')}`
+- L77: `<button`
+- L78: `onClick={() => handleGrade('completed')}`
+
+### `src/types/SubmissionGrader.tsx` (2)
+- L59: `<button`
+- L60: `onClick={() => {`
 
 ## Flutter CTA Files
 
 ### `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart` (10)
-- L571: `IconButton(`
-- L585: `IconButton(`
-- L599: `IconButton(`
-- L632: `TextButton(`
-- L796: `return ListTile(`
-- L824: `TextButton(`
-- L837: `ElevatedButton(`
-- L879: `...appState.siteIds.map((String siteId) => ListTile(`
-- L935: `TextButton(`
-- L948: `ElevatedButton(`
+- L851: `IconButton(`
+- L865: `IconButton(`
+- L880: `IconButton(`
+- L915: `TextButton(`
+- L1172: `return ListTile(`
+- L1208: `TextButton(`
+- L1221: `ElevatedButton(`
+- L1263: `...appState.siteIds.map((String siteId) => ListTile(`
+- L1322: `TextButton(`
+- L1335: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/attendance/attendance_page.dart` (3)
-- L128: `return RefreshIndicator(`
-- L151: `child: ListTile(`
-- L571: `child: InkWell(`
+- L134: `return RefreshIndicator(`
+- L157: `child: ListTile(`
+- L600: `child: InkWell(`
 
-### `apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart` (10)
-- L109: `IconButton(`
-- L212: `? IconButton(`
-- L473: `TextButton(`
-- L599: `child: InkWell(`
-- L792: `IconButton(`
-- L853: `...summary.authorizedPickups.map((AuthorizedPickup pickup) => ListTile(`
-- L888: `? IconButton(`
-- L935: `child: InkWell(`
-- L1227: `child: ElevatedButton(`
-- L1332: `return InkWell(`
+### `apps/empire_flutter/app/lib/modules/checkin/checkin_page.dart` (11)
+- L114: `IconButton(`
+- L218: `? IconButton(`
+- L532: `TextButton(`
+- L662: `child: InkWell(`
+- L861: `IconButton(`
+- L872: `IconButton(`
+- L934: `.map((AuthorizedPickup pickup) => ListTile(`
+- L973: `? IconButton(`
+- L1020: `child: InkWell(`
+- L1322: `child: ElevatedButton(`
+- L1440: `return InkWell(`
 
 ### `apps/empire_flutter/app/lib/modules/educator/educator_integrations_page.dart` (1)
-- L194: `: ElevatedButton(`
+- L264: `: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart` (6)
-- L57: `IconButton(`
-- L154: `child: InkWell(`
-- L375: `child: OutlinedButton(`
-- L393: `child: ElevatedButton(`
-- L443: `TextButton(`
-- L457: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/educator/educator_learner_supports_page.dart` (10)
+- L52: `IconButton(`
+- L206: `child: InkWell(`
+- L456: `child: OutlinedButton(`
+- L483: `child: ElevatedButton(`
+- L574: `TextButton(`
+- L596: `ElevatedButton(`
+- L666: `TextButton(`
+- L679: `TextButton(`
+- L683: `TextButton(`
+- L687: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart` (3)
-- L162: `? IconButton(`
-- L328: `child: InkWell(`
-- L476: `return GestureDetector(`
+- L357: `? IconButton(`
+- L524: `child: InkWell(`
+- L672: `return GestureDetector(`
 
-### `apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart` (8)
-- L83: `IconButton(`
-- L110: `child: InkWell(`
-- L273: `TextButton(`
-- L289: `return ListTile(`
-- L338: `child: OutlinedButton(`
-- L354: `child: ElevatedButton(`
-- L433: `TextButton(`
-- L443: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/educator/educator_mission_plans_page.dart` (9)
+- L106: `IconButton(`
+- L165: `child: InkWell(`
+- L364: `TextButton(`
+- L376: `ElevatedButton(`
+- L396: `return ListTile(`
+- L447: `child: OutlinedButton(`
+- L463: `child: ElevatedButton(`
+- L557: `TextButton(`
+- L569: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/educator/educator_mission_review_page.dart` (5)
-- L302: `child: InkWell(`
-- L494: `return GestureDetector(`
-- L710: `(int index) => GestureDetector(`
-- L760: `child: OutlinedButton(`
-- L790: `child: ElevatedButton(`
+- L352: `child: InkWell(`
+- L547: `return GestureDetector(`
+- L764: `(int index) => GestureDetector(`
+- L815: `child: OutlinedButton(`
+- L879: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` (5)
-- L424: `TextButton(`
-- L438: `ElevatedButton(`
-- L466: `child: InkWell(`
-- L635: `return GestureDetector(`
-- L729: `child: ElevatedButton(`
+- L516: `TextButton(`
+- L530: `ElevatedButton(`
+- L557: `child: InkWell(`
+- L729: `return GestureDetector(`
+- L849: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart` (8)
-- L324: `child: ElevatedButton(`
-- L413: `TextButton(`
-- L442: `TextButton(`
-- L454: `ElevatedButton(`
-- L556: `child: InkWell(`
-- L624: `child: InkWell(`
-- L798: `return ListTile(`
-- L819: `child: ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart` (10)
+- L457: `child: ElevatedButton(`
+- L550: `TextButton(`
+- L584: `TextButton(`
+- L596: `ElevatedButton(`
+- L674: `child: ListTile(`
+- L682: `trailing: IconButton(`
+- L828: `child: InkWell(`
+- L895: `child: InkWell(`
+- L1087: `return ListTile(`
+- L1110: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/habits/habits_page.dart` (7)
-- L88: `IconButton(`
-- L499: `child: InkWell(`
-- L626: `return GestureDetector(`
-- L834: `IconButton(`
-- L1067: `IconButton(`
-- L1094: `return GestureDetector(`
-- L1256: `child: ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/habits/habits_page.dart` (8)
+- L95: `IconButton(`
+- L512: `child: InkWell(`
+- L671: `return GestureDetector(`
+- L944: `IconButton(`
+- L1200: `IconButton(`
+- L1430: `IconButton(`
+- L1467: `return GestureDetector(`
+- L1630: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart` (4)
-- L89: `IconButton(`
-- L420: `TextButton(`
-- L470: `TextButton(`
-- L483: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart` (7)
+- L186: `IconButton(`
+- L198: `IconButton(`
+- L923: `TextButton(`
+- L968: `TextButton(`
+- L988: `ElevatedButton(`
+- L1207: `TextButton(`
+- L1220: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_approvals_page.dart` (2)
-- L190: `child: OutlinedButton(`
-- L198: `child: ElevatedButton(`
+- L195: `child: OutlinedButton(`
+- L204: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart` (5)
-- L84: `IconButton(`
-- L98: `IconButton(`
-- L166: `child: ListTile(`
-- L235: `return ListTile(`
-- L306: `child: OutlinedButton(`
+### `apps/empire_flutter/app/lib/modules/hq_admin/hq_audit_page.dart` (11)
+- L152: `IconButton(`
+- L159: `IconButton(`
+- L166: `IconButton(`
+- L179: `body: RefreshIndicator(`
+- L339: `child: ListTile(`
+- L351: `child: ListTile(`
+- L495: `return ListTile(`
+- L542: `child: OutlinedButton(`
+- L599: `OutlinedButton(`
+- L705: `TextButton(`
+- L710: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_billing_page.dart` (8)
-- L116: `IconButton(`
-- L498: `TextButton(`
-- L502: `ElevatedButton(`
-- L616: `TextButton(`
-- L724: `IconButton(`
-- L729: `IconButton(`
-- L967: `IconButton(`
-- L1079: `child: ElevatedButton(`
+- L136: `IconButton(`
+- L526: `TextButton(`
+- L530: `ElevatedButton(`
+- L837: `TextButton(`
+- L950: `IconButton(`
+- L955: `IconButton(`
+- L1215: `IconButton(`
+- L1333: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` (5)
-- L176: `child: InkWell(`
-- L286: `child: OutlinedButton(`
-- L304: `child: ElevatedButton(`
-- L367: `TextButton(`
-- L381: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` (12)
+- L110: `IconButton(`
+- L214: `child: InkWell(`
+- L353: `child: OutlinedButton(`
+- L375: `child: ElevatedButton(`
+- L690: `TextButton(`
+- L697: `ElevatedButton(`
+- L859: `TextButton(`
+- L876: `ElevatedButton(`
+- L1145: `TextButton(`
+- L1150: `ElevatedButton(`
+- L1514: `TextButton(`
+- L1521: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart` (1)
-- L81: `IconButton(`
+- L59: `IconButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_integrations_health_page.dart` (3)
-- L47: `IconButton(`
-- L194: `return ListTile(`
-- L203: `? TextButton(`
+- L42: `IconButton(`
+- L233: `return ListTile(`
+- L243: `? TextButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_role_switcher_page.dart` (3)
-- L47: `IconButton(`
-- L190: `IconButton(`
-- L364: `child: InkWell(`
+- L52: `IconButton(`
+- L198: `IconButton(`
+- L374: `child: InkWell(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_safety_page.dart` (4)
-- L158: `child: ListTile(`
-- L162: `trailing: IconButton(`
-- L231: `child: OutlinedButton(`
-- L249: `child: ElevatedButton(`
+- L204: `child: ListTile(`
+- L210: `trailing: IconButton(`
+- L291: `child: OutlinedButton(`
+- L309: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/hq_sites_page.dart` (4)
-- L201: `? IconButton(`
-- L408: `child: InkWell(`
-- L619: `return GestureDetector(`
-- L772: `child: ElevatedButton(`
+- L148: `? IconButton(`
+- L550: `child: InkWell(`
+- L758: `return GestureDetector(`
+- L912: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart` (10)
-- L124: `IconButton(`
-- L227: `? IconButton(`
-- L561: `child: InkWell(`
-- L640: `child: InkWell(`
-- L1235: `children: UserRole.values.map((UserRole role) => ListTile(`
-- L1288: `TextButton(`
-- L1301: `ElevatedButton(`
-- L1378: `child: InkWell(`
-- L1615: `TextButton(`
-- L1627: `ElevatedButton(`
+- L131: `IconButton(`
+- L236: `? IconButton(`
+- L576: `child: InkWell(`
+- L654: `child: InkWell(`
+- L1300: `.map((UserRole role) => ListTile(`
+- L1358: `TextButton(`
+- L1371: `ElevatedButton(`
+- L1449: `child: InkWell(`
+- L1693: `TextButton(`
+- L1705: `ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` (5)
-- L145: `IconButton(`
-- L574: `TextButton(`
-- L588: `ElevatedButton(`
-- L620: `TextButton(`
-- L634: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` (7)
+- L158: `IconButton(`
+- L592: `TextButton(`
+- L606: `ElevatedButton(`
+- L638: `TextButton(`
+- L652: `ElevatedButton(`
+- L697: `child: ListTile(`
+- L704: `trailing: IconButton(`
 
-### `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart` (4)
-- L99: `IconButton(`
-- L330: `TextButton(`
-- L375: `TextButton(`
-- L519: `child: InkWell(`
+### `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart` (6)
+- L119: `IconButton(`
+- L413: `TextButton(`
+- L491: `TextButton(`
+- L545: `child: ListTile(`
+- L552: `trailing: IconButton(`
+- L755: `child: InkWell(`
 
 ### `apps/empire_flutter/app/lib/modules/messages/messages_page.dart` (5)
-- L365: `child: InkWell(`
-- L447: `child: InkWell(`
-- L596: `child: ListTile(`
-- L740: `IconButton(`
-- L790: `child: ElevatedButton(`
+- L375: `child: InkWell(`
+- L456: `child: InkWell(`
+- L622: `child: ListTile(`
+- L776: `IconButton(`
+- L827: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/messages/notifications_page.dart` (2)
-- L82: `TextButton(`
-- L148: `child: InkWell(`
+- L46: `TextButton(`
+- L131: `child: InkWell(`
 
-### `apps/empire_flutter/app/lib/modules/missions/missions_page.dart` (4)
-- L501: `child: InkWell(`
-- L572: `child: InkWell(`
-- L948: `child: ElevatedButton(`
-- L998: `child: ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/missions/missions_page.dart` (5)
+- L513: `child: InkWell(`
+- L583: `child: InkWell(`
+- L993: `child: ElevatedButton(`
+- L1063: `child: ElevatedButton(`
+- L1183: `IconButton(`
 
 ### `apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart` (9)
-- L109: `IconButton(`
-- L516: `TextButton(`
-- L526: `child: OutlinedButton(`
-- L596: `TextButton(`
-- L608: `ElevatedButton(`
-- L644: `TextButton(`
-- L654: `ElevatedButton(`
-- L813: `child: OutlinedButton(`
-- L832: `child: ElevatedButton(`
+- L153: `IconButton(`
+- L609: `TextButton(`
+- L619: `child: OutlinedButton(`
+- L789: `TextButton(`
+- L801: `ElevatedButton(`
+- L839: `TextButton(`
+- L851: `ElevatedButton(`
+- L1025: `child: OutlinedButton(`
+- L1044: `child: ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` (1)
-- L129: `child: InkWell(`
+### `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` (4)
+- L272: `child: InkWell(`
+- L473: `child: ElevatedButton(`
+- L600: `child: ListTile(`
+- L608: `trailing: IconButton(`
 
-### `apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart` (5)
-- L202: `return GestureDetector(`
-- L304: `TextButton(`
-- L386: `TextButton(`
-- L398: `ElevatedButton(`
-- L564: `return GestureDetector(`
+### `apps/empire_flutter/app/lib/modules/parent/parent_schedule_page.dart` (6)
+- L160: `IconButton(`
+- L341: `return GestureDetector(`
+- L469: `TextButton(`
+- L562: `TextButton(`
+- L574: `ElevatedButton(`
+- L940: `return GestureDetector(`
 
 ### `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart` (3)
-- L116: `IconButton(`
-- L143: `return GestureDetector(`
-- L391: `TextButton(`
+- L156: `IconButton(`
+- L185: `return GestureDetector(`
+- L475: `TextButton(`
 
-### `apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart` (4)
-- L45: `return RefreshIndicator(`
-- L114: `child: InkWell(`
-- L324: `...contract.deliverables.map((PartnerDeliverable d) => ListTile(`
-- L336: `ElevatedButton(`
+### `apps/empire_flutter/app/lib/modules/partner/partner_contracts_page.dart` (9)
+- L119: `return RefreshIndicator(`
+- L153: `return RefreshIndicator(`
+- L219: `child: InkWell(`
+- L328: `child: InkWell(`
+- L530: `return ListTile(`
+- L543: `ElevatedButton(`
+- L630: `ElevatedButton(`
+- L716: `TextButton(`
+- L721: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/partner/partner_listings_page.dart` (9)
-- L35: `IconButton(`
-- L61: `return RefreshIndicator(`
-- L151: `child: InkWell(`
-- L343: `TextButton(`
-- L354: `ElevatedButton(`
-- L484: `child: OutlinedButton(`
-- L491: `child: ElevatedButton(`
-- L542: `TextButton(`
-- L546: `ElevatedButton(`
+- L40: `IconButton(`
+- L66: `return RefreshIndicator(`
+- L157: `child: InkWell(`
+- L352: `TextButton(`
+- L363: `ElevatedButton(`
+- L498: `child: OutlinedButton(`
+- L505: `child: ElevatedButton(`
+- L559: `TextButton(`
+- L563: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/partner/partner_payouts_page.dart` (1)
-- L49: `child: RefreshIndicator(`
+- L55: `child: RefreshIndicator(`
 
 ### `apps/empire_flutter/app/lib/modules/profile/profile_page.dart` (9)
-- L55: `IconButton(`
-- L74: `IconButton(`
-- L374: `TextButton(`
-- L384: `TextButton(`
-- L455: `TextButton(`
-- L465: `ElevatedButton(`
-- L503: `TextButton(`
-- L516: `ElevatedButton(`
-- L557: `child: ListTile(`
+- L65: `IconButton(`
+- L84: `IconButton(`
+- L409: `TextButton(`
+- L421: `TextButton(`
+- L497: `TextButton(`
+- L507: `ElevatedButton(`
+- L573: `TextButton(`
+- L586: `ElevatedButton(`
+- L630: `child: ListTile(`
 
-### `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart` (26)
-- L109: `floatingActionButton: FloatingActionButton(`
-- L212: `return RefreshIndicator(`
-- L234: `child: ListTile(`
-- L242: `trailing: IconButton(`
-- L271: `ListTile(`
-- L290: `ListTile(`
-- L337: `return RefreshIndicator(`
-- L359: `child: ListTile(`
-- L369: `trailing: IconButton(`
-- L398: `ListTile(`
-- L417: `ListTile(`
-- L464: `return RefreshIndicator(`
-- L486: `child: ListTile(`
-- L511: `trailing: IconButton(`
-- L543: `TextButton(`
-- L557: `TextButton(`
-- L702: `TextButton(`
-- L711: `ElevatedButton(`
-- L838: `TextButton(`
-- L847: `ElevatedButton(`
-- ... 6 more
+### `apps/empire_flutter/app/lib/modules/provisioning/provisioning_page.dart` (29)
+- L148: `floatingActionButton: FloatingActionButton(`
+- L273: `return RefreshIndicator(`
+- L295: `child: ListTile(`
+- L306: `trailing: IconButton(`
+- L335: `ListTile(`
+- L355: `ListTile(`
+- L404: `return RefreshIndicator(`
+- L426: `child: ListTile(`
+- L438: `trailing: IconButton(`
+- L467: `ListTile(`
+- L487: `ListTile(`
+- L536: `return RefreshIndicator(`
+- L558: `child: ListTile(`
+- L585: `trailing: IconButton(`
+- L616: `TextButton(`
+- L630: `TextButton(`
+- L685: `return RefreshIndicator(`
+- L986: `TextButton(`
+- L995: `ElevatedButton(`
+- L1132: `TextButton(`
+- ... 9 more
 
-### `apps/empire_flutter/app/lib/modules/settings/settings_page.dart` (10)
-- L391: `return ListTile(`
-- L489: `TextButton(`
-- L516: `TextButton(`
-- L520: `ElevatedButton(`
-- L557: `TextButton(`
-- L561: `ElevatedButton(`
-- L593: `TextButton(`
-- L606: `ElevatedButton(`
-- L697: `return ListTile(`
-- L743: `return ListTile(`
+### `apps/empire_flutter/app/lib/modules/settings/settings_page.dart` (21)
+- L691: `child: OutlinedButton(`
+- L698: `child: ElevatedButton(`
+- L786: `child: OutlinedButton(`
+- L793: `child: ElevatedButton(`
+- L870: `child: OutlinedButton(`
+- L877: `child: ElevatedButton(`
+- L995: `return ListTile(`
+- L1045: `return ListTile(`
+- L1103: `return ListTile(`
+- L1208: `child: OutlinedButton(`
+- L1215: `child: ElevatedButton(`
+- L1265: `TextButton(`
+- L1296: `TextButton(`
+- L1300: `ElevatedButton(`
+- L1344: `TextButton(`
+- L1348: `ElevatedButton(`
+- L1396: `TextButton(`
+- L1400: `ElevatedButton(`
+- L1438: `TextButton(`
+- L1569: `return ListTile(`
+- ... 1 more
 
 ### `apps/empire_flutter/app/lib/modules/site/site_billing_page.dart` (5)
-- L114: `OutlinedButton(`
-- L227: `TextButton(`
-- L262: `return ListTile(`
-- L306: `TextButton(`
-- L320: `ElevatedButton(`
+- L160: `OutlinedButton(`
+- L283: `TextButton(`
+- L337: `return ListTile(`
+- L382: `TextButton(`
+- L396: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart` (5)
-- L110: `IconButton(`
-- L380: `TextButton(`
-- L417: `TextButton(`
-- L429: `ElevatedButton(`
-- L535: `return GestureDetector(`
+- L233: `IconButton(`
+- L790: `TextButton(`
+- L896: `TextButton(`
+- L916: `ElevatedButton(`
+- L1368: `return GestureDetector(`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_identity_page.dart` (2)
-- L193: `child: OutlinedButton(`
-- L203: `child: ElevatedButton(`
+- L202: `child: OutlinedButton(`
+- L212: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_incidents_page.dart` (6)
-- L183: `child: InkWell(`
-- L338: `child: OutlinedButton(`
-- L356: `child: ElevatedButton(`
-- L385: `child: OutlinedButton(`
-- L456: `TextButton(`
-- L470: `ElevatedButton(`
+- L191: `child: InkWell(`
+- L348: `child: OutlinedButton(`
+- L366: `child: ElevatedButton(`
+- L396: `child: OutlinedButton(`
+- L492: `TextButton(`
+- L506: `ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_integrations_health_page.dart` (7)
-- L57: `IconButton(`
-- L192: `IconButton(`
-- L226: `child: ElevatedButton(`
-- L320: `ListTile(`
-- L337: `ListTile(`
-- L354: `ListTile(`
+- L48: `IconButton(`
+- L219: `IconButton(`
+- L259: `child: ElevatedButton(`
+- L353: `ListTile(`
 - L370: `ListTile(`
+- L387: `ListTile(`
+- L403: `ListTile(`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_ops_page.dart` (2)
-- L219: `child: InkWell(`
-- L337: `return ListTile(`
+- L254: `child: InkWell(`
+- L607: `return ListTile(`
 
-### `apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart` (6)
-- L249: `IconButton(`
-- L273: `return GestureDetector(`
-- L329: `IconButton(`
-- L514: `return GestureDetector(`
-- L901: `child: ElevatedButton(`
-- L977: `return GestureDetector(`
+### `apps/empire_flutter/app/lib/modules/site/site_sessions_page.dart` (7)
+- L291: `IconButton(`
+- L316: `return GestureDetector(`
+- L374: `IconButton(`
+- L874: `return GestureDetector(`
+- L1087: `return ListTile(`
+- L1375: `child: ElevatedButton(`
+- L1591: `return GestureDetector(`
 
 ### `apps/empire_flutter/app/lib/offline/sync_status_widget.dart` (1)
-- L76: `TextButton(`
+- L103: `TextButton(`
 
 ### `apps/empire_flutter/app/lib/router/role_gate.dart` (1)
-- L77: `ElevatedButton(`
+- L104: `ElevatedButton(`
 
-### `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` (2)
-- L466: `InkWell(`
-- L475: `InkWell(`
+### `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` (8)
+- L1010: `TextButton(`
+- L1014: `FilledButton(`
+- L1370: `TextButton(`
+- L1474: `IconButton(`
+- L1483: `IconButton(`
+- L1560: `TextButton(`
+- L1790: `InkWell(`
+- L1799: `InkWell(`
+
+### `apps/empire_flutter/app/lib/runtime/ai_context_coach_section.dart` (2)
+- L82: `child: ListTile(`
+- L86: `trailing: IconButton(`
+
+### `apps/empire_flutter/app/lib/runtime/global_ai_assistant_overlay.dart` (2)
+- L134: `child: FloatingActionButton(`
+- L601: `IconButton(`
 
 ### `apps/empire_flutter/app/lib/ui/auth/login_page.dart` (5)
-- L210: `TextButton(`
-- L226: `ElevatedButton(`
-- L539: `suffixIcon: IconButton(`
-- L578: `child: TextButton(`
-- L602: `child: ElevatedButton(`
+- L246: `TextButton(`
+- L262: `ElevatedButton(`
+- L615: `suffixIcon: IconButton(`
+- L656: `child: TextButton(`
+- L682: `child: ElevatedButton(`
 
 ### `apps/empire_flutter/app/lib/ui/landing/landing_page.dart` (6)
-- L207: `TextButton(`
-- L384: `TextButton(`
-- L396: `ElevatedButton(`
-- L416: `TextButton(`
-- L862: `ElevatedButton(`
-- L928: `return InkWell(`
+- L340: `TextButton(`
+- L514: `TextButton(`
+- L526: `ElevatedButton(`
+- L546: `TextButton(`
+- L1016: `ElevatedButton(`
+- L1082: `return InkWell(`
 
 ### `apps/empire_flutter/app/lib/ui/widgets/cards.dart` (4)
-- L36: `child: InkWell(`
-- L202: `child: InkWell(`
-- L372: `child: InkWell(`
-- L647: `return ListTile(`
+- L55: `child: InkWell(`
+- L264: `child: InkWell(`
+- L445: `child: InkWell(`
+- L720: `return ListTile(`
 
 ### `apps/empire_flutter/app/lib/ui/widgets/learner_widgets.dart` (7)
-- L103: `child: InkWell(`
-- L255: `ElevatedButton(`
-- L362: `return ListTile(`
-- L452: `child: InkWell(`
-- L512: `IconButton(`
-- L680: `child: InkWell(`
-- L822: `return ListTile(`
+- L155: `child: InkWell(`
+- L315: `ElevatedButton(`
+- L425: `return ListTile(`
+- L514: `child: InkWell(`
+- L574: `IconButton(`
+- L756: `child: InkWell(`
+- L903: `return ListTile(`
 
 ## Web Quick Actions Files
 
-### `app/[locale]/(protected)/educator/page.tsx` (1)
-- L111: `<h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>`
-
-### `app/[locale]/(protected)/parent/page.tsx` (1)
-- L120: `<h3 className="text-base font-semibold leading-6 text-gray-900">Quick Actions</h3>`
-
 ## Flutter Quick Actions Files
 
-### `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart` (2)
-- L624: `'Quick Actions',`
-- L784: `'All Quick Actions',`
+### `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart` (6)
+- L98: `'Quick Actions': '快捷操作',`
+- L100: `'All Quick Actions': '全部快捷操作',`
+- L215: `'Quick Actions': '快捷操作',`
+- L217: `'All Quick Actions': '全部快捷操作',`
+- L907: `_t(context, 'Quick Actions'),`
+- L1160: `_t(sheetContext, 'All Quick Actions'),`
 
 ### `apps/empire_flutter/app/lib/modules/educator/educator_today_page.dart` (2)
-- L9: `/// Educator Today Page - Daily schedule and quick actions`
-- L561: `'cta': 'educator_today_quick_action',`
+- L17: `/// Educator Today Page - Daily schedule and quick actions`
+- L833: `'cta': 'educator_today_quick_action',`
 
 ### `apps/empire_flutter/app/lib/modules/hq_admin/user_admin_page.dart` (2)
-- L1100: `// Quick Actions`
-- L1102: `'Quick Actions',`
+- L1145: `// Quick Actions`
+- L1147: `_tUserAdmin(context, 'Quick Actions'),`
 
 ### `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart` (2)
-- L298: `metadata: const <String, dynamic>{'cta': 'learner_today_open_messages_quick_action'},`
-- L524: `'cta': 'learner_today_quick_action',`
+- L349: `'cta': 'learner_today_open_messages_quick_action'`
+- L760: `'cta': 'learner_today_quick_action',`
 
 ### `apps/empire_flutter/app/lib/modules/site/site_ops_page.dart` (3)
-- L189: `'Quick Actions',`
-- L225: `'cta_id': 'quick_action',`
-- L226: `'surface': 'quick_actions',`
+- L220: `_tSiteOps(context, 'Quick Actions'),`
+- L260: `'cta_id': 'quick_action',`
+- L261: `'surface': 'quick_actions',`
 
 ### `apps/empire_flutter/app/lib/ui/widgets/cards.dart` (2)
-- L352: `/// A quick action button with icon and label`
-- L380: `'cta_id': 'tap_quick_action',`
+- L425: `/// A quick action button with icon and label`
+- L453: `'cta_id': 'tap_quick_action',`
 
-<!-- TELEMETRY_WIRING:START -->
-## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
-- Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
-- Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
-- Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
-- Doc scope: `CTA_FULL_INVENTORY.md`
-<!-- TELEMETRY_WIRING:END -->

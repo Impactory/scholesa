@@ -3,8 +3,6 @@ from __future__ import annotations
 NON_ACTIONABLE_WEB_PATHS = {
     "src/components/ui/Button.tsx",
     "src/types/FeedbackForm-impactory.tsx",
-    "src/types/FeedbackForm.tsx",
-    "src/types/SubmissionGrader.tsx",
 }
 
 NON_ACTIONABLE_FLUTTER_PATHS = {
