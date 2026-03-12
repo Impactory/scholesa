@@ -5,6 +5,7 @@ Normalize Scholesa brand assets to transparent-background formats.
 Outputs:
 - apps/empire_flutter/app/assets/icons/android/*.png
 - apps/empire_flutter/app/assets/icons/ios/*.png
+- apps/empire_flutter/app/assets/icons/scholesa_launcher*.png
 - apps/empire_flutter/app/web/icons/*.png + favicon.ico
 - apps/empire_flutter/app/web/favicon.png
 - public/icons/*.png + favicon.png + favicon.ico
@@ -32,14 +33,8 @@ PUBLIC_DIR = REPO_ROOT / "public"
 PUBLIC_ICONS_DIR = PUBLIC_DIR / "icons"
 PUBLIC_LOGO_DIR = PUBLIC_DIR / "logo"
 
-IOS_MASTER_SOURCE_CANDIDATES = [
-    IOS_DIR / "1024.png",
-    ASSETS_DIR / "scholesa_launcher.png",
-]
-
-ANDROID_MASTER_SOURCE_CANDIDATES = [
-    ANDROID_DIR / "scholesa_android_icon_master.png",
-    ANDROID_DIR / "android-launchericon-512-512.png",
+SHARED_MASTER_SOURCE_CANDIDATES = [
+    ASSETS_DIR / "scholesa_brand_mark_master.png",
     ASSETS_DIR / "scholesa_launcher.png",
     IOS_DIR / "1024.png",
 ]
@@ -250,14 +245,14 @@ def write_many_png(master: Image.Image, outputs: Iterable[tuple[Path, int]]) -> 
         save_png(resize_icon(master, size), output)
 
 
-def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> None:
+def generate_assets(shared_master: Image.Image) -> None:
     # Persist normalized transparent launcher source.
-    save_png(resize_icon(ios_master, 512), ASSETS_DIR / "scholesa_launcher.png")
-    save_png(ios_master, ASSETS_DIR / "scholesa_launcher_transparent.png")
+    save_png(resize_icon(shared_master, 512), ASSETS_DIR / "scholesa_launcher.png")
+    save_png(shared_master, ASSETS_DIR / "scholesa_launcher_transparent.png")
 
     # Android source icons.
     write_many_png(
-        android_master,
+        shared_master,
         (
             (ANDROID_DIR / f"android-launchericon-{size}-{size}.png", size)
             for size in ANDROID_SIZES
@@ -266,7 +261,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
 
     # iOS/macOS source icons.
     write_many_png(
-        ios_master,
+        shared_master,
         (
             (IOS_DIR / f"{size}.png", size)
             for size in IOS_SIZES
@@ -275,7 +270,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
 
     # Flutter web/PWA icons + favicon.
     write_many_png(
-        ios_master,
+        shared_master,
         [
             (WEB_ICONS_DIR / "Icon-192.png", 192),
             (WEB_ICONS_DIR / "Icon-512.png", 512),
@@ -287,7 +282,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
         ],
     )
 
-    favicon32 = resize_icon(ios_master, 32)
+    favicon32 = resize_icon(shared_master, 32)
     ensure_dir(WEB_ICONS_DIR)
     favicon32.save(
         WEB_ICONS_DIR / "favicon.ico",
@@ -297,7 +292,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
 
     # Next.js public icons + favicon.
     write_many_png(
-        ios_master,
+        shared_master,
         [
             (PUBLIC_ICONS_DIR / "icon-192.png", 192),
             (PUBLIC_ICONS_DIR / "icon-512.png", 512),
@@ -305,7 +300,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
         ],
     )
 
-    favicon64 = resize_icon(ios_master, 64)
+    favicon64 = resize_icon(shared_master, 64)
     ensure_dir(PUBLIC_DIR)
     favicon64.save(
         PUBLIC_DIR / "favicon.ico",
@@ -315,7 +310,7 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
 
     # Logo exports in multiple transparent formats.
     write_many_png(
-        ios_master,
+        shared_master,
         [
             (PUBLIC_LOGO_DIR / "scholesa-logo-1024.png", 1024),
             (PUBLIC_LOGO_DIR / "scholesa-logo-512.png", 512),
@@ -325,13 +320,12 @@ def generate_assets(ios_master: Image.Image, android_master: Image.Image) -> Non
             (PUBLIC_LOGO_DIR / "scholesa-logo-64.png", 64),
         ],
     )
-    save_webp(resize_icon(ios_master, 512), PUBLIC_LOGO_DIR / "scholesa-logo-512.webp")
+    save_webp(resize_icon(shared_master, 512), PUBLIC_LOGO_DIR / "scholesa-logo-512.webp")
 
 
 def main() -> None:
-    ios_master = load_normalized_master(IOS_MASTER_SOURCE_CANDIDATES)
-    android_master = load_normalized_master(ANDROID_MASTER_SOURCE_CANDIDATES)
-    generate_assets(ios_master, android_master)
+    shared_master = load_normalized_master(SHARED_MASTER_SOURCE_CANDIDATES)
+    generate_assets(shared_master)
     print("Brand icon/logo assets converted with transparent background and regenerated.")
 
 

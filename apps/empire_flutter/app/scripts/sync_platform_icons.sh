@@ -150,8 +150,8 @@ copy_png "$ANDROID_SRC/android-launchericon-192-192.png" "$ANDROID_RES/mipmap-xx
 
 echo "[icons] Syncing Android native splash logo from transparent source"
 mkdir -p "$ANDROID_SPLASH_DIR"
-require_file "$IOS_SRC/1024.png"
-resize_png 512 512 "$IOS_SRC/1024.png" "$ANDROID_SPLASH_DIR/splash_logo.png"
+require_file "$ICONS_DIR/scholesa_launcher_transparent.png"
+resize_png 512 512 "$ICONS_DIR/scholesa_launcher_transparent.png" "$ANDROID_SPLASH_DIR/splash_logo.png"
 
 echo "[icons] Syncing iOS app icons from assets/icons/ios (ensuring opaque RGB format for Apple compliance)"
 # iOS app icons MUST be opaque RGB (no alpha channel) per Apple's App Store guidelines
@@ -188,10 +188,10 @@ copy_png "$IOS_SRC/512.png" "$MACOS_APPICON/app_icon_512.png"
 copy_png "$IOS_SRC/1024.png" "$MACOS_APPICON/app_icon_1024.png"
 
 echo "[icons] Syncing iOS launch image from assets/icons/ios"
-require_file "$IOS_SRC/1024.png"
-resize_png 168 168 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage.png"
-resize_png 336 336 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage@2x.png"
-resize_png 504 504 "$IOS_SRC/1024.png" "$IOS_LAUNCH_IMAGE/LaunchImage@3x.png"
+require_file "$ICONS_DIR/scholesa_launcher_transparent.png"
+resize_png 168 168 "$ICONS_DIR/scholesa_launcher_transparent.png" "$IOS_LAUNCH_IMAGE/LaunchImage.png"
+resize_png 336 336 "$ICONS_DIR/scholesa_launcher_transparent.png" "$IOS_LAUNCH_IMAGE/LaunchImage@2x.png"
+resize_png 504 504 "$ICONS_DIR/scholesa_launcher_transparent.png" "$IOS_LAUNCH_IMAGE/LaunchImage@3x.png"
 
 echo "[icons] Generating Windows app_icon.ico from assets/icons/windows11"
 require_file "$WIN_SRC/Square44x44Logo.targetsize-256.png"

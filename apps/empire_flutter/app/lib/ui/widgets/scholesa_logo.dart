@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/scholesa_theme.dart';
 
-/// Scholesa Logo widget - consistent branding across the app
-/// Uses authoritative PNG logo assets from assets/icons.
+/// Scholesa Logo widget - consistent branding across the app.
+/// Uses the shared launcher asset generated from the canonical SVG brand mark.
 class ScholesaLogo extends StatelessWidget {
   const ScholesaLogo({
     super.key,

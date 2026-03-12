@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tealGreen_brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C9FF" />
+      <stop offset="100%" stop-color="#92FE9D" />
+    </linearGradient>
+    <linearGradient id="blueDark_brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1CB5E0" />
+      <stop offset="100%" stop-color="#000851" />
+    </linearGradient>
+    <linearGradient id="magentaOrange_brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF512F" />
+      <stop offset="100%" stop-color="#DD2476" />
+    </linearGradient>
+    <linearGradient id="yellowOrange_brand" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f12711" />
+      <stop offset="100%" stop-color="#f5af19" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(26, 26) scale(0.11)">
+    <path d="M256,380 C130,380 60,300 60,200 L60,280 C60,380 130,460 256,460 Z" fill="url(#blueDark_brand)"/>
+    <path d="M256,380 C382,380 452,300 452,200 L452,280 C452,380 382,460 256,460 Z" fill="url(#magentaOrange_brand)"/>
+    <path d="M256,240 C160,150 90,60 50,30 C130,60 190,140 256,240 Z" fill="url(#tealGreen_brand)"/>
+    <path d="M256,240 C330,150 410,80 470,60 C410,100 350,160 256,240 Z" fill="url(#yellowOrange_brand)"/>
+    <polygon points="256,240 275,310 256,380 237,310" fill="#ffffff" opacity="0.9"/>
+  </g>
+</svg>
