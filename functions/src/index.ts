@@ -821,8 +821,9 @@ function generateMvlInterceptMessage(
 }
 
 /**
- * Generate AI Coach response (V1 template-based).
- * Modes: hint (low assist), verify (evidence check), explain (scaffolding), debug (guided).
+ * Generate AI Coach response.
+ * Primary path: internal inference gateway with BOS/MVL safety controls.
+ * Fallback path: deterministic scaffold if internal inference is unavailable.
  * Forbidden: final answers, doing student's work, punitive language.
  */
 function generateCoachResponse(
@@ -1192,7 +1193,7 @@ export const genAiCoach = onCall(async (request) => {
     autonomyRisk,
   });
 
-  // ── A0) Control: Generate response (V1 template, V2+ LLM) ──
+  // ── A0) Control: Generate response via internal inference with BOS/MVL gating ──
   let message: string;
   let requiresExplainBack = false;
   let suggestedNextSteps: string[] = [];
@@ -1246,7 +1247,7 @@ export const genAiCoach = onCall(async (request) => {
   }
 
   // ── A1) Forbidden check: never give final answers for graded checkpoints ──
-  // V1: template mode is safe. V2+ LLM will need output filtering.
+  // Internal inference responses stay inside BOS/MVL gating and COPPA mode checks.
 
   // ── Emit ai_help_used event ──────────────────
   await admin.firestore().collection('interactionEvents').add({

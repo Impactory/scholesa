@@ -8,6 +8,7 @@
 import type { AgeBand } from '@/src/types/schema';
 import type { SupportedLocale } from '@/src/lib/i18n/config';
 import type { Role } from '@/schema';
+import { buildLocaleHeaders } from '@/src/lib/i18n/localeHeaders';
 
 // ==================== YOUR SCHEMA (vendor-agnostic) ====================
 
@@ -125,149 +126,49 @@ export interface ModelAdapter {
 
 // ==================== INTERNAL ADAPTER ====================
 
-type LocaleText = {
-  intro: string;
-  noDirect: string;
-  taskHint: Record<TaskType, string>;
-  contextLead: string;
-  explainBack: string;
-  followUp: string;
-};
+function resolveAiEndpoint(): string {
+  if (typeof window !== 'undefined') {
+    return '/api/ai/complete';
+  }
 
-const LOCALE_TEXT: Record<SupportedLocale, LocaleText> = {
-  en: {
-    intro: 'Let’s work through this together.',
-    noDirect: 'I’ll guide you with clues instead of jumping to the final answer.',
-    taskHint: {
-      hint_generation: 'Start with one small move: what is the goal here, and what do you already know?',
-      rubric_check: 'Check your work against each criterion and name one strength plus one next improvement.',
-      debug_assistance: 'Start at the first place where the result stopped matching what you expected.',
-      critique_feedback: 'Keep the feedback specific: point to evidence, name what is clear, and suggest one useful next step.',
-      explain_concept: 'Let’s break the idea into smaller parts and connect it to something familiar.',
-      reflection_prompt: 'Pause for a moment: what helped, what got in the way, and what will you try next?',
-    },
-    contextLead: 'A useful clue here is:',
-    explainBack: 'After you try it, can you tell me your thinking in your own words?',
-    followUp: 'What feels like the best next step to try right now?',
-  },
-  'zh-CN': {
-    intro: '我们一步一步来。',
-    noDirect: '我会用提示引导你，而不是直接给最终答案。',
-    taskHint: {
-      hint_generation: '先明确目标、已知条件，再选一个最小可执行步骤。',
-      rubric_check: '按评分标准逐项对照，写出一个优势和一个改进点。',
-      debug_assistance: '先检查最近改动，再定位一个最可能的原因。',
-      critique_feedback: '反馈聚焦证据、清晰度和一个可执行改进。',
-      explain_concept: '把概念拆成简单部分，并联系一个熟悉例子。',
-      reflection_prompt: '回想什么有效、什么无效、下一步要尝试什么。',
-    },
-    contextLead: '可参考这个任务线索：',
-    explainBack: '你可以用自己的话解释一下你的思路吗？',
-    followUp: '你现在可以先尝试哪一步？',
-  },
-  'zh-TW': {
-    intro: '我們一步一步來。',
-    noDirect: '我會用提示引導你，而不是直接給最終答案。',
-    taskHint: {
-      hint_generation: '先明確目標、已知條件，再選一個最小可執行步驟。',
-      rubric_check: '按評分標準逐項對照，寫出一個優勢和一個改進點。',
-      debug_assistance: '先檢查最近改動，再定位一個最可能的原因。',
-      critique_feedback: '回饋聚焦證據、清晰度和一個可執行改進。',
-      explain_concept: '把概念拆成簡單部分，並連結一個熟悉例子。',
-      reflection_prompt: '回想什麼有效、什麼無效、下一步要嘗試什麼。',
-    },
-    contextLead: '可參考這個任務線索：',
-    explainBack: '你可以用自己的話解釋一下你的思路嗎？',
-    followUp: '你現在可以先嘗試哪一步？',
-  },
-  th: {
-    intro: 'เรามาแก้ทีละขั้นตอนกัน',
-    noDirect: 'ฉันจะช่วยด้วยคำใบ้แทนการให้คำตอบสุดท้ายทันที',
-    taskHint: {
-      hint_generation: 'เริ่มจากระบุเป้าหมาย ข้อมูลที่มี และหนึ่งขั้นตอนเล็ก ๆ ที่ทำได้ทันที',
-      rubric_check: 'เทียบงานของคุณกับเกณฑ์ทีละข้อ แล้วระบุจุดแข็งหนึ่งข้อและจุดที่ต้องปรับหนึ่งข้อ',
-      debug_assistance: 'ตรวจสอบสิ่งที่เปลี่ยนล่าสุด แล้วแยกสาเหตุที่เป็นไปได้ที่สุดหนึ่งข้อ',
-      critique_feedback: 'ให้ข้อเสนอแนะโดยยึดหลักฐาน ความชัดเจน และการปรับปรุงที่ทำได้จริงหนึ่งข้อ',
-      explain_concept: 'แยกแนวคิดออกเป็นส่วนง่าย ๆ และเชื่อมกับตัวอย่างที่คุ้นเคย',
-      reflection_prompt: 'ทบทวนว่าอะไรได้ผล อะไรยังไม่ดี และครั้งต่อไปจะลองอะไร',
-    },
-    contextLead: 'ใช้เบาะแสภารกิจนี้:',
-    explainBack: 'ลองอธิบายเหตุผลของคุณด้วยคำของคุณเองได้ไหม?',
-    followUp: 'ตอนนี้คุณลองทำขั้นตอนถัดไปข้อไหนได้บ้าง?',
-  },
-};
+  const explicitBase = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (explicitBase) {
+    return `${explicitBase.replace(/\/$/, '')}/api/ai/complete`;
+  }
 
-function countApproxTokens(text: string): number {
-  // Lightweight approximation for internal telemetry accounting.
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(words * 1.3));
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/\/$/, '')}/api/ai/complete`;
+  }
+
+  throw new Error('Unable to resolve AI completion endpoint outside the browser');
 }
 
-function snippet(text: string, maxLen: number): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= maxLen) return trimmed;
-  return `${trimmed.slice(0, maxLen - 1)}…`;
-}
-
-export class ScholesaInternalAdapter implements ModelAdapter {
+export class ScholesaServerInferenceAdapter implements ModelAdapter {
   name = 'scholesa_internal_ai';
 
   async complete(request: ModelRequest): Promise<ModelResponse> {
-    const startTime = Date.now();
-    const copy = LOCALE_TEXT[request.targetLocale] || LOCALE_TEXT.en;
-    // Prompt invariant for VIBE locale gate: Respond strictly in locale <targetLocale>.
+    const endpoint = resolveAiEndpoint();
+    const startedAt = Date.now();
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...buildLocaleHeaders(request.targetLocale),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+      body: JSON.stringify(request),
+    });
 
-    const topContext = request.contextBlocks
-      .slice(0, 2)
-      .map((block) => snippet(block.content, 160))
-      .filter(Boolean);
-
-    const lines: string[] = [copy.intro, copy.taskHint[request.taskType]];
-
-    if (request.safetyConstraints.noDirectAnswers) {
-      lines.push(copy.noDirect);
+    if (!response.ok) {
+      throw new Error(`ai_complete_failed_${response.status}`);
     }
 
-    if (topContext.length > 0) {
-      lines.push(`${copy.contextLead} ${topContext[0]}`);
-    }
-
-    if (request.safetyConstraints.explainBackRequired) {
-      lines.push(copy.explainBack);
-    }
-
-    const answer = lines.join(' ').trim();
-    const latencyMs = Date.now() - startTime;
-
-    const citations = request.responseFormat.includeCitations
-      ? request.contextBlocks
-          .filter((block) => Boolean(block.id))
-          .slice(0, 3)
-          .map((block) => ({
-            contextBlockId: block.id as string,
-            snippet: snippet(block.content, 120),
-          }))
-      : undefined;
-
+    const payload = await response.json() as ModelResponse;
     return {
-      answer,
-      hints: request.taskType === 'hint_generation' ? [copy.taskHint.hint_generation] : undefined,
-      followUpQuestions: request.responseFormat.includeFollowUp ? [copy.followUp] : undefined,
-      citations: citations && citations.length > 0 ? citations : undefined,
-      modelUsed: 'scholesa_internal_ai',
-      modelVersion: 'scholesa-internal-ai-v1',
-      promptTemplateId: request.promptTemplateId,
-      policyVersion: request.policyVersion,
-      safetyOutcome: 'allowed',
-      safetyReasonCode: 'none',
-      toolCallIds: [],
-      targetLocale: request.targetLocale,
-      gradeBand: request.gradeBand,
-      traceId: request.traceId,
-      missionAttemptId: request.missionAttemptId,
-      confidence: 0.74,
-      tokensUsed: countApproxTokens(answer),
-      latencyMs,
+      ...payload,
+      latencyMs: payload.latencyMs || (Date.now() - startedAt),
     };
   }
 
@@ -325,5 +226,5 @@ export class ModelRouter {
 // ==================== SINGLETON INSTANCE ====================
 
 export const modelRouter = new ModelRouter();
-modelRouter.registerAdapter(new ScholesaInternalAdapter());
+modelRouter.registerAdapter(new ScholesaServerInferenceAdapter());
 modelRouter.setDefault('scholesa_internal_ai');
