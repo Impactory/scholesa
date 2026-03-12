@@ -270,6 +270,23 @@
     <div class="logo-container">
       <div class="logo">
         <img src="favicon.svg" alt="Scholesa Logo" />
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
+        });
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            for (const key of keys) {
+              caches.delete(key);
+            }
+          });
+        }
+      });
+    }
+
       </div>
     </div>
     
