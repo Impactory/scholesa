@@ -11,6 +11,8 @@
 - `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`
 - `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
+- `RC3_CUTOVER_HANDOFF_PACKET_MARCH_12_2026.md`
+- `RC3_CONFIDENCE_MATRIX_MARCH_12_2026.md`
 
 ---
 
@@ -22,6 +24,19 @@
 - Record the exact time, outcome, and any deviation.
 - If any role fails its primary CTA, persistence check, or scope boundary, declare `NO-GO`, stop the cutover, and execute rollback.
 - Do not convert a failed big-bang cutover into a partial rollout or canary. The release either passes in full or rolls back in full.
+
+---
+
+## Prepared State Before You Start
+
+Already validated before this operator run:
+
+- live six-account auth precheck is green
+- `npm run rc3:preflight` is green on the current codebase
+- signoff docs and release policy are aligned to big-bang cutover
+- no mocked or fake runtime dependency remains in the active RC3 release path
+
+Your remaining responsibility is browser execution and evidence capture, not engineering remediation.
 
 ---
 
@@ -220,5 +235,6 @@ ________________________________________________________________________________
 Post-run handoff:
 - Update `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - Copy the final GO / NO-GO outcome into `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`
+- Preserve `RC3_CUTOVER_HANDOFF_PACKET_MARCH_12_2026.md` as the prep-state artifact for the run
 
 Release may only remain live if all six roles pass and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` is fully completed.

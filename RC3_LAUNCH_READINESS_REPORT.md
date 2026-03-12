@@ -46,6 +46,20 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **Live Identity Reconciliation**: Auth, Firestore, and Auth role claims now aligned one-to-one for all login-capable production profiles  
 ✅ **Release Path Integrity**: Active RC3 code path contains no mocked/fake runtime flow; archived simulation code is outside the release path  
 
+### Confidence Snapshot
+
+| Area | Confidence | Interpretation |
+|---|---:|---|
+| RC3 code and gates | **97 / 100** | Ready for operator execution |
+| Full release-control completion | **93 / 100** | Manual cutover evidence still pending |
+| Learner AI autonomy safety floor | **97 / 100 minimum gate** | Enforced by policy/runtime |
+
+Supporting artifacts:
+
+- `RC3_CONFIDENCE_MATRIX_MARCH_12_2026.md`
+- `RC3_LEADERSHIP_RAG_SIGNOFF_MARCH_12_2026.md`
+- `RC3_CUTOVER_HANDOFF_PACKET_MARCH_12_2026.md`
+
 ---
 
 ## DETAILED BLOCKER RESOLUTION TIMELINE

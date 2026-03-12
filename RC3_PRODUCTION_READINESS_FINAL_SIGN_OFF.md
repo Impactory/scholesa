@@ -53,6 +53,28 @@
 
 ---
 
+## RC3 CONFIDENCE SNAPSHOT
+
+| Area | Confidence | Status |
+|---|---:|---|
+| Overall RC3 code and gate readiness | **97 / 100** | High confidence |
+| Literal release-control completion against full gate | **93 / 100** | Awaiting final operator evidence |
+| Learner-facing autonomous AI safety threshold | **97 / 100 minimum gate** | Enforced |
+
+Decision read:
+
+- Engineering state is green and production-ready.
+- No mocked or fake runtime dependency remains in the active RC3 release path.
+- Remaining gap is the manual six-role browser cutover, not an unresolved engineering blocker.
+
+Supporting artifacts:
+
+- `RC3_CONFIDENCE_MATRIX_MARCH_12_2026.md`
+- `RC3_LEADERSHIP_RAG_SIGNOFF_MARCH_12_2026.md`
+- `RC3_CUTOVER_HANDOFF_PACKET_MARCH_12_2026.md`
+
+---
+
 ## NEXT PHASE OPTIONS
 
 Choose one of the following:
