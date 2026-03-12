@@ -15,6 +15,7 @@ RC3 is considered `100% against gate` only when all of the following are true at
 4. Manual big-bang production cutover verification passes for all six core roles.
 5. Current signoff documentation matches the real system state.
 6. Learner-facing AI paths prove compliant confidence/COPPA behavior and never fabricate help below the autonomous threshold.
+7. No mocked, fake, or archived-only runtime path is relied on by the active release path.
 
 This is a release standard, not a claim that production risk is literally zero.
 
@@ -73,6 +74,7 @@ Required result:
 - no redirect loops
 - no unauthorized data exposure
 - no learner AI response violates the `0.97` confidence/COPPA guardrail
+- no operator evidence relies on historical canary artifacts or archived simulation code in place of the live runtime
 
 ---
 
@@ -86,6 +88,7 @@ A release is not `100% against gate` unless the repo contains or references:
 4. Successful gate output for login verification
 5. Successful gate output for RC3 preflight
 6. Recorded six-account live auth execution for the current cutover account set
+7. Evidence that the active release path contains no mocked/fake runtime dependency
 
 Current signoff references:
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
@@ -114,6 +117,7 @@ Treat release as `NO-GO` if any of the following occur:
 5. Any role lands on the wrong dashboard or enters a redirect loop.
 6. Documentation claims a greener state than the live system actually has.
 7. Any learner-facing AI flow returns low-confidence help instead of an escalation or educator-review prompt.
+8. Any signoff or operator path relies on archived simulation code, seeded fake runtime behavior, or superseded canary instructions instead of the live RC3 path.
 
 ---
 
@@ -125,6 +129,7 @@ For this repo, `100%` means:
 - all defined gates are green
 - no known live data drift exists in Auth or Firestore
 - launch-critical workflows have both automated and full cutover evidence
+- no mocked/fake runtime dependency exists in the active release path
 - rollback and monitoring remain available if production behavior diverges
 
 It does not mean unknown unknowns are impossible. It means the release meets the full agreed deployment standard.

@@ -12,7 +12,9 @@
 - Live production auth precheck executed successfully for all six operator accounts with `Test123!`
 - HQ operator credential reference corrected to `hq@scholesa.test` (`3hGfzDVbhyc5mDCgbLEPhZtDxCH2`)
 - Release gate, big-bang cutover checklist, operator script, and live signoff docs are now aligned to the same six-account set
+- `npm run rc3:preflight` is green on the March 12 codebase after Next 16 config cleanup and legacy runtime quarantine
 - BOS/MIA learner AI is now internal-inference only, enforces a `0.97` autonomous confidence threshold, and escalates safely when confidence or consent requirements are not met
+- No mocked or fake runtime path remains in the active RC3 release path; dormant TypeScript simulation code is quarantined outside the active source tree
 - Final step for literal `100% against gate`: complete the manual browser cutover in `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---
@@ -47,6 +49,7 @@
 - **i18n**: Centralized system live for EN / ZH-CN / ZH-TW on launch-critical BOS and auth surfaces
 - **Login Verification**: `amelda@scholesa.com`, `ameldalin561@gmail.com`, and `partner@example.com` verified with `Test123!`
 - **Learner AI Safety**: Autonomous learner help hard-gated at confidence `>= 0.97`; low-confidence or unavailable inference escalates instead of fabricating coaching
+- **Release Path Integrity**: No mocked/fake RC3 runtime flow remains active; historical simulation assets are quarantined and excluded from the release path
 
 ---
 

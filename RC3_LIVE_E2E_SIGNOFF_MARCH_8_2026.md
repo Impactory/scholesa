@@ -16,6 +16,7 @@ This signoff covers:
 - Auth custom role claim reconciliation
 - strict live audit enforcement for future drift
 - full RC3 preflight execution across web, Flutter, voice, compliance, telemetry, and E2E routing
+- confirmation that no mocked or fake runtime flow remains in the active RC3 release path
 
 ---
 
@@ -113,7 +114,7 @@ bash ./scripts/rc3_preflight.sh
 
 ## RC3 Preflight Result
 
-`bash ./scripts/rc3_preflight.sh` completed successfully on March 8, 2026.
+`bash ./scripts/rc3_preflight.sh` completed successfully on March 8, 2026 and again on March 12, 2026 after the Next 16 config cleanup and legacy runtime quarantine.
 
 The preflight passed:
 - live Firebase role identity audit
@@ -144,6 +145,12 @@ Active BOS, auth, and role-gated Flutter runtime flows are aligned with this tri
 - Learner-facing BOS/MIA help is internal-inference only.
 - Autonomous learner help is permitted only at certified confidence `>= 0.97`.
 - Low-confidence, unavailable, or consent-blocked inference escalates safely instead of fabricating coaching.
+
+## Active Release Path Integrity
+
+- No mocked or fake runtime flow remains in the active RC3 release path.
+- Historical TypeScript BOS/voice/safety/telemetry simulation code is archived outside the active source tree and is not part of the release path.
+- Historical canary artifacts remain only as evidence of the March 8 rollout state and are not current release-control inputs.
 
 ---
 

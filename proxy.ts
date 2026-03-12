@@ -71,7 +71,7 @@ function joinPath(locale: string, segments: string[]): string {
   return `/${locale}/${segments.join('/')}`;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const segments = pathname.split('/').filter(Boolean);
   const localeFromPath = segments[0];
@@ -94,7 +94,6 @@ export function middleware(request: NextRequest) {
   const rootSegment = segments[1] || '';
   const hasSessionCookie = Boolean(request.cookies.get('__session')?.value);
 
-  // Legacy top-level role pages are no longer canonical workflow routes.
   if (LEGACY_ROLE_ROOT_SEGMENTS.has(rootSegment) && segments.length === 2) {
     const fallback = ROLE_DEFAULT_ROUTE[rootSegment];
     if (fallback) {
@@ -122,7 +121,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip all internal paths (_next, assets, api)
     '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|icons|logo).*)',
   ],
 };

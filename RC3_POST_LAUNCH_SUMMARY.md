@@ -4,6 +4,7 @@
 > Historical snapshot only. This document records the March 3 post-launch narrative and is not a current release-control artifact.
 > Current release control is defined by `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
 > Current operator entry point: `npm run rc3:big-bang:guide`.
+> Historical references below to `en, es, zh`, `Next.js 14`, and early RC3 enhancement assumptions reflect the March 3 snapshot only and are not the current RC3 baseline.
 
 **Status**: ✅ **PRODUCTION LIVE**  
 **Launch Date**: March 3, 2026, 18:00 UTC  

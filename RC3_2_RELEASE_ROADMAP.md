@@ -3,6 +3,7 @@
 
 > Historical planning snapshot only. This roadmap reflects the March 3 RC3.2 planning state and is not a current release-control artifact.
 > Current launch control is defined by `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`.
+> Historical references below to Spanish verification and planned locale expansion reflect an earlier planning snapshot and are not the current RC3 locale baseline.
 
 **Created**: March 3, 2026  
 **Planning Lead**: Engineering Team  

@@ -29,7 +29,7 @@ Source: [package.json](/Users/simonluke/dev/scholesa/package.json)
 | firebase | ^11.10.0 | 11.x only | Do not jump to 12.x without a compatibility pass. |
 | firebase-admin | ^10.3.0 | 10.x only | Root web/server bundle still depends on the 10.x line; functions use a newer major independently. |
 | firebase-functions | ^4.9.0 | 4.x only | Root web/server helpers still target this line; do not jump majors without a server integration audit. |
-| next-pwa | ^2.0.2 | 2.x only | Current PWA helper baseline in the root app; re-validate service worker output on any upgrade. |
+| next-pwa | ^2.0.2 | 2.x only | Current PWA helper baseline in the root app; re-validate service worker output on any upgrade. On Next 16 this legacy line still emits Workbox and `Compilation.assets` deprecation warnings during `next build --webpack`, but the RC3 build and preflight remain green. Treat that as package debt until an explicit PWA migration is approved. |
 | tailwindcss | ^3.4.19 | 3.x only | Do not mix with Tailwind 4 until config/plugins are migrated. |
 | tailwind-merge | ^2.6.1 | 2.x only | Upgrade together with Tailwind utility strategy. |
 | zod | ^3.25.76 | 3.x only | Zod 4 requires an explicit migration. |
@@ -108,6 +108,7 @@ Key findings:
 - Functions drift had one clean in-range patch candidate: `@types/node` advanced from 25.3.5 to 25.4.0.
 - Flutter direct dependency floors were refreshed to the currently resolved approved-major lines for provider, audioplayers, record, shared_preferences, equatable, build_runner, and fake_cloud_firestore.
 - Next.js 17+, React 19, Tailwind 4, Firebase 12/13, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
+- March 12, 2026 cleanup verified that Next 16-specific app warnings were removed by migrating the route interceptor to `proxy.ts` and sanitizing the exported Next config. Remaining production-build warnings come from the approved `next-pwa` 2.x plugin internals, not from unsupported Scholesa config keys.
 - `build_resolvers` and `build_runner_core` remain reported as discontinued Flutter transitives; clearing that debt requires an explicit build-runner toolchain migration rather than another patch bump.
 
 ## Upgrade Rules

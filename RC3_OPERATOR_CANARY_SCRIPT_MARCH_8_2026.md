@@ -6,6 +6,7 @@
 
 > Superseded on March 12, 2026 by `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`.
 > Do not use this document as the current production release-control artifact.
+> This historical canary script predates the final big-bang release policy and must not be used as evidence for current learner AI guardrail compliance or release readiness.
 
 ---
 

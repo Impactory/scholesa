@@ -41,7 +41,7 @@
     "pages/**/*.ts",
     "pages/**/*.tsx",
     ".next/types/**/*.ts",
-    "middleware.ts",
+    "proxy.ts",
     "schema.ts",
     "scheduler.ts",
     "invariants.ts",

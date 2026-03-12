@@ -3,6 +3,7 @@
 > Historical snapshot only. This document is retained for March 3 deployment history and is not a current release-control artifact.
 > Current live signoff is captured in `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`, `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`, and `RC3_LAUNCH_READINESS_REPORT.md`.
 > Current operator entry point: `npm run rc3:big-bang:guide`.
+> Historical references below to `en, es, zh`, locale removals, and other March 3 deployment assumptions are not the current RC3 baseline.
 
 **Status**: ✅ **LIVE IN PRODUCTION**  
 **Deployment Date**: March 3, 2026, 18:45 UTC  

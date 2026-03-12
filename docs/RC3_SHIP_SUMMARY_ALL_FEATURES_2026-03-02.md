@@ -4,6 +4,8 @@ Date: 2026-03-02
 Release Target: 1.0.0-rc.3  
 Status: GO (all listed gates passing)
 
+> Historical feature shipment snapshot only. Current release-control truth lives in `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`, and the March 12 big-bang operator/checklist artifacts.
+
 ---
 
 ## 1) What shipped (all features)

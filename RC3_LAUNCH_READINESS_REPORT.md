@@ -13,7 +13,9 @@
 - Re-verified the current six-account production cutover set against live Firebase Auth with `Test123!`; all six accounts authenticated successfully
 - Correct live HQ production account is `hq@scholesa.test`, and the operator runbook now matches that production identity
 - Top-level readiness docs, gate docs, and big-bang cutover docs now point to the same live account set and evidence chain
+- `npm run rc3:preflight` is green on the March 12 codebase after the Next 16 config cleanup and legacy runtime quarantine
 - BOS/MIA learner AI now enforces a `0.97` autonomous confidence threshold and safe escalation under low confidence or missing consent
+- No mocked or fake runtime flow remains in the active RC3 release path; historical simulation code is retained only as archived reference material
 - Remaining step for full `100% against gate`: human execution of the manual browser big-bang cutover
 
 ---
@@ -42,6 +44,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **Flutter Analysis**: App clean (4 non-blocking info lints)  
 ✅ **Service Worker**: PWA manifest + offline support verified  
 ✅ **Live Identity Reconciliation**: Auth, Firestore, and Auth role claims now aligned one-to-one for all login-capable production profiles  
+✅ **Release Path Integrity**: Active RC3 code path contains no mocked/fake runtime flow; archived simulation code is outside the release path  
 
 ---
 

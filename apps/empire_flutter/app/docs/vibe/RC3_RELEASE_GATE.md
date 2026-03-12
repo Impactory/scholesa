@@ -9,6 +9,11 @@ For platform-wide March 8 live deployment criteria, also use:
 - `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 - `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`
 
+March 12, 2026 verification update:
+- `npm run rc3:preflight` is green on the current codebase.
+- No mocked or fake runtime flow remains in the active RC3 release path.
+- Historical simulation code is archived outside the active source tree and is not part of this release gate.
+
 ---
 
 ## Gate Summary
