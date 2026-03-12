@@ -1,6 +1,6 @@
 # Dependency Baseline Scholesa
 
-Last reviewed: 2026-03-09
+Last reviewed: 2026-03-12
 Authority: repo root manifests and Flutter pubspecs
 
 ## Purpose
@@ -22,18 +22,18 @@ Source: [package.json](/Users/simonluke/dev/scholesa/package.json)
 
 | Package | Current locked version | Supported range | Notes |
 | --- | --- | --- | --- |
-| next | ^14.2.35 | 14.x only | Do not jump to 15.x or 16.x without App Router, PWA, and deployment validation. |
-| react | ^18 | 18.x only | Keep React and React DOM on the same major. |
-| react-dom | ^18 | 18.x only | Must stay aligned with React. |
+| next | ^16.1.6 | 16.x only | App Router baseline is already on Next 16; re-validate routing, PWA, and deployment before a 17.x migration. |
+| react | ^18.3.1 | 18.x only | Keep React and React DOM on the same major. |
+| react-dom | ^18.3.1 | 18.x only | Must stay aligned with React. |
 | typescript | ^5.5.3 | 5.x only | Upgrade within 5.x unless tooling migration is planned. |
-| firebase | ^11.1.0 | 11.x only | Latest installed is 11.10.0; do not jump to 12.x without a compatibility pass. |
-| firebase-admin | ^13.7.0 | 13.x only | Shared by web/server and functions. |
-| firebase-functions | ^7.1.1 | 7.x only | Keep aligned with deployed Functions runtime behavior. |
-| next-pwa | ^5.6.0 | 5.x only | Re-validate service worker output on any upgrade. |
-| tailwindcss | ^3.4.6 | 3.x only | Do not mix with Tailwind 4 until config/plugins are migrated. |
-| tailwind-merge | ^2.3.0 | 2.x only | Upgrade together with Tailwind utility strategy. |
-| zod | ^3.23.8 | 3.x only | Zod 4 requires an explicit migration. |
-| framer-motion | ^11.3.8 | 11.x only | 12.x is out; defer until animation regressions are audited. |
+| firebase | ^11.10.0 | 11.x only | Do not jump to 12.x without a compatibility pass. |
+| firebase-admin | ^10.3.0 | 10.x only | Root web/server bundle still depends on the 10.x line; functions use a newer major independently. |
+| firebase-functions | ^4.9.0 | 4.x only | Root web/server helpers still target this line; do not jump majors without a server integration audit. |
+| next-pwa | ^2.0.2 | 2.x only | Current PWA helper baseline in the root app; re-validate service worker output on any upgrade. |
+| tailwindcss | ^3.4.19 | 3.x only | Do not mix with Tailwind 4 until config/plugins are migrated. |
+| tailwind-merge | ^2.6.1 | 2.x only | Upgrade together with Tailwind utility strategy. |
+| zod | ^3.25.76 | 3.x only | Zod 4 requires an explicit migration. |
+| framer-motion | ^11.18.2 | 11.x only | 12.x is out; defer until animation regressions are audited. |
 | lucide-react | ^0.560.0 | 0.x current minor line | Safe to update within the same API shape after icon audit. |
 
 ## Functions Baseline
@@ -44,6 +44,8 @@ Source: [functions/package.json](/Users/simonluke/dev/scholesa/functions/package
 | --- | --- | --- | --- |
 | typescript | ^5.4.5 | 5.x only | Keep compatible with ts-jest and ts-node. |
 | jest | ^29.7.0 | 29.x only | Do not move to 30.x until tests/config are upgraded together. |
+| @types/jest | ^29.5.14 | 29.x only | Keep aligned with the Jest 29 line. |
+| @types/node | ^25.4.0 | 25.x only | Keep Node type definitions aligned with the functions toolchain. |
 | ts-jest | ^29.1.2 | 29.x only | Must match the Jest major. |
 | ts-node | ^10.9.2 | 10.x only | Used by spec scripts and local tooling. |
 | firebase-admin | ^13.7.0 | 13.x only | Match root baseline. |
@@ -62,17 +64,17 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 | firebase_storage | ^13.1.0 | 13.x only | Re-test upload rules and portfolio media flows on upgrades. |
 | cloud_functions | ^6.0.7 | 6.x only | Keep callable payloads validated against backend changes. |
 | google_sign_in | ^7.2.0 | 7.x only | Re-check auth configuration on upgrades. |
-| provider | ^6.1.2 | 6.x only | Current state-management baseline. |
+| provider | ^6.1.5+1 | 6.x only | Current state-management baseline. |
 | go_router | ^17.1.0 | 17.x only | Route refactors required before a major upgrade. |
 | connectivity_plus | ^7.0.0 | 7.x only | Used by offline queue and connectivity gates. |
 | intl | ^0.20.2 | 0.20.x only | Keep aligned with flutter_localizations. |
 | google_fonts | ^8.0.2 | 8.x only | Current typography baseline. |
-| audioplayers | ^6.1.0 | 6.x only | Validate BOS voice flows before major upgrades. |
-| record | ^6.0.0 | 6.x only | Validate microphone permissions and runtime flows before upgrade. |
+| audioplayers | ^6.6.0 | 6.x only | Validate BOS voice flows before major upgrades. |
+| record | ^6.2.0 | 6.x only | Validate microphone permissions and runtime flows before upgrade. |
 | speech_to_text | ^7.3.0 | 7.x only | Voice runtime sensitive. |
 | flutter_tts | ^4.2.5 | 4.x only | Voice runtime sensitive. |
-| shared_preferences | ^2.2.3 | 2.x only | Storage behavior should stay compatible across mobile/web. |
-| equatable | ^2.0.5 | 2.x only | Model baseline. |
+| shared_preferences | ^2.5.4 | 2.x only | Storage behavior should stay compatible across mobile/web. |
+| equatable | ^2.0.8 | 2.x only | Model baseline. |
 | file_picker | ^10.3.10 | 10.x only | Re-test platform pickers on upgrade. |
 
 ## UI And Design System Baseline
@@ -98,13 +100,15 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 
 ## Drift Snapshot
 
-Command run on 2026-03-08: `npm outdated`
+Command run on 2026-03-12: `npm outdated`, `npm outdated --prefix functions`, and `flutter pub outdated --json`
 
 Key findings:
 
-- Next.js 16.x, React 19.x, Tailwind 4.x, Firebase 12.x, Jest 30.x, and Zod 4.x are available upstream but are outside Scholesa's supported majors.
-- Current policy is to stay on the latest stable within the chosen major unless a migration plan explicitly widens the supported range.
-- The installed root Firebase version resolves to 11.10.0 while `package.json` declares `^11.1.0`; this remains inside the approved 11.x line.
+- Root manifests were refreshed to the currently resolved approved-major versions for Firebase client, framer-motion, Tailwind 3, Zod 3, and React 18 type packages.
+- Functions drift had one clean in-range patch candidate: `@types/node` advanced from 25.3.5 to 25.4.0.
+- Flutter direct dependency floors were refreshed to the currently resolved approved-major lines for provider, audioplayers, record, shared_preferences, equatable, build_runner, and fake_cloud_firestore.
+- Next.js 17+, React 19, Tailwind 4, Firebase 12/13, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
+- `build_resolvers` and `build_runner_core` remain reported as discontinued Flutter transitives; clearing that debt requires an explicit build-runner toolchain migration rather than another patch bump.
 
 ## Upgrade Rules
 
