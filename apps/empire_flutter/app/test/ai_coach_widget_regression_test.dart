@@ -38,7 +38,6 @@ void main() {
             body: AiCoachWidget(
               runtime: runtime,
               actorRole: role,
-              allowBosFallback: role == UserRole.learner,
               conceptTags: const <String>['regression-test'],
             ),
           ),

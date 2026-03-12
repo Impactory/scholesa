@@ -24,7 +24,6 @@ void main() {
             body: AiCoachWidget(
               runtime: runtime,
               actorRole: UserRole.learner,
-              allowBosFallback: true,
               conceptTags: const <String>['integration-test'],
             ),
           ),
