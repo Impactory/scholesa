@@ -786,7 +786,6 @@ class _QuickActionCard extends StatelessWidget {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: scheme.outline.withValues(alpha: 0.16)),

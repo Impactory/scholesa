@@ -10,6 +10,7 @@ import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/modules/educator/educator_today_page.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
+import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -61,6 +62,10 @@ void main() {
         firestoreService: firestoreService,
         learnerId: 'learner-test-1',
       );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'learner-test-1',
+      );
 
       await tester.pumpWidget(
         MultiProvider(
@@ -69,6 +74,7 @@ void main() {
             Provider<FirestoreService>.value(value: firestoreService),
             ChangeNotifierProvider<MissionService>.value(value: missionService),
             ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
           ],
           child: MaterialApp(
             theme: _testTheme,

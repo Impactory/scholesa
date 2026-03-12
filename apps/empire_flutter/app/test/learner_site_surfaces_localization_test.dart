@@ -10,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
+import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/site/site_incidents_page.dart';
 import 'package:scholesa_app/modules/site/site_ops_page.dart';
@@ -83,6 +84,10 @@ void main() {
         firestoreService: firestoreService,
         learnerId: 'test-user-1',
       );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
 
       await tester.binding.setSurfaceSize(const Size(1280, 1600));
       await tester.pumpWidget(
@@ -94,6 +99,7 @@ void main() {
             Provider<FirestoreService>.value(value: firestoreService),
             ChangeNotifierProvider<MissionService>.value(value: missionService),
             ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
             Provider<dynamic>.value(value: null),
           ],
         ),
