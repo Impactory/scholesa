@@ -35,17 +35,35 @@ const isBuildPhase =
   process.env.__NEXT_PRIVATE_BUILD_WORKER === '1' ||
   process.env.npm_lifecycle_event === 'build';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo.appspot.com',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '000000000000',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:000000000000:web:demo',
-};
+const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
+const allowPlaceholderClientConfig = typeof window === 'undefined' || isBuildPhase || isE2ETestMode;
+
+if (!hasFullFirebaseClientConfig && !allowPlaceholderClientConfig) {
+  throw new Error(
+    'Missing required Firebase client env vars. Refusing to initialize the client SDK with demo placeholders.',
+  );
+}
+
+const firebaseConfig = hasFullFirebaseClientConfig
+  ? {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY as string,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN as string,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID as string,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET as string,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID as string,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID as string,
+    }
+  : {
+      apiKey: 'build-placeholder-api-key',
+      authDomain: 'build-placeholder.firebaseapp.com',
+      projectId: 'build-placeholder-project',
+      storageBucket: 'build-placeholder.appspot.com',
+      messagingSenderId: '000000000000',
+      appId: '1:000000000000:web:build-placeholder',
+    };
 
 if (!hasFullFirebaseClientConfig && typeof window === 'undefined' && !isBuildPhase) {
-  console.warn('Firebase client env vars are missing; using safe server-side placeholder config for build/runtime.');
+  console.warn('Firebase client env vars are missing; using server-side placeholder config only outside browser runtime.');
 }
 
 const firestoreEmulatorHost =
@@ -103,7 +121,7 @@ if (functionsEmulatorHost && typeof window !== 'undefined' && !(globalThis as Re
   (globalThis as Record<string, unknown>).__scholesaFunctionsEmulatorConnected = true;
 }
 
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+if (typeof window !== 'undefined' && isE2ETestMode) {
   (window as typeof window & {
     __scholesaE2E?: {
       signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;

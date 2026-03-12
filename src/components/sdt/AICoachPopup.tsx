@@ -24,6 +24,7 @@ import { getPolicyForGrade, getAICoachModesForGrade } from '@/src/lib/policies/g
 import { useAITracking, useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { recordAIFeedback } from '@/src/lib/ai/interactionLogger';
+import { localizedServiceUnavailable } from '@/src/lib/ai/multilingualGuardrails';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
@@ -479,20 +480,20 @@ Guidance: ${
       });
     } catch (err) {
       console.error('AI Coach error:', err);
-      // Show friendly error
+      const traceId = `ai_popup_${Date.now()}`;
       setResponse({
-        answer: t('aiCoach.errorFallback'),
-        modelUsed: 'error',
-        modelVersion: 'error',
-        logId: 'error',
-        promptTemplateId: 'coach.error',
+        answer: localizedServiceUnavailable(locale),
+        modelUsed: 'service_guard',
+        modelVersion: 'service_guard',
+        logId: traceId,
+        promptTemplateId: 'coach.service_guard',
         policyVersion: 'i18n-guardrails-2026-02-23',
         safetyOutcome: 'escalated',
-        safetyReasonCode: 'client_error',
+        safetyReasonCode: 'service_error_guard',
         toolCallIds: [],
         targetLocale: locale,
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
-        traceId: `ai_popup_${Date.now()}`,
+        traceId,
       });
     } finally {
       setLoading(false);

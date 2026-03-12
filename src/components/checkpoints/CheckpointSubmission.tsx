@@ -8,10 +8,11 @@
  */
 
 import React, { useState } from 'react';
+import { Timestamp, addDoc, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { CompetenceEngine } from '@/src/lib/motivation/motivationEngine';
-import { useCompetenceTracking } from '@/src/hooks/useTelemetry';
+import { trackUnifiedEvent } from '@/src/lib/analytics';
 import { CheckCircleIcon, XIcon, AlertCircleIcon } from 'lucide-react';
+import { missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 
 interface CheckpointSubmissionProps {
   missionId: string;
@@ -29,14 +30,25 @@ export function CheckpointSubmission({
   onSubmitted
 }: CheckpointSubmissionProps) {
   const { profile } = useAuthContext();
-  const trackCompetence = useCompetenceTracking();
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ passed: boolean; feedback: string } | null>(null);
+  const [result, setResult] = useState<{ status: 'submitted' | 'error'; feedback: string } | null>(null);
   
   const learnerId = profile?.uid || '';
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
+  const resolvedGrade = typeof (profile as Record<string, unknown> | null)?.grade === 'number'
+    ? ((profile as Record<string, unknown>).grade as number)
+    : null;
+  const resolvedGradeBand = resolvedGrade == null
+    ? null
+    : resolvedGrade <= 3
+    ? 'grades_1_3'
+    : resolvedGrade <= 6
+    ? 'grades_4_6'
+    : resolvedGrade <= 9
+    ? 'grades_7_9'
+    : 'grades_10_12';
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,52 +57,85 @@ export function CheckpointSubmission({
     if (Object.keys(answers).length < requiredSkills.length) {
       return;
     }
+
+    if (!learnerId || !siteId) {
+      setResult({
+        status: 'error',
+        feedback: 'Your account is missing learner or site context. Refresh and try again.',
+      });
+      return;
+    }
     
     setLoading(true);
     
     try {
-      // Track checkpoint attempt - removed, using only checkpoint_passed event
-      
-      // Simulate grading (in real app, this would call AI grading or educator review)
-      const passed = Math.random() > 0.3; // 70% pass rate for demo
-      
-      if (passed) {
-        // Record checkpoint passed via CompetenceEngine
-        await CompetenceEngine.recordCheckpointPassed(
-          learnerId,
-          siteId,
-          5, // grade - K-9 grade level, using 5 as default
+      const attemptsQuery = query(
+        missionAttemptsCollection,
+        where('learnerId', '==', learnerId),
+        where('missionId', '==', missionId),
+      );
+      const attemptsSnapshot = await getDocs(attemptsQuery);
+      const attemptNumber = attemptsSnapshot.size + 1;
+      const checkpointId = `${missionId}:checkpoint:${checkpointNumber}`;
+      const content = requiredSkills
+        .map((skill) => `Skill: ${skill}\nResponse: ${answers[skill]?.trim() || ''}`)
+        .join('\n\n');
+
+      await addDoc(missionAttemptsCollection, {
+        learnerId,
+        missionId,
+        siteId,
+        status: 'submitted',
+        content,
+        submittedAt: serverTimestamp(),
+      });
+
+      await trackUnifiedEvent({
+        userId: learnerId,
+        userRole: 'learner',
+        siteId,
+        telemetryEvent: 'checkpoint_attempted',
+        analyticsEvent: resolvedGradeBand
+          ? {
+              event_name: 'checkpoint_submitted',
+              event_id: `cp_${Date.now()}`,
+              event_time: Timestamp.now(),
+              class_id: siteId,
+              student_id: learnerId,
+              grade_band_id: resolvedGradeBand,
+              app_version: '1.0.0',
+              device_type: 'web',
+              source_screen: 'checkpoint',
+              checkpoint_id: checkpointId,
+              mission_id: missionId,
+              skill_id: requiredSkills[0] || checkpointId,
+              attempt_no: attemptNumber,
+              passed: false,
+            }
+          : undefined,
+        grade: resolvedGrade ?? undefined,
+        metadata: {
           missionId,
           checkpointNumber,
-          requiredSkills
-        );
-        
-        // Track checkpoint passed
-        trackCompetence('checkpoint_passed', {
-          missionId,
-          checkpointNumber,
-          skillCount: requiredSkills.length,
-          attemptDuration: 0 // Would calculate actual duration
-        });
-        
-        setResult({
-          passed: true,
-          feedback: 'Great work! You have demonstrated mastery of these skills.'
-        });
-      } else {
-        setResult({
-          passed: false,
-          feedback: 'Not quite there yet. Review the feedback and try again when ready.'
-        });
-      }
-      
-      // Notify parent
-      if (onSubmitted) onSubmitted(passed);
+          checkpointId,
+          requiredSkills,
+          attemptNumber,
+          analyticsRecorded: Boolean(resolvedGradeBand),
+          submissionStatus: 'submitted_for_review',
+        },
+      });
+
+      setResult({
+        status: 'submitted',
+        feedback: 'Checkpoint submitted for review. An educator or approved workflow can now assess it end to end.',
+      });
+
+      if (onSubmitted) onSubmitted(false);
       
     } catch (err) {
       console.error('Failed to submit checkpoint:', err);
       setResult({
-        passed: false,
+        status: 'error',
         feedback: 'Failed to submit. Please try again.'
       });
     } finally {
@@ -102,22 +147,22 @@ export function CheckpointSubmission({
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-6">
         <div className={`rounded-lg p-6 text-center ${
-          result.passed ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'
+          result.status === 'submitted' ? 'bg-blue-50 border border-blue-200' : 'bg-amber-50 border border-amber-200'
         }`}>
-          {result.passed ? (
-            <CheckCircleIcon className="h-16 w-16 text-green-600 mx-auto mb-4" />
+          {result.status === 'submitted' ? (
+            <CheckCircleIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
           ) : (
             <AlertCircleIcon className="h-16 w-16 text-amber-600 mx-auto mb-4" />
           )}
           
           <h3 className={`text-xl font-bold mb-2 ${
-            result.passed ? 'text-green-900' : 'text-amber-900'
+            result.status === 'submitted' ? 'text-blue-900' : 'text-amber-900'
           }`}>
-            {result.passed ? 'Checkpoint Passed! 🎉' : 'Keep Trying!'}
+            {result.status === 'submitted' ? 'Checkpoint Submitted' : 'Submission Failed'}
           </h3>
           
           <p className={`text-sm mb-6 ${
-            result.passed ? 'text-green-800' : 'text-amber-800'
+            result.status === 'submitted' ? 'text-blue-800' : 'text-amber-800'
           }`}>
             {result.feedback}
           </p>
@@ -125,12 +170,12 @@ export function CheckpointSubmission({
           <button
             onClick={onClose}
             className={`px-6 py-2 rounded-md font-medium ${
-              result.passed
-                ? 'bg-green-600 text-white hover:bg-green-700'
+              result.status === 'submitted'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-amber-600 text-white hover:bg-amber-700'
             }`}
           >
-            {result.passed ? 'Continue' : 'Review & Retry'}
+            {result.status === 'submitted' ? 'Continue' : 'Close'}
           </button>
         </div>
       </div>
