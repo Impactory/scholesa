@@ -24,6 +24,11 @@ function runStep(name, command, args) {
 function main() {
   const steps = [
     {
+      name: 'Big-bang release artifact verification',
+      command: 'npm',
+      args: ['run', 'qa:release:big-bang-docs'],
+    },
+    {
       name: 'BOS MIA completion gate',
       command: 'npm',
       args: ['run', 'qa:bos:mia:complete'],
@@ -62,6 +67,7 @@ function main() {
     return;
   }
   process.stdout.write('✅ BOS+MIA sign-off report generated.\n');
+  process.stdout.write('Manual release control remains RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md + RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md\n');
 }
 
 main();

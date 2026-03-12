@@ -171,6 +171,9 @@ main() {
   log "Running Flutter suite via ${flutter_test_script}..."
   (cd "$REPO_ROOT" && npm run "$flutter_test_script")
 
+  log "Verifying big-bang release artifacts..."
+  (cd "$REPO_ROOT" && npm run qa:release:big-bang-docs)
+
   log "Running web production build..."
   (cd "$REPO_ROOT" && npm run build)
 

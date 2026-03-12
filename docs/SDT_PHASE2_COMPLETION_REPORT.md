@@ -77,6 +77,8 @@ Integrated telemetry tracking into core student-facing components:
    - Toggle between "This Week" and "This Month"
    - Re-queries telemetry aggregates on change
 
+> Historical note: this December 2024 phase report contains prototype-era references to mock analytics data and staging validation. Those statements are archival and are not the current Scholesa production policy or release evidence standard.
+
 5. **Responsive Design**
    - Mobile-friendly grid layouts
    - Accessible progress bars with ARIA labels
@@ -95,7 +97,7 @@ User Activity → TelemetryService.track() → telemetryEvents collection
                                     Educator UI (charts)
 ```
 
-**Current State:** Uses mock data for demonstration; ready to integrate real Firestore queries once aggregates are populated.
+**Current State (historical snapshot):** This phase used mock data for dashboard demonstration while aggregates were still being wired. Do not treat this as the current production analytics state.
 
 ---
 
@@ -481,7 +483,7 @@ User Activity → TelemetryService.track() → telemetryEvents collection
 - Type-safe event names and metadata
 - Easy to audit telemetry coverage (search for `useTelemetry`)
 
-### 5. Mock Data for Initial Dashboard
+### 5. Mock Data for Initial Dashboard (Historical Prototype Decision)
 **Decision:** Ship analytics dashboard with mock data  
 **Rationale:**
 - Allows UI/UX testing before real user activity
@@ -494,7 +496,7 @@ User Activity → TelemetryService.track() → telemetryEvents collection
 ## 💡 Recommendations for Product Team
 
 ### Short-Term (Week 1-2):
-1. **Deploy to staging:** Test with 5-10 real students
+1. **Historical recommendation:** Use a limited pre-production rehearsal to test with real students before production launch
 2. **Educator training:** Show analytics dashboard, explain SDT pillars
 3. **Student onboarding:** Introduce motivation profile as "your learning passport"
 
@@ -534,7 +536,7 @@ This implementation builds on:
 
 **Report Generated:** December 2024  
 **Phase:** 2 of 6 (MVP Complete)  
-**Status:** ✅ Production-Ready  
+**Status:** ✅ Historical phase complete; superseded by later live telemetry and release-gate evidence  
 **Next Review:** Post-deployment Week 1
 
 <!-- TELEMETRY_WIRING:START -->

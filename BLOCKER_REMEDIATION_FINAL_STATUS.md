@@ -7,12 +7,13 @@
 
 ---
 
-## MARCH 8 RELEASE NOTE
+## MARCH 12 RELEASE NOTE
 
-- Production canary auth precheck completed for learner, educator, parent, site, partner, and HQ accounts with `Test123!`
+- Production cutover auth precheck completed for learner, educator, parent, site, partner, and HQ accounts with `Test123!`
 - HQ runbook account corrected from a stale non-working reference to `hq@scholesa.test`
-- Readiness docs and canary docs now share one consistent operator account set
-- Remaining launch action is manual browser execution of `RC3_PRODUCTION_CANARY_CHECKLIST_MARCH_8_2026.md`
+- Readiness docs and big-bang cutover docs now share one consistent operator account set
+- Learner-facing BOS/MIA runtime now enforces autonomous confidence `>= 0.97` with safe escalation below threshold
+- Remaining launch action is manual browser execution of `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---
 

@@ -1,7 +1,10 @@
 # 72_RELEASE_CUTOVER_RUNBOOK.md
-Release Cutover Runbook (Staging → Production)
+Release Cutover Runbook (Pre-Production Rehearsal → Production Big-Bang)
 
 Generated: 2026-01-09
+
+> Current release-control policy: use `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md` and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` as the authoritative production cutover artifacts.
+> This runbook remains useful for operational sequencing, but it is no longer the canonical release gate by itself.
 
 **Design language lock (non-negotiable):**
 - Keep the existing Scholesa visual language and component patterns.
@@ -17,7 +20,7 @@ Define the exact steps to cutover safely to production.
 ## 1) Preconditions
 - `51_IMPLEMENTATION_AUDIT_GO_LIVE.md`: all P0 PASS with evidence
 - Scholesa_Go_Live_Readiness_Checklist.docx: completed
-- Staging pilot rehearsal completed with evidence
+- Pre-production rehearsal completed with evidence
 - Backups and restore rehearsal completed
 
 ---
@@ -47,6 +50,7 @@ Define the exact steps to cutover safely to production.
    - take attendance online
    - send a message
    - view parent summary
+   - validate learner AI returns high-confidence help or safe escalation, never fabricated low-confidence help
 6) Monitor:
    - error rates
    - auth failures

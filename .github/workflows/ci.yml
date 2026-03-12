@@ -48,6 +48,9 @@ jobs:
       - name: Workflow no-mock audit
         run: npm run qa:workflow:no-mock
 
+      - name: Big-bang release artifacts
+        run: npm run qa:release:big-bang-docs
+
       - name: Build
         run: npm run build
 

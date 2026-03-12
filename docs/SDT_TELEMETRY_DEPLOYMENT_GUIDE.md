@@ -272,9 +272,9 @@ try {
 2. **Date filtering:** Check queries for date range mismatch
 3. **Site scoping:** User's `activeSiteId` doesn't match event `siteId`
 
-**Quick fix (mock data):**
-- The current implementation uses mock data for demonstration
-- Once real aggregates exist, replace mock data with Firestore queries
+**Quick fix (historical prototype guidance):**
+- Earlier prototype builds used mock data for dashboard demonstration
+- Current production signoff must use real Firestore aggregates and live release-gate evidence instead of this prototype shortcut
 
 ### Student Profile Scores Zero
 **Symptom:** SDT scores show 0% despite activity

@@ -58,6 +58,7 @@ run_step "Login profile reconciliation" node scripts/reconcile_login_profiles.js
 run_step "Auth role claim reconciliation" node scripts/reconcile_auth_role_claims.js --strict
 run_step "Live Firebase role identity audit" node scripts/firebase_role_e2e_audit.js --strict
 run_step "Firebase password login verification" node scripts/verify_login_profiles.js --strict
+run_step "Big-bang release artifact verification" npm run qa:release:big-bang-docs
 run_step "Role dashboard smoke checks" node scripts/role_dashboard_smoke.js --env="$ENV_NAME" --strict
 run_step "Workflow no-mock/no-synthetic audit" npm run qa:workflow:no-mock
 run_step "Web browser workflow E2E" npm run test:e2e:web
@@ -78,3 +79,4 @@ run_step "VIBE telemetry blocker gate" npm run qa:vibe-telemetry:blockers
 
 echo ""
 echo "✅ RC3 preflight completed successfully."
+echo "Final manual release control: RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md + RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md"

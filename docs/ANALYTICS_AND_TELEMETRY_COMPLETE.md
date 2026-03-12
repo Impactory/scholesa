@@ -525,7 +525,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Coach embeddings
 ---
 
 **Last Updated:** January 17, 2026  
-**Next Steps:** Deploy to staging, validate indexes, test real-time updates with concurrent users
+**Next Steps:** Use pre-production validation for rehearsal only, then validate against the production big-bang cutover chain before launch. This report is not itself a release-control artifact.
 
 
 ---
