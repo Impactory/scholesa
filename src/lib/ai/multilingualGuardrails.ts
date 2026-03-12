@@ -27,6 +27,20 @@ const NEUTRAL_FALLBACK_BY_LOCALE: Record<SupportedLocale, string> = {
   th: 'มาโฟกัสที่เป้าหมายการเรียนรู้ของคุณก่อน คุณอยากเริ่มเข้าใจส่วนไหนก่อน?'
 };
 
+const LOW_CONFIDENCE_SUPPORT_BY_LOCALE: Record<SupportedLocale, string> = {
+  en: 'I want to be careful here. Tell me what you have already tried, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
+  'zh-CN': '我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。',
+  'zh-TW': '我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。',
+  th: 'ฉันอยากระวังให้มากขึ้น ลองบอกก่อนว่าคุณได้ลองอะไรไปแล้วบ้าง แล้วฉันจะช่วยคิดขั้นต่อไปที่ปลอดภัยให้ ถ้าต้องการตรวจแบบครบถ้วน ให้ครูช่วยดูไปด้วยกัน'
+};
+
+const SERVICE_UNAVAILABLE_BY_LOCALE: Record<SupportedLocale, string> = {
+  en: 'The AI coach is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+  'zh-CN': 'AI 教练现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
+  'zh-TW': 'AI 教練現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
+  th: 'โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ'
+};
+
 const INJECTION_PATTERNS = [
   /ignore (all )?previous instructions/i,
   /reveal (the )?system prompt/i,
@@ -138,6 +152,14 @@ export function languageLooksCompatible(text: string, locale: SupportedLocale): 
 
 export function localizedTutorFallback(locale: SupportedLocale): string {
   return NEUTRAL_FALLBACK_BY_LOCALE[locale];
+}
+
+export function localizedLowConfidenceSupport(locale: SupportedLocale): string {
+  return LOW_CONFIDENCE_SUPPORT_BY_LOCALE[locale];
+}
+
+export function localizedServiceUnavailable(locale: SupportedLocale): string {
+  return SERVICE_UNAVAILABLE_BY_LOCALE[locale];
 }
 
 export function localizedRefusal(locale: SupportedLocale): string {

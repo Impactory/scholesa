@@ -33,6 +33,7 @@ const INTERACTION_COLLECTION = 'interactionEvents';
 const FEATURE_QUEUE_COLLECTION = 'fdmFeatureExtractionQueue';
 const USERS_COLLECTION = 'users';
 const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
+const MIN_AUTONOMOUS_POLICY_CONFIDENCE = 0.97;
 const BOS_PAYLOAD_KEY_BLOCKLIST = new Set([
   'prompt',
   'response',
@@ -1485,7 +1486,7 @@ export const bosGetIntervention = onCall(
           candidate.confidence ?? asRecord(candidate.metadata)?.confidence,
           0.5,
         ));
-        const allowOverride = modelConfidence >= 0.35;
+        const allowOverride = modelConfidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
         if (allowOverride) {
           const typeCandidate = normalizeString(candidate.type)?.toLowerCase();
           if (

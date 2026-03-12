@@ -5,6 +5,7 @@ import { resolveRequestLocale } from '@/src/lib/i18n/localeHeaders';
 import { normalizeLocale, type SupportedLocale } from '@/src/lib/i18n/config';
 import type { ModelRequest, ModelResponse } from '@/src/lib/ai/modelAdapter';
 import { callInternalInferenceJson, isInternalInferenceRequired } from '@/src/lib/server/internalInferenceGateway';
+import { localizedLowConfidenceSupport, localizedServiceUnavailable } from '@/src/lib/ai/multilingualGuardrails';
 
 type SessionUser = Awaited<ReturnType<typeof getCurrentUserServer>>;
 type AllowedRole = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
@@ -18,6 +19,8 @@ type ParsedLlmPayload = {
     confidence?: number;
   };
 };
+
+const MIN_AUTONOMOUS_LEARNER_CONFIDENCE = 0.97;
 
 function parseBody(body: unknown): ModelRequest | null {
   if (!body || typeof body !== 'object') return null;
@@ -135,6 +138,49 @@ function fallbackQuestion(locale: SupportedLocale): string {
   }
 }
 
+function clampConfidence(value: unknown): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  if (numeric < 0) return 0;
+  if (numeric > 1) return 1;
+  return numeric;
+}
+
+function requiresStrictConfidence(request: ModelRequest): boolean {
+  return request.role === 'learner' || request.safetyConstraints.requireChildSafe;
+}
+
+function buildEscalatedGuardResponse(input: {
+  request: ModelRequest;
+  targetLocale: SupportedLocale;
+  traceId: string;
+  modelVersion: string;
+  safetyReasonCode: string;
+  confidence?: number;
+  answer: string;
+}): ModelResponse {
+  return {
+    answer: input.answer,
+    followUpQuestions: input.request.responseFormat.includeFollowUp ? [fallbackQuestion(input.targetLocale)] : undefined,
+    citations: undefined,
+    modelUsed: 'scholesa_server_inference_guard',
+    modelVersion: input.modelVersion,
+    promptTemplateId: input.request.promptTemplateId,
+    policyVersion: input.request.policyVersion,
+    safetyOutcome: 'escalated',
+    safetyReasonCode: input.safetyReasonCode,
+    toolCallIds: [],
+    targetLocale: input.targetLocale,
+    gradeBand: input.request.gradeBand,
+    traceId: input.traceId,
+    missionAttemptId: input.request.missionAttemptId,
+    confidence: input.confidence,
+    safetyFlags: ['coppa_confidence_guard'],
+    tokensUsed: 0,
+    latencyMs: 0,
+  };
+}
+
 export async function POST(request: Request) {
   const locale = resolveRequestLocale(request.headers);
   const body = parseBody(await request.json());
@@ -188,12 +234,59 @@ export async function POST(request: Request) {
   });
 
   if (isInternalInferenceRequired() && !inference.ok) {
+    if (requiresStrictConfidence(body)) {
+      return NextResponse.json(buildEscalatedGuardResponse({
+        request: body,
+        targetLocale,
+        traceId,
+        modelVersion: 'confidence-guard-v1',
+        safetyReasonCode: 'child_inference_unavailable',
+        answer: localizedServiceUnavailable(targetLocale),
+      }), { status: 200 });
+    }
     return NextResponse.json({ error: 'inference_unavailable', code: inference.errorCode }, { status: 503 });
   }
 
-  const llmPayload = inference.ok ? extractLlmPayload(inference.data) : undefined;
+  if (!inference.ok) {
+    if (requiresStrictConfidence(body)) {
+      return NextResponse.json(buildEscalatedGuardResponse({
+        request: body,
+        targetLocale,
+        traceId,
+        modelVersion: 'confidence-guard-v1',
+        safetyReasonCode: 'child_inference_unavailable',
+        answer: localizedServiceUnavailable(targetLocale),
+      }), { status: 200 });
+    }
+    return NextResponse.json({ error: 'inference_unavailable', code: inference.errorCode }, { status: 503 });
+  }
+
+  const llmPayload = extractLlmPayload(inference.data);
   if (!llmPayload?.text) {
+    if (requiresStrictConfidence(body)) {
+      return NextResponse.json(buildEscalatedGuardResponse({
+        request: body,
+        targetLocale,
+        traceId,
+        modelVersion: llmPayload?.modelVersion || 'confidence-guard-v1',
+        safetyReasonCode: 'child_empty_inference_response',
+        answer: localizedServiceUnavailable(targetLocale),
+      }), { status: 200 });
+    }
     return NextResponse.json({ error: 'empty_inference_response' }, { status: 503 });
+  }
+
+  const certifiedConfidence = clampConfidence(llmPayload.understanding?.confidence);
+  if (requiresStrictConfidence(body) && certifiedConfidence < MIN_AUTONOMOUS_LEARNER_CONFIDENCE) {
+    return NextResponse.json(buildEscalatedGuardResponse({
+      request: body,
+      targetLocale,
+      traceId,
+      modelVersion: llmPayload.modelVersion || 'confidence-guard-v1',
+      safetyReasonCode: 'child_low_confidence_guard',
+      confidence: certifiedConfidence,
+      answer: localizedLowConfidenceSupport(targetLocale),
+    }), { status: 200 });
   }
 
   const response: ModelResponse = {
@@ -216,7 +309,7 @@ export async function POST(request: Request) {
     gradeBand: body.gradeBand,
     traceId,
     missionAttemptId: body.missionAttemptId,
-    confidence: llmPayload.understanding?.confidence,
+    confidence: certifiedConfidence,
     tokensUsed: Math.max(1, Math.ceil(llmPayload.text.split(/\s+/).filter(Boolean).length * 1.3)),
     latencyMs: 0,
   };

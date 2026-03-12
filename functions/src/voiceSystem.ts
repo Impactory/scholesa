@@ -33,11 +33,27 @@ const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
 const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
 const STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
 const TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
+const MIN_AUTONOMOUS_STUDENT_CONFIDENCE = 0.97;
+const MIN_AUTONOMOUS_POLICY_CONFIDENCE = 0.97;
 const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const BOS_INTERACTION_COLLECTION = 'interactionEvents';
 const TELEMETRY_UNSCOPED_SITE_ID = 'unscoped';
 const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
+
+const LOW_CONFIDENCE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
+  en: 'I want to be careful here. Tell me what you have already tried, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
+  'zh-CN': '我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。',
+  'zh-TW': '我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。',
+  th: 'ฉันอยากระวังให้มากขึ้น ลองบอกก่อนว่าคุณได้ลองอะไรไปแล้วบ้าง แล้วฉันจะช่วยคิดขั้นต่อไปที่ปลอดภัยให้ ถ้าต้องการตรวจแบบครบถ้วน ให้ครูช่วยดูไปด้วยกัน',
+};
+
+const UNAVAILABLE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
+  en: 'The AI coach is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+  'zh-CN': 'AI 教练现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
+  'zh-TW': 'AI 教練現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
+  th: 'โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
+};
 
 type VoiceTelemetryEvent =
   | 'voice.transcribe'
@@ -1174,6 +1190,18 @@ function buildAdaptiveLocalizedResponse(
     pieces.push(localized.scaffoldPrompt);
   }
   return pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function requiresStrictStudentConfidence(role: VoiceRequesterRole): boolean {
+  return role === 'student';
+}
+
+function buildStudentConfidenceGuardResponse(locale: VoiceLocale): string {
+  return LOW_CONFIDENCE_STUDENT_SUPPORT[locale] ?? LOW_CONFIDENCE_STUDENT_SUPPORT.en;
+}
+
+function buildStudentInferenceUnavailableResponse(locale: VoiceLocale): string {
+  return UNAVAILABLE_STUDENT_SUPPORT[locale] ?? UNAVAILABLE_STUDENT_SUPPORT.en;
 }
 
 function generateLocalizedResponse(role: VoiceRequesterRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
@@ -2686,6 +2714,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
 
       const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
       const suggestedText = llmPayload?.text ? normalizeSpeechText(llmPayload.text) : undefined;
+      const certifiedModelConfidence = clampProbability(llmPayload?.understanding?.confidence ?? 0);
       if (llmPayload?.modelVersion) {
         llmModelVersion = llmPayload.modelVersion;
       }
@@ -2697,23 +2726,41 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         modelToolHints = llmPayload?.toolSuggestions ?? [];
       }
       if (llmResult.ok && suggestedText) {
-        const outputSafety = evaluateSafetyDecision(suggestedText, authContext.requesterRole, locale);
-        if (outputSafety.safetyOutcome === 'allowed') {
-          candidateText = suggestedText;
-          inferenceMeta = buildInferenceMeta('llm', llmResult);
-        } else if (outputSafety.safetyOutcome === 'modified') {
-          candidateText = outputSafety.localizedMessage;
-          inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_modified');
+        if (
+          requiresStrictStudentConfidence(authContext.requesterRole) &&
+          certifiedModelConfidence < MIN_AUTONOMOUS_STUDENT_CONFIDENCE
+        ) {
+          candidateText = buildStudentConfidenceGuardResponse(locale);
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_low_confidence_guard');
         } else {
-          inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_blocked');
+          const outputSafety = evaluateSafetyDecision(suggestedText, authContext.requesterRole, locale);
+          if (outputSafety.safetyOutcome === 'allowed') {
+            candidateText = suggestedText;
+            inferenceMeta = buildInferenceMeta('llm', llmResult);
+          } else if (outputSafety.safetyOutcome === 'modified') {
+            candidateText = outputSafety.localizedMessage;
+            inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_modified');
+          } else {
+            inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_blocked');
+          }
         }
       } else if (llmResult.ok) {
-        if (isInternalInferenceRequired()) {
-          throw new VoiceHttpError(503, 'inference_unavailable', 'Internal LLM response was empty.');
+        if (requiresStrictStudentConfidence(authContext.requesterRole)) {
+          candidateText = buildStudentInferenceUnavailableResponse(locale);
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_empty_inference_response');
+        } else {
+          if (isInternalInferenceRequired()) {
+            throw new VoiceHttpError(503, 'inference_unavailable', 'Internal LLM response was empty.');
+          }
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
         }
-        inferenceMeta = buildInferenceMeta('llm', llmResult, 'empty_model_text');
       } else {
-        inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
+        if (requiresStrictStudentConfidence(authContext.requesterRole)) {
+          candidateText = buildStudentInferenceUnavailableResponse(locale);
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_inference_unavailable');
+        } else {
+          inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
+        }
       }
 
       const bosResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
@@ -2752,7 +2799,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         const policyHint = extractInternalBosPayload(bosResult.data);
         if (policyHint) {
           bosPolicyHint = policyHint;
-          const applyPolicyHint = policyHint.confidence >= 0.35;
+          const applyPolicyHint = policyHint.confidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
           if (applyPolicyHint) {
             const bosModeToolHints = deriveBosModeToolHints(authContext.requesterRole, policyHint);
             modelToolHints = dedupeStrings([...modelToolHints, ...bosModeToolHints]).slice(0, 6);
@@ -2795,6 +2842,19 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const voiceProfile = chooseVoiceProfile(locale, authContext.requesterRole, authContext.gradeBand);
     const shouldSpeak = voiceOutputEnabled && !quietModeActive && preparedSpeech.speechText.length > 0;
 
+    let effectiveSafetyOutcome: SafetyOutcome = safety.safetyOutcome;
+    let effectiveSafetyReasonCode = safety.safetyReasonCode;
+    if (inferenceMeta.reason === 'child_low_confidence_guard') {
+      effectiveSafetyOutcome = 'escalated';
+      effectiveSafetyReasonCode = 'child_low_confidence_guard';
+    } else if (inferenceMeta.reason === 'child_empty_inference_response') {
+      effectiveSafetyOutcome = 'escalated';
+      effectiveSafetyReasonCode = 'child_empty_inference_response';
+    } else if (inferenceMeta.reason === 'child_inference_unavailable') {
+      effectiveSafetyOutcome = 'escalated';
+      effectiveSafetyReasonCode = 'child_inference_unavailable';
+    }
+
     let audioUrl: string | undefined;
     if (shouldSpeak) {
       const expMs = Date.now() + AUDIO_TOKEN_TTL_MS;
@@ -2818,9 +2878,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       : adaptiveFallback;
     const latencyMs = Date.now() - startedAt;
     const supplementalSafetyEvent: VoiceTelemetryEvent | null =
-      safety.safetyOutcome === 'escalated'
+      effectiveSafetyOutcome === 'escalated'
         ? 'voice.escalated'
-        : (safety.safetyOutcome === 'blocked' || safety.safetyOutcome === 'modified')
+        : (effectiveSafetyOutcome === 'blocked' || effectiveSafetyOutcome === 'modified')
         ? 'voice.blocked'
         : null;
 
@@ -2832,7 +2892,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         traceId,
         authContext,
         locale,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
         quietModeActive,
@@ -2847,7 +2907,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         locale,
         latencyMs,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
         quietModeActive,
@@ -2871,7 +2931,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         body,
         locale,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         understanding,
         textLength: message.length,
         understandingSource,
@@ -2888,7 +2948,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         locale,
         latencyMs,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: message.length,
         understanding,
@@ -2908,7 +2968,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         locale,
         latencyMs,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: message.length,
         understanding,
@@ -2928,7 +2988,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         locale,
         latencyMs,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         toolCount: toolsInvoked.length,
         textLength: responseText.length,
         understanding,
@@ -2948,7 +3008,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         body,
         locale,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         latencyMs,
         toolCount: toolsInvoked.length,
         textLength: message.length,
@@ -2969,7 +3029,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         body,
         locale,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         latencyMs,
         toolCount: toolsInvoked.length,
         textLength: message.length,
@@ -2990,7 +3050,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         authContext,
         body,
         locale,
-        safetyOutcome: safety.safetyOutcome,
+        safetyOutcome: effectiveSafetyOutcome,
         latencyMs,
         toolCount: toolsInvoked.length,
         textLength: responseText.length,
@@ -3015,7 +3075,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           authContext,
           locale,
           latencyMs,
-          safetyOutcome: safety.safetyOutcome,
+          safetyOutcome: effectiveSafetyOutcome,
           redactionApplied: preparedSpeech.redactionApplied,
           redactionCount: preparedSpeech.redactionCount,
           quietModeActive,
@@ -3041,8 +3101,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       metadata: {
         requestId,
         traceId,
-        safetyOutcome: safety.safetyOutcome,
-        safetyReasonCode: safety.safetyReasonCode,
+        safetyOutcome: effectiveSafetyOutcome,
+        safetyReasonCode: effectiveSafetyReasonCode,
         policyVersion: VOICE_POLICY_VERSION,
         modelVersion: llmModelVersion,
         locale,

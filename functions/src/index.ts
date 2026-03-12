@@ -965,6 +965,55 @@ function mergeAiCoachUnderstanding(
   };
 }
 
+const MIN_AUTONOMOUS_LEARNER_CONFIDENCE = 0.97;
+
+function clampLearnerConfidence(value: unknown): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  if (numeric < 0) return 0;
+  if (numeric > 1) return 1;
+  return numeric;
+}
+
+function buildLearnerConfidenceGuardMessage(displayName: string, locale: string): string {
+  switch (locale) {
+    case 'zh-CN':
+      return `${displayName}，我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。`;
+    case 'zh-TW':
+      return `${displayName}，我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。`;
+    case 'th':
+      return `${displayName} ฉันอยากระวังให้มากขึ้น ลองบอกก่อนว่าคุณได้ลองอะไรไปแล้วบ้าง แล้วฉันจะช่วยคิดขั้นต่อไปที่ปลอดภัยให้ ถ้าต้องการตรวจแบบครบถ้วน ให้ครูช่วยดูไปด้วยกัน`;
+    default:
+      return `${displayName}, I want to be careful here. Tell me what you have already tried, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.`;
+  }
+}
+
+function buildLearnerInferenceUnavailableMessage(displayName: string, locale: string): string {
+  switch (locale) {
+    case 'zh-CN':
+      return `${displayName}，AI 教练现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。`;
+    case 'zh-TW':
+      return `${displayName}，AI 教練現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。`;
+    case 'th':
+      return `${displayName} โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ`;
+    default:
+      return `${displayName}, the AI coach is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.`;
+  }
+}
+
+function buildLearnerGuardNextSteps(locale: string): string[] {
+  switch (locale) {
+    case 'zh-CN':
+      return ['告诉我你已经试过的步骤。', '指出你卡住的具体位置。', '请老师和你一起检查下一步。'];
+    case 'zh-TW':
+      return ['告訴我你已經試過的步驟。', '指出你卡住的具體位置。', '請老師和你一起檢查下一步。'];
+    case 'th':
+      return ['บอกขั้นตอนที่คุณลองไปแล้ว', 'บอกจุดที่คุณติดอยู่', 'ให้ครูช่วยดูขั้นต่อไปกับคุณ'];
+    default:
+      return ['Tell me which step you already tried.', 'Point to the exact place you got stuck.', 'Ask your educator to review the next step with you.'];
+  }
+}
+
 function buildAiCoachInput(
   coachMode: string,
   studentInput: string | undefined,
@@ -991,7 +1040,7 @@ async function generateCoachResponseWithInference(input: {
   checkpointId?: string;
   learnerState?: { cognition: number; engagement: number; integrity: number } | null;
   coppaBand: string;
-}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string }> {
+}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string; confidence: number }> {
   const applyLearnerConversationalTone = (text: string, locale: string): string => {
     const normalized = text.replace(/\s+/g, ' ').trim();
     if (!normalized) return normalized;
@@ -1021,12 +1070,6 @@ async function generateCoachResponseWithInference(input: {
       category: 'generic',
     },
   });
-  const baselineText = __voiceSystemInternals.buildAdaptiveLocalizedResponse(
-    'student',
-    input.locale as 'en' | 'zh-CN' | 'zh-TW' | 'th',
-    'generic',
-    heuristicUnderstanding as Parameters<typeof __voiceSystemInternals.buildAdaptiveLocalizedResponse>[3],
-  );
 
   const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
     service: 'llm',
@@ -1062,18 +1105,31 @@ async function generateCoachResponseWithInference(input: {
     },
   });
 
-  if (isInternalInferenceRequired() && !llmResult.ok) {
+  if (!llmResult.ok) {
     throw new HttpsError('unavailable', 'Internal AI inference is required but unavailable.');
   }
 
-  const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
+  const llmPayload = extractInternalLlmPayload(llmResult.data);
+  if (!llmPayload?.text?.trim()) {
+    throw new HttpsError('unavailable', 'Internal AI inference returned an empty response.');
+  }
+
+  const certifiedConfidence = clampLearnerConfidence(llmPayload.understanding?.confidence);
   const understanding = mergeAiCoachUnderstanding(
     heuristicUnderstanding as AiCoachUnderstandingSignal,
     llmPayload?.understanding,
   );
-  const candidateText = llmPayload?.text?.trim()
-    ? applyLearnerConversationalTone(llmPayload.text.trim(), input.locale)
-    : applyLearnerConversationalTone(baselineText, input.locale);
+  if (certifiedConfidence < MIN_AUTONOMOUS_LEARNER_CONFIDENCE) {
+    return {
+      message: buildLearnerConfidenceGuardMessage(input.displayName, input.locale),
+      suggestedNextSteps: buildLearnerGuardNextSteps(input.locale),
+      requiresExplainBack: true,
+      modelVersion: llmPayload.modelVersion ?? 'confidence-guard-v1',
+      confidence: certifiedConfidence,
+    };
+  }
+
+  const candidateText = applyLearnerConversationalTone(llmPayload.text.trim(), input.locale);
 
   const suggestedNextSteps = llmPayload?.toolSuggestions?.slice(0, 3)
     ?? [];
@@ -1084,6 +1140,7 @@ async function generateCoachResponseWithInference(input: {
     suggestedNextSteps,
     requiresExplainBack,
     modelVersion: llmPayload?.modelVersion ?? 'voice-orchestrator-v1',
+    confidence: understanding.confidence,
   };
 }
 
@@ -1146,7 +1203,6 @@ export const genAiCoach = onCall(async (request) => {
   validateCoppaInputText(studentInput, coppaBand);
 
   const tags: string[] = Array.isArray(conceptTags) ? conceptTags : [];
-  const tagsStr = tags.join(', ');
   const displayName = profile.displayName ?? 'learner';
 
   // ── A0) Sense: Load orchestration state (x_hat, P) ──
@@ -1197,7 +1253,8 @@ export const genAiCoach = onCall(async (request) => {
   let message: string;
   let requiresExplainBack = false;
   let suggestedNextSteps: string[] = [];
-  let modelVersion = 'coach-template-v1';
+  let modelVersion = 'confidence-guard-v1';
+  let responseConfidence = 0;
 
   // If MVL gate is active, intercept with verification prompt
   if (mvlResult.gateActive) {
@@ -1226,12 +1283,13 @@ export const genAiCoach = onCall(async (request) => {
       requiresExplainBack = generated.requiresExplainBack;
       suggestedNextSteps = generated.suggestedNextSteps;
       modelVersion = generated.modelVersion;
+      responseConfidence = generated.confidence;
     } catch (error) {
-      console.warn('genAiCoach inference fallback engaged', { coachMode, siteId, reason: error instanceof Error ? error.message : String(error) });
-      const generated = generateCoachResponse(coachMode, displayName, xHat, tagsStr, studentInput);
-      message = generated.message;
-      requiresExplainBack = generated.requiresExplainBack;
-      suggestedNextSteps = generated.suggestedNextSteps;
+      console.warn('genAiCoach inference guard engaged', { coachMode, siteId, reason: error instanceof Error ? error.message : String(error) });
+      message = buildLearnerInferenceUnavailableMessage(displayName, 'en');
+      requiresExplainBack = true;
+      suggestedNextSteps = buildLearnerGuardNextSteps('en');
+      responseConfidence = 0;
     }
   }
 
@@ -1265,6 +1323,7 @@ export const genAiCoach = onCall(async (request) => {
       reliabilityRiskScore: reliabilityRisk.riskScore,
       autonomyRiskScore: autonomyRisk.riskScore,
       mvlGateActive: mvlResult.gateActive,
+      responseConfidence,
       requiresExplainBack,
       coppaBand,
     },
@@ -1290,6 +1349,7 @@ export const genAiCoach = onCall(async (request) => {
       mvlEpisodeId: mvlResult.episodeId || null,
       coppaBand,
       gradeBandSource,
+      responseConfidence,
     },
     timestamp: FieldValue.serverTimestamp(),
   });

@@ -26,6 +26,7 @@ import {
   evaluateGuardrailOutput,
   languageLooksCompatible,
   localizedRefusal,
+  localizedServiceUnavailable,
   localizedTutorFallback,
   policyVersion,
   type SafetyOutcome,
@@ -79,6 +80,7 @@ export interface AIServiceResponse {
   gradeBand: AgeBand;
   traceId: string;
   missionAttemptId?: string;
+  confidence?: number;
 }
 
 // ==================== INTEGRATED AI SERVICE ====================
@@ -285,6 +287,7 @@ export class AIService {
         gradeBand: modelResponse.gradeBand,
         traceId: modelResponse.traceId,
         missionAttemptId: modelResponse.missionAttemptId,
+        confidence: modelResponse.confidence,
       };
       
     } catch (error) {
@@ -294,19 +297,20 @@ export class AIService {
       const gradeBand: AgeBand = this.getAgeBand(req.grade);
       const fallbackPolicyVersion = policyVersion();
       return {
-        answer: localizedTutorFallback(targetLocale),
-        modelUsed: 'error_fallback',
-        modelVersion: 'error_fallback',
+        answer: localizedServiceUnavailable(targetLocale),
+        modelUsed: 'service_guard',
+        modelVersion: 'service_guard',
         logId: 'error',
         promptTemplateId: this.getPromptTemplateId(req.taskType, this.getPolicyMode(req.grade)),
         policyVersion: fallbackPolicyVersion,
         safetyOutcome: 'escalated',
-        safetyReasonCode: 'service_error',
+        safetyReasonCode: 'service_error_guard',
         toolCallIds: [],
         targetLocale,
         gradeBand,
         traceId,
         missionAttemptId,
+        confidence: 0,
       };
     }
   }
