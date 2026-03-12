@@ -1,4 +1,4 @@
-import { adminDb } from '@/src/firebase/admin-init';
+import { getAdminDb } from '@/src/firebase/admin-init';
 import type { User, Role } from '@/schema';
 
 /**
@@ -14,6 +14,7 @@ export async function getUserRoleServer(uid: string): Promise<Role | null> {
   if (!uid) return null;
 
   try {
+    const adminDb = getAdminDb();
     const userDoc = await adminDb.collection('users').doc(uid).get();
 
     if (!userDoc.exists) {
