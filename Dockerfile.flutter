@@ -8,7 +8,7 @@ COPY apps/empire_flutter/app /workspace/app
 
 WORKDIR /workspace/app
 RUN flutter pub get
-RUN flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+RUN flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
 
 FROM nginx:1.25-alpine
 

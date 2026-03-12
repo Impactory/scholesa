@@ -33,7 +33,7 @@ run_step "Functions build" npm --prefix "$FUNCTIONS_DIR" run build
 run_step "COPPA regression guards" npm --prefix "$ROOT_DIR" run qa:coppa:guards
 run_step "Flutter analyze" bash -lc "cd '$FLUTTER_DIR' && flutter analyze"
 run_step "Flutter test" npm --prefix "$ROOT_DIR" run "$FLUTTER_TEST_SCRIPT"
-run_step "Flutter web release build" bash -lc "cd '$FLUTTER_DIR' && flutter build web --release --wasm --no-tree-shake-icons"
+run_step "Flutter web release build" bash -lc "cd '$FLUTTER_DIR' && flutter build web --release --no-tree-shake-icons --no-wasm-dry-run"
 run_step "VIBE telemetry audit master" npm --prefix "$ROOT_DIR" run qa:vibe-telemetry:audit
 run_step "VIBE telemetry blocker gate" npm --prefix "$ROOT_DIR" run qa:vibe-telemetry:blockers
 
