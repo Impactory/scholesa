@@ -69,6 +69,7 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 | connectivity_plus | ^7.0.0 | 7.x only | Used by offline queue and connectivity gates. |
 | intl | ^0.20.2 | 0.20.x only | Keep aligned with flutter_localizations. |
 | google_fonts | ^8.0.2 | 8.x only | Current typography baseline. |
+| flutter_svg | ^2.2.0 | 2.x only | Required so Flutter renders the canonical `scholesa.svg` brand asset directly. |
 | audioplayers | ^6.6.0 | 6.x only | Validate BOS voice flows before major upgrades. |
 | record | ^6.2.0 | 6.x only | Validate microphone permissions and runtime flows before upgrade. |
 | speech_to_text | ^7.3.0 | 7.x only | Voice runtime sensitive. |

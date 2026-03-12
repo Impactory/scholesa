@@ -10,7 +10,7 @@
     "prefer_related_applications": false,
     "icons": [
         {
-            "src": "favicon.svg",
+            "src": "scholesa.svg",
             "sizes": "any",
             "type": "image/svg+xml"
         }

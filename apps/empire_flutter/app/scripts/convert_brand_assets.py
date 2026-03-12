@@ -7,8 +7,9 @@ assets. This script must only copy that file to downstream SVG destinations and
 must never rewrite it.
 
 Outputs:
-- public/favicon.svg
-- apps/empire_flutter/app/web/favicon.svg
+- apps/empire_flutter/app/assets/images/scholesa.svg
+- apps/empire_flutter/app/web/scholesa.svg
+- public/scholesa.svg
 - apps/empire_flutter/app/assets/icons/android/*.png
 - apps/empire_flutter/app/assets/icons/ios/*.png
 - apps/empire_flutter/app/assets/icons/scholesa_launcher*.png
@@ -40,8 +41,9 @@ PUBLIC_ICONS_DIR = PUBLIC_DIR / "icons"
 PUBLIC_LOGO_DIR = PUBLIC_DIR / "logo"
 SOURCE_SVG = REPO_ROOT / "scholesa.svg"
 SVG_OUTPUTS = [
-    PUBLIC_DIR / "favicon.svg",
-    WEB_DIR / "favicon.svg",
+    APP_ROOT / "assets" / "images" / "scholesa.svg",
+    PUBLIC_DIR / "scholesa.svg",
+    WEB_DIR / "scholesa.svg",
 ]
 
 SHARED_MASTER_SOURCE_CANDIDATES = [

@@ -112,8 +112,9 @@ copy_svg() {
 
 echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
 echo "[icons] Syncing canonical SVG brand source"
-copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/favicon.svg"
-copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/favicon.svg"
+copy_svg "$SOURCE_SVG" "$ROOT_DIR/assets/images/scholesa.svg"
+copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/scholesa.svg"
+copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/scholesa.svg"
 
 if python_has_pillow; then
   python3 "$ROOT_DIR/scripts/convert_brand_assets.py"

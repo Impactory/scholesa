@@ -28,8 +28,8 @@ workbox.core.clientsClaim();
  */
 self.__precacheManifest = [
   {
-    "url": "/favicon.svg",
-    "revision": "brand-mark-20260312"
+    "url": "/scholesa.svg",
+    "revision": "brand-source-20260312"
   },
   {
     "url": "/manifest.webmanifest",
