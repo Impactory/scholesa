@@ -40,17 +40,6 @@ sys.exit(0 if importlib.util.find_spec("PIL") else 1)
 PY
 }
 
-echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
-echo "[icons] Syncing canonical SVG brand source"
-copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/favicon.svg"
-copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/favicon.svg"
-
-if python_has_pillow; then
-  python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
-else
-  echo "[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets" >&2
-fi
-
 resize_png() {
   local height="$1"
   local width="$2"
@@ -120,6 +109,17 @@ copy_svg() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
 }
+
+echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
+echo "[icons] Syncing canonical SVG brand source"
+copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/favicon.svg"
+copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/favicon.svg"
+
+if python_has_pillow; then
+  python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
+else
+  echo "[icons] Warning: python3 Pillow not available; skipping brand asset normalization and using checked-in assets" >&2
+fi
 
 convert_png_to_opaque() {
   local src="$1"

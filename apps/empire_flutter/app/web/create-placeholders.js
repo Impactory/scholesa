@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Create minimal valid PNG files as placeholders
-// These are tiny green squares - will work for the build
+// Emergency placeholders only.
+// Canonical brand source-of-truth is repo-root scholesa.svg.
+// Do not treat any file created here as a brand asset master.
 
 // Minimal 1x1 green PNG
 const png1x1 = Buffer.from([
