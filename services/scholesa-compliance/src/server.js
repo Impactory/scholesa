@@ -85,7 +85,7 @@ async function handleRequest(req, res) {
         message: 'Service is running',
         endpoints: [
           'GET /',
-          'GET /healthz',
+          'GET /health',
           'GET /compliance/status',
           'POST /compliance/run',
           'GET /compliance/report/:reportId',
@@ -95,7 +95,7 @@ async function handleRequest(req, res) {
       return;
     }
 
-    if (req.method === 'GET' && url.pathname === '/healthz') {
+    if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/healthz')) {
       sendJson(res, 200, { ok: true, service: 'scholesa-compliance' });
       return;
     }
@@ -165,7 +165,7 @@ async function handleRequest(req, res) {
       message: 'Unknown endpoint',
       endpoints: [
         'GET /',
-        'GET /healthz',
+        'GET /health',
         'GET /compliance/status',
         'POST /compliance/run',
         'GET /compliance/report/:reportId',

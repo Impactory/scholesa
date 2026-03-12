@@ -16,7 +16,7 @@ SERVER_PID=$!
 sleep 1
 
 root_code="$(curl -s -o /tmp/scholesa-root-smoke.json -w "%{http_code}" http://127.0.0.1:8080/)"
-health_code="$(curl -s -o /tmp/scholesa-healthz-smoke.json -w "%{http_code}" http://127.0.0.1:8080/healthz)"
+health_code="$(curl -s -o /tmp/scholesa-health-smoke.json -w "%{http_code}" http://127.0.0.1:8080/health)"
 status_code="$(curl -s -o /tmp/scholesa-status-smoke.json -w "%{http_code}" http://127.0.0.1:8080/compliance/status)"
 
 if [[ "$root_code" != "200" ]]; then
@@ -26,8 +26,8 @@ if [[ "$root_code" != "200" ]]; then
 fi
 
 if [[ "$health_code" != "200" ]]; then
-  echo "Compliance runtime smoke failed: GET /healthz returned $health_code"
-  cat /tmp/scholesa-healthz-smoke.json || true
+  echo "Compliance runtime smoke failed: GET /health returned $health_code"
+  cat /tmp/scholesa-health-smoke.json || true
   exit 1
 fi
 
@@ -37,4 +37,4 @@ if [[ "$status_code" != "401" ]]; then
   exit 1
 fi
 
-echo "Compliance runtime smoke passed (/, /healthz, auth gate)."
+echo "Compliance runtime smoke passed (/, /health, auth gate)."
