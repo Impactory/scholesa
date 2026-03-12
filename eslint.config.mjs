@@ -23,6 +23,7 @@ export default tseslint.config(
       "**/dataconnect/**",
       "**/docs/**",
       "**/public/sw.js",
+      "**/public/precache*.js",
       "**/public/workbox-*.js",
       "**/*-generated/**",
     ],
