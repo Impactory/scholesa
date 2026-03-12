@@ -4,9 +4,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const admin = require('firebase-admin');
+const { resolveProjectId } = require('./firebase_runtime_auth');
 
-const PROJECT_ID =
-  process.env.FIREBASE_PROJECT_ID || 'studio-3328096157-e3f79';
 const TEST_SITE_ID = process.env.TEST_SITE_ID || 'site_001';
 const TEST_SITE_NAME = process.env.TEST_SITE_NAME || 'RC3 Test Site';
 const TEST_MISSION_ID = process.env.TEST_MISSION_ID || 'mission_rc3_intro';
@@ -20,6 +19,8 @@ const SERVICE_ACCOUNT_PATHS = [
   path.resolve(__dirname, '../firebase-service-account.json'),
   path.resolve(__dirname, '../studio-service-account.json'),
 ].filter(Boolean);
+
+const PROJECT_ID = resolveProjectId(process.env.FIREBASE_PROJECT_ID, SERVICE_ACCOUNT_PATHS[0]) || '';
 
 const TEST_USERS = [
   {

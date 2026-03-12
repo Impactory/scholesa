@@ -13,13 +13,13 @@ const {
 } = require('./vibe_audit_report_schema');
 const {
   isServiceAccountCredentialPath,
+  resolveCloudRunServiceUrl,
   resolveCredentialPath,
+  resolveProjectId,
 } = require('./firebase_runtime_auth');
 
 const ROOT = path.resolve(__dirname, '..');
-const DEFAULT_PROJECT = 'studio-3328096157-e3f79';
 const DEFAULT_REPORT_NAME = 'tts-stt-bos-no-gap-assurance';
-const DEFAULT_VOICE_BASE_URL = 'https://voiceapi-gu5vyrn2tq-uc.a.run.app';
 const RETRYABLE_ERROR_PATTERNS = [
   'UNAVAILABLE: Name resolution failed',
   'fetch failed',
@@ -28,14 +28,20 @@ const RETRYABLE_ERROR_PATTERNS = [
 ];
 
 function parseArgs(argv) {
+  const initialProjectId = resolveProjectId(process.env.FIREBASE_PROJECT_ID);
   const args = {
     env: resolveEnv(process.env.VIBE_ENV || process.env.NODE_ENV || 'prod'),
     strict: false,
     hours: 168,
     limit: 25000,
-    project: process.env.FIREBASE_PROJECT_ID || DEFAULT_PROJECT,
+    project: initialProjectId || '',
     credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
-    baseUrl: process.env.VOICE_API_BASE_URL || DEFAULT_VOICE_BASE_URL,
+    baseUrl: resolveCloudRunServiceUrl({
+      explicitUrl: process.env.VOICE_API_BASE_URL,
+      serviceName: process.env.VOICE_API_SERVICE || 'voiceapi',
+      region: process.env.VOICE_API_REGION || 'us-central1',
+      projectId: initialProjectId,
+    }) || '',
     reportName: DEFAULT_REPORT_NAME,
     wiringReportName: 'firebase-ui-field-wiring-bulk-bos-noncore-latest',
   };
@@ -70,8 +76,13 @@ function parseArgs(argv) {
   if (!Number.isFinite(args.limit) || args.limit <= 0) {
     throw new Error(`Invalid --limit value: ${args.limit}`);
   }
+  args.project = resolveProjectId(args.project, args.credentials) || '';
+
   if (!args.project) {
     throw new Error('Missing --project value.');
+  }
+  if (!args.baseUrl) {
+    throw new Error('Missing voice API base URL. Set VOICE_API_BASE_URL or ensure gcloud can resolve the voiceapi Cloud Run service URL.');
   }
   if (!args.reportName) {
     throw new Error('Missing --report-name value.');

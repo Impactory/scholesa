@@ -1,18 +1,25 @@
+import 'firebase_options.dart';
+
 /// Environment configuration - single source of truth for app config.
 /// Uses dart-define values passed at build time.
 class AppConfig {
   /// Firebase project ID
-  static const String firebaseProjectId = String.fromEnvironment(
+  static const String _firebaseProjectIdOverride = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: 'studio-3328096157-e3f79',
   );
 
+  static String get firebaseProjectId =>
+      _firebaseProjectIdOverride.isNotEmpty
+          ? _firebaseProjectIdOverride
+          : DefaultFirebaseOptions.currentPlatform.projectId;
+
   /// API base URL for Cloud Functions backend
-  static const String apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue:
-        'https://us-central1-studio-3328096157-e3f79.cloudfunctions.net/apiV1',
-  );
+  static const String _apiBaseUrlOverride = String.fromEnvironment('API_BASE_URL');
+
+  static String get apiBaseUrl =>
+      _apiBaseUrlOverride.isNotEmpty
+          ? _apiBaseUrlOverride
+          : 'https://us-central1-$firebaseProjectId.cloudfunctions.net/apiV1';
 
   /// Current environment: dev, staging, prod
   static const String environment = String.fromEnvironment(

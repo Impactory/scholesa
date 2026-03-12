@@ -11,8 +11,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const admin = require('firebase-admin');
+const { resolveProjectId } = require('./firebase_runtime_auth');
 
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'studio-3328096157-e3f79';
+const PROJECT_ID = resolveProjectId(process.env.FIREBASE_PROJECT_ID) || '';
 const IMPORT_DIR = path.join(__dirname, '..', 'apps', 'empire_flutter', 'imports');
 const DEFAULT_PASSWORD = process.env.SEED_TEST_PASSWORD || 'Test123!';
 

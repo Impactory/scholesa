@@ -89,6 +89,35 @@ function resolveProjectId(explicitProjectId, credentialPath) {
   return undefined;
 }
 
+function resolveCloudRunServiceUrl({ explicitUrl, serviceName, region = 'us-central1', projectId } = {}) {
+  if (typeof explicitUrl === 'string' && explicitUrl.trim().length > 0) {
+    return explicitUrl.trim().replace(/\/+$/g, '');
+  }
+
+  if (typeof serviceName !== 'string' || serviceName.trim().length === 0) {
+    return undefined;
+  }
+
+  const args = ['run', 'services', 'describe', serviceName.trim(), '--format=value(status.url)'];
+  if (typeof region === 'string' && region.trim().length > 0) {
+    args.push('--region', region.trim());
+  }
+  if (typeof projectId === 'string' && projectId.trim().length > 0) {
+    args.push('--project', projectId.trim());
+  }
+
+  try {
+    const serviceUrl = cp.execSync(`gcloud ${args.map((arg) => JSON.stringify(arg)).join(' ')}`, {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    });
+    const normalized = String(serviceUrl || '').trim().replace(/\/+$/g, '');
+    return normalized || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function isCredentialAuthError(error) {
   const message = error instanceof Error ? error.message : String(error || '');
   return (
@@ -768,6 +797,7 @@ module.exports = {
   isServiceAccountPayload,
   readJsonFileSafe,
   resolveFirebaseApiKey,
+  resolveCloudRunServiceUrl,
   resolveCredentialPath,
   resolveProjectId,
   signInWithPassword,

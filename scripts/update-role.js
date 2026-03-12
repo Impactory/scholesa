@@ -3,13 +3,23 @@
 // Example: node scripts/update-role.js educator@scholesa.test hq
 
 const admin = require('firebase-admin');
+const path = require('node:path');
+const {
+  initializeFirebaseAdmin,
+  resolveCredentialPath,
+  resolveProjectId,
+} = require('./firebase_runtime_auth');
 
-// Initialize with your service account
-const serviceAccount = require('../studio-service-account.json');
+const extraCredentialPaths = [
+  path.resolve(__dirname, '../studio-service-account.json'),
+  path.resolve(__dirname, '../firebase-service-account.json'),
+];
+const credentialPath = resolveCredentialPath(process.env.GOOGLE_APPLICATION_CREDENTIALS, extraCredentialPaths);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  projectId: 'studio-3328096157-e3f79'
+initializeFirebaseAdmin(admin, {
+  projectId: resolveProjectId(process.env.FIREBASE_PROJECT_ID, credentialPath),
+  credentialPath,
+  extraCredentialPaths,
 });
 
 const db = admin.firestore();

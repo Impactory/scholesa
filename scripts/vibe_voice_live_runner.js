@@ -9,14 +9,22 @@ const {
   initializeFirestoreRestFallback,
   initializeFirebaseAdmin,
   isCredentialAuthError,
+  resolveCloudRunServiceUrl,
+  resolveProjectId,
   resolveCredentialPath,
 } = require('./firebase_runtime_auth');
 
 function parseArgs(argv = process.argv.slice(2)) {
+  const initialProjectId = resolveProjectId(process.env.VOICE_LIVE_PROJECT || process.env.FIREBASE_PROJECT_ID);
   const options = {
-    projectId: process.env.VOICE_LIVE_PROJECT || 'studio-3328096157-e3f79',
+    projectId: initialProjectId || '',
     serviceAccountPath: process.env.VOICE_LIVE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
-    baseUrl: process.env.VOICE_API_BASE_URL || '',
+    baseUrl: resolveCloudRunServiceUrl({
+      explicitUrl: process.env.VOICE_API_BASE_URL,
+      serviceName: process.env.VOICE_API_SERVICE || 'voiceapi',
+      region: process.env.VOICE_API_REGION || 'us-central1',
+      projectId: initialProjectId,
+    }) || '',
     apiKey: process.env.VOICE_LIVE_API_KEY || '',
     strict: false,
     autoServiceAccount: false,
@@ -46,6 +54,7 @@ function parseArgs(argv = process.argv.slice(2)) {
       options.testPassword = arg.slice('--test-password='.length);
     }
   }
+  options.projectId = resolveProjectId(options.projectId) || '';
   options.baseUrl = options.baseUrl.replace(/\/+$/g, '');
   return options;
 }

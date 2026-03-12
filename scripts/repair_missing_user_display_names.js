@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 
-const { initializeFirebaseRestClients } = require('./firebase_runtime_auth');
+const { initializeFirebaseRestClients, resolveProjectId } = require('./firebase_runtime_auth');
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply');
 const strict = argv.includes('--strict');
 const projectArg = argv.find((arg) => arg.startsWith('--project='));
 const projectId =
-  (projectArg && projectArg.split('=')[1]) ||
-  process.env.FIREBASE_PROJECT_ID ||
-  process.env.GOOGLE_CLOUD_PROJECT ||
-  process.env.GCLOUD_PROJECT ||
-  'studio-3328096157-e3f79';
+  resolveProjectId((projectArg && projectArg.split('=')[1]) || process.env.FIREBASE_PROJECT_ID) ||
+  '';
 
 const { db } = initializeFirebaseRestClients({ projectId });
 

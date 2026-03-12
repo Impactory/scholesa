@@ -9,8 +9,6 @@ import 'app_state.dart';
 const String _defaultGoogleServerClientId =
   String.fromEnvironment(
   'GOOGLE_SIGN_IN_SERVER_CLIENT_ID',
-  defaultValue:
-    '97120825720-bbnvrtprshupk1qglnrtl34nj5jd1s5d.apps.googleusercontent.com',
 );
 
 const String _googleAppleClientId =
@@ -214,7 +212,7 @@ class AuthService {
       microsoftProvider.addScope('openid');
 
       // Set custom parameters for Microsoft login
-      // Using Firebase auth handler: https://studio-3328096157-e3f79.firebaseapp.com/__/auth/handler
+      // Use the Firebase project's configured auth handler endpoint.
       microsoftProvider.setCustomParameters(<String, String>{
         'prompt': 'select_account',
         'tenant':
