@@ -46,6 +46,7 @@ export interface ModelRequest {
   taskType: TaskType;
   gradeBand: AgeBand;
   targetLocale: SupportedLocale;
+  localeInstruction: string;
   role: Role;
   siteId: string;
   learnerId: string;
@@ -122,6 +123,10 @@ export interface ModelAdapter {
    * Health check
    */
   isAvailable(): Promise<boolean>;
+}
+
+export function buildLocaleInstruction(locale: SupportedLocale): string {
+  return `Respond strictly in locale ${locale}. Do not switch languages unless the learner explicitly asks for translation help.`;
 }
 
 // ==================== INTERNAL ADAPTER ====================

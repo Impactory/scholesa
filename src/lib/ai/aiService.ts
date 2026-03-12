@@ -13,7 +13,7 @@
  * 7. Return response
  */
 
-import { modelRouter, type TaskType, type PolicyMode, type ModelRequest, type ModelResponse, type ContextBlock } from './modelAdapter';
+import { buildLocaleInstruction, modelRouter, type TaskType, type PolicyMode, type ModelRequest, type ModelResponse, type ContextBlock } from './modelAdapter';
 import { RedactionService, redactStudentQuestion } from './redactionService';
 import { RetrievalService, getHintContext, getRubricCheckContext } from './retrievalService';
 import { AIInteractionLogger, logAICoachInteraction } from './interactionLogger';
@@ -119,6 +119,7 @@ export class AIService {
         taskType: req.taskType,
         gradeBand,
         targetLocale,
+        localeInstruction: buildLocaleInstruction(targetLocale),
         role,
         siteId: req.siteId,
         learnerId: req.learnerId,

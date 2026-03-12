@@ -201,8 +201,9 @@ export async function POST(request: Request) {
   const inference = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
     service: 'llm',
     body: {
-      message: body.studentQuestion,
+      message: `${body.localeInstruction}\n\n${body.studentQuestion}`,
       locale: targetLocale,
+      localeInstruction: body.localeInstruction,
       role: body.role,
       requesterRole,
       gradeBand: gradeBandFromAgeBand(body.gradeBand),
