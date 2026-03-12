@@ -51,6 +51,7 @@ class ScholesaLogo extends StatelessWidget {
             width: size,
             height: size,
             fit: BoxFit.contain,
+            renderingStrategy: RenderingStrategy.raster,
           ),
         ),
       ),
