@@ -34,6 +34,8 @@ const createCollection = <T = DocumentData>(collectionName: string) => {
   return collection(db, collectionName) as CollectionReference<T>;
 };
 
+type MissionAttemptWrite = Omit<MissionAttempt, 'id'>;
+
 // Define the collections
 export const usersCollection = createCollection<UserProfile>('users');
 export const sitesCollection = createCollection<Site>('sites');
@@ -46,7 +48,7 @@ export const sessionsCollection = createCollection<Session>('sessions');
 export const sessionOccurrencesCollection = createCollection<SessionOccurrence>('sessionOccurrences');
 export const attendanceCollection = createCollection<Attendance>('attendance');
 export const missionPlansCollection = createCollection<MissionPlan>('missionPlans');
-export const missionAttemptsCollection = createCollection<MissionAttempt>('missionAttempts');
+export const missionAttemptsCollection = createCollection<MissionAttemptWrite>('missionAttempts');
 export const reflectionsCollection = createCollection<Reflection>('reflections');
 export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
 export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');

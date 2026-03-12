@@ -62,7 +62,7 @@ export const attendanceRecordsCollection = createCollection<AttendanceRecord>('a
 // Missions
 export const missionsCollection = createCollection<Mission>('missions');
 export const missionPlansCollection = createCollection<MissionPlan>('missionPlans');
-export const missionAttemptsCollection = createCollection<MissionAttempt>('missionAttempts');
+export const missionAttemptsCollection = createCollection<Omit<MissionAttempt, 'id'>>('missionAttempts');
 
 // Portfolio
 export const portfoliosCollection = createCollection<Portfolio>('portfolios');

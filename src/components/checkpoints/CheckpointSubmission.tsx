@@ -37,9 +37,8 @@ export function CheckpointSubmission({
   
   const learnerId = profile?.uid || '';
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
-  const resolvedGrade = typeof (profile as Record<string, unknown> | null)?.grade === 'number'
-    ? ((profile as Record<string, unknown>).grade as number)
-    : null;
+  const rawGrade = (profile as unknown as { grade?: unknown } | null)?.grade;
+  const resolvedGrade = typeof rawGrade === 'number' ? rawGrade : null;
   const resolvedGradeBand = resolvedGrade == null
     ? null
     : resolvedGrade <= 3
