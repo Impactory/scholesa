@@ -833,33 +833,36 @@ function generateCoachResponse(
   let message: string;
   let requiresExplainBack = false;
   const suggestedNextSteps: string[] = [];
+  const hasLearnerInput = Boolean(studentInput?.trim());
 
   switch (mode) {
     case 'hint':
       if (xHat && xHat.cognition < 0.4) {
-        message = `${displayName}, it looks like you could use a nudge. Try re-reading the instructions for this checkpoint and focus on the key concepts${tagsStr ? ` (${tagsStr})` : ''}.`;
+        message = `${displayName}, let’s slow it down and take one small step. Start by rereading the checkpoint, then pick the one part that matters most${tagsStr ? ` and keep your eye on ${tagsStr}` : ''}.`;
         suggestedNextSteps.push('Re-read the mission brief carefully', 'Identify one thing you already understand');
       } else {
-        message = `${displayName}, you're making good progress! Think about what you already know and try applying it to this next step${tagsStr ? ` — focus on ${tagsStr}` : ''}.`;
+        message = `${displayName}, you already have something to build from. Start with what you know, then use it to test the next small move${tagsStr ? ` while focusing on ${tagsStr}` : ''}.`;
         suggestedNextSteps.push('Try connecting this to something you learned before');
       }
       break;
     case 'verify':
-      message = `${displayName}, let's check your work. Can you explain your reasoning for this step? Walk me through what you did and why.`;
+      message = `${displayName}, walk me through your thinking on this step. I want to hear how you decided what to do, not just the result.`;
       requiresExplainBack = true;
       suggestedNextSteps.push('Explain your reasoning', 'Show evidence of your approach');
       break;
     case 'explain':
-      message = `${displayName}, here's a breakdown: ${tagsStr ? `The concepts involved are ${tagsStr}. ` : ''}Take it step by step and focus on understanding the "why" behind each part.`;
+      message = `${displayName}, let’s unpack it together. ${tagsStr ? `A useful place to focus is ${tagsStr}. ` : ''}We’ll keep it simple and make sure each part makes sense before moving on.`;
       requiresExplainBack = true;
       suggestedNextSteps.push('Restate the concept in your own words', 'Give a real-world example');
       break;
     case 'debug':
-      message = `${displayName}, let's troubleshoot. ${studentInput ? `You mentioned: "${studentInput}". ` : ''}Think about what you expected to happen versus what actually happened. Where does the mismatch start?`;
+      message = hasLearnerInput
+        ? `${displayName}, let’s troubleshoot this together. Start with the first place where what you expected and what actually happened stopped matching.`
+        : `${displayName}, let’s troubleshoot this together. Check the first spot where the result stopped matching your plan.`;
       suggestedNextSteps.push('Check your most recent change', 'Compare expected vs actual output');
       break;
     default:
-      message = `Hello ${displayName}, this is your AI Coach. What would you like to work on?`;
+      message = `${displayName}, I’m here with you. What part should we work on first?`;
   }
 
   return { message, requiresExplainBack, suggestedNextSteps };
@@ -872,17 +875,20 @@ function applyKidFriendlyConversationalTone(
 ): string {
   const trimmed = (message || '').replace(/\s+/g, ' ').trim();
   if (!trimmed) {
-    return `${displayName}, you are doing great. Let's take one small step together. What do you want to try first?`;
+    return `${displayName}, you’re doing fine. Let’s take one small step together. What do you want to try first?`;
   }
 
-  const encouragementRegex = /\b(great|good|nice|awesome|well done|you can do this|you've got this)\b/i;
+  const encouragementRegex = /\b(great|good|nice|awesome|well done|you can do this|you've got this|let’s|i’m here|we’ll)\b/i;
   const hasEncouragement = encouragementRegex.test(trimmed);
   const hasQuestion = /\?/.test(trimmed);
   const skipFollowupQuestion = /no\s+question/i.test(personaHint ?? '');
+  const normalized = trimmed
+    .replace(/^hello\s+[^,]+,?\s*this is your ai coach\.?\s*/i, '')
+    .replace(/^hello\s+/i, '');
 
-  let shaped = hasEncouragement ? trimmed : `${displayName}, nice effort. ${trimmed}`;
+  let shaped = hasEncouragement ? normalized : `${displayName}, nice effort. ${normalized}`;
   if (!hasQuestion && !skipFollowupQuestion) {
-    shaped = `${shaped} What do you want to try first?`;
+    shaped = `${shaped} What feels like the best first move?`;
   }
 
   return shaped;

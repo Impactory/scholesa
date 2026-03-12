@@ -26,6 +26,7 @@ import type {
   TaskType,
   PolicyMode
 } from './modelAdapter';
+import { RedactionService } from './redactionService';
 import type { AgeBand } from '@/src/types/schema';
 import type { Role } from '@/schema';
 import type { SupportedLocale } from '@/src/lib/i18n/config';
@@ -101,6 +102,18 @@ export interface AIInteractionLog {
 // Firestore collection
 export const aiInteractionLogsCollection = collection(db, 'aiInteractionLogs');
 
+function sanitizeLoggedResponse(responseText: string, policyMode: PolicyMode): string {
+  const result = RedactionService.redact(
+    responseText,
+    RedactionService.getConfigForPolicy(policyMode)
+  );
+  const normalized = result.redacted.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= 280) {
+    return normalized;
+  }
+  return `${normalized.slice(0, 279)}...`;
+}
+
 // ==================== LOGGER ====================
 
 export class AIInteractionLogger {
@@ -158,7 +171,7 @@ export class AIInteractionLogger {
       safetyOutcome: response.safetyOutcome,
       safetyReasonCode: response.safetyReasonCode,
       toolCallIds: response.toolCallIds,
-      response: response.answer,
+      response: sanitizeLoggedResponse(response.answer, request.policyMode),
       tokensUsed: response.tokensUsed,
       latencyMs: response.latencyMs,
       safetyFlags: response.safetyFlags,

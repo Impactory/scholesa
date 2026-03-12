@@ -13,8 +13,8 @@
  * 7. Return response
  */
 
-import { modelRouter, type TaskType, type PolicyMode, type ModelRequest, type ModelResponse } from './modelAdapter';
-import { redactStudentQuestion } from './redactionService';
+import { modelRouter, type TaskType, type PolicyMode, type ModelRequest, type ModelResponse, type ContextBlock } from './modelAdapter';
+import { RedactionService, redactStudentQuestion } from './redactionService';
 import { RetrievalService, getHintContext, getRubricCheckContext } from './retrievalService';
 import { AIInteractionLogger, logAICoachInteraction } from './interactionLogger';
 import { getPolicyForGrade } from '@/src/lib/policies/gradeBandPolicy';
@@ -166,12 +166,17 @@ export class AIService {
         };
       } else {
         // 4. Retrieve relevant context from YOUR stores
-        modelRequest.contextBlocks = await this.getContextForTask(
+        const rawContextBlocks = await this.getContextForTask(
           req.taskType,
           redactionResult.redacted,
           req.learnerId,
           req.missionId || '',
           gradeBand
+        );
+        modelRequest.contextBlocks = this.sanitizeContextBlocks(
+          rawContextBlocks,
+          req.studentName,
+          policyMode
         );
 
         // 5. Call model (swappable vendor)
@@ -207,6 +212,21 @@ export class AIService {
             safetyReasonCode: modelResponse.safetyReasonCode || 'none',
             policyVersion: modelResponse.policyVersion || policyVersionTag,
             toolCallIds: modelResponse.toolCallIds || [],
+          };
+        }
+
+        const sanitizedResponse = this.sanitizeModelResponse(
+          modelResponse,
+          req.studentName,
+          policyMode
+        );
+        modelResponse = sanitizedResponse.response;
+        if (sanitizedResponse.wasModified) {
+          modelResponse = {
+            ...modelResponse,
+            safetyOutcome: 'modified',
+            safetyReasonCode: 'output_pii_redacted',
+            policyVersion: policyVersionTag,
           };
         }
       }
@@ -391,6 +411,73 @@ export class AIService {
     };
     
     return formatMap[taskType] || 'hint';
+  }
+
+  private static sanitizeContextBlocks(
+    blocks: ContextBlock[],
+    studentName: string,
+    policyMode: PolicyMode
+  ): ContextBlock[] {
+    return blocks.map((block) => ({
+      type: block.type,
+      id: block.id,
+      relevance: block.relevance,
+      content: this.redactText(block.content, studentName, policyMode, 220).text,
+    }));
+  }
+
+  private static sanitizeModelResponse(
+    response: ModelResponse,
+    studentName: string,
+    policyMode: PolicyMode
+  ): { response: ModelResponse; wasModified: boolean } {
+    let wasModified = false;
+    const sanitize = (value?: string, maxLength = 280): string | undefined => {
+      if (!value) return value;
+      const redacted = this.redactText(value, studentName, policyMode, maxLength);
+      if (redacted.wasModified) {
+        wasModified = true;
+      }
+      return redacted.text;
+    };
+
+    return {
+      response: {
+        ...response,
+        answer: sanitize(response.answer, 420) || response.answer,
+        steps: response.steps?.map((step) => sanitize(step, 180) || step),
+        hints: response.hints?.map((hint) => sanitize(hint, 180) || hint),
+        followUpQuestions: response.followUpQuestions?.map((question) => sanitize(question, 180) || question),
+        citations: response.citations?.map((citation) => ({
+          ...citation,
+          snippet: sanitize(citation.snippet, 140) || citation.snippet,
+        })),
+      },
+      wasModified,
+    };
+  }
+
+  private static redactText(
+    text: string,
+    studentName: string,
+    policyMode: PolicyMode,
+    maxLength: number
+  ): { text: string; wasModified: boolean } {
+    const result = RedactionService.redact(
+      text,
+      RedactionService.getConfigForPolicy(policyMode),
+      {
+        studentNames: [studentName],
+      }
+    );
+    const normalized = result.redacted.replace(/\s+/g, ' ').trim();
+    const limited = normalized.length > maxLength
+      ? `${normalized.slice(0, maxLength - 1)}...`
+      : normalized;
+    return {
+      text: limited,
+      wasModified: limited !== text,
+    };
   }
 }
 

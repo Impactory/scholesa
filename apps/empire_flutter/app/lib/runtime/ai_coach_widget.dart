@@ -826,6 +826,58 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         .toList();
   }
 
+  String _privacySafeText(String text, {int maxLength = 240}) {
+    String sanitized = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    sanitized = sanitized.replaceAll(
+      RegExp(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'),
+      '[email]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}'),
+      '[phone]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'\b[A-Za-z0-9]{20,}\b'),
+      '[id]',
+    );
+    if (sanitized.length <= maxLength) {
+      return sanitized;
+    }
+    return '${sanitized.substring(0, maxLength - 1)}...';
+  }
+
+  List<String> _privacySafeConversationTurns({int limit = 6}) {
+    return _recentConversationTurns(limit: limit)
+        .map((String turn) => _privacySafeText(turn, maxLength: 180))
+        .toList();
+  }
+
+  List<String> _privacySafeLearningGoals() {
+    return _learningGoals
+        .map((String goal) => _privacySafeText(goal, maxLength: 80))
+        .where((String goal) => goal.isNotEmpty)
+        .toList();
+  }
+
+  Map<String, dynamic> _buildPrivacySafeCopilotContext(String sanitizedInput) {
+    final List<String> safeGoals = _privacySafeLearningGoals();
+    return <String, dynamic>{
+      'userInput': sanitizedInput,
+      'conversationTurns': _privacySafeConversationTurns(),
+      'learningGoals': safeGoals,
+      if (widget.missionId != null) 'missionId': widget.missionId,
+      if (widget.checkpointId != null) 'checkpointId': widget.checkpointId,
+      if (widget.runtime.sessionOccurrenceId != null)
+        'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
+      'mode': _selectedMode.name,
+      'role': widget.actorRole.name,
+      'bosMiaLoop': true,
+      'loopTags': _bosMiaLoopTags(),
+      'personaInstructions':
+          'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
+    };
+  }
+
   String _roleInstruction(UserRole role) {
     switch (role) {
       case UserRole.learner:
@@ -847,17 +899,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   String _buildConversationalPrompt(String userInput) {
-    final List<String> turns = _recentConversationTurns();
+    final List<String> turns = _privacySafeConversationTurns();
     final String conversation = turns.isEmpty
         ? 'No prior turns.'
         : turns.join('\n');
-    final String mission = (widget.missionId ?? '').trim();
-    final String checkpoint = (widget.checkpointId ?? '').trim();
-    final String occurrence = (widget.runtime.sessionOccurrenceId ?? '').trim();
     final String tags = _bosMiaLoopTags().join(', ');
-    final String goals = _learningGoals.isEmpty
+    final List<String> safeGoals = _privacySafeLearningGoals();
+    final String goals = safeGoals.isEmpty
       ? 'none yet'
-      : _learningGoals.map((g) => '- $g').join('\n');
+      : safeGoals.map((g) => '- $g').join('\n');
 
     return '''
 You are Scholesa AI Coach in a live conversation.
@@ -866,11 +916,9 @@ Mode: ${_selectedMode.name}. ${_coachDirectiveForMode(_selectedMode)}
 Safety: Do not provide final graded answers; scaffold thinking.
 
 Context:
-- siteId: ${widget.runtime.siteId}
-- learnerId: ${widget.runtime.learnerId}
-- sessionOccurrenceId: ${occurrence.isEmpty ? 'unknown' : occurrence}
-- missionId: ${mission.isEmpty ? 'unknown' : mission}
-- checkpointId: ${checkpoint.isEmpty ? 'unknown' : checkpoint}
+- missionContextAvailable: ${(widget.missionId ?? '').trim().isEmpty ? 'no' : 'yes'}
+- checkpointContextAvailable: ${(widget.checkpointId ?? '').trim().isEmpty ? 'no' : 'yes'}
+- sessionContextAvailable: ${(widget.runtime.sessionOccurrenceId ?? '').trim().isEmpty ? 'no' : 'yes'}
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
 - bosMiaLoop: Always stay in BOS/MIA closed-loop coaching and improve this specific learner over time.
@@ -1186,6 +1234,7 @@ Response style:
   }
 
   Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
+    final String sanitizedPrompt = _privacySafeText(prompt, maxLength: 320);
     final AiCoachRequest request = AiCoachRequest(
       siteId: widget.runtime.siteId,
       learnerId: widget.runtime.learnerId,
@@ -1196,7 +1245,7 @@ Response style:
       checkpointId: widget.checkpointId,
       conceptTags: _bosMiaLoopTags(),
       learnerState: widget.runtime.state?.xHat,
-      studentInput: prompt.isNotEmpty ? prompt : null,
+      studentInput: sanitizedPrompt.isNotEmpty ? sanitizedPrompt : null,
       personaInstructions:
           'Your response should be friendly, conversational, and encouraging, suitable for being spoken aloud as a helpful guide. Do not provide direct answers, but help the user discover the answer themselves.',
     );
@@ -1206,25 +1255,10 @@ Response style:
     try {
       response = await VoiceRuntimeService.instance.requestCopilot(
         VoiceCopilotRequest(
-          message: _buildConversationalPrompt(prompt),
+          message: _buildConversationalPrompt(sanitizedPrompt),
           locale: Localizations.localeOf(context).toLanguageTag(),
           gradeBand: widget.runtime.gradeBand,
-          context: <String, dynamic>{
-            'userInput': prompt,
-            'conversationTurns': _recentConversationTurns(),
-            'learningGoals': _learningGoals,
-            'learnerId': widget.runtime.learnerId,
-            'siteId': widget.runtime.siteId,
-            'missionId': widget.missionId,
-            'checkpointId': widget.checkpointId,
-            'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
-            'mode': _selectedMode.name,
-            'role': widget.actorRole.name,
-            'bosMiaLoop': true,
-            'loopTags': _bosMiaLoopTags(),
-            'personaInstructions':
-                'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
-          },
+          context: _buildPrivacySafeCopilotContext(sanitizedPrompt),
           voiceEnabled: true,
           voiceOutput: _voiceOutputEnabled,
         ),

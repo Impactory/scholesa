@@ -136,19 +136,19 @@ type LocaleText = {
 
 const LOCALE_TEXT: Record<SupportedLocale, LocaleText> = {
   en: {
-    intro: 'Let us work through this step by step.',
-    noDirect: 'I will guide with hints instead of giving the final answer.',
+    intro: 'Let’s work through this together.',
+    noDirect: 'I’ll guide you with clues instead of jumping to the final answer.',
     taskHint: {
-      hint_generation: 'Start by identifying the goal, the inputs, and one small action.',
-      rubric_check: 'Compare your work against each rubric criterion and note one strength plus one gap.',
-      debug_assistance: 'Check what changed most recently, then isolate one possible cause.',
-      critique_feedback: 'Focus feedback on evidence, clarity, and one concrete improvement.',
-      explain_concept: 'Break the concept into simple parts and connect it to a familiar example.',
-      reflection_prompt: 'Think about what worked, what did not, and what you will try next.',
+      hint_generation: 'Start with one small move: what is the goal here, and what do you already know?',
+      rubric_check: 'Check your work against each criterion and name one strength plus one next improvement.',
+      debug_assistance: 'Start at the first place where the result stopped matching what you expected.',
+      critique_feedback: 'Keep the feedback specific: point to evidence, name what is clear, and suggest one useful next step.',
+      explain_concept: 'Let’s break the idea into smaller parts and connect it to something familiar.',
+      reflection_prompt: 'Pause for a moment: what helped, what got in the way, and what will you try next?',
     },
-    contextLead: 'Use this mission clue:',
-    explainBack: 'Can you explain your reasoning in your own words?',
-    followUp: 'What is one next step you can try now?',
+    contextLead: 'A useful clue here is:',
+    explainBack: 'After you try it, can you tell me your thinking in your own words?',
+    followUp: 'What feels like the best next step to try right now?',
   },
   'zh-CN': {
     intro: '我们一步一步来。',
