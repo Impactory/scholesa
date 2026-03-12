@@ -1,4 +1,4 @@
-self.__precacheManifest = (self.__precacheManifest || []).concat([
+self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/", "revision": "DwYTP3jnt8Ogip1F5ELr-" },
   {
     "revision": "d751713988987e9331980363e24189ce",
     "url": "/_next/dynamic-css-manifest.json"
