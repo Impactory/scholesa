@@ -612,7 +612,6 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
                 ? AiCoachWidget(
                     runtime: _runtime!,
                     actorRole: widget.role,
-                    allowBosFallback: widget.role == UserRole.learner,
                     autoSpeakGreeting: true,
                     autoAssistOnHesitation: widget.role == UserRole.learner,
                     voiceOnlyConversation: widget.role == UserRole.learner,

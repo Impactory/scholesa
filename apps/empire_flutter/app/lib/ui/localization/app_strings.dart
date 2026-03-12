@@ -71,6 +71,8 @@ class AppStrings {
           'Check in proactively with the learner. Offer one tiny next step and ask a confidence-building follow-up question.',
       'ai.error.unreachable':
           'Unable to reach AI Coach right now. Try again in a moment.',
+      'ai.error.safeEscalation':
+          'I want to be careful here. Share what you have tried so far, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
       'ai.voice.transcriptionUnavailable':
           'Voice transcription unavailable. Please type your question.',
       'ai.voice.microphonePermissionRequired':
@@ -190,6 +192,7 @@ class AppStrings {
       'ai.autoAssist.interventionPrompt': 'BOS 检测到一个需要主动支持的时刻。干预类型：{type}，显著性：{salience}，原因码：{reasons}。请给出简短支持性语音提醒，包含一个立即行动和一个追问。',
       'ai.autoAssist.fallbackPrompt': '请主动关心学习者，给出一个微小下一步，并提出一个增强信心的追问。',
       'ai.error.unreachable': '当前无法连接 AI 教练，请稍后再试。',
+    'ai.error.safeEscalation': '我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。',
       'ai.voice.transcriptionUnavailable': '语音转写不可用，请改用文字输入。',
       'ai.voice.microphonePermissionRequired': '语音输入需要麦克风权限。',
       'ai.voice.playbackStopped': '播放已停止',
@@ -291,6 +294,7 @@ class AppStrings {
       'ai.autoAssist.interventionPrompt': 'BOS 偵測到需要主動支持的時刻。介入類型：{type}，顯著性：{salience}，原因碼：{reasons}。請給出簡短支持性語音提醒，包含一個立即行動和一個追問。',
       'ai.autoAssist.fallbackPrompt': '請主動關心學習者，給出一個微小下一步，並提出一個建立信心的追問。',
       'ai.error.unreachable': '目前無法連線到 AI 教練，請稍後再試。',
+    'ai.error.safeEscalation': '我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。',
       'ai.voice.transcriptionUnavailable': '語音轉寫不可用，請改用文字輸入。',
       'ai.voice.microphonePermissionRequired': '語音輸入需要麥克風權限。',
       'ai.voice.playbackStopped': '播放已停止',

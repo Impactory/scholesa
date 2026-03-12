@@ -37,7 +37,6 @@ class AiCoachWidget extends StatefulWidget {
   const AiCoachWidget({
     required this.runtime,
     required this.actorRole,
-    this.allowBosFallback = true,
     this.autoSpeakGreeting = false,
     this.autoAssistOnHesitation = false,
     this.hesitationInactivityThreshold = const Duration(seconds: 35),
@@ -56,7 +55,6 @@ class AiCoachWidget extends StatefulWidget {
 
   final LearningRuntimeProvider runtime;
   final UserRole actorRole;
-  final bool allowBosFallback;
   final bool autoSpeakGreeting;
   final bool autoAssistOnHesitation;
   final Duration hesitationInactivityThreshold;
@@ -74,12 +72,6 @@ class AiCoachWidget extends StatefulWidget {
 
   @override
   State<AiCoachWidget> createState() => _AiCoachWidgetState();
-}
-
-bool _isMissingFirebaseAppError(Object error) {
-  final String message = error.toString();
-  return message.contains("No Firebase App '[DEFAULT]' has been created") ||
-      message.contains('core/no-app');
 }
 
 class _AiCoachWidgetState extends State<AiCoachWidget> {
@@ -1070,22 +1062,6 @@ Response style:
     }
   }
 
-  String _buildOfflineFallbackReply(String learnerInput) {
-    final String normalized = learnerInput.trim();
-    final String safeInput = normalized.isEmpty ? _t('ai.enrich.retryPrompt') : normalized;
-
-    switch (_selectedMode) {
-      case AiCoachMode.hint:
-        return 'Let\'s keep moving. From your message, "$safeInput", what is one small next step you can try now?';
-      case AiCoachMode.verify:
-        return 'Good check-in. Based on "$safeInput", can you explain your reasoning in 2 short steps and what evidence supports it?';
-      case AiCoachMode.explain:
-        return 'Let\'s simplify this. In your own words, what is the main idea behind "$safeInput" and where did you get stuck?';
-      case AiCoachMode.debug:
-        return 'Let\'s debug together. For "$safeInput", what did you expect to happen, what actually happened, and what changed right before it?';
-    }
-  }
-
   Future<void> _interruptSpeaking() async {
     try {
       await HapticFeedback.selectionClick();
@@ -1206,27 +1182,26 @@ Response style:
         },
       );
     } catch (e) {
-      final String fallbackReply = _buildOfflineFallbackReply(input);
       await TelemetryService.instance.logEvent(
         event: 'voice.message',
         metadata: <String, dynamic>{
           'surface': 'ai_coach_widget',
           'mode': _selectedMode.name,
-          'source': 'local_fallback',
+          'source': 'safe_escalation',
           'error': e.toString(),
           'role': widget.actorRole.name,
         },
       );
 
-      if (kDebugMode && !_isMissingFirebaseAppError(e)) {
-        debugPrint('AI request failed, using local fallback: $e');
+      if (kDebugMode) {
+        debugPrint('AI request failed, returning safe escalation: $e');
       }
 
       setState(() {
         _messages.add(_ChatMessage(
-          text: fallbackReply,
+          text: _t('ai.error.safeEscalation'),
           isUser: false,
-          isError: false,
+          isError: true,
         ));
         _loading = false;
       });
@@ -1235,59 +1210,26 @@ Response style:
 
   Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
     final String sanitizedPrompt = _privacySafeText(prompt, maxLength: 320);
-    final AiCoachRequest request = AiCoachRequest(
-      siteId: widget.runtime.siteId,
-      learnerId: widget.runtime.learnerId,
-      gradeBand: widget.runtime.gradeBand,
-      mode: _selectedMode,
-      sessionOccurrenceId: widget.runtime.sessionOccurrenceId,
-      missionId: widget.missionId,
-      checkpointId: widget.checkpointId,
-      conceptTags: _bosMiaLoopTags(),
-      learnerState: widget.runtime.state?.xHat,
-      studentInput: sanitizedPrompt.isNotEmpty ? sanitizedPrompt : null,
-      personaInstructions:
-          'Your response should be friendly, conversational, and encouraging, suitable for being spoken aloud as a helpful guide. Do not provide direct answers, but help the user discover the answer themselves.',
+    final AiCoachResponse response = await VoiceRuntimeService.instance.requestCopilot(
+      VoiceCopilotRequest(
+        message: _buildConversationalPrompt(sanitizedPrompt),
+        locale: Localizations.localeOf(context).toLanguageTag(),
+        gradeBand: widget.runtime.gradeBand,
+        context: _buildPrivacySafeCopilotContext(sanitizedPrompt),
+        voiceEnabled: true,
+        voiceOutput: _voiceOutputEnabled,
+      ),
     );
-
-    late final AiCoachResponse response;
-
-    try {
-      response = await VoiceRuntimeService.instance.requestCopilot(
-        VoiceCopilotRequest(
-          message: _buildConversationalPrompt(sanitizedPrompt),
-          locale: Localizations.localeOf(context).toLanguageTag(),
-          gradeBand: widget.runtime.gradeBand,
-          context: _buildPrivacySafeCopilotContext(sanitizedPrompt),
-          voiceEnabled: true,
-          voiceOutput: _voiceOutputEnabled,
-        ),
-      );
-      await TelemetryService.instance.logEvent(
-        event: 'voice.message',
-        metadata: <String, dynamic>{
-          'surface': 'ai_coach_widget',
-          'mode': _selectedMode.name,
-          'traceId': response.traceId,
-          'safetyOutcome': response.safetyOutcome,
-          'policyVersion': response.policyVersion,
-        },
-      );
-    } catch (_) {
-      if (!widget.allowBosFallback) {
-        rethrow;
-      }
-      response = await BosService.instance.callAiCoach(request);
-      await TelemetryService.instance.logEvent(
-        event: 'voice.message',
-        metadata: <String, dynamic>{
-          'surface': 'ai_coach_widget',
-          'mode': _selectedMode.name,
-          'source': 'bos_fallback',
-          'role': widget.actorRole.name,
-        },
-      );
-    }
+    await TelemetryService.instance.logEvent(
+      event: 'voice.message',
+      metadata: <String, dynamic>{
+        'surface': 'ai_coach_widget',
+        'mode': _selectedMode.name,
+        'traceId': response.traceId,
+        'safetyOutcome': response.safetyOutcome,
+        'policyVersion': response.policyVersion,
+      },
+    );
 
     widget.runtime.trackEvent(
       'ai_coach_response',
@@ -1303,8 +1245,7 @@ Response style:
     );
 
     // MVL Gating Logic (client-side override)
-    if (widget.allowBosFallback &&
-        widget.runtime.hasMvlGate &&
+    if (widget.runtime.hasMvlGate &&
         response.mvlGateActive) {
       widget.runtime.trackEvent(
         'mvl_gate_triggered',

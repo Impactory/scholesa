@@ -2872,10 +2872,16 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       audioUrl = buildAudioUrl(req, token);
     }
 
-    const adaptiveFallback = buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, 'generic', understanding);
-    const responseText = detectLanguageCompatibility(candidateText, locale)
+    const languageCompatible = detectLanguageCompatibility(candidateText, locale);
+    const responseText = languageCompatible
       ? candidateText
-      : adaptiveFallback;
+      : requiresStrictStudentConfidence(authContext.requesterRole)
+      ? buildStudentConfidenceGuardResponse(locale)
+      : buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, 'generic', understanding);
+    if (!languageCompatible && requiresStrictStudentConfidence(authContext.requesterRole)) {
+      effectiveSafetyOutcome = 'escalated';
+      effectiveSafetyReasonCode = 'output_language_mismatch_guard';
+    }
     const latencyMs = Date.now() - startedAt;
     const supplementalSafetyEvent: VoiceTelemetryEvent | null =
       effectiveSafetyOutcome === 'escalated'

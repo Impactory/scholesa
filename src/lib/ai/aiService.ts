@@ -25,9 +25,9 @@ import {
   evaluateGuardrailInput,
   evaluateGuardrailOutput,
   languageLooksCompatible,
+  localizedLowConfidenceSupport,
   localizedRefusal,
   localizedServiceUnavailable,
-  localizedTutorFallback,
   policyVersion,
   type SafetyOutcome,
 } from './multilingualGuardrails';
@@ -201,8 +201,8 @@ export class AIService {
         } else if (!languageLooksCompatible(modelResponse.answer, targetLocale)) {
           modelResponse = {
             ...modelResponse,
-            answer: localizedTutorFallback(targetLocale),
-            safetyOutcome: 'modified',
+            answer: localizedLowConfidenceSupport(targetLocale),
+            safetyOutcome: 'escalated',
             safetyReasonCode: 'output_language_mismatch',
             toolCallIds: [],
             policyVersion: policyVersionTag,
