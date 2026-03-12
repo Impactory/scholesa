@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ICONS_DIR="$ROOT_DIR/assets/icons"
 REPO_ROOT="$(cd "$ROOT_DIR/../../.." && pwd)"
+SOURCE_SVG="$REPO_ROOT/scholesa.svg"
 
 ANDROID_SRC="$ICONS_DIR/android"
 IOS_SRC="$ICONS_DIR/ios"
@@ -40,6 +41,10 @@ PY
 }
 
 echo "[icons] Normalizing brand assets to transparent backgrounds and required formats"
+echo "[icons] Syncing canonical SVG brand source"
+copy_svg "$SOURCE_SVG" "$ROOT_DIR/web/favicon.svg"
+copy_svg "$SOURCE_SVG" "$NEXT_PUBLIC_DIR/favicon.svg"
+
 if python_has_pillow; then
   python3 "$ROOT_DIR/scripts/convert_brand_assets.py"
 else
@@ -101,6 +106,14 @@ convert_to_ico() {
 }
 
 copy_png() {
+  local src="$1"
+  local dst="$2"
+  require_file "$src"
+  mkdir -p "$(dirname "$dst")"
+  cp "$src" "$dst"
+}
+
+copy_svg() {
   local src="$1"
   local dst="$2"
   require_file "$src"

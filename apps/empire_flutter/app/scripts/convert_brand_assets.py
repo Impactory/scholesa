@@ -2,7 +2,13 @@
 """
 Normalize Scholesa brand assets to transparent-background formats.
 
+The repo-root scholesa.svg file is the canonical source-of-truth for SVG brand
+assets. This script must only copy that file to downstream SVG destinations and
+must never rewrite it.
+
 Outputs:
+- public/favicon.svg
+- apps/empire_flutter/app/web/favicon.svg
 - apps/empire_flutter/app/assets/icons/android/*.png
 - apps/empire_flutter/app/assets/icons/ios/*.png
 - apps/empire_flutter/app/assets/icons/scholesa_launcher*.png
@@ -32,6 +38,11 @@ WEB_ICONS_DIR = WEB_DIR / "icons"
 PUBLIC_DIR = REPO_ROOT / "public"
 PUBLIC_ICONS_DIR = PUBLIC_DIR / "icons"
 PUBLIC_LOGO_DIR = PUBLIC_DIR / "logo"
+SOURCE_SVG = REPO_ROOT / "scholesa.svg"
+SVG_OUTPUTS = [
+    PUBLIC_DIR / "favicon.svg",
+    WEB_DIR / "favicon.svg",
+]
 
 SHARED_MASTER_SOURCE_CANDIDATES = [
     ASSETS_DIR / "scholesa_brand_mark_master.png",
@@ -48,6 +59,18 @@ IOS_SIZES = [
 
 def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
+
+
+def sync_canonical_svg(source: Path, outputs: Iterable[Path]) -> None:
+    if not source.exists():
+        raise FileNotFoundError(f"Missing canonical SVG source: {source}")
+
+    svg_bytes = source.read_bytes()
+    for output in outputs:
+        ensure_dir(output.parent)
+        if output.exists() and output.read_bytes() == svg_bytes:
+            continue
+        output.write_bytes(svg_bytes)
 
 
 def pick_master_source(candidates: Iterable[Path]) -> Path:
@@ -324,6 +347,7 @@ def generate_assets(shared_master: Image.Image) -> None:
 
 
 def main() -> None:
+    sync_canonical_svg(SOURCE_SVG, SVG_OUTPUTS)
     shared_master = load_normalized_master(SHARED_MASTER_SOURCE_CANDIDATES)
     generate_assets(shared_master)
     print("Brand icon/logo assets converted with transparent background and regenerated.")
