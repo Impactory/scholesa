@@ -18,11 +18,16 @@
       <stop offset="100%" stop-color="#f5af19" />
     </linearGradient>
   </defs>
+
   <g transform="translate(256, 256) scale(1)">
     <path d="M256,380 C130,380 60,300 60,200 L60,280 C60,380 130,460 256,460 Z" fill="url(#blueDark_ios)"/>
+
     <path d="M256,380 C382,380 452,300 452,200 L452,280 C452,380 382,460 256,460 Z" fill="url(#magentaOrange_ios)"/>
+
     <path d="M256,240 C160,150 90,60 50,30 C130,60 190,140 256,240 Z" fill="url(#tealGreen_ios)"/>
+
     <path d="M256,240 C330,150 410,80 470,60 C410,100 350,160 256,240 Z" fill="url(#yellowOrange_ios)"/>
+
     <polygon points="256,240 275,310 256,380 237,310" fill="#ffffff" opacity="0.9"/>
   </g>
 </svg>
