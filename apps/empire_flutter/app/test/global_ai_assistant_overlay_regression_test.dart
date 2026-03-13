@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 import 'package:scholesa_app/auth/app_state.dart';
@@ -15,7 +16,7 @@ class _FakeLearningRuntimeProvider extends LearningRuntimeProvider {
     required super.learnerId,
     required super.gradeBand,
     super.sessionOccurrenceId,
-  });
+  }) : super(firestore: FakeFirebaseFirestore());
 
   OrchestrationState? _fakeState;
   final List<Map<String, dynamic>> trackedEventPayloads = <Map<String, dynamic>>[];

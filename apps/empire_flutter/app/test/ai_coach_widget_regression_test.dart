@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/runtime/ai_coach_widget.dart';
@@ -14,12 +15,15 @@ final ThemeData _testTheme = ThemeData(
 void main() {
   group('AiCoachWidget conversational goals regressions', () {
     late LearningRuntimeProvider runtime;
+    late FakeFirebaseFirestore firestore;
 
     setUp(() {
+      firestore = FakeFirebaseFirestore();
       runtime = LearningRuntimeProvider(
         siteId: 'site_test',
         learnerId: 'learner_test',
         gradeBand: GradeBand.g4_6,
+        firestore: firestore,
       );
     });
 
@@ -253,6 +257,7 @@ class _FakeRuntime extends LearningRuntimeProvider {
           siteId: 'site_fake',
           learnerId: 'learner_fake',
           gradeBand: GradeBand.g4_6,
+          firestore: FakeFirebaseFirestore(),
         );
 
   OrchestrationState? _fakeState;
