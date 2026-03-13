@@ -260,6 +260,19 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay>
       },
     ));
 
+    if (role == UserRole.learner) {
+      _bosRuntime?.trackEvent(
+        'interaction_signal_observed',
+        payload: <String, dynamic>{
+          'signalFamily': 'pointer',
+          'source': 'global_ai_assistant_open',
+          'target': 'assistant_fab',
+          'trigger': trigger,
+          'interactionCount': 1,
+        },
+      );
+    }
+
     _assistantSheetOpen = true;
     try {
       final Widget sheetChild = _GlobalAiAssistantSheet(

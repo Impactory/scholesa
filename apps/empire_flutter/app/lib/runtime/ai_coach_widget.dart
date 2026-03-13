@@ -99,6 +99,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _listenAfterSpeech = false;
   DateTime _lastLearnerActivityAt = DateTime.now();
   DateTime? _lastAutoAssistAt;
+  Timer? _interactionSignalTimer;
+  DateTime? _typingBurstStartedAt;
+  DateTime? _lastTypingSignalAt;
+  String _lastInputSnapshot = '';
+  int _typingChangeCount = 0;
+  int _typingCharsAdded = 0;
+  int _typingCharsRemoved = 0;
+  bool _suppressInteractionTracking = false;
 
   String _t(String key) => AppStrings.of(context, key);
 
@@ -304,8 +312,117 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     unawaited(_evaluateBosAutoAssist(trigger: 'runtime_state_change'));
   }
 
+  bool get _shouldCaptureInteractionSignals {
+    return widget.actorRole == UserRole.learner;
+  }
+
   void _markLearnerActivity() {
     _lastLearnerActivityAt = DateTime.now();
+  }
+
+  void _handleInputChanged(String value) {
+    _markLearnerActivity();
+    if (_suppressInteractionTracking || !_shouldCaptureInteractionSignals) {
+      _lastInputSnapshot = value;
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (_lastTypingSignalAt != null &&
+        now.difference(_lastTypingSignalAt!) > const Duration(seconds: 4)) {
+      _flushInteractionSignal(reason: 'inactivity_window');
+    }
+
+    _typingBurstStartedAt ??= now;
+    final int delta = value.length - _lastInputSnapshot.length;
+    if (delta > 0) {
+      _typingCharsAdded += delta;
+    } else if (delta < 0) {
+      _typingCharsRemoved += delta.abs();
+    }
+    _typingChangeCount += 1;
+    _lastTypingSignalAt = now;
+    _lastInputSnapshot = value;
+    _scheduleInteractionSignalFlush();
+  }
+
+  void _scheduleInteractionSignalFlush() {
+    _interactionSignalTimer?.cancel();
+    _interactionSignalTimer = Timer(
+      const Duration(seconds: 4),
+      () => _flushInteractionSignal(reason: 'idle_flush'),
+    );
+  }
+
+  void _flushInteractionSignal({required String reason}) {
+    _interactionSignalTimer?.cancel();
+    if (!_shouldCaptureInteractionSignals || _typingChangeCount == 0) {
+      _resetInteractionSignalState();
+      return;
+    }
+
+    final DateTime endAt = _lastTypingSignalAt ?? DateTime.now();
+    final DateTime startAt = _typingBurstStartedAt ?? endAt;
+    final int durationMs = endAt.difference(startAt).inMilliseconds;
+
+    widget.runtime.trackEvent(
+      'interaction_signal_observed',
+      missionId: widget.missionId,
+      checkpointId: widget.checkpointId,
+      payload: <String, dynamic>{
+        'signalFamily': 'keystroke',
+        'source': 'ai_coach_input',
+        'reason': reason,
+        'interactionCount': _typingChangeCount,
+        'charsAdded': _typingCharsAdded,
+        'charsRemoved': _typingCharsRemoved,
+        'textLengthBucket': _lengthBucket(_lastInputSnapshot.length),
+        'burstDurationBucket': _durationBucket(durationMs),
+      },
+    );
+
+    _resetInteractionSignalState();
+  }
+
+  void _resetInteractionSignalState() {
+    _typingBurstStartedAt = null;
+    _lastTypingSignalAt = null;
+    _typingChangeCount = 0;
+    _typingCharsAdded = 0;
+    _typingCharsRemoved = 0;
+  }
+
+  String _lengthBucket(int length) {
+    if (length <= 0) return 'empty';
+    if (length <= 12) return '1_12';
+    if (length <= 40) return '13_40';
+    if (length <= 120) return '41_120';
+    return '121_plus';
+  }
+
+  String _durationBucket(int durationMs) {
+    if (durationMs < 1500) return 'under_1_5s';
+    if (durationMs < 5000) return '1_5s_to_5s';
+    if (durationMs < 12000) return '5s_to_12s';
+    return '12s_plus';
+  }
+
+  void _replaceInputText(String value) {
+    _suppressInteractionTracking = true;
+    _inputController.text = value;
+    _inputController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _inputController.text.length),
+    );
+    _lastInputSnapshot = value;
+    _suppressInteractionTracking = false;
+    _markLearnerActivity();
+  }
+
+  void _clearInputText() {
+    _suppressInteractionTracking = true;
+    _inputController.clear();
+    _lastInputSnapshot = '';
+    _suppressInteractionTracking = false;
   }
 
   void _startProactiveAssistLoop() {
@@ -481,6 +598,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   void dispose() {
     widget.runtime.removeListener(_handleRuntimeSignalChange);
     _proactiveAssistTimer?.cancel();
+    _flushInteractionSignal(reason: 'dispose');
+    _interactionSignalTimer?.cancel();
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
     unawaited(_audioPlayer.stop());
@@ -538,10 +657,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
       if (!mounted) return;
       setState(() {
-        _inputController.text = transcribed.transcript;
-        _inputController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _inputController.text.length),
-        );
+        _replaceInputText(transcribed.transcript);
       });
 
       await TelemetryService.instance.logEvent(
@@ -645,10 +761,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         onResult: (result) {
           if (!mounted) return;
           setState(() {
-            _inputController.text = result.recognizedWords;
-            _inputController.selection = TextSelection.fromPosition(
-              TextPosition(offset: _inputController.text.length),
-            );
+            _replaceInputText(result.recognizedWords);
           });
 
           if (result.finalResult) {
@@ -1118,6 +1231,9 @@ Response style:
   }) async {
     final String input = rawInput.trim();
     if (_loading || input.isEmpty) return;
+    if (source == 'manual') {
+      _flushInteractionSignal(reason: 'submitted');
+    }
     _updateLearningGoals(input);
 
     TelemetryService.instance.logEvent(
@@ -1135,7 +1251,7 @@ Response style:
     setState(() {
       _messages.add(_ChatMessage(text: input, isUser: true));
       _loading = true;
-      _inputController.clear();
+      _clearInputText();
     });
 
     // Emit ai_help_opened (client-side tracking)
@@ -1528,7 +1644,7 @@ Response style:
                         isDense: true,
                       ),
                       textInputAction: TextInputAction.send,
-                      onChanged: (_) => _markLearnerActivity(),
+                      onChanged: _handleInputChanged,
                       onSubmitted: (_) => _sendMessage(),
                       maxLines: 3,
                       minLines: 1,
