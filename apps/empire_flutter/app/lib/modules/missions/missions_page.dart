@@ -760,7 +760,18 @@ class _MissionDetailsSheet extends StatefulWidget {
 class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   bool _showAiCoach = false;
   bool _isUpdatingStudyAction = false;
+  bool _isSavingProofBundle = false;
+  bool _isSavingCheckpoint = false;
   LearnerProfileModel? _learnerProfile;
+  final TextEditingController _explainItBackController =
+      TextEditingController();
+  final TextEditingController _oralCheckController = TextEditingController();
+  final TextEditingController _miniRebuildController = TextEditingController();
+  final TextEditingController _checkpointSummaryController =
+      TextEditingController();
+  final TextEditingController _checkpointArtifactController =
+      TextEditingController();
+  List<MissionProofCheckpoint> _versionHistory = const <MissionProofCheckpoint>[];
 
   bool get _keyboardOnlyEnabled =>
       _learnerProfile?.keyboardOnlyEnabled ?? false;
@@ -772,7 +783,18 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadLearnerProfile();
+      _loadProofBundle();
     });
+  }
+
+  @override
+  void dispose() {
+    _explainItBackController.dispose();
+    _oralCheckController.dispose();
+    _miniRebuildController.dispose();
+    _checkpointSummaryController.dispose();
+    _checkpointArtifactController.dispose();
+    super.dispose();
   }
 
   Color get _pillarColor {
@@ -808,6 +830,250 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     }
 
     setState(() => _learnerProfile = profile);
+  }
+
+  bool get _proofBundleReady {
+    return _explainItBackController.text.trim().isNotEmpty &&
+        _oralCheckController.text.trim().isNotEmpty &&
+        _miniRebuildController.text.trim().isNotEmpty &&
+        _versionHistory.isNotEmpty;
+  }
+
+  Future<void> _loadProofBundle() async {
+    final MissionService missionService = context.read<MissionService>();
+    final MissionProofBundle? bundle =
+        await missionService.loadProofBundle(widget.mission.id);
+    if (!mounted || bundle == null) {
+      return;
+    }
+    setState(() {
+      _explainItBackController.text = bundle.explainItBack ?? '';
+      _oralCheckController.text = bundle.oralCheckResponse ?? '';
+      _miniRebuildController.text = bundle.miniRebuildPlan ?? '';
+      _versionHistory = bundle.versionHistory;
+    });
+  }
+
+  Future<void> _saveProofBundle() async {
+    setState(() => _isSavingProofBundle = true);
+    final MissionService missionService = context.read<MissionService>();
+    final MissionProofBundle? bundle = await missionService.saveProofBundleDraft(
+      missionId: widget.mission.id,
+      explainItBack: _explainItBackController.text,
+      oralCheckResponse: _oralCheckController.text,
+      miniRebuildPlan: _miniRebuildController.text,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isSavingProofBundle = false;
+      _versionHistory = bundle?.versionHistory ?? _versionHistory;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_tMissions(context, 'Proof bundle saved')),
+        backgroundColor: ScholesaColors.success,
+      ),
+    );
+  }
+
+  Future<void> _saveCheckpoint() async {
+    final String summary = _checkpointSummaryController.text.trim();
+    if (summary.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tMissions(context, 'Add a version checkpoint summary first')),
+        ),
+      );
+      return;
+    }
+    setState(() => _isSavingCheckpoint = true);
+    final MissionService missionService = context.read<MissionService>();
+    final MissionProofBundle? bundle = await missionService.addVersionCheckpoint(
+      missionId: widget.mission.id,
+      summary: summary,
+      artifactNote: _checkpointArtifactController.text,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isSavingCheckpoint = false;
+      _checkpointSummaryController.clear();
+      _checkpointArtifactController.clear();
+      _versionHistory = bundle?.versionHistory ?? _versionHistory;
+    });
+  }
+
+  String _formatCheckpointTimestamp(DateTime? value) {
+    if (value == null) {
+      return _tMissions(context, 'Saved just now');
+    }
+    return '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildProofOfLearningSection(BuildContext context, Mission mission) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _pillarColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _pillarColor.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.verified_outlined, color: _pillarColor),
+              const SizedBox(width: 8),
+              Text(
+                _tMissions(context, 'Proof of Learning'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: _pillarColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tMissions(
+              context,
+              'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.',
+            ),
+            style: TextStyle(color: context.schTextSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _explainItBackController,
+            maxLines: 3,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Explain-it-back summary'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _oralCheckController,
+            maxLines: 3,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Oral check reflection'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _miniRebuildController,
+            maxLines: 3,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Mini-rebuild plan'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _tMissions(context, 'Version History'),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (_versionHistory.isEmpty)
+            Text(
+              _tMissions(context, 'No version checkpoints yet'),
+              style: TextStyle(color: context.schTextSecondary),
+            )
+          else
+            ..._versionHistory.reversed.map(
+              (MissionProofCheckpoint checkpoint) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.history_rounded, color: _pillarColor),
+                title: Text(checkpoint.summary),
+                subtitle: Text(_formatCheckpointTimestamp(checkpoint.createdAt)),
+                trailing: checkpoint.artifactNote?.isNotEmpty == true
+                    ? const Icon(Icons.attach_file_rounded, size: 18)
+                    : null,
+              ),
+            ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _checkpointSummaryController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Version checkpoint summary'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _checkpointArtifactController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Artifact note (optional)'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isSavingCheckpoint ? null : _saveCheckpoint,
+                  icon: _isSavingCheckpoint
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.history_toggle_off_rounded),
+                  label: Text(_tMissions(context, 'Save Checkpoint')),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isSavingProofBundle ? null : _saveProofBundle,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _pillarColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: _isSavingProofBundle
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_tMissions(context, 'Save Proof Bundle')),
+                ),
+              ),
+            ],
+          ),
+          if (mission.progress == 1.0 && !_proofBundleReady) ...<Widget>[
+            const SizedBox(height: 12),
+            Text(
+              _tMissions(
+                context,
+                'Complete all four proof items before submitting this mission.',
+              ),
+              style: TextStyle(
+                color: ScholesaColors.warning,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -1027,6 +1293,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                           MissionStatus.notStarted) ...<Widget>[
                         _buildStudyFlowSection(context, mission),
                         const SizedBox(height: 24),
+                        _buildProofOfLearningSection(context, mission),
+                        const SizedBox(height: 24),
                       ],
 
                       // Educator feedback
@@ -1149,7 +1417,10 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () async {
+                            onPressed: !_proofBundleReady
+                                ? null
+                                : () async {
+                              await _saveProofBundle();
                               TelemetryService.instance.logEvent(
                                 event: 'cta.clicked',
                                 metadata: <String, dynamic>{
