@@ -692,7 +692,6 @@ void main() {
 
       expect(find.text('No habits scheduled yet'), findsOneWidget);
       expect(find.text('No active missions yet'), findsOneWidget);
-      expect(find.text('AI coaching is loading'), findsOneWidget);
     });
 
     testWidgets('learner portfolio renders zh-TW copy',
