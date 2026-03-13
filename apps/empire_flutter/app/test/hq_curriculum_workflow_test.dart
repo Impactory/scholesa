@@ -112,7 +112,8 @@ void main() {
       expect(missions.docs.first.data()['publishedBy'], 'hq-user-1');
     });
 
-    testWidgets('create snapshot bumps mission version and creates snapshot entity',
+    testWidgets(
+        'create snapshot bumps mission version and creates snapshot entity',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();
@@ -142,7 +143,8 @@ void main() {
           snapshotDocs.docs.first.id);
     });
 
-    testWidgets('apply rubric creates rubric entity and links mission to rubric',
+    testWidgets(
+        'apply rubric creates rubric entity and links mission to rubric',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();

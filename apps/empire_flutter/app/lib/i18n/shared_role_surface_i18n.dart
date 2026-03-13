@@ -69,7 +69,8 @@ class SharedRoleSurfaceI18n {
     'Unable to load telemetry metrics:': '无法加载遥测指标：',
     'Telemetry KPIs': '遥测 KPI',
     'Telemetry feed pending': '遥测流待接入',
-    'Waiting for first data sync from BOS-MIA telemetry.': '正在等待 BOS-MIA 遥测的首次数据同步。',
+    'Waiting for first data sync from BOS-MIA telemetry.':
+        '正在等待 BOS-MIA 遥测的首次数据同步。',
     '7-day': '7 天',
     'Weekly Accountability': '每周问责',
     'Review SLA': '审核 SLA',
@@ -92,7 +93,8 @@ class SharedRoleSurfaceI18n {
     'Top Performers': '最佳表现者',
     'View All': '查看全部',
     'Export HQ Analytics': '导出 HQ 分析',
-    'Generate and export the current HQ analytics summary for cross-site review.': '生成并导出当前 HQ 分析摘要供跨站点审核。',
+    'Generate and export the current HQ analytics summary for cross-site review.':
+        '生成并导出当前 HQ 分析摘要供跨站点审核。',
     'Loading...': '加载中...',
     'No comparison data available': '暂无对比数据',
     'No top performers available': '暂无最佳表现者',
@@ -265,7 +267,8 @@ class SharedRoleSurfaceI18n {
     'Unable to load telemetry metrics:': '無法載入遙測指標：',
     'Telemetry KPIs': '遙測 KPI',
     'Telemetry feed pending': '遙測資料流待接入',
-    'Waiting for first data sync from BOS-MIA telemetry.': '正在等待 BOS-MIA 遙測的首次資料同步。',
+    'Waiting for first data sync from BOS-MIA telemetry.':
+        '正在等待 BOS-MIA 遙測的首次資料同步。',
     '7-day': '7 天',
     'Weekly Accountability': '每週問責',
     'Review SLA': '審核 SLA',
@@ -288,7 +291,8 @@ class SharedRoleSurfaceI18n {
     'Top Performers': '最佳表現者',
     'View All': '查看全部',
     'Export HQ Analytics': '匯出 HQ 分析',
-    'Generate and export the current HQ analytics summary for cross-site review.': '產生並匯出目前 HQ 分析摘要供跨站點審查。',
+    'Generate and export the current HQ analytics summary for cross-site review.':
+        '產生並匯出目前 HQ 分析摘要供跨站點審查。',
     'Loading...': '載入中...',
     'No comparison data available': '目前沒有比較資料',
     'No top performers available': '目前沒有最佳表現者',

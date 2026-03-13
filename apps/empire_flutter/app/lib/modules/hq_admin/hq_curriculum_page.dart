@@ -724,9 +724,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final TextEditingController titleController =
         TextEditingController(text: curriculum.title);
     final TextEditingController descriptionController =
-      TextEditingController(text: curriculum.description);
+        TextEditingController(text: curriculum.description);
     final TextEditingController misconceptionTagsController =
-      TextEditingController(text: curriculum.misconceptionTags.join(', '));
+        TextEditingController(text: curriculum.misconceptionTags.join(', '));
     String selectedPillar = curriculum.pillar;
     String selectedTemplate = curriculum.template;
     String selectedDifficulty = curriculum.difficulty;
@@ -897,8 +897,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     color: ScholesaColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
-                  decoration:
-                      _dialogDecoration(context, 'Misconception tags'),
+                  decoration: _dialogDecoration(context, 'Misconception tags'),
                 ),
               ],
             ),
@@ -1172,8 +1171,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     color: ScholesaColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
-                  decoration:
-                      _dialogDecoration(context, 'Misconception tags'),
+                  decoration: _dialogDecoration(context, 'Misconception tags'),
                 ),
               ],
             ),
@@ -1599,11 +1597,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           template: (data['template'] as String? ?? 'Project sprint').trim(),
           difficulty: (data['difficulty'] as String? ?? 'Intermediate').trim(),
           misconceptionTags: _parseStringList(data['misconceptionTags']),
-          mediaFormat:
-              (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
+          mediaFormat: (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
           version: (data['version'] as String?) ?? '1.0',
-          approvalStatus:
-              (data['approvalStatus'] as String? ?? 'draft').trim(),
+          approvalStatus: (data['approvalStatus'] as String? ?? 'draft').trim(),
           status: _parseCurriculumStatus(data['status'] as String?),
           lastUpdated: lastUpdated,
         );
