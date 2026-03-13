@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
+import '../../services/telemetry_service.dart';
 import 'educator_models.dart';
 
 /// Service for educator-specific features - wired to Firebase
