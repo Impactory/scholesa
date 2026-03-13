@@ -960,6 +960,30 @@ class _SessionDetailSheet extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'educator_sessions_import_roster_csv',
+                            'session_id': session.id,
+                          },
+                        );
+                        showDialog<void>(
+                          context: context,
+                          builder: (BuildContext context) =>
+                              _ImportRosterDialog(session: session),
+                        );
+                      },
+                      icon: const Icon(Icons.upload_file_rounded),
+                      label: Text(
+                        _tEducatorSessions(context, 'Import Roster CSV'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        TelemetryService.instance.logEvent(
                           event: 'substitute.requested',
                           metadata: <String, dynamic>{
                             'module': 'educator_sessions',
@@ -1012,6 +1036,140 @@ class _SessionDetailSheet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ImportRosterDialog extends StatefulWidget {
+  const _ImportRosterDialog({required this.session});
+
+  final EducatorSession session;
+
+  @override
+  State<_ImportRosterDialog> createState() => _ImportRosterDialogState();
+}
+
+class _ImportRosterDialogState extends State<_ImportRosterDialog> {
+  final TextEditingController _csvController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _csvController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_csvController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorSessions(context, 'Paste CSV content to import a roster'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final EducatorService service = context.read<EducatorService>();
+    final RosterImportOutcome? outcome = await service.importRosterCsv(
+      sessionId: widget.session.id,
+      csvContent: _csvController.text,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isSubmitting = false);
+
+    if (outcome == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            service.error ??
+                _tEducatorSessions(context, 'Unable to import roster right now'),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop();
+    final String message = outcome.queuedCount == 0
+        ? _tEducatorSessions(
+            context,
+            'Roster import complete: {importedCount} enrolled, {duplicateCount} already present',
+            placeholders: <String, String>{
+              'importedCount': '${outcome.importedCount}',
+              'duplicateCount': '${outcome.duplicateCount}',
+            },
+          )
+        : _tEducatorSessions(
+            context,
+            'Roster import complete: {importedCount} enrolled, {queuedCount} queued for provisioning',
+            placeholders: <String, String>{
+              'importedCount': '${outcome.importedCount}',
+              'queuedCount': '${outcome.queuedCount}',
+            },
+          );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: ScholesaColors.success,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_tEducatorSessions(context, 'Import Roster CSV')),
+      content: SizedBox(
+        width: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _tEducatorSessions(
+                context,
+                'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.',
+              ),
+              style: TextStyle(color: Colors.grey[700], height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _csvController,
+              maxLines: 10,
+              decoration: InputDecoration(
+                hintText: _tEducatorSessions(
+                  context,
+                  'name,email\nAva Maker,ava@example.com\nKai Build,kai@example.com',
+                ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+          child: Text(_tEducatorSessions(context, 'Cancel')),
+        ),
+        ElevatedButton.icon(
+          onPressed: _isSubmitting ? null : _submit,
+          icon: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.upload_file_rounded),
+          label: Text(_tEducatorSessions(context, 'Import')), 
+        ),
+      ],
     );
   }
 }
