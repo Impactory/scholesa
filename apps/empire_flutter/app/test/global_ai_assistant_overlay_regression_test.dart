@@ -48,7 +48,7 @@ void main() {
         'userId': 'learner_test',
         'email': 'learner@test.scholesa',
         'displayName': 'Learner Test',
-        'role': 'learner',
+        'role': 'site',
         'activeSiteId': 'site_test',
         'siteIds': <String>['site_test'],
         'entitlements': <dynamic>[],
