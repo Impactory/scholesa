@@ -75,6 +75,7 @@ Release read:
 
 Implemented path:
 - The learner motivation loop card surfaces goals, reminders, value prompts, and reflection entry points.
+- The learner motivation loop now includes a shout-out action that persists a learner celebration record through the reflection path.
 - The learner-facing loop supports autonomy and competence signaling in the current dashboard path.
 
 Primary implementation files:
@@ -85,12 +86,13 @@ Primary implementation files:
 
 Validation evidence:
 - Widget proof in `apps/empire_flutter/app/test/learner_site_surfaces_localization_test.dart`
+- Widget regression now covers shout-out persistence in `apps/empire_flutter/app/test/learner_site_surfaces_localization_test.dart`
 
 Residual:
-- Shout-outs and wider engine parity are still incomplete.
+- Wider motivation-engine parity is still incomplete.
 
 Release read:
-- The current learner release path includes a functioning motivation loop with real learner-visible prompts and persistence-linked actions.
+- The current learner release path includes a functioning motivation loop with real learner-visible prompts, persistence-linked actions, and a persisted shout-out path.
 - Remaining parity work does not block current learner release behavior.
 
 ### REQ-088: Accessibility surfaces: keyboard-only, drag alternatives, TTS, reading level, reduced distraction, contrast controls
@@ -134,7 +136,7 @@ These items should not block learner release confidence or the current clean bui
 
 1. Complete broader scheduler parity for the study orchestration layer.
 2. Extend worked-example decay to a fuller long-horizon correctness policy.
-3. Add shout-outs and close wider motivation-engine parity gaps.
+3. Close wider motivation-engine parity gaps.
 4. Add drag-alternative depth and automated WCAG coverage.
 
 ---

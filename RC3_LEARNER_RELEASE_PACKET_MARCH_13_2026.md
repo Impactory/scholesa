@@ -44,6 +44,10 @@ Reasoning:
 - Sustained correct FSRS reviews now drive worked-example decay automatically.
 - Fade stage and prompt-level support no longer advance only when the learner explicitly opens the worked example.
 
+### Motivation loop
+- Learner motivation loop now includes a persisted shout-out action.
+- Learner shout-outs are covered in the learner surface widget regression suite.
+
 ---
 
 ## Current Evidence Snapshot
@@ -69,7 +73,7 @@ Observed outcomes:
 1. External push-provider delivery is still contract-proven rather than receipt-proven.
 2. Curriculum confusability still uses heuristic weighting instead of a fully authored graph.
 3. Broader scheduler parity remains incomplete.
-4. Motivation shout-outs remain partial.
+4. Wider motivation-engine parity remains incomplete.
 5. Accessibility drag-alternative depth and WCAG automation remain incomplete.
 
 ---
