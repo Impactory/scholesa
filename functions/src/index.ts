@@ -12,6 +12,7 @@ import {
 } from './notificationPipeline';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
+import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
 import {
   handleVoiceApi,
   handleCopilotMessage,
@@ -271,6 +272,10 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'support.intervention.logged',
   'motivation.insight.viewed',
   'fdm.state.changed',
+  'mvl.required',
+  'mvl.completed',
+  'autonomy_risk.detected',
+  'sep.verify.prompted',
   // ── BOS+MIA Runtime Events ──
   'mission_viewed',
   'mission_selected',
@@ -1197,6 +1202,22 @@ export const genAiCoach = onCall(async (request) => {
 
   // ── A0) Detect: Compute autonomy risk (behavioral signals) ──
   const autonomyRisk = await computeAutonomyRisk(userId, sessionOccurrenceId, xHat, gb);
+  if (autonomyRisk.signals.length > 0) {
+    await persistTelemetryEvent({
+      event: 'autonomy_risk.detected',
+      userId,
+      role: 'learner',
+      siteId,
+      traceId: aiHelpOpenedRef.id,
+      metadata: {
+        signalType: autonomyRisk.signals[0],
+        signals: autonomyRisk.signals,
+        riskScore: autonomyRisk.riskScore,
+        threshold: autonomyRisk.threshold,
+        service: 'bos_runtime',
+      },
+    });
+  }
 
   // ── A0) Gate: Check if MVL should block this AI response ──
   const mvlResult = await checkAndMaybeCreateMvl({
@@ -1218,6 +1239,21 @@ export const genAiCoach = onCall(async (request) => {
 
   // If MVL gate is active, intercept with verification prompt
   if (mvlResult.gateActive) {
+    await persistTelemetryEvent({
+      event: 'sep.verify.prompted',
+      userId,
+      role: 'learner',
+      siteId,
+      traceId: aiHelpOpenedRef.id,
+      metadata: {
+        entropyBand: classifySepEntropyBand(reliabilityRisk),
+        signalType: summarizeVerificationSignalType(autonomyRisk, reliabilityRisk),
+        riskScore: reliabilityRisk.riskScore,
+        threshold: reliabilityRisk.threshold,
+        triggerReason: mvlResult.reason,
+        service: 'bos_runtime',
+      },
+    });
     message = generateMvlInterceptMessage(coachMode, displayName, mvlResult.reason, tags);
     requiresExplainBack = true;
     suggestedNextSteps = [

@@ -817,7 +817,12 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
         final Mission mission =
             service.getMissionById(widget.mission.id) ?? widget.mission;
 
-        return Container(
+        final AppState appState = context.read<AppState>();
+        final FirestoreService firestoreService = context.read<FirestoreService>();
+        final String learnerId = (appState.userId ?? '').trim();
+        final String siteId = (appState.activeSiteId ?? '').trim();
+
+        final Widget sheetBody = Container(
           height: MediaQuery.of(context).size.height * 0.85,
           decoration: BoxDecoration(
             color: _highContrastEnabled ? Colors.black : Colors.white,
@@ -1222,6 +1227,17 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
               ),
             ],
           ),
+        );
+
+        if (learnerId.isEmpty || siteId.isEmpty) {
+          return sheetBody;
+        }
+
+        return _MissionRuntimeScope(
+          learnerId: learnerId,
+          siteId: siteId,
+          firestoreService: firestoreService,
+          child: sheetBody,
         );
       },
     );
@@ -1820,6 +1836,62 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
         actorRole: role,
         missionId: widget.mission.id,
         conceptTags: widget.mission.skills.map((Skill s) => s.name).toList(),
+      ),
+    );
+  }
+}
+
+class _MissionRuntimeScope extends StatefulWidget {
+  const _MissionRuntimeScope({
+    required this.learnerId,
+    required this.siteId,
+    required this.firestoreService,
+    required this.child,
+  });
+
+  final String learnerId;
+  final String siteId;
+  final FirestoreService firestoreService;
+  final Widget child;
+
+  @override
+  State<_MissionRuntimeScope> createState() => _MissionRuntimeScopeState();
+}
+
+class _MissionRuntimeScopeState extends State<_MissionRuntimeScope> {
+  late final LearningRuntimeProvider _runtime;
+
+  @override
+  void initState() {
+    super.initState();
+    _runtime = LearningRuntimeProvider(
+      siteId: widget.siteId,
+      learnerId: widget.learnerId,
+      gradeBand: GradeBand.g4_6,
+      firestore: widget.firestoreService.firestore,
+    );
+    _runtime.startListening();
+  }
+
+  @override
+  void dispose() {
+    _runtime.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<LearningRuntimeProvider>.value(
+      value: _runtime,
+      child: AnimatedBuilder(
+        animation: _runtime,
+        builder: (BuildContext context, Widget? child) {
+          return MvlGateWidget(
+            runtime: _runtime,
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        child: widget.child,
       ),
     );
   }

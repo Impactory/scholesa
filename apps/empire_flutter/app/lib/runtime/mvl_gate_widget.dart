@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../ui/localization/inline_locale_text.dart';
+import '../services/telemetry_service.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
@@ -129,13 +132,70 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
   bool _submitting = false;
   String? _feedback;
   final List<String> _submittedEvidenceIds = <String>[];
+  String? _requiredTelemetryEpisodeId;
 
   MvlEpisode? get _episode => widget.runtime.activeMvl;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_emitRequiredTelemetryIfNeeded());
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _MvlGateOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.runtime.activeMvl?.id != widget.runtime.activeMvl?.id) {
+      _requiredTelemetryEpisodeId = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_emitRequiredTelemetryIfNeeded());
+      });
+    }
+  }
 
   @override
   void dispose() {
     _explainController.dispose();
     super.dispose();
+  }
+
+  Future<void> _emitRequiredTelemetryIfNeeded() async {
+    final MvlEpisode? episode = _episode;
+    if (episode == null || _requiredTelemetryEpisodeId == episode.id) {
+      return;
+    }
+
+    _requiredTelemetryEpisodeId = episode.id;
+    await TelemetryService.instance.logEvent(
+      event: 'mvl.required',
+      siteId: episode.siteId,
+      role: 'learner',
+      metadata: <String, dynamic>{
+        'traceId': episode.id,
+        'triggerReason': episode.triggerReason,
+        'evidenceCount': episode.evidenceEventIds.length,
+        'reliabilityMethod': episode.reliabilityRisk?.method,
+      },
+    );
+  }
+
+  Future<void> _emitCompletionTelemetry(String outcome) async {
+    final MvlEpisode? episode = _episode;
+    if (episode == null) return;
+
+    await TelemetryService.instance.logEvent(
+      event: 'mvl.completed',
+      siteId: episode.siteId,
+      role: 'learner',
+      metadata: <String, dynamic>{
+        'traceId': episode.id,
+        'outcome': outcome,
+        'triggerReason': episode.triggerReason,
+        'evidenceCount': _submittedEvidenceIds.length,
+      },
+    );
   }
 
   Future<void> _submitExplainItBack() async {
@@ -192,6 +252,7 @@ class _MvlGateOverlayState extends State<_MvlGateOverlay> {
               'evidenceCount': _submittedEvidenceIds.length,
             },
           );
+          await _emitCompletionTelemetry(resolution);
 
           setState(() {
             _feedback = resolution == 'passed'
