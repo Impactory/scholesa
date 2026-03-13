@@ -265,6 +265,8 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'substitute.requested',
   'substitute.assigned',
   'mission.snapshot.created',
+  'version_history_checkpointed',
+  'roster.imported',
   'rubric.applied',
   'rubric.shared_to_parent_summary',
   'educator.review.completed',

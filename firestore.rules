@@ -362,6 +362,18 @@ service cloud.firestore {
       allow create: if isEducator();
       allow update, delete: if false;
     }
+    match /proofOfLearningBundles/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || (
+          resource.data.keys().hasAny(['learnerId'])
+          && isParentLinkedToLearner(resource.data.learnerId)
+        )
+      );
+      allow create, update: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow delete: if false;
+    }
 
     // Portfolios (container)
     match /portfolios/{id} {
@@ -742,6 +754,12 @@ service cloud.firestore {
     match /classInsights/{id} {
       allow read: if isAuthenticated() && (isEducator() || isHQ() || isAdminOrHQ());
       allow create, update, delete: if false;
+    }
+
+    match /rosterImports/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ() || isAdminOrHQ());
+      allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow delete: if false;
     }
 
     // Default Deny

@@ -80,6 +80,8 @@ class TelemetryService {
     'substitute.requested',
     'substitute.assigned',
     'mission.snapshot.created',
+    'version_history_checkpointed',
+    'roster.imported',
     'rubric.applied',
     'rubric.shared_to_parent_summary',
     'lead.submitted',

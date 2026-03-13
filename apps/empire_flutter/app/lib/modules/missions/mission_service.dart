@@ -4,6 +4,102 @@ import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import 'mission_models.dart';
 
+@immutable
+class MissionProofCheckpoint {
+  const MissionProofCheckpoint({
+    required this.id,
+    required this.summary,
+    this.artifactNote,
+    this.createdAt,
+  });
+
+  final String id;
+  final String summary;
+  final String? artifactNote;
+  final DateTime? createdAt;
+
+  factory MissionProofCheckpoint.fromMap(Map<String, dynamic> data) {
+    return MissionProofCheckpoint(
+      id: data['id'] as String? ?? '',
+      summary: data['summary'] as String? ?? '',
+      artifactNote: data['artifactNote'] as String?,
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'id': id,
+        'summary': summary,
+        if (artifactNote != null && artifactNote!.isNotEmpty)
+          'artifactNote': artifactNote,
+        'createdAt': createdAt == null
+            ? FieldValue.serverTimestamp()
+            : Timestamp.fromDate(createdAt!),
+      };
+}
+
+@immutable
+class MissionProofBundle {
+  const MissionProofBundle({
+    required this.id,
+    required this.missionId,
+    required this.learnerId,
+    this.siteId,
+    this.explainItBack,
+    this.oralCheckResponse,
+    this.miniRebuildPlan,
+    this.versionHistory = const <MissionProofCheckpoint>[],
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String missionId;
+  final String learnerId;
+  final String? siteId;
+  final String? explainItBack;
+  final String? oralCheckResponse;
+  final String? miniRebuildPlan;
+  final List<MissionProofCheckpoint> versionHistory;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  bool get isReady {
+    return (explainItBack?.trim().isNotEmpty ?? false) &&
+        (oralCheckResponse?.trim().isNotEmpty ?? false) &&
+        (miniRebuildPlan?.trim().isNotEmpty ?? false) &&
+        versionHistory.isNotEmpty;
+  }
+
+  factory MissionProofBundle.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
+    final List<dynamic> rawHistory =
+        data['versionHistory'] as List<dynamic>? ?? <dynamic>[];
+    return MissionProofBundle(
+      id: doc.id,
+      missionId: data['missionId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String?,
+      explainItBack: data['explainItBack'] as String?,
+      oralCheckResponse: data['oralCheckResponse'] as String?,
+      miniRebuildPlan: data['miniRebuildPlan'] as String?,
+      versionHistory: rawHistory
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> entry) =>
+              MissionProofCheckpoint.fromMap(Map<String, dynamic>.from(entry)))
+          .toList(),
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
+      updatedAt: data['updatedAt'] is Timestamp
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+    );
+  }
+}
+
 /// Service for learner missions
 class MissionService extends ChangeNotifier {
   MissionService({
@@ -197,6 +293,108 @@ class MissionService extends ChangeNotifier {
     if (value is Timestamp) return value.toDate();
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     return null;
+  }
+
+  DocumentReference<Map<String, dynamic>> _proofBundleRef(String missionId) {
+    return _firestore
+        .collection('proofOfLearningBundles')
+        .doc('${learnerId}_$missionId');
+  }
+
+  Future<MissionProofBundle?> loadProofBundle(String missionId) async {
+    final DocumentSnapshot<Map<String, dynamic>> snapshot =
+        await _proofBundleRef(missionId).get();
+    if (!snapshot.exists) {
+      return null;
+    }
+    return MissionProofBundle.fromDoc(snapshot);
+  }
+
+  Future<MissionProofBundle?> saveProofBundleDraft({
+    required String missionId,
+    String? explainItBack,
+    String? oralCheckResponse,
+    String? miniRebuildPlan,
+  }) async {
+    final MissionProofBundle? existing = await loadProofBundle(missionId);
+    final String? siteId = existing?.siteId ?? await _resolveSiteIdForMission(missionId);
+    final DocumentReference<Map<String, dynamic>> ref = _proofBundleRef(missionId);
+    await ref.set(<String, dynamic>{
+      'missionId': missionId,
+      'learnerId': learnerId,
+      if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+      'explainItBack': explainItBack?.trim() ?? existing?.explainItBack ?? '',
+      'oralCheckResponse':
+          oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '',
+      'miniRebuildPlan':
+          miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '',
+      if (existing != null)
+        'versionHistory':
+            existing.versionHistory.map((MissionProofCheckpoint entry) => entry.toMap()).toList(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'createdAt': existing == null
+          ? FieldValue.serverTimestamp()
+          : (existing.createdAt == null
+              ? FieldValue.serverTimestamp()
+              : Timestamp.fromDate(existing.createdAt!)),
+    }, SetOptions(merge: true));
+    return loadProofBundle(missionId);
+  }
+
+  Future<MissionProofBundle?> addVersionCheckpoint({
+    required String missionId,
+    required String summary,
+    String? artifactNote,
+  }) async {
+    final String trimmedSummary = summary.trim();
+    if (trimmedSummary.isEmpty) {
+      return loadProofBundle(missionId);
+    }
+
+    final MissionProofBundle? existing = await loadProofBundle(missionId);
+    final String? siteId = existing?.siteId ?? await _resolveSiteIdForMission(missionId);
+    final MissionProofCheckpoint checkpoint = MissionProofCheckpoint(
+      id: '${DateTime.now().millisecondsSinceEpoch}',
+      summary: trimmedSummary,
+      artifactNote: artifactNote?.trim().isNotEmpty == true
+          ? artifactNote!.trim()
+          : null,
+      createdAt: DateTime.now(),
+    );
+    final List<MissionProofCheckpoint> versionHistory = <MissionProofCheckpoint>[
+      ...?existing?.versionHistory,
+      checkpoint,
+    ];
+
+    await _proofBundleRef(missionId).set(<String, dynamic>{
+      'missionId': missionId,
+      'learnerId': learnerId,
+      if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+      'explainItBack': existing?.explainItBack ?? '',
+      'oralCheckResponse': existing?.oralCheckResponse ?? '',
+      'miniRebuildPlan': existing?.miniRebuildPlan ?? '',
+      'versionHistory': versionHistory
+          .map((MissionProofCheckpoint entry) => entry.toMap())
+          .toList(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'createdAt': existing == null
+          ? FieldValue.serverTimestamp()
+          : (existing.createdAt == null
+              ? FieldValue.serverTimestamp()
+              : Timestamp.fromDate(existing.createdAt!)),
+    }, SetOptions(merge: true));
+
+    await TelemetryService.instance.logEvent(
+      event: 'version_history_checkpointed',
+      siteId: siteId,
+      metadata: <String, dynamic>{
+        'mission_id': missionId,
+        'checkpoint_count': versionHistory.length,
+        'has_artifact_note': checkpoint.artifactNote != null,
+      },
+    );
+
+    return loadProofBundle(missionId);
   }
 
   Pillar _parsePillar(String? code) {
@@ -674,6 +872,7 @@ class MissionService extends ChangeNotifier {
       if (index != -1) {
         final Mission mission = _missions[index];
         final String? siteId = await _resolveSiteIdForMission(missionId);
+        final MissionProofBundle? proofBundle = await loadProofBundle(missionId);
         final DocumentReference<Map<String, dynamic>> submissionRef =
             _firestore.collection('missionSubmissions').doc();
 
@@ -688,6 +887,18 @@ class MissionService extends ChangeNotifier {
           'submissionText':
               'Mission "${mission.title}" submitted for educator review.',
           'attachmentUrls': const <String>[],
+          if (proofBundle != null) 'proofBundleId': proofBundle.id,
+          if (proofBundle != null)
+            'proofBundleSummary': <String, dynamic>{
+              'isReady': proofBundle.isReady,
+              'checkpointCount': proofBundle.versionHistory.length,
+              'hasExplainItBack':
+                  proofBundle.explainItBack?.trim().isNotEmpty ?? false,
+              'hasOralCheck':
+                  proofBundle.oralCheckResponse?.trim().isNotEmpty ?? false,
+              'hasMiniRebuild':
+                  proofBundle.miniRebuildPlan?.trim().isNotEmpty ?? false,
+            },
         });
 
         _missions[index] = _missions[index].copyWith(
