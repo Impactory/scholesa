@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -748,9 +751,222 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _LearnerDetailSheet extends StatelessWidget {
+class _LearnerDetailSheet extends StatefulWidget {
   const _LearnerDetailSheet({required this.learner});
   final EducatorLearner learner;
+
+  @override
+  State<_LearnerDetailSheet> createState() => _LearnerDetailSheetState();
+}
+
+class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
+  final TextEditingController _overrideReasonController =
+      TextEditingController();
+  late final String _recommendedLane;
+  late String _selectedLane;
+  bool _isSavingOverride = false;
+  bool _isExporting = false;
+
+  EducatorLearner get learner => widget.learner;
+
+  @override
+  void initState() {
+    super.initState();
+    _recommendedLane = _resolveRecommendedLane();
+    _selectedLane = _recommendedLane;
+  }
+
+  @override
+  void dispose() {
+    _overrideReasonController.dispose();
+    super.dispose();
+  }
+
+  String _resolveRecommendedLane() {
+    final double averageProgress =
+        (learner.futureSkillsProgress +
+                learner.leadershipProgress +
+                learner.impactProgress) /
+            3;
+    if (learner.attendanceRate < 75 || averageProgress < 0.45) {
+      return 'scaffolded';
+    }
+    if (averageProgress >= 0.75 && learner.missionsCompleted >= 8) {
+      return 'stretch';
+    }
+    return 'core';
+  }
+
+  String _laneLabel(String lane) {
+    switch (lane) {
+      case 'scaffolded':
+        return _tEducatorLearners(context, 'Scaffolded lane');
+      case 'stretch':
+        return _tEducatorLearners(context, 'Stretch lane');
+      default:
+        return _tEducatorLearners(context, 'Core lane');
+    }
+  }
+
+  String _laneSummary(String lane) {
+    switch (lane) {
+      case 'scaffolded':
+        return _tEducatorLearners(
+          context,
+          'Use worked examples, shorter sets, and frequent explain-it-back checks.',
+        );
+      case 'stretch':
+        return _tEducatorLearners(
+          context,
+          'Use open-ended extensions, transfer prompts, and learner-led reflection.',
+        );
+      default:
+        return _tEducatorLearners(
+          context,
+          'Use on-level practice, targeted feedback, and one concrete next step.',
+        );
+    }
+  }
+
+  List<String> _practiceTasksForLane(String lane) {
+    switch (lane) {
+      case 'scaffolded':
+        return <String>[
+          _tEducatorLearners(context, 'Review one model example together.'),
+          _tEducatorLearners(context, 'Complete two short guided reps.'),
+          _tEducatorLearners(context, 'End with a verbal explain-it-back.'),
+        ];
+      case 'stretch':
+        return <String>[
+          _tEducatorLearners(context, 'Solve one transfer challenge without hints.'),
+          _tEducatorLearners(context, 'Document an alternative strategy.'),
+          _tEducatorLearners(context, 'Reflect on tradeoffs and next iteration.'),
+        ];
+      default:
+        return <String>[
+          _tEducatorLearners(context, 'Complete one on-level practice set.'),
+          _tEducatorLearners(context, 'Check one misconception and correct it.'),
+          _tEducatorLearners(context, 'Write one concrete next-step note.'),
+        ];
+    }
+  }
+
+  String _buildPrintablePracticePlan() {
+    final List<String> tasks = _practiceTasksForLane(_selectedLane);
+    return <String>[
+      _tEducatorLearners(context, 'Learner') + ': ${learner.name}',
+      _tEducatorLearners(context, 'Differentiation lane') + ': ${_laneLabel(_selectedLane)}',
+      _tEducatorLearners(context, 'Attendance') + ': ${learner.attendanceRate}%',
+      _tEducatorLearners(context, 'Missions') + ': ${learner.missionsCompleted}',
+      '',
+      _tEducatorLearners(context, 'Practice focus'),
+      _laneSummary(_selectedLane),
+      '',
+      ...tasks.asMap().entries.map(
+            (MapEntry<int, String> entry) => '${entry.key + 1}. ${entry.value}',
+          ),
+    ].join('\n');
+  }
+
+  Future<void> _saveLaneOverride() async {
+    final AppState? appState = context.read<AppState?>();
+    final String? siteId = appState?.activeSiteId;
+    final String? educatorId = appState?.userId;
+    if (siteId == null || siteId.isEmpty || educatorId == null || educatorId.isEmpty) {
+      return;
+    }
+    setState(() => _isSavingOverride = true);
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      await firestoreService.firestore
+          .collection('learnerDifferentiationPlans')
+          .doc('${learner.id}_$siteId')
+          .set(<String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learner.id,
+        'educatorId': educatorId,
+        'recommendedLane': _recommendedLane,
+        'selectedLane': _selectedLane,
+        'overrideReason': _overrideReasonController.text.trim(),
+        'teacherOverride': _selectedLane != _recommendedLane,
+        'printablePracticePlan': _buildPrintablePracticePlan(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      }, SetOptions(merge: true));
+
+      TelemetryService.instance.logEvent(
+        event: _selectedLane == _recommendedLane
+            ? 'teacher_override_mvl'
+            : 'teacher_override_intervention',
+        metadata: <String, dynamic>{
+          'learner_id': learner.id,
+          'recommended_lane': _recommendedLane,
+          'selected_lane': _selectedLane,
+          'override': _selectedLane != _recommendedLane,
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(context, 'Differentiation lane saved'),
+          ),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingOverride = false);
+      }
+    }
+  }
+
+  Future<void> _exportPracticePlan() async {
+    final AppState? appState = context.read<AppState?>();
+    final String? siteId = appState?.activeSiteId;
+    final String? educatorId = appState?.userId;
+    if (siteId == null || siteId.isEmpty || educatorId == null || educatorId.isEmpty) {
+      return;
+    }
+    setState(() => _isExporting = true);
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final String printablePlan = _buildPrintablePracticePlan();
+      await firestoreService.firestore.collection('practiceExports').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'learnerId': learner.id,
+          'educatorId': educatorId,
+          'lane': _selectedLane,
+          'content': printablePlan,
+          'format': 'text/plain',
+          'createdAt': DateTime.now().toIso8601String(),
+        },
+      );
+      await Clipboard.setData(ClipboardData(text: printablePlan));
+      TelemetryService.instance.logEvent(
+        event: 'export.requested',
+        metadata: <String, dynamic>{
+          'learner_id': learner.id,
+          'lane': _selectedLane,
+          'export_type': 'printable_practice',
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(context, 'Practice plan exported to clipboard'),
+          ),
+          backgroundColor: ScholesaColors.educator,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -835,6 +1051,135 @@ class _LearnerDetailSheet extends StatelessWidget {
                     label: _tEducatorLearners(context, 'Impact'),
                     progress: learner.impactProgress,
                     color: ScholesaColors.impact,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _tEducatorLearners(context, 'Differentiation lane'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: ScholesaColors.educator.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: ScholesaColors.educator.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          '${_tEducatorLearners(context, 'Recommended lane')}: ${_laneLabel(_recommendedLane)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: ScholesaColors.educator,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _laneSummary(_selectedLane),
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <String>['scaffolded', 'core', 'stretch']
+                              .map(
+                                (String lane) => ChoiceChip(
+                                  label: Text(_laneLabel(lane)),
+                                  selected: _selectedLane == lane,
+                                  onSelected: (_) {
+                                    setState(() => _selectedLane = lane);
+                                  },
+                                ),
+                              )
+                              .toList(),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _overrideReasonController,
+                          maxLines: 2,
+                          decoration: InputDecoration(
+                            hintText: _tEducatorLearners(
+                              context,
+                              'Teacher override note (optional)',
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade200),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isSavingOverride ? null : _saveLaneOverride,
+                            icon: _isSavingOverride
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.tune),
+                            label: Text(
+                              _tEducatorLearners(context, 'Save lane override'),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ScholesaColors.educator,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _tEducatorLearners(context, 'Printable practice export'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      _buildPrintablePracticePlan(),
+                      style: TextStyle(color: Colors.grey[700], height: 1.4),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isExporting ? null : _exportPracticePlan,
+                      icon: _isExporting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.print_outlined),
+                      label: Text(
+                        _tEducatorLearners(context, 'Export practice plan'),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ScholesaColors.educator,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: ScholesaColors.educator),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Row(
