@@ -1,15 +1,15 @@
 connectorId: example
 generate:
   adminNodeSdk:
-    - outputDir: ..\..\src\dataconnect-admin-generated
+    - outputDir: ../../src/dataconnect-admin-generated
       package: "@dataconnect/admin-generated"
-      packageJsonDir: ..\..
-    - outputDir: ..\..\functions\src\dataconnect-admin-generated
+      packageJsonDir: ../../
+    - outputDir: ../../functions/src/dataconnect-admin-generated
       package: "@dataconnect/admin-generated"
-      packageJsonDir: ..\..\functions
+      packageJsonDir: ../../functions
   javascriptSdk:
-    - outputDir: ..\..\src\dataconnect-generated
+    - outputDir: ../../src/dataconnect-generated
       package: "@dataconnect/generated"
-      packageJsonDir: ..\..
+      packageJsonDir: ../../
       react: true
       angular: false
