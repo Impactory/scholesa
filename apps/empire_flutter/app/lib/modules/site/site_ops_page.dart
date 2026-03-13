@@ -29,6 +29,10 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   bool _isLoading = false;
   String? _siteId;
   List<_ActivityEntry> _recentActivity = <_ActivityEntry>[];
+  List<_TimetableEntry> _todaySessions = <_TimetableEntry>[];
+  List<_KitChecklistItem> _kitChecklist = _defaultKitChecklist;
+  List<_SafetyNoteEntry> _safetyNotes = <_SafetyNoteEntry>[];
+  final TextEditingController _safetyNoteController = TextEditingController();
 
   @override
   void initState() {
@@ -36,6 +40,12 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadOpsData();
     });
+  }
+
+  @override
+  void dispose() {
+    _safetyNoteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -84,12 +94,179 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             const SizedBox(height: 24),
             _buildQuickStats(),
             const SizedBox(height: 24),
+            _buildTimetableSnapshot(),
+            const SizedBox(height: 24),
+            _buildKitChecklist(),
+            const SizedBox(height: 24),
+            _buildSafetyNotes(),
+            const SizedBox(height: 24),
             _buildQuickActions(),
             const SizedBox(height: 24),
             _buildRecentActivity(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTimetableSnapshot() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tSiteOps(context, 'Today Timetable'),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: ScholesaColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: ScholesaColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: _todaySessions.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    _tSiteOps(context, 'No sessions scheduled today'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                )
+              : Column(
+                  children: _todaySessions
+                      .map((_TimetableEntry session) => ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: ScholesaColors.siteGradient.colors.first
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.schedule_rounded,
+                                color: ScholesaColors.primary,
+                              ),
+                            ),
+                            title: Text(session.title),
+                            subtitle: Text(
+                              '${session.timeLabel} • ${session.educator} • ${session.room}',
+                            ),
+                            trailing: Text(
+                              '${session.learnerCount} ${_tSiteOps(context, 'learners')}',
+                              style: const TextStyle(
+                                color: ScholesaColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ))
+                      .toList(growable: false),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKitChecklist() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tSiteOps(context, 'Kit Checklist'),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: ScholesaColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: ScholesaColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Column(
+            children: _kitChecklist
+                .map((_KitChecklistItem item) => CheckboxListTile(
+                      value: item.completed,
+                      title: Text(_tSiteOps(context, item.label)),
+                      subtitle: item.note == null || item.note!.isEmpty
+                          ? null
+                          : Text(_tSiteOps(context, item.note!)),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (bool? value) {
+                        _toggleChecklistItem(item, value ?? false);
+                      },
+                    ))
+                .toList(growable: false),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSafetyNotes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tSiteOps(context, 'Safety Notes'),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: ScholesaColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: ScholesaColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                TextField(
+                  controller: _safetyNoteController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: _tSiteOps(context, 'Capture handoff changes, medical context, or room risks'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: _saveSafetyNote,
+                    icon: const Icon(Icons.note_add_rounded),
+                    label: Text(_tSiteOps(context, 'Save Safety Note')),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_safetyNotes.isEmpty)
+                  Text(
+                    _tSiteOps(context, 'No safety notes logged today'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  )
+                else
+                  ..._safetyNotes.map(
+                    (_SafetyNoteEntry note) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.shield_outlined,
+                        color: ScholesaColors.primary,
+                      ),
+                      title: Text(note.note),
+                      subtitle: Text(
+                        '${note.authorLabel} • ${_formatTime(note.createdAt)}',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -404,13 +581,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           _openIncidents = 0;
           _isDayOpen = false;
           _recentActivity = <_ActivityEntry>[];
+          _todaySessions = <_TimetableEntry>[];
+          _kitChecklist = _defaultKitChecklist;
+          _safetyNotes = <_SafetyNoteEntry>[];
         });
         return;
       }
 
       final DateTime now = DateTime.now();
       final DateTime dayStart = DateTime(now.year, now.month, now.day);
+      final DateTime nextDay = dayStart.add(const Duration(days: 1));
       final List<_TimedActivity> activities = <_TimedActivity>[];
+      final List<_TimetableEntry> timetable = <_TimetableEntry>[];
 
       final QuerySnapshot<Map<String, dynamic>> presenceSnap =
           await firestoreService.firestore
@@ -530,6 +712,114 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         );
       }
 
+      QuerySnapshot<Map<String, dynamic>> sessionsSnap;
+      try {
+        sessionsSnap = await firestoreService.firestore
+            .collection('sessions')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .orderBy('startTime')
+            .limit(50)
+            .get();
+      } catch (_) {
+        sessionsSnap = await firestoreService.firestore
+            .collection('sessions')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .limit(50)
+            .get();
+      }
+      if (!mounted) return;
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in sessionsSnap.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? startAt = _toDateTime(data['startTime']);
+        if (startAt == null || startAt.isBefore(dayStart) || !startAt.isBefore(nextDay)) {
+          continue;
+        }
+        timetable.add(
+          _TimetableEntry(
+            title: ((data['title'] as String?) ?? '').trim().isNotEmpty
+                ? (data['title'] as String).trim()
+                : doc.id,
+            timeLabel: _formatTime(startAt),
+            educator: ((data['educatorName'] as String?) ?? '').trim().isNotEmpty
+                ? (data['educatorName'] as String).trim()
+                : _tSiteOps(context, 'Unassigned'),
+            room: ((data['room'] as String?) ?? '').trim().isNotEmpty
+                ? (data['room'] as String).trim()
+                : _tSiteOps(context, 'Unassigned'),
+            learnerCount: (data['learnerCount'] as num?)?.toInt() ?? 0,
+          ),
+        );
+      }
+
+      QuerySnapshot<Map<String, dynamic>> checklistSnap;
+      try {
+        checklistSnap = await firestoreService.firestore
+            .collection('siteOpsKitChecklist')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .orderBy('order')
+            .limit(20)
+            .get();
+      } catch (_) {
+        checklistSnap = await firestoreService.firestore
+            .collection('siteOpsKitChecklist')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .limit(20)
+            .get();
+      }
+      if (!mounted) return;
+
+      final List<_KitChecklistItem> checklist = checklistSnap.docs.isEmpty
+          ? _defaultKitChecklist
+          : checklistSnap.docs
+              .map((_doc) {
+                final Map<String, dynamic> data = _doc.data();
+                return _KitChecklistItem(
+                  id: _doc.id,
+                  label: (data['label'] as String?) ?? 'Checklist item',
+                  completed: data['completed'] == true,
+                  order: (data['order'] as num?)?.toInt() ?? 0,
+                  note: data['note'] as String?,
+                );
+              })
+              .toList(growable: false);
+
+      QuerySnapshot<Map<String, dynamic>> safetyNotesSnap;
+      try {
+        safetyNotesSnap = await firestoreService.firestore
+            .collection('siteSafetyNotes')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .orderBy('createdAt', descending: true)
+            .limit(10)
+            .get();
+      } catch (_) {
+        safetyNotesSnap = await firestoreService.firestore
+            .collection('siteSafetyNotes')
+            .where('siteId', isEqualTo: resolvedSiteId)
+            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .limit(10)
+            .get();
+      }
+      if (!mounted) return;
+
+      final List<_SafetyNoteEntry> safetyNotes = safetyNotesSnap.docs
+          .map((_doc) {
+            final Map<String, dynamic> data = _doc.data();
+            return _SafetyNoteEntry(
+              note: (data['note'] as String?) ?? '',
+              createdAt: _toDateTime(data['createdAt']) ?? dayStart,
+              authorLabel: ((data['createdByName'] as String?) ?? '').trim().isNotEmpty
+                  ? (data['createdByName'] as String).trim()
+                  : _tSiteOps(context, 'Site Team'),
+            );
+          })
+          .where((_SafetyNoteEntry note) => note.note.trim().isNotEmpty)
+          .toList(growable: false);
+
       activities.sort((_TimedActivity a, _TimedActivity b) => b.at.compareTo(a.at));
       final List<_ActivityEntry> recent = activities
           .take(8)
@@ -550,12 +840,126 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _openIncidents = openIncidents;
         _isDayOpen = _presentCount > 0;
         _recentActivity = recent;
+        _todaySessions = timetable;
+        _kitChecklist = checklist;
+        _safetyNotes = safetyNotes;
       });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _toggleChecklistItem(
+    _KitChecklistItem item,
+    bool completed,
+  ) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final AppState appState = context.read<AppState>();
+    final String siteId = (_siteId ?? '').trim();
+    if (siteId.isEmpty) return;
+    final DateTime now = DateTime.now();
+    final _KitChecklistItem updated = item.copyWith(completed: completed);
+    setState(() {
+      _kitChecklist = _kitChecklist
+          .map((_KitChecklistItem current) => current.id == item.id ? updated : current)
+          .toList(growable: false);
+    });
+    try {
+      await firestoreService.firestore
+          .collection('siteOpsKitChecklist')
+          .doc(updated.id)
+          .set(<String, dynamic>{
+        'siteId': siteId,
+        'dayKey': _dayKey(now),
+        'label': updated.label,
+        'completed': completed,
+        'order': updated.order,
+        if ((updated.note ?? '').trim().isNotEmpty) 'note': updated.note,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': appState.userId,
+      }, SetOptions(merge: true));
+      await firestoreService.firestore.collection('siteOpsEvents').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'action': 'Kit checklist updated',
+          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'site_ops',
+          'cta_id': 'toggle_kit_checklist_item',
+          'surface': 'kit_checklist',
+          'label': updated.label,
+          'completed': completed,
+        },
+      );
+      await _loadOpsData();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+      );
+    }
+  }
+
+  Future<void> _saveSafetyNote() async {
+    final String note = _safetyNoteController.text.trim();
+    if (note.isEmpty) {
+      return;
+    }
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final AppState appState = context.read<AppState>();
+    final String siteId = (_siteId ?? '').trim();
+    if (siteId.isEmpty) {
+      return;
+    }
+
+    try {
+      await firestoreService.firestore.collection('siteSafetyNotes').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'dayKey': _dayKey(DateTime.now()),
+          'note': note,
+          'createdAt': FieldValue.serverTimestamp(),
+          'createdBy': appState.userId,
+          'createdByName': appState.displayName,
+        },
+      );
+      await firestoreService.firestore.collection('siteOpsEvents').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'action': 'Safety note saved',
+          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'site_ops',
+          'cta_id': 'save_safety_note',
+          'surface': 'safety_notes',
+        },
+      );
+      _safetyNoteController.clear();
+      await _loadOpsData();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+      );
+    }
+  }
+
+  String _dayKey(DateTime dateTime) {
+    final String month = dateTime.month.toString().padLeft(2, '0');
+    final String day = dateTime.day.toString().padLeft(2, '0');
+    return '${dateTime.year}-$month-$day';
   }
 
   String _formatTime(DateTime dateTime) {
@@ -592,6 +996,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           title: _tSiteOps(context, 'Roster viewed'),
           icon: Icons.list_alt_rounded,
           color: ScholesaColors.primary,
+        );
+      case 'Kit checklist updated':
+        return (
+          title: _tSiteOps(context, 'Kit checklist updated'),
+          icon: Icons.inventory_2_outlined,
+          color: Colors.deepPurple,
+        );
+      case 'Safety note saved':
+        return (
+          title: _tSiteOps(context, 'Safety note saved'),
+          icon: Icons.shield_outlined,
+          color: Colors.redAccent,
         );
       default:
         return (
@@ -647,3 +1063,81 @@ class _TimedActivity {
   final IconData icon;
   final Color color;
 }
+
+class _TimetableEntry {
+  const _TimetableEntry({
+    required this.title,
+    required this.timeLabel,
+    required this.educator,
+    required this.room,
+    required this.learnerCount,
+  });
+
+  final String title;
+  final String timeLabel;
+  final String educator;
+  final String room;
+  final int learnerCount;
+}
+
+class _KitChecklistItem {
+  const _KitChecklistItem({
+    required this.id,
+    required this.label,
+    required this.completed,
+    required this.order,
+    this.note,
+  });
+
+  final String id;
+  final String label;
+  final bool completed;
+  final int order;
+  final String? note;
+
+  _KitChecklistItem copyWith({bool? completed}) {
+    return _KitChecklistItem(
+      id: id,
+      label: label,
+      completed: completed ?? this.completed,
+      order: order,
+      note: note,
+    );
+  }
+}
+
+class _SafetyNoteEntry {
+  const _SafetyNoteEntry({
+    required this.note,
+    required this.createdAt,
+    required this.authorLabel,
+  });
+
+  final String note;
+  final DateTime createdAt;
+  final String authorLabel;
+}
+
+const List<_KitChecklistItem> _defaultKitChecklist = <_KitChecklistItem>[
+  _KitChecklistItem(
+    id: 'arrival-tablets',
+    label: 'Tablets charged',
+    completed: false,
+    order: 1,
+    note: 'Verify every learner device is above 70%',
+  ),
+  _KitChecklistItem(
+    id: 'maker-kits',
+    label: 'Maker kits staged',
+    completed: false,
+    order: 2,
+    note: 'Place robotics and lab kits in the session rooms',
+  ),
+  _KitChecklistItem(
+    id: 'safety-bag',
+    label: 'First-aid bag confirmed',
+    completed: false,
+    order: 3,
+    note: 'Confirm the bag is stocked before doors open',
+  ),
+];

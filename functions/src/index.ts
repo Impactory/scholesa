@@ -3108,6 +3108,43 @@ export const listAuditLogs = onCall(async (request: CallableRequest) => {
   return { logs };
 });
 
+export const recordLogoutAudit = onCall(async (request: CallableRequest) => {
+  const requestedSiteId = typeof request.data?.siteId === 'string'
+    ? request.data.siteId.trim()
+    : '';
+  const actor = await requireRoleAndSite(
+    request.auth?.uid,
+    ['learner', 'educator', 'parent', 'site', 'partner', 'hq'],
+    requestedSiteId || undefined,
+  );
+  const source = typeof request.data?.source === 'string'
+    && request.data.source.trim().length > 0
+    ? request.data.source.trim()
+    : 'unknown';
+  const impersonatingRole = typeof request.data?.impersonatingRole === 'string'
+    && request.data.impersonatingRole.trim().length > 0
+    ? request.data.impersonatingRole.trim().toLowerCase()
+    : undefined;
+  const siteId = requestedSiteId || actor.profile.activeSiteId || undefined;
+
+  const auditRef = admin.firestore().collection(AUDIT_COLLECTION).doc();
+  await auditRef.set({
+    actorId: actor.uid,
+    actorRole: actor.role,
+    action: 'auth.logout',
+    entityType: 'session',
+    entityId: actor.uid,
+    siteId,
+    details: {
+      source,
+      ...(impersonatingRole ? { impersonatingRole } : {}),
+    },
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { status: 'ok', id: auditRef.id };
+});
+
 export const processNotificationRequests = onSchedule('every 5 minutes', async () => {
   const db = admin.firestore();
   const pendingSnap = await db
