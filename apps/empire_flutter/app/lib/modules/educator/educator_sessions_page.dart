@@ -9,8 +9,16 @@ import '../../i18n/bos_coaching_i18n.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
-String _tEducatorSessions(BuildContext context, String input) {
-  return WorkflowSurfaceI18n.text(context, input);
+String _tEducatorSessions(
+  BuildContext context,
+  String input, {
+  Map<String, String> placeholders = const <String, String>{},
+}) {
+  return WorkflowSurfaceI18n.textWithPlaceholders(
+    context,
+    input,
+    placeholders: placeholders,
+  );
 }
 
 /// Educator Sessions Page - Manage and view all sessions
@@ -121,7 +129,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 if (service.learners.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       child: BosLearnerLoopInsightsCard(
                         title: BosCoachingI18n.sessionLoopTitle(context),
                         subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
@@ -209,7 +218,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                         ),
                   ),
                   Text(
-                    _tEducatorSessions(context, 'Manage your teaching schedule'),
+                    _tEducatorSessions(
+                        context, 'Manage your teaching schedule'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -385,7 +395,10 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _coTeacherIdsController = TextEditingController();
+  final TextEditingController _aideIdsController = TextEditingController();
   String _pillar = 'Future Skills';
+  bool _generateJoinCode = true;
   bool _isSubmitting = false;
 
   @override
@@ -393,7 +406,19 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _coTeacherIdsController.dispose();
+    _aideIdsController.dispose();
     super.dispose();
+  }
+
+  List<String> _splitIds(String input) {
+    return input
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
   }
 
   Future<void> _submit() async {
@@ -416,6 +441,8 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
     final DateTime end = start.add(const Duration(hours: 1));
 
     final EducatorService service = context.read<EducatorService>();
+    final List<String> coTeacherIds = _splitIds(_coTeacherIdsController.text);
+    final List<String> aideIds = _splitIds(_aideIdsController.text);
     final EducatorSession? created = await service.createSession(
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -423,6 +450,9 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
       pillar: _pillar,
       startTime: start,
       endTime: end,
+      coTeacherIds: coTeacherIds,
+      aideIds: aideIds,
+      generateJoinCode: _generateJoinCode,
     );
 
     if (!mounted) {
@@ -433,15 +463,57 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
 
     if (created == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(service.error ?? _tEducatorSessions(context, 'Failed to create session'))),
+        SnackBar(
+            content: Text(service.error ??
+                _tEducatorSessions(context, 'Failed to create session'))),
       );
       return;
+    }
+
+    final AppState appState = context.read<AppState>();
+    final String? activeSiteId = service.siteId?.trim().isNotEmpty == true
+        ? service.siteId!.trim()
+        : appState.activeSiteId?.trim();
+    await TelemetryService.instance.logEvent(
+      event: 'class.created',
+      role: appState.role?.name,
+      siteId: activeSiteId,
+      metadata: <String, dynamic>{
+        'classId': created.id,
+        'pillar': created.pillar,
+        'coTeacherCount': created.coTeacherIds.length,
+        'aideCount': created.aideIds.length,
+      },
+    );
+    if (created.joinCode != null && created.joinCode!.isNotEmpty) {
+      await TelemetryService.instance.logEvent(
+        event: 'class.join_code.created',
+        role: appState.role?.name,
+        siteId: activeSiteId,
+        metadata: <String, dynamic>{
+          'classId': created.id,
+          'joinCodeLength': created.joinCode!.length,
+        },
+      );
     }
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_tEducatorSessions(context, 'Session created and added to your list')),
+        content: Text(
+          created.joinCode == null || created.joinCode!.isEmpty
+              ? _tEducatorSessions(
+                  context,
+                  'Session created and added to your list',
+                )
+              : _tEducatorSessions(
+                  context,
+                  'Session created with join code {joinCode}',
+                  placeholders: <String, String>{
+                    'joinCode': created.joinCode!,
+                  },
+                ),
+        ),
         backgroundColor: ScholesaColors.success,
       ),
     );
@@ -458,7 +530,8 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
           children: <Widget>[
             TextFormField(
               controller: _titleController,
-              decoration: InputDecoration(labelText: _tEducatorSessions(context, 'Session title')),
+              decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Session title')),
               validator: (String? value) =>
                   value == null || value.trim().isEmpty
                       ? _tEducatorSessions(context, 'Title is required')
@@ -468,7 +541,8 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
             TextFormField(
               controller: _descriptionController,
               decoration: InputDecoration(
-                labelText: _tEducatorSessions(context, 'Description (optional)'),
+                labelText:
+                    _tEducatorSessions(context, 'Description (optional)'),
               ),
             ),
             const SizedBox(height: 12),
@@ -479,9 +553,30 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
               ),
             ),
             const SizedBox(height: 12),
+            TextFormField(
+              controller: _coTeacherIdsController,
+              decoration: InputDecoration(
+                labelText: _tEducatorSessions(
+                  context,
+                  'Co-teacher IDs (comma separated)',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _aideIdsController,
+              decoration: InputDecoration(
+                labelText: _tEducatorSessions(
+                  context,
+                  'Aide IDs (comma separated)',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _pillar,
-              decoration: InputDecoration(labelText: _tEducatorSessions(context, 'Pillar')),
+              decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Pillar')),
               items: <DropdownMenuItem<String>>[
                 DropdownMenuItem<String>(
                   value: 'Future Skills',
@@ -507,6 +602,15 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
                   );
                   setState(() => _pillar = value);
                 }
+              },
+            ),
+            const SizedBox(height: 12),
+            SwitchListTile.adaptive(
+              value: _generateJoinCode,
+              contentPadding: EdgeInsets.zero,
+              title: Text(_tEducatorSessions(context, 'Generate join code')),
+              onChanged: (bool value) {
+                setState(() => _generateJoinCode = value);
               },
             ),
           ],
@@ -802,7 +906,8 @@ class _SessionDetailSheet extends StatelessWidget {
                   _DetailRow(
                     icon: Icons.people,
                     label: _tEducatorSessions(context, 'Enrolled'),
-                    value: '${session.learnerCount} ${_tEducatorSessions(context, 'learners enrolled')}',
+                    value:
+                        '${session.learnerCount} ${_tEducatorSessions(context, 'learners enrolled')}',
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
@@ -816,6 +921,38 @@ class _SessionDetailSheet extends StatelessWidget {
                     icon: Icons.category,
                     label: _tEducatorSessions(context, 'Pillar'),
                     value: _tEducatorSessions(context, session.pillar),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.qr_code_rounded,
+                    label: _tEducatorSessions(context, 'Join Code'),
+                    value: session.joinCode?.isNotEmpty == true
+                        ? session.joinCode!
+                        : _tEducatorSessions(context, 'No join code yet'),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.badge_rounded,
+                    label: _tEducatorSessions(context, 'Primary Teachers'),
+                    value: session.teacherIds.isEmpty
+                        ? _tEducatorSessions(context, 'Unassigned')
+                        : session.teacherIds.join(', '),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.groups_rounded,
+                    label: _tEducatorSessions(context, 'Co-teachers'),
+                    value: session.coTeacherIds.isEmpty
+                        ? _tEducatorSessions(context, 'Unassigned')
+                        : session.coTeacherIds.join(', '),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: Icons.support_agent_rounded,
+                    label: _tEducatorSessions(context, 'Aides'),
+                    value: session.aideIds.isEmpty
+                        ? _tEducatorSessions(context, 'Unassigned')
+                        : session.aideIds.join(', '),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -840,7 +977,8 @@ class _SessionDetailSheet extends StatelessWidget {
                         );
                       },
                       icon: const Icon(Icons.swap_horiz_rounded),
-                      label: Text(_tEducatorSessions(context, 'Request Substitute')),
+                      label: Text(
+                          _tEducatorSessions(context, 'Request Substitute')),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -864,7 +1002,8 @@ class _SessionDetailSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(_tEducatorSessions(context, 'View Full Details')),
+                      child: Text(
+                          _tEducatorSessions(context, 'View Full Details')),
                     ),
                   ),
                 ],

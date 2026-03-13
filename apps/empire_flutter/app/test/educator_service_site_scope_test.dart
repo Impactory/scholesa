@@ -3,6 +3,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -109,6 +110,59 @@ void main() {
       expect(service.learners.length, 1);
       expect(service.learners.first.id, 'learner-a');
       expect(service.learners.first.name, 'Learner A');
+    });
+
+    test('createSession persists join code and teacher role variants',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+
+      final EducatorService service = EducatorService(
+        firestoreService: firestoreService,
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+      );
+
+      final EducatorSession? created = await service.createSession(
+        title: 'Launch Lab',
+        pillar: 'Future Skills',
+        startTime: DateTime(2026, 3, 13, 9),
+        endTime: DateTime(2026, 3, 13, 10),
+        coTeacherIds: const <String>['educator-2', 'educator-3'],
+        aideIds: const <String>['aide-1'],
+        joinCode: 'LAB123',
+      );
+
+      expect(created, isNotNull);
+      expect(created!.joinCode, 'LAB123');
+      expect(created.teacherIds, const <String>['educator-1']);
+      expect(
+        created.coTeacherIds,
+        const <String>['educator-2', 'educator-3'],
+      );
+      expect(created.aideIds, const <String>['aide-1']);
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await firestore.collection('sessions').get();
+      expect(snapshot.docs.length, 1);
+
+      final Map<String, dynamic> data = snapshot.docs.single.data();
+      expect(data['siteId'], 'site-a');
+      expect(data['joinCode'], 'LAB123');
+      expect(data['teacherIds'], const <String>['educator-1']);
+      expect(
+        data['coTeacherIds'],
+        const <String>['educator-2', 'educator-3'],
+      );
+      expect(data['aideIds'], const <String>['aide-1']);
+      expect(
+        data['educatorIds'],
+        const <String>['aide-1', 'educator-1', 'educator-2', 'educator-3'],
+      );
+      expect(data['joinCodeCreatedAt'], isNotNull);
     });
   });
 }

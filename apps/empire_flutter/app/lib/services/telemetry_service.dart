@@ -65,6 +65,8 @@ class TelemetryService {
     'fsrs.queue.rescheduled',
     'interleaving.mode.changed',
     'worked_example.shown',
+    'class.created',
+    'class.join_code.created',
     'educator.review.completed',
     'site.checkin',
     'site.checkout',

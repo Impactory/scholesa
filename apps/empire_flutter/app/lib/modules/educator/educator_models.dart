@@ -114,6 +114,10 @@ class EducatorSession extends Equatable {
     required this.enrolledCount,
     required this.maxCapacity,
     required this.status,
+    this.joinCode,
+    this.teacherIds = const <String>[],
+    this.coTeacherIds = const <String>[],
+    this.aideIds = const <String>[],
   });
   final String id;
   final String title;
@@ -125,6 +129,10 @@ class EducatorSession extends Equatable {
   final int enrolledCount;
   final int maxCapacity;
   final String status;
+  final String? joinCode;
+  final List<String> teacherIds;
+  final List<String> coTeacherIds;
+  final List<String> aideIds;
 
   /// Convenience getters for UI
   int get learnerCount => enrolledCount;
@@ -153,6 +161,10 @@ class EducatorSession extends Equatable {
         enrolledCount,
         maxCapacity,
         status,
+        joinCode,
+        teacherIds,
+        coTeacherIds,
+        aideIds,
       ];
 }
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
@@ -124,6 +126,23 @@ class EducatorService extends ChangeNotifier {
           .where((String item) => item.isNotEmpty);
     }
     return const <String>[];
+  }
+
+  List<String> _normalizedDistinctIds(Iterable<String> values) {
+    final Set<String> deduped = values
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet();
+    return deduped.toList()..sort();
+  }
+
+  String _generateJoinCode() {
+    const String alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final Random random = Random.secure();
+    return List<String>.generate(
+      6,
+      (int index) => alphabet[random.nextInt(alphabet.length)],
+    ).join();
   }
 
   bool _recordMatchesEducator(Map<String, dynamic> data) {
@@ -367,6 +386,17 @@ class EducatorService extends ChangeNotifier {
           enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
           maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
           status: _stringOrDefault(data['status'], null, 'upcoming'),
+          joinCode: (data['joinCode'] as String?)?.trim(),
+          teacherIds: _normalizedDistinctIds(
+            <String>[
+              ..._asStringIterable(data['teacherIds']),
+              if ((data['educatorId'] as String?)?.trim().isNotEmpty == true)
+                (data['educatorId'] as String).trim(),
+            ],
+          ),
+          coTeacherIds:
+              _normalizedDistinctIds(_asStringIterable(data['coTeacherIds'])),
+          aideIds: _normalizedDistinctIds(_asStringIterable(data['aideIds'])),
         );
       }).toList()
             ..sort(
@@ -394,17 +424,40 @@ class EducatorService extends ChangeNotifier {
     String? description,
     String? location,
     int maxCapacity = 20,
+    List<String> coTeacherIds = const <String>[],
+    List<String> aideIds = const <String>[],
+    bool generateJoinCode = true,
+    String? joinCode,
   }) async {
     _error = null;
     notifyListeners();
 
     try {
+      final List<String> teacherIds =
+          _normalizedDistinctIds(<String>[educatorId]);
+      final List<String> normalizedCoTeacherIds =
+          _normalizedDistinctIds(coTeacherIds);
+      final List<String> normalizedAideIds = _normalizedDistinctIds(aideIds);
+      final List<String> educatorIds = _normalizedDistinctIds(<String>[
+        ...teacherIds,
+        ...normalizedCoTeacherIds,
+        ...normalizedAideIds,
+      ]);
+      final String? resolvedJoinCode = generateJoinCode
+          ? ((joinCode?.trim().isNotEmpty ?? false)
+              ? joinCode!.trim().toUpperCase()
+              : _generateJoinCode())
+          : null;
+
       final String sessionId = await _firestoreService.createDocument(
         'sessions',
         <String, dynamic>{
           if ((siteId?.trim() ?? '').isNotEmpty) 'siteId': siteId!.trim(),
           'educatorId': educatorId,
-          'educatorIds': <String>[educatorId],
+          'educatorIds': educatorIds,
+          'teacherIds': teacherIds,
+          'coTeacherIds': normalizedCoTeacherIds,
+          'aideIds': normalizedAideIds,
           'title': title,
           'description': description ?? '',
           'pillar': pillar,
@@ -414,6 +467,9 @@ class EducatorService extends ChangeNotifier {
           'enrolledCount': 0,
           'maxCapacity': maxCapacity,
           'status': 'upcoming',
+          if (resolvedJoinCode != null) 'joinCode': resolvedJoinCode,
+          if (resolvedJoinCode != null)
+            'joinCodeCreatedAt': FieldValue.serverTimestamp(),
         },
       );
 
@@ -428,6 +484,10 @@ class EducatorService extends ChangeNotifier {
         enrolledCount: 0,
         maxCapacity: maxCapacity,
         status: 'upcoming',
+        joinCode: resolvedJoinCode,
+        teacherIds: teacherIds,
+        coTeacherIds: normalizedCoTeacherIds,
+        aideIds: normalizedAideIds,
       );
 
       _sessions = <EducatorSession>[created, ..._sessions];
