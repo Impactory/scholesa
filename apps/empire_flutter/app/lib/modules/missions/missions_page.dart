@@ -382,7 +382,8 @@ class _MissionsPageState extends State<MissionsPage>
         icon = Icons.search;
       case MissionStatus.inProgress:
         title = _tMissions(context, 'No active missions');
-        subtitle = _tMissions(context, 'Start a mission to begin your journey!');
+        subtitle =
+            _tMissions(context, 'Start a mission to begin your journey!');
         icon = Icons.play_circle_outline;
       case MissionStatus.completed:
         title = _tMissions(context, 'No completed missions yet');
@@ -755,6 +756,7 @@ class _MissionDetailsSheet extends StatefulWidget {
 
 class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   bool _showAiCoach = false;
+  bool _isUpdatingStudyAction = false;
 
   Color get _pillarColor {
     switch (widget.mission.pillar) {
@@ -769,375 +771,651 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final Mission mission = widget.mission;
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: <Widget>[
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return Consumer<MissionService>(
+      builder: (BuildContext context, MissionService service, _) {
+        final Mission mission =
+            service.getMissionById(widget.mission.id) ?? widget.mission;
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // Header
-                  Row(
+          child: Column(
+            children: <Widget>[
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: <Color>[
-                              _pillarColor.withValues(alpha: 0.8),
-                              _pillarColor
-                            ],
+                      // Header
+                      Row(
+                        children: <Widget>[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: <Color>[
+                                  _pillarColor.withValues(alpha: 0.8),
+                                  _pillarColor
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: _pillarColor.withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              mission.pillar.emoji,
+                              style: const TextStyle(fontSize: 32),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: <BoxShadow>[
-                            BoxShadow(
-                              color: _pillarColor.withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          mission.pillar.emoji,
-                          style: const TextStyle(fontSize: 32),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _pillarColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                mission.pillar.label,
-                                style: TextStyle(
-                                  color: _pillarColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              mission.title,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Stats row
-                  Row(
-                    children: <Widget>[
-                      _StatChip(
-                        icon: Icons.star,
-                        value: '${mission.xpReward} XP',
-                        color: const Color(0xFFF59E0B),
-                      ),
-                      const SizedBox(width: 8),
-                      _StatChip(
-                        icon: Icons.signal_cellular_alt,
-                        value: mission.difficulty.label,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      _StatChip(
-                        icon: Icons.checklist,
-                        value: '${mission.steps.length} ${_tMissions(context, 'Steps')}',
-                        color: _pillarColor,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Description
-                  Text(
-                    _tMissions(context, 'Description'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    mission.description,
-                    style:
-                        TextStyle(color: context.schTextSecondary, height: 1.5),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Skills
-                  if (mission.skills.isNotEmpty) ...<Widget>[
-                    Text(
-                      _tMissions(context, "Skills You'll Learn"),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: mission.skills
-                          .map((Skill skill) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: _pillarColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  skill.name,
-                                  style: TextStyle(
-                                    color: _pillarColor,
-                                    fontWeight: FontWeight.w500,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _pillarColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    mission.pillar.label,
+                                    style: TextStyle(
+                                      color: _pillarColor,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Steps
-                  Text(
-                    _tMissions(context, 'Mission Steps'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...mission.steps.map((MissionStep step) =>
-                      _StepItem(step: step, color: _pillarColor)),
-                  const SizedBox(height: 24),
-
-                  // Educator feedback
-                  if (mission.educatorFeedback != null) ...<Widget>[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: ScholesaColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color:
-                                ScholesaColors.success.withValues(alpha: 0.3)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Icon(Icons.comment,
-                                  color: ScholesaColors.success, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                _tMissions(context, 'Educator Feedback'),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: ScholesaColors.success,
+                                const SizedBox(height: 8),
+                                Text(
+                                  mission.title,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            mission.educatorFeedback!,
-                            style:
-                                TextStyle(color: Colors.grey[700], height: 1.5),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                      const SizedBox(height: 20),
 
-                  // AI Coaching Section
-                  _buildAiCoachingSection(context, _pillarColor),
-                  const SizedBox(height: 24),
-
-                  // Action button
-                  if (mission.status == MissionStatus.notStarted)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          TelemetryService.instance.logEvent(
-                            event: 'cta.clicked',
-                            metadata: <String, dynamic>{
-                              'cta': 'missions_start_mission',
-                              'mission_id': mission.id,
-                            },
-                          );
-                          final bool started = await context
-                              .read<MissionService>()
-                              .startMission(mission.id);
-
-                          if (!context.mounted) return;
-
-                          if (started) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    '${_tMissions(context, 'Started')}: ${mission.title}'),
-                                backgroundColor: ScholesaColors.success,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_tMissions(
-                                    context, 'Unable to start mission right now')),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _pillarColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                      // Stats row
+                      Row(
+                        children: <Widget>[
+                          _StatChip(
+                            icon: Icons.star,
+                            value: '${mission.xpReward} XP',
+                            color: const Color(0xFFF59E0B),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Icon(Icons.rocket_launch),
-                            SizedBox(width: 8),
-                            Text(
-                              _tMissions(context, 'Start Mission'),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
+                          const SizedBox(width: 8),
+                          _StatChip(
+                            icon: Icons.signal_cellular_alt,
+                            value: mission.difficulty.label,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 8),
+                          _StatChip(
+                            icon: Icons.checklist,
+                            value:
+                                '${mission.steps.length} ${_tMissions(context, 'Steps')}',
+                            color: _pillarColor,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Description
+                      Text(
+                        _tMissions(context, 'Description'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
                         ),
                       ),
-                    ),
-                  if (mission.status == MissionStatus.inProgress &&
-                      mission.progress == 1.0)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          TelemetryService.instance.logEvent(
-                            event: 'cta.clicked',
-                            metadata: <String, dynamic>{
-                              'cta': 'missions_submit_for_review',
-                              'mission_id': mission.id,
-                            },
-                          );
-                          final MissionService missionService =
-                              context.read<MissionService>();
-                          final String? submissionId =
-                              await missionService.submitMission(mission.id);
+                      const SizedBox(height: 8),
+                      Text(
+                        mission.description,
+                        style: TextStyle(
+                            color: context.schTextSecondary, height: 1.5),
+                      ),
+                      const SizedBox(height: 24),
 
-                          if (submissionId == null) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_tMissions(
-                                    context, 'Unable to submit mission right now')),
-                                backgroundColor: ScholesaColors.error,
+                      // Skills
+                      if (mission.skills.isNotEmpty) ...<Widget>[
+                        Text(
+                          _tMissions(context, "Skills You'll Learn"),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: mission.skills
+                              .map((Skill skill) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          _pillarColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      skill.name,
+                                      style: TextStyle(
+                                        color: _pillarColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Steps
+                      Text(
+                        _tMissions(context, 'Mission Steps'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...mission.steps.map((MissionStep step) =>
+                          _StepItem(step: step, color: _pillarColor)),
+                      const SizedBox(height: 24),
+
+                      if (mission.status !=
+                          MissionStatus.notStarted) ...<Widget>[
+                        _buildStudyFlowSection(context, mission),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Educator feedback
+                      if (mission.educatorFeedback != null) ...<Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color:
+                                ScholesaColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: ScholesaColors.success
+                                    .withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Icon(Icons.comment,
+                                      color: ScholesaColors.success, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    _tMissions(context, 'Educator Feedback'),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: ScholesaColors.success,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            );
-                            return;
-                          }
+                              const SizedBox(height: 8),
+                              Text(
+                                mission.educatorFeedback!,
+                                style: TextStyle(
+                                    color: Colors.grey[700], height: 1.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
-                          TelemetryService.instance.logEvent(
-                            event: 'mission.attempt.submitted',
-                            metadata: <String, dynamic>{
-                              'mission_id': mission.id,
-                              'submission_id': submissionId,
-                              'mission_status': mission.status.name,
-                              'progress': mission.progress,
+                      // AI Coaching Section
+                      _buildAiCoachingSection(context, _pillarColor),
+                      const SizedBox(height: 24),
+
+                      // Action button
+                      if (mission.status == MissionStatus.notStarted)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              TelemetryService.instance.logEvent(
+                                event: 'cta.clicked',
+                                metadata: <String, dynamic>{
+                                  'cta': 'missions_start_mission',
+                                  'mission_id': mission.id,
+                                },
+                              );
+                              final bool started = await context
+                                  .read<MissionService>()
+                                  .startMission(mission.id);
+
+                              if (!context.mounted) return;
+
+                              if (started) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        '${_tMissions(context, 'Started')}: ${mission.title}'),
+                                    backgroundColor: ScholesaColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_tMissions(context,
+                                        'Unable to start mission right now')),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
                             },
-                          );
-                          if (!context.mounted) return;
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '${_tMissions(context, 'Submitted')}: ${mission.title}'),
-                              backgroundColor: ScholesaColors.success,
-                              behavior: SnackBarBehavior.floating,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _pillarColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ScholesaColors.success,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(Icons.rocket_launch),
+                                SizedBox(width: 8),
+                                Text(
+                                  _tMissions(context, 'Start Mission'),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Icon(Icons.send),
-                            SizedBox(width: 8),
-                            Text(
-                              _tMissions(context, 'Submit for Review'),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                      if (mission.status == MissionStatus.inProgress &&
+                          mission.progress == 1.0)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              TelemetryService.instance.logEvent(
+                                event: 'cta.clicked',
+                                metadata: <String, dynamic>{
+                                  'cta': 'missions_submit_for_review',
+                                  'mission_id': mission.id,
+                                },
+                              );
+                              final MissionService missionService =
+                                  context.read<MissionService>();
+                              final String? submissionId = await missionService
+                                  .submitMission(mission.id);
+
+                              if (submissionId == null) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_tMissions(context,
+                                        'Unable to submit mission right now')),
+                                    backgroundColor: ScholesaColors.error,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              TelemetryService.instance.logEvent(
+                                event: 'mission.attempt.submitted',
+                                metadata: <String, dynamic>{
+                                  'mission_id': mission.id,
+                                  'submission_id': submissionId,
+                                  'mission_status': mission.status.name,
+                                  'progress': mission.progress,
+                                },
+                              );
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      '${_tMissions(context, 'Submitted')}: ${mission.title}'),
+                                  backgroundColor: ScholesaColors.success,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ScholesaColors.success,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(Icons.send),
+                                SizedBox(width: 8),
+                                Text(
+                                  _tMissions(context, 'Submit for Review'),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStudyFlowSection(BuildContext context, Mission mission) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tMissions(context, 'Study flow'),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _pillarColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _pillarColor.withValues(alpha: 0.18)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Icon(Icons.memory_rounded, color: _pillarColor, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    _tMissions(context, 'Review memory'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _pillarColor,
                     ),
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                mission.fsrsLastRating == null
+                    ? _tMissions(
+                        context,
+                        'Choose how this mission felt to plan the next review.',
+                      )
+                    : '${_tMissions(context, 'Last rating')}: ${_tMissions(context, mission.fsrsLastRating!.label)}',
+                style: TextStyle(color: context.schTextSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${_tMissions(context, 'Next review')}: ${_formatNextReview(mission.nextReviewAt)}',
+                style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: FsrsRating.values
+                    .map(
+                      (FsrsRating rating) => ActionChip(
+                        label: Text(_tMissions(context, rating.label)),
+                        onPressed: _isUpdatingStudyAction
+                            ? null
+                            : () => _handleStudyAction(
+                                  action: () => context
+                                      .read<MissionService>()
+                                      .rateFsrsReview(
+                                        mission.id,
+                                        rating: rating,
+                                      ),
+                                  successMessage:
+                                      _tMissions(context, 'Review saved'),
+                                ),
+                        backgroundColor: _pillarColor.withValues(alpha: 0.12),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  OutlinedButton.icon(
+                    onPressed: _isUpdatingStudyAction
+                        ? null
+                        : () => _handleStudyAction(
+                              action: () => context
+                                  .read<MissionService>()
+                                  .snoozeFsrsQueue(mission.id),
+                              successMessage:
+                                  _tMissions(context, 'Queue snoozed'),
+                            ),
+                    icon: const Icon(Icons.snooze_rounded),
+                    label: Text(_tMissions(context, 'Snooze 1 day')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _isUpdatingStudyAction
+                        ? null
+                        : () => _handleStudyAction(
+                              action: () => context
+                                  .read<MissionService>()
+                                  .rescheduleFsrsQueue(mission.id),
+                              successMessage:
+                                  _tMissions(context, 'Review rescheduled'),
+                            ),
+                    icon: const Icon(Icons.event_repeat_rounded),
+                    label: Text(_tMissions(context, 'Review in 3 days')),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  Icon(Icons.shuffle_rounded, color: _pillarColor, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    _tMissions(context, 'Study mode'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _pillarColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _tMissions(
+                  context,
+                  'Switch between a single-focus path and mixed practice.',
+                ),
+                style: TextStyle(color: context.schTextSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: InterleavingMode.values
+                    .map(
+                      (InterleavingMode mode) => ChoiceChip(
+                        label: Text(_tMissions(context, mode.label)),
+                        selected: mission.interleavingMode == mode,
+                        onSelected: _isUpdatingStudyAction
+                            ? null
+                            : (_) => _handleStudyAction(
+                                  action: () => context
+                                      .read<MissionService>()
+                                      .setInterleavingMode(
+                                        mission.id,
+                                        mode: mode,
+                                      ),
+                                  successMessage: _tMissions(
+                                    context,
+                                    'Study mode updated',
+                                  ),
+                                ),
+                        selectedColor: _pillarColor.withValues(alpha: 0.18),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: <Widget>[
+                  Icon(Icons.menu_book_rounded, color: _pillarColor, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    _tMissions(context, 'Worked example'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _pillarColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                mission.workedExampleShown
+                    ? '${_tMissions(context, 'Fade stage')}: ${mission.workedExampleFadeStage}'
+                    : _tMissions(
+                        context,
+                        'Reveal a worked example before you try the next step alone.',
+                      ),
+                style: TextStyle(color: context.schTextSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _isUpdatingStudyAction
+                    ? null
+                    : () => _handleStudyAction(
+                          action: () => context
+                              .read<MissionService>()
+                              .showWorkedExample(mission.id),
+                          successMessage:
+                              _tMissions(context, 'Worked example ready'),
+                        ),
+                icon: const Icon(Icons.visibility_rounded),
+                label: Text(
+                  mission.workedExampleShown
+                      ? _tMissions(context, 'Show next example stage')
+                      : _tMissions(context, 'Show worked example'),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _pillarColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  String _formatNextReview(DateTime? nextReviewAt) {
+    if (nextReviewAt == null) {
+      return _tMissions(context, 'Not scheduled');
+    }
+
+    final Duration difference = nextReviewAt.difference(DateTime.now());
+    if (difference.inMinutes <= 0) {
+      return _tMissions(context, 'Now');
+    }
+    if (difference.inHours < 1) {
+      return '${difference.inMinutes}m';
+    }
+    if (difference.inDays < 1) {
+      return '${difference.inHours}h';
+    }
+    return '${difference.inDays}d';
+  }
+
+  Future<void> _handleStudyAction({
+    required Future<bool> Function() action,
+    required String successMessage,
+  }) async {
+    if (_isUpdatingStudyAction) {
+      return;
+    }
+
+    setState(() => _isUpdatingStudyAction = true);
+    final bool succeeded = await action();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isUpdatingStudyAction = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          succeeded
+              ? successMessage
+              : _tMissions(context, 'Unable to update study flow right now'),
+        ),
+        backgroundColor:
+            succeeded ? ScholesaColors.success : ScholesaColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -1168,7 +1446,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      Icon(Icons.smart_toy_rounded, color: pillarColor, size: 20),
+                      Icon(Icons.smart_toy_rounded,
+                          color: pillarColor, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         _tMissions(context, 'Get AI Help'),
@@ -1195,9 +1474,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                       setState(() => _showAiCoach = !_showAiCoach);
                     },
                     icon: Icon(
-                      _showAiCoach
-                          ? Icons.expand_less
-                          : Icons.expand_more,
+                      _showAiCoach ? Icons.expand_less : Icons.expand_more,
                       color: pillarColor,
                     ),
                   ),
@@ -1206,8 +1483,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
               if (!_showAiCoach) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
-                  _tMissions(
-                      context, 'Ask for hints, explanations, or debugging help'),
+                  _tMissions(context,
+                      'Ask for hints, explanations, or debugging help'),
                   style: TextStyle(
                     color: context.schTextSecondary,
                     fontSize: 13,
@@ -1225,8 +1502,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     );
   }
 
-  Widget _buildAiCoachPanel(
-      BuildContext context, UserRole role) {
+  Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {

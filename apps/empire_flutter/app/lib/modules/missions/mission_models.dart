@@ -71,6 +71,40 @@ enum DifficultyLevel {
   }
 }
 
+enum FsrsRating {
+  again,
+  hard,
+  good,
+  easy;
+
+  String get label {
+    switch (this) {
+      case FsrsRating.again:
+        return 'Again';
+      case FsrsRating.hard:
+        return 'Hard';
+      case FsrsRating.good:
+        return 'Good';
+      case FsrsRating.easy:
+        return 'Easy';
+    }
+  }
+}
+
+enum InterleavingMode {
+  focusOnly,
+  mixed;
+
+  String get label {
+    switch (this) {
+      case InterleavingMode.focusOnly:
+        return 'Focus only';
+      case InterleavingMode.mixed:
+        return 'Mixed';
+    }
+  }
+}
+
 /// Model for a skill that can be learned
 class Skill extends Equatable {
   const Skill({
@@ -194,6 +228,11 @@ class Mission extends Equatable {
     this.progress = 0.0,
     this.educatorFeedback,
     this.reflectionPrompt,
+    this.fsrsLastRating,
+    this.nextReviewAt,
+    this.interleavingMode = InterleavingMode.focusOnly,
+    this.workedExampleShown = false,
+    this.workedExampleFadeStage = 0,
   });
 
   factory Mission.fromJson(Map<String, dynamic> json) {
@@ -235,6 +274,21 @@ class Mission extends Equatable {
       progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
       educatorFeedback: json['educatorFeedback'] as String?,
       reflectionPrompt: json['reflectionPrompt'] as String?,
+      fsrsLastRating: json['fsrsLastRating'] != null
+          ? FsrsRating.values.firstWhere(
+              (FsrsRating rating) => rating.name == json['fsrsLastRating'],
+              orElse: () => FsrsRating.good,
+            )
+          : null,
+      nextReviewAt: json['nextReviewAt'] != null
+          ? DateTime.parse(json['nextReviewAt'] as String)
+          : null,
+      interleavingMode: InterleavingMode.values.firstWhere(
+        (InterleavingMode mode) => mode.name == json['interleavingMode'],
+        orElse: () => InterleavingMode.focusOnly,
+      ),
+      workedExampleShown: json['workedExampleShown'] as bool? ?? false,
+      workedExampleFadeStage: json['workedExampleFadeStage'] as int? ?? 0,
     );
   }
   final String id;
@@ -253,6 +307,11 @@ class Mission extends Equatable {
   final double progress;
   final String? educatorFeedback;
   final String? reflectionPrompt;
+  final FsrsRating? fsrsLastRating;
+  final DateTime? nextReviewAt;
+  final InterleavingMode interleavingMode;
+  final bool workedExampleShown;
+  final int workedExampleFadeStage;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -272,6 +331,11 @@ class Mission extends Equatable {
       'progress': progress,
       'educatorFeedback': educatorFeedback,
       'reflectionPrompt': reflectionPrompt,
+      'fsrsLastRating': fsrsLastRating?.name,
+      'nextReviewAt': nextReviewAt?.toIso8601String(),
+      'interleavingMode': interleavingMode.name,
+      'workedExampleShown': workedExampleShown,
+      'workedExampleFadeStage': workedExampleFadeStage,
     };
   }
 
@@ -292,6 +356,11 @@ class Mission extends Equatable {
     double? progress,
     String? educatorFeedback,
     String? reflectionPrompt,
+    FsrsRating? fsrsLastRating,
+    DateTime? nextReviewAt,
+    InterleavingMode? interleavingMode,
+    bool? workedExampleShown,
+    int? workedExampleFadeStage,
   }) {
     return Mission(
       id: id ?? this.id,
@@ -310,6 +379,12 @@ class Mission extends Equatable {
       progress: progress ?? this.progress,
       educatorFeedback: educatorFeedback ?? this.educatorFeedback,
       reflectionPrompt: reflectionPrompt ?? this.reflectionPrompt,
+      fsrsLastRating: fsrsLastRating ?? this.fsrsLastRating,
+      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+      interleavingMode: interleavingMode ?? this.interleavingMode,
+      workedExampleShown: workedExampleShown ?? this.workedExampleShown,
+      workedExampleFadeStage:
+          workedExampleFadeStage ?? this.workedExampleFadeStage,
     );
   }
 
@@ -335,6 +410,11 @@ class Mission extends Equatable {
         progress,
         educatorFeedback,
         reflectionPrompt,
+        fsrsLastRating,
+        nextReviewAt,
+        interleavingMode,
+        workedExampleShown,
+        workedExampleFadeStage,
       ];
 }
 

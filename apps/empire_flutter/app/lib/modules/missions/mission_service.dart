@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
+import '../../services/telemetry_service.dart';
 import 'mission_models.dart';
 
 /// Service for learner missions
@@ -35,6 +36,15 @@ class MissionService extends ChangeNotifier {
   String? get error => _error;
   Pillar? get pillarFilter => _pillarFilter;
   MissionStatus? get statusFilter => _statusFilter;
+
+  Mission? getMissionById(String missionId) {
+    for (final Mission mission in _missions) {
+      if (mission.id == missionId) {
+        return mission;
+      }
+    }
+    return null;
+  }
 
   List<Mission> get _filteredMissions {
     return _missions.where((Mission mission) {
@@ -130,6 +140,16 @@ class MissionService extends ChangeNotifier {
             completedAt: _parseTimestamp(assignData['completedAt']),
             educatorFeedback: assignData['feedback'] as String?,
             reflectionPrompt: missionData['reflectionPrompt'] as String?,
+            fsrsLastRating:
+                _parseFsrsRating(assignData['fsrsLastRating'] as String?),
+            nextReviewAt: _parseTimestamp(assignData['nextReviewAt']),
+            interleavingMode: _parseInterleavingMode(
+              assignData['interleavingMode'] as String?,
+            ),
+            workedExampleShown:
+                assignData['workedExampleShown'] as bool? ?? false,
+            workedExampleFadeStage:
+                assignData['workedExampleFadeStage'] as int? ?? 0,
           ));
         }
       }
@@ -196,6 +216,66 @@ class MissionService extends ChangeNotifier {
     }
   }
 
+  FsrsRating? _parseFsrsRating(String? rating) {
+    if (rating == null || rating.isEmpty) {
+      return null;
+    }
+    return FsrsRating.values.firstWhere(
+      (FsrsRating value) => value.name == rating,
+      orElse: () => FsrsRating.good,
+    );
+  }
+
+  InterleavingMode _parseInterleavingMode(String? mode) {
+    return InterleavingMode.values.firstWhere(
+      (InterleavingMode value) => value.name == mode,
+      orElse: () => InterleavingMode.focusOnly,
+    );
+  }
+
+  Future<QueryDocumentSnapshot<Map<String, dynamic>>?>
+      _getAssignmentDocForMission(
+    String missionId,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+        await _firestore
+            .collection('missionAssignments')
+            .where('learnerId', isEqualTo: learnerId)
+            .where('missionId', isEqualTo: missionId)
+            .limit(1)
+            .get();
+
+    if (assignmentsSnapshot.docs.isEmpty) {
+      return null;
+    }
+
+    return assignmentsSnapshot.docs.first;
+  }
+
+  String? _siteIdFromAssignment(
+    QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc,
+  ) {
+    final String? siteId = assignmentDoc?.data()['siteId'] as String?;
+    if (siteId == null || siteId.isEmpty) {
+      return null;
+    }
+    return siteId;
+  }
+
+  DateTime _nextReviewTimeForRating(FsrsRating rating) {
+    final DateTime now = DateTime.now();
+    switch (rating) {
+      case FsrsRating.again:
+        return now.add(const Duration(minutes: 10));
+      case FsrsRating.hard:
+        return now.add(const Duration(days: 1));
+      case FsrsRating.good:
+        return now.add(const Duration(days: 3));
+      case FsrsRating.easy:
+        return now.add(const Duration(days: 7));
+    }
+  }
+
   LearnerProgress _calculateProgress() {
     final int totalXp = _missions
         .where((Mission m) => m.status == MissionStatus.completed)
@@ -223,16 +303,11 @@ class MissionService extends ChangeNotifier {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
-        final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
-            await _firestore
-                .collection('missionAssignments')
-                .where('learnerId', isEqualTo: learnerId)
-                .where('missionId', isEqualTo: missionId)
-                .limit(1)
-                .get();
+        final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+            await _getAssignmentDocForMission(missionId);
 
-        if (assignmentsSnapshot.docs.isNotEmpty) {
-          await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+        if (assignmentDoc != null) {
+          await assignmentDoc.reference.update(<String, dynamic>{
             'status': 'in_progress',
             'startedAt': FieldValue.serverTimestamp(),
           });
@@ -260,13 +335,8 @@ class MissionService extends ChangeNotifier {
           _missions.indexWhere((Mission m) => m.id == missionId);
       if (missionIndex == -1) return false;
 
-      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
-        await _firestore
-          .collection('missionAssignments')
-          .where('learnerId', isEqualTo: learnerId)
-          .where('missionId', isEqualTo: missionId)
-          .limit(1)
-          .get();
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
 
       final Mission mission = _missions[missionIndex];
       final List<MissionStep> updatedSteps =
@@ -289,8 +359,8 @@ class MissionService extends ChangeNotifier {
         progress: progress,
       );
 
-      if (assignmentsSnapshot.docs.isNotEmpty) {
-        await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
           'progress': progress,
           'status': progress >= 1.0 ? 'completed' : 'in_progress',
           if (progress >= 1.0) 'completedAt': FieldValue.serverTimestamp(),
@@ -372,13 +442,8 @@ class MissionService extends ChangeNotifier {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
-        final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
-            await _firestore
-                .collection('missionAssignments')
-                .where('learnerId', isEqualTo: learnerId)
-                .where('missionId', isEqualTo: missionId)
-                .limit(1)
-                .get();
+        final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+            await _getAssignmentDocForMission(missionId);
 
         final Mission mission = _missions[index];
         _missions[index] = mission.copyWith(
@@ -387,8 +452,8 @@ class MissionService extends ChangeNotifier {
           progress: 1.0,
         );
 
-        if (assignmentsSnapshot.docs.isNotEmpty) {
-          await assignmentsSnapshot.docs.first.reference.update(<String, dynamic>{
+        if (assignmentDoc != null) {
+          await assignmentDoc.reference.update(<String, dynamic>{
             'status': 'completed',
             'progress': 1.0,
             'completedAt': FieldValue.serverTimestamp(),
@@ -411,6 +476,230 @@ class MissionService extends ChangeNotifier {
         return true;
       }
       return false;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> rateFsrsReview(
+    String missionId, {
+    required FsrsRating rating,
+  }) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+      final DateTime nextReviewAt = _nextReviewTimeForRating(rating);
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'fsrsLastRating': rating.name,
+          'fsrsRatedAt': FieldValue.serverTimestamp(),
+          'nextReviewAt': Timestamp.fromDate(nextReviewAt),
+          'fsrsQueueState': 'scheduled',
+        });
+      }
+
+      _missions[index] = _missions[index].copyWith(
+        fsrsLastRating: rating,
+        nextReviewAt: nextReviewAt,
+      );
+
+      await TelemetryService.instance.logEvent(
+        event: 'fsrs.review.rated',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'itemType': 'mission',
+          'rating': rating.name,
+          'next_review_at': nextReviewAt.toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> snoozeFsrsQueue(String missionId) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+      final DateTime nextReviewAt = DateTime.now().add(const Duration(days: 1));
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'nextReviewAt': Timestamp.fromDate(nextReviewAt),
+          'fsrsQueueState': 'snoozed',
+          'fsrsSnoozedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      _missions[index] = _missions[index].copyWith(nextReviewAt: nextReviewAt);
+
+      await TelemetryService.instance.logEvent(
+        event: 'fsrs.queue.snoozed',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'itemCount': 1,
+          'itemType': 'mission',
+          'next_review_at': nextReviewAt.toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> rescheduleFsrsQueue(
+    String missionId, {
+    int days = 3,
+  }) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+      final DateTime nextReviewAt = DateTime.now().add(Duration(days: days));
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'nextReviewAt': Timestamp.fromDate(nextReviewAt),
+          'fsrsQueueState': 'rescheduled',
+          'fsrsRescheduledAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      _missions[index] = _missions[index].copyWith(nextReviewAt: nextReviewAt);
+
+      await TelemetryService.instance.logEvent(
+        event: 'fsrs.queue.rescheduled',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'itemCount': 1,
+          'itemType': 'mission',
+          'days': days,
+          'next_review_at': nextReviewAt.toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> setInterleavingMode(
+    String missionId, {
+    required InterleavingMode mode,
+  }) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'interleavingMode': mode.name,
+          'interleavingUpdatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      _missions[index] = _missions[index].copyWith(interleavingMode: mode);
+
+      await TelemetryService.instance.logEvent(
+        event: 'interleaving.mode.changed',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'mode': mode.name,
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> showWorkedExample(String missionId) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+      final int nextFadeStage = _missions[index].workedExampleFadeStage >= 3
+          ? 3
+          : _missions[index].workedExampleFadeStage + 1;
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'workedExampleShown': true,
+          'workedExampleFadeStage': nextFadeStage,
+          'workedExampleShownAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      _missions[index] = _missions[index].copyWith(
+        workedExampleShown: true,
+        workedExampleFadeStage: nextFadeStage,
+      );
+
+      await TelemetryService.instance.logEvent(
+        event: 'worked_example.shown',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'triggerTag': 'mission_detail_sheet',
+          'fadeStage': nextFadeStage,
+        },
+      );
+
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

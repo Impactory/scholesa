@@ -44,6 +44,19 @@ const VOICE_REQUIRED_METADATA_KEYS = [
   'timestamp',
 ];
 const BOS_COMPATIBILITY_EVENT_SET = new Set(BOS_COMPATIBILITY_EVENTS);
+const MARCH12_LEARNER_EVENTS = [
+  'onboarding.started',
+  'onboarding.completed',
+  'diagnostic.submitted',
+  'learner.goal.updated',
+  'accessibility.setting.changed',
+  'reflection.submitted',
+  'fsrs.review.rated',
+  'fsrs.queue.snoozed',
+  'fsrs.queue.rescheduled',
+  'interleaving.mode.changed',
+  'worked_example.shown',
+];
 const VALID_VOICE_LOCALES = new Set(['en', 'zh-CN', 'zh-TW', 'th']);
 const VALID_VOICE_ROLES = new Set(['student', 'teacher', 'admin']);
 const VALID_VOICE_GRADE_BANDS = new Set(['k5', 'ms', 'hs']);
@@ -1320,6 +1333,9 @@ async function run() {
   const smokeMissingInBackend = canonicalRequiredEvents.filter((event) => !backendSet.has(event));
   const smokeMissingInFlutter = canonicalRequiredEvents.filter((event) => !flutterSet.has(event));
   const missingEmitters = canonicalRequiredEvents.filter((event) => !emitterIndex.has(event));
+  const march12MissingInBackend = MARCH12_LEARNER_EVENTS.filter((event) => !backendSet.has(event));
+  const march12MissingInFlutter = MARCH12_LEARNER_EVENTS.filter((event) => !flutterSet.has(event));
+  const march12MissingEmitters = MARCH12_LEARNER_EVENTS.filter((event) => !emitterIndex.has(event));
 
   const registries = {
     backendAllowedEvents,
@@ -1351,6 +1367,10 @@ async function run() {
   printSection(
     'Canonical Required Event Coverage (live)',
     canonicalRequiredEvents.map((event) => `${event}=${live.eventCounts.get(event) ?? 0}`),
+  );
+  printSection(
+    'March 12 Learner Event Coverage (live)',
+    MARCH12_LEARNER_EVENTS.map((event) => `${event}=${live.eventCounts.get(event) ?? 0}`),
   );
 
   printSection('Live Dataset', [
@@ -1426,6 +1446,30 @@ async function run() {
     printSection(
       'Canonical Required Events Missing Emitter Paths',
       missingEmitters.map((event) => `- ${event}`),
+    );
+  }
+
+  if (march12MissingInBackend.length > 0) {
+    failures.push(`march12LearnerMissingInBackend=${march12MissingInBackend.length}`);
+    printSection(
+      'March 12 Learner Events Missing In Backend Allowlist',
+      march12MissingInBackend.map((event) => `- ${event}`),
+    );
+  }
+
+  if (march12MissingInFlutter.length > 0) {
+    failures.push(`march12LearnerMissingInFlutter=${march12MissingInFlutter.length}`);
+    printSection(
+      'March 12 Learner Events Missing In Flutter Registry',
+      march12MissingInFlutter.map((event) => `- ${event}`),
+    );
+  }
+
+  if (march12MissingEmitters.length > 0) {
+    failures.push(`march12LearnerMissingEmitters=${march12MissingEmitters.length}`);
+    printSection(
+      'March 12 Learner Events Missing Emitter Paths',
+      march12MissingEmitters.map((event) => `- ${event}`),
     );
   }
 

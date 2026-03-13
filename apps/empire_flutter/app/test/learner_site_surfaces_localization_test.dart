@@ -12,11 +12,13 @@ import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
+import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/site/site_incidents_page.dart';
 import 'package:scholesa_app/modules/site/site_ops_page.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -32,9 +34,8 @@ AppState _buildAppState({
     'role': role.name,
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
-    'localeCode': locale.languageCode == 'zh'
-        ? 'zh-${locale.countryCode}'
-        : 'en',
+    'localeCode':
+        locale.languageCode == 'zh' ? 'zh-${locale.countryCode}' : 'en',
     'entitlements': <Map<String, dynamic>>[],
   });
   return appState;
@@ -160,8 +161,10 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField).at(0), 'Robotics, coding');
-      await tester.enterText(find.byType(TextField).at(1), 'Build a better robot');
-      await tester.enterText(find.byType(TextField).at(2), 'I want to create useful things');
+      await tester.enterText(
+          find.byType(TextField).at(1), 'Build a better robot');
+      await tester.enterText(
+          find.byType(TextField).at(2), 'I want to create useful things');
       await tester.tap(find.text('Save').last);
       await tester.pumpAndSettle();
 
@@ -237,6 +240,131 @@ void main() {
       expect(snapshot.docs.first.data()['reflectionType'], 'post_session');
     });
 
+    testWidgets('missions study flow controls persist and emit telemetry',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final List<Map<String, dynamic>> telemetryPayloads =
+          <Map<String, dynamic>>[];
+
+      await fakeFirestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.5,
+        },
+      );
+      await fakeFirestore.collection('missions').doc('mission-1').set(
+        <String, dynamic>{
+          'title': 'Mission One',
+          'description': 'Description',
+          'pillarCode': 'future_skills',
+          'difficulty': 'beginner',
+          'xpReward': 100,
+        },
+      );
+      await fakeFirestore
+          .collection('missions')
+          .doc('mission-1')
+          .collection('steps')
+          .doc('step-1')
+          .set(
+        <String, dynamic>{
+          'title': 'Step One',
+          'order': 1,
+          'isCompleted': false,
+        },
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await TelemetryService.runWithDispatcher(
+        (Map<String, dynamic> payload) async {
+          telemetryPayloads.add(Map<String, dynamic>.from(payload));
+        },
+        () async {
+          await tester.pumpWidget(
+            _buildHarness(
+              locale: locale,
+              child: const MissionsPage(),
+              providers: <SingleChildWidget>[
+                ChangeNotifierProvider<AppState>.value(value: appState),
+                Provider<FirestoreService>.value(value: firestoreService),
+                ChangeNotifierProvider<MissionService>.value(
+                    value: missionService),
+              ],
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+          await tester.pumpAndSettle();
+
+          await tester.tap(find.text('In Progress'));
+          await tester.pumpAndSettle();
+
+          await tester.tap(find.text('Mission One').first);
+          await tester.pumpAndSettle();
+
+          expect(find.text('Study flow'), findsOneWidget);
+
+          await tester.ensureVisible(find.text('Good').last);
+          await tester.tap(find.text('Good').last);
+          await tester.pumpAndSettle();
+
+          await tester.ensureVisible(find.text('Snooze 1 day').last);
+          await tester.tap(find.text('Snooze 1 day').last);
+          await tester.pumpAndSettle();
+
+          await tester.ensureVisible(find.text('Mixed').last);
+          await tester.tap(find.text('Mixed').last);
+          await tester.pumpAndSettle();
+
+          await tester.ensureVisible(find.text('Show worked example').last);
+          await tester.tap(find.text('Show worked example').last);
+          await tester.pumpAndSettle();
+        },
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
+          await fakeFirestore
+              .collection('missionAssignments')
+              .doc('assignment-1')
+              .get();
+      final Map<String, dynamic>? data = assignmentDoc.data();
+
+      expect(data?['fsrsLastRating'], 'good');
+      expect(data?['fsrsQueueState'], 'snoozed');
+      expect(data?['interleavingMode'], 'mixed');
+      expect(data?['workedExampleShown'], true);
+      expect(data?['workedExampleFadeStage'], 1);
+      expect(data?['nextReviewAt'], isA<Timestamp>());
+
+      final List<String> emittedEvents = telemetryPayloads
+          .map((Map<String, dynamic> payload) => payload['event'] as String?)
+          .whereType<String>()
+          .toList();
+      expect(emittedEvents, contains('fsrs.review.rated'));
+      expect(emittedEvents, contains('fsrs.queue.snoozed'));
+      expect(emittedEvents, contains('interleaving.mode.changed'));
+      expect(emittedEvents, contains('worked_example.shown'));
+    });
+
     testWidgets('learner portfolio renders zh-TW copy',
         (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'TW');
@@ -293,8 +421,7 @@ void main() {
       expect(find.text('新建课程'), findsOneWidget);
     });
 
-    testWidgets('site ops renders zh-TW copy',
-        (WidgetTester tester) async {
+    testWidgets('site ops renders zh-TW copy', (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'TW');
       final FirestoreService firestoreService = FirestoreService(
         firestore: FakeFirebaseFirestore(),

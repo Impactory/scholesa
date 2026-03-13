@@ -6,10 +6,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
 import 'package:scholesa_app/modules/habits/habit_models.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
+import 'package:scholesa_app/modules/missions/mission_models.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
 class _MockUser extends Mock implements User {}
 
 void main() {
@@ -115,24 +118,137 @@ void main() {
       final bool started = await service.startMission('mission-1');
       expect(started, isTrue);
 
-      DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
-          await firestore.collection('missionAssignments').doc('assignment-1').get();
+      DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .get();
       expect(assignmentDoc.data()?['status'], 'in_progress');
 
-      final bool completedStep = await service.completeStep('mission-1', 'step-1');
+      final bool completedStep =
+          await service.completeStep('mission-1', 'step-1');
       expect(completedStep, isTrue);
 
-      assignmentDoc =
-          await firestore.collection('missionAssignments').doc('assignment-1').get();
+      assignmentDoc = await firestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .get();
       expect(assignmentDoc.data()?['status'], 'completed');
       expect((assignmentDoc.data()?['progress'] as num?)?.toDouble(), 1.0);
 
       final bool completedMission = await service.completeMission('mission-1');
       expect(completedMission, isTrue);
 
-      assignmentDoc =
-          await firestore.collection('missionAssignments').doc('assignment-1').get();
+      assignmentDoc = await firestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .get();
       expect(assignmentDoc.data()?['status'], 'completed');
+    });
+
+    test(
+        'mission service persists study flow controls and emits learner telemetry',
+        () async {
+      final MissionService service = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-1',
+      );
+      final List<Map<String, dynamic>> telemetryPayloads =
+          <Map<String, dynamic>>[];
+
+      await firestore.collection('missionAssignments').doc('assignment-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.5,
+        },
+      );
+
+      await firestore.collection('missions').doc('mission-1').set(
+        <String, dynamic>{
+          'title': 'Mission One',
+          'description': 'Description',
+          'pillarCode': 'future_skills',
+          'difficulty': 'beginner',
+          'xpReward': 100,
+        },
+      );
+
+      await firestore
+          .collection('missions')
+          .doc('mission-1')
+          .collection('steps')
+          .doc('step-1')
+          .set(
+        <String, dynamic>{
+          'title': 'Step One',
+          'order': 1,
+          'isCompleted': false,
+        },
+      );
+
+      await service.loadMissions();
+
+      await TelemetryService.runWithDispatcher(
+        (Map<String, dynamic> payload) async {
+          telemetryPayloads.add(Map<String, dynamic>.from(payload));
+        },
+        () async {
+          expect(
+            await service.rateFsrsReview(
+              'mission-1',
+              rating: FsrsRating.good,
+            ),
+            isTrue,
+          );
+          expect(await service.snoozeFsrsQueue('mission-1'), isTrue);
+          expect(
+            await service.rescheduleFsrsQueue('mission-1', days: 3),
+            isTrue,
+          );
+          expect(
+            await service.setInterleavingMode(
+              'mission-1',
+              mode: InterleavingMode.mixed,
+            ),
+            isTrue,
+          );
+          expect(await service.showWorkedExample('mission-1'), isTrue);
+        },
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
+          await firestore
+              .collection('missionAssignments')
+              .doc('assignment-1')
+              .get();
+      final Map<String, dynamic>? data = assignmentDoc.data();
+
+      expect(data?['fsrsLastRating'], 'good');
+      expect(data?['fsrsQueueState'], 'rescheduled');
+      expect(data?['interleavingMode'], 'mixed');
+      expect(data?['workedExampleShown'], true);
+      expect(data?['workedExampleFadeStage'], 1);
+      expect(data?['nextReviewAt'], isA<Timestamp>());
+
+      final List<String> emittedEvents = telemetryPayloads
+          .map((Map<String, dynamic> payload) => payload['event'] as String?)
+          .whereType<String>()
+          .toList();
+      expect(emittedEvents, contains('fsrs.review.rated'));
+      expect(emittedEvents, contains('fsrs.queue.snoozed'));
+      expect(emittedEvents, contains('fsrs.queue.rescheduled'));
+      expect(emittedEvents, contains('interleaving.mode.changed'));
+      expect(emittedEvents, contains('worked_example.shown'));
+
+      final Map<String, dynamic> fsrsPayload = telemetryPayloads.firstWhere(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'fsrs.review.rated',
+      );
+      expect(fsrsPayload['siteId'], 'site-1');
+      expect(fsrsPayload['role'], 'learner');
+      expect(fsrsPayload['metadata']['rating'], 'good');
     });
 
     test('habit service wrappers persist creation and completion in Firestore',
