@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
@@ -216,8 +217,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Notifications'),
-                message: _tProfile(
-                    context, 'Open notification preferences and delivery channels.'),
+                message: _tProfile(context,
+                    'Open notification preferences and delivery channels.'),
               );
             },
           ),
@@ -235,8 +236,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Privacy & Security'),
-                message: _tProfile(
-                    context, 'Review password, MFA, and device session settings.'),
+                message: _tProfile(context,
+                    'Review password, MFA, and device session settings.'),
               );
             },
           ),
@@ -254,8 +255,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Language'),
-                message:
-                    _tProfile(context, 'Choose your preferred language for the app.'),
+                message: _tProfile(
+                    context, 'Choose your preferred language for the app.'),
               );
             },
           ),
@@ -273,8 +274,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Appearance'),
-                message:
-                    _tProfile(context, 'Switch between light and dark display modes.'),
+                message: _tProfile(
+                    context, 'Switch between light and dark display modes.'),
               );
             },
           ),
@@ -292,8 +293,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Sync & Data'),
-                message:
-                    _tProfile(context, 'Manage sync cadence and data usage options.'),
+                message: _tProfile(
+                    context, 'Manage sync cadence and data usage options.'),
               );
             },
           ),
@@ -331,7 +332,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Help & Support'),
-                message: _tProfile(context, 'Open help docs and contact support.'),
+                message:
+                    _tProfile(context, 'Open help docs and contact support.'),
               );
             },
           ),
@@ -346,8 +348,8 @@ class ProfilePage extends StatelessWidget {
               _showFeatureDialog(
                 context,
                 title: _tProfile(context, 'Terms of Service'),
-                message:
-                    _tProfile(context, 'Review terms and platform usage rules.'),
+                message: _tProfile(
+                    context, 'Review terms and platform usage rules.'),
               );
             },
           ),
@@ -393,6 +395,7 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context, AppState appState) {
+    final AuthService authService = context.read<AuthService>();
     return Padding(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
@@ -444,7 +447,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_sign_out_execute'
                 },
               );
-              appState.clear();
+              await authService.signOut(source: 'profile_page');
               if (context.mounted) {
                 context.go('/login');
               }

@@ -436,8 +436,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _SettingsTile(
           icon: Icons.tune,
           title: _tSettings(context, 'Notification Preferences'),
-          subtitle:
-              _tSettings(context, 'Choose what to be notified about'),
+          subtitle: _tSettings(context, 'Choose what to be notified about'),
           onTap: () => _showNotificationPreferences(),
         ),
       ],
@@ -697,7 +696,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        final AuthService authService = context.read<AuthService>();
+                        final AuthService authService =
+                            context.read<AuthService>();
                         final String validationMessage = _tSettings(
                             context, 'Enter a new password (min 8 characters)');
                         final String successMessage =
@@ -792,13 +792,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        final AuthService authService = context.read<AuthService>();
+                        final AuthService authService =
+                            context.read<AuthService>();
                         final String invalidEmailMessage =
                             _tSettings(context, 'Enter new email');
                         final String emailRequestedMessage =
                             _tSettings(context, 'Email Update Requested');
-                        final String verifyInboxMessage = _tSettings(
-                            context, 'Check your inbox to verify your new email.');
+                        final String verifyInboxMessage = _tSettings(context,
+                            'Check your inbox to verify your new email.');
                         final String newEmail = emailController.text.trim();
                         final String currentPassword =
                             passwordController.text.trim();
@@ -876,7 +877,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        final AuthService authService = context.read<AuthService>();
+                        final AuthService authService =
+                            context.read<AuthService>();
                         final String phoneRequiredMessage =
                             _tSettings(context, 'Enter phone number');
                         final String phoneUpdatedMessage =
@@ -887,8 +889,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           return;
                         }
                         try {
-                          await authService.updatePhoneNumberInProfile(
-                              phoneNumber);
+                          await authService
+                              .updatePhoneNumberInProfile(phoneNumber);
                           await _refreshAppStateFromFirestore();
                           if (!context.mounted) return;
                           Navigator.pop(bottomSheetContext);
@@ -1094,16 +1096,16 @@ class _SettingsPageState extends State<SettingsPage> {
             children: <Widget>[
               Text(
                 _tSettings(context, 'Choose Time Zone'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...zones.map((String zone) {
                 final bool isSelected = _timeZone == zone ||
                     (_timeZone == 'auto' && zone == 'auto');
                 return ListTile(
-                  title: Text(zone == 'auto'
-                      ? _tSettings(context, 'Automatic')
-                      : zone),
+                  title: Text(
+                      zone == 'auto' ? _tSettings(context, 'Automatic') : zone),
                   trailing: isSelected
                       ? const Icon(Icons.check, color: ScholesaColors.success)
                       : null,
@@ -1225,7 +1227,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         }
                         await TelemetryService.instance.logEvent(
                           event: 'settings.feedback.submitted',
-                          metadata: <String, dynamic>{'length': feedback.length},
+                          metadata: <String, dynamic>{
+                            'length': feedback.length
+                          },
                         );
                         if (!context.mounted) return;
                         Navigator.pop(bottomSheetContext);
@@ -1290,8 +1294,8 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(_tSettings(dialogContext, 'Sign Out')),
-          content:
-              Text(_tSettings(dialogContext, 'Are you sure you want to sign out?')),
+          content: Text(
+              _tSettings(dialogContext, 'Are you sure you want to sign out?')),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -1306,7 +1310,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 );
                 Navigator.pop(dialogContext);
-                await authService.signOut();
+                await authService.signOut(source: 'settings_page');
                 if (!mounted) return;
                 context.go('/login');
               },
@@ -1380,8 +1384,8 @@ class _SettingsPageState extends State<SettingsPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Text(_tSettings(
-                  context, 'Enter current password to confirm account deletion.')),
+              Text(_tSettings(context,
+                  'Enter current password to confirm account deletion.')),
               const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
@@ -1473,13 +1477,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _persistPreferences(Map<String, dynamic> updates) async {
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final Map<String, dynamic> payload = <String, dynamic>{};
       updates.forEach((String key, dynamic value) {
         payload['preferences.$key'] = value;
       });
       await firestoreService.updateUserProfile(payload);
-      final Map<String, dynamic>? profile = await firestoreService.getUserProfile();
+      final Map<String, dynamic>? profile =
+          await firestoreService.getUserProfile();
       if (!mounted || profile == null) return;
       context.read<AppState>().updateFromMeResponse(profile);
     } catch (error) {
@@ -1490,7 +1496,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _refreshAppStateFromFirestore() async {
     final FirestoreService firestoreService = context.read<FirestoreService>();
-    final Map<String, dynamic>? profile = await firestoreService.getUserProfile();
+    final Map<String, dynamic>? profile =
+        await firestoreService.getUserProfile();
     if (!mounted || profile == null) return;
     context.read<AppState>().updateFromMeResponse(profile);
   }

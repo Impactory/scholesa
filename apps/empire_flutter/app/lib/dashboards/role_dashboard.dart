@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../auth/auth_service.dart';
 import '../auth/app_state.dart';
 import '../router/app_router.dart';
 import '../modules/messages/message_service.dart';
@@ -982,8 +983,7 @@ class RoleDashboard extends StatelessWidget {
                         icon: card.icon,
                         gradient: card.gradient,
                         isEnabled: isEnabled,
-                        badgeText:
-                            _buildDynamicBadge(
+                        badgeText: _buildDynamicBadge(
                                       context,
                                       card,
                                       messageService,
@@ -1399,9 +1399,8 @@ class RoleDashboard extends StatelessWidget {
                 },
               );
               Navigator.pop(dialogContext);
-              // Clear app state and go to login
-              final AppState appState = context.read<AppState>();
-              appState.clear();
+              final AuthService authService = context.read<AuthService>();
+              await authService.signOut(source: 'role_dashboard');
               if (context.mounted) {
                 context.go('/welcome');
               }

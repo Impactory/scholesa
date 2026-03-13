@@ -6,13 +6,12 @@ import '../services/firestore_service.dart';
 import '../services/telemetry_service.dart';
 import 'app_state.dart';
 
-const String _defaultGoogleServerClientId =
-  String.fromEnvironment(
+const String _defaultGoogleServerClientId = String.fromEnvironment(
   'GOOGLE_SIGN_IN_SERVER_CLIENT_ID',
 );
 
 const String _googleAppleClientId =
-  String.fromEnvironment('GOOGLE_SIGN_IN_CLIENT_ID', defaultValue: '');
+    String.fromEnvironment('GOOGLE_SIGN_IN_CLIENT_ID', defaultValue: '');
 
 /// Service for handling Firebase authentication
 class AuthService {
@@ -118,7 +117,10 @@ class AuthService {
   }
 
   /// Sign out
-  Future<void> signOut() async {
+  Future<void> signOut({String source = 'unknown'}) async {
+    final String? roleName = _appState.role?.name;
+    final String? activeSiteId = _normalizedOrNull(_appState.activeSiteId);
+    final String? impersonatingRole = _appState.impersonatingRole?.name;
     // Sign out from Google if signed in with Google
     try {
       await _googleSignIn.signOut();
@@ -134,7 +136,16 @@ class AuthService {
       // Ignore errors clearing prefs
     }
     try {
-      await TelemetryService.instance.logEvent(event: 'auth.logout');
+      await TelemetryService.instance.logEvent(
+        event: 'auth.logout',
+        metadata: <String, dynamic>{
+          'source': source,
+          if (roleName != null) 'role': roleName,
+          if (activeSiteId != null) 'site_id': activeSiteId,
+          if (impersonatingRole != null)
+            'impersonating_role': impersonatingRole,
+        },
+      );
     } catch (_) {
       // Best-effort telemetry
     }
