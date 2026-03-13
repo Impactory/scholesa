@@ -6,6 +6,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/logout_audit_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 
 // ── Mocks ──────────────────────────────────────────────────
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -22,6 +24,8 @@ class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
 
 class MockGoogleSignInAuthentication extends Mock
   implements GoogleSignInAuthentication {}
+
+class MockLogoutAuditService extends Mock implements LogoutAuditService {}
 
 class FakeAuthCredential extends Fake implements AuthCredential {}
 
@@ -44,6 +48,7 @@ void main() {
   late MockGoogleSignIn mockGoogleSignIn;
   late MockGoogleSignInAccount mockGoogleAccount;
   late MockGoogleSignInAuthentication mockGoogleAuth;
+  late MockLogoutAuditService mockLogoutAuditService;
 
   setUp(() {
     mockAuth = MockFirebaseAuth();
@@ -54,6 +59,14 @@ void main() {
     mockGoogleSignIn = MockGoogleSignIn();
     mockGoogleAccount = MockGoogleSignInAccount();
     mockGoogleAuth = MockGoogleSignInAuthentication();
+    mockLogoutAuditService = MockLogoutAuditService();
+
+    when(() => mockLogoutAuditService.recordLogout(
+          source: any(named: 'source'),
+          role: any(named: 'role'),
+          siteId: any(named: 'siteId'),
+          impersonatingRole: any(named: 'impersonatingRole'),
+        )).thenAnswer((_) async {});
 
     authService = AuthService(
       auth: mockAuth,
@@ -61,6 +74,7 @@ void main() {
       appState: appState,
       googleSignIn: mockGoogleSignIn,
       googleSignInPlatformOverride: TargetPlatform.iOS,
+      logoutAuditService: mockLogoutAuditService,
     );
 
     // Common stubs
@@ -250,7 +264,7 @@ void main() {
 
     // ── signOut ───────────────────────────────────────────
     group('signOut', () {
-      test('signs out and clears AppState', () async {
+      test('emits logout telemetry before signing out', () async {
         appState.updateFromMeResponse(<String, dynamic>{
           'userId': 'uid-123',
           'email': 'test@example.com',
@@ -264,10 +278,68 @@ void main() {
 
         when(() => mockAuth.signOut()).thenAnswer((_) async {});
 
-        await authService.signOut();
+        final List<Map<String, dynamic>> telemetryPayloads =
+            <Map<String, dynamic>>[];
+
+        await TelemetryService.runWithDispatcher(
+          (Map<String, dynamic> payload) async {
+            telemetryPayloads.add(Map<String, dynamic>.from(payload));
+          },
+          () => authService.signOut(source: 'settings'),
+        );
+
+        expect(telemetryPayloads, hasLength(1));
+        expect(telemetryPayloads.single['event'], 'auth.logout');
+        expect(
+          telemetryPayloads.single['metadata'],
+          containsPair('source', 'settings'),
+        );
+        expect(
+          telemetryPayloads.single['metadata'],
+          containsPair('role', 'educator'),
+        );
+        expect(
+          telemetryPayloads.single['metadata'],
+          containsPair('site_id', 'site1'),
+        );
+        verifyInOrder(<dynamic Function()>[
+          () => mockLogoutAuditService.recordLogout(
+                source: 'settings',
+                role: 'educator',
+                siteId: 'site1',
+                impersonatingRole: null,
+              ),
+          () => mockAuth.signOut(),
+        ]);
 
         expect(appState.isAuthenticated, isFalse);
         expect(appState.userId, isNull);
+      });
+
+      test('records a durable logout audit before signing out', () async {
+        appState.updateFromMeResponse(<String, dynamic>{
+          'userId': 'uid-123',
+          'email': 'test@example.com',
+          'displayName': 'Test User',
+          'role': 'educator',
+          'activeSiteId': 'site1',
+          'siteIds': <String>['site1'],
+          'entitlements': <dynamic>[],
+        });
+
+        when(() => mockAuth.signOut()).thenAnswer((_) async {});
+
+        await TelemetryService.runWithDispatcher(
+          (_) async {},
+          () => authService.signOut(source: 'dashboard'),
+        );
+
+        verify(() => mockLogoutAuditService.recordLogout(
+              source: 'dashboard',
+              role: 'educator',
+              siteId: 'site1',
+              impersonatingRole: null,
+            )).called(1);
         verify(() => mockAuth.signOut()).called(1);
       });
     });

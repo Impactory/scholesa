@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
+import '../services/logout_audit_service.dart';
 import '../services/telemetry_service.dart';
 import 'app_state.dart';
 
@@ -23,13 +24,15 @@ class AuthService {
     String? googleClientId,
     String? googleServerClientId,
     TargetPlatform? googleSignInPlatformOverride,
+    LogoutAuditService? logoutAuditService,
   })  : _auth = auth,
         _firestoreService = firestoreService,
         _appState = appState,
         _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
         _googleClientId = googleClientId,
         _googleServerClientId = googleServerClientId,
-        _googleSignInPlatformOverride = googleSignInPlatformOverride;
+      _googleSignInPlatformOverride = googleSignInPlatformOverride,
+      _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
@@ -37,6 +40,7 @@ class AuthService {
   final String? _googleClientId;
   final String? _googleServerClientId;
   final TargetPlatform? _googleSignInPlatformOverride;
+  final LogoutAuditService _logoutAuditService;
   Future<void>? _googleInitialization;
 
   Future<void> _ensureGoogleInitialized() {
@@ -127,14 +131,6 @@ class AuthService {
     } catch (_) {
       // Ignore if not signed in with Google
     }
-    await _auth.signOut();
-    // Clear SharedPreferences (all keys)
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-    } catch (_) {
-      // Ignore errors clearing prefs
-    }
     try {
       await TelemetryService.instance.logEvent(
         event: 'auth.logout',
@@ -148,6 +144,24 @@ class AuthService {
       );
     } catch (_) {
       // Best-effort telemetry
+    }
+    try {
+      await _logoutAuditService.recordLogout(
+        source: source,
+        role: roleName,
+        siteId: activeSiteId,
+        impersonatingRole: impersonatingRole,
+      );
+    } catch (_) {
+      // Best-effort durable audit logging
+    }
+    await _auth.signOut();
+    // Clear SharedPreferences (all keys)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+    } catch (_) {
+      // Ignore errors clearing prefs
     }
     _appState.clear();
   }
