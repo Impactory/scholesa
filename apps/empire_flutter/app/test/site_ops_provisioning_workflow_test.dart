@@ -85,6 +85,9 @@ AppState _buildSiteState({String localeCode = 'en'}) {
 
 Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
   final DateTime now = DateTime.now();
+  final DateTime dayStart = DateTime(now.year, now.month, now.day);
+  final String dayKey =
+      '${dayStart.year}-${dayStart.month.toString().padLeft(2, '0')}-${dayStart.day.toString().padLeft(2, '0')}';
   await firestore.collection('checkins').doc('checkin-1').set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
@@ -122,6 +125,39 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'siteId': 'site-2',
     'action': 'Check-in',
     'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+  });
+  await firestore.collection('sessions').doc('session-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'title': 'Robotics Lab',
+    'educatorName': 'Coach Ada',
+    'room': 'Lab 2',
+    'learnerCount': 14,
+    'startTime': Timestamp.fromDate(
+      dayStart.add(const Duration(hours: 9, minutes: 30)),
+    ),
+  });
+  await firestore.collection('sessions').doc('session-2').set(<String, dynamic>{
+    'siteId': 'site-2',
+    'title': 'Ignore Other Site',
+    'educatorName': 'Coach Lin',
+    'room': 'Lab 9',
+    'learnerCount': 10,
+    'startTime': Timestamp.fromDate(dayStart.add(const Duration(hours: 11))),
+  });
+  await firestore.collection('siteOpsKitChecklist').doc('arrival-tablets').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'dayKey': dayKey,
+    'label': 'Tablets charged',
+    'completed': false,
+    'order': 1,
+    'note': 'Verify every learner device is above 70%',
+  });
+  await firestore.collection('siteSafetyNotes').doc('note-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'dayKey': dayKey,
+    'note': 'Guardian pickup change confirmed',
+    'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 20))),
+    'createdByName': 'Site Admin',
   });
 }
 
@@ -290,7 +326,50 @@ void main() {
       expect(find.text('Manual check-out recorded'), findsOneWidget);
       expect(find.text('New incident created'), findsOneWidget);
       expect(find.text('Roster viewed'), findsOneWidget);
+      expect(find.text('Today Timetable'), findsOneWidget);
+      expect(find.text('Robotics Lab'), findsOneWidget);
+      expect(find.text('Kit Checklist'), findsOneWidget);
+      expect(find.text('Tablets charged'), findsOneWidget);
+      expect(find.text('Safety Notes'), findsOneWidget);
+      expect(find.text('Guardian pickup change confirmed'), findsOneWidget);
       expect(find.text('No recent activity yet'), findsNothing);
+    });
+
+    testWidgets('site ops persists checklist toggles and safety notes for the active site',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedSiteOpsData(firestore);
+
+      await _pumpSiteOpsPage(tester, firestore: firestore);
+
+      await tester.tap(find.text('Tablets charged'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField),
+        'Learner allergy reminder shared with Coach Ada',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save Safety Note'));
+      await tester.pumpAndSettle();
+
+      final DocumentSnapshot<Map<String, dynamic>> checklistDoc =
+          await firestore.collection('siteOpsKitChecklist').doc('arrival-tablets').get();
+      expect(checklistDoc.exists, isTrue);
+      expect(checklistDoc.data()!['completed'], isTrue);
+
+      final QuerySnapshot<Map<String, dynamic>> notes = await firestore
+          .collection('siteSafetyNotes')
+          .where('siteId', isEqualTo: 'site-1')
+          .where(
+            'note',
+            isEqualTo: 'Learner allergy reminder shared with Coach Ada',
+          )
+          .get();
+      expect(notes.docs, isNotEmpty);
+      expect(
+        find.text('Learner allergy reminder shared with Coach Ada'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('provisioning delete confirmation renders zh-CN guardian link copy',
