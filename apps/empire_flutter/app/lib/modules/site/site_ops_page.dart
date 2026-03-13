@@ -775,10 +775,10 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       final List<_KitChecklistItem> checklist = checklistSnap.docs.isEmpty
           ? _defaultKitChecklist
           : checklistSnap.docs
-              .map((_doc) {
-                final Map<String, dynamic> data = _doc.data();
+              .map((doc) {
+                final Map<String, dynamic> data = doc.data();
                 return _KitChecklistItem(
-                  id: _doc.id,
+                  id: doc.id,
                   label: (data['label'] as String?) ?? 'Checklist item',
                   completed: data['completed'] == true,
                   order: (data['order'] as num?)?.toInt() ?? 0,
@@ -807,8 +807,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       if (!mounted) return;
 
       final List<_SafetyNoteEntry> safetyNotes = safetyNotesSnap.docs
-          .map((_doc) {
-            final Map<String, dynamic> data = _doc.data();
+          .map((doc) {
+            final Map<String, dynamic> data = doc.data();
             return _SafetyNoteEntry(
               note: (data['note'] as String?) ?? '',
               createdAt: _toDateTime(data['createdAt']) ?? dayStart,

@@ -854,10 +854,10 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   String _buildPrintablePracticePlan() {
     final List<String> tasks = _practiceTasksForLane(_selectedLane);
     return <String>[
-      _tEducatorLearners(context, 'Learner') + ': ${learner.name}',
-      _tEducatorLearners(context, 'Differentiation lane') + ': ${_laneLabel(_selectedLane)}',
-      _tEducatorLearners(context, 'Attendance') + ': ${learner.attendanceRate}%',
-      _tEducatorLearners(context, 'Missions') + ': ${learner.missionsCompleted}',
+      '${_tEducatorLearners(context, 'Learner')}: ${learner.name}',
+      '${_tEducatorLearners(context, 'Differentiation lane')}: ${_laneLabel(_selectedLane)}',
+      '${_tEducatorLearners(context, 'Attendance')}: ${learner.attendanceRate}%',
+      '${_tEducatorLearners(context, 'Missions')}: ${learner.missionsCompleted}',
       '',
       _tEducatorLearners(context, 'Practice focus'),
       _laneSummary(_selectedLane),

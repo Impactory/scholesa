@@ -25,6 +25,7 @@ import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
+import { ekfLiteUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
 import { hasSiteAccess, isCoppaConsentActive } from './coppaGuards';
 
 const db = admin.firestore();
@@ -668,52 +669,6 @@ async function extractFeatures(
 // ──────────────────────────────────────────────────────
 // §3  EKF-lite State Estimator
 // ──────────────────────────────────────────────────────
-
-interface StateEstimate {
-  x_hat: { cognition: number; engagement: number; integrity: number };
-  P: { diag: number[]; trace: number; confidence: number };
-}
-
-/**
- * EKF-lite: simplified Kalman update.
- * x_hat_{t+1} = α * x_hat_t + (1 − α) * y_t
- * P updated via simple decay.
- */
-function ekfLiteUpdate(
-  prior: StateEstimate | null,
-  observation: FeatureVector,
-  alpha: number = 0.7,
-): StateEstimate {
-  if (!prior) {
-    // Initialize from first observation
-    return {
-      x_hat: {
-        cognition: observation.cognition,
-        engagement: observation.engagement,
-        integrity: observation.integrity,
-      },
-      P: { diag: [0.25, 0.25, 0.25], trace: 0.75, confidence: 0.25 },
-    };
-  }
-
-  const x = prior.x_hat;
-  const y = observation;
-
-  const newCognition = clamp(alpha * x.cognition + (1 - alpha) * y.cognition);
-  const newEngagement = clamp(alpha * x.engagement + (1 - alpha) * y.engagement);
-  const newIntegrity = clamp(alpha * x.integrity + (1 - alpha) * y.integrity);
-
-  // Uncertainty shrinks with each observation
-  const decayFactor = 0.9;
-  const newDiag = prior.P.diag.map(d => Math.max(0.01, d * decayFactor));
-  const newTrace = newDiag.reduce((a, b) => a + b, 0);
-  const newConfidence = 1 - newTrace / 3;
-
-  return {
-    x_hat: { cognition: newCognition, engagement: newEngagement, integrity: newIntegrity },
-    P: { diag: newDiag, trace: newTrace, confidence: newConfidence },
-  };
-}
 
 // ──────────────────────────────────────────────────────
 // §4  Policy Engine — Autonomy-regularized control
@@ -2000,11 +1955,7 @@ export const bosGetClassInsights = onCall(
       };
     });
 
-    // Aggregate stats
-    const count = learners.length;
-    const avgCognition = count > 0 ? learners.reduce((s, l) => s + (l.x_hat?.cognition ?? 0.5), 0) / count : 0;
-    const avgEngagement = count > 0 ? learners.reduce((s, l) => s + (l.x_hat?.engagement ?? 0.5), 0) / count : 0;
-    const avgIntegrity = count > 0 ? learners.reduce((s, l) => s + (l.x_hat?.integrity ?? 0.5), 0) / count : 0;
+    const summary = summarizeClassInsights(learners);
 
     // Fetch active MVL episodes
     const activeMvls = await db.collection('mvlEpisodes')
@@ -2016,10 +1967,11 @@ export const bosGetClassInsights = onCall(
     return {
       sessionOccurrenceId,
       siteId,
-      learnerCount: count,
-      averages: { cognition: avgCognition, engagement: avgEngagement, integrity: avgIntegrity },
+      learnerCount: summary.learnerCount,
+      averages: summary.averages,
       activeMvlCount: activeMvls.size,
       learners,
+      watchlist: summary.watchlist,
     };
   }
 );
