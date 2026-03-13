@@ -23,12 +23,14 @@ class LearningRuntimeProvider extends ChangeNotifier {
     required this.learnerId,
     required this.gradeBand,
     this.sessionOccurrenceId,
-  });
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final String siteId;
   final String learnerId;
   final GradeBand gradeBand;
   final String? sessionOccurrenceId;
+  final FirebaseFirestore _firestore;
 
   // ── Live state ────────────────────────────
 
@@ -55,7 +57,7 @@ class LearningRuntimeProvider extends ChangeNotifier {
     if (sessionOccurrenceId == null) return;
 
     final String docId = '${learnerId}_$sessionOccurrenceId';
-    _stateSub = FirebaseFirestore.instance
+    _stateSub = _firestore
         .collection('orchestrationStates')
         .doc(docId)
         .snapshots()
@@ -70,7 +72,7 @@ class LearningRuntimeProvider extends ChangeNotifier {
   }
 
   void _listenActiveMvl() {
-    _mvlSub = FirebaseFirestore.instance
+    _mvlSub = _firestore
         .collection('mvlEpisodes')
         .where('learnerId', isEqualTo: learnerId)
         .where('siteId', isEqualTo: siteId)

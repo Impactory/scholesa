@@ -206,7 +206,9 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                     (insights['averages'] as Map<String, dynamic>?) ??
                         <String, dynamic>{};
                 final List<_ClassLearnerSignal> watchlist =
-                    _watchlistFromPayload(insights['learners']);
+                    _watchlistFromPayload(
+                      insights['watchlist'] ?? insights['learners'],
+                    );
 
                 String pct(dynamic value) {
                   final double numeric = (value as num?)?.toDouble() ?? 0;
