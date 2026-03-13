@@ -65,8 +65,8 @@ jobs:
     if: ${{ inputs.upload_to_testflight }}
     runs-on: macos-14
     env:
-      IOS_SIGNING_CERT_P12_BASE64: ${{ secrets['IOS_SIGNING_CERT_P12_BASE64'] }}
-      IOS_SIGNING_CERT_PASSWORD: ${{ secrets['IOS_SIGNING_CERT_PASSWORD'] }}
+      IOS_SIGNING_CERT_P12_BASE64: ${{ secrets.IOS_SIGNING_CERT_P12_BASE64 }}
+      IOS_SIGNING_CERT_PASSWORD: ${{ secrets.IOS_SIGNING_CERT_PASSWORD }}
       IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
     steps:
       - name: Checkout
