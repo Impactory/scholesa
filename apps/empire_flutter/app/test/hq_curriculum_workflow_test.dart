@@ -184,5 +184,46 @@ void main() {
       expect(missions.docs.first.data()['status'], 'review');
       expect(missions.docs.first.data()['rubricApplied'], true);
     });
+
+    testWidgets('curriculum create persists content authoring metadata',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(tester, firestore: firestore, appState: appState);
+
+      await tester.tap(find.text('New Curriculum'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Title'),
+        'Metadata Curriculum',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Description'),
+        'Curriculum metadata persistence coverage.',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Misconception tags'),
+        'fractions, sequencing',
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> missions =
+          await firestore.collection('missions').get();
+      expect(missions.docs.length, 1);
+      final Map<String, dynamic> data = missions.docs.first.data();
+      expect(data['description'], 'Curriculum metadata persistence coverage.');
+      expect(data['template'], 'Project sprint');
+      expect(data['difficulty'], 'Intermediate');
+      expect(data['mediaFormat'], 'Mixed media');
+      expect(data['approvalStatus'], 'draft');
+      expect(data['version'], '1.0');
+      expect(
+        data['misconceptionTags'],
+        <String>['fractions', 'sequencing'],
+      );
+    });
   });
 }

@@ -32,16 +32,28 @@ class _Curriculum {
   const _Curriculum({
     required this.id,
     required this.title,
+    required this.description,
     required this.pillar,
+    required this.template,
+    required this.difficulty,
+    required this.misconceptionTags,
+    required this.mediaFormat,
     required this.version,
+    required this.approvalStatus,
     required this.status,
     required this.lastUpdated,
   });
 
   final String id;
   final String title;
+  final String description;
   final String pillar;
+  final String template;
+  final String difficulty;
+  final List<String> misconceptionTags;
+  final String mediaFormat;
   final String version;
+  final String approvalStatus;
   final _CurriculumStatus status;
   final DateTime lastUpdated;
 }
@@ -74,6 +86,22 @@ class _TrainingCycle {
 
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
+  static const List<String> _templateOptions = <String>[
+    'Project sprint',
+    'Guided lab',
+    'Seminar',
+  ];
+  static const List<String> _difficultyOptions = <String>[
+    'Beginner',
+    'Intermediate',
+    'Advanced',
+  ];
+  static const List<String> _mediaFormatOptions = <String>[
+    'Mixed media',
+    'Video',
+    'Slide deck',
+    'Worksheet',
+  ];
   final WorkflowBridgeService _workflowBridgeService =
       WorkflowBridgeService.instance;
   late TabController _tabController;
@@ -235,6 +263,18 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                             style: TextStyle(
                                 fontSize: 12,
                                 color: _getPillarColor(curriculum.pillar))),
+                        if (curriculum.description.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text(
+                            curriculum.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -253,6 +293,23 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ],
               ),
               const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _buildInfoBadge(_tHqCurriculum(context, curriculum.template)),
+                  _buildInfoBadge(
+                    _tHqCurriculum(context, curriculum.difficulty),
+                  ),
+                  _buildInfoBadge(
+                    _tHqCurriculum(context, curriculum.mediaFormat),
+                  ),
+                  _buildInfoBadge(
+                    _tHqCurriculum(context, curriculum.approvalStatus),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
                 '${_tHqCurriculum(context, 'Updated')} ${_formatTime(curriculum.lastUpdated)}',
                 style: const TextStyle(
@@ -260,6 +317,25 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ScholesaColors.border),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          color: ScholesaColors.textSecondary,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -344,8 +420,56 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   _tHqCurriculum(context, 'Status'),
                   _tHqCurriculum(context, curriculum.status.name)
                       .toUpperCase()),
+              _buildDetailRow(_tHqCurriculum(context, 'Template'),
+                  _tHqCurriculum(context, curriculum.template)),
+              _buildDetailRow(_tHqCurriculum(context, 'Difficulty'),
+                  _tHqCurriculum(context, curriculum.difficulty)),
+              _buildDetailRow(_tHqCurriculum(context, 'Media format'),
+                  _tHqCurriculum(context, curriculum.mediaFormat)),
+              _buildDetailRow(_tHqCurriculum(context, 'Approval status'),
+                  _tHqCurriculum(context, curriculum.approvalStatus)),
               _buildDetailRow(_tHqCurriculum(context, 'Updated'),
                   _formatTime(curriculum.lastUpdated)),
+              if (curriculum.description.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 12),
+                Text(
+                  _tHqCurriculum(context, 'Description'),
+                  style: const TextStyle(
+                    color: ScholesaColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  curriculum.description,
+                  style: const TextStyle(color: ScholesaColors.textPrimary),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                _tHqCurriculum(context, 'Misconception tags'),
+                style: const TextStyle(
+                  color: ScholesaColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: curriculum.misconceptionTags.isEmpty
+                    ? <Widget>[
+                        Text(
+                          _tHqCurriculum(context, 'No misconception tags'),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                          ),
+                        ),
+                      ]
+                    : curriculum.misconceptionTags
+                        .map((String tag) => _buildInfoBadge(tag))
+                        .toList(),
+              ),
               const SizedBox(height: 24),
               Row(
                 children: <Widget>[
@@ -549,6 +673,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       final Map<String, dynamic> updates = <String, dynamic>{
         'status': targetStatus.name,
         'published': isPublishing,
+        'approvalStatus': isPublishing ? 'approved' : 'in_review',
       };
 
       if (targetStatus == _CurriculumStatus.review) {
@@ -565,6 +690,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
       _replaceLocalCurriculum(
         curriculum.id,
+        approvalStatus: isPublishing ? 'approved' : 'in_review',
         status: targetStatus,
         lastUpdated: now,
       );
@@ -597,7 +723,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   void _showEditDialog(_Curriculum curriculum) {
     final TextEditingController titleController =
         TextEditingController(text: curriculum.title);
+    final TextEditingController descriptionController =
+      TextEditingController(text: curriculum.description);
+    final TextEditingController misconceptionTagsController =
+      TextEditingController(text: curriculum.misconceptionTags.join(', '));
     String selectedPillar = curriculum.pillar;
+    String selectedTemplate = curriculum.template;
+    String selectedDifficulty = curriculum.difficulty;
+    String selectedMediaFormat = curriculum.mediaFormat;
     bool isSubmitting = false;
 
     showDialog<void>(
@@ -624,6 +757,31 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: InputDecoration(
                     labelText: _tHqCurriculum(context, 'Title'),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
+                    border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(context, 'Description'),
                     labelStyle:
                         const TextStyle(color: ScholesaColors.textSecondary),
                     filled: true,
@@ -684,6 +842,64 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     }
                   },
                 ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedTemplate,
+                  decoration: _dialogDecoration(context, 'Template'),
+                  items: _templateOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedTemplate = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedDifficulty,
+                  decoration: _dialogDecoration(context, 'Difficulty'),
+                  items: _difficultyOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedDifficulty = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedMediaFormat,
+                  decoration: _dialogDecoration(context, 'Media format'),
+                  items: _mediaFormatOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedMediaFormat = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: misconceptionTagsController,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration:
+                      _dialogDecoration(context, 'Misconception tags'),
+                ),
               ],
             ),
             actions: <Widget>[
@@ -717,7 +933,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                         final bool updated = await _updateCurriculum(
                           curriculum,
                           title: title,
+                          description: descriptionController.text.trim(),
                           pillar: selectedPillar,
+                          template: selectedTemplate,
+                          difficulty: selectedDifficulty,
+                          misconceptionTags: _splitCommaSeparated(
+                            misconceptionTagsController.text,
+                          ),
+                          mediaFormat: selectedMediaFormat,
                         );
                         if (!mounted || !dialogContext.mounted) return;
                         if (updated) {
@@ -764,9 +987,39 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     );
   }
 
+  InputDecoration _dialogDecoration(BuildContext context, String label) {
+    return InputDecoration(
+      labelText: _tHqCurriculum(context, label),
+      labelStyle: const TextStyle(color: ScholesaColors.textSecondary),
+      filled: true,
+      fillColor: ScholesaColors.surfaceVariant,
+      border: const OutlineInputBorder(),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: ScholesaColors.border),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: ScholesaColors.primary, width: 1.5),
+      ),
+    );
+  }
+
+  List<String> _splitCommaSeparated(String raw) {
+    return raw
+        .split(',')
+        .map((String entry) => entry.trim())
+        .where((String entry) => entry.isNotEmpty)
+        .toList();
+  }
+
   void _showCreateDialog() {
     final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    final TextEditingController misconceptionTagsController =
+        TextEditingController();
     String selectedPillar = 'Future Skills';
+    String selectedTemplate = _templateOptions.first;
+    String selectedDifficulty = _difficultyOptions[1];
+    String selectedMediaFormat = _mediaFormatOptions.first;
     bool isSubmitting = false;
 
     showDialog<void>(
@@ -806,6 +1059,17 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: _dialogDecoration(context, 'Description'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -852,6 +1116,64 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       setLocalState(() => selectedPillar = value);
                     }
                   },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedTemplate,
+                  decoration: _dialogDecoration(context, 'Template'),
+                  items: _templateOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedTemplate = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedDifficulty,
+                  decoration: _dialogDecoration(context, 'Difficulty'),
+                  items: _difficultyOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedDifficulty = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedMediaFormat,
+                  decoration: _dialogDecoration(context, 'Media format'),
+                  items: _mediaFormatOptions
+                      .map((String option) => DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(_tHqCurriculum(context, option)),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedMediaFormat = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: misconceptionTagsController,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration:
+                      _dialogDecoration(context, 'Misconception tags'),
                 ),
               ],
             ),
@@ -911,7 +1233,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
                         final bool created = await _createCurriculum(
                           title: title,
+                          description: descriptionController.text.trim(),
                           pillar: selectedPillar,
+                          template: selectedTemplate,
+                          difficulty: selectedDifficulty,
+                          misconceptionTags: _splitCommaSeparated(
+                            misconceptionTagsController.text,
+                          ),
+                          mediaFormat: selectedMediaFormat,
                         );
 
                         if (!mounted || !dialogContext.mounted) return;
@@ -1265,8 +1594,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         return _Curriculum(
           id: doc.id,
           title: title,
+          description: (data['description'] as String? ?? '').trim(),
           pillar: _pillarFromData(data),
+          template: (data['template'] as String? ?? 'Project sprint').trim(),
+          difficulty: (data['difficulty'] as String? ?? 'Intermediate').trim(),
+          misconceptionTags: _parseStringList(data['misconceptionTags']),
+          mediaFormat:
+              (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
           version: (data['version'] as String?) ?? '1.0',
+          approvalStatus:
+              (data['approvalStatus'] as String? ?? 'draft').trim(),
           status: _parseCurriculumStatus(data['status'] as String?),
           lastUpdated: lastUpdated,
         );
@@ -1322,7 +1659,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
   Future<bool> _createCurriculum({
     required String title,
+    required String description,
     required String pillar,
+    required String template,
+    required String difficulty,
+    required List<String> misconceptionTags,
+    required String mediaFormat,
   }) async {
     final AppState? appState = _maybeAppState();
     final FirestoreService? firestoreService = _maybeFirestoreService();
@@ -1344,10 +1686,15 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         'missions',
         <String, dynamic>{
           'title': title,
-          'description': title,
+          'description': description,
           'pillar': pillar,
           'pillarCode': pillarCode,
           'pillarCodes': <String>[pillarCode],
+          'template': template,
+          'difficulty': difficulty,
+          'misconceptionTags': misconceptionTags,
+          'mediaFormat': mediaFormat,
+          'approvalStatus': 'draft',
           'siteId': activeSiteId,
           'createdBy': actorId,
           'createdByRole': actorRole,
@@ -1361,8 +1708,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       final _Curriculum created = _Curriculum(
         id: createdId,
         title: title,
+        description: description,
         pillar: pillar,
+        template: template,
+        difficulty: difficulty,
+        misconceptionTags: misconceptionTags,
+        mediaFormat: mediaFormat,
         version: '1.0',
+        approvalStatus: 'draft',
         status: _CurriculumStatus.draft,
         lastUpdated: DateTime.now(),
       );
@@ -1391,7 +1744,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   Future<bool> _updateCurriculum(
     _Curriculum curriculum, {
     required String title,
+    required String description,
     required String pillar,
+    required String template,
+    required String difficulty,
+    required List<String> misconceptionTags,
+    required String mediaFormat,
   }) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     if (firestoreService == null) {
@@ -1407,16 +1765,25 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       await firestoreService
           .updateDocument('missions', curriculum.id, <String, dynamic>{
         'title': title,
-        'description': title,
+        'description': description,
         'pillar': pillar,
         'pillarCode': pillarCode,
         'pillarCodes': <String>[pillarCode],
+        'template': template,
+        'difficulty': difficulty,
+        'misconceptionTags': misconceptionTags,
+        'mediaFormat': mediaFormat,
       });
 
       _replaceLocalCurriculum(
         curriculum.id,
         title: title,
+        description: description,
         pillar: pillar,
+        template: template,
+        difficulty: difficulty,
+        misconceptionTags: misconceptionTags,
+        mediaFormat: mediaFormat,
         lastUpdated: DateTime.now(),
       );
 
@@ -1798,8 +2165,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   void _replaceLocalCurriculum(
     String id, {
     String? title,
+    String? description,
     String? pillar,
+    String? template,
+    String? difficulty,
+    List<String>? misconceptionTags,
+    String? mediaFormat,
     String? version,
+    String? approvalStatus,
     _CurriculumStatus? status,
     DateTime? lastUpdated,
   }) {
@@ -1810,8 +2183,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         return _Curriculum(
           id: entry.id,
           title: title ?? entry.title,
+          description: description ?? entry.description,
           pillar: pillar ?? entry.pillar,
+          template: template ?? entry.template,
+          difficulty: difficulty ?? entry.difficulty,
+          misconceptionTags: misconceptionTags ?? entry.misconceptionTags,
+          mediaFormat: mediaFormat ?? entry.mediaFormat,
           version: version ?? entry.version,
+          approvalStatus: approvalStatus ?? entry.approvalStatus,
           status: status ?? entry.status,
           lastUpdated: lastUpdated ?? entry.lastUpdated,
         );
@@ -1848,6 +2227,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       return _pillarLabelFromCode(pillarCodes.first.toString());
     }
     return 'Future Skills';
+  }
+
+  List<String> _parseStringList(dynamic value) {
+    return List<String>.from(value as List<dynamic>? ?? const <String>[])
+        .map((String entry) => entry.trim())
+        .where((String entry) => entry.isNotEmpty)
+        .toList();
   }
 
   String _pillarLabelFromCode(String raw) {
