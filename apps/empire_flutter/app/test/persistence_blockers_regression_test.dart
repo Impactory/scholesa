@@ -146,6 +146,119 @@ void main() {
     });
 
     test(
+        'mission service persists educator grading with ai feedback and rubric support',
+        () async {
+      final MissionService service = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-1',
+      );
+
+      await firestore.collection('missionAssignments').doc('assignment-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'completed',
+          'progress': 1.0,
+        },
+      );
+
+      await firestore.collection('missionAttempts').doc('attempt-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'submitted',
+        },
+      );
+
+      await firestore.collection('missionSubmissions').doc('submission-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'pending',
+          'submittedAt': Timestamp.now(),
+          'submissionText': 'Prototype upload with reflection notes.',
+        },
+      );
+
+      final bool reviewed = await service.submitReview(
+        submissionId: 'submission-1',
+        rating: 4,
+        feedback:
+            'Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
+        reviewerId: 'educator-9',
+        status: 'approved',
+        aiFeedbackDraft:
+            'Great iteration. Add a clearer evidence trail and explain the tradeoffs in your next revision.',
+        rubricId: 'rubric-1',
+        rubricTitle: 'Prototype Rubric',
+        rubricScores: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'criterionId': 'evidence',
+            'label': 'Evidence',
+            'score': 4,
+            'maxScore': 4,
+          },
+          <String, dynamic>{
+            'criterionId': 'reflection',
+            'label': 'Reflection',
+            'score': 3,
+            'maxScore': 4,
+          },
+        ],
+      );
+
+      expect(reviewed, isTrue);
+
+      final DocumentSnapshot<Map<String, dynamic>> submissionDoc =
+          await firestore
+              .collection('missionSubmissions')
+              .doc('submission-1')
+              .get();
+      expect(submissionDoc.data()?['status'], 'approved');
+      expect(submissionDoc.data()?['rating'], 4);
+      expect(submissionDoc.data()?['rubricId'], 'rubric-1');
+      expect(submissionDoc.data()?['rubricTitle'], 'Prototype Rubric');
+      expect(submissionDoc.data()?['rubricTotalScore'], 7);
+      expect(submissionDoc.data()?['rubricMaxScore'], 8);
+      expect(submissionDoc.data()?['aiFeedbackDraft'], contains('evidence trail'));
+      expect(submissionDoc.data()?['aiFeedbackEdited'], isTrue);
+
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
+          await firestore
+              .collection('missionAssignments')
+              .doc('assignment-1')
+              .get();
+      expect(assignmentDoc.data()?['reviewStatus'], 'approved');
+      expect(assignmentDoc.data()?['lastSubmissionId'], 'submission-1');
+      expect(assignmentDoc.data()?['gradedBy'], 'educator-9');
+      expect(assignmentDoc.data()?['rubricTotalScore'], 7);
+
+      final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
+          .collection('missionAttempts')
+          .doc('attempt-1')
+          .get();
+      expect(attemptDoc.data()?['reviewStatus'], 'approved');
+      expect(attemptDoc.data()?['rubricId'], 'rubric-1');
+      expect(attemptDoc.data()?['aiFeedbackEdited'], isTrue);
+
+      final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
+          await firestore
+              .collection('rubricApplications')
+              .doc('submission-1')
+              .get();
+      expect(rubricApplicationDoc.exists, isTrue);
+      expect(rubricApplicationDoc.data()?['missionAttemptId'], 'submission-1');
+      expect(rubricApplicationDoc.data()?['rubricId'], 'rubric-1');
+      expect(
+        (rubricApplicationDoc.data()?['scores'] as List?)?.length,
+        2,
+      );
+    });
+
+    test(
         'mission service persists study flow controls and emits learner telemetry',
         () async {
       final MissionService service = MissionService(

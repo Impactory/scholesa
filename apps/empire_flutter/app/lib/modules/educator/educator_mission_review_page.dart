@@ -665,12 +665,163 @@ class _ReviewSheet extends StatefulWidget {
 
 class _ReviewSheetState extends State<_ReviewSheet> {
   final TextEditingController _feedbackController = TextEditingController();
+  String? _aiFeedbackDraft;
   int _rating = 0;
+  late final Map<String, int> _rubricScores;
+
+  @override
+  void initState() {
+    super.initState();
+    _rating = widget.submission.rating ?? 0;
+    _feedbackController.text = widget.submission.feedback ?? '';
+    _aiFeedbackDraft = widget.submission.aiFeedbackDraft;
+    _rubricScores = <String, int>{
+      for (final Map<String, dynamic> criterion in widget.submission.rubricCriteria)
+        _criterionId(criterion): _existingScoreForCriterion(criterion),
+    };
+  }
 
   @override
   void dispose() {
     _feedbackController.dispose();
     super.dispose();
+  }
+
+  int _existingScoreForCriterion(Map<String, dynamic> criterion) {
+    final String criterionId = _criterionId(criterion);
+    for (final Map<String, dynamic> score in widget.submission.rubricScores) {
+      if ((score['criterionId'] as String? ?? '') == criterionId) {
+        return (score['score'] as num?)?.toInt() ?? 0;
+      }
+    }
+    return 0;
+  }
+
+  String _criterionId(Map<String, dynamic> criterion) {
+    return criterion['id'] as String? ?? criterion['label'] as String? ?? 'criterion';
+  }
+
+  int _criterionMaxScore(Map<String, dynamic> criterion) {
+    final List<int> levels = ((criterion['levels'] as List<dynamic>?)
+            ?.map((dynamic value) => (value as num).toInt())
+            .toList()) ??
+        const <int>[];
+    if (levels.isEmpty) {
+      return 4;
+    }
+    return levels.reduce((int left, int right) => left > right ? left : right);
+  }
+
+  String _pillarLabel(String pillarCode) {
+    switch (pillarCode) {
+      case 'leadership':
+        return _tEducatorMissionReview(context, 'Leadership');
+      case 'impact':
+        return _tEducatorMissionReview(context, 'Impact');
+      default:
+        return _tEducatorMissionReview(context, 'Future Skills');
+    }
+  }
+
+  String _buildAiDraft() {
+    final int effectiveRating = _rating == 0 ? 4 : _rating;
+    final String tone = effectiveRating >= 4
+        ? _tEducatorMissionReview(context, 'Strong progress')
+        : effectiveRating == 3
+            ? _tEducatorMissionReview(context, 'Solid progress')
+            : _tEducatorMissionReview(context, 'Growth opportunity');
+    final String nextStep = effectiveRating >= 4
+        ? _tEducatorMissionReview(context,
+            'Next, push the learner to explain their choices and extend the work independently.')
+        : _tEducatorMissionReview(context,
+            'Next, ask the learner to revise one concrete part and explain the change back to you.');
+    return '${widget.submission.learnerName} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${widget.submission.missionTitle}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
+  }
+
+  List<Map<String, dynamic>> _selectedRubricScores() {
+    return widget.submission.rubricCriteria.map((Map<String, dynamic> criterion) {
+      final String criterionId = _criterionId(criterion);
+      final int maxScore = _criterionMaxScore(criterion);
+      return <String, dynamic>{
+        'criterionId': criterionId,
+        'label': criterion['label'] as String? ?? criterionId,
+        'pillarCode': criterion['pillarCode'] as String? ?? widget.submission.pillar,
+        'score': (_rubricScores[criterionId] ?? 0).clamp(0, maxScore),
+        'maxScore': maxScore,
+      };
+    }).toList();
+  }
+
+  Future<void> _submitReview(
+    BuildContext context, {
+    required String status,
+    required int fallbackRating,
+    required String outcome,
+    required String successMessage,
+    required Color successColor,
+  }) async {
+    final MissionService missionService = context.read<MissionService>();
+    final String reviewerId =
+        FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+    final int effectiveRating = _rating == 0 ? fallbackRating : _rating;
+    final List<Map<String, dynamic>> rubricScores = _selectedRubricScores();
+    final bool success = await missionService.submitReview(
+      submissionId: widget.submission.id,
+      rating: effectiveRating,
+      feedback: _feedbackController.text.trim(),
+      reviewerId: reviewerId,
+      status: status,
+      aiFeedbackDraft: _aiFeedbackDraft,
+      rubricId: widget.submission.rubricId,
+      rubricTitle: widget.submission.rubricTitle,
+      rubricScores: rubricScores,
+    );
+    if (!success || !context.mounted) {
+      return;
+    }
+    if (_aiFeedbackDraft != null && _aiFeedbackDraft!.isNotEmpty) {
+      TelemetryService.instance.logEvent(
+        event: 'ai_coach_feedback',
+        metadata: <String, dynamic>{
+          'submission_id': widget.submission.id,
+          'mission_id': widget.submission.missionId,
+          'edited': _aiFeedbackDraft != _feedbackController.text.trim(),
+          'draft_length': _aiFeedbackDraft!.length,
+          'final_length': _feedbackController.text.trim().length,
+        },
+      );
+    }
+    TelemetryService.instance.logEvent(
+      event: 'checkpoint_graded',
+      metadata: <String, dynamic>{
+        'submission_id': widget.submission.id,
+        'mission_id': widget.submission.missionId,
+        'rating': effectiveRating,
+        'rubric_id': widget.submission.rubricId,
+        'rubric_criteria_count': rubricScores.length,
+        'outcome': outcome,
+      },
+    );
+    TelemetryService.instance.logEvent(
+      event: 'educator.review.completed',
+      metadata: <String, dynamic>{
+        'submission_id': widget.submission.id,
+        'mission_id': widget.submission.missionId,
+        'outcome': outcome,
+        'rating': effectiveRating,
+        'feedback_length': _feedbackController.text.trim().length,
+        'turnaround_minutes': DateTime.now()
+            .difference(widget.submission.submittedAt)
+            .inMinutes,
+      },
+    );
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_tEducatorMissionReview(context, successMessage)),
+        backgroundColor: successColor,
+      ),
+    );
   }
 
   @override
@@ -790,6 +941,79 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
+                  Row(
+                    children: <Widget>[
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          final String draft = _buildAiDraft();
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta': 'educator_mission_review_generate_ai_feedback',
+                              'submission_id': widget.submission.id,
+                            },
+                          );
+                          setState(() {
+                            _aiFeedbackDraft = draft;
+                            _feedbackController.text = draft;
+                            _feedbackController.selection =
+                                TextSelection.collapsed(
+                              offset: _feedbackController.text.length,
+                            );
+                          });
+                        },
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                        label: Text(
+                          _tEducatorMissionReview(context, 'Generate AI draft'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _tEducatorMissionReview(
+                            context,
+                            'Generate a coach draft, then edit before sending.',
+                          ),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_aiFeedbackDraft != null && _aiFeedbackDraft!.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: ScholesaColors.educator.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: ScholesaColors.educator.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tEducatorMissionReview(context, 'AI draft saved'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: ScholesaColors.educator,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _aiFeedbackDraft!,
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
                   TextField(
                     controller: _feedbackController,
                     maxLines: 4,
@@ -808,6 +1032,56 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       ),
                     ),
                   ),
+                  if (widget.submission.hasRubric) ...<Widget>[
+                    const SizedBox(height: 24),
+                    Text(
+                      _tEducatorMissionReview(context, 'Rubric'),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    if (widget.submission.rubricTitle != null &&
+                        widget.submission.rubricTitle!.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.submission.rubricTitle!,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    ...widget.submission.rubricCriteria.map((Map<String, dynamic> criterion) {
+                      final String criterionId = _criterionId(criterion);
+                      final int maxScore = _criterionMaxScore(criterion);
+                      final String label =
+                          criterion['label'] as String? ?? criterionId;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              label,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: List<Widget>.generate(
+                                maxScore + 1,
+                                (int score) => ChoiceChip(
+                                  label: Text('$score/$maxScore'),
+                                  selected:
+                                      (_rubricScores[criterionId] ?? 0) == score,
+                                  onSelected: (_) {
+                                    setState(() => _rubricScores[criterionId] = score);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
                   const SizedBox(height: 24),
                   Row(
                     children: <Widget>[
@@ -822,43 +1096,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                                 'submission_id': widget.submission.id,
                               },
                             );
-                            final MissionService missionService =
-                                context.read<MissionService>();
-                            final String reviewerId =
-                                FirebaseAuth.instance.currentUser?.uid ??
-                                    'unknown';
-                            final bool success =
-                                await missionService.submitReview(
-                              submissionId: widget.submission.id,
-                              rating: _rating == 0 ? 3 : _rating,
-                              feedback: _feedbackController.text.trim(),
-                              reviewerId: reviewerId,
+                            await _submitReview(
+                              context,
                               status: 'revision',
-                            );
-                            if (!success || !context.mounted) {
-                              return;
-                            }
-                            TelemetryService.instance.logEvent(
-                              event: 'educator.review.completed',
-                              metadata: <String, dynamic>{
-                                'submission_id': widget.submission.id,
-                                'mission_id': widget.submission.missionId,
-                                'outcome': 'revision',
-                                'rating': _rating == 0 ? 3 : _rating,
-                                'feedback_length':
-                                    _feedbackController.text.trim().length,
-                                'turnaround_minutes': DateTime.now()
-                                    .difference(widget.submission.submittedAt)
-                                    .inMinutes,
-                              },
-                            );
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_tEducatorMissionReview(
-                                    context, 'Revision requested')),
-                                backgroundColor: ScholesaColors.warning,
-                              ),
+                              fallbackRating: 3,
+                              outcome: 'revision',
+                              successMessage: 'Revision requested',
+                              successColor: ScholesaColors.warning,
                             );
                           },
                           style: OutlinedButton.styleFrom(
@@ -885,43 +1129,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                                 'submission_id': widget.submission.id,
                               },
                             );
-                            final MissionService missionService =
-                                context.read<MissionService>();
-                            final String reviewerId =
-                                FirebaseAuth.instance.currentUser?.uid ??
-                                    'unknown';
-                            final bool success =
-                                await missionService.submitReview(
-                              submissionId: widget.submission.id,
-                              rating: _rating == 0 ? 5 : _rating,
-                              feedback: _feedbackController.text.trim(),
-                              reviewerId: reviewerId,
+                            await _submitReview(
+                              context,
                               status: 'approved',
-                            );
-                            if (!success || !context.mounted) {
-                              return;
-                            }
-                            TelemetryService.instance.logEvent(
-                              event: 'educator.review.completed',
-                              metadata: <String, dynamic>{
-                                'submission_id': widget.submission.id,
-                                'mission_id': widget.submission.missionId,
-                                'outcome': 'approved',
-                                'rating': _rating == 0 ? 5 : _rating,
-                                'feedback_length':
-                                    _feedbackController.text.trim().length,
-                                'turnaround_minutes': DateTime.now()
-                                    .difference(widget.submission.submittedAt)
-                                    .inMinutes,
-                              },
-                            );
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_tEducatorMissionReview(
-                                    context, 'Mission approved!')),
-                                backgroundColor: ScholesaColors.success,
-                              ),
+                              fallbackRating: 5,
+                              outcome: 'approved',
+                              successMessage: 'Mission approved!',
+                              successColor: ScholesaColors.success,
                             );
                           },
                           style: ElevatedButton.styleFrom(

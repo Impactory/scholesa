@@ -166,7 +166,20 @@ class WorkflowSurfaceI18n {
     'Needs Revision': '需要修改',
     'Approved': '已批准',
     'Feedback': '反馈',
+    'Rubric': '评分量规',
     'Approve': '批准',
+    'Generate AI draft': '生成 AI 草稿',
+    'Generate a coach draft, then edit before sending.': '先生成教练反馈草稿，再编辑后发送。',
+    'AI draft saved': 'AI 草稿已保存',
+    'Strong progress': '进展很强',
+    'Solid progress': '进展扎实',
+    'Growth opportunity': '仍有提升空间',
+    'Reference specific evidence from the submission and keep the next step concrete.':
+      '请引用提交中的具体证据，并让下一步建议保持明确具体。',
+    'Next, push the learner to explain their choices and extend the work independently.':
+      '下一步，让学习者解释自己的选择，并独立扩展这份作品。',
+    'Next, ask the learner to revise one concrete part and explain the change back to you.':
+      '下一步，让学习者修改一个具体部分，并向你复述修改原因。',
     'New Invoice': '新建发票',
     'Billing Management': '账单管理',
     'All Sites': '所有站点',
@@ -424,6 +437,19 @@ class WorkflowSurfaceI18n {
     'Delete step': '刪除步驟',
     'Add at least one lesson step': '至少新增一個課程步驟',
     'Mission Review': '任務審查',
+    'Rubric': '評分量規',
+    'Generate AI draft': '產生 AI 草稿',
+    'Generate a coach draft, then edit before sending.': '先產生教練回饋草稿，再編輯後送出。',
+    'AI draft saved': 'AI 草稿已儲存',
+    'Strong progress': '進展很強',
+    'Solid progress': '進展穩定',
+    'Growth opportunity': '仍有成長空間',
+    'Reference specific evidence from the submission and keep the next step concrete.':
+      '請引用提交內容中的具體證據，並讓下一步建議保持明確。',
+    'Next, push the learner to explain their choices and extend the work independently.':
+      '下一步，讓學習者說明自己的選擇，並獨立延伸這份作品。',
+    'Next, ask the learner to revise one concrete part and explain the change back to you.':
+      '下一步，請學習者修改一個具體部分，並向你說明改動原因。',
     'New Invoice': '新建發票',
     'Billing Management': '帳務管理',
     'All Sites': '所有站點',
