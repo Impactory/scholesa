@@ -49,12 +49,14 @@ describe('logoutAudit', () => {
       siteId: 'site-9',
       source: 'dashboard',
     });
+    const writes =
+      mockSet.mock.calls as unknown as Array<[Record<string, unknown>]>;
 
     expect(id).toBe('audit-123');
     expect(mockCollection).toHaveBeenCalledWith('auditLogs');
     expect(mockDoc).toHaveBeenCalledTimes(1);
     expect(mockSet).toHaveBeenCalledTimes(1);
-    expect(mockSet.mock.calls[0][0]).toMatchObject({
+    expect(writes[0][0]).toMatchObject({
       actorId: 'user-2',
       actorRole: 'hq',
       action: 'auth.logout',
