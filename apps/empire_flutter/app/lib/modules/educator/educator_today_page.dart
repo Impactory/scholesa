@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -485,39 +487,71 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: <String, dynamic>{
-                    'cta': 'educator_today_manage_attendance_current_class',
-                    'class_id': currentClass.id,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'educator_today_manage_attendance_current_class',
+                        'class_id': currentClass.id,
+                      },
+                    );
+                    context.push('/educator/attendance');
                   },
-                );
-                context.push('/educator/attendance');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.schSurface,
-                foregroundColor: ScholesaColors.educator,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.schSurface,
+                    foregroundColor: ScholesaColors.educator,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Icon(Icons.how_to_reg, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        _tEducatorToday(context, 'Manage Attendance'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Icon(Icons.how_to_reg, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _tEducatorToday(context, 'Manage Attendance'),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _openLiveSessionMode(currentClass, service),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Icon(Icons.podcasts_outlined, size: 20),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          _tEducatorToday(context, 'Live Session Mode'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -564,6 +598,31 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) =>
           _ClassDetailSheet(todayClass: todayClass),
+    );
+  }
+
+  void _openLiveSessionMode(TodayClass todayClass, EducatorService service) {
+    final Map<String, String> learnerNamesById = <String, String>{
+      for (final EducatorLearner learner in service.learners)
+        learner.id: learner.name,
+    };
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'educator_today_open_live_session_mode',
+        'class_id': todayClass.id,
+      },
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext bottomSheetContext) => _LiveSessionModeSheet(
+        todayClass: todayClass,
+        siteId: _siteIdForInsights(service),
+        learnerNamesById: learnerNamesById,
+        classInsightsLoader: widget.classInsightsLoader,
+      ),
     );
   }
 
@@ -1229,6 +1288,450 @@ class _ClassDetailSheet extends StatelessWidget {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+}
+
+class _LiveSessionModeSheet extends StatefulWidget {
+  const _LiveSessionModeSheet({
+    required this.todayClass,
+    required this.siteId,
+    required this.learnerNamesById,
+    this.classInsightsLoader,
+  });
+
+  final TodayClass todayClass;
+  final String? siteId;
+  final Map<String, String> learnerNamesById;
+  final BosClassInsightsLoader? classInsightsLoader;
+
+  @override
+  State<_LiveSessionModeSheet> createState() => _LiveSessionModeSheetState();
+}
+
+class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
+  final TextEditingController _pollController = TextEditingController(
+    text: 'How confident are you with this step?',
+  );
+  final TextEditingController _exitTicketController = TextEditingController(
+    text: 'What is one thing you can now explain without help?',
+  );
+  String _pacingMode = 'steady';
+  String? _selectedColdCallLearnerId;
+  bool _isSaving = false;
+  List<String> _misconceptionAlerts = const <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedColdCallLearnerId = widget.learnerNamesById.keys.firstOrNull;
+    _loadMisconceptionAlerts();
+  }
+
+  @override
+  void dispose() {
+    _pollController.dispose();
+    _exitTicketController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMisconceptionAlerts() async {
+    final String? occurrenceId = widget.todayClass.id.trim().isEmpty
+        ? null
+        : widget.todayClass.id.trim();
+    final String? siteId = widget.siteId?.trim();
+    if (widget.classInsightsLoader == null ||
+        occurrenceId == null ||
+        siteId == null ||
+        siteId.isEmpty) {
+      return;
+    }
+
+    try {
+      final Map<String, dynamic> insights = await widget.classInsightsLoader!(
+        sessionOccurrenceId: occurrenceId,
+        siteId: siteId,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _misconceptionAlerts = _extractMisconceptionAlerts(insights);
+      });
+    } catch (_) {}
+  }
+
+  List<String> _extractMisconceptionAlerts(Map<String, dynamic> insights) {
+    final Set<String> alerts = <String>{};
+    final List<dynamic> learners = insights['learners'] as List<dynamic>? ??
+        const <dynamic>[];
+    for (final dynamic entry in learners) {
+      if (entry is! Map) {
+        continue;
+      }
+      final Map<String, dynamic> learner =
+          Map<String, dynamic>.from(entry);
+      final String learnerName = widget.learnerNamesById[
+              learner['learnerId'] as String? ?? ''] ??
+          learner['learnerId'] as String? ??
+          _tEducatorToday(context, 'Learner');
+      final List<String> tags = (learner['misconceptionTags'] as List?)
+              ?.whereType<String>()
+              .map((String value) => value.trim())
+              .where((String value) => value.isNotEmpty)
+              .toList() ??
+          const <String>[];
+      for (final String tag in tags) {
+        alerts.add('$learnerName: $tag');
+      }
+      final Map<String, dynamic> state =
+          (learner['x_hat'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+      final double cognition = (state['cognition'] as num?)?.toDouble() ?? 1;
+      if (cognition < 0.4) {
+        alerts.add(
+          '$learnerName: ${_tEducatorToday(context, 'Needs reteach on current concept')}',
+        );
+      }
+    }
+    return alerts.take(4).toList(growable: false);
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _persistLiveSessionState({
+    String? eventType,
+    Map<String, dynamic>? eventData,
+    String? successMessage,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = context.read<AppState?>();
+    final String? siteId = widget.siteId?.trim().isNotEmpty == true
+        ? widget.siteId?.trim()
+        : appState?.activeSiteId?.trim();
+    final String? educatorId = appState?.userId?.trim();
+    if (firestoreService == null ||
+        siteId == null ||
+        siteId.isEmpty ||
+        educatorId == null ||
+        educatorId.isEmpty) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final String docId = '${widget.todayClass.id}_$siteId';
+      final Map<String, dynamic> modePayload = <String, dynamic>{
+        'siteId': siteId,
+        'sessionOccurrenceId': widget.todayClass.id,
+        'sessionId': widget.todayClass.sessionId,
+        'sessionTitle': widget.todayClass.title,
+        'pacingMode': _pacingMode,
+        'coldCallLearnerId': _selectedColdCallLearnerId,
+        'coldCallLearnerName': widget.learnerNamesById[_selectedColdCallLearnerId],
+        'pollPrompt': _pollController.text.trim(),
+        'exitTicketPrompt': _exitTicketController.text.trim(),
+        'misconceptionAlerts': _misconceptionAlerts,
+        'updatedBy': educatorId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await firestoreService.firestore
+          .collection('liveSessionModes')
+          .doc(docId)
+          .set(modePayload, SetOptions(merge: true));
+      if (eventType != null) {
+        await firestoreService.firestore.collection('liveSessionEvents').add(
+          <String, dynamic>{
+            'siteId': siteId,
+            'sessionOccurrenceId': widget.todayClass.id,
+            'sessionId': widget.todayClass.sessionId,
+            'eventType': eventType,
+            'eventData': eventData ?? <String, dynamic>{},
+            'createdBy': educatorId,
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+      if (!mounted || successMessage == null) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tEducatorToday(context, successMessage))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _queueColdCall() async {
+    final String? learnerId = _selectedColdCallLearnerId;
+    if (learnerId == null || learnerId.isEmpty) {
+      return;
+    }
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'educator_live_session_queue_cold_call',
+        'class_id': widget.todayClass.id,
+        'learner_id': learnerId,
+      },
+    );
+    await _persistLiveSessionState(
+      eventType: 'cold_call',
+      eventData: <String, dynamic>{
+        'learnerId': learnerId,
+        'learnerName': widget.learnerNamesById[learnerId],
+      },
+      successMessage: 'Cold-call queued',
+    );
+  }
+
+  Future<void> _launchQuickPoll() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'educator_live_session_launch_poll',
+        'class_id': widget.todayClass.id,
+      },
+    );
+    await _persistLiveSessionState(
+      eventType: 'poll',
+      eventData: <String, dynamic>{
+        'prompt': _pollController.text.trim(),
+        'options': const <String>['Need help', 'Ready', 'Can teach it'],
+      },
+      successMessage: 'Quick poll launched',
+    );
+  }
+
+  Future<void> _sendExitTicket() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'educator_live_session_send_exit_ticket',
+        'class_id': widget.todayClass.id,
+      },
+    );
+    await _persistLiveSessionState(
+      eventType: 'exit_ticket',
+      eventData: <String, dynamic>{
+        'prompt': _exitTicketController.text.trim(),
+      },
+      successMessage: 'Exit ticket sent',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tEducatorToday(context, 'Live Session Mode'),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.todayClass.title,
+              style: TextStyle(color: Colors.grey[700], fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorToday(context, 'Pacing'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <String>['reteach', 'steady', 'accelerate']
+                  .map(
+                    (String mode) => ChoiceChip(
+                      label: Text(
+                        _tEducatorToday(
+                          context,
+                          mode == 'reteach'
+                              ? 'Reteach'
+                              : mode == 'accelerate'
+                                  ? 'Accelerate'
+                                  : 'Steady',
+                        ),
+                      ),
+                      selected: _pacingMode == mode,
+                      onSelected: (_) {
+                        setState(() => _pacingMode = mode);
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorToday(context, 'Cold-Calls'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (widget.learnerNamesById.isEmpty)
+              Text(_tEducatorToday(context, 'No learners available'))
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _selectedColdCallLearnerId,
+                items: widget.learnerNamesById.entries
+                    .map(
+                      (MapEntry<String, String> entry) => DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (String? value) {
+                  setState(() => _selectedColdCallLearnerId = value);
+                },
+                decoration: InputDecoration(
+                  labelText: _tEducatorToday(context, 'Target learner'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSaving ? null : _queueColdCall,
+                icon: const Icon(Icons.record_voice_over_outlined),
+                label: Text(_tEducatorToday(context, 'Queue Cold-Call')),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorToday(context, 'Quick Poll'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _pollController,
+              decoration: InputDecoration(
+                labelText: _tEducatorToday(context, 'Poll prompt'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSaving ? null : _launchQuickPoll,
+                icon: const Icon(Icons.poll_outlined),
+                label: Text(_tEducatorToday(context, 'Launch Quick Poll')),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorToday(context, 'Exit Ticket'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _exitTicketController,
+              decoration: InputDecoration(
+                labelText: _tEducatorToday(context, 'Exit ticket prompt'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSaving ? null : _sendExitTicket,
+                icon: const Icon(Icons.assignment_turned_in_outlined),
+                label: Text(_tEducatorToday(context, 'Send Exit Ticket')),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorToday(context, 'Misconception Alerts'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (_misconceptionAlerts.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.educator.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _tEducatorToday(
+                    context,
+                    'No misconception alerts yet for this session.',
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _misconceptionAlerts
+                    .map(
+                      (String alert) => Chip(
+                        label: Text(alert),
+                        avatar: const Icon(Icons.warning_amber_rounded, size: 16),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isSaving
+                    ? null
+                    : () => _persistLiveSessionState(
+                          successMessage: 'Live session mode saved',
+                        ),
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: Text(_tEducatorToday(context, 'Save Live Mode')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ScholesaColors.educator,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
