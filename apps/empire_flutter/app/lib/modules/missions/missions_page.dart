@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models.dart' show LearnerProfileModel;
+import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -757,6 +760,20 @@ class _MissionDetailsSheet extends StatefulWidget {
 class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   bool _showAiCoach = false;
   bool _isUpdatingStudyAction = false;
+  LearnerProfileModel? _learnerProfile;
+
+  bool get _keyboardOnlyEnabled =>
+      _learnerProfile?.keyboardOnlyEnabled ?? false;
+  bool get _highContrastEnabled =>
+      _learnerProfile?.highContrastEnabled ?? false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLearnerProfile();
+    });
+  }
 
   Color get _pillarColor {
     switch (widget.mission.pillar) {
@@ -769,6 +786,30 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     }
   }
 
+  Future<void> _loadLearnerProfile() async {
+    final AppState appState = context.read<AppState>();
+    final String? learnerId = appState.userId;
+    final String? siteId = appState.activeSiteId;
+    if (learnerId == null || learnerId.isEmpty || siteId == null || siteId.isEmpty) {
+      return;
+    }
+
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final LearnerProfileRepository repository = LearnerProfileRepository(
+      firestore: firestoreService.firestore,
+    );
+    final LearnerProfileModel? profile = await repository.getByLearnerAndSite(
+      learnerId: learnerId,
+      siteId: siteId,
+    );
+
+    if (!mounted || profile == null) {
+      return;
+    }
+
+    setState(() => _learnerProfile = profile);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<MissionService>(
@@ -778,19 +819,42 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
 
         return Container(
           height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: _highContrastEnabled ? Colors.black : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: <Widget>[
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: _highContrastEnabled
+                                ? Colors.white54
+                                : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: _highContrastEnabled
+                            ? Colors.white
+                            : Colors.grey[700],
+                      ),
+                      label: Text(_tMissions(context, 'Close mission details')),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
@@ -799,6 +863,10 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      if (_keyboardOnlyEnabled) ...<Widget>[
+                        _buildKeyboardOnlyBanner(context),
+                        const SizedBox(height: 20),
+                      ],
                       // Header
                       Row(
                         children: <Widget>[
@@ -1221,76 +1289,153 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 style: TextStyle(color: context.schTextSecondary, fontSize: 12),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: FsrsRating.values
-                    .map(
-                      (FsrsRating rating) => ActionChip(
-                        label: Text(_tMissions(context, rating.label)),
-                        onPressed: _isUpdatingStudyAction
-                            ? null
-                            : () => _handleStudyAction(
-                                  action: () => context
-                                      .read<MissionService>()
-                                      .rateFsrsReview(
-                                        mission.id,
-                                        rating: rating,
-                                      ),
-                                  successMessage:
-                                      _tMissions(context, 'Review saved'),
+              _keyboardOnlyEnabled
+                  ? Column(
+                      children: FsrsRating.values
+                          .map(
+                            (FsrsRating rating) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: _isUpdatingStudyAction
+                                      ? null
+                                      : () => _handleStudyAction(
+                                            action: () => context
+                                                .read<MissionService>()
+                                                .rateFsrsReview(
+                                                  mission.id,
+                                                  rating: rating,
+                                                ),
+                                            successMessage:
+                                                _tMissions(context, 'Review saved'),
+                                          ),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: _pillarColor,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: Text(_tMissions(context, rating.label)),
                                 ),
-                        backgroundColor: _pillarColor.withValues(alpha: 0.12),
-                      ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     )
-                    .toList(),
-              ),
+                  : Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: FsrsRating.values
+                          .map(
+                            (FsrsRating rating) => ActionChip(
+                              label: Text(_tMissions(context, rating.label)),
+                              onPressed: _isUpdatingStudyAction
+                                  ? null
+                                  : () => _handleStudyAction(
+                                        action: () => context
+                                            .read<MissionService>()
+                                            .rateFsrsReview(
+                                              mission.id,
+                                              rating: rating,
+                                            ),
+                                        successMessage:
+                                            _tMissions(context, 'Review saved'),
+                                      ),
+                              backgroundColor:
+                                  _pillarColor.withValues(alpha: 0.12),
+                            ),
+                          )
+                          .toList(),
+                    ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  OutlinedButton.icon(
-                    onPressed: _isUpdatingStudyAction
-                        ? null
-                        : () => _handleStudyAction(
-                              action: () => context
-                                  .read<MissionService>()
-                                  .snoozeFsrsQueue(mission.id),
-                              successMessage:
-                                  _tMissions(context, 'Queue snoozed'),
-                            ),
-                    icon: const Icon(Icons.snooze_rounded),
-                    label: Text(_tMissions(context, 'Snooze 1 day')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _isUpdatingStudyAction
-                        ? null
-                        : () => _handleStudyAction(
-                              action: () => context
-                                  .read<MissionService>()
-                                  .rescheduleFsrsQueue(mission.id),
-                              successMessage:
-                                  _tMissions(context, 'Review rescheduled'),
-                            ),
-                    icon: const Icon(Icons.event_repeat_rounded),
-                    label: Text(_tMissions(context, 'Review in 3 days')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _isUpdatingStudyAction
-                        ? null
-                        : () => _handleStudyAction(
-                              action: () => context
-                                  .read<MissionService>()
-                                  .suspendFsrsQueue(mission.id),
-                              successMessage:
-                                  _tMissions(context, 'Review suspended'),
-                            ),
-                    icon: const Icon(Icons.pause_circle_outline_rounded),
-                    label: Text(_tMissions(context, 'Suspend review queue')),
-                  ),
-                ],
-              ),
+              _keyboardOnlyEnabled
+                  ? Column(
+                      children: <Widget>[
+                        _buildKeyboardActionButton(
+                          label: _tMissions(context, 'Snooze 1 day'),
+                          icon: Icons.snooze_rounded,
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .snoozeFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Queue snoozed'),
+                                  ),
+                        ),
+                        _buildKeyboardActionButton(
+                          label: _tMissions(context, 'Review in 3 days'),
+                          icon: Icons.event_repeat_rounded,
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .rescheduleFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Review rescheduled'),
+                                  ),
+                        ),
+                        _buildKeyboardActionButton(
+                          label: _tMissions(context, 'Suspend review queue'),
+                          icon: Icons.pause_circle_outline_rounded,
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .suspendFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Review suspended'),
+                                  ),
+                        ),
+                      ],
+                    )
+                  : Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        OutlinedButton.icon(
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .snoozeFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Queue snoozed'),
+                                  ),
+                          icon: const Icon(Icons.snooze_rounded),
+                          label: Text(_tMissions(context, 'Snooze 1 day')),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .rescheduleFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Review rescheduled'),
+                                  ),
+                          icon: const Icon(Icons.event_repeat_rounded),
+                          label: Text(_tMissions(context, 'Review in 3 days')),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _isUpdatingStudyAction
+                              ? null
+                              : () => _handleStudyAction(
+                                    action: () => context
+                                        .read<MissionService>()
+                                        .suspendFsrsQueue(mission.id),
+                                    successMessage:
+                                        _tMissions(context, 'Review suspended'),
+                                  ),
+                          icon: const Icon(Icons.pause_circle_outline_rounded),
+                          label: Text(_tMissions(context, 'Suspend review queue')),
+                        ),
+                      ],
+                    ),
               const SizedBox(height: 20),
               Row(
                 children: <Widget>[
@@ -1329,33 +1474,73 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 ),
               ],
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: InterleavingMode.values
-                    .map(
-                      (InterleavingMode mode) => ChoiceChip(
-                        label: Text(_tMissions(context, mode.label)),
-                        selected: mission.interleavingMode == mode,
-                        onSelected: _isUpdatingStudyAction
-                            ? null
-                            : (_) => _handleStudyAction(
-                                  action: () => context
-                                      .read<MissionService>()
-                                      .setInterleavingMode(
-                                        mission.id,
-                                        mode: mode,
-                                      ),
-                                  successMessage: _tMissions(
-                                    context,
-                                    'Study mode updated',
+              _keyboardOnlyEnabled
+                  ? Column(
+                      children: InterleavingMode.values
+                          .map(
+                            (InterleavingMode mode) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: _isUpdatingStudyAction
+                                      ? null
+                                      : () => _handleStudyAction(
+                                            action: () => context
+                                                .read<MissionService>()
+                                                .setInterleavingMode(
+                                                  mission.id,
+                                                  mode: mode,
+                                                ),
+                                            successMessage: _tMissions(
+                                              context,
+                                              'Study mode updated',
+                                            ),
+                                          ),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor:
+                                        mission.interleavingMode == mode
+                                            ? _pillarColor.withValues(alpha: 0.12)
+                                            : null,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(_tMissions(context, mode.label)),
                                   ),
                                 ),
-                        selectedColor: _pillarColor.withValues(alpha: 0.18),
-                      ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     )
-                    .toList(),
-              ),
+                  : Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: InterleavingMode.values
+                          .map(
+                            (InterleavingMode mode) => ChoiceChip(
+                              label: Text(_tMissions(context, mode.label)),
+                              selected: mission.interleavingMode == mode,
+                              onSelected: _isUpdatingStudyAction
+                                  ? null
+                                  : (_) => _handleStudyAction(
+                                        action: () => context
+                                            .read<MissionService>()
+                                            .setInterleavingMode(
+                                              mission.id,
+                                              mode: mode,
+                                            ),
+                                        successMessage: _tMissions(
+                                          context,
+                                          'Study mode updated',
+                                        ),
+                                      ),
+                              selectedColor:
+                                  _pillarColor.withValues(alpha: 0.18),
+                            ),
+                          )
+                          .toList(),
+                    ),
               const SizedBox(height: 20),
               Row(
                 children: <Widget>[
@@ -1381,31 +1566,94 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 style: TextStyle(color: context.schTextSecondary, height: 1.4),
               ),
               const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _isUpdatingStudyAction
-                    ? null
-                    : () => _handleStudyAction(
-                          action: () => context
-                              .read<MissionService>()
-                              .showWorkedExample(mission.id),
-                          successMessage:
-                              _tMissions(context, 'Worked example ready'),
-                        ),
-                icon: const Icon(Icons.visibility_rounded),
-                label: Text(
-                  mission.workedExampleShown
-                      ? _tMissions(context, 'Show next example stage')
-                      : _tMissions(context, 'Show worked example'),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: _pillarColor,
-                  foregroundColor: Colors.white,
+              SizedBox(
+                width: _keyboardOnlyEnabled ? double.infinity : null,
+                child: FilledButton.icon(
+                  onPressed: _isUpdatingStudyAction
+                      ? null
+                      : () => _handleStudyAction(
+                            action: () => context
+                                .read<MissionService>()
+                                .showWorkedExample(mission.id),
+                            successMessage:
+                                _tMissions(context, 'Worked example ready'),
+                          ),
+                  icon: const Icon(Icons.visibility_rounded),
+                  label: Text(
+                    mission.workedExampleShown
+                        ? _tMissions(context, 'Show next example stage')
+                        : _tMissions(context, 'Show worked example'),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _pillarColor,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildKeyboardOnlyBanner(BuildContext context) {
+    final Color textColor = _highContrastEnabled ? Colors.white : Colors.black87;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _highContrastEnabled
+            ? Colors.white12
+            : _pillarColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _highContrastEnabled
+              ? Colors.white70
+              : _pillarColor.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tMissions(context, 'Keyboard-only mission controls'),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tMissions(
+              context,
+              'Large buttons are shown below so you can review, switch study mode, and close this sheet without drag gestures.',
+            ),
+            style: TextStyle(color: textColor, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyboardActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(label),
+          ),
+        ),
+      ),
     );
   }
 

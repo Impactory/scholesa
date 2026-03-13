@@ -13,6 +13,8 @@ class FirestoreService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
+  FirebaseAuth get auth => _auth;
+
   // ==================== USER OPERATIONS ====================
 
   /// Get current user's profile from Firestore

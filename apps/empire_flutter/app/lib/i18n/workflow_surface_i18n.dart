@@ -251,6 +251,10 @@ class WorkflowSurfaceI18n {
     'Recommended mix': '建议混合练习',
     'Study mode updated': '学习模式已更新',
     'Worked example': '示范例题',
+    'Keyboard-only mission controls': '仅键盘任务控制',
+    'Large buttons are shown below so you can review, switch study mode, and close this sheet without drag gestures.':
+      '下方会显示大按钮，这样你无需拖动手势也能完成复习、切换学习模式并关闭此面板。',
+    'Close mission details': '关闭任务详情',
     'Reveal a worked example before you try the next step alone.':
         '在你独立尝试下一步之前先展示一个示范例题。',
     'Fade stage': '渐隐阶段',
@@ -439,6 +443,10 @@ class WorkflowSurfaceI18n {
     'Recommended mix': '建議混合練習',
     'Study mode updated': '學習模式已更新',
     'Worked example': '示範例題',
+    'Keyboard-only mission controls': '僅鍵盤任務控制',
+    'Large buttons are shown below so you can review, switch study mode, and close this sheet without drag gestures.':
+      '下方會顯示大型按鈕，讓你不必使用拖曳手勢也能完成複習、切換學習模式並關閉此面板。',
+    'Close mission details': '關閉任務詳情',
     'Reveal a worked example before you try the next step alone.':
         '在你獨立嘗試下一步之前先展示一個示範例題。',
     'Fade stage': '漸隱階段',

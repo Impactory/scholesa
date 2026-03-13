@@ -12,6 +12,7 @@ import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
+import 'package:scholesa_app/modules/missions/mission_models.dart';
 import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/site/site_incidents_page.dart';
@@ -557,6 +558,92 @@ void main() {
       expect(emittedEvents, contains('fsrs.queue.snoozed'));
       expect(emittedEvents, contains('interleaving.mode.changed'));
       expect(emittedEvents, contains('worked_example.shown'));
+    });
+
+    testWidgets('missions surface shows keyboard-only alternatives for study flow',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+
+      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+        <String, dynamic>{
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'keyboardOnlyEnabled': true,
+          'onboardingCompleted': true,
+        },
+      );
+      await fakeFirestore.collection('missionAssignments').doc('assignment-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.5,
+          'interleavingMode': InterleavingMode.focusOnly.name,
+        },
+      );
+      await fakeFirestore.collection('missions').doc('mission-1').set(
+        <String, dynamic>{
+          'title': 'Robot mission',
+          'description': 'Build and test a control loop.',
+          'pillarCode': 'future_skills',
+          'difficulty': 'beginner',
+          'xpReward': 100,
+        },
+      );
+      await fakeFirestore
+          .collection('missions')
+          .doc('mission-1')
+          .collection('steps')
+          .doc('step-1')
+          .set(
+        <String, dynamic>{
+          'title': 'Prototype',
+          'order': 1,
+          'isCompleted': false,
+        },
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const MissionsPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('In Progress'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Robot mission').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Keyboard-only mission controls'), findsOneWidget);
+      expect(find.text('Close mission details'), findsOneWidget);
+      expect(find.text('Snooze 1 day'), findsOneWidget);
+      expect(find.text('Review in 3 days'), findsOneWidget);
+      expect(find.text('Suspend review queue'), findsOneWidget);
     });
 
     testWidgets('learner portfolio renders zh-TW copy',
