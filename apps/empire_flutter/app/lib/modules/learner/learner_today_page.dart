@@ -907,6 +907,59 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                   .toList(),
             ),
             const SizedBox(height: 16),
+            Consumer2<HabitService, MissionService>(
+              builder: (
+                BuildContext context,
+                HabitService habitService,
+                MissionService missionService,
+                _,
+              ) {
+                final String shoutOutMessage = _motivationShoutOutMessage(
+                  totalStreak: habitService.totalStreak,
+                  activeMissionCount: missionService.activeMissions.length,
+                  weeklyTargetMinutes: profile?.weeklyTargetMinutes ?? 0,
+                );
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _t('Shout-out'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        shoutOutMessage,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _saveMotivationShoutOut(
+                            shoutOutMessage,
+                          ),
+                          icon: const Icon(Icons.celebration_outlined),
+                          label: Text(_t('Save shout-out')),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -938,6 +991,23 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         ),
       ),
     );
+  }
+
+  String _motivationShoutOutMessage({
+    required int totalStreak,
+    required int activeMissionCount,
+    required int weeklyTargetMinutes,
+  }) {
+    if (totalStreak >= 3) {
+      return _t('You kept showing up for your goals. That consistency matters.');
+    }
+    if (activeMissionCount > 0) {
+      return _t('You are carrying active missions forward. That momentum counts.');
+    }
+    if (weeklyTargetMinutes > 0) {
+      return _t('You set a clear goal for your week. That is real progress.');
+    }
+    return _t('You checked in and kept your learning loop moving today.');
   }
 
   Future<void> _openLearnerSetupSheet() async {
@@ -1355,6 +1425,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 
   String _promptForReflectionType(String reflectionType) {
     switch (reflectionType) {
+      case 'shout_out':
+        return _t('What win are you proud of today?');
       case 'pre_plan':
         return _t('What is your plan for this session?');
       case 'weekly_review':
@@ -1363,6 +1435,42 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       default:
         return _t('What worked? What is your next step?');
     }
+  }
+
+  Future<void> _saveMotivationShoutOut(String message) async {
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
+    if (learnerId.isEmpty || siteId.isEmpty) {
+      return;
+    }
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      role: 'learner',
+      siteId: siteId,
+      metadata: const <String, dynamic>{
+        'cta': 'learner_today_save_shout_out',
+      },
+    );
+
+    final FirebaseFirestore firestore =
+        context.read<FirestoreService>().firestore;
+    final LearnerReflectionRepository repository =
+        LearnerReflectionRepository(firestore: firestore);
+    await repository.create(
+      learnerId: learnerId,
+      siteId: siteId,
+      reflectionType: 'shout_out',
+      response: message,
+      prompt: _promptForReflectionType('shout_out'),
+    );
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_t('Shout-out saved'))),
+    );
   }
 
   Future<void> _openQuickReflectionSheet({

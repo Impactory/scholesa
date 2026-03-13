@@ -130,6 +130,18 @@ class LearnerSurfaceI18n {
     'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
       '保持与目标和提醒相连的计划-反思-回顾节奏。',
     'Reminder': '提醒',
+    'Shout-out': '鼓励时刻',
+    'Save shout-out': '保存鼓励',
+    'Shout-out saved': '鼓励已保存',
+    'You kept showing up for your goals. That consistency matters.':
+      '你一直在为目标持续投入，这份稳定很重要。',
+    'You are carrying active missions forward. That momentum counts.':
+      '你正在持续推进进行中的任务，这份势头很有价值。',
+    'You set a clear goal for your week. That is real progress.':
+      '你为这周设定了清晰目标，这就是真实的进步。',
+    'You checked in and kept your learning loop moving today.':
+      '你今天完成了签到，也让自己的学习循环继续前进。',
+    'What win are you proud of today?': '你今天最为自己骄傲的收获是什么？',
     'Pre-plan reflection': '课前计划反思',
     'Post-session reflection': '课后回顾反思',
     'Weekly review reflection': '每周回顾反思',
@@ -263,6 +275,18 @@ class LearnerSurfaceI18n {
     'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
       '保持與目標和提醒連結的計畫-反思-回顧節奏。',
     'Reminder': '提醒',
+    'Shout-out': '鼓勵時刻',
+    'Save shout-out': '保存鼓勵',
+    'Shout-out saved': '鼓勵已保存',
+    'You kept showing up for your goals. That consistency matters.':
+      '你一直持續為目標投入，這份穩定很重要。',
+    'You are carrying active missions forward. That momentum counts.':
+      '你正持續推進進行中的任務，這份動能很有價值。',
+    'You set a clear goal for your week. That is real progress.':
+      '你為這週設下了清楚目標，這就是真實的進步。',
+    'You checked in and kept your learning loop moving today.':
+      '你今天完成了簽到，也讓自己的學習循環持續前進。',
+    'What win are you proud of today?': '你今天最為自己驕傲的收穫是什麼？',
     'Pre-plan reflection': '課前計畫反思',
     'Post-session reflection': '課後回顧反思',
     'Weekly review reflection': '每週回顧反思',

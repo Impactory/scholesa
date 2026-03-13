@@ -64,7 +64,7 @@ function addCollectionAddPolyfill(db) {
   return db;
 }
 
-function initializeDb(args) {
+async function initializeDb(args) {
   const projectId = resolveProjectId(args.project, args.credentials);
   try {
     const init = initializeFirebaseAdmin(admin, {
@@ -75,8 +75,10 @@ function initializeDb(args) {
         'studio-service-account.json',
       ],
     });
+    const db = admin.firestore();
+    await db.collection(TELEMETRY_COLLECTION).limit(1).get();
     return {
-      db: admin.firestore(),
+      db,
       projectId: init.projectId || projectId,
       transport: init.credentialMode,
     };
@@ -120,7 +122,7 @@ async function pickSiteId(db, explicitSite) {
 
 async function run() {
   const args = parseArgs(process.argv.slice(2));
-  const { db, projectId, transport } = initializeDb(args);
+  const { db, projectId, transport } = await initializeDb(args);
   const siteId = await pickSiteId(db, args.site);
   const learnerId = args.learner;
   const preferenceId = `${siteId}_${learnerId}`;

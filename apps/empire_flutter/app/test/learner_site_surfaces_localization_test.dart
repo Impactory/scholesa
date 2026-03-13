@@ -50,6 +50,9 @@ Widget _buildHarness({
   return MultiProvider(
     providers: providers,
     child: MaterialApp(
+      theme: ThemeData(
+        splashFactory: NoSplash.splashFactory,
+      ),
       locale: locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
@@ -327,6 +330,75 @@ void main() {
           await fakeFirestore.collection('learnerReflections').get();
       expect(snapshot.docs, hasLength(1));
       expect(snapshot.docs.first.data()['reflectionType'], 'pre_plan');
+    });
+
+    testWidgets('motivation loop shout-out action writes learner reflection record',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final HabitService habitService = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+
+      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+        <String, dynamic>{
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'onboardingCompleted': true,
+          'weeklyTargetMinutes': 90,
+          'reminderSchedule': 'weekdays',
+          'valuePrompt': 'I want to build useful things',
+        },
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerTodayPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+            ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Save shout-out'));
+      await tester.tap(find.text('Save shout-out'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Shout-out saved'), findsOneWidget);
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await fakeFirestore.collection('learnerReflections').get();
+      expect(snapshot.docs, hasLength(1));
+      expect(snapshot.docs.first.data()['reflectionType'], 'shout_out');
+      expect(
+        snapshot.docs.first.data()['prompt'],
+        'What win are you proud of today?',
+      );
     });
 
     testWidgets('missions study flow controls persist and emit telemetry',

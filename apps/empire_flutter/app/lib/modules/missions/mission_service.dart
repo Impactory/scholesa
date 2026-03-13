@@ -172,6 +172,8 @@ class MissionService extends ChangeNotifier {
             workedExamplePromptLevel: _parseWorkedExamplePromptLevel(
               assignData['workedExamplePromptLevel'] as String?,
             ),
+            workedExampleSuccessStreak:
+                assignData['workedExampleSuccessStreak'] as int? ?? 0,
           ));
         }
       }
@@ -310,6 +312,41 @@ class MissionService extends ChangeNotifier {
       case FsrsRating.easy:
         return now.add(const Duration(days: 7));
     }
+  }
+
+  _WorkedExamplePolicyOutcome _workedExamplePolicyForReview(
+    Mission current,
+    FsrsRating rating,
+  ) {
+    int nextFadeStage = current.workedExampleFadeStage;
+    int nextSuccessStreak = current.workedExampleSuccessStreak;
+    String action = 'hold';
+
+    final bool strongRating =
+        rating == FsrsRating.good || rating == FsrsRating.easy;
+    if (strongRating) {
+      nextSuccessStreak += 1;
+      if (nextSuccessStreak >= 2 && nextFadeStage < 4) {
+        nextFadeStage += 1;
+        nextSuccessStreak = 0;
+        action = 'decay';
+      }
+    } else if (rating == FsrsRating.again) {
+      nextSuccessStreak = 0;
+      if (nextFadeStage > 0) {
+        nextFadeStage -= 1;
+        action = 'rebuild_support';
+      }
+    } else {
+      nextSuccessStreak = 0;
+    }
+
+    return _WorkedExamplePolicyOutcome(
+      fadeStage: nextFadeStage,
+      promptLevel: _promptLevelForFadeStage(nextFadeStage),
+      successStreak: nextSuccessStreak,
+      action: action,
+    );
   }
 
   Future<List<Skill>> _loadMissionSkills(
@@ -750,6 +787,9 @@ class MissionService extends ChangeNotifier {
       final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
           await _getAssignmentDocForMission(missionId);
       final DateTime nextReviewAt = _nextReviewTimeForRating(rating);
+      final Mission current = _missions[index];
+      final _WorkedExamplePolicyOutcome workedExampleOutcome =
+          _workedExamplePolicyForReview(current, rating);
 
       if (assignmentDoc != null) {
         await assignmentDoc.reference.update(<String, dynamic>{
@@ -757,6 +797,9 @@ class MissionService extends ChangeNotifier {
           'fsrsRatedAt': FieldValue.serverTimestamp(),
           'nextReviewAt': Timestamp.fromDate(nextReviewAt),
           'fsrsQueueState': 'scheduled',
+          'workedExampleFadeStage': workedExampleOutcome.fadeStage,
+          'workedExamplePromptLevel': workedExampleOutcome.promptLevel.name,
+          'workedExampleSuccessStreak': workedExampleOutcome.successStreak,
         });
       }
 
@@ -764,6 +807,9 @@ class MissionService extends ChangeNotifier {
         fsrsLastRating: rating,
         nextReviewAt: nextReviewAt,
         fsrsQueueState: FsrsQueueState.scheduled,
+        workedExampleFadeStage: workedExampleOutcome.fadeStage,
+        workedExamplePromptLevel: workedExampleOutcome.promptLevel,
+        workedExampleSuccessStreak: workedExampleOutcome.successStreak,
       );
 
       await TelemetryService.instance.logEvent(
@@ -775,6 +821,10 @@ class MissionService extends ChangeNotifier {
           'itemType': 'mission',
           'rating': rating.name,
           'next_review_at': nextReviewAt.toIso8601String(),
+          'worked_example_fade_stage': workedExampleOutcome.fadeStage,
+          'worked_example_prompt_level': workedExampleOutcome.promptLevel.name,
+          'worked_example_policy_action': workedExampleOutcome.action,
+          'worked_example_success_streak': workedExampleOutcome.successStreak,
         },
       );
 
@@ -927,6 +977,7 @@ class MissionService extends ChangeNotifier {
         workedExampleShown: current.workedExampleShown,
         workedExampleFadeStage: current.workedExampleFadeStage,
         workedExamplePromptLevel: current.workedExamplePromptLevel,
+        workedExampleSuccessStreak: current.workedExampleSuccessStreak,
       );
 
       await TelemetryService.instance.logEvent(
@@ -1030,6 +1081,7 @@ class MissionService extends ChangeNotifier {
         workedExampleShown: true,
         workedExampleFadeStage: nextFadeStage,
         workedExamplePromptLevel: promptLevel,
+        workedExampleSuccessStreak: 0,
       );
 
       await TelemetryService.instance.logEvent(
@@ -1168,6 +1220,20 @@ class MissionService extends ChangeNotifier {
       return false;
     }
   }
+}
+
+class _WorkedExamplePolicyOutcome {
+  const _WorkedExamplePolicyOutcome({
+    required this.fadeStage,
+    required this.promptLevel,
+    required this.successStreak,
+    required this.action,
+  });
+
+  final int fadeStage;
+  final WorkedExamplePromptLevel promptLevel;
+  final int successStreak;
+  final String action;
 }
 
 class _InterleavingRecommendation {

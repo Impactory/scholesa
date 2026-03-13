@@ -349,6 +349,94 @@ void main() {
       expect(interleavingPayload['metadata']['recommended_count'], greaterThan(0));
     });
 
+    test(
+        'worked example support decays after sustained correct FSRS ratings',
+        () async {
+      final MissionService service = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-1',
+      );
+      final List<Map<String, dynamic>> telemetryPayloads =
+          <Map<String, dynamic>>[];
+
+      await firestore.collection('missionAssignments').doc('assignment-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.5,
+          'workedExampleFadeStage': 1,
+          'workedExamplePromptLevel': 'fullModel',
+          'workedExampleSuccessStreak': 0,
+        },
+      );
+      await firestore.collection('missions').doc('mission-1').set(
+        <String, dynamic>{
+          'title': 'Mission One',
+          'description': 'Description',
+          'pillarCode': 'future_skills',
+          'difficulty': 'beginner',
+          'xpReward': 100,
+        },
+      );
+      await firestore
+          .collection('missions')
+          .doc('mission-1')
+          .collection('steps')
+          .doc('step-1')
+          .set(
+        <String, dynamic>{
+          'title': 'Step One',
+          'order': 1,
+          'isCompleted': false,
+        },
+      );
+
+      await service.loadMissions();
+
+      await TelemetryService.runWithDispatcher(
+        (Map<String, dynamic> payload) async {
+          telemetryPayloads.add(Map<String, dynamic>.from(payload));
+        },
+        () async {
+          expect(
+            await service.rateFsrsReview(
+              'mission-1',
+              rating: FsrsRating.good,
+            ),
+            isTrue,
+          );
+          expect(
+            await service.rateFsrsReview(
+              'mission-1',
+              rating: FsrsRating.easy,
+            ),
+            isTrue,
+          );
+        },
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .get();
+      final Map<String, dynamic>? data = assignmentDoc.data();
+
+      expect(data?['workedExampleFadeStage'], 2);
+      expect(data?['workedExamplePromptLevel'], 'partialSteps');
+      expect(data?['workedExampleSuccessStreak'], 0);
+
+      final Map<String, dynamic> fsrsPayload = telemetryPayloads.lastWhere(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'fsrs.review.rated',
+      );
+      expect(fsrsPayload['metadata']['worked_example_policy_action'], 'decay');
+      expect(fsrsPayload['metadata']['worked_example_fade_stage'], 2);
+      expect(fsrsPayload['metadata']['worked_example_prompt_level'],
+          'partialSteps');
+    });
+
     test('habit service wrappers persist creation and completion in Firestore',
         () async {
       final HabitService service = HabitService(

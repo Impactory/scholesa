@@ -283,6 +283,7 @@ class Mission extends Equatable {
     this.workedExampleShown = false,
     this.workedExampleFadeStage = 0,
     this.workedExamplePromptLevel = WorkedExamplePromptLevel.fullModel,
+    this.workedExampleSuccessStreak = 0,
   });
 
   factory Mission.fromJson(Map<String, dynamic> json) {
@@ -353,6 +354,8 @@ class Mission extends Equatable {
             value.name == json['workedExamplePromptLevel'],
         orElse: () => WorkedExamplePromptLevel.fullModel,
       ),
+      workedExampleSuccessStreak:
+          json['workedExampleSuccessStreak'] as int? ?? 0,
     );
   }
   final String id;
@@ -380,6 +383,7 @@ class Mission extends Equatable {
   final bool workedExampleShown;
   final int workedExampleFadeStage;
   final WorkedExamplePromptLevel workedExamplePromptLevel;
+  final int workedExampleSuccessStreak;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -408,6 +412,7 @@ class Mission extends Equatable {
       'workedExampleShown': workedExampleShown,
       'workedExampleFadeStage': workedExampleFadeStage,
       'workedExamplePromptLevel': workedExamplePromptLevel.name,
+      'workedExampleSuccessStreak': workedExampleSuccessStreak,
     };
   }
 
@@ -437,6 +442,7 @@ class Mission extends Equatable {
     bool? workedExampleShown,
     int? workedExampleFadeStage,
     WorkedExamplePromptLevel? workedExamplePromptLevel,
+    int? workedExampleSuccessStreak,
   }) {
     return Mission(
       id: id ?? this.id,
@@ -466,8 +472,10 @@ class Mission extends Equatable {
       workedExampleShown: workedExampleShown ?? this.workedExampleShown,
       workedExampleFadeStage:
           workedExampleFadeStage ?? this.workedExampleFadeStage,
-        workedExamplePromptLevel:
+      workedExamplePromptLevel:
           workedExamplePromptLevel ?? this.workedExamplePromptLevel,
+      workedExampleSuccessStreak:
+          workedExampleSuccessStreak ?? this.workedExampleSuccessStreak,
     );
   }
 
@@ -502,6 +510,7 @@ class Mission extends Equatable {
         workedExampleShown,
         workedExampleFadeStage,
         workedExamplePromptLevel,
+        workedExampleSuccessStreak,
       ];
 }
 
