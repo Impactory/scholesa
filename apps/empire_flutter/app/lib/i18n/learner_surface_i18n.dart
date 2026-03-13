@@ -119,6 +119,23 @@ class LearnerSurfaceI18n {
     'What worked? What is your next step?': '什么有效？你的下一步是什么？',
     'Tell us about your goals, supports, and study rhythm.': '告诉我们你的目标、支持需求和学习节奏。',
     'Comma separated': '用逗号分隔',
+    'Learner onboarding': '学习者入门设置',
+    'Build your goals, reminders, and reflection rhythm before you jump into missions.':
+      '在进入任务之前，先建立你的目标、提醒和反思节奏。',
+    'You will unlock the learner dashboard after this setup is saved.':
+      '保存此设置后，你将解锁学习者仪表板。',
+    'Motivation loop': '动力循环',
+    'Start with a plan, reflect after each session, and save a weekly review rhythm.':
+      '先做计划，在每次学习后反思，并建立每周回顾节奏。',
+    'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
+      '保持与目标和提醒相连的计划-反思-回顾节奏。',
+    'Reminder': '提醒',
+    'Pre-plan reflection': '课前计划反思',
+    'Post-session reflection': '课后回顾反思',
+    'Weekly review reflection': '每周回顾反思',
+    'What is your plan for this session?': '你这次学习的计划是什么？',
+    'What pattern do you notice from this week, and what will you adjust next?':
+      '你从这周看到了什么模式，接下来会调整什么？',
   };
 
   static const Map<String, String> _zhTw = <String, String>{
@@ -235,6 +252,23 @@ class LearnerSurfaceI18n {
     'What worked? What is your next step?': '什麼有效？你的下一步是什麼？',
     'Tell us about your goals, supports, and study rhythm.': '告訴我們你的目標、支援需求與學習節奏。',
     'Comma separated': '以逗號分隔',
+    'Learner onboarding': '學習者入門設定',
+    'Build your goals, reminders, and reflection rhythm before you jump into missions.':
+      '在進入任務之前，先建立你的目標、提醒與反思節奏。',
+    'You will unlock the learner dashboard after this setup is saved.':
+      '儲存此設定後，你將解鎖學習者儀表板。',
+    'Motivation loop': '動力循環',
+    'Start with a plan, reflect after each session, and save a weekly review rhythm.':
+      '先做計畫，在每次學習後反思，並建立每週回顧節奏。',
+    'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
+      '保持與目標和提醒連結的計畫-反思-回顧節奏。',
+    'Reminder': '提醒',
+    'Pre-plan reflection': '課前計畫反思',
+    'Post-session reflection': '課後回顧反思',
+    'Weekly review reflection': '每週回顧反思',
+    'What is your plan for this session?': '你這次學習的計畫是什麼？',
+    'What pattern do you notice from this week, and what will you adjust next?':
+      '你從這週看到了什麼模式，接下來會調整什麼？',
   };
 
   static String text(BuildContext context, String input) {

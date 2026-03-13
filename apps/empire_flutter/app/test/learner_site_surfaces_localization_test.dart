@@ -240,6 +240,76 @@ void main() {
       expect(snapshot.docs.first.data()['reflectionType'], 'post_session');
     });
 
+    testWidgets('motivation loop pre-plan action writes learner reflection record',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final HabitService habitService = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+
+      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+        <String, dynamic>{
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'onboardingCompleted': true,
+          'weeklyTargetMinutes': 90,
+          'reminderSchedule': 'weekdays',
+          'valuePrompt': 'I want to build useful things',
+        },
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerTodayPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+            ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Pre-plan reflection'));
+      await tester.tap(find.text('Pre-plan reflection'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).last,
+        'I will focus on the first step and ask for help if blocked.',
+      );
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await fakeFirestore.collection('learnerReflections').get();
+      expect(snapshot.docs, hasLength(1));
+      expect(snapshot.docs.first.data()['reflectionType'], 'pre_plan');
+    });
+
     testWidgets('missions study flow controls persist and emit telemetry',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
@@ -271,6 +341,18 @@ void main() {
           'progress': 0.5,
         },
       );
+      await fakeFirestore
+          .collection('missionAssignments')
+          .doc('assignment-2')
+          .set(
+        <String, dynamic>{
+          'missionId': 'mission-2',
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.2,
+        },
+      );
       await fakeFirestore.collection('missions').doc('mission-1').set(
         <String, dynamic>{
           'title': 'Mission One',
@@ -278,6 +360,15 @@ void main() {
           'pillarCode': 'future_skills',
           'difficulty': 'beginner',
           'xpReward': 100,
+        },
+      );
+      await fakeFirestore.collection('missions').doc('mission-2').set(
+        <String, dynamic>{
+          'title': 'Mission Two',
+          'description': 'Description 2',
+          'pillarCode': 'future_skills',
+          'difficulty': 'intermediate',
+          'xpReward': 140,
         },
       );
       await fakeFirestore
@@ -332,11 +423,21 @@ void main() {
           await tester.pumpAndSettle();
 
           await tester.ensureVisible(find.text('Mixed').last);
-          await tester.tap(find.text('Mixed').last);
+          await tester.tap(find.text('Scaffolded mix').last);
+          await tester.pumpAndSettle();
+
+          expect(find.text('Recommended mix: Mission Two'), findsOneWidget);
+
+          await tester.ensureVisible(find.text('Suspend review queue').last);
+          await tester.tap(find.text('Suspend review queue').last);
           await tester.pumpAndSettle();
 
           await tester.ensureVisible(find.text('Show worked example').last);
           await tester.tap(find.text('Show worked example').last);
+          await tester.pumpAndSettle();
+
+          await tester.ensureVisible(find.text('Show next example stage').last);
+          await tester.tap(find.text('Show next example stage').last);
           await tester.pumpAndSettle();
         },
       );
@@ -349,11 +450,13 @@ void main() {
       final Map<String, dynamic>? data = assignmentDoc.data();
 
       expect(data?['fsrsLastRating'], 'good');
-      expect(data?['fsrsQueueState'], 'snoozed');
-      expect(data?['interleavingMode'], 'mixed');
+    expect(data?['fsrsQueueState'], 'suspended');
+    expect(data?['interleavingMode'], 'scaffoldedMixed');
+    expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
       expect(data?['workedExampleShown'], true);
-      expect(data?['workedExampleFadeStage'], 1);
-      expect(data?['nextReviewAt'], isA<Timestamp>());
+    expect(data?['workedExampleFadeStage'], 2);
+    expect(data?['workedExamplePromptLevel'], 'partialSteps');
+    expect(data?.containsKey('nextReviewAt'), isFalse);
 
       final List<String> emittedEvents = telemetryPayloads
           .map((Map<String, dynamic> payload) => payload['event'] as String?)

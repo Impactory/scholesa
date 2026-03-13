@@ -35,6 +35,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/': true,
 
   // Learner
+  '/learner/onboarding': true,
   '/learner/today': true,
   '/learner/missions': true,
   '/learner/habits': true,
@@ -236,6 +237,20 @@ GoRouter createAppRouter(
 
       // Learner routes
       GoRoute(
+        path: '/learner/onboarding',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
+          child: LearnerOnboardingGate(
+            allowIncompleteSetup: true,
+            child: LearnerTodayPage(forceSetupMode: true),
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/learner/today',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[
@@ -243,7 +258,9 @@ GoRouter createAppRouter(
             UserRole.educator,
             UserRole.hq
           ],
-          child: LearnerTodayPage(),
+          child: LearnerOnboardingGate(
+            child: LearnerTodayPage(),
+          ),
         ),
       ),
       GoRoute(
@@ -254,7 +271,9 @@ GoRouter createAppRouter(
             UserRole.educator,
             UserRole.hq
           ],
-          child: MissionsPage(),
+          child: LearnerOnboardingGate(
+            child: MissionsPage(),
+          ),
         ),
       ),
       GoRoute(
@@ -265,7 +284,9 @@ GoRouter createAppRouter(
             UserRole.educator,
             UserRole.hq
           ],
-          child: HabitsPage(),
+          child: LearnerOnboardingGate(
+            child: HabitsPage(),
+          ),
         ),
       ),
 
@@ -402,7 +423,9 @@ GoRouter createAppRouter(
             UserRole.educator,
             UserRole.hq
           ],
-          child: LearnerPortfolioPage(),
+          child: LearnerOnboardingGate(
+            child: LearnerPortfolioPage(),
+          ),
         ),
       ),
 

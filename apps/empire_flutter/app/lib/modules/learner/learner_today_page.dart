@@ -19,7 +19,12 @@ import '../messages/message_service.dart';
 
 /// Learner Today Page - Daily summary for learners
 class LearnerTodayPage extends StatefulWidget {
-  const LearnerTodayPage({super.key});
+  const LearnerTodayPage({
+    super.key,
+    this.forceSetupMode = false,
+  });
+
+  final bool forceSetupMode;
 
   @override
   State<LearnerTodayPage> createState() => _LearnerTodayPageState();
@@ -30,6 +35,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   LearnerProfileModel? _learnerProfile;
   bool _isProfileLoading = false;
   bool _didLogOnboardingStart = false;
+  bool _didAutoOpenForcedSetup = false;
 
   String _t(String input) {
     return LearnerSurfaceI18n.text(context, input);
@@ -42,7 +48,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       context.read<MissionService>().loadMissions();
       context.read<HabitService>().loadHabits();
       context.read<MessageService>().loadMessages();
-      unawaited(_loadLearnerProfile());
+      unawaited(_loadLearnerProfile(openSetupAfterLoad: widget.forceSetupMode));
     });
   }
 
@@ -50,6 +56,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final bool isDark = scheme.brightness == Brightness.dark;
+    if (widget.forceSetupMode) {
+      return _buildOnboardingScaffold(scheme, isDark);
+    }
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -70,6 +80,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildGreetingCard()),
             SliverToBoxAdapter(child: _buildTodayProgress()),
             SliverToBoxAdapter(child: _buildLearnerSetupCard()),
+            SliverToBoxAdapter(child: _buildMotivationLoopCard()),
             SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
             SliverToBoxAdapter(child: _buildLearnerLoopInsights(context)),
             SliverToBoxAdapter(child: _buildQuickActions()),
@@ -77,6 +88,49 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildActiveMissions()),
             const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOnboardingScaffold(ColorScheme scheme, bool isDark) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              isDark ? scheme.surface : const Color(0xFFF0FDF8),
+              isDark ? scheme.surfaceContainerLow : const Color(0xFFF8FAFC),
+              isDark ? scheme.surfaceContainer : const Color(0xFFFFFBEB),
+            ],
+            stops: const <double>[0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            children: <Widget>[
+              Text(
+                _t('Learner onboarding'),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _t('Build your goals, reminders, and reflection rhythm before you jump into missions.'),
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildLearnerSetupCard(),
+              _buildMotivationLoopCard(isOnboardingSurface: true),
+            ],
+          ),
         ),
       ),
     );
@@ -559,7 +613,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     );
   }
 
-  Future<void> _loadLearnerProfile() async {
+  Future<void> _loadLearnerProfile({
+    bool openSetupAfterLoad = false,
+  }) async {
     final AppState appState = context.read<AppState>();
     final String learnerId = appState.userId?.trim() ?? '';
     final String siteId = _activeSiteId(appState);
@@ -591,6 +647,16 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         _learnerProfile = profile;
         _isProfileLoading = false;
       });
+      if (openSetupAfterLoad &&
+          !(profile?.onboardingCompleted ?? false) &&
+          !_didAutoOpenForcedSetup) {
+        _didAutoOpenForcedSetup = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(_openLearnerSetupSheet());
+          }
+        });
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _isProfileLoading = false);
@@ -704,11 +770,22 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     .toList(),
               ),
             const SizedBox(height: 16),
+            if (!_setupComplete && widget.forceSetupMode)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  _t('You will unlock the learner dashboard after this setup is saved.'),
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             Row(
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _openQuickReflectionSheet,
+                    onPressed: () => _openQuickReflectionSheet(),
                     icon: const Icon(Icons.rate_review_outlined),
                     label: Text(_t('Quick reflection')),
                   ),
@@ -733,6 +810,135 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     );
   }
 
+  Widget _buildMotivationLoopCard({
+    bool isOnboardingSurface = false,
+  }) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final LearnerProfileModel? profile = _learnerProfile;
+    final String valuePrompt = profile?.valuePrompt?.trim() ?? '';
+    final List<String> summaryChips = <String>[
+      if ((profile?.weeklyTargetMinutes ?? 0) > 0)
+        '${_t('Weekly target minutes')}: ${profile!.weeklyTargetMinutes}',
+      _t('Reminder') + ': ' + _reminderScheduleLabel(profile?.reminderSchedule),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.loop_rounded,
+                    color: Color(0xFF0EA5E9),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _t('Motivation loop'),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isOnboardingSurface
+                            ? _t('Start with a plan, reflect after each session, and save a weekly review rhythm.')
+                            : _t('Keep a simple plan-reflect-review rhythm tied to your goals and reminders.'),
+                        style: TextStyle(
+                          color: scheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (valuePrompt.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.learner.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  '"$valuePrompt"',
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: summaryChips
+                  .map(
+                    (String label) => _SummaryChip(
+                      label: label,
+                      color: const Color(0xFF0EA5E9),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                OutlinedButton.icon(
+                  onPressed: () => _openQuickReflectionSheet(
+                    initialReflectionType: 'pre_plan',
+                  ),
+                  icon: const Icon(Icons.flag_rounded),
+                  label: Text(_t('Pre-plan reflection')),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _openQuickReflectionSheet(
+                    initialReflectionType: 'post_session',
+                  ),
+                  icon: const Icon(Icons.rate_review_outlined),
+                  label: Text(_t('Post-session reflection')),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _openQuickReflectionSheet(
+                    initialReflectionType: 'weekly_review',
+                  ),
+                  icon: const Icon(Icons.event_note_rounded),
+                  label: Text(_t('Weekly review reflection')),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openLearnerSetupSheet() async {
     final AppState appState = context.read<AppState>();
     final String learnerId = appState.userId?.trim() ?? '';
@@ -745,7 +951,11 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         event: 'onboarding.started',
         role: 'learner',
         siteId: siteId,
-        metadata: <String, dynamic>{'surface': 'learner_today_setup'},
+        metadata: <String, dynamic>{
+          'surface': widget.forceSetupMode
+              ? 'learner_onboarding_route'
+              : 'learner_today_setup',
+        },
       ));
     }
 
@@ -1007,6 +1217,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(content: Text(_t('Setup saved'))),
                                         );
+                                        if (widget.forceSetupMode && mounted) {
+                                          context.go('/learner/today');
+                                        }
                                       } finally {
                                         if (bottomSheetContext.mounted) {
                                           modalSetState(() => isSaving = false);
@@ -1027,6 +1240,20 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         );
       },
     );
+  }
+
+  String _reminderScheduleLabel(String? schedule) {
+    switch (schedule) {
+      case 'daily':
+        return _t('Daily');
+      case 'weekdays':
+        return _t('Weekdays');
+      case 'weekends':
+        return _t('Weekends');
+      case 'off':
+      default:
+        return _t('Off');
+    }
   }
 
   List<String> _splitCsv(String input) {
@@ -1113,14 +1340,28 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     }
   }
 
-  Future<void> _openQuickReflectionSheet() async {
+  String _promptForReflectionType(String reflectionType) {
+    switch (reflectionType) {
+      case 'pre_plan':
+        return _t('What is your plan for this session?');
+      case 'weekly_review':
+        return _t('What pattern do you notice from this week, and what will you adjust next?');
+      case 'post_session':
+      default:
+        return _t('What worked? What is your next step?');
+    }
+  }
+
+  Future<void> _openQuickReflectionSheet({
+    String initialReflectionType = 'post_session',
+  }) async {
     final AppState appState = context.read<AppState>();
     final String learnerId = appState.userId?.trim() ?? '';
     final String siteId = _activeSiteId(appState);
     if (learnerId.isEmpty || siteId.isEmpty) return;
 
     final TextEditingController reflectionController = TextEditingController();
-    String reflectionType = 'post_session';
+    String reflectionType = initialReflectionType;
     bool isSaving = false;
 
     await showModalBottomSheet<void>(
@@ -1201,7 +1442,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         siteId: siteId,
                                         reflectionType: reflectionType,
                                         response: response,
-                                        prompt: _t('What worked? What is your next step?'),
+                                        prompt: _promptForReflectionType(reflectionType),
                                       );
                                       if (!mounted) return;
                                       Navigator.pop(bottomSheetContext);

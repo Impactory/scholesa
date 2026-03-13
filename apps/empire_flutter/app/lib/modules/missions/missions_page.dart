@@ -1160,6 +1160,12 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   }
 
   Widget _buildStudyFlowSection(BuildContext context, Mission mission) {
+    final MissionService missionService = context.read<MissionService>();
+    final List<String> recommendedMissionTitles = mission.recommendedInterleavingMissionIds
+        .map((String missionId) => missionService.getMissionById(missionId)?.title)
+        .whereType<String>()
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1207,6 +1213,11 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
               const SizedBox(height: 4),
               Text(
                 '${_tMissions(context, 'Next review')}: ${_formatNextReview(mission.nextReviewAt)}',
+                style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${_tMissions(context, 'Queue state')}: ${_tMissions(context, mission.fsrsQueueState.label)}',
                 style: TextStyle(color: context.schTextSecondary, fontSize: 12),
               ),
               const SizedBox(height: 12),
@@ -1265,6 +1276,19 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                     icon: const Icon(Icons.event_repeat_rounded),
                     label: Text(_tMissions(context, 'Review in 3 days')),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: _isUpdatingStudyAction
+                        ? null
+                        : () => _handleStudyAction(
+                              action: () => context
+                                  .read<MissionService>()
+                                  .suspendFsrsQueue(mission.id),
+                              successMessage:
+                                  _tMissions(context, 'Review suspended'),
+                            ),
+                    icon: const Icon(Icons.pause_circle_outline_rounded),
+                    label: Text(_tMissions(context, 'Suspend review queue')),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -1289,6 +1313,21 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 ),
                 style: TextStyle(color: context.schTextSecondary, height: 1.4),
               ),
+              const SizedBox(height: 4),
+              Text(
+                '${_tMissions(context, 'Confusability band')}: ${_tMissions(context, _confusabilityLabel(mission.confusabilityBand))}',
+                style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+              ),
+              if (recommendedMissionTitles.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  '${_tMissions(context, 'Recommended mix')}: ${recommendedMissionTitles.join(' • ')}',
+                  style: TextStyle(
+                    color: context.schTextSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -1334,7 +1373,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
               const SizedBox(height: 8),
               Text(
                 mission.workedExampleShown
-                    ? '${_tMissions(context, 'Fade stage')}: ${mission.workedExampleFadeStage}'
+                    ? '${_tMissions(context, 'Fade stage')}: ${mission.workedExampleFadeStage} • ${_tMissions(context, mission.workedExamplePromptLevel.label)}'
                     : _tMissions(
                         context,
                         'Reveal a worked example before you try the next step alone.',
@@ -1386,6 +1425,18 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       return '${difference.inHours}h';
     }
     return '${difference.inDays}d';
+  }
+
+  String _confusabilityLabel(String band) {
+    switch (band) {
+      case 'high':
+        return 'High';
+      case 'medium':
+        return 'Medium';
+      case 'low':
+      default:
+        return 'Low';
+    }
   }
 
   Future<void> _handleStudyAction({

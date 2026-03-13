@@ -164,6 +164,15 @@ void main() {
           'progress': 0.5,
         },
       );
+      await firestore.collection('missionAssignments').doc('assignment-2').set(
+        <String, dynamic>{
+          'missionId': 'mission-2',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.25,
+        },
+      );
 
       await firestore.collection('missions').doc('mission-1').set(
         <String, dynamic>{
@@ -172,6 +181,15 @@ void main() {
           'pillarCode': 'future_skills',
           'difficulty': 'beginner',
           'xpReward': 100,
+        },
+      );
+      await firestore.collection('missions').doc('mission-2').set(
+        <String, dynamic>{
+          'title': 'Mission Two',
+          'description': 'Description 2',
+          'pillarCode': 'future_skills',
+          'difficulty': 'intermediate',
+          'xpReward': 120,
         },
       );
 
@@ -207,13 +225,15 @@ void main() {
             await service.rescheduleFsrsQueue('mission-1', days: 3),
             isTrue,
           );
+          expect(await service.suspendFsrsQueue('mission-1'), isTrue);
           expect(
             await service.setInterleavingMode(
               'mission-1',
-              mode: InterleavingMode.mixed,
+              mode: InterleavingMode.scaffoldedMixed,
             ),
             isTrue,
           );
+          expect(await service.showWorkedExample('mission-1'), isTrue);
           expect(await service.showWorkedExample('mission-1'), isTrue);
         },
       );
@@ -226,11 +246,13 @@ void main() {
       final Map<String, dynamic>? data = assignmentDoc.data();
 
       expect(data?['fsrsLastRating'], 'good');
-      expect(data?['fsrsQueueState'], 'rescheduled');
-      expect(data?['interleavingMode'], 'mixed');
+    expect(data?['fsrsQueueState'], 'suspended');
+    expect(data?.containsKey('nextReviewAt'), isFalse);
+    expect(data?['interleavingMode'], 'scaffoldedMixed');
+    expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
       expect(data?['workedExampleShown'], true);
-      expect(data?['workedExampleFadeStage'], 1);
-      expect(data?['nextReviewAt'], isA<Timestamp>());
+    expect(data?['workedExampleFadeStage'], 2);
+    expect(data?['workedExamplePromptLevel'], 'partialSteps');
 
       final List<String> emittedEvents = telemetryPayloads
           .map((Map<String, dynamic> payload) => payload['event'] as String?)
@@ -249,6 +271,13 @@ void main() {
       expect(fsrsPayload['siteId'], 'site-1');
       expect(fsrsPayload['role'], 'learner');
       expect(fsrsPayload['metadata']['rating'], 'good');
+
+      final Map<String, dynamic> interleavingPayload = telemetryPayloads.firstWhere(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'interleaving.mode.changed',
+      );
+      expect(interleavingPayload['metadata']['mode'], 'scaffoldedMixed');
+      expect(interleavingPayload['metadata']['recommended_count'], greaterThan(0));
     });
 
     test('habit service wrappers persist creation and completion in Firestore',

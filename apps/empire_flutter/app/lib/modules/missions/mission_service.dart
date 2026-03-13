@@ -143,13 +143,25 @@ class MissionService extends ChangeNotifier {
             fsrsLastRating:
                 _parseFsrsRating(assignData['fsrsLastRating'] as String?),
             nextReviewAt: _parseTimestamp(assignData['nextReviewAt']),
+            fsrsQueueState: _parseFsrsQueueState(
+              assignData['fsrsQueueState'] as String?,
+            ),
             interleavingMode: _parseInterleavingMode(
               assignData['interleavingMode'] as String?,
             ),
+            recommendedInterleavingMissionIds: List<String>.from(
+              assignData['recommendedInterleavingMissionIds'] as List? ??
+                  const <String>[],
+            ),
+            confusabilityBand:
+                assignData['confusabilityBand'] as String? ?? 'low',
             workedExampleShown:
                 assignData['workedExampleShown'] as bool? ?? false,
             workedExampleFadeStage:
                 assignData['workedExampleFadeStage'] as int? ?? 0,
+            workedExamplePromptLevel: _parseWorkedExamplePromptLevel(
+              assignData['workedExamplePromptLevel'] as String?,
+            ),
           ));
         }
       }
@@ -226,10 +238,24 @@ class MissionService extends ChangeNotifier {
     );
   }
 
+  FsrsQueueState _parseFsrsQueueState(String? state) {
+    return FsrsQueueState.values.firstWhere(
+      (FsrsQueueState value) => value.name == state,
+      orElse: () => FsrsQueueState.idle,
+    );
+  }
+
   InterleavingMode _parseInterleavingMode(String? mode) {
     return InterleavingMode.values.firstWhere(
       (InterleavingMode value) => value.name == mode,
       orElse: () => InterleavingMode.focusOnly,
+    );
+  }
+
+  WorkedExamplePromptLevel _parseWorkedExamplePromptLevel(String? value) {
+    return WorkedExamplePromptLevel.values.firstWhere(
+      (WorkedExamplePromptLevel promptLevel) => promptLevel.name == value,
+      orElse: () => WorkedExamplePromptLevel.fullModel,
     );
   }
 
@@ -274,6 +300,72 @@ class MissionService extends ChangeNotifier {
       case FsrsRating.easy:
         return now.add(const Duration(days: 7));
     }
+  }
+
+  _InterleavingRecommendation _buildInterleavingRecommendation(
+    Mission source,
+    InterleavingMode mode,
+  ) {
+    final List<Mission> candidates = _missions
+        .where((Mission mission) =>
+            mission.id != source.id && mission.status != MissionStatus.completed)
+        .toList();
+
+    candidates.sort(
+      (Mission left, Mission right) => _interleavingPriority(source, left, mode)
+          .compareTo(_interleavingPriority(source, right, mode)),
+    );
+
+    final int confusableCount = candidates
+        .where((Mission mission) =>
+            mission.pillar == source.pillar &&
+            mission.difficulty == source.difficulty)
+        .length;
+
+    return _InterleavingRecommendation(
+      missionIds: candidates.take(3).map((Mission mission) => mission.id).toList(),
+      confusabilityBand: confusableCount >= 2
+          ? 'high'
+          : confusableCount == 1
+              ? 'medium'
+              : 'low',
+    );
+  }
+
+  int _interleavingPriority(
+    Mission source,
+    Mission candidate,
+    InterleavingMode mode,
+  ) {
+    final bool samePillar = candidate.pillar == source.pillar;
+    final bool sameDifficulty = candidate.difficulty == source.difficulty;
+    switch (mode) {
+      case InterleavingMode.focusOnly:
+        return samePillar ? 0 : 3;
+      case InterleavingMode.mixed:
+        if (!samePillar) {
+          return 0;
+        }
+        return sameDifficulty ? 3 : 2;
+      case InterleavingMode.scaffoldedMixed:
+        if (samePillar && !sameDifficulty) {
+          return 0;
+        }
+        return samePillar ? 2 : 1;
+    }
+  }
+
+  WorkedExamplePromptLevel _promptLevelForFadeStage(int fadeStage) {
+    if (fadeStage >= 4) {
+      return WorkedExamplePromptLevel.independentCheck;
+    }
+    if (fadeStage == 3) {
+      return WorkedExamplePromptLevel.hintOnly;
+    }
+    if (fadeStage == 2) {
+      return WorkedExamplePromptLevel.partialSteps;
+    }
+    return WorkedExamplePromptLevel.fullModel;
   }
 
   LearnerProgress _calculateProgress() {
@@ -509,6 +601,7 @@ class MissionService extends ChangeNotifier {
       _missions[index] = _missions[index].copyWith(
         fsrsLastRating: rating,
         nextReviewAt: nextReviewAt,
+        fsrsQueueState: FsrsQueueState.scheduled,
       );
 
       await TelemetryService.instance.logEvent(
@@ -551,7 +644,10 @@ class MissionService extends ChangeNotifier {
         });
       }
 
-      _missions[index] = _missions[index].copyWith(nextReviewAt: nextReviewAt);
+      _missions[index] = _missions[index].copyWith(
+        nextReviewAt: nextReviewAt,
+        fsrsQueueState: FsrsQueueState.snoozed,
+      );
 
       await TelemetryService.instance.logEvent(
         event: 'fsrs.queue.snoozed',
@@ -596,7 +692,10 @@ class MissionService extends ChangeNotifier {
         });
       }
 
-      _missions[index] = _missions[index].copyWith(nextReviewAt: nextReviewAt);
+      _missions[index] = _missions[index].copyWith(
+        nextReviewAt: nextReviewAt,
+        fsrsQueueState: FsrsQueueState.rescheduled,
+      );
 
       await TelemetryService.instance.logEvent(
         event: 'fsrs.queue.rescheduled',
@@ -608,6 +707,76 @@ class MissionService extends ChangeNotifier {
           'itemType': 'mission',
           'days': days,
           'next_review_at': nextReviewAt.toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> suspendFsrsQueue(String missionId) async {
+    try {
+      final int index = _missions.indexWhere((Mission m) => m.id == missionId);
+      if (index == -1) {
+        return false;
+      }
+
+      final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+          await _getAssignmentDocForMission(missionId);
+
+      if (assignmentDoc != null) {
+        await assignmentDoc.reference.update(<String, dynamic>{
+          'nextReviewAt': FieldValue.delete(),
+          'fsrsQueueState': 'suspended',
+          'fsrsSuspendedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      final Mission current = _missions[index];
+      _missions[index] = Mission(
+        id: current.id,
+        title: current.title,
+        description: current.description,
+        imageUrl: current.imageUrl,
+        pillar: current.pillar,
+        difficulty: current.difficulty,
+        skills: current.skills,
+        steps: current.steps,
+        status: current.status,
+        xpReward: current.xpReward,
+        dueDate: current.dueDate,
+        startedAt: current.startedAt,
+        completedAt: current.completedAt,
+        progress: current.progress,
+        educatorFeedback: current.educatorFeedback,
+        reflectionPrompt: current.reflectionPrompt,
+        fsrsLastRating: current.fsrsLastRating,
+        nextReviewAt: null,
+        fsrsQueueState: FsrsQueueState.suspended,
+        interleavingMode: current.interleavingMode,
+        recommendedInterleavingMissionIds:
+            current.recommendedInterleavingMissionIds,
+        confusabilityBand: current.confusabilityBand,
+        workedExampleShown: current.workedExampleShown,
+        workedExampleFadeStage: current.workedExampleFadeStage,
+        workedExamplePromptLevel: current.workedExamplePromptLevel,
+      );
+
+      await TelemetryService.instance.logEvent(
+        event: 'fsrs.queue.rescheduled',
+        role: 'learner',
+        siteId: _siteIdFromAssignment(assignmentDoc),
+        metadata: <String, dynamic>{
+          'mission_id': missionId,
+          'itemCount': 1,
+          'itemType': 'mission',
+          'action': 'suspend',
+          'queue_state': 'suspended',
         },
       );
 
@@ -632,15 +801,23 @@ class MissionService extends ChangeNotifier {
 
       final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
           await _getAssignmentDocForMission(missionId);
+      final _InterleavingRecommendation recommendation =
+          _buildInterleavingRecommendation(_missions[index], mode);
 
       if (assignmentDoc != null) {
         await assignmentDoc.reference.update(<String, dynamic>{
           'interleavingMode': mode.name,
+          'recommendedInterleavingMissionIds': recommendation.missionIds,
+          'confusabilityBand': recommendation.confusabilityBand,
           'interleavingUpdatedAt': FieldValue.serverTimestamp(),
         });
       }
 
-      _missions[index] = _missions[index].copyWith(interleavingMode: mode);
+      _missions[index] = _missions[index].copyWith(
+        interleavingMode: mode,
+        recommendedInterleavingMissionIds: recommendation.missionIds,
+        confusabilityBand: recommendation.confusabilityBand,
+      );
 
       await TelemetryService.instance.logEvent(
         event: 'interleaving.mode.changed',
@@ -649,6 +826,8 @@ class MissionService extends ChangeNotifier {
         metadata: <String, dynamic>{
           'mission_id': missionId,
           'mode': mode.name,
+          'recommended_count': recommendation.missionIds.length,
+          'confusabilityBand': recommendation.confusabilityBand,
         },
       );
 
@@ -670,14 +849,17 @@ class MissionService extends ChangeNotifier {
 
       final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
           await _getAssignmentDocForMission(missionId);
-      final int nextFadeStage = _missions[index].workedExampleFadeStage >= 3
-          ? 3
+      final int nextFadeStage = _missions[index].workedExampleFadeStage >= 4
+          ? 4
           : _missions[index].workedExampleFadeStage + 1;
+      final WorkedExamplePromptLevel promptLevel =
+          _promptLevelForFadeStage(nextFadeStage);
 
       if (assignmentDoc != null) {
         await assignmentDoc.reference.update(<String, dynamic>{
           'workedExampleShown': true,
           'workedExampleFadeStage': nextFadeStage,
+          'workedExamplePromptLevel': promptLevel.name,
           'workedExampleShownAt': FieldValue.serverTimestamp(),
         });
       }
@@ -685,6 +867,7 @@ class MissionService extends ChangeNotifier {
       _missions[index] = _missions[index].copyWith(
         workedExampleShown: true,
         workedExampleFadeStage: nextFadeStage,
+        workedExamplePromptLevel: promptLevel,
       );
 
       await TelemetryService.instance.logEvent(
@@ -695,6 +878,7 @@ class MissionService extends ChangeNotifier {
           'mission_id': missionId,
           'triggerTag': 'mission_detail_sheet',
           'fadeStage': nextFadeStage,
+          'promptLevel': promptLevel.name,
         },
       );
 
@@ -822,6 +1006,16 @@ class MissionService extends ChangeNotifier {
       return false;
     }
   }
+}
+
+class _InterleavingRecommendation {
+  const _InterleavingRecommendation({
+    required this.missionIds,
+    required this.confusabilityBand,
+  });
+
+  final List<String> missionIds;
+  final String confusabilityBand;
 }
 
 /// Mission submission model for educator review

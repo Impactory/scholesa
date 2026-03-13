@@ -91,9 +91,33 @@ enum FsrsRating {
   }
 }
 
+enum FsrsQueueState {
+  idle,
+  scheduled,
+  snoozed,
+  rescheduled,
+  suspended;
+
+  String get label {
+    switch (this) {
+      case FsrsQueueState.idle:
+        return 'Not scheduled';
+      case FsrsQueueState.scheduled:
+        return 'Scheduled';
+      case FsrsQueueState.snoozed:
+        return 'Snoozed';
+      case FsrsQueueState.rescheduled:
+        return 'Rescheduled';
+      case FsrsQueueState.suspended:
+        return 'Suspended';
+    }
+  }
+}
+
 enum InterleavingMode {
   focusOnly,
-  mixed;
+  mixed,
+  scaffoldedMixed;
 
   String get label {
     switch (this) {
@@ -101,6 +125,28 @@ enum InterleavingMode {
         return 'Focus only';
       case InterleavingMode.mixed:
         return 'Mixed';
+      case InterleavingMode.scaffoldedMixed:
+        return 'Scaffolded mix';
+    }
+  }
+}
+
+enum WorkedExamplePromptLevel {
+  fullModel,
+  partialSteps,
+  hintOnly,
+  independentCheck;
+
+  String get label {
+    switch (this) {
+      case WorkedExamplePromptLevel.fullModel:
+        return 'Full model';
+      case WorkedExamplePromptLevel.partialSteps:
+        return 'Partial steps';
+      case WorkedExamplePromptLevel.hintOnly:
+        return 'Hint only';
+      case WorkedExamplePromptLevel.independentCheck:
+        return 'Independent check';
     }
   }
 }
@@ -230,9 +276,13 @@ class Mission extends Equatable {
     this.reflectionPrompt,
     this.fsrsLastRating,
     this.nextReviewAt,
+    this.fsrsQueueState = FsrsQueueState.idle,
     this.interleavingMode = InterleavingMode.focusOnly,
+    this.recommendedInterleavingMissionIds = const <String>[],
+    this.confusabilityBand = 'low',
     this.workedExampleShown = false,
     this.workedExampleFadeStage = 0,
+    this.workedExamplePromptLevel = WorkedExamplePromptLevel.fullModel,
   });
 
   factory Mission.fromJson(Map<String, dynamic> json) {
@@ -283,12 +333,26 @@ class Mission extends Equatable {
       nextReviewAt: json['nextReviewAt'] != null
           ? DateTime.parse(json['nextReviewAt'] as String)
           : null,
+      fsrsQueueState: FsrsQueueState.values.firstWhere(
+        (FsrsQueueState value) => value.name == json['fsrsQueueState'],
+        orElse: () => FsrsQueueState.idle,
+      ),
       interleavingMode: InterleavingMode.values.firstWhere(
         (InterleavingMode mode) => mode.name == json['interleavingMode'],
         orElse: () => InterleavingMode.focusOnly,
       ),
+      recommendedInterleavingMissionIds: List<String>.from(
+        json['recommendedInterleavingMissionIds'] as List? ??
+            const <String>[],
+      ),
+      confusabilityBand: json['confusabilityBand'] as String? ?? 'low',
       workedExampleShown: json['workedExampleShown'] as bool? ?? false,
       workedExampleFadeStage: json['workedExampleFadeStage'] as int? ?? 0,
+      workedExamplePromptLevel: WorkedExamplePromptLevel.values.firstWhere(
+        (WorkedExamplePromptLevel value) =>
+            value.name == json['workedExamplePromptLevel'],
+        orElse: () => WorkedExamplePromptLevel.fullModel,
+      ),
     );
   }
   final String id;
@@ -309,9 +373,13 @@ class Mission extends Equatable {
   final String? reflectionPrompt;
   final FsrsRating? fsrsLastRating;
   final DateTime? nextReviewAt;
+  final FsrsQueueState fsrsQueueState;
   final InterleavingMode interleavingMode;
+  final List<String> recommendedInterleavingMissionIds;
+  final String confusabilityBand;
   final bool workedExampleShown;
   final int workedExampleFadeStage;
+  final WorkedExamplePromptLevel workedExamplePromptLevel;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -333,9 +401,13 @@ class Mission extends Equatable {
       'reflectionPrompt': reflectionPrompt,
       'fsrsLastRating': fsrsLastRating?.name,
       'nextReviewAt': nextReviewAt?.toIso8601String(),
+      'fsrsQueueState': fsrsQueueState.name,
       'interleavingMode': interleavingMode.name,
+      'recommendedInterleavingMissionIds': recommendedInterleavingMissionIds,
+      'confusabilityBand': confusabilityBand,
       'workedExampleShown': workedExampleShown,
       'workedExampleFadeStage': workedExampleFadeStage,
+      'workedExamplePromptLevel': workedExamplePromptLevel.name,
     };
   }
 
@@ -358,9 +430,13 @@ class Mission extends Equatable {
     String? reflectionPrompt,
     FsrsRating? fsrsLastRating,
     DateTime? nextReviewAt,
+    FsrsQueueState? fsrsQueueState,
     InterleavingMode? interleavingMode,
+    List<String>? recommendedInterleavingMissionIds,
+    String? confusabilityBand,
     bool? workedExampleShown,
     int? workedExampleFadeStage,
+    WorkedExamplePromptLevel? workedExamplePromptLevel,
   }) {
     return Mission(
       id: id ?? this.id,
@@ -381,10 +457,17 @@ class Mission extends Equatable {
       reflectionPrompt: reflectionPrompt ?? this.reflectionPrompt,
       fsrsLastRating: fsrsLastRating ?? this.fsrsLastRating,
       nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+        fsrsQueueState: fsrsQueueState ?? this.fsrsQueueState,
       interleavingMode: interleavingMode ?? this.interleavingMode,
+        recommendedInterleavingMissionIds:
+          recommendedInterleavingMissionIds ??
+            this.recommendedInterleavingMissionIds,
+        confusabilityBand: confusabilityBand ?? this.confusabilityBand,
       workedExampleShown: workedExampleShown ?? this.workedExampleShown,
       workedExampleFadeStage:
           workedExampleFadeStage ?? this.workedExampleFadeStage,
+        workedExamplePromptLevel:
+          workedExamplePromptLevel ?? this.workedExamplePromptLevel,
     );
   }
 
@@ -412,9 +495,13 @@ class Mission extends Equatable {
         reflectionPrompt,
         fsrsLastRating,
         nextReviewAt,
+        fsrsQueueState,
         interleavingMode,
+        recommendedInterleavingMissionIds,
+        confusabilityBand,
         workedExampleShown,
         workedExampleFadeStage,
+        workedExamplePromptLevel,
       ];
 }
 
