@@ -5,7 +5,7 @@ class NotificationService {
   NotificationService._();
 
   static final NotificationService instance = NotificationService._();
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  FirebaseFunctions get _functions => FirebaseFunctions.instance;
   static Future<dynamic> Function(
     String callableName,
     Map<String, dynamic> payload,
