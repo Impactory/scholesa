@@ -100,22 +100,26 @@ Release read:
 Implemented path:
 - Learner setup persists accessibility preferences.
 - Reading level, reduced-distraction, and related learner settings are surfaced in the learner flow.
+- Mission study details now honor keyboard-only learner preferences with explicit no-drag controls, large action buttons, and a visible close affordance.
 - Accessibility-setting telemetry is already captured in the live learner event path.
 
 Primary implementation files:
 - `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart`
+- `apps/empire_flutter/app/lib/modules/missions/missions_page.dart`
 - `apps/empire_flutter/app/lib/domain/models.dart`
 - `apps/empire_flutter/app/lib/i18n/learner_surface_i18n.dart`
+- `apps/empire_flutter/app/lib/i18n/workflow_surface_i18n.dart`
 
 Validation evidence:
 - Widget + persistence proof in `apps/empire_flutter/app/test/learner_site_surfaces_localization_test.dart`
+- Widget regression now covers keyboard-only mission controls and no-drag mission actions in `apps/empire_flutter/app/test/learner_site_surfaces_localization_test.dart`
 - Live telemetry audit coverage for `accessibility.setting.changed`
 
 Residual:
-- Drag alternatives and WCAG automation are still missing.
+- Formal WCAG automation and broader accessibility parity beyond the learner mission release path are still missing.
 
 Release read:
-- Accessibility preference persistence and learner-facing configuration are operational in the current release path.
+- Accessibility preference persistence, learner-facing configuration, and keyboard-only no-drag mission actions are operational in the current release path.
 - The remaining gap is deeper accessibility breadth and automation, not a broken learner accessibility flow.
 
 ---
@@ -137,7 +141,7 @@ These items should not block learner release confidence or the current clean bui
 1. Complete broader scheduler parity for the study orchestration layer.
 2. Extend worked-example decay to a fuller long-horizon correctness policy.
 3. Close wider motivation-engine parity gaps.
-4. Add drag-alternative depth and automated WCAG coverage.
+4. Add automated WCAG coverage and broader non-learner accessibility parity.
 
 ---
 
