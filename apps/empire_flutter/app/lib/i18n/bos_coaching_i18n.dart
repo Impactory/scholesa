@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 /// BOS/MIA coaching internationalization keys
-/// 
+///
 /// Centralized i18n keys for BOS/MIA coaching surfaces.
 /// Shared by all educator and parent pages to ensure consistency.
 ///
 /// **Usage**:
 /// ```dart
 /// import 'package:scholesa/i18n/bos_coaching_i18n.dart';
-/// 
+///
 /// final title = BosCoachingI18n.sessionLoopTitle(context);
 /// ```
 class BosCoachingI18n {
@@ -19,6 +19,9 @@ class BosCoachingI18n {
     'sessionLoopTitle': 'BOS/MIA 课堂循环',
     'sessionLoopSubtitle': '本次课堂最新的个人成长信号',
     'sessionLoopEmpty': '暂无课堂循环数据',
+    'classInsightsTitle': 'BOS/MIA 课堂洞察',
+    'classInsightsSubtitle': '本课堂的 FDM 状态估计、BAE 关注名单与进行中的 MVL 闸门',
+    'classInsightsEmpty': '暂无课堂洞察数据',
     'familyLearningTitle': '家庭学习循环',
     'familyLearningSubtitle': '你孩子的学习准备度与成长信号',
     'familyLearningEmpty': '暂无家庭学习数据',
@@ -40,6 +43,13 @@ class BosCoachingI18n {
     'loadingInsights': '正在加载学习洞察...',
     'errorLoadingInsights': '无法加载学习洞察，请稍后重试',
     'latestSignal': '最新信号',
+    'fdmStateEstimate': 'FDM 状态估计',
+    'baeWatchlist': 'BAE 关注名单',
+    'activeMvlGates': '进行中的 MVL 闸门',
+    'learnersTracked': '已追踪学习者',
+    'viewWatchlist': '查看关注名单',
+    'watchlistClear': '目前没有需要立即跟进的学习者',
+    'supportRecommended': '建议优先提供支持给以下学习者',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
@@ -49,6 +59,9 @@ class BosCoachingI18n {
     'sessionLoopTitle': 'BOS/MIA 課堂循環',
     'sessionLoopSubtitle': '本次課堂最新的個人成長訊號',
     'sessionLoopEmpty': '目前沒有課堂循環資料',
+    'classInsightsTitle': 'BOS/MIA 課堂洞察',
+    'classInsightsSubtitle': '本課堂的 FDM 狀態估計、BAE 關注名單與進行中的 MVL 閘門',
+    'classInsightsEmpty': '目前沒有課堂洞察資料',
     'familyLearningTitle': '家庭學習循環',
     'familyLearningSubtitle': '你孩子的學習準備度與成長訊號',
     'familyLearningEmpty': '目前沒有家庭學習資料',
@@ -70,6 +83,13 @@ class BosCoachingI18n {
     'loadingInsights': '正在載入學習洞察...',
     'errorLoadingInsights': '無法載入學習洞察，請稍後再試',
     'latestSignal': '最新訊號',
+    'fdmStateEstimate': 'FDM 狀態估計',
+    'baeWatchlist': 'BAE 關注名單',
+    'activeMvlGates': '進行中的 MVL 閘門',
+    'learnersTracked': '已追蹤學習者',
+    'viewWatchlist': '查看關注名單',
+    'watchlistClear': '目前沒有需要立即跟進的學習者',
+    'supportRecommended': '建議優先提供支持給以下學習者',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -77,13 +97,20 @@ class BosCoachingI18n {
     'learnerLoopSubtitle': 'Latest individual improvement signal',
     'learnerLoopEmpty': 'No learner loop data yet',
     'sessionLoopTitle': 'BOS/MIA Session Loop',
-    'sessionLoopSubtitle': 'Latest individual improvement signal for this session',
+    'sessionLoopSubtitle':
+        'Latest individual improvement signal for this session',
     'sessionLoopEmpty': 'No session loop data yet',
+    'classInsightsTitle': 'BOS/MIA Class Insights',
+    'classInsightsSubtitle':
+        'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+    'classInsightsEmpty': 'No class insights yet',
     'familyLearningTitle': 'Family Learning Loop',
-    'familyLearningSubtitle': 'Your child\'s learning readiness and improvement signals',
+    'familyLearningSubtitle':
+        'Your child\'s learning readiness and improvement signals',
     'familyLearningEmpty': 'No family learning data yet',
     'familyScheduleTitle': 'Family Schedule Loop',
-    'familyScheduleSubtitle': 'Your child\'s learning readiness and attendance signals',
+    'familyScheduleSubtitle':
+        'Your child\'s learning readiness and attendance signals',
     'familyScheduleEmpty': 'No schedule learning data yet',
     'familyBillingTitle': 'Family Billing Loop',
     'familyBillingSubtitle': 'Learning engagement and progress metrics',
@@ -100,6 +127,13 @@ class BosCoachingI18n {
     'loadingInsights': 'Loading learning insights...',
     'errorLoadingInsights': 'Unable to load insights; try again later',
     'latestSignal': 'Latest Signal',
+    'fdmStateEstimate': 'FDM State Estimate',
+    'baeWatchlist': 'BAE Watchlist',
+    'activeMvlGates': 'Active MVL Gates',
+    'learnersTracked': 'Learners Tracked',
+    'viewWatchlist': 'View Watchlist',
+    'watchlistClear': 'No learners need immediate follow-up right now',
+    'supportRecommended': 'Support recommended for these learners',
   };
 
   /// Get a BOS/MIA coaching key in the user's locale
@@ -123,31 +157,71 @@ class BosCoachingI18n {
   }
 
   // Convenience getters for commonly used keys
-  static String learnerLoopTitle(BuildContext context) => get(context, 'learnerLoopTitle');
-  static String learnerLoopSubtitle(BuildContext context) => get(context, 'learnerLoopSubtitle');
-  static String learnerLoopEmpty(BuildContext context) => get(context, 'learnerLoopEmpty');
-  static String sessionLoopTitle(BuildContext context) => get(context, 'sessionLoopTitle');
-  static String sessionLoopSubtitle(BuildContext context) => get(context, 'sessionLoopSubtitle');
-  static String sessionLoopEmpty(BuildContext context) => get(context, 'sessionLoopEmpty');
-  static String familyLearningTitle(BuildContext context) => get(context, 'familyLearningTitle');
-  static String familyLearningSubtitle(BuildContext context) => get(context, 'familyLearningSubtitle');
-  static String familyLearningEmpty(BuildContext context) => get(context, 'familyLearningEmpty');
-  static String familyScheduleTitle(BuildContext context) => get(context, 'familyScheduleTitle');
-  static String familyScheduleSubtitle(BuildContext context) => get(context, 'familyScheduleSubtitle');
-  static String familyScheduleEmpty(BuildContext context) => get(context, 'familyScheduleEmpty');
-  static String familyBillingTitle(BuildContext context) => get(context, 'familyBillingTitle');
-  static String familyBillingSubtitle(BuildContext context) => get(context, 'familyBillingSubtitle');
-  static String familyBillingEmpty(BuildContext context) => get(context, 'familyBillingEmpty');
+  static String learnerLoopTitle(BuildContext context) =>
+      get(context, 'learnerLoopTitle');
+  static String learnerLoopSubtitle(BuildContext context) =>
+      get(context, 'learnerLoopSubtitle');
+  static String learnerLoopEmpty(BuildContext context) =>
+      get(context, 'learnerLoopEmpty');
+  static String sessionLoopTitle(BuildContext context) =>
+      get(context, 'sessionLoopTitle');
+  static String sessionLoopSubtitle(BuildContext context) =>
+      get(context, 'sessionLoopSubtitle');
+  static String sessionLoopEmpty(BuildContext context) =>
+      get(context, 'sessionLoopEmpty');
+  static String classInsightsTitle(BuildContext context) =>
+      get(context, 'classInsightsTitle');
+  static String classInsightsSubtitle(BuildContext context) =>
+      get(context, 'classInsightsSubtitle');
+  static String classInsightsEmpty(BuildContext context) =>
+      get(context, 'classInsightsEmpty');
+  static String familyLearningTitle(BuildContext context) =>
+      get(context, 'familyLearningTitle');
+  static String familyLearningSubtitle(BuildContext context) =>
+      get(context, 'familyLearningSubtitle');
+  static String familyLearningEmpty(BuildContext context) =>
+      get(context, 'familyLearningEmpty');
+  static String familyScheduleTitle(BuildContext context) =>
+      get(context, 'familyScheduleTitle');
+  static String familyScheduleSubtitle(BuildContext context) =>
+      get(context, 'familyScheduleSubtitle');
+  static String familyScheduleEmpty(BuildContext context) =>
+      get(context, 'familyScheduleEmpty');
+  static String familyBillingTitle(BuildContext context) =>
+      get(context, 'familyBillingTitle');
+  static String familyBillingSubtitle(BuildContext context) =>
+      get(context, 'familyBillingSubtitle');
+  static String familyBillingEmpty(BuildContext context) =>
+      get(context, 'familyBillingEmpty');
   static String cognition(BuildContext context) => get(context, 'cognition');
   static String engagement(BuildContext context) => get(context, 'engagement');
   static String integrity(BuildContext context) => get(context, 'integrity');
-  static String improvementScore(BuildContext context) => get(context, 'improvementScore');
-  static String activeGoals(BuildContext context) => get(context, 'activeGoals');
+  static String improvementScore(BuildContext context) =>
+      get(context, 'improvementScore');
+  static String activeGoals(BuildContext context) =>
+      get(context, 'activeGoals');
   static String mvlStatus(BuildContext context) => get(context, 'mvlStatus');
   static String mvlActive(BuildContext context) => get(context, 'mvlActive');
   static String mvlPassed(BuildContext context) => get(context, 'mvlPassed');
   static String mvlFailed(BuildContext context) => get(context, 'mvlFailed');
-  static String loadingInsights(BuildContext context) => get(context, 'loadingInsights');
-  static String errorLoadingInsights(BuildContext context) => get(context, 'errorLoadingInsights');
-  static String latestSignal(BuildContext context) => get(context, 'latestSignal');
+  static String loadingInsights(BuildContext context) =>
+      get(context, 'loadingInsights');
+  static String errorLoadingInsights(BuildContext context) =>
+      get(context, 'errorLoadingInsights');
+  static String latestSignal(BuildContext context) =>
+      get(context, 'latestSignal');
+  static String fdmStateEstimate(BuildContext context) =>
+      get(context, 'fdmStateEstimate');
+  static String baeWatchlist(BuildContext context) =>
+      get(context, 'baeWatchlist');
+  static String activeMvlGates(BuildContext context) =>
+      get(context, 'activeMvlGates');
+  static String learnersTracked(BuildContext context) =>
+      get(context, 'learnersTracked');
+  static String viewWatchlist(BuildContext context) =>
+      get(context, 'viewWatchlist');
+  static String watchlistClear(BuildContext context) =>
+      get(context, 'watchlistClear');
+  static String supportRecommended(BuildContext context) =>
+      get(context, 'supportRecommended');
 }

@@ -16,7 +16,9 @@ String _tEducatorToday(BuildContext context, String input) {
 
 /// Educator Today Page - Daily schedule and quick actions
 class EducatorTodayPage extends StatefulWidget {
-  const EducatorTodayPage({super.key});
+  const EducatorTodayPage({this.classInsightsLoader, super.key});
+
+  final BosClassInsightsLoader? classInsightsLoader;
 
   @override
   State<EducatorTodayPage> createState() => _EducatorTodayPageState();
@@ -64,17 +66,19 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 SliverToBoxAdapter(child: _buildHeader()),
                 SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
                 SliverToBoxAdapter(
-                  child: BosLearnerLoopInsightsCard(
-                  title: BosCoachingI18n.sessionLoopTitle(context),
-                  subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
-                  emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
-                    learnerId: service.learners.isNotEmpty
-                        ? service.learners.first.id
-                        : null,
-                    learnerName: service.learners.isNotEmpty
-                        ? service.learners.first.name
-                        : null,
+                  child: BosClassInsightsCard(
+                    title: BosCoachingI18n.classInsightsTitle(context),
+                    subtitle: BosCoachingI18n.classInsightsSubtitle(context),
+                    emptyLabel: BosCoachingI18n.classInsightsEmpty(context),
+                    sessionOccurrenceId:
+                        _sessionOccurrenceIdForInsights(service),
+                    siteId: _siteIdForInsights(service),
+                    learnerNamesById: <String, String>{
+                      for (final EducatorLearner learner in service.learners)
+                        learner.id: learner.name,
+                    },
                     accentColor: ScholesaColors.educator,
+                    insightsLoader: widget.classInsightsLoader,
                   ),
                 ),
                 SliverToBoxAdapter(child: _buildQuickStats(service)),
@@ -132,6 +136,35 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
         ),
       ),
     );
+  }
+
+  String? _sessionOccurrenceIdForInsights(EducatorService service) {
+    final TodayClass? classForInsights =
+        service.currentClass ?? service.todayClasses.firstOrNull;
+    final String? sessionOccurrenceId = classForInsights?.id.trim();
+    if (sessionOccurrenceId == null || sessionOccurrenceId.isEmpty) {
+      return null;
+    }
+    return sessionOccurrenceId;
+  }
+
+  String? _siteIdForInsights(EducatorService service) {
+    final String educatorSiteId = service.siteId?.trim() ?? '';
+    if (educatorSiteId.isNotEmpty) {
+      return educatorSiteId;
+    }
+    final AppState appState = context.read<AppState>();
+    final String activeSiteId = appState.activeSiteId?.trim() ?? '';
+    if (activeSiteId.isNotEmpty) {
+      return activeSiteId;
+    }
+    if (appState.siteIds.isNotEmpty) {
+      final String siteId = appState.siteIds.first.trim();
+      if (siteId.isNotEmpty) {
+        return siteId;
+      }
+    }
+    return null;
   }
 
   Widget _buildHeader() {
