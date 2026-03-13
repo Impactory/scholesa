@@ -41,6 +41,7 @@
 - `mission_started`
 - `mission_abandoned` (payload: step, reason)
 - `mission_completed`
+- `interaction_signal_observed` (payload: signalFamily=`keystroke|pointer`, interactionCount, charsAdded/charsRemoved buckets or pointer target; no raw text or coordinates)
 
 ### 2.2 Build + iteration
 - `artifact_created`

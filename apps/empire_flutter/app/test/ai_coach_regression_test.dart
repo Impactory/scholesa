@@ -762,6 +762,7 @@ const Set<String> _knownAllowedEvents = <String>{
   'session_left',
   'idle_detected',
   'focus_restored',
+  'interaction_signal_observed',
   'educator_class_view',
   'educator_learner_drilldown',
 };

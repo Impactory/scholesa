@@ -209,6 +209,41 @@ void main() {
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
       expect(find.textContaining('BOS-MIA'), findsOneWidget);
     });
+
+    testWidgets('captures privacy-safe keystroke summaries for learner typing',
+        (WidgetTester tester) async {
+      final _FakeRuntime fakeRuntime = _FakeRuntime();
+
+      addTearDown(fakeRuntime.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: fakeRuntime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'Need help with fractions');
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+
+      expect(fakeRuntime.trackedEvents, contains('interaction_signal_observed'));
+
+      final Map<String, dynamic> payload = fakeRuntime.eventPayloads.lastWhere(
+        (Map<String, dynamic> entry) => entry['eventType'] == 'interaction_signal_observed',
+      )['payload'] as Map<String, dynamic>;
+
+      expect(payload['signalFamily'], equals('keystroke'));
+      expect(payload['source'], equals('ai_coach_input'));
+      expect(payload['charsAdded'], greaterThan(0));
+      expect(payload['textLengthBucket'], isNotEmpty);
+    });
   });
 }
 
@@ -222,6 +257,7 @@ class _FakeRuntime extends LearningRuntimeProvider {
 
   OrchestrationState? _fakeState;
   final List<String> trackedEvents = <String>[];
+  final List<Map<String, dynamic>> eventPayloads = <Map<String, dynamic>>[];
 
   @override
   OrchestrationState? get state => _fakeState;
@@ -247,5 +283,11 @@ class _FakeRuntime extends LearningRuntimeProvider {
     Map<String, dynamic> payload = const <String, dynamic>{},
   }) {
     trackedEvents.add(eventType);
+    eventPayloads.add(<String, dynamic>{
+      'eventType': eventType,
+      'missionId': missionId,
+      'checkpointId': checkpointId,
+      'payload': Map<String, dynamic>.from(payload),
+    });
   }
 }

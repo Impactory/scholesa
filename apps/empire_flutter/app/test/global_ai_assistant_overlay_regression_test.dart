@@ -18,12 +18,28 @@ class _FakeLearningRuntimeProvider extends LearningRuntimeProvider {
   });
 
   OrchestrationState? _fakeState;
+  final List<Map<String, dynamic>> trackedEventPayloads = <Map<String, dynamic>>[];
 
   @override
   OrchestrationState? get state => _fakeState;
 
   @override
   void startListening() {}
+
+  @override
+  void trackEvent(
+    String eventType, {
+    String? missionId,
+    String? checkpointId,
+    Map<String, dynamic> payload = const <String, dynamic>{},
+  }) {
+    trackedEventPayloads.add(<String, dynamic>{
+      'eventType': eventType,
+      'missionId': missionId,
+      'checkpointId': checkpointId,
+      'payload': Map<String, dynamic>.from(payload),
+    });
+  }
 
   void emitHesitatingState() {
     _fakeState = OrchestrationState(
@@ -186,6 +202,74 @@ void main() {
 
       expect(find.text('Click for AI help'), findsOneWidget);
       expect(sheetOpenCount, equals(0));
+    });
+
+    testWidgets('captures learner pointer summary when assistant opens',
+        (WidgetTester tester) async {
+      final AppState appState = AppState();
+      appState.updateFromMeResponse(<String, dynamic>{
+        'userId': 'learner_test',
+        'email': 'learner@test.scholesa',
+        'displayName': 'Learner Test',
+        'role': 'learner',
+        'activeSiteId': 'site_test',
+        'siteIds': <String>['site_test'],
+        'entitlements': <dynamic>[],
+      });
+
+      final _FakeLearningRuntimeProvider fakeRuntime = _FakeLearningRuntimeProvider(
+        siteId: 'site_test',
+        learnerId: 'learner_test',
+        gradeBand: GradeBand.g4_6,
+        sessionOccurrenceId: 'occ_test',
+      );
+
+      int sheetOpenCount = 0;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+          child: MaterialApp(
+            home: Scaffold(
+              body: GlobalAiAssistantOverlay(
+                runtimeFactory: ({
+                  required String siteId,
+                  required String learnerId,
+                  required GradeBand gradeBand,
+                  String? sessionOccurrenceId,
+                }) {
+                  return fakeRuntime;
+                },
+                sessionOccurrenceResolver: (
+                  BuildContext context, {
+                  required String siteId,
+                  required String learnerId,
+                }) async {
+                  return 'occ_test';
+                },
+                sheetPresenter: (BuildContext context, Widget child) async {
+                  sheetOpenCount += 1;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(sheetOpenCount, equals(1));
+      expect(fakeRuntime.trackedEventPayloads, isNotEmpty);
+
+      final Map<String, dynamic> payload = fakeRuntime.trackedEventPayloads.lastWhere(
+        (Map<String, dynamic> entry) => entry['eventType'] == 'interaction_signal_observed',
+      )['payload'] as Map<String, dynamic>;
+
+      expect(payload['signalFamily'], equals('pointer'));
+      expect(payload['source'], equals('global_ai_assistant_open'));
+      expect(payload['target'], equals('assistant_fab'));
     });
   });
 }

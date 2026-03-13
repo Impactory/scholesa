@@ -26,6 +26,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import { ekfLiteUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
+import { readInteractionSignalObservation } from './fdmInteractionSignals';
 import { hasSiteAccess, isCoppaConsentActive } from './coppaGuards';
 
 const db = admin.firestore();
@@ -604,7 +605,11 @@ async function extractFeatures(
   const voiceSignals = events
     .map((event) => readVoiceUnderstandingObservation(event))
     .filter((event): event is VoiceUnderstandingObservation => Boolean(event));
+  const interactionSignals = events
+    .map((event) => readInteractionSignalObservation(event as Record<string, unknown>))
+    .filter((event): event is NonNullable<ReturnType<typeof readInteractionSignalObservation>> => Boolean(event));
   const voiceSignalCount = voiceSignals.length;
+  const interactionSignalCount = interactionSignals.length;
   const avgUnderstandingConfidence = voiceSignalCount > 0
     ? voiceSignals.reduce((sum, signal) => sum + signal.confidence, 0) / voiceSignalCount
     : 0;
@@ -628,6 +633,10 @@ async function extractFeatures(
     const scaffoldRatio = scaffoldSignals / Math.max(voiceSignalCount, 1);
     cognition = clamp((cognition * 0.75) + (avgUnderstandingConfidence * 0.25) - (scaffoldRatio * 0.12));
   }
+  if (interactionSignalCount > 0) {
+    const cognitionBoost = interactionSignals.reduce((sum, signal) => sum + signal.cognitionDelta, 0);
+    cognition = clamp(cognition + Math.min(0.12, cognitionBoost));
+  }
 
   // Engagement proxy: inverse idle rate adjusted with voice frustration and participation.
   let engagement = totalEvents > 0
@@ -637,6 +646,10 @@ async function extractFeatures(
     const frustrationRatio = frustrationSignals / Math.max(voiceSignalCount, 1);
     const participationBoost = Math.min(0.12, (voiceSignalCount / Math.max(totalEvents, 1)) * 0.12);
     engagement = clamp(engagement + participationBoost - (frustrationRatio * 0.2));
+  }
+  if (interactionSignalCount > 0) {
+    const engagementBoost = interactionSignals.reduce((sum, signal) => sum + signal.engagementDelta, 0);
+    engagement = clamp(engagement + Math.min(0.18, engagementBoost));
   }
 
   // Integrity proxy: lower if heavy AI assistance, softened by explain/reflection evidence.
@@ -648,8 +661,15 @@ async function extractFeatures(
     const independenceRatio = explainSignals / Math.max(voiceSignalCount, 1);
     integrity = clamp(integrity + (independenceRatio * 0.1) - (dependencyRatio * 0.14));
   }
+  if (interactionSignalCount > 0) {
+    const integrityBoost = interactionSignals.reduce((sum, signal) => sum + signal.integrityDelta, 0);
+    integrity = clamp(integrity + Math.min(0.05, integrityBoost));
+  }
 
   const fusionFamiliesPresent = totalEvents > 0 ? ['interaction'] : [];
+  if (interactionSignalCount > 0) {
+    fusionFamiliesPresent.push('non_invasive_interaction_signals');
+  }
   if (voiceSignalCount > 0) {
     fusionFamiliesPresent.push('voice_understanding');
   }
