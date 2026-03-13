@@ -654,8 +654,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       },
     );
     final TextEditingController titleController = TextEditingController();
-    final TextEditingController descriptionController =
-        TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
     String selectedPillar = 'Future Skills';
     String selectedDifficulty = 'beginner';
     final Set<String> evidenceDefaults = <String>{

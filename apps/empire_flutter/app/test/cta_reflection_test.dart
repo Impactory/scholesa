@@ -112,7 +112,8 @@ void main() {
       expect(find.text('Mission created and added to list'), findsOneWidget);
     });
 
-    testWidgets('mission plans persist evidence defaults and authored step order',
+    testWidgets(
+        'mission plans persist evidence defaults and authored step order',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1800));
 
@@ -157,8 +158,8 @@ void main() {
         <String>['Guided practice', 'Launch challenge', 'Evidence capture'],
       );
 
-      final QuerySnapshot<Map<String, dynamic>> steps = await missions.docs
-          .single.reference
+      final QuerySnapshot<Map<String, dynamic>> steps = await missions
+          .docs.single.reference
           .collection('steps')
           .orderBy('order')
           .get();
