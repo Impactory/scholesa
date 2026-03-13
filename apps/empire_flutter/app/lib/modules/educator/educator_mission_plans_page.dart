@@ -654,7 +654,27 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       },
     );
     final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController =
+        TextEditingController();
     String selectedPillar = 'Future Skills';
+    String selectedDifficulty = 'beginner';
+    final Set<String> evidenceDefaults = <String>{
+      'explain_it_back',
+      'reflection_note',
+    };
+    final List<_LessonStepDraft> lessonSteps = <_LessonStepDraft>[
+      _LessonStepDraft(id: 'step-0', title: 'Launch challenge'),
+      _LessonStepDraft(id: 'step-1', title: 'Guided practice'),
+      _LessonStepDraft(id: 'step-2', title: 'Evidence capture'),
+    ];
+
+    void disposeDraftControllers() {
+      titleController.dispose();
+      descriptionController.dispose();
+      for (final _LessonStepDraft draft in lessonSteps) {
+        draft.controller.dispose();
+      }
+    }
 
     showDialog<void>(
       context: context,
@@ -672,7 +692,18 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   controller: titleController,
                   decoration: InputDecoration(
                     labelText: _tEducatorMissionPlans(context, 'Mission Title'),
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText:
+                        _tEducatorMissionPlans(context, 'Mission Description'),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -680,7 +711,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   initialValue: selectedPillar,
                   decoration: InputDecoration(
                     labelText: _tEducatorMissionPlans(context, 'Pillar'),
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   items: <DropdownMenuItem<String>>[
                     DropdownMenuItem<String>(
@@ -709,6 +740,236 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     }
                   },
                 ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedDifficulty,
+                  decoration: InputDecoration(
+                    labelText:
+                        _tEducatorMissionPlans(context, 'Lesson difficulty'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'beginner',
+                      child: Text(
+                        _tEducatorMissionPlans(context, 'Beginner'),
+                      ),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'intermediate',
+                      child: Text(
+                        _tEducatorMissionPlans(context, 'Intermediate'),
+                      ),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'advanced',
+                      child: Text(
+                        _tEducatorMissionPlans(context, 'Advanced'),
+                      ),
+                    ),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedDifficulty = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _tEducatorMissionPlans(context, 'Evidence defaults'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildEvidenceToggle(
+                  context: context,
+                  value: evidenceDefaults.contains('explain_it_back'),
+                  label: 'Explain-it-back check',
+                  onChanged: (bool enabled) {
+                    setLocalState(() {
+                      if (enabled) {
+                        evidenceDefaults.add('explain_it_back');
+                      } else {
+                        evidenceDefaults.remove('explain_it_back');
+                      }
+                    });
+                  },
+                ),
+                _buildEvidenceToggle(
+                  context: context,
+                  value: evidenceDefaults.contains('artifact_capture'),
+                  label: 'Artifact capture',
+                  onChanged: (bool enabled) {
+                    setLocalState(() {
+                      if (enabled) {
+                        evidenceDefaults.add('artifact_capture');
+                      } else {
+                        evidenceDefaults.remove('artifact_capture');
+                      }
+                    });
+                  },
+                ),
+                _buildEvidenceToggle(
+                  context: context,
+                  value: evidenceDefaults.contains('reflection_note'),
+                  label: 'Reflection note',
+                  onChanged: (bool enabled) {
+                    setLocalState(() {
+                      if (enabled) {
+                        evidenceDefaults.add('reflection_note');
+                      } else {
+                        evidenceDefaults.remove('reflection_note');
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        _tEducatorMissionPlans(context, 'Lesson flow'),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      key: const ValueKey<String>('mission_step_add'),
+                      onPressed: () {
+                        setLocalState(() {
+                          lessonSteps.add(
+                            _LessonStepDraft(
+                              id: 'step-${lessonSteps.length}',
+                              title: '',
+                            ),
+                          );
+                        });
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(_tEducatorMissionPlans(context, 'Add step')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 260,
+                  child: ListView.builder(
+                    itemCount: lessonSteps.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final _LessonStepDraft draft = lessonSteps[index];
+                      return Card(
+                        key: ValueKey<String>(draft.id),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              CircleAvatar(
+                                radius: 14,
+                                child: Text('${index + 1}'),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  key: ValueKey<String>(
+                                    'mission_step_field_$index',
+                                  ),
+                                  controller: draft.controller,
+                                  decoration: InputDecoration(
+                                    labelText: _tEducatorMissionPlans(
+                                      context,
+                                      'Lesson step',
+                                    ),
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                children: <Widget>[
+                                  IconButton(
+                                    key: ValueKey<String>(
+                                      'mission_step_up_$index',
+                                    ),
+                                    tooltip: _tEducatorMissionPlans(
+                                      context,
+                                      'Move up',
+                                    ),
+                                    onPressed: index == 0
+                                        ? null
+                                        : () {
+                                            setLocalState(() {
+                                              final _LessonStepDraft moved =
+                                                  lessonSteps.removeAt(index);
+                                              lessonSteps.insert(
+                                                index - 1,
+                                                moved,
+                                              );
+                                            });
+                                          },
+                                    icon:
+                                        const Icon(Icons.arrow_upward_rounded),
+                                  ),
+                                  IconButton(
+                                    key: ValueKey<String>(
+                                      'mission_step_down_$index',
+                                    ),
+                                    tooltip: _tEducatorMissionPlans(
+                                      context,
+                                      'Move down',
+                                    ),
+                                    onPressed: index == lessonSteps.length - 1
+                                        ? null
+                                        : () {
+                                            setLocalState(() {
+                                              final _LessonStepDraft moved =
+                                                  lessonSteps.removeAt(index);
+                                              lessonSteps.insert(
+                                                index + 1,
+                                                moved,
+                                              );
+                                            });
+                                          },
+                                    icon: const Icon(
+                                      Icons.arrow_downward_rounded,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    key: ValueKey<String>(
+                                      'mission_step_delete_$index',
+                                    ),
+                                    tooltip: _tEducatorMissionPlans(
+                                      context,
+                                      'Delete step',
+                                    ),
+                                    onPressed: lessonSteps.length <= 1
+                                        ? null
+                                        : () {
+                                            setLocalState(() {
+                                              final _LessonStepDraft removed =
+                                                  lessonSteps.removeAt(index);
+                                              removed.controller.dispose();
+                                            });
+                                          },
+                                    icon: const Icon(Icons.delete_outline),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -733,10 +994,24 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     context, 'Mission created and added to list');
                 final String createFailedText =
                     _tEducatorMissionPlans(context, 'Failed to create mission');
+                final String stepRequiredText = _tEducatorMissionPlans(
+                    context, 'Add at least one lesson step');
                 final String title = titleController.text.trim();
+                final List<String> orderedSteps = lessonSteps
+                    .map(
+                      (_LessonStepDraft draft) => draft.controller.text.trim(),
+                    )
+                    .where((String stepTitle) => stepTitle.isNotEmpty)
+                    .toList();
                 if (title.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(titleRequiredText)),
+                  );
+                  return;
+                }
+                if (orderedSteps.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(stepRequiredText)),
                   );
                   return;
                 }
@@ -751,7 +1026,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
                 final bool created = await _createMission(
                   title: title,
+                  description: descriptionController.text.trim(),
                   pillar: selectedPillar,
+                  difficulty: selectedDifficulty,
+                  evidenceDefaults: evidenceDefaults.toList(),
+                  orderedSteps: orderedSteps,
                 );
                 if (!mounted || !dialogContext.mounted) return;
                 Navigator.pop(dialogContext);
@@ -766,7 +1045,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           ],
         ),
       ),
-    );
+    ).whenComplete(disposeDraftControllers);
   }
 
   Future<void> _loadMissionPlans() async {
@@ -793,17 +1072,23 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           title: (data['title'] as String? ?? '').trim().isEmpty
               ? 'Mission'
               : (data['title'] as String).trim(),
+          description: (data['description'] as String? ?? '').trim(),
           pillar: pillar,
           duration: (data['duration'] as String? ?? '4 weeks'),
           targetGrade: (data['targetGrade'] as String? ??
               data['gradeBand'] as String? ??
               '6-8'),
+          difficulty: (data['difficulty'] as String? ?? 'beginner').trim(),
           status: _parsePlanStatus(data['status'] as String?),
           assignedSessions: _asInt(data['assignedSessions']) ??
               ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
           completedBy: _asInt(data['completedBy']) ??
               _asInt(data['completedCount']) ??
               0,
+          evidenceDefaults: List<String>.from(
+            data['evidenceDefaults'] as List<dynamic>? ?? const <String>[],
+          ),
+          lessonSteps: _parseLessonSteps(data),
         );
       }).where((_MissionPlan plan) {
         if (currentUserId == null || currentUserId.isEmpty) return true;
@@ -831,35 +1116,77 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
   Future<bool> _createMission({
     required String title,
+    required String description,
     required String pillar,
+    required String difficulty,
+    required List<String> evidenceDefaults,
+    required List<String> orderedSteps,
   }) async {
     try {
       final FirebaseFirestore firestore = _resolveFirestore();
       final String? userId = _resolveActorId();
       final DocumentReference<Map<String, dynamic>> createdRef =
-          await firestore.collection('missions').add(<String, dynamic>{
+          firestore.collection('missions').doc();
+      final WriteBatch batch = firestore.batch();
+      final List<Map<String, dynamic>> lessonStepMaps = orderedSteps
+          .asMap()
+          .entries
+          .map((MapEntry<int, String> entry) => <String, dynamic>{
+                'title': entry.value,
+                'order': entry.key,
+              })
+          .toList();
+      batch.set(createdRef, <String, dynamic>{
         'title': title,
+        'description': description,
         'pillar': pillar,
         'pillarCode': _pillarCodeFromLabel(pillar),
+        'pillarCodes': <String>[_pillarCodeFromLabel(pillar)],
         'duration': '4 weeks',
         'targetGrade': '6-8',
+        'difficulty': difficulty,
         'status': 'draft',
+        'approvalStatus': 'draft',
         'assignedSessions': 0,
         'completedBy': 0,
+        'evidenceDefaults': evidenceDefaults,
+        'lessonSteps': orderedSteps,
+        'stepCount': orderedSteps.length,
+        'bodyJson': <String, dynamic>{
+          'lessonBuilder': <String, dynamic>{
+            'evidenceDefaults': evidenceDefaults,
+            'steps': lessonStepMaps,
+          },
+          'misconceptionTags': const <String>[],
+        },
         if (userId != null && userId.isNotEmpty) 'educatorId': userId,
         if (userId != null && userId.isNotEmpty) 'createdBy': userId,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      for (final MapEntry<int, String> entry in orderedSteps.asMap().entries) {
+        batch.set(createdRef.collection('steps').doc(), <String, dynamic>{
+          'title': entry.value,
+          'order': entry.key,
+          'isCompleted': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
       final _MissionPlan created = _MissionPlan(
         id: createdRef.id,
         title: title,
+        description: description,
         pillar: pillar,
         duration: '4 weeks',
         targetGrade: '6-8',
+        difficulty: difficulty,
         status: _PlanStatus.draft,
         assignedSessions: 0,
         completedBy: 0,
+        evidenceDefaults: evidenceDefaults,
+        lessonSteps: orderedSteps,
       );
       if (mounted) {
         setState(() {
@@ -911,6 +1238,22 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     return null;
   }
 
+  Widget _buildEvidenceToggle({
+    required BuildContext context,
+    required bool value,
+    required String label,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return CheckboxListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      value: value,
+      onChanged: (bool? nextValue) => onChanged(nextValue ?? false),
+      title: Text(_tEducatorMissionPlans(context, label)),
+      controlAffinity: ListTileControlAffinity.leading,
+    );
+  }
+
   _PlanStatus _parsePlanStatus(String? status) {
     switch ((status ?? '').trim().toLowerCase()) {
       case 'active':
@@ -948,6 +1291,56 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         return 'impact';
       default:
         return 'future_skills';
+    }
+  }
+
+  List<String> _parseLessonSteps(Map<String, dynamic> data) {
+    final List<String> topLevel = List<String>.from(
+      data['lessonSteps'] as List<dynamic>? ?? const <String>[],
+    ).where((String value) => value.trim().isNotEmpty).toList();
+    if (topLevel.isNotEmpty) {
+      return topLevel;
+    }
+    final dynamic bodyJson = data['bodyJson'];
+    if (bodyJson is Map<String, dynamic>) {
+      final dynamic lessonBuilder = bodyJson['lessonBuilder'];
+      if (lessonBuilder is Map<String, dynamic>) {
+        final dynamic steps = lessonBuilder['steps'];
+        if (steps is List<dynamic>) {
+          return steps
+              .map((dynamic step) {
+                if (step is Map<String, dynamic>) {
+                  return (step['title'] as String? ?? '').trim();
+                }
+                return '';
+              })
+              .where((String value) => value.isNotEmpty)
+              .toList();
+        }
+      }
+    }
+    return const <String>[];
+  }
+
+  String _difficultyLabel(String difficulty) {
+    switch (difficulty.trim().toLowerCase()) {
+      case 'advanced':
+        return _tEducatorMissionPlans(context, 'Advanced');
+      case 'intermediate':
+        return _tEducatorMissionPlans(context, 'Intermediate');
+      default:
+        return _tEducatorMissionPlans(context, 'Beginner');
+    }
+  }
+
+  String _evidenceDefaultLabel(String evidenceDefault) {
+    switch (evidenceDefault) {
+      case 'artifact_capture':
+        return _tEducatorMissionPlans(context, 'Artifact capture');
+      case 'reflection_note':
+        return _tEducatorMissionPlans(context, 'Reflection note');
+      default:
+        return _tEducatorMissionPlans(context, 'Explain-it-back check');
     }
   }
 
