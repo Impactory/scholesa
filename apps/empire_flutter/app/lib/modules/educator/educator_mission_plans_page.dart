@@ -23,22 +23,38 @@ class _MissionPlan {
   const _MissionPlan({
     required this.id,
     required this.title,
+    required this.description,
     required this.pillar,
     required this.duration,
     required this.targetGrade,
+    required this.difficulty,
     required this.status,
     required this.assignedSessions,
     required this.completedBy,
+    required this.evidenceDefaults,
+    required this.lessonSteps,
   });
 
   final String id;
   final String title;
+  final String description;
   final String pillar;
   final String duration;
   final String targetGrade;
+  final String difficulty;
   final _PlanStatus status;
   final int assignedSessions;
   final int completedBy;
+  final List<String> evidenceDefaults;
+  final List<String> lessonSteps;
+}
+
+class _LessonStepDraft {
+  _LessonStepDraft({required this.id, required String title})
+      : controller = TextEditingController(text: title);
+
+  final String id;
+  final TextEditingController controller;
 }
 
 class EducatorMissionPlansPage extends StatefulWidget {
@@ -195,10 +211,41 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (plan.description.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 6),
+                          Text(
+                            plan.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   _buildStatusChip(plan.status),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _buildMetaChip(
+                    Icons.stacked_bar_chart_rounded,
+                    _difficultyLabel(plan.difficulty),
+                  ),
+                  _buildMetaChip(
+                    Icons.checklist_rtl_rounded,
+                    '${plan.lessonSteps.length} ${_tEducatorMissionPlans(context, 'Steps')}',
+                  ),
+                  _buildMetaChip(
+                    Icons.verified_outlined,
+                    '${plan.evidenceDefaults.length} ${_tEducatorMissionPlans(context, 'Evidence defaults')}',
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -305,6 +352,32 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMetaChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: ScholesaColors.background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ScholesaColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 14, color: ScholesaColors.textSecondary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -439,6 +512,92 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 color: _getPillarColor(plan.pillar),
                 fontWeight: FontWeight.w500,
               ),
+            ),
+            if (plan.description.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                plan.description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                _buildMetaChip(
+                  Icons.stacked_bar_chart_rounded,
+                  _difficultyLabel(plan.difficulty),
+                ),
+                _buildMetaChip(
+                  Icons.checklist_rtl_rounded,
+                  '${plan.lessonSteps.length} ${_tEducatorMissionPlans(context, 'Steps')}',
+                ),
+                _buildMetaChip(
+                  Icons.verified_outlined,
+                  '${plan.evidenceDefaults.length} ${_tEducatorMissionPlans(context, 'Evidence defaults')}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorMissionPlans(context, 'Evidence defaults'),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: plan.evidenceDefaults.isEmpty
+                  ? <Widget>[
+                      Text(
+                        _tEducatorMissionPlans(
+                          context,
+                          'No evidence defaults selected',
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ]
+                  : plan.evidenceDefaults
+                      .map((String defaultKey) => _buildMetaChip(
+                            Icons.task_alt_rounded,
+                            _evidenceDefaultLabel(defaultKey),
+                          ))
+                      .toList(),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _tEducatorMissionPlans(context, 'Lesson flow'),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Column(
+              children: plan.lessonSteps.asMap().entries.map(
+                (MapEntry<int, String> entry) {
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      radius: 14,
+                      backgroundColor:
+                          ScholesaColors.educator.withValues(alpha: 0.15),
+                      foregroundColor: ScholesaColors.educator,
+                      child: Text('${entry.key + 1}'),
+                    ),
+                    title: Text(entry.value),
+                  );
+                },
+              ).toList(),
             ),
             const SizedBox(height: 24),
             Row(
