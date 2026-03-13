@@ -136,6 +136,276 @@ class EducatorService extends ChangeNotifier {
     return deduped.toList()..sort();
   }
 
+  List<List<String>> _parseCsvRows(String source) {
+    final List<List<String>> rows = <List<String>>[];
+    final StringBuffer field = StringBuffer();
+    List<String> currentRow = <String>[];
+    bool inQuotes = false;
+
+    void commitField() {
+      currentRow.add(field.toString().trim());
+      field.clear();
+    }
+
+    void commitRow() {
+      commitField();
+      if (currentRow.any((String cell) => cell.isNotEmpty)) {
+        rows.add(List<String>.from(currentRow));
+      }
+      currentRow = <String>[];
+    }
+
+    for (int index = 0; index < source.length; index += 1) {
+      final String char = source[index];
+      if (char == '"') {
+        final bool escapedQuote =
+            inQuotes && index + 1 < source.length && source[index + 1] == '"';
+        if (escapedQuote) {
+          field.write('"');
+          index += 1;
+          continue;
+        }
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (!inQuotes && char == ',') {
+        commitField();
+        continue;
+      }
+      if (!inQuotes && (char == '\n' || char == '\r')) {
+        if (char == '\r' && index + 1 < source.length && source[index + 1] == '\n') {
+          index += 1;
+        }
+        commitRow();
+        continue;
+      }
+      field.write(char);
+    }
+
+    if (field.isNotEmpty || currentRow.isNotEmpty) {
+      commitRow();
+    }
+    return rows;
+  }
+
+  String _normalizeHeader(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  }
+
+  String? _readRowValue(
+    Map<String, int> headerIndex,
+    List<String> row,
+    List<String> acceptedHeaders,
+  ) {
+    for (final String header in acceptedHeaders) {
+      final int? index = headerIndex[header];
+      if (index == null || index >= row.length) {
+        continue;
+      }
+      final String value = row[index].trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _findUserByEmail(
+    String email,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email.trim().toLowerCase())
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+    return snapshot.docs.first;
+  }
+
+  Future<bool> _enrollmentExists({
+    required String sessionId,
+    required String learnerId,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('enrollments')
+        .where('sessionId', isEqualTo: sessionId)
+        .where('learnerId', isEqualTo: learnerId)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  Future<RosterImportOutcome?> importRosterCsv({
+    required String sessionId,
+    required String csvContent,
+  }) async {
+    _error = null;
+    notifyListeners();
+
+    try {
+      final List<List<String>> rows = _parseCsvRows(csvContent);
+      if (rows.length < 2) {
+        _error = 'No valid roster rows found in CSV import.';
+        notifyListeners();
+        return null;
+      }
+
+      final List<String> headers =
+          rows.first.map(_normalizeHeader).toList(growable: false);
+      final Map<String, int> headerIndex = <String, int>{
+        for (int index = 0; index < headers.length; index += 1)
+          headers[index]: index,
+      };
+      final DocumentSnapshot<Map<String, dynamic>> sessionDoc =
+          await _firestore.collection('sessions').doc(sessionId).get();
+      if (!sessionDoc.exists) {
+        _error = 'Session not found for roster import.';
+        notifyListeners();
+        return null;
+      }
+
+      final Map<String, dynamic> sessionData =
+          sessionDoc.data() ?? <String, dynamic>{};
+      final String resolvedSiteId =
+          (sessionData['siteId'] as String?)?.trim().isNotEmpty == true
+              ? (sessionData['siteId'] as String).trim()
+              : (siteId?.trim() ?? '');
+      final List<String> educatorIds = _normalizedDistinctIds(<String>[
+        educatorId,
+        ..._asStringIterable(sessionData['educatorIds']),
+      ]);
+
+      final WriteBatch batch = _firestore.batch();
+      int importedCount = 0;
+      int queuedCount = 0;
+      int duplicateCount = 0;
+      final List<String> queuedEmails = <String>[];
+
+      for (int rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+        final List<String> row = rows[rowIndex];
+        final String? learnerIdValue = _readRowValue(
+          headerIndex,
+          row,
+          const <String>['learner_id', 'userid', 'user_id', 'id'],
+        );
+        final String? emailValue = _readRowValue(
+          headerIndex,
+          row,
+          const <String>['email', 'email_address', 'mail'],
+        );
+        final String displayName =
+            _readRowValue(
+                  headerIndex,
+                  row,
+                  const <String>['name', 'display_name', 'learner_name', 'full_name'],
+                ) ??
+                emailValue ??
+                learnerIdValue ??
+                'Learner ${rowIndex}';
+
+        String? resolvedLearnerId = learnerIdValue?.trim();
+        if ((resolvedLearnerId == null || resolvedLearnerId.isEmpty) &&
+            emailValue != null) {
+          final DocumentSnapshot<Map<String, dynamic>>? userDoc =
+              await _findUserByEmail(emailValue);
+          final Map<String, dynamic>? userData = userDoc?.data();
+          if (userDoc != null &&
+              userDoc.exists &&
+              _recordMatchesSite(userData ?? <String, dynamic>{})) {
+            resolvedLearnerId = userDoc.id;
+          }
+        }
+
+        if (resolvedLearnerId == null || resolvedLearnerId.isEmpty) {
+          final DocumentReference<Map<String, dynamic>> rosterImportRef =
+              _firestore.collection('rosterImports').doc();
+          batch.set(rosterImportRef, <String, dynamic>{
+            if (resolvedSiteId.isNotEmpty) 'siteId': resolvedSiteId,
+            'sessionId': sessionId,
+            'educatorId': educatorId,
+            'status': 'pending_provisioning',
+            'source': 'csv_import',
+            'rowNumber': rowIndex + 1,
+            'displayName': displayName,
+            if (emailValue != null) 'email': emailValue.trim().toLowerCase(),
+            if (learnerIdValue != null) 'learnerIdCandidate': learnerIdValue,
+            'rawRow': row,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          queuedCount += 1;
+          if (emailValue != null && emailValue.trim().isNotEmpty) {
+            queuedEmails.add(emailValue.trim().toLowerCase());
+          }
+          continue;
+        }
+
+        if (await _enrollmentExists(
+          sessionId: sessionId,
+          learnerId: resolvedLearnerId,
+        )) {
+          duplicateCount += 1;
+          continue;
+        }
+
+        final DocumentReference<Map<String, dynamic>> enrollmentRef =
+            _firestore.collection('enrollments').doc();
+        batch.set(enrollmentRef, <String, dynamic>{
+          if (resolvedSiteId.isNotEmpty) 'siteId': resolvedSiteId,
+          'sessionId': sessionId,
+          'learnerId': resolvedLearnerId,
+          'educatorId': educatorId,
+          'educatorIds': educatorIds,
+          'status': 'active',
+          'source': 'csv_import',
+          'displayName': displayName,
+          if (emailValue != null) 'email': emailValue.trim().toLowerCase(),
+          'importedAt': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        importedCount += 1;
+      }
+
+      batch.set(sessionDoc.reference, <String, dynamic>{
+        'lastRosterSyncAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (importedCount > 0) 'enrolledCount': FieldValue.increment(importedCount),
+      }, SetOptions(merge: true));
+
+      await batch.commit();
+
+      await TelemetryService.instance.logEvent(
+        event: 'roster.imported',
+        siteId: resolvedSiteId.isNotEmpty ? resolvedSiteId : null,
+        metadata: <String, dynamic>{
+          'session_id': sessionId,
+          'total_rows': rows.length - 1,
+          'imported_count': importedCount,
+          'queued_count': queuedCount,
+          'duplicate_count': duplicateCount,
+        },
+      );
+
+      await loadSessions();
+      await loadLearners();
+
+      return RosterImportOutcome(
+        totalRows: rows.length - 1,
+        importedCount: importedCount,
+        queuedCount: queuedCount,
+        duplicateCount: duplicateCount,
+        queuedEmails: queuedEmails,
+      );
+    } catch (e) {
+      _error = 'Failed to import roster CSV: $e';
+      notifyListeners();
+      return null;
+    }
+  }
+
   String _generateJoinCode() {
     const String alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final Random random = Random.secure();

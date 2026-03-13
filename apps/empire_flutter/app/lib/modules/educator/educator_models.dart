@@ -218,3 +218,30 @@ class EducatorLearner extends Equatable {
         isActiveToday,
       ];
 }
+
+class RosterImportOutcome extends Equatable {
+  const RosterImportOutcome({
+    required this.totalRows,
+    required this.importedCount,
+    required this.queuedCount,
+    required this.duplicateCount,
+    this.queuedEmails = const <String>[],
+  });
+
+  final int totalRows;
+  final int importedCount;
+  final int queuedCount;
+  final int duplicateCount;
+  final List<String> queuedEmails;
+
+  bool get hasChanges => importedCount > 0 || queuedCount > 0;
+
+  @override
+  List<Object?> get props => <Object?>[
+        totalRows,
+        importedCount,
+        queuedCount,
+        duplicateCount,
+        queuedEmails,
+      ];
+}
