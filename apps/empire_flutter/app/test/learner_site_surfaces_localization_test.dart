@@ -18,6 +18,7 @@ import 'package:scholesa_app/modules/site/site_incidents_page.dart';
 import 'package:scholesa_app/modules/site/site_ops_page.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/notification_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -139,34 +140,45 @@ void main() {
         firestoreService: firestoreService,
         userId: 'test-user-1',
       );
+      final List<Map<String, dynamic>> reminderCalls = <Map<String, dynamic>>[];
 
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
-      await tester.pumpWidget(
-        _buildHarness(
-          locale: locale,
-          child: const LearnerTodayPage(),
-          providers: <SingleChildWidget>[
-            ChangeNotifierProvider<AppState>.value(value: appState),
-            Provider<FirestoreService>.value(value: firestoreService),
-            ChangeNotifierProvider<MissionService>.value(value: missionService),
-            ChangeNotifierProvider<HabitService>.value(value: habitService),
-            ChangeNotifierProvider<MessageService>.value(value: messageService),
-            Provider<dynamic>.value(value: null),
-          ],
-        ),
+      await NotificationService.runWithCallableInvoker(
+        (String callableName, Map<String, dynamic> payload) async {
+          reminderCalls.add(<String, dynamic>{
+            'callableName': callableName,
+            'payload': Map<String, dynamic>.from(payload),
+          });
+        },
+        () async {
+          await tester.pumpWidget(
+            _buildHarness(
+              locale: locale,
+              child: const LearnerTodayPage(),
+              providers: <SingleChildWidget>[
+                ChangeNotifierProvider<AppState>.value(value: appState),
+                Provider<FirestoreService>.value(value: firestoreService),
+                ChangeNotifierProvider<MissionService>.value(value: missionService),
+                ChangeNotifierProvider<HabitService>.value(value: habitService),
+                ChangeNotifierProvider<MessageService>.value(value: messageService),
+                Provider<dynamic>.value(value: null),
+              ],
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          await tester.tap(find.text('Complete setup'));
+          await tester.pumpAndSettle();
+
+          await tester.enterText(find.byType(TextField).at(0), 'Robotics, coding');
+          await tester.enterText(
+              find.byType(TextField).at(1), 'Build a better robot');
+          await tester.enterText(
+              find.byType(TextField).at(2), 'I want to create useful things');
+          await tester.tap(find.text('Save').last);
+          await tester.pumpAndSettle();
+        },
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Complete setup'));
-      await tester.pumpAndSettle();
-
-      await tester.enterText(find.byType(TextField).at(0), 'Robotics, coding');
-      await tester.enterText(
-          find.byType(TextField).at(1), 'Build a better robot');
-      await tester.enterText(
-          find.byType(TextField).at(2), 'I want to create useful things');
-      await tester.tap(find.text('Save').last);
-      await tester.pumpAndSettle();
 
       expect(find.text('Setup saved'), findsOneWidget);
 
@@ -176,6 +188,13 @@ void main() {
       expect(snapshot.docs.first.data()['learnerId'], 'test-user-1');
       expect(snapshot.docs.first.data()['siteId'], 'site-1');
       expect(snapshot.docs.first.data()['onboardingCompleted'], true);
+
+      expect(reminderCalls, hasLength(1));
+      expect(reminderCalls.first['callableName'], 'syncLearnerReminderPreference');
+      expect(reminderCalls.first['payload']['siteId'], 'site-1');
+      expect(reminderCalls.first['payload']['schedule'], 'weekdays');
+      expect(reminderCalls.first['payload']['weeklyTargetMinutes'], 90);
+      expect(reminderCalls.first['payload']['localeCode'], 'en');
     });
 
     testWidgets('quick reflection writes learner reflection record',

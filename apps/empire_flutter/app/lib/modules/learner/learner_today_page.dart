@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
+import '../../services/notification_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -1206,6 +1207,18 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 
                                       try {
                                         await repository.upsert(updatedProfile);
+                                        await NotificationService.instance
+                                            .syncLearnerReminderPreference(
+                                          siteId: siteId,
+                                          schedule: reminderSchedule,
+                                          weeklyTargetMinutes:
+                                              weeklyTargetMinutes.round(),
+                                          localeCode:
+                                              appState.preferredLocaleCode,
+                                          timeZone: appState.timeZone,
+                                          valuePrompt:
+                                              valuePromptController.text.trim(),
+                                        );
                                         await _logLearnerSetupEvents(
                                           previous: currentProfile,
                                           current: updatedProfile,

@@ -183,6 +183,7 @@ const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
 const NOTIFICATION_REQUESTS_COLLECTION = 'notificationRequests';
+const LEARNER_REMINDER_PREFERENCES_COLLECTION = 'learnerReminderPreferences';
 const NOTIFICATION_RATE_COLLECTION = 'notificationRateLimits';
 const CHECKOUT_INTENTS_COLLECTION = 'checkoutIntents';
 const STRIPE_CUSTOMERS_COLLECTION = 'stripeCustomers';
@@ -373,11 +374,22 @@ async function requireHq(authUid: string | undefined) {
   };
 }
 
-async function sendNotification(payload: { channel: string; threadId: string; messageId: string; siteId: string }) {
+async function sendNotification(payload: {
+  channel: string;
+  siteId?: string;
+  threadId?: string;
+  messageId?: string;
+  userId?: string;
+  type?: string;
+  data?: Record<string, unknown>;
+}) {
   const endpoint = notifyEndpoint.value();
   const apiKey = notifyApiKey.value();
   if (!endpoint || !apiKey) {
     throw new Error('Notification provider not configured');
+  }
+  if (!payload.threadId && !payload.type) {
+    throw new Error('Notification payload requires threadId/messageId or type');
   }
 
   const response = await guardedFetch(endpoint, {
@@ -391,6 +403,9 @@ async function sendNotification(payload: { channel: string; threadId: string; me
       threadId: payload.threadId,
       messageId: payload.messageId,
       siteId: payload.siteId,
+      userId: payload.userId,
+      type: payload.type,
+      data: payload.data,
     }),
   }, { source: 'functions.sendNotification', mode: 'general' });
 
@@ -3036,6 +3051,56 @@ export const requestNotificationSend = onCall(async (request: CallableRequest) =
   return { status: 'queued', id: docRef.id };
 });
 
+export const syncLearnerReminderPreference = onCall(async (request: CallableRequest) => {
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+  const schedule = typeof request.data?.schedule === 'string' ? request.data.schedule.trim() : '';
+  const weeklyTargetMinutes =
+    typeof request.data?.weeklyTargetMinutes === 'number' ? request.data.weeklyTargetMinutes : 0;
+  const localeCode = typeof request.data?.localeCode === 'string' ? request.data.localeCode.trim() : 'en';
+  const timeZone = typeof request.data?.timeZone === 'string' ? request.data.timeZone.trim() : 'auto';
+  const valuePrompt = typeof request.data?.valuePrompt === 'string' ? request.data.valuePrompt.trim() : '';
+
+  if (!siteId) {
+    throw new HttpsError('invalid-argument', 'siteId is required');
+  }
+  if (!new Set(['off', 'daily', 'weekdays', 'weekends']).has(schedule)) {
+    throw new HttpsError('invalid-argument', 'Invalid schedule');
+  }
+
+  const actor = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'site', 'hq'], siteId);
+  const docRef = admin.firestore()
+    .collection(LEARNER_REMINDER_PREFERENCES_COLLECTION)
+    .doc(`${siteId}_${actor.uid}`);
+  const enabled = schedule !== 'off' && weeklyTargetMinutes > 0;
+  await docRef.set({
+    learnerId: actor.uid,
+    siteId,
+    schedule,
+    weeklyTargetMinutes,
+    localeCode,
+    timeZone,
+    valuePrompt,
+    enabled,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await persistTelemetryEvent({
+    event: 'notification.requested',
+    userId: actor.uid,
+    role: actor.role,
+    siteId,
+    metadata: {
+      channel: 'push',
+      type: 'learner_goal_reminder.preference_sync',
+      schedule,
+      enabled,
+    },
+  });
+
+  return { status: enabled ? 'enabled' : 'disabled' };
+});
+
 export const resetUserPassword = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
   const email = typeof request.data?.email === 'string' ? request.data.email : undefined;
@@ -3089,9 +3154,12 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
     try {
       const result = await sendNotification({
         channel: data.channel as string,
-        threadId: data.threadId as string,
-        messageId: data.messageId as string,
-        siteId: data.siteId as string,
+        threadId: data.threadId as string | undefined,
+        messageId: data.messageId as string | undefined,
+        siteId: data.siteId as string | undefined,
+        userId: data.userId as string | undefined,
+        type: data.type as string | undefined,
+        data: data.data as Record<string, unknown> | undefined,
       });
       await docSnap.ref.set({ status: 'sent', processedAt: now, providerMessageId: result.providerMessageId }, { merge: true });
       await persistTelemetryEvent({
@@ -3099,7 +3167,14 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
         userId: (data.requestedBy as string | undefined) ?? 'system',
         role: data.role as Role | undefined,
         siteId: data.siteId as string | undefined,
-        metadata: { channel: data.channel, threadId: data.threadId, messageId: data.messageId, processed: true },
+        metadata: {
+          channel: data.channel,
+          threadId: data.threadId,
+          messageId: data.messageId,
+          type: data.type,
+          userId: data.userId,
+          processed: true,
+        },
       });
       const auditRef = db.collection(AUDIT_COLLECTION).doc();
       await auditRef.set({
@@ -3109,12 +3184,100 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
         entityType: 'notificationRequest',
         entityId: docSnap.id,
         siteId: data.siteId,
-        details: { channel: data.channel, threadId: data.threadId, messageId: data.messageId },
+        details: {
+          channel: data.channel,
+          threadId: data.threadId,
+          messageId: data.messageId,
+          type: data.type,
+          userId: data.userId,
+        },
         createdAt: now,
       });
     } catch (e) {
       await docSnap.ref.set({ status: 'error', processedAt: now, error: (e as Error).message }, { merge: true });
     }
+  }
+});
+
+export const scheduleLearnerGoalReminders = onSchedule('every 6 hours', async () => {
+  const db = admin.firestore();
+  const prefsSnap = await db
+    .collection(LEARNER_REMINDER_PREFERENCES_COLLECTION)
+    .where('enabled', '==', true)
+    .limit(100)
+    .get();
+
+  const now = new Date();
+  for (const doc of prefsSnap.docs) {
+    const data = doc.data();
+    const learnerId = typeof data.learnerId === 'string' ? data.learnerId : '';
+    const siteId = typeof data.siteId === 'string' ? data.siteId : '';
+    const schedule = typeof data.schedule === 'string' ? data.schedule : 'off';
+    const timeZone = typeof data.timeZone === 'string' && data.timeZone ? data.timeZone : 'UTC';
+    if (!learnerId || !siteId || schedule === 'off') {
+      continue;
+    }
+
+    const localWeekday = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short',
+      timeZone,
+    }).format(now);
+    const localDayKey = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+    const isWeekend = localWeekday === 'Sat' || localWeekday === 'Sun';
+    const shouldSend = schedule === 'daily' ||
+      (schedule === 'weekdays' && !isWeekend) ||
+      (schedule === 'weekends' && isWeekend);
+    if (!shouldSend) {
+      continue;
+    }
+
+    const existing = await db
+      .collection(NOTIFICATION_REQUESTS_COLLECTION)
+      .where('userId', '==', learnerId)
+      .where('type', '==', 'learner_goal_reminder')
+      .where('data.localDayKey', '==', localDayKey)
+      .limit(1)
+      .get();
+    if (!existing.empty) {
+      continue;
+    }
+
+    await db.collection(NOTIFICATION_REQUESTS_COLLECTION).add({
+      userId: learnerId,
+      siteId,
+      type: 'learner_goal_reminder',
+      channel: 'push',
+      status: 'pending',
+      requestedBy: learnerId,
+      role: 'learner',
+      rateKey: `${learnerId}:learner_goal_reminder:${localDayKey}`,
+      data: {
+        schedule,
+        weeklyTargetMinutes: data.weeklyTargetMinutes,
+        valuePrompt: data.valuePrompt,
+        localeCode: data.localeCode,
+        localDayKey,
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    await persistTelemetryEvent({
+      event: 'notification.requested',
+      userId: learnerId,
+      role: 'learner',
+      siteId,
+      metadata: {
+        channel: 'push',
+        type: 'learner_goal_reminder',
+        schedule,
+        localDayKey,
+      },
+    });
   }
 });
 

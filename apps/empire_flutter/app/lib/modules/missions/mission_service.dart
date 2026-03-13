@@ -102,6 +102,7 @@ class MissionService extends ChangeNotifier {
 
         if (missionDoc.exists) {
           final Map<String, dynamic> missionData = missionDoc.data()!;
+          final List<Skill> skills = await _loadMissionSkills(missionData);
 
           // Get steps for this mission
           final QuerySnapshot<Map<String, dynamic>> stepsSnapshot =
@@ -134,7 +135,7 @@ class MissionService extends ChangeNotifier {
             status: _parseStatus(assignData['status'] as String?),
             progress: (assignData['progress'] as num?)?.toDouble() ?? 0.0,
             steps: steps,
-            skills: const <Skill>[],
+            skills: skills,
             dueDate: _parseTimestamp(assignData['dueDate']),
             startedAt: _parseTimestamp(assignData['startedAt']),
             completedAt: _parseTimestamp(assignData['completedAt']),
@@ -302,6 +303,48 @@ class MissionService extends ChangeNotifier {
     }
   }
 
+  Future<List<Skill>> _loadMissionSkills(
+    Map<String, dynamic> missionData,
+  ) async {
+    final List<Skill> embeddedSkills =
+        (missionData['skills'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<Map<String, dynamic>>()
+            .map(Skill.fromJson)
+            .toList();
+    if (embeddedSkills.isNotEmpty) {
+      return embeddedSkills;
+    }
+
+    final List<String> skillIds = List<String>.from(
+      missionData['skillIds'] as List? ?? const <String>[],
+    );
+    if (skillIds.isEmpty) {
+      return const <Skill>[];
+    }
+
+    final List<Skill> resolvedSkills = <Skill>[];
+    for (final String skillId in skillIds) {
+      final DocumentSnapshot<Map<String, dynamic>> skillDoc =
+          await _firestore.collection('skills').doc(skillId).get();
+      if (!skillDoc.exists) {
+        resolvedSkills.add(Skill(
+          id: skillId,
+          name: skillId,
+          pillar: _parsePillar(missionData['pillarCode'] as String?),
+        ));
+        continue;
+      }
+      final Map<String, dynamic> skillData = skillDoc.data()!;
+      resolvedSkills.add(Skill(
+        id: skillDoc.id,
+        name: skillData['name'] as String? ?? skillDoc.id,
+        description: skillData['description'] as String?,
+        pillar: _parsePillar(skillData['pillarCode'] as String?),
+      ));
+    }
+    return resolvedSkills;
+  }
+
   _InterleavingRecommendation _buildInterleavingRecommendation(
     Mission source,
     InterleavingMode mode,
@@ -312,14 +355,23 @@ class MissionService extends ChangeNotifier {
         .toList();
 
     candidates.sort(
-      (Mission left, Mission right) => _interleavingPriority(source, left, mode)
-          .compareTo(_interleavingPriority(source, right, mode)),
+      (Mission left, Mission right) => _interleavingPriority(
+        source,
+        left,
+        mode,
+      ).compareTo(
+        _interleavingPriority(
+          source,
+          right,
+          mode,
+        ),
+      ),
     );
 
     final int confusableCount = candidates
-        .where((Mission mission) =>
-            mission.pillar == source.pillar &&
-            mission.difficulty == source.difficulty)
+        .where(
+          (Mission mission) => _skillOverlapCount(source, mission) > 0,
+        )
         .length;
 
     return _InterleavingRecommendation(
@@ -337,22 +389,34 @@ class MissionService extends ChangeNotifier {
     Mission candidate,
     InterleavingMode mode,
   ) {
+    final int overlap = _skillOverlapCount(source, candidate);
     final bool samePillar = candidate.pillar == source.pillar;
-    final bool sameDifficulty = candidate.difficulty == source.difficulty;
+    final int difficultyDistance =
+        (candidate.difficulty.index - source.difficulty.index).abs();
+    final int progressDistance = ((candidate.progress - source.progress).abs() * 10)
+        .round();
     switch (mode) {
       case InterleavingMode.focusOnly:
-        return samePillar ? 0 : 3;
+        return samePillar ? difficultyDistance + progressDistance : 20 + overlap;
       case InterleavingMode.mixed:
-        if (!samePillar) {
-          return 0;
-        }
-        return sameDifficulty ? 3 : 2;
+        return (samePillar ? 4 : 0) +
+            (overlap == 0 ? 0 : 8) +
+            difficultyDistance +
+            progressDistance;
       case InterleavingMode.scaffoldedMixed:
-        if (samePillar && !sameDifficulty) {
-          return 0;
-        }
-        return samePillar ? 2 : 1;
+        return (overlap > 0 ? 0 : 6) +
+            (samePillar ? 0 : 4) +
+            difficultyDistance +
+            progressDistance;
     }
+  }
+
+  int _skillOverlapCount(Mission source, Mission candidate) {
+    final Set<String> sourceSkills =
+        source.skills.map((Skill skill) => skill.id).toSet();
+    final Set<String> candidateSkills =
+        candidate.skills.map((Skill skill) => skill.id).toSet();
+    return sourceSkills.intersection(candidateSkills).length;
   }
 
   WorkedExamplePromptLevel _promptLevelForFadeStage(int fadeStage) {

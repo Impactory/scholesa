@@ -173,6 +173,28 @@ void main() {
           'progress': 0.25,
         },
       );
+      await firestore.collection('missionAssignments').doc('assignment-3').set(
+        <String, dynamic>{
+          'missionId': 'mission-3',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'status': 'in_progress',
+          'progress': 0.20,
+        },
+      );
+
+      await firestore.collection('skills').doc('skill-robotics').set(
+        <String, dynamic>{
+          'name': 'Robotics',
+          'pillarCode': 'future_skills',
+        },
+      );
+      await firestore.collection('skills').doc('skill-design').set(
+        <String, dynamic>{
+          'name': 'Design',
+          'pillarCode': 'impact',
+        },
+      );
 
       await firestore.collection('missions').doc('mission-1').set(
         <String, dynamic>{
@@ -181,6 +203,7 @@ void main() {
           'pillarCode': 'future_skills',
           'difficulty': 'beginner',
           'xpReward': 100,
+          'skillIds': <String>['skill-robotics'],
         },
       );
       await firestore.collection('missions').doc('mission-2').set(
@@ -190,6 +213,17 @@ void main() {
           'pillarCode': 'future_skills',
           'difficulty': 'intermediate',
           'xpReward': 120,
+          'skillIds': <String>['skill-robotics'],
+        },
+      );
+      await firestore.collection('missions').doc('mission-3').set(
+        <String, dynamic>{
+          'title': 'Mission Three',
+          'description': 'Description 3',
+          'pillarCode': 'impact',
+          'difficulty': 'intermediate',
+          'xpReward': 140,
+          'skillIds': <String>['skill-design'],
         },
       );
 
@@ -250,6 +284,8 @@ void main() {
     expect(data?.containsKey('nextReviewAt'), isFalse);
     expect(data?['interleavingMode'], 'scaffoldedMixed');
     expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
+      expect((data?['recommendedInterleavingMissionIds'] as List<dynamic>).first,
+        'mission-2');
       expect(data?['workedExampleShown'], true);
     expect(data?['workedExampleFadeStage'], 2);
     expect(data?['workedExamplePromptLevel'], 'partialSteps');
