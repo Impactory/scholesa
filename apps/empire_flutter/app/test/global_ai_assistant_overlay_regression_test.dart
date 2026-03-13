@@ -258,8 +258,10 @@ void main() {
       );
 
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
       await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
 
       expect(sheetOpenCount, equals(1));
       expect(fakeRuntime.trackedEventPayloads, isNotEmpty);
