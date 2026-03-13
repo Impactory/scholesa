@@ -48,7 +48,7 @@ void main() {
         'userId': 'learner_test',
         'email': 'learner@test.scholesa',
         'displayName': 'Learner Test',
-        'role': 'site',
+        'role': 'learner',
         'activeSiteId': 'site_test',
         'siteIds': <String>['site_test'],
         'entitlements': <dynamic>[],
@@ -142,7 +142,7 @@ void main() {
         'userId': 'learner_test',
         'email': 'learner@test.scholesa',
         'displayName': 'Learner Test',
-        'role': 'learner',
+        'role': 'site',
         'activeSiteId': 'site_test',
         'siteIds': <String>['site_test'],
         'entitlements': <dynamic>[],
@@ -183,6 +183,7 @@ void main() {
       await mouse.moveTo(tester.getCenter(fab));
       await tester.pump(const Duration(milliseconds: 150));
 
+      expect(find.text('Click for AI help'), findsOneWidget);
       expect(sheetOpenCount, equals(0));
     });
   });

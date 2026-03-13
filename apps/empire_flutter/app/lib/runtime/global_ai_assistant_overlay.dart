@@ -52,12 +52,24 @@ class GlobalAiAssistantOverlay extends StatefulWidget {
       _GlobalAiAssistantOverlayState();
 }
 
-class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
+class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay>
+    with SingleTickerProviderStateMixin {
   bool _assistantSheetOpen = false;
+  bool _isHoveringAssistant = false;
   DateTime? _lastBosPopupAt;
   bool _bosPopupInFlight = false;
   String? _bosMonitorKey;
   LearningRuntimeProvider? _bosRuntime;
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+  }
 
   bool _isHesitating(XHat state) {
     return state.engagement <= 0.42 || state.cognition <= 0.38;
@@ -104,44 +116,104 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.only(right: 16, bottom: 16),
-              child: FloatingActionButton(
-                heroTag: 'global_ai_assistant_fab',
-                tooltip: AppStrings.of(context, 'assistant.tooltip'),
-                backgroundColor: Colors.transparent,
-                foregroundColor: theme.colorScheme.onPrimary,
-                elevation: 0,
-                hoverElevation: 0,
-                highlightElevation: 0,
-                onPressed: () => _openAssistantSheet(
-                  context,
-                  role: role,
-                  siteId: siteId,
-                  learnerId: learnerId,
-                  trigger: _isPointerPlatform() ? 'click' : 'tap',
-                ),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[
-                        ScholesaColors.futureSkills,
-                        ScholesaColors.leadership,
-                        ScholesaColors.impact,
-                      ],
-                    ),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: ScholesaColors.leadership.withValues(alpha: 0.28),
-                        blurRadius: 12,
-                        offset: const Offset(0, 5),
+              child: MouseRegion(
+                onEnter: (_) {
+                  if (!_isPointerPlatform()) {
+                    return;
+                  }
+                  setState(() => _isHoveringAssistant = true);
+                },
+                onExit: (_) {
+                  if (_isHoveringAssistant) {
+                    setState(() => _isHoveringAssistant = false);
+                  }
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.bottomRight,
+                  children: <Widget>[
+                    if (_isPointerPlatform())
+                      IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (BuildContext context, Widget? child) {
+                            final double scale = 1 + (_pulseController.value * 0.22);
+                            final double opacity = (1 - _pulseController.value) * 0.18;
+                            return Transform.scale(
+                              scale: scale,
+                              child: Opacity(opacity: opacity, child: child),
+                            );
+                          },
+                          child: Container(
+                            width: 74,
+                            height: 74,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: ScholesaColors.leadership.withValues(alpha: 0.22),
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+                    Positioned(
+                      right: 0,
+                      bottom: 70,
+                      child: IgnorePointer(
+                        child: AnimatedSlide(
+                          duration: const Duration(milliseconds: 180),
+                          offset: _isHoveringAssistant
+                              ? Offset.zero
+                              : const Offset(0, 0.08),
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 180),
+                            opacity: _isHoveringAssistant ? 1 : 0,
+                            child: _AssistantHoverHint(
+                              label: AppStrings.of(context, 'assistant.hoverHint'),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    FloatingActionButton(
+                      heroTag: 'global_ai_assistant_fab',
+                      tooltip: AppStrings.of(context, 'assistant.tooltip'),
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      elevation: 0,
+                      hoverElevation: 0,
+                      highlightElevation: 0,
+                      onPressed: () => _openAssistantSheet(
+                        context,
+                        role: role,
+                        siteId: siteId,
+                        learnerId: learnerId,
+                        trigger: _isPointerPlatform() ? 'click' : 'tap',
+                      ),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: <Color>[
+                              ScholesaColors.futureSkills,
+                              ScholesaColors.leadership,
+                              ScholesaColors.impact,
+                            ],
+                          ),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: ScholesaColors.leadership.withValues(alpha: 0.28),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -418,6 +490,7 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
   @override
   void dispose() {
     _disposeBosMonitor();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -433,6 +506,42 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
       }
     }
     return '';
+  }
+}
+
+class _AssistantHoverHint extends StatelessWidget {
+  const _AssistantHoverHint({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surface.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.16)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: scheme.onSurface,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -61,6 +61,7 @@ class AppStrings {
       'assistant.title': 'AI Assistant',
       'assistant.close': 'Close',
       'assistant.loading': 'Loading assistant…',
+    'assistant.hoverHint': 'Click for AI help',
       'ai.greeting.initial':
           'Hi! I\'m your AI coach. I can guide you with hints, explanations, and quick debug steps whenever you need support.',
       'ai.autoAssist.hesitationPrompt':
@@ -187,6 +188,7 @@ class AppStrings {
       'assistant.title': 'AI 助手',
       'assistant.close': '关闭',
       'assistant.loading': '正在加载助手…',
+    'assistant.hoverHint': '点击获取 AI 帮助',
       'ai.greeting.initial': '你好！我是你的 AI 教练。需要帮助时，我可以提供提示、解释和简短的调试步骤。',
       'ai.autoAssist.hesitationPrompt': '学习者可能正在犹豫。当前 BOS 状态：{state}。请给出简短支持性提醒、一个微小下一步和一个追问。',
       'ai.autoAssist.interventionPrompt': 'BOS 检测到一个需要主动支持的时刻。干预类型：{type}，显著性：{salience}，原因码：{reasons}。请给出简短支持性语音提醒，包含一个立即行动和一个追问。',
@@ -289,6 +291,7 @@ class AppStrings {
       'assistant.title': 'AI 助手',
       'assistant.close': '關閉',
       'assistant.loading': '正在載入助手…',
+    'assistant.hoverHint': '點擊取得 AI 協助',
       'ai.greeting.initial': '你好！我是你的 AI 教練。當你需要協助時，我可以提供提示、解釋和簡短除錯步驟。',
       'ai.autoAssist.hesitationPrompt': '學習者可能正在猶豫。當前 BOS 狀態：{state}。請給出簡短支持性提醒、一個微小下一步以及一個追問。',
       'ai.autoAssist.interventionPrompt': 'BOS 偵測到需要主動支持的時刻。介入類型：{type}，顯著性：{salience}，原因碼：{reasons}。請給出簡短支持性語音提醒，包含一個立即行動和一個追問。',
