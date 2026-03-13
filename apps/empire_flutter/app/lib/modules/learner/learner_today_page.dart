@@ -464,32 +464,19 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         if (habits.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _t("Today's Habits"),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _t('No habits scheduled yet'),
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _t('Set up a habit to start your daily streak.'),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                ],
-              ),
+            child: _DashboardInfoCard(
+              title: _t("Today's Habits"),
+              body: <Widget>[
+                Text(
+                  _t('No habits scheduled yet'),
+                  style: TextStyle(color: context.schTextPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _t('Set up a habit to start your daily streak.'),
+                  style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+                ),
+              ],
             ),
           );
         }
@@ -542,32 +529,19 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         if (missions.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _t('Active Missions'),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _t('No active missions yet'),
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _t('Start a mission to activate your learning loop.'),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                ],
-              ),
+            child: _DashboardInfoCard(
+              title: _t('Active Missions'),
+              body: <Widget>[
+                Text(
+                  _t('No active missions yet'),
+                  style: TextStyle(color: context.schTextPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _t('Start a mission to activate your learning loop.'),
+                  style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+                ),
+              ],
             ),
           );
         }
@@ -1655,23 +1629,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     if (runtime == null) {
       return Container(
         margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              _t('AI coaching is loading'),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
+        child: _DashboardInfoCard(
+          title: _t('AI coaching is loading'),
+          compactTitle: true,
+          body: <Widget>[
             Text(
               _t('Runtime context is syncing. Try again in a moment.'),
-              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+              style: TextStyle(color: context.schTextSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -1743,6 +1707,53 @@ class _SummaryChip extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _DashboardInfoCard extends StatelessWidget {
+  const _DashboardInfoCard({
+    required this.title,
+    required this.body,
+    this.compactTitle = false,
+  });
+
+  final String title;
+  final List<Widget> body;
+  final bool compactTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.schSurfaceStrong,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: compactTitle ? 16 : 18,
+              fontWeight: FontWeight.bold,
+              color: context.schTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...body,
+        ],
       ),
     );
   }
