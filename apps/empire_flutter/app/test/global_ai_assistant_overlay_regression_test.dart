@@ -171,7 +171,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
 
       final Finder fab = find.byType(FloatingActionButton);
       expect(fab, findsOneWidget);
