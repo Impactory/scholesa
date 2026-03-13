@@ -90,3 +90,61 @@
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
 - Doc scope: `TRACEABILITY_MATRIX.md`
 <!-- TELEMETRY_WIRING:END -->
+
+## March 12 Feature Contract Coverage
+
+Source contract: `feature sets 2025 March 12.md`
+
+Execution plan: `docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md`
+
+Status legend:
+- `✅` shipped and evidenced in code or tests
+- `🟠` partial and requires additional wiring, QA, or telemetry
+- `⏸️` planned or deferred and must not be claimed as release-complete
+
+| Req ID | March 12 feature contract item | Implementation Files | Verification | Status |
+| --- | --- | --- | --- | --- |
+| REQ-078 | Product pillars remain encoded in platform surfaces and data contracts | schema.ts, apps/empire_flutter/app/lib/features/dashboards/*, app/[locale]/(protected)/* | Review + route E2E | ✅ |
+| REQ-079 | PWA deployment baseline for installable app surfaces | next.config.mjs, public/manifest.webmanifest, public/sw.js, apps/empire_flutter/app/web/* | RC3 preflight + deploy validation | ✅ |
+| REQ-080 | Learner onboarding flow: reading level, interests, accommodations, diagnostic mastery seed | apps/empire_flutter/app/lib/features/landing/*, apps/empire_flutter/app/lib/features/auth/*, apps/empire_flutter/app/lib/domain/models.dart | Manual only; no single E2E onboarding proof yet | 🟠 |
+| REQ-081 | Learner goals, reminders, and value prompts | apps/empire_flutter/app/lib/features/dashboards/*, apps/empire_flutter/app/lib/services/notification_service.dart | Review only | 🟠 |
+| REQ-082 | Study session orchestration with KT plus FSRS review UX | src/lib/motivation/motivationEngine.ts, src/lib/analytics/analyticsEngine.ts, apps/empire_flutter/imports/09_missions.csv | Review only; UX parity incomplete | 🟠 |
+| REQ-083 | FSRS queue actions: Again, Hard, Good, Easy, snooze, suspend, reschedule | src/lib/motivation/motivationEngine.ts | Review only; explicit user-facing queue contract incomplete | 🟠 |
+| REQ-084 | Interleaving engine with confusability matrix and mode toggle | apps/empire_flutter/imports/09_missions.csv, src/lib/analytics/analyticsEngine.ts | Review only; no confusability matrix proof | 🟠 |
+| REQ-085 | Worked-example injection, fading, and decay after sustained correctness | apps/empire_flutter/imports/09_missions.csv, src/lib/analytics/analyticsEngine.ts | Review only; product-level enforcement incomplete | 🟠 |
+| REQ-086 | Reflection cards: pre-plan, post-session, weekly review | apps/empire_flutter/app/lib/features/offline/offline_queue.dart, offline/offline_dispatchers.dart, docs/telemetry/event_catalog.md | Manual + telemetry evidence partial | 🟠 |
+| REQ-087 | Motivation layer: autonomy choices, competence signals, shout-outs | src/lib/motivation/motivationEngine.ts, src/lib/telemetry/sdtTelemetry.ts | Review only; full learner-facing loop incomplete | 🟠 |
+| REQ-088 | Accessibility surfaces: keyboard-only, drag alternatives, TTS, reading level, reduced distraction, contrast controls | bos_engine.dart, apps/empire_flutter/app/lib/* | Review only; no WCAG gate coverage yet | 🟠 |
+| REQ-089 | Nudge-first tutor policy with no surveillance dependency | functions/src/index.ts, docs/AI_ARCHITECTURE_GUIDE.md | Runtime review + compliance audit | ✅ |
+| REQ-090 | Educator dashboard primitives for BAE, FDM, MVL visibility | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, apps/empire_flutter/app/lib/features/analytics/analytics_dashboard_screen.dart | Manual only | 🟠 |
+| REQ-091 | Class management: create classes, invite or join codes, CSV roster import, teacher role variants | apps/empire_flutter/app/lib/domain/models.dart, app/lib/domain/repositories.dart | Review only; CSV and role depth incomplete | 🟠 |
+| REQ-092 | Lesson builder evidence defaults and reorderable author flow | apps/empire_flutter/app/lib/features/dashboards/role_dashboards.dart, app/lib/domain/models.dart | Review only | 🟠 |
+| REQ-093 | Content authoring: templates, misconception tags, difficulty, media, versioning, approvals | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart, storage.rules | Review only; workflow incomplete | 🟠 |
+| REQ-094 | Assignments and grading with editable AI feedback and rubric support | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart, functions/src/index.ts | Manual AI-01 + review | 🟠 |
+| REQ-095 | Differentiation lanes with teacher override and printable practice export | src/lib/policies/gradeBandPolicy.ts, apps/empire_flutter/app/lib/features/dashboards/* | Review only; educator UX parity partial | 🟠 |
+| REQ-096 | Live session mode: pacing, cold-calls, polls, exit tickets, misconception alerts | No canonical implementation found | None | ⏸️ |
+| REQ-097 | School ops parity: sessions, attendance, timetable, kit checklist, safety notes | apps/empire_flutter/app/lib/modules/checkin/*, app/lib/modules/site/*, schema.ts | Attendance evidenced; full ops parity incomplete | 🟠 |
+| REQ-098 | BOS learner regulation loop, EKF state estimate, and BAE runtime | bos_engine.dart, functions/src/bosRuntime.ts, functions/src/voiceSystem.ts | Code review + runtime docs | 🟠 |
+| REQ-099 | FDM using non-invasive keystroke and pointer telemetry | No canonical implementation found | None | ⏸️ |
+| REQ-100 | HLC streak protection and variable-ratio reward logic | src/lib/motivation/motivationEngine.ts, src/lib/policies/gradeBandPolicy.ts | Review | ✅ |
+| REQ-101 | Learner runtime guard with 0.97 confidence threshold and safe escalation | functions/src/index.ts, docs/BOS_MIA_HOW_TO_IMPLEMENT.md | Runtime review + release audit evidence | ✅ |
+| REQ-102 | MVL explain-it-back progression gating | functions/src/index.ts, firestore.rules, apps/empire_flutter/app/docs/vibe/REGRESSION_REPORT_RC2.md | Runtime review + regression evidence | 🟠 |
+| REQ-103 | SEP hallucination detection and verification prompts | No canonical implementation found | None | ⏸️ |
+| REQ-104 | Autonomy-risk detection with self-explanation follow-up | functions/src/index.ts, functions/src/bosRuntime.ts | Review only; full product wiring incomplete | 🟠 |
+| REQ-105 | Proof-of-learning bundle: explain-it-back, version history, oral check, mini-rebuild | firestore.rules, functions/src/index.ts | Explain-back partial only | 🟠 |
+| REQ-106 | Tutor and feedback policies: Socratic, hint depth caps, grounded responses, profanity and PII masks, rationale logging | functions/src/index.ts, src/lib/ai/aiService.ts, app/api/ai/complete/route.ts | Review + compliance audit | ✅ |
+| REQ-107 | Moderation: scan, abuse filters, escalation, org blocklist and allowlist | functions/src/index.ts, firestore.rules | Review only; explicit E2E moderation proof incomplete | 🟠 |
+| REQ-108 | Privacy and compliance posture: COPPA, PIPEDA, FERPA-oriented, consent, minimization, site-scoped auth, auditability | functions/src/coppaOps.ts, firestore.rules, storage.rules, services/scholesa-compliance/src/server.js | Rules tests + compliance smoke | ✅ |
+| REQ-109 | Security posture: RBAC, encryption at rest and transport, rate limiting, audit logs | firestore.rules, storage.rules, cloudbuild.compliance.yaml, schema.ts | Review + deploy evidence | ✅ |
+| REQ-110 | Enterprise SSO via SAML and OIDC | No canonical implementation found | None | ⏸️ |
+| REQ-111 | Longitudinal metacognitive calibration records | src/lib/analytics/analyticsEngine.ts, src/lib/telemetry/sdtTelemetry.ts | Review only; contract needs explicit persistence proof | 🟠 |
+| REQ-112 | Internal telemetry and warehouse-friendly export posture | docs/18_ANALYTICS_TELEMETRY_SPEC.md, docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md | Audit docs + telemetry validation | ✅ |
+| REQ-113 | PostHog and Segment capture | Blocked by compliance posture and vendor-ban audit | None | ⏸️ |
+| REQ-114 | Federated learning data moat | No canonical implementation found | None | ⏸️ |
+| REQ-115 | WCAG 2.2 AA automated checks in CI or audit automation | No canonical implementation found | None | ⏸️ |
+| REQ-116 | CI and release policy: trunk-based, preview-only pre-prod, big-bang prod cutover, zero-downtime migrations | .github/workflows/ci.yml, scripts/rc3_preflight.sh, package.json, deployment docs | RC3 release evidence | ✅ |
+| REQ-117 | Google Classroom integration end to end | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart, apps/empire_flutter/app/lib/modules/educator/educator_integrations_page.dart | Review only; backend sync incomplete | 🟠 |
+| REQ-118 | LTI 1.3 and grade passback | No canonical implementation found | None | ⏸️ |
+| REQ-119 | SIS CSV import and admin review flow | apps/empire_flutter/app/lib/domain/models.dart, domain/repositories.dart | Review only; complete import flow not proven | 🟠 |
+| REQ-120 | Clever and ClassLink integrations | No canonical implementation found | None | ⏸️ |
+

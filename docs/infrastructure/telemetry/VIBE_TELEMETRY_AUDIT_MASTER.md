@@ -83,6 +83,7 @@ Verify:
 Output:
 - `logging-no-raw-content.json`
 - `telemetry-schema-valid.json`
+- `feature-contract-coverage.json`
 
 ---
 
@@ -165,6 +166,41 @@ VIBE must:
 4. Confirm response guard logged
 
 If trace continuity broken -> FAIL audit.
+
+---
+
+## 3A. March 12 Feature Contract Coverage Audit
+
+VIBE must validate feature-level telemetry for the March 12 execution plan.
+
+Minimum event families to inspect:
+- `onboarding.started`, `onboarding.completed`, `diagnostic.submitted`
+- `learner.goal.updated`
+- `fsrs.review.rated`, `fsrs.queue.snoozed`, `fsrs.queue.rescheduled`
+- `interleaving.mode.changed`
+- `worked_example.shown`
+- `reflection.submitted`
+- `accessibility.setting.changed`
+- `class.created`, `class.join_code.created`, `roster.import.completed`
+- `lesson.builder.saved`
+- `assignment.published`, `grading.feedback.applied`
+- `live_session.started` when that feature is enabled
+- `ai.guard.escalated`, `mvl.required`, `mvl.completed`, `autonomy_risk.detected`, `sep.verify.prompted`
+- `moderation.escalated`
+- `integration.sync.started`, `integration.sync.completed`
+- `auth.sso.login`, `grade.passback.sent` when those integrations are enabled
+
+For each family, VIBE must classify the feature as one of:
+- `shipped`
+- `partial`
+- `planned`
+- `deferred`
+
+Rules:
+- A feature cannot be marked `shipped` if the product surface exists but telemetry is absent.
+- A feature cannot be marked `shipped` if docs describe behavior not present in code or tests.
+- Vendor analytics paths such as PostHog or Segment must not be introduced to satisfy this requirement.
+- Features explicitly not implemented, including federated learning or SEP logic, must remain `planned` or `deferred` until code and tests exist.
 
 ---
 
@@ -291,6 +327,7 @@ Blocker list:
 - `voice-retention-ttl`
 - `logging-no-raw-content`
 - `telemetry-schema-valid`
+- `feature-contract-coverage`
 - `inference-authz`
 - `inference-ingress-private`
 - `infra-drift`
@@ -311,6 +348,7 @@ Audit passes only if:
 - No external egress
 - Infrastructure drift checks pass
 - All required locales present
+- March 12 feature-contract classifications are current and no deferred item is being reported as shipped
 - All reports pass
 
 ---
