@@ -11,6 +11,7 @@ import {
   sendNotification as sendExternalNotification,
 } from './notificationPipeline';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
+import { persistLogoutAuditRecord } from './logoutAudit';
 import {
   handleVoiceApi,
   handleCopilotMessage,
@@ -3127,22 +3128,16 @@ export const recordLogoutAudit = onCall(async (request: CallableRequest) => {
     : undefined;
   const siteId = requestedSiteId || actor.profile.activeSiteId || undefined;
 
-  const auditRef = admin.firestore().collection(AUDIT_COLLECTION).doc();
-  await auditRef.set({
+  const id = await persistLogoutAuditRecord({
     actorId: actor.uid,
     actorRole: actor.role,
-    action: 'auth.logout',
-    entityType: 'session',
-    entityId: actor.uid,
+    source,
     siteId,
-    details: {
-      source,
-      ...(impersonatingRole ? { impersonatingRole } : {}),
-    },
-    createdAt: FieldValue.serverTimestamp(),
+    impersonatingRole,
+    collectionName: AUDIT_COLLECTION,
   });
 
-  return { status: 'ok', id: auditRef.id };
+  return { status: 'ok', id };
 });
 
 export const processNotificationRequests = onSchedule('every 5 minutes', async () => {
