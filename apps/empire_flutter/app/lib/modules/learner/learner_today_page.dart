@@ -820,7 +820,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     final List<String> summaryChips = <String>[
       if ((profile?.weeklyTargetMinutes ?? 0) > 0)
         '${_t('Weekly target minutes')}: ${profile!.weeklyTargetMinutes}',
-      _t('Reminder') + ': ' + _reminderScheduleLabel(profile?.reminderSchedule),
+      '${_t('Reminder')}: ${_reminderScheduleLabel(profile?.reminderSchedule)}',
     ];
 
     return Padding(
@@ -1086,7 +1086,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: readingLevel,
+                        initialValue: readingLevel,
                         decoration: InputDecoration(labelText: _t('Reading check')),
                         items: <DropdownMenuItem<String>>[
                           DropdownMenuItem(value: 'need_support', child: Text(_t('Need support'))),
@@ -1102,7 +1102,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: diagnosticBand,
+                        initialValue: diagnosticBand,
                         decoration: InputDecoration(labelText: _t('Mastery confidence')),
                         items: <DropdownMenuItem<String>>[
                           DropdownMenuItem(value: 'emerging', child: Text(_t('Emerging'))),
@@ -1151,7 +1151,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: reminderSchedule,
+                        initialValue: reminderSchedule,
                         decoration: InputDecoration(labelText: _t('Reminder schedule')),
                         items: <DropdownMenuItem<String>>[
                           DropdownMenuItem(value: 'off', child: Text(_t('Off'))),
@@ -1511,7 +1511,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: reflectionType,
+                      initialValue: reflectionType,
                       decoration: InputDecoration(labelText: _t('Reflection type')),
                       items: <DropdownMenuItem<String>>[
                         DropdownMenuItem(value: 'pre_plan', child: Text(_t('Pre-plan'))),
