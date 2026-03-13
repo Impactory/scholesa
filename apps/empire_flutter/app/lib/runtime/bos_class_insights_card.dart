@@ -334,7 +334,10 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
             runSpacing: 8,
             children: watchlist
                 .take(3)
-                .map((_) => _watchlistChip(context, accent, _))
+                .map(
+                  (_ClassLearnerSignal learner) =>
+                      _watchlistChip(context, accent, learner),
+                )
                 .toList(growable: false),
           ),
           const SizedBox(height: 6),
@@ -468,7 +471,9 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
             widget.learnerNamesById,
           );
         })
-        .where((_) => _.needsAttention)
+        .where(
+          (_ClassLearnerSignal learner) => learner.needsAttention,
+        )
         .toList(growable: false)
       ..sort((a, b) => a.riskScore.compareTo(b.riskScore));
 
