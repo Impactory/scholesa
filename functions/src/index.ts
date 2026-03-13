@@ -6,6 +6,10 @@ import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { guardedFetch } from './security/egressGuard';
+import {
+  enqueueLearnerGoalReminders,
+  sendNotification as sendExternalNotification,
+} from './notificationPipeline';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import {
   handleVoiceApi,
@@ -383,39 +387,15 @@ async function sendNotification(payload: {
   type?: string;
   data?: Record<string, unknown>;
 }) {
-  const endpoint = notifyEndpoint.value();
-  const apiKey = notifyApiKey.value();
-  if (!endpoint || !apiKey) {
-    throw new Error('Notification provider not configured');
-  }
-  if (!payload.threadId && !payload.type) {
-    throw new Error('Notification payload requires threadId/messageId or type');
-  }
-
-  const response = await guardedFetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      channel: payload.channel,
-      threadId: payload.threadId,
-      messageId: payload.messageId,
-      siteId: payload.siteId,
-      userId: payload.userId,
-      type: payload.type,
-      data: payload.data,
-    }),
-  }, { source: 'functions.sendNotification', mode: 'general' });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Notify failed: ${response.status} ${text}`);
-  }
-
-  const data = (await response.json()) as { providerMessageId?: string };
-  return { delivered: true, providerMessageId: data.providerMessageId ?? `prov-${payload.messageId}` };
+  return sendExternalNotification(payload, {
+    endpoint: notifyEndpoint.value(),
+    apiKey: notifyApiKey.value(),
+    fetchImpl: (url, init) => guardedFetch(
+      url,
+      init,
+      { source: 'functions.sendNotification', mode: 'general' },
+    ) as Promise<any>,
+  });
 }
 
 function toStringArray(value: unknown): string[] {
@@ -3201,84 +3181,12 @@ export const processNotificationRequests = onSchedule('every 5 minutes', async (
 
 export const scheduleLearnerGoalReminders = onSchedule('every 6 hours', async () => {
   const db = admin.firestore();
-  const prefsSnap = await db
-    .collection(LEARNER_REMINDER_PREFERENCES_COLLECTION)
-    .where('enabled', '==', true)
-    .limit(100)
-    .get();
-
-  const now = new Date();
-  for (const doc of prefsSnap.docs) {
-    const data = doc.data();
-    const learnerId = typeof data.learnerId === 'string' ? data.learnerId : '';
-    const siteId = typeof data.siteId === 'string' ? data.siteId : '';
-    const schedule = typeof data.schedule === 'string' ? data.schedule : 'off';
-    const timeZone = typeof data.timeZone === 'string' && data.timeZone ? data.timeZone : 'UTC';
-    if (!learnerId || !siteId || schedule === 'off') {
-      continue;
-    }
-
-    const localWeekday = new Intl.DateTimeFormat('en-US', {
-      weekday: 'short',
-      timeZone,
-    }).format(now);
-    const localDayKey = new Intl.DateTimeFormat('en-CA', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
-    const isWeekend = localWeekday === 'Sat' || localWeekday === 'Sun';
-    const shouldSend = schedule === 'daily' ||
-      (schedule === 'weekdays' && !isWeekend) ||
-      (schedule === 'weekends' && isWeekend);
-    if (!shouldSend) {
-      continue;
-    }
-
-    const existing = await db
-      .collection(NOTIFICATION_REQUESTS_COLLECTION)
-      .where('userId', '==', learnerId)
-      .where('type', '==', 'learner_goal_reminder')
-      .where('data.localDayKey', '==', localDayKey)
-      .limit(1)
-      .get();
-    if (!existing.empty) {
-      continue;
-    }
-
-    await db.collection(NOTIFICATION_REQUESTS_COLLECTION).add({
-      userId: learnerId,
-      siteId,
-      type: 'learner_goal_reminder',
-      channel: 'push',
-      status: 'pending',
-      requestedBy: learnerId,
-      role: 'learner',
-      rateKey: `${learnerId}:learner_goal_reminder:${localDayKey}`,
-      data: {
-        schedule,
-        weeklyTargetMinutes: data.weeklyTargetMinutes,
-        valuePrompt: data.valuePrompt,
-        localeCode: data.localeCode,
-        localDayKey,
-      },
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    await persistTelemetryEvent({
-      event: 'notification.requested',
-      userId: learnerId,
-      role: 'learner',
-      siteId,
-      metadata: {
-        channel: 'push',
-        type: 'learner_goal_reminder',
-        schedule,
-        localDayKey,
-      },
-    });
-  }
+  await enqueueLearnerGoalReminders({
+    db,
+    reminderPreferencesCollection: LEARNER_REMINDER_PREFERENCES_COLLECTION,
+    notificationRequestsCollection: NOTIFICATION_REQUESTS_COLLECTION,
+    persistTelemetryEvent,
+  });
 });
 
 export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
