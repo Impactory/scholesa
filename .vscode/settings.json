@@ -1,14 +1,39 @@
 {
+  "cSpell.configFile": "${workspaceFolder}/cspell.json",
   "cSpell.ignorePaths": [
     "**/.next/**",
     "**/.fvm/**",
     "**/flutter_sdk/**",
     "**/packages/flutter_tools/test/data/**",
+    "**/windows/flutter/ephemeral/**",
+    "**/ios/.symlinks/**",
+    "**/macos/Pods/**",
     "dataconnect/example/**",
     "**/.vscode.configs.import.cspell.config.*",
     "**/dataconnect-generated/**",
     "**/dataconnect-admin-generated/**"
   ],
+  "files.exclude": {
+    "**/.next": true,
+    "**/.fvm": true,
+    "**/windows/flutter/ephemeral": true,
+    "**/ios/.symlinks": true,
+    "**/macos/Pods": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/.fvm": true,
+    "**/windows/flutter/ephemeral": true,
+    "**/ios/.symlinks": true,
+    "**/macos/Pods": true
+  },
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/.fvm/**": true,
+    "**/windows/flutter/ephemeral/**": true,
+    "**/ios/.symlinks/**": true,
+    "**/macos/Pods/**": true
+  },
   "chatgpt.openOnStartup": true,
   "cloudcode.project": "studio-3328096157-e3f79",
   "continue.enableConsole": false,
