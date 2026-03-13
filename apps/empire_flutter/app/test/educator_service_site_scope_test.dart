@@ -164,5 +164,67 @@ void main() {
       );
       expect(data['joinCodeCreatedAt'], isNotNull);
     });
+
+    test('importRosterCsv enrolls known learners and queues unknown rows',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+
+      await firestore.collection('sessions').doc('session-1').set(
+        <String, dynamic>{
+          'siteId': 'site-a',
+          'educatorId': 'educator-1',
+          'educatorIds': const <String>['educator-1'],
+          'title': 'Launch Lab',
+          'enrolledCount': 0,
+        },
+      );
+      await firestore.collection('users').doc('learner-a').set(
+        <String, dynamic>{
+          'displayName': 'Known Learner',
+          'email': 'known@example.com',
+          'role': 'learner',
+          'siteIds': const <String>['site-a'],
+        },
+      );
+
+      final EducatorService service = EducatorService(
+        firestoreService: firestoreService,
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+      );
+
+      final RosterImportOutcome? outcome = await service.importRosterCsv(
+        sessionId: 'session-1',
+        csvContent: 'name,email\nKnown Learner,known@example.com\nNew Learner,new@example.com',
+      );
+
+      expect(outcome, isNotNull);
+      expect(outcome!.totalRows, 2);
+      expect(outcome.importedCount, 1);
+      expect(outcome.queuedCount, 1);
+      expect(outcome.duplicateCount, 0);
+      expect(outcome.queuedEmails, contains('new@example.com'));
+
+      final QuerySnapshot<Map<String, dynamic>> enrollments =
+          await firestore.collection('enrollments').get();
+      expect(enrollments.docs, hasLength(1));
+      expect(enrollments.docs.first.data()['learnerId'], 'learner-a');
+      expect(enrollments.docs.first.data()['sessionId'], 'session-1');
+
+      final QuerySnapshot<Map<String, dynamic>> queuedRows =
+          await firestore.collection('rosterImports').get();
+      expect(queuedRows.docs, hasLength(1));
+      expect(queuedRows.docs.first.data()['email'], 'new@example.com');
+      expect(queuedRows.docs.first.data()['status'], 'pending_provisioning');
+
+      final DocumentSnapshot<Map<String, dynamic>> sessionDoc =
+          await firestore.collection('sessions').doc('session-1').get();
+      expect(sessionDoc.data()?['enrolledCount'], 1);
+      expect(sessionDoc.data()?['lastRosterSyncAt'], isNotNull);
+    });
   });
 }
