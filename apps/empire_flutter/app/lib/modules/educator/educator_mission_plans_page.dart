@@ -667,14 +667,6 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       _LessonStepDraft(id: 'step-2', title: 'Evidence capture'),
     ];
 
-    void disposeDraftControllers() {
-      titleController.dispose();
-      descriptionController.dispose();
-      for (final _LessonStepDraft draft in lessonSteps) {
-        draft.controller.dispose();
-      }
-    }
-
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => StatefulBuilder(
@@ -857,117 +849,111 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  height: 260,
-                  child: ListView.builder(
-                    itemCount: lessonSteps.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final _LessonStepDraft draft = lessonSteps[index];
-                      return Card(
-                        key: ValueKey<String>(draft.id),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              CircleAvatar(
-                                radius: 14,
-                                child: Text('${index + 1}'),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  key: ValueKey<String>(
-                                    'mission_step_field_$index',
+                Column(
+                  children:
+                      List<Widget>.generate(lessonSteps.length, (int index) {
+                    final _LessonStepDraft draft = lessonSteps[index];
+                    return Card(
+                      key: ValueKey<String>(draft.id),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            CircleAvatar(
+                              radius: 14,
+                              child: Text('${index + 1}'),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                key: ValueKey<String>(
+                                  'mission_step_field_$index',
+                                ),
+                                controller: draft.controller,
+                                decoration: InputDecoration(
+                                  labelText: _tEducatorMissionPlans(
+                                    context,
+                                    'Lesson step',
                                   ),
-                                  controller: draft.controller,
-                                  decoration: InputDecoration(
-                                    labelText: _tEducatorMissionPlans(
-                                      context,
-                                      'Lesson step',
-                                    ),
-                                    border: const OutlineInputBorder(),
-                                  ),
+                                  border: const OutlineInputBorder(),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Column(
-                                children: <Widget>[
-                                  IconButton(
-                                    key: ValueKey<String>(
-                                      'mission_step_up_$index',
-                                    ),
-                                    tooltip: _tEducatorMissionPlans(
-                                      context,
-                                      'Move up',
-                                    ),
-                                    onPressed: index == 0
-                                        ? null
-                                        : () {
-                                            setLocalState(() {
-                                              final _LessonStepDraft moved =
-                                                  lessonSteps.removeAt(index);
-                                              lessonSteps.insert(
-                                                index - 1,
-                                                moved,
-                                              );
-                                            });
-                                          },
-                                    icon:
-                                        const Icon(Icons.arrow_upward_rounded),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              children: <Widget>[
+                                IconButton(
+                                  key: ValueKey<String>(
+                                    'mission_step_up_$index',
                                   ),
-                                  IconButton(
-                                    key: ValueKey<String>(
-                                      'mission_step_down_$index',
-                                    ),
-                                    tooltip: _tEducatorMissionPlans(
-                                      context,
-                                      'Move down',
-                                    ),
-                                    onPressed: index == lessonSteps.length - 1
-                                        ? null
-                                        : () {
-                                            setLocalState(() {
-                                              final _LessonStepDraft moved =
-                                                  lessonSteps.removeAt(index);
-                                              lessonSteps.insert(
-                                                index + 1,
-                                                moved,
-                                              );
-                                            });
-                                          },
-                                    icon: const Icon(
-                                      Icons.arrow_downward_rounded,
-                                    ),
+                                  tooltip: _tEducatorMissionPlans(
+                                    context,
+                                    'Move up',
                                   ),
-                                  IconButton(
-                                    key: ValueKey<String>(
-                                      'mission_step_delete_$index',
-                                    ),
-                                    tooltip: _tEducatorMissionPlans(
-                                      context,
-                                      'Delete step',
-                                    ),
-                                    onPressed: lessonSteps.length <= 1
-                                        ? null
-                                        : () {
-                                            setLocalState(() {
-                                              final _LessonStepDraft removed =
-                                                  lessonSteps.removeAt(index);
-                                              removed.controller.dispose();
-                                            });
-                                          },
-                                    icon: const Icon(Icons.delete_outline),
+                                  onPressed: index == 0
+                                      ? null
+                                      : () {
+                                          setLocalState(() {
+                                            final _LessonStepDraft moved =
+                                                lessonSteps.removeAt(index);
+                                            lessonSteps.insert(
+                                              index - 1,
+                                              moved,
+                                            );
+                                          });
+                                        },
+                                  icon: const Icon(Icons.arrow_upward_rounded),
+                                ),
+                                IconButton(
+                                  key: ValueKey<String>(
+                                    'mission_step_down_$index',
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                  tooltip: _tEducatorMissionPlans(
+                                    context,
+                                    'Move down',
+                                  ),
+                                  onPressed: index == lessonSteps.length - 1
+                                      ? null
+                                      : () {
+                                          setLocalState(() {
+                                            final _LessonStepDraft moved =
+                                                lessonSteps.removeAt(index);
+                                            lessonSteps.insert(
+                                              index + 1,
+                                              moved,
+                                            );
+                                          });
+                                        },
+                                  icon: const Icon(
+                                    Icons.arrow_downward_rounded,
+                                  ),
+                                ),
+                                IconButton(
+                                  key: ValueKey<String>(
+                                    'mission_step_delete_$index',
+                                  ),
+                                  tooltip: _tEducatorMissionPlans(
+                                    context,
+                                    'Delete step',
+                                  ),
+                                  onPressed: lessonSteps.length <= 1
+                                      ? null
+                                      : () {
+                                          setLocalState(() {
+                                            lessonSteps.removeAt(index);
+                                          });
+                                        },
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -1044,7 +1030,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           ],
         ),
       ),
-    ).whenComplete(disposeDraftControllers);
+    );
   }
 
   Future<void> _loadMissionPlans() async {
