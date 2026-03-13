@@ -220,10 +220,43 @@ void main() {
         <String, dynamic>{
           'title': 'Mission Three',
           'description': 'Description 3',
-          'pillarCode': 'impact',
+          'pillarCode': 'future_skills',
           'difficulty': 'intermediate',
           'xpReward': 140,
           'skillIds': <String>['skill-design'],
+        },
+      );
+
+      await firestore.collection('missionSnapshots').doc('snapshot-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'skillIds': <String>['skill-robotics'],
+          'pillarCodes': <String>['future_skills'],
+          'bodyJson': <String, dynamic>{
+            'misconceptionTags': <String>['loops', 'sequencing'],
+          },
+        },
+      );
+      await firestore.collection('missionSnapshots').doc('snapshot-2').set(
+        <String, dynamic>{
+          'missionId': 'mission-2',
+          'skillIds': <String>['skill-robotics'],
+          'pillarCodes': <String>['future_skills'],
+          'bodyJson': <String, dynamic>{
+            'scaffold': <String, dynamic>{
+              'misconceptions': <String>['loops'],
+            },
+          },
+        },
+      );
+      await firestore.collection('missionSnapshots').doc('snapshot-3').set(
+        <String, dynamic>{
+          'missionId': 'mission-3',
+          'skillIds': <String>['skill-design'],
+          'pillarCodes': <String>['future_skills'],
+          'bodyJson': <String, dynamic>{
+            'confusabilityTags': <String>['visual-design'],
+          },
         },
       );
 
@@ -282,13 +315,13 @@ void main() {
       expect(data?['fsrsLastRating'], 'good');
     expect(data?['fsrsQueueState'], 'suspended');
     expect(data?.containsKey('nextReviewAt'), isFalse);
-    expect(data?['interleavingMode'], 'scaffoldedMixed');
-    expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
+      expect(data?['interleavingMode'], 'scaffoldedMixed');
+      expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
       expect((data?['recommendedInterleavingMissionIds'] as List<dynamic>).first,
         'mission-2');
       expect(data?['workedExampleShown'], true);
-    expect(data?['workedExampleFadeStage'], 2);
-    expect(data?['workedExamplePromptLevel'], 'partialSteps');
+      expect(data?['workedExampleFadeStage'], 2);
+      expect(data?['workedExamplePromptLevel'], 'partialSteps');
 
       final List<String> emittedEvents = telemetryPayloads
           .map((Map<String, dynamic> payload) => payload['event'] as String?)

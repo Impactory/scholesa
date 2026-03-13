@@ -12,6 +12,45 @@ const { enqueueLearnerGoalReminders } = require(path.join(ROOT, 'functions/lib/n
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const PREFS_COLLECTION = 'learnerReminderPreferences';
 const REQUESTS_COLLECTION = 'notificationRequests';
+const SERVICE_ACCOUNT_PATHS = [
+  process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  path.resolve(ROOT, 'firebase-service-account.json'),
+  path.resolve(ROOT, 'studio-service-account.json'),
+].filter(Boolean);
+
+function isServiceAccountCredentialPath(candidate) {
+  if (typeof candidate !== 'string' || !candidate.trim()) return false;
+  const credentialPath = path.isAbsolute(candidate)
+    ? candidate
+    : path.resolve(ROOT, candidate);
+  if (!fs.existsSync(credentialPath)) return false;
+  try {
+    const payload = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
+    return payload &&
+      typeof payload === 'object' &&
+      payload.type === 'service_account' &&
+      typeof payload.private_key === 'string' &&
+      typeof payload.project_id === 'string';
+  } catch {
+    return false;
+  }
+}
+
+function resolveCredentialPath(explicitPath) {
+  if (isServiceAccountCredentialPath(explicitPath)) {
+    return path.isAbsolute(explicitPath)
+      ? explicitPath
+      : path.resolve(ROOT, explicitPath);
+  }
+  for (const candidate of SERVICE_ACCOUNT_PATHS) {
+    if (isServiceAccountCredentialPath(candidate)) {
+      return path.isAbsolute(candidate)
+        ? candidate
+        : path.resolve(ROOT, candidate);
+    }
+  }
+  return undefined;
+}
 
 function parseArgs(argv) {
   const args = {
@@ -48,13 +87,8 @@ function initializeAdmin(args) {
   if (args.project) {
     appOptions.projectId = args.project;
   }
-  if (args.credentials) {
-    const credentialPath = path.isAbsolute(args.credentials)
-      ? args.credentials
-      : path.resolve(ROOT, args.credentials);
-    if (!fs.existsSync(credentialPath)) {
-      throw new Error(`Credentials file not found: ${credentialPath}`);
-    }
+  const credentialPath = resolveCredentialPath(args.credentials);
+  if (credentialPath) {
     appOptions.credential = cert(require(credentialPath));
   } else {
     appOptions.credential = applicationDefault();

@@ -29,10 +29,10 @@ export interface TelemetryWriter {
   (payload: {
     event: string;
     userId: string;
-    role?: string;
+    role?: 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq' | 'system';
     siteId?: string;
     metadata?: Record<string, unknown>;
-  }): Promise<void>;
+  }): Promise<unknown>;
 }
 
 interface FetchResponseLike {

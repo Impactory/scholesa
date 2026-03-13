@@ -15,6 +15,8 @@ class MissionService extends ChangeNotifier {
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<Mission> _missions = <Mission>[];
+  final Map<String, _MissionConfusabilityProfile> _missionProfiles =
+      <String, _MissionConfusabilityProfile>{};
   LearnerProgress? _progress;
   bool _isLoading = false;
   String? _error;
@@ -82,6 +84,8 @@ class MissionService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _missionProfiles.clear();
+
       // Load missions assigned to this learner
       final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
           await _firestore
@@ -103,6 +107,11 @@ class MissionService extends ChangeNotifier {
         if (missionDoc.exists) {
           final Map<String, dynamic> missionData = missionDoc.data()!;
           final List<Skill> skills = await _loadMissionSkills(missionData);
+          _missionProfiles[missionId] = await _loadMissionConfusabilityProfile(
+            missionId,
+            missionData,
+            skills,
+          );
 
           // Get steps for this mission
           final QuerySnapshot<Map<String, dynamic>> stepsSnapshot =
@@ -345,6 +354,81 @@ class MissionService extends ChangeNotifier {
     return resolvedSkills;
   }
 
+  Future<_MissionConfusabilityProfile> _loadMissionConfusabilityProfile(
+    String missionId,
+    Map<String, dynamic> missionData,
+    List<Skill> skills,
+  ) async {
+    final Set<String> skillIds = <String>{
+      ...skills.map((Skill skill) => skill.id),
+      ...List<String>.from(
+        missionData['skillIds'] as List? ?? const <String>[],
+      ),
+    }..removeWhere((String value) => value.isEmpty);
+    final Set<String> pillarCodes = <String>{
+      if (missionData['pillarCode'] is String)
+        (missionData['pillarCode'] as String).trim(),
+      ...List<String>.from(
+        missionData['pillarCodes'] as List? ?? const <String>[],
+      ),
+    }..removeWhere((String value) => value.isEmpty);
+    final Set<String> misconceptionTags = <String>{};
+
+    final QuerySnapshot<Map<String, dynamic>> snapshotDocs = await _firestore
+        .collection('missionSnapshots')
+        .where('missionId', isEqualTo: missionId)
+        .limit(3)
+        .get();
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> snapshotDoc
+        in snapshotDocs.docs) {
+      final Map<String, dynamic> snapshotData = snapshotDoc.data();
+      skillIds.addAll(
+        List<String>.from(snapshotData['skillIds'] as List? ?? const <String>[]),
+      );
+      pillarCodes.addAll(
+        List<String>.from(
+          snapshotData['pillarCodes'] as List? ?? const <String>[],
+        ),
+      );
+      _collectConfusabilityTags(snapshotData['bodyJson'], misconceptionTags);
+    }
+
+    return _MissionConfusabilityProfile(
+      skillIds: skillIds,
+      pillarCodes: pillarCodes,
+      misconceptionTags: misconceptionTags,
+    );
+  }
+
+  void _collectConfusabilityTags(dynamic node, Set<String> output) {
+    if (node == null) {
+      return;
+    }
+    if (node is Map) {
+      node.forEach((dynamic key, dynamic value) {
+        final String normalizedKey = key.toString().trim().toLowerCase();
+        if (normalizedKey == 'misconceptiontags' ||
+            normalizedKey == 'misconceptions' ||
+            normalizedKey == 'confusabilitytags') {
+          if (value is List) {
+            output.addAll(
+              value
+                  .map((dynamic item) => item.toString().trim())
+                  .where((String item) => item.isNotEmpty),
+            );
+          }
+        }
+        _collectConfusabilityTags(value, output);
+      });
+      return;
+    }
+    if (node is List) {
+      for (final dynamic value in node) {
+        _collectConfusabilityTags(value, output);
+      }
+    }
+  }
+
   _InterleavingRecommendation _buildInterleavingRecommendation(
     Mission source,
     InterleavingMode mode,
@@ -370,7 +454,7 @@ class MissionService extends ChangeNotifier {
 
     final int confusableCount = candidates
         .where(
-          (Mission mission) => _skillOverlapCount(source, mission) > 0,
+          (Mission mission) => _confusabilityOverlapScore(source, mission) > 0,
         )
         .length;
 
@@ -389,7 +473,7 @@ class MissionService extends ChangeNotifier {
     Mission candidate,
     InterleavingMode mode,
   ) {
-    final int overlap = _skillOverlapCount(source, candidate);
+    final int overlap = _confusabilityOverlapScore(source, candidate);
     final bool samePillar = candidate.pillar == source.pillar;
     final int difficultyDistance =
         (candidate.difficulty.index - source.difficulty.index).abs();
@@ -411,12 +495,26 @@ class MissionService extends ChangeNotifier {
     }
   }
 
-  int _skillOverlapCount(Mission source, Mission candidate) {
-    final Set<String> sourceSkills =
-        source.skills.map((Skill skill) => skill.id).toSet();
-    final Set<String> candidateSkills =
-        candidate.skills.map((Skill skill) => skill.id).toSet();
-    return sourceSkills.intersection(candidateSkills).length;
+  int _confusabilityOverlapScore(Mission source, Mission candidate) {
+    final _MissionConfusabilityProfile sourceProfile =
+        _missionProfiles[source.id] ??
+            _MissionConfusabilityProfile.empty(
+              source.skills.map((Skill skill) => skill.id).toSet(),
+            );
+    final _MissionConfusabilityProfile candidateProfile =
+        _missionProfiles[candidate.id] ??
+            _MissionConfusabilityProfile.empty(
+              candidate.skills.map((Skill skill) => skill.id).toSet(),
+            );
+
+    final int skillOverlap =
+        sourceProfile.skillIds.intersection(candidateProfile.skillIds).length;
+    final int misconceptionOverlap = sourceProfile.misconceptionTags
+        .intersection(candidateProfile.misconceptionTags)
+        .length;
+    final int pillarOverlap =
+        sourceProfile.pillarCodes.intersection(candidateProfile.pillarCodes).length;
+    return (misconceptionOverlap * 3) + (skillOverlap * 2) + pillarOverlap;
   }
 
   WorkedExamplePromptLevel _promptLevelForFadeStage(int fadeStage) {
@@ -1080,6 +1178,26 @@ class _InterleavingRecommendation {
 
   final List<String> missionIds;
   final String confusabilityBand;
+}
+
+class _MissionConfusabilityProfile {
+  const _MissionConfusabilityProfile({
+    required this.skillIds,
+    required this.pillarCodes,
+    required this.misconceptionTags,
+  });
+
+  factory _MissionConfusabilityProfile.empty(Set<String> skillIds) {
+    return _MissionConfusabilityProfile(
+      skillIds: skillIds,
+      pillarCodes: <String>{},
+      misconceptionTags: <String>{},
+    );
+  }
+
+  final Set<String> skillIds;
+  final Set<String> pillarCodes;
+  final Set<String> misconceptionTags;
 }
 
 /// Mission submission model for educator review
