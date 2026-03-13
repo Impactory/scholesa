@@ -1,56 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
-const { initializeApp, applicationDefault, cert, getApps } = require('firebase-admin/app');
-const { getFirestore, Timestamp } = require('firebase-admin/firestore');
+const crypto = require('crypto');
+const admin = require('firebase-admin');
 
 const ROOT = path.resolve(__dirname, '..');
 const { enqueueLearnerGoalReminders } = require(path.join(ROOT, 'functions/lib/notificationPipeline.js'));
+const {
+  initializeFirebaseAdmin,
+  initializeFirestoreRestFallback,
+  isCredentialAuthError,
+  resolveProjectId,
+} = require(path.join(ROOT, 'scripts/firebase_runtime_auth.js'));
 
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const PREFS_COLLECTION = 'learnerReminderPreferences';
 const REQUESTS_COLLECTION = 'notificationRequests';
-const SERVICE_ACCOUNT_PATHS = [
-  process.env.GOOGLE_APPLICATION_CREDENTIALS,
-  path.resolve(ROOT, 'firebase-service-account.json'),
-  path.resolve(ROOT, 'studio-service-account.json'),
-].filter(Boolean);
-
-function isServiceAccountCredentialPath(candidate) {
-  if (typeof candidate !== 'string' || !candidate.trim()) return false;
-  const credentialPath = path.isAbsolute(candidate)
-    ? candidate
-    : path.resolve(ROOT, candidate);
-  if (!fs.existsSync(credentialPath)) return false;
-  try {
-    const payload = JSON.parse(fs.readFileSync(credentialPath, 'utf8'));
-    return payload &&
-      typeof payload === 'object' &&
-      payload.type === 'service_account' &&
-      typeof payload.private_key === 'string' &&
-      typeof payload.project_id === 'string';
-  } catch {
-    return false;
-  }
-}
-
-function resolveCredentialPath(explicitPath) {
-  if (isServiceAccountCredentialPath(explicitPath)) {
-    return path.isAbsolute(explicitPath)
-      ? explicitPath
-      : path.resolve(ROOT, explicitPath);
-  }
-  for (const candidate of SERVICE_ACCOUNT_PATHS) {
-    if (isServiceAccountCredentialPath(candidate)) {
-      return path.isAbsolute(candidate)
-        ? candidate
-        : path.resolve(ROOT, candidate);
-    }
-  }
-  return undefined;
-}
 
 function parseArgs(argv) {
   const args = {
@@ -82,22 +48,50 @@ function parseArgs(argv) {
   return args;
 }
 
-function initializeAdmin(args) {
-  const appOptions = {};
-  if (args.project) {
-    appOptions.projectId = args.project;
-  }
-  const credentialPath = resolveCredentialPath(args.credentials);
-  if (credentialPath) {
-    appOptions.credential = cert(require(credentialPath));
-  } else {
-    appOptions.credential = applicationDefault();
+function addCollectionAddPolyfill(db) {
+  const originalCollection = db.collection.bind(db);
+  db.collection = (collectionName) => {
+    const collectionRef = originalCollection(collectionName);
+    if (typeof collectionRef.add !== 'function') {
+      collectionRef.add = async (data) => {
+        const docId = crypto.randomUUID();
+        await collectionRef.doc(docId).set(data);
+        return collectionRef.doc(docId);
+      };
+    }
+    return collectionRef;
+  };
+  return db;
+}
+
+function initializeDb(args) {
+  const projectId = resolveProjectId(args.project, args.credentials);
+  try {
+    const init = initializeFirebaseAdmin(admin, {
+      projectId,
+      credentialPath: args.credentials,
+      extraCredentialPaths: [
+        'firebase-service-account.json',
+        'studio-service-account.json',
+      ],
+    });
+    return {
+      db: admin.firestore(),
+      projectId: init.projectId || projectId,
+      transport: init.credentialMode,
+    };
+  } catch (error) {
+    if (!isCredentialAuthError(error)) {
+      throw error;
+    }
   }
 
-  if (!getApps().length) {
-    initializeApp(appOptions);
-  }
-  return getFirestore();
+  const fallback = initializeFirestoreRestFallback(projectId);
+  return {
+    db: addCollectionAddPolyfill(fallback.db),
+    projectId: fallback.projectId,
+    transport: fallback.transport,
+  };
 }
 
 async function pickSiteId(db, explicitSite) {
@@ -126,7 +120,7 @@ async function pickSiteId(db, explicitSite) {
 
 async function run() {
   const args = parseArgs(process.argv.slice(2));
-  const db = initializeAdmin(args);
+  const { db, projectId, transport } = initializeDb(args);
   const siteId = await pickSiteId(db, args.site);
   const learnerId = args.learner;
   const preferenceId = `${siteId}_${learnerId}`;
@@ -141,8 +135,8 @@ async function run() {
     timeZone: 'UTC',
     valuePrompt: 'canary reminder path',
     enabled: true,
-    updatedAt: Timestamp.now(),
-    createdAt: Timestamp.now(),
+    updatedAt: now,
+    createdAt: now,
   }, { merge: true });
 
   const result = await enqueueLearnerGoalReminders({
@@ -153,7 +147,7 @@ async function run() {
     persistTelemetryEvent: async (payload) => {
       await db.collection(TELEMETRY_COLLECTION).add({
         ...payload,
-        createdAt: Timestamp.now(),
+        createdAt: now,
         metadata: {
           ...(payload.metadata || {}),
           syntheticCoverageSeed: true,
@@ -193,6 +187,8 @@ async function run() {
   });
 
   console.log('Learner Reminder Live Canary');
+  console.log(`projectId=${projectId}`);
+  console.log(`transport=${transport}`);
   console.log(`siteId=${siteId}`);
   console.log(`learnerId=${learnerId}`);
   console.log(`queued=${result.queued}`);
