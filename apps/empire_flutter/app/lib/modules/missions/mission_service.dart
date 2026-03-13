@@ -1144,6 +1144,23 @@ class MissionService extends ChangeNotifier {
           final DocumentSnapshot<Map<String, dynamic>> missionDoc =
               await _firestore.collection('missions').doc(missionId).get();
           final Map<String, dynamic>? missionData = missionDoc.data();
+          final String rubricId = missionData?['rubricId'] as String? ??
+              data['rubricId'] as String? ??
+              '';
+          List<Map<String, dynamic>> rubricCriteria =
+              const <Map<String, dynamic>>[];
+
+          if (rubricId.isNotEmpty) {
+            final DocumentSnapshot<Map<String, dynamic>> rubricDoc =
+                await _firestore.collection('rubrics').doc(rubricId).get();
+            rubricCriteria = (rubricDoc.data()?['criteria'] as List?)
+                    ?.map(
+                      (dynamic entry) =>
+                          Map<String, dynamic>.from(entry as Map),
+                    )
+                    .toList() ??
+                const <Map<String, dynamic>>[];
+          }
 
           return MissionSubmission(
             id: doc.id,
@@ -1152,6 +1169,7 @@ class MissionService extends ChangeNotifier {
             learnerId: learnerId,
             learnerName: learnerData?['displayName'] as String? ?? 'Unknown',
             learnerPhotoUrl: learnerData?['photoUrl'] as String?,
+            siteId: data['siteId'] as String?,
             pillar: missionData?['pillarCode'] as String? ?? 'future_skills',
             submittedAt: _parseTimestamp(data['submittedAt']) ?? DateTime.now(),
             status: data['status'] as String? ?? 'pending',
@@ -1160,6 +1178,18 @@ class MissionService extends ChangeNotifier {
                 data['attachmentUrls'] as List? ?? <String>[]),
             rating: data['rating'] as int?,
             feedback: data['feedback'] as String?,
+            aiFeedbackDraft: data['aiFeedbackDraft'] as String?,
+            rubricId: rubricId,
+            rubricTitle: missionData?['rubricTitle'] as String? ??
+                data['rubricTitle'] as String?,
+            rubricCriteria: rubricCriteria,
+            rubricScores: (data['rubricScores'] as List?)
+                    ?.map(
+                      (dynamic entry) =>
+                          Map<String, dynamic>.from(entry as Map),
+                    )
+                    .toList() ??
+                const <Map<String, dynamic>>[],
           );
         }),
       );
@@ -1170,11 +1200,16 @@ class MissionService extends ChangeNotifier {
       final QuerySnapshot<Map<String, dynamic>> reviewedSnapshot =
           await _firestore
               .collection('missionSubmissions')
-              .where('status', isEqualTo: 'reviewed')
               .where('reviewedAt',
                   isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
               .get();
-      _reviewedToday = reviewedSnapshot.docs.length;
+        _reviewedToday = reviewedSnapshot.docs.where((doc) {
+        final String reviewedStatus =
+          doc.data()['status'] as String? ?? 'pending';
+        return reviewedStatus == 'reviewed' ||
+          reviewedStatus == 'approved' ||
+          reviewedStatus == 'revision';
+        }).length;
 
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
     } catch (e) {
@@ -1193,18 +1228,159 @@ class MissionService extends ChangeNotifier {
     required String feedback,
     required String reviewerId,
     String status = 'reviewed',
+    String? aiFeedbackDraft,
+    String? rubricId,
+    String? rubricTitle,
+    List<Map<String, dynamic>> rubricScores = const <Map<String, dynamic>>[],
   }) async {
     try {
-      await _firestore
-          .collection('missionSubmissions')
-          .doc(submissionId)
-          .update(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> submissionRef =
+          _firestore.collection('missionSubmissions').doc(submissionId);
+      final DocumentSnapshot<Map<String, dynamic>> submissionSnapshot =
+          await submissionRef.get();
+      final Map<String, dynamic> submissionData =
+          submissionSnapshot.data() ?? <String, dynamic>{};
+      final String missionId = submissionData['missionId'] as String? ?? '';
+      final String reviewLearnerId =
+          submissionData['learnerId'] as String? ?? learnerId;
+      final String? reviewSiteId = submissionData['siteId'] as String?;
+      final String trimmedFeedback = feedback.trim();
+      final String? trimmedAiDraft = aiFeedbackDraft?.trim().isNotEmpty == true
+          ? aiFeedbackDraft!.trim()
+          : null;
+      final String resolvedRubricId = rubricId?.trim().isNotEmpty == true
+          ? rubricId!.trim()
+          : submissionData['rubricId'] as String? ?? '';
+      final String? resolvedRubricTitle = rubricTitle?.trim().isNotEmpty == true
+          ? rubricTitle!.trim()
+          : submissionData['rubricTitle'] as String?;
+      final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
+          .map((Map<String, dynamic> score) => <String, dynamic>{
+                ...score,
+                'score': (score['score'] as num?)?.toInt() ?? 0,
+                'maxScore': (score['maxScore'] as num?)?.toInt() ?? 4,
+              })
+          .toList();
+      final int rubricTotalScore = normalizedRubricScores.fold<int>(
+        0,
+        (int total, Map<String, dynamic> score) =>
+            total + ((score['score'] as num?)?.toInt() ?? 0),
+      );
+      final int rubricMaxScore = normalizedRubricScores.fold<int>(
+        0,
+        (int total, Map<String, dynamic> score) =>
+            total + ((score['maxScore'] as num?)?.toInt() ?? 0),
+      );
+      final WriteBatch batch = _firestore.batch();
+
+      batch.update(submissionRef, <String, dynamic>{
         'status': status,
         'rating': rating,
-        'feedback': feedback,
+        'feedback': trimmedFeedback,
         'reviewedBy': reviewerId,
         'reviewedAt': FieldValue.serverTimestamp(),
+        if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+        if (trimmedAiDraft != null) 'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+        if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+        if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+          'rubricTitle': resolvedRubricTitle,
+        if (normalizedRubricScores.isNotEmpty)
+          'rubricScores': normalizedRubricScores,
+        if (normalizedRubricScores.isNotEmpty) 'rubricTotalScore': rubricTotalScore,
+        if (normalizedRubricScores.isNotEmpty) 'rubricMaxScore': rubricMaxScore,
       });
+
+      if (missionId.isNotEmpty && reviewLearnerId.isNotEmpty) {
+        final QuerySnapshot<Map<String, dynamic>> assignmentSnapshot =
+            await _firestore
+                .collection('missionAssignments')
+                .where('learnerId', isEqualTo: reviewLearnerId)
+                .where('missionId', isEqualTo: missionId)
+                .get();
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> assignmentDoc
+            in assignmentSnapshot.docs) {
+          final String? assignmentSiteId =
+              assignmentDoc.data()['siteId'] as String?;
+          if (reviewSiteId != null &&
+              reviewSiteId.isNotEmpty &&
+              assignmentSiteId != reviewSiteId) {
+            continue;
+          }
+          batch.update(assignmentDoc.reference, <String, dynamic>{
+            'reviewStatus': status,
+            'lastSubmissionId': submissionId,
+            'gradedBy': reviewerId,
+            'gradedAt': FieldValue.serverTimestamp(),
+            'rating': rating,
+            'feedback': trimmedFeedback,
+            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+            if (trimmedAiDraft != null)
+              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+            if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+            if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+              'rubricTitle': resolvedRubricTitle,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricScores': normalizedRubricScores,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricTotalScore': rubricTotalScore,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricMaxScore': rubricMaxScore,
+          });
+        }
+
+        final QuerySnapshot<Map<String, dynamic>> missionAttemptSnapshot =
+            await _firestore
+                .collection('missionAttempts')
+                .where('learnerId', isEqualTo: reviewLearnerId)
+                .where('missionId', isEqualTo: missionId)
+                .get();
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> attemptDoc
+            in missionAttemptSnapshot.docs) {
+          final String? attemptSiteId = attemptDoc.data()['siteId'] as String?;
+          if (reviewSiteId != null &&
+              reviewSiteId.isNotEmpty &&
+              attemptSiteId != reviewSiteId) {
+            continue;
+          }
+          batch.update(attemptDoc.reference, <String, dynamic>{
+            'reviewStatus': status,
+            'gradedBy': reviewerId,
+            'gradedAt': FieldValue.serverTimestamp(),
+            'rating': rating,
+            'feedback': trimmedFeedback,
+            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+            if (trimmedAiDraft != null)
+              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+            if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+            if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+              'rubricTitle': resolvedRubricTitle,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricScores': normalizedRubricScores,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricTotalScore': rubricTotalScore,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricMaxScore': rubricMaxScore,
+          });
+        }
+      }
+
+      if (resolvedRubricId.isNotEmpty && normalizedRubricScores.isNotEmpty) {
+        final DocumentReference<Map<String, dynamic>> rubricApplicationRef =
+            _firestore.collection('rubricApplications').doc(submissionId);
+        batch.set(rubricApplicationRef, <String, dynamic>{
+          'siteId': reviewSiteId,
+          'missionAttemptId': submissionId,
+          'submissionId': submissionId,
+          'educatorId': reviewerId,
+          'rubricId': resolvedRubricId,
+          'scores': normalizedRubricScores,
+          'overallNote': trimmedFeedback,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
 
       // Update local state
       _pendingReviews = _pendingReviews
@@ -1274,6 +1450,7 @@ class MissionSubmission {
   final String learnerId;
   final String learnerName;
   final String? learnerPhotoUrl;
+  final String? siteId;
   final String pillar;
   final DateTime submittedAt;
   final String status;
@@ -1281,6 +1458,11 @@ class MissionSubmission {
   final List<String> attachmentUrls;
   final int? rating;
   final String? feedback;
+  final String? aiFeedbackDraft;
+  final String? rubricId;
+  final String? rubricTitle;
+  final List<Map<String, dynamic>> rubricCriteria;
+  final List<Map<String, dynamic>> rubricScores;
 
   const MissionSubmission({
     required this.id,
@@ -1289,6 +1471,7 @@ class MissionSubmission {
     required this.learnerId,
     required this.learnerName,
     this.learnerPhotoUrl,
+    this.siteId,
     required this.pillar,
     required this.submittedAt,
     required this.status,
@@ -1296,6 +1479,11 @@ class MissionSubmission {
     this.attachmentUrls = const <String>[],
     this.rating,
     this.feedback,
+    this.aiFeedbackDraft,
+    this.rubricId,
+    this.rubricTitle,
+    this.rubricCriteria = const <Map<String, dynamic>>[],
+    this.rubricScores = const <Map<String, dynamic>>[],
   });
 
   /// Convenience getters for UI
@@ -1328,4 +1516,6 @@ class MissionSubmission {
       return '${diff.inDays}d ago';
     }
   }
+
+  bool get hasRubric => rubricId?.isNotEmpty == true || rubricCriteria.isNotEmpty;
 }
