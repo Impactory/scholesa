@@ -1,7 +1,13 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models.dart';
+import '../../domain/repositories.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
@@ -21,6 +27,9 @@ class LearnerTodayPage extends StatefulWidget {
 
 class _LearnerTodayPageState extends State<LearnerTodayPage> {
   bool _showAiCoach = false;
+  LearnerProfileModel? _learnerProfile;
+  bool _isProfileLoading = false;
+  bool _didLogOnboardingStart = false;
 
   String _t(String input) {
     return LearnerSurfaceI18n.text(context, input);
@@ -33,6 +42,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       context.read<MissionService>().loadMissions();
       context.read<HabitService>().loadHabits();
       context.read<MessageService>().loadMessages();
+      unawaited(_loadLearnerProfile());
     });
   }
 
@@ -59,6 +69,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildGreetingCard()),
             SliverToBoxAdapter(child: _buildTodayProgress()),
+            SliverToBoxAdapter(child: _buildLearnerSetupCard()),
             SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
             SliverToBoxAdapter(child: _buildLearnerLoopInsights(context)),
             SliverToBoxAdapter(child: _buildQuickActions()),
@@ -548,6 +559,676 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     );
   }
 
+  Future<void> _loadLearnerProfile() async {
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
+    if (learnerId.isEmpty || siteId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _learnerProfile = null;
+          _isProfileLoading = false;
+        });
+      }
+      return;
+    }
+
+    final FirebaseFirestore firestore = context.read<FirestoreService>().firestore;
+    final LearnerProfileRepository repository =
+        LearnerProfileRepository(firestore: firestore);
+
+    if (mounted) {
+      setState(() => _isProfileLoading = true);
+    }
+
+    try {
+      final LearnerProfileModel? profile = await repository.getByLearnerAndSite(
+        learnerId: learnerId,
+        siteId: siteId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _learnerProfile = profile;
+        _isProfileLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isProfileLoading = false);
+    }
+  }
+
+  String _activeSiteId(AppState appState) {
+    final String activeSiteId = appState.activeSiteId?.trim() ?? '';
+    if (activeSiteId.isNotEmpty) return activeSiteId;
+    if (appState.siteIds.isNotEmpty) {
+      return appState.siteIds.first.trim();
+    }
+    return '';
+  }
+
+  bool get _setupComplete => _learnerProfile?.onboardingCompleted ?? false;
+
+  Widget _buildLearnerSetupCard() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final List<_SummaryChipData> chips = <_SummaryChipData>[
+      _SummaryChipData(
+        label: _setupComplete ? _t('Setup complete') : _t('Setup needed'),
+        color: _setupComplete ? ScholesaColors.success : ScholesaColors.warning,
+      ),
+      if ((_learnerProfile?.goals.length ?? 0) > 0)
+        _SummaryChipData(
+          label: '${_t('Goals')}: ${_learnerProfile!.goals.length}',
+          color: ScholesaColors.learner,
+        ),
+      if ((_learnerProfile?.interests.length ?? 0) > 0)
+        _SummaryChipData(
+          label: '${_t('Interests')}: ${_learnerProfile!.interests.length}',
+          color: const Color(0xFF0EA5E9),
+        ),
+      if ((_learnerProfile?.weeklyTargetMinutes ?? 0) > 0)
+        _SummaryChipData(
+          label:
+              '${_t('Weekly target minutes')}: ${_learnerProfile!.weeklyTargetMinutes}',
+          color: const Color(0xFFF59E0B),
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: ScholesaColors.learner.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    color: ScholesaColors.learner,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _t('Learner Setup'),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _t(
+                          'Complete your setup to personalize goals, reminders, and accessibility supports.',
+                        ),
+                        style: TextStyle(
+                          color: scheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isProfileLoading)
+              const LinearProgressIndicator(minHeight: 4)
+            else if (chips.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: chips
+                    .map((_) => _SummaryChip(label: _.label, color: _.color))
+                    .toList(),
+              ),
+            const SizedBox(height: 16),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _openQuickReflectionSheet,
+                    icon: const Icon(Icons.rate_review_outlined),
+                    label: Text(_t('Quick reflection')),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _openLearnerSetupSheet,
+                    icon: const Icon(Icons.auto_awesome_mosaic),
+                    label: Text(
+                      _setupComplete
+                          ? _t('Update setup')
+                          : _t('Complete setup'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openLearnerSetupSheet() async {
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
+    if (learnerId.isEmpty || siteId.isEmpty) return;
+
+    if (!_setupComplete && !_didLogOnboardingStart) {
+      _didLogOnboardingStart = true;
+      unawaited(TelemetryService.instance.logEvent(
+        event: 'onboarding.started',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{'surface': 'learner_today_setup'},
+      ));
+    }
+
+    final LearnerProfileModel? currentProfile = _learnerProfile;
+    final TextEditingController interestsController =
+        TextEditingController(text: currentProfile?.interests.join(', ') ?? '');
+    final TextEditingController goalsController =
+        TextEditingController(text: currentProfile?.goals.join(', ') ?? '');
+    final TextEditingController valuePromptController =
+        TextEditingController(text: currentProfile?.valuePrompt ?? '');
+
+    String readingLevel = currentProfile?.readingLevelSelfCheck ?? 'just_right';
+    String diagnosticBand =
+        currentProfile?.diagnosticConfidenceBand ?? 'developing';
+    double weeklyTargetMinutes =
+        (currentProfile?.weeklyTargetMinutes ?? 90).toDouble();
+    String reminderSchedule = currentProfile?.reminderSchedule ?? 'weekdays';
+    bool ttsEnabled = currentProfile?.ttsEnabled ?? false;
+    bool reducedDistractionEnabled =
+        currentProfile?.reducedDistractionEnabled ?? false;
+    bool keyboardOnlyEnabled = currentProfile?.keyboardOnlyEnabled ?? false;
+    bool highContrastEnabled = currentProfile?.highContrastEnabled ?? false;
+    bool isSaving = false;
+
+    final List<String> selectedSupports =
+        List<String>.from(currentProfile?.learningNeeds ?? const <String>[]);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _t('Learner Setup'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _t('Tell us about your goals, supports, and study rhythm.'),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: readingLevel,
+                        decoration: InputDecoration(labelText: _t('Reading check')),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'need_support', child: Text(_t('Need support'))),
+                          DropdownMenuItem(value: 'just_right', child: Text(_t('Just right'))),
+                          DropdownMenuItem(value: 'challenge_me', child: Text(_t('Ready for a challenge'))),
+                        ],
+                        onChanged: isSaving
+                            ? null
+                            : (String? value) {
+                                if (value == null) return;
+                                modalSetState(() => readingLevel = value);
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: diagnosticBand,
+                        decoration: InputDecoration(labelText: _t('Mastery confidence')),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'emerging', child: Text(_t('Emerging'))),
+                          DropdownMenuItem(value: 'developing', child: Text(_t('Developing'))),
+                          DropdownMenuItem(value: 'confident', child: Text(_t('Confident'))),
+                        ],
+                        onChanged: isSaving
+                            ? null
+                            : (String? value) {
+                                if (value == null) return;
+                                modalSetState(() => diagnosticBand = value);
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: interestsController,
+                        decoration: InputDecoration(
+                          labelText: _t('Interests'),
+                          helperText: _t('Comma separated'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: goalsController,
+                        decoration: InputDecoration(
+                          labelText: _t('Goals'),
+                          helperText: _t('Comma separated'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '${_t('Weekly target minutes')}: ${weeklyTargetMinutes.round()}',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Slider(
+                        value: weeklyTargetMinutes,
+                        min: 30,
+                        max: 240,
+                        divisions: 7,
+                        label: weeklyTargetMinutes.round().toString(),
+                        onChanged: isSaving
+                            ? null
+                            : (double value) {
+                                modalSetState(() => weeklyTargetMinutes = value);
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: reminderSchedule,
+                        decoration: InputDecoration(labelText: _t('Reminder schedule')),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'off', child: Text(_t('Off'))),
+                          DropdownMenuItem(value: 'daily', child: Text(_t('Daily'))),
+                          DropdownMenuItem(value: 'weekdays', child: Text(_t('Weekdays'))),
+                          DropdownMenuItem(value: 'weekends', child: Text(_t('Weekends'))),
+                        ],
+                        onChanged: isSaving
+                            ? null
+                            : (String? value) {
+                                if (value == null) return;
+                                modalSetState(() => reminderSchedule = value);
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: valuePromptController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: _t('Why does this matter to you?'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _t('Accessibility supports'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        value: ttsEnabled,
+                        onChanged: isSaving
+                            ? null
+                            : (bool? value) {
+                                modalSetState(() => ttsEnabled = value ?? false);
+                              },
+                        title: Text(_t('Text-to-Speech')),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      CheckboxListTile(
+                        value: reducedDistractionEnabled,
+                        onChanged: isSaving
+                            ? null
+                            : (bool? value) {
+                                modalSetState(() => reducedDistractionEnabled = value ?? false);
+                              },
+                        title: Text(_t('Reduced distraction')),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      CheckboxListTile(
+                        value: keyboardOnlyEnabled,
+                        onChanged: isSaving
+                            ? null
+                            : (bool? value) {
+                                modalSetState(() => keyboardOnlyEnabled = value ?? false);
+                              },
+                        title: Text(_t('Keyboard only')),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      CheckboxListTile(
+                        value: highContrastEnabled,
+                        onChanged: isSaving
+                            ? null
+                            : (bool? value) {
+                                modalSetState(() => highContrastEnabled = value ?? false);
+                              },
+                        title: Text(_t('High contrast')),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () => Navigator.pop(bottomSheetContext),
+                              child: Text(_t('Cancel')),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      modalSetState(() => isSaving = true);
+                                      final LearnerProfileModel updatedProfile = LearnerProfileModel(
+                                        id: currentProfile?.id ?? '${siteId}_$learnerId',
+                                        learnerId: learnerId,
+                                        siteId: siteId,
+                                        legalName: currentProfile?.legalName,
+                                        preferredName: currentProfile?.preferredName,
+                                        dateOfBirth: currentProfile?.dateOfBirth,
+                                        gradeLevel: currentProfile?.gradeLevel,
+                                        strengths: currentProfile?.strengths ?? const <String>[],
+                                        learningNeeds: selectedSupports,
+                                        interests: _splitCsv(interestsController.text),
+                                        goals: _splitCsv(goalsController.text),
+                                        readingLevelSelfCheck: readingLevel,
+                                        diagnosticConfidenceBand: diagnosticBand,
+                                        weeklyTargetMinutes: weeklyTargetMinutes.round(),
+                                        reminderSchedule: reminderSchedule,
+                                        valuePrompt: valuePromptController.text.trim(),
+                                        ttsEnabled: ttsEnabled,
+                                        reducedDistractionEnabled: reducedDistractionEnabled,
+                                        keyboardOnlyEnabled: keyboardOnlyEnabled,
+                                        highContrastEnabled: highContrastEnabled,
+                                        onboardingCompleted: true,
+                                        lastSetupAt: Timestamp.now(),
+                                        emergencyContact: currentProfile?.emergencyContact,
+                                        createdAt: currentProfile?.createdAt,
+                                        updatedAt: Timestamp.now(),
+                                      );
+
+                                      final FirebaseFirestore firestore =
+                                          context.read<FirestoreService>().firestore;
+                                      final LearnerProfileRepository repository =
+                                          LearnerProfileRepository(firestore: firestore);
+
+                                      try {
+                                        await repository.upsert(updatedProfile);
+                                        await _logLearnerSetupEvents(
+                                          previous: currentProfile,
+                                          current: updatedProfile,
+                                          siteId: siteId,
+                                        );
+                                        if (!mounted) return;
+                                        setState(() => _learnerProfile = updatedProfile);
+                                        Navigator.pop(bottomSheetContext);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(_t('Setup saved'))),
+                                        );
+                                      } finally {
+                                        if (bottomSheetContext.mounted) {
+                                          modalSetState(() => isSaving = false);
+                                        }
+                                      }
+                                    },
+                              child: Text(_t('Save')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<String> _splitCsv(String input) {
+    return input
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet()
+        .take(6)
+        .toList();
+  }
+
+  Future<void> _logLearnerSetupEvents({
+    required LearnerProfileModel? previous,
+    required LearnerProfileModel current,
+    required String siteId,
+  }) async {
+    if (previous == null || !previous.onboardingCompleted) {
+      await TelemetryService.instance.logEvent(
+        event: 'onboarding.completed',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'interestCount': current.interests.length,
+          'goalCount': current.goals.length,
+          'readingLevel': current.readingLevelSelfCheck,
+        },
+      );
+    }
+
+    if (previous?.diagnosticConfidenceBand != current.diagnosticConfidenceBand) {
+      await TelemetryService.instance.logEvent(
+        event: 'diagnostic.submitted',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'confidenceBand': current.diagnosticConfidenceBand,
+          'readingLevel': current.readingLevelSelfCheck,
+        },
+      );
+    }
+
+    if (previous?.weeklyTargetMinutes != current.weeklyTargetMinutes ||
+        previous?.reminderSchedule != current.reminderSchedule ||
+        previous?.goals.join('|') != current.goals.join('|') ||
+        previous?.valuePrompt != current.valuePrompt) {
+      await TelemetryService.instance.logEvent(
+        event: 'learner.goal.updated',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'goalCount': current.goals.length,
+          'weeklyTargetMinutes': current.weeklyTargetMinutes,
+          'reminderSchedule': current.reminderSchedule,
+          'hasValuePrompt': (current.valuePrompt?.isNotEmpty ?? false),
+        },
+      );
+    }
+
+    final Map<String, bool> previousSettings = <String, bool>{
+      'ttsEnabled': previous?.ttsEnabled ?? false,
+      'reducedDistractionEnabled': previous?.reducedDistractionEnabled ?? false,
+      'keyboardOnlyEnabled': previous?.keyboardOnlyEnabled ?? false,
+      'highContrastEnabled': previous?.highContrastEnabled ?? false,
+    };
+    final Map<String, bool> currentSettings = <String, bool>{
+      'ttsEnabled': current.ttsEnabled,
+      'reducedDistractionEnabled': current.reducedDistractionEnabled,
+      'keyboardOnlyEnabled': current.keyboardOnlyEnabled,
+      'highContrastEnabled': current.highContrastEnabled,
+    };
+
+    for (final MapEntry<String, bool> entry in currentSettings.entries) {
+      if (previousSettings[entry.key] == entry.value) continue;
+      await TelemetryService.instance.logEvent(
+        event: 'accessibility.setting.changed',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'settingKey': entry.key,
+          'enabled': entry.value,
+        },
+      );
+    }
+  }
+
+  Future<void> _openQuickReflectionSheet() async {
+    final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
+    if (learnerId.isEmpty || siteId.isEmpty) return;
+
+    final TextEditingController reflectionController = TextEditingController();
+    String reflectionType = 'post_session';
+    bool isSaving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _t('Quick reflection'),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: reflectionType,
+                      decoration: InputDecoration(labelText: _t('Reflection type')),
+                      items: <DropdownMenuItem<String>>[
+                        DropdownMenuItem(value: 'pre_plan', child: Text(_t('Pre-plan'))),
+                        DropdownMenuItem(value: 'post_session', child: Text(_t('Post-session'))),
+                        DropdownMenuItem(value: 'weekly_review', child: Text(_t('Weekly review'))),
+                      ],
+                      onChanged: isSaving
+                          ? null
+                          : (String? value) {
+                              if (value == null) return;
+                              modalSetState(() => reflectionType = value);
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: reflectionController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        labelText: _t('What worked? What is your next step?'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => Navigator.pop(bottomSheetContext),
+                            child: Text(_t('Cancel')),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    final String response = reflectionController.text.trim();
+                                    if (response.isEmpty) return;
+                                    modalSetState(() => isSaving = true);
+                                    final FirebaseFirestore firestore =
+                                        context.read<FirestoreService>().firestore;
+                                    final LearnerReflectionRepository repository =
+                                        LearnerReflectionRepository(firestore: firestore);
+                                    try {
+                                      await repository.create(
+                                        learnerId: learnerId,
+                                        siteId: siteId,
+                                        reflectionType: reflectionType,
+                                        response: response,
+                                        prompt: _t('What worked? What is your next step?'),
+                                      );
+                                      if (!mounted) return;
+                                      Navigator.pop(bottomSheetContext);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(_t('Reflection saved'))),
+                                      );
+                                    } finally {
+                                      if (bottomSheetContext.mounted) {
+                                        modalSetState(() => isSaving = false);
+                                      }
+                                    }
+                                  },
+                            child: Text(_t('Save')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   String _getGreeting() {
     final int hour = DateTime.now().hour;
     if (hour < 12) return _t('Good morning');
@@ -670,6 +1351,39 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     );
   }
 
+}
+
+class _SummaryChipData {
+  const _SummaryChipData({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
 
 class _ProgressCard extends StatelessWidget {

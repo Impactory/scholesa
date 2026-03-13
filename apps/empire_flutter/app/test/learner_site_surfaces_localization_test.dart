@@ -110,6 +110,130 @@ void main() {
       expect(find.text('今天'), findsOneWidget);
       expect(find.text('🌟 继续加油！'), findsOneWidget);
       expect(find.text('今天的习惯'), findsOneWidget);
+      expect(find.text('学习者设置'), findsOneWidget);
+    });
+
+    testWidgets('learner setup persists profile to Firestore',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final HabitService habitService = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerTodayPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+            ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Complete setup'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).at(0), 'Robotics, coding');
+      await tester.enterText(find.byType(TextField).at(1), 'Build a better robot');
+      await tester.enterText(find.byType(TextField).at(2), 'I want to create useful things');
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Setup saved'), findsOneWidget);
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await fakeFirestore.collection('learnerProfiles').get();
+      expect(snapshot.docs, hasLength(1));
+      expect(snapshot.docs.first.data()['learnerId'], 'test-user-1');
+      expect(snapshot.docs.first.data()['siteId'], 'site-1');
+      expect(snapshot.docs.first.data()['onboardingCompleted'], true);
+    });
+
+    testWidgets('quick reflection writes learner reflection record',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final HabitService habitService = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerTodayPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+            ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Quick reflection'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).last,
+        'The habit streak helped me stay focused.',
+      );
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reflection saved'), findsOneWidget);
+
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await fakeFirestore.collection('learnerReflections').get();
+      expect(snapshot.docs, hasLength(1));
+      expect(snapshot.docs.first.data()['learnerId'], 'test-user-1');
+      expect(snapshot.docs.first.data()['siteId'], 'site-1');
+      expect(snapshot.docs.first.data()['reflectionType'], 'post_session');
     });
 
     testWidgets('learner portfolio renders zh-TW copy',

@@ -122,6 +122,17 @@ class LearnerProfileModel {
     this.learningNeeds = const <String>[],
     this.interests = const <String>[],
     this.goals = const <String>[],
+    this.readingLevelSelfCheck,
+    this.diagnosticConfidenceBand,
+    this.weeklyTargetMinutes,
+    this.reminderSchedule,
+    this.valuePrompt,
+    this.ttsEnabled = false,
+    this.reducedDistractionEnabled = false,
+    this.keyboardOnlyEnabled = false,
+    this.highContrastEnabled = false,
+    this.onboardingCompleted = false,
+    this.lastSetupAt,
     this.emergencyContact,
     this.createdAt,
     this.updatedAt,
@@ -138,6 +149,17 @@ class LearnerProfileModel {
   final List<String> learningNeeds;
   final List<String> interests;
   final List<String> goals;
+  final String? readingLevelSelfCheck;
+  final String? diagnosticConfidenceBand;
+  final int? weeklyTargetMinutes;
+  final String? reminderSchedule;
+  final String? valuePrompt;
+  final bool ttsEnabled;
+  final bool reducedDistractionEnabled;
+  final bool keyboardOnlyEnabled;
+  final bool highContrastEnabled;
+  final bool onboardingCompleted;
+  final Timestamp? lastSetupAt;
   final Map<String, dynamic>? emergencyContact;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -160,6 +182,18 @@ class LearnerProfileModel {
       interests:
           List<String>.from(data['interests'] as List? ?? const <String>[]),
       goals: List<String>.from(data['goals'] as List? ?? const <String>[]),
+        readingLevelSelfCheck: data['readingLevelSelfCheck'] as String?,
+        diagnosticConfidenceBand: data['diagnosticConfidenceBand'] as String?,
+        weeklyTargetMinutes: data['weeklyTargetMinutes'] as int?,
+        reminderSchedule: data['reminderSchedule'] as String?,
+        valuePrompt: data['valuePrompt'] as String?,
+        ttsEnabled: data['ttsEnabled'] as bool? ?? false,
+        reducedDistractionEnabled:
+          data['reducedDistractionEnabled'] as bool? ?? false,
+        keyboardOnlyEnabled: data['keyboardOnlyEnabled'] as bool? ?? false,
+        highContrastEnabled: data['highContrastEnabled'] as bool? ?? false,
+        onboardingCompleted: data['onboardingCompleted'] as bool? ?? false,
+        lastSetupAt: data['lastSetupAt'] as Timestamp?,
       emergencyContact: data['emergencyContact'] as Map<String, dynamic>?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -177,6 +211,17 @@ class LearnerProfileModel {
         'learningNeeds': learningNeeds,
         'interests': interests,
         'goals': goals,
+        'readingLevelSelfCheck': readingLevelSelfCheck,
+        'diagnosticConfidenceBand': diagnosticConfidenceBand,
+        'weeklyTargetMinutes': weeklyTargetMinutes,
+        'reminderSchedule': reminderSchedule,
+        'valuePrompt': valuePrompt,
+        'ttsEnabled': ttsEnabled,
+        'reducedDistractionEnabled': reducedDistractionEnabled,
+        'keyboardOnlyEnabled': keyboardOnlyEnabled,
+        'highContrastEnabled': highContrastEnabled,
+        'onboardingCompleted': onboardingCompleted,
+        'lastSetupAt': lastSetupAt,
         'emergencyContact': emergencyContact,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),

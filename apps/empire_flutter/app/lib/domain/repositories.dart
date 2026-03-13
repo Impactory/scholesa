@@ -18,15 +18,75 @@ class UserRepository {
 }
 
 class LearnerProfileRepository {
+  LearnerProfileRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('learnerProfiles');
+      _firestore.collection('learnerProfiles');
 
   Future<void> upsert(LearnerProfileModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 
+  Future<LearnerProfileModel?> getByLearnerAndSite({
+    required String learnerId,
+    required String siteId,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return LearnerProfileModel.fromDoc(snap.docs.first);
+  }
+
   Future<List<LearnerProfileModel>> listBySite(String siteId) async {
     final snap = await _col.where('siteId', isEqualTo: siteId).get();
     return snap.docs.map(LearnerProfileModel.fromDoc).toList();
+  }
+}
+
+class LearnerReflectionRepository {
+  LearnerReflectionRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('learnerReflections');
+
+  Future<String> create({
+    required String learnerId,
+    required String siteId,
+    required String reflectionType,
+    required String response,
+    String? prompt,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> doc = _col.doc();
+    await doc.set(<String, dynamic>{
+      'learnerId': learnerId,
+      'siteId': siteId,
+      'reflectionType': reflectionType,
+      'prompt': prompt,
+      'response': response,
+      'createdAt': Timestamp.now(),
+      'updatedAt': Timestamp.now(),
+    });
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'reflection.submitted',
+        role: 'learner',
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'reflectionType': reflectionType,
+          'responseLength': response.length,
+          'hasPrompt': prompt != null && prompt.trim().isNotEmpty,
+        },
+      );
+    } catch (_) {}
+    return doc.id;
   }
 }
 
