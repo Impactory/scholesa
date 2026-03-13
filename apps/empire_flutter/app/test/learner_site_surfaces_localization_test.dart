@@ -21,6 +21,7 @@ import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/notification_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
+import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -47,11 +48,12 @@ Widget _buildHarness({
   required Locale locale,
   required Widget child,
   required List<SingleChildWidget> providers,
+  ThemeData? theme,
 }) {
   return MultiProvider(
     providers: providers,
     child: MaterialApp(
-      theme: ThemeData(
+      theme: theme ?? ScholesaTheme.light.copyWith(
         splashFactory: NoSplash.splashFactory,
       ),
       locale: locale,
@@ -644,6 +646,53 @@ void main() {
       expect(find.text('Snooze 1 day'), findsOneWidget);
       expect(find.text('Review in 3 days'), findsOneWidget);
       expect(find.text('Suspend review queue'), findsOneWidget);
+    });
+
+    testWidgets('learner today empty cards stay readable in dark theme',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: FakeFirebaseFirestore(),
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+      final HabitService habitService = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MissionService missionService = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'test-user-1',
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          theme: ScholesaTheme.dark,
+          child: const LearnerTodayPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<HabitService>.value(value: habitService),
+            ChangeNotifierProvider<MissionService>.value(value: missionService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('No habits scheduled yet'), findsOneWidget);
+      expect(find.text('No active missions yet'), findsOneWidget);
+      expect(find.text('AI coaching is loading'), findsOneWidget);
     });
 
     testWidgets('learner portfolio renders zh-TW copy',

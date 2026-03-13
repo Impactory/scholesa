@@ -10,11 +10,9 @@ import 'package:scholesa_app/dashboards/role_dashboard.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
-final ThemeData _testTheme = ThemeData(
-  useMaterial3: true,
-  splashFactory: InkRipple.splashFactory,
-);
+final ThemeData _testTheme = ScholesaTheme.light;
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -104,6 +102,25 @@ void main() {
 
       expect(find.text('All Recent Activity'), findsOneWidget);
       expect(find.text('New enrollment'), findsWidgets);
+    });
+
+    testWidgets('site dashboard empty analytics cards render in dark theme',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ScholesaTheme.dark,
+          home: SiteDashboardPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Telemetry KPIs'), findsOneWidget);
+      expect(
+        find.text('Waiting for first data sync from BOS-MIA telemetry.'),
+        findsOneWidget,
+      );
+      expect(find.text('KPI Packs'), findsOneWidget);
     });
   });
 }

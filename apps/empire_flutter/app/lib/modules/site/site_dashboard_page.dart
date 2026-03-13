@@ -160,6 +160,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool isDark = scheme.brightness == Brightness.dark;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -167,9 +169,13 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: <Color>[
-              ScholesaColors.site.withValues(alpha: 0.05),
-              Colors.white,
-              ScholesaColors.futureSkills.withValues(alpha: 0.03),
+              isDark
+                  ? scheme.surface
+                  : ScholesaColors.site.withValues(alpha: 0.05),
+              isDark ? scheme.surfaceContainerLow : scheme.surface,
+              isDark
+                  ? scheme.surfaceContainer
+                  : ScholesaColors.futureSkills.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -225,7 +231,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                   Text(
                     _t('Pilot Studio Overview'),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -325,11 +331,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+        decoration: _dashboardCardDecoration(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -357,14 +359,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             else if (_kpiPacks.isEmpty)
               Text(
                 _t('No KPI packs yet'),
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: context.schTextSecondary),
               )
             else ...<Widget>[
               Text(
                 _t('Latest KPI pack'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: ScholesaColors.textSecondary,
+                  color: context.schTextSecondary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -382,6 +384,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       decoration: BoxDecoration(
         color: ScholesaColors.site.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,7 +435,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             const SizedBox(height: 12),
             Text(
               '${pack.period} • ${_formatShortDateTime(pack.generatedAt!)}',
-              style: const TextStyle(color: ScholesaColors.textSecondary),
+              style: TextStyle(color: context.schTextSecondary),
             ),
           ],
         ],
@@ -471,23 +476,22 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         padding: const EdgeInsets.all(16),
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
+          decoration: _dashboardCardDecoration(context, radius: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
                 _t('Telemetry KPIs'),
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: context.schTextPrimary,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 _t('Waiting for first data sync from BOS-MIA telemetry.'),
-                style: TextStyle(color: Colors.grey[700]),
+                style: TextStyle(color: context.schTextSecondary),
               ),
               const SizedBox(height: 12),
               Row(
@@ -619,11 +623,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+        decoration: _dashboardCardDecoration(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -683,7 +683,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: Center(
                   child: Text(
                     _t('Attendance data unavailable'),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: context.schTextSecondary),
                   ),
                 ),
               ),
@@ -693,7 +693,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: Center(
                   child: Text(
                     _t('No attendance telemetry for this period'),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: context.schTextSecondary),
                   ),
                 ),
               ),
@@ -719,7 +719,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 child: Text(
                   '${_t('Latest attendance:')} ${latestRate.toStringAsFixed(1)}%',
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: context.schTextSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -735,11 +735,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+        decoration: _dashboardCardDecoration(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -800,7 +796,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               child: Center(
                 child: Text(
                   _t('Loading...'),
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: context.schTextSecondary),
                 ),
               ),
             ),
@@ -810,7 +806,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               child: Center(
                 child: Text(
                   _t('No recent activity yet'),
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: context.schTextSecondary),
                 ),
               ),
             ),
@@ -970,7 +966,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1005,6 +1001,25 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         'surface': 'site_dashboard',
         'reason': 'closed_without_action',
       },
+    );
+  }
+
+  BoxDecoration _dashboardCardDecoration(
+    BuildContext context, {
+    double radius = 20,
+  }) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return BoxDecoration(
+      color: context.schSurfaceStrong,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+        ),
+      ],
     );
   }
 
@@ -1406,12 +1421,13 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.schSurfaceStrong,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1472,7 +1488,7 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(color: context.schTextSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -1487,6 +1503,7 @@ class _BarColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
@@ -1501,7 +1518,7 @@ class _BarColumn extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
         ),
       ],
     );
@@ -1582,14 +1599,15 @@ class _ActivityItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.schSurfaceStrong,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: <Widget>[
@@ -1612,14 +1630,17 @@ class _ActivityItem extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(color: context.schTextSecondary, fontSize: 12),
                   ),
                 ],
               ),
             ),
             Text(
               time,
-              style: TextStyle(color: Colors.grey[400], fontSize: 11),
+              style: TextStyle(
+                color: context.schTextSecondary.withValues(alpha: 0.72),
+                fontSize: 11,
+              ),
             ),
           ],
         ),
