@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -132,6 +133,57 @@ void main() {
 
       expect(hasBosAutoPopupOpenEvent, isTrue);
       expect(hasBosAutoPopupCloseEvent, isTrue);
+    });
+
+    testWidgets('does not open modal assistant on mouse hover',
+        (WidgetTester tester) async {
+      final AppState appState = AppState();
+      appState.updateFromMeResponse(<String, dynamic>{
+        'userId': 'learner_test',
+        'email': 'learner@test.scholesa',
+        'displayName': 'Learner Test',
+        'role': 'learner',
+        'activeSiteId': 'site_test',
+        'siteIds': <String>['site_test'],
+        'entitlements': <dynamic>[],
+      });
+
+      int sheetOpenCount = 0;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: appState,
+          child: MaterialApp(
+            home: Scaffold(
+              body: GlobalAiAssistantOverlay(
+                sessionOccurrenceResolver: (
+                  BuildContext context, {
+                  required String siteId,
+                  required String learnerId,
+                }) async {
+                  return 'occ_test';
+                },
+                sheetPresenter: (BuildContext context, Widget child) async {
+                  sheetOpenCount += 1;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder fab = find.byType(FloatingActionButton);
+      expect(fab, findsOneWidget);
+
+      final TestGesture mouse = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+      );
+      await mouse.addPointer();
+      await mouse.moveTo(tester.getCenter(fab));
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(sheetOpenCount, equals(0));
     });
   });
 }

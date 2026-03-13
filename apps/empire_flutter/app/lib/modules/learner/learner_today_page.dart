@@ -741,7 +741,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: chips
-                    .map((_) => _SummaryChip(label: _.label, color: _.color))
+                  .map(
+                    (_SummaryChipData chip) =>
+                    _SummaryChip(label: chip.label, color: chip.color),
+                  )
                     .toList(),
               ),
             const SizedBox(height: 16),
@@ -1244,7 +1247,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         updatedAt: Timestamp.now(),
                                       );
 
-                                      final FirebaseFirestore firestore =
+                                        final NavigatorState sheetNavigator =
+                                          Navigator.of(bottomSheetContext);
+                                        final ScaffoldMessengerState messenger =
+                                          ScaffoldMessenger.of(context);
+                                        final GoRouter router = GoRouter.of(context);
+                                        final FirebaseFirestore firestore =
                                           context.read<FirestoreService>().firestore;
                                       final LearnerProfileRepository repository =
                                           LearnerProfileRepository(firestore: firestore);
@@ -1270,12 +1278,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         );
                                         if (!mounted) return;
                                         setState(() => _learnerProfile = updatedProfile);
-                                        Navigator.pop(bottomSheetContext);
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        sheetNavigator.pop();
+                                        messenger.showSnackBar(
                                           SnackBar(content: Text(_t('Setup saved'))),
                                         );
-                                        if (widget.forceSetupMode && mounted) {
-                                          context.go('/learner/today');
+                                        if (widget.forceSetupMode) {
+                                          router.go('/learner/today');
                                         }
                                       } finally {
                                         if (bottomSheetContext.mounted) {
@@ -1432,6 +1440,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         context.read<FirestoreService>().firestore;
     final LearnerReflectionRepository repository =
         LearnerReflectionRepository(firestore: firestore);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     await repository.create(
       learnerId: learnerId,
       siteId: siteId,
@@ -1442,7 +1451,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(content: Text(_t('Shout-out saved'))),
     );
   }
@@ -1526,6 +1535,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                 : () async {
                                     final String response = reflectionController.text.trim();
                                     if (response.isEmpty) return;
+                                final NavigatorState sheetNavigator =
+                                  Navigator.of(bottomSheetContext);
+                                final ScaffoldMessengerState messenger =
+                                  ScaffoldMessenger.of(context);
                                     modalSetState(() => isSaving = true);
                                     final FirebaseFirestore firestore =
                                         context.read<FirestoreService>().firestore;
@@ -1540,8 +1553,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         prompt: _promptForReflectionType(reflectionType),
                                       );
                                       if (!mounted) return;
-                                      Navigator.pop(bottomSheetContext);
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      sheetNavigator.pop();
+                                      messenger.showSnackBar(
                                         SnackBar(content: Text(_t('Reflection saved'))),
                                       );
                                     } finally {

@@ -54,24 +54,10 @@ class GlobalAiAssistantOverlay extends StatefulWidget {
 
 class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
   bool _assistantSheetOpen = false;
-  DateTime? _lastHoverOpenAt;
   DateTime? _lastBosPopupAt;
   bool _bosPopupInFlight = false;
   String? _bosMonitorKey;
   LearningRuntimeProvider? _bosRuntime;
-
-  bool _shouldOpenFromHover() {
-    if (_assistantSheetOpen) {
-      return false;
-    }
-    final DateTime now = widget.nowProvider?.call() ?? DateTime.now();
-    if (_lastHoverOpenAt != null &&
-        now.difference(_lastHoverOpenAt!) < const Duration(seconds: 4)) {
-      return false;
-    }
-    _lastHoverOpenAt = now;
-    return true;
-  }
 
   bool _isHesitating(XHat state) {
     return state.engagement <= 0.42 || state.cognition <= 0.38;
@@ -118,58 +104,44 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.only(right: 16, bottom: 16),
-              child: MouseRegion(
-                onEnter: (_) {
-                  if (!_isPointerPlatform() || !_shouldOpenFromHover()) {
-                    return;
-                  }
-                  unawaited(_openAssistantSheet(
-                    context,
-                    role: role,
-                    siteId: siteId,
-                    learnerId: learnerId,
-                    trigger: 'hover',
-                  ));
-                },
-                child: FloatingActionButton(
-                  heroTag: 'global_ai_assistant_fab',
-                  tooltip: AppStrings.of(context, 'assistant.tooltip'),
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  elevation: 0,
-                  hoverElevation: 0,
-                  highlightElevation: 0,
-                  onPressed: () => _openAssistantSheet(
-                    context,
-                    role: role,
-                    siteId: siteId,
-                    learnerId: learnerId,
-                    trigger: 'click',
-                  ),
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: <Color>[
-                          ScholesaColors.futureSkills,
-                          ScholesaColors.leadership,
-                          ScholesaColors.impact,
-                        ],
-                      ),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: ScholesaColors.leadership.withValues(alpha: 0.28),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
+              child: FloatingActionButton(
+                heroTag: 'global_ai_assistant_fab',
+                tooltip: AppStrings.of(context, 'assistant.tooltip'),
+                backgroundColor: Colors.transparent,
+                foregroundColor: theme.colorScheme.onPrimary,
+                elevation: 0,
+                hoverElevation: 0,
+                highlightElevation: 0,
+                onPressed: () => _openAssistantSheet(
+                  context,
+                  role: role,
+                  siteId: siteId,
+                  learnerId: learnerId,
+                  trigger: _isPointerPlatform() ? 'click' : 'tap',
+                ),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        ScholesaColors.futureSkills,
+                        ScholesaColors.leadership,
+                        ScholesaColors.impact,
                       ],
                     ),
-                    child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: ScholesaColors.leadership.withValues(alpha: 0.28),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
+                  child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
                 ),
               ),
             ),
