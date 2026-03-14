@@ -14,6 +14,7 @@ export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot'
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
+export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -228,6 +229,14 @@ export function buildFederatedLearningRuntimeDeliveryRecordDocId(packageId: stri
   return `fl_delivery_${packageId.replace(/^fl_pkg_/, '')}`;
 }
 
+export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: string, siteId: string): string {
+  const digest = createHash('sha256')
+    .update(`${deliveryId}|${siteId.trim()}`)
+    .digest('hex')
+    .slice(0, 24);
+  return `fl_activation_${digest}`;
+}
+
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -315,6 +324,16 @@ export function normalizeFederatedLearningRuntimeDeliveryStatus(
   if (normalized === 'assigned') return 'assigned';
   if (normalized === 'active') return 'active';
   if (normalized === 'revoked') return 'revoked';
+  return null;
+}
+
+export function normalizeFederatedLearningRuntimeActivationStatus(
+  value: unknown,
+): FederatedLearningRuntimeActivationStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'resolved') return 'resolved';
+  if (normalized === 'staged') return 'staged';
+  if (normalized === 'fallback') return 'fallback';
   return null;
 }
 

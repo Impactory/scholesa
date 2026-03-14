@@ -6,6 +6,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_feature_flags_page.dart';
+import 'package:scholesa_app/services/federated_learning_runtime_activation_reporter.dart';
 import 'package:scholesa_app/services/federated_learning_runtime_delivery_resolver.dart';
 import 'package:scholesa_app/services/federated_learning_prototype_uploader.dart';
 import 'package:scholesa_app/services/federated_learning_runtime_adapter.dart';
@@ -26,6 +27,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? pilotApprovalRecords,
     List<Map<String, dynamic>>? pilotExecutionRecords,
     List<Map<String, dynamic>>? runtimeDeliveryRecords,
+    List<Map<String, dynamic>>? runtimeActivationRecords,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -59,6 +61,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _runtimeDeliveryRecords = List<Map<String, dynamic>>.from(
           runtimeDeliveryRecords ?? <Map<String, dynamic>>[],
         ),
+        _runtimeActivationRecords = List<Map<String, dynamic>>.from(
+          runtimeActivationRecords ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -78,6 +83,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _pilotApprovalRecords;
   final List<Map<String, dynamic>> _pilotExecutionRecords;
   final List<Map<String, dynamic>> _runtimeDeliveryRecords;
+  final List<Map<String, dynamic>> _runtimeActivationRecords;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
@@ -90,6 +96,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> recordedPilotExecutionSaves =
       <Map<String, dynamic>>[];
     final List<Map<String, dynamic>> recordedRuntimeDeliverySaves =
+      <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedRuntimeActivationSaves =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
@@ -426,6 +434,51 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeActivationRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? siteId,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _runtimeActivationRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (siteId != null && siteId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['siteId'] == siteId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+    String? siteId,
+    int limit = 40,
+  }) async {
+    final String resolvedSiteId = (siteId ?? '').trim();
+    final Iterable<Map<String, dynamic>> scoped = _runtimeActivationRecords.where(
+      (Map<String, dynamic> row) => row['siteId'] == resolvedSiteId,
+    );
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -717,6 +770,43 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<String?> upsertFederatedLearningRuntimeActivationRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String deliveryRecordId =
+        (data['deliveryRecordId'] as String? ?? '').trim();
+    final Map<String, dynamic> deliveryRow = _runtimeDeliveryRecords.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String siteId = (data['siteId'] as String? ?? '').trim();
+    final String activationId =
+        'fl_runtime_activation_${deliveryRecordId.replaceAll('fl_delivery_', '')}_$siteId';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': activationId,
+      'deliveryRecordId': deliveryRecordId,
+      'experimentId': deliveryRow['experimentId'] ?? '',
+      'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
+      'siteId': siteId,
+      'runtimeTarget': deliveryRow['runtimeTarget'] ?? 'flutter_mobile',
+      'manifestDigest': deliveryRow['manifestDigest'] ?? '',
+      'status': (data['status'] as String? ?? 'resolved').trim(),
+      'traceId': (data['traceId'] as String? ?? '').trim(),
+      'notes': (data['notes'] as String? ?? '').trim(),
+      'reportedBy': 'site-admin-1',
+      'reportedAt': DateTime(2026, 3, 14, 20),
+      'createdAt': DateTime(2026, 3, 14, 20),
+      'updatedAt': DateTime(2026, 3, 14, 20),
+    };
+    _runtimeActivationRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == activationId,
+    );
+    _runtimeActivationRecords.insert(0, record);
+    recordedRuntimeActivationSaves.add(<String, dynamic>{...record});
+    return activationId;
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -897,6 +987,35 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'assignedAt': DateTime(2026, 3, 14, 19),
     'createdAt': DateTime(2026, 3, 14, 19),
     'updatedAt': DateTime(2026, 3, 14, 19),
+  };
+}
+
+Map<String, dynamic> _runtimeActivationRecordRow({
+  String id = 'fl_runtime_activation_1_site-1',
+  String deliveryRecordId = 'fl_delivery_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String siteId = 'site-1',
+  String status = 'resolved',
+  String traceId = 'activation-trace-1',
+  String notes = 'Site runtime resolved the bounded manifest assignment.',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'deliveryRecordId': deliveryRecordId,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'siteId': siteId,
+    'runtimeTarget': 'flutter_mobile',
+    'manifestDigest':
+        'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'status': status,
+    'traceId': traceId,
+    'notes': notes,
+    'reportedBy': 'site-admin-1',
+    'reportedAt': DateTime(2026, 3, 14, 20),
+    'createdAt': DateTime(2026, 3, 14, 20),
+    'updatedAt': DateTime(2026, 3, 14, 20),
   };
 }
 
@@ -1261,6 +1380,51 @@ void main() {
     expect(latest!.candidateModelPackageId, 'fl_pkg_1');
   });
 
+  test('runtime activation reporter records bounded site evidence', () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(),
+      ],
+    );
+    final FederatedLearningRuntimeDeliveryResolver resolver =
+        FederatedLearningRuntimeDeliveryResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+    );
+    final FederatedLearningRuntimeActivationReporter reporter =
+        FederatedLearningRuntimeActivationReporter(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      deliveryResolver: resolver,
+    );
+
+    final List<FederatedLearningRuntimeActivationRecordModel> existing =
+        await reporter.listReports();
+    final String? activationId = await reporter.reportLatestAssignmentActivation(
+      runtimeTarget: 'flutter_mobile',
+      status: 'staged',
+      traceId: 'trace-99',
+      notes: 'Prepared bounded runtime activation evidence.',
+    );
+
+    expect(existing, hasLength(1));
+    expect(existing.single.status, 'resolved');
+    expect(activationId, 'fl_runtime_activation_1_site-1');
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['deliveryRecordId'],
+      'fl_delivery_1',
+    );
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'staged');
+    expect(bridge.recordedRuntimeActivationSaves.single['siteId'], 'site-1');
+  });
+
   test('runtime adapter uploads bounded BOS summaries on real triggers',
       () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
@@ -1368,6 +1532,12 @@ void main() {
       pilotExecutionRecords: <Map<String, dynamic>>[
         _pilotExecutionRecordRow(),
       ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(status: 'assigned'),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(status: 'resolved'),
+      ],
       promotionRecords: <Map<String, dynamic>>[
         _promotionRecordRow(),
       ],
@@ -1387,6 +1557,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Recent aggregation runs'), findsOneWidget);
+    expect(find.textContaining('Runtime activation: resolved'), findsOneWidget);
     expect(
       find.text('Artifact generated: fl_merge_1'),
       findsWidgets,
@@ -1408,7 +1579,8 @@ void main() {
     );
     expect(find.text('Pilot approval: pending (sandbox_eval)'), findsOneWidget);
     expect(find.text('Pilot execution: planned · 1 sites · 0 sessions · 0 learners'), findsOneWidget);
-    expect(find.text('Runtime delivery: pending'), findsOneWidget);
+    expect(find.text('Runtime delivery: assigned · 1 sites · flutter_mobile'), findsOneWidget);
+    expect(find.text('Runtime activation: resolved · 1 site reports · flutter_mobile'), findsOneWidget);
 
     final Finder reviewChecklistButton = find.widgetWithText(
       TextButton,

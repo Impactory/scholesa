@@ -401,6 +401,22 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningRuntimeActivationRecords', 'fl_activation_demo_1'), {
+      deliveryRecordId: 'fl_delivery_demo_1',
+      experimentId: 'fl_exp_literacy_pilot',
+      candidateModelPackageId: 'fl_pkg_demo_1',
+      siteId: 'site1',
+      runtimeTarget: 'flutter_mobile',
+      manifestDigest: 'sha256:delivery-demo-1',
+      status: 'resolved',
+      traceId: 'activation-trace-1',
+      notes: 'Site runtime resolved the bounded manifest assignment for review.',
+      reportedBy: siteAdminUser.uid,
+      reportedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -803,6 +819,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningRuntimeDeliveryRecords', 'fl_delivery_demo_1')),
+    );
+  });
+
+  test('HQ can read runtime activation records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningRuntimeActivationRecords', 'fl_activation_demo_1')),
+    );
+  });
+
+  test('site admins cannot read runtime activation records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningRuntimeActivationRecords', 'fl_activation_demo_1')),
     );
   });
 });

@@ -68,6 +68,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningRuntimeDeliveryRecordModel>
     _runtimeDeliveryRecordsByPackageId =
     <String, FederatedLearningRuntimeDeliveryRecordModel>{};
+  Map<String, List<FederatedLearningRuntimeActivationRecordModel>>
+    _runtimeActivationRecordsByPackageId =
+    <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -364,6 +367,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestPackage == null
         ? null
         : _runtimeDeliveryRecordsByPackageId[latestPackage.id];
+    final List<FederatedLearningRuntimeActivationRecordModel>
+      runtimeActivationRecords = latestPackage == null
+        ? const <FederatedLearningRuntimeActivationRecordModel>[]
+        : (_runtimeActivationRecordsByPackageId[latestPackage.id] ??
+          const <FederatedLearningRuntimeActivationRecordModel>[]);
+    final FederatedLearningRuntimeActivationRecordModel? latestRuntimeActivation =
+      runtimeActivationRecords.isEmpty ? null : runtimeActivationRecords.first;
     final FederatedLearningExperimentReviewRecordModel? reviewRecord =
       _experimentReviewRecordsByExperimentId[experiment.id];
     final FederatedLearningCandidatePromotionRevocationRecordModel?
@@ -646,6 +656,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 latestRuntimeDelivery == null
                     ? 'Runtime delivery: pending'
                     : 'Runtime delivery: ${latestRuntimeDelivery.status} · ${latestRuntimeDelivery.targetSiteIds.length} sites · ${latestRuntimeDelivery.runtimeTarget}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                latestRuntimeActivation == null
+                    ? 'Runtime activation: pending'
+                    : 'Runtime activation: ${latestRuntimeActivation.status} · ${runtimeActivationRecords.length} site reports · ${latestRuntimeActivation.runtimeTarget}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -3630,6 +3653,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningPilotApprovalRecords(limit: 120),
         _workflowBridge.listFederatedLearningPilotExecutionRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeActivationRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
@@ -3760,6 +3784,31 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         runtimeDeliveryByPackageId[record.candidateModelPackageId] = record;
       }
+      final Map<String, List<FederatedLearningRuntimeActivationRecordModel>>
+          runtimeActivationByPackageId =
+          <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
+      for (final FederatedLearningRuntimeActivationRecordModel record
+          in (payloads[9] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeActivationRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_activation_record',
+                    row,
+                  ))) {
+        runtimeActivationByPackageId
+            .putIfAbsent(
+              record.candidateModelPackageId,
+              () => <FederatedLearningRuntimeActivationRecordModel>[],
+            )
+            .add(record);
+      }
+      for (final List<FederatedLearningRuntimeActivationRecordModel> records
+          in runtimeActivationByPackageId.values) {
+        records.sort((a, b) {
+          final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+          final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+          return bMillis.compareTo(aMillis);
+        });
+      }
         final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
@@ -3776,7 +3825,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[9] as List<Map<String, dynamic>>)
+          in (payloads[10] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -3788,7 +3837,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[10] as List<Map<String, dynamic>>)
+          in (payloads[11] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -3806,6 +3855,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _pilotApprovalRecordsByPackageId = pilotApprovalByPackageId;
         _pilotExecutionRecordsByPackageId = pilotExecutionByPackageId;
         _runtimeDeliveryRecordsByPackageId = runtimeDeliveryByPackageId;
+        _runtimeActivationRecordsByPackageId = runtimeActivationByPackageId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -3828,6 +3878,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, FederatedLearningPilotExecutionRecordModel>{};
         _runtimeDeliveryRecordsByPackageId =
           <String, FederatedLearningRuntimeDeliveryRecordModel>{};
+        _runtimeActivationRecordsByPackageId =
+          <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
         _experimentReviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =

@@ -3761,6 +3761,88 @@ class FederatedLearningRuntimeDeliveryRecordModel {
 }
 
 @immutable
+class FederatedLearningRuntimeActivationRecordModel {
+  const FederatedLearningRuntimeActivationRecordModel({
+    required this.id,
+    required this.deliveryRecordId,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.siteId,
+    required this.runtimeTarget,
+    required this.manifestDigest,
+    required this.status,
+    this.traceId,
+    this.notes,
+    this.reportedBy,
+    this.reportedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String deliveryRecordId;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String siteId;
+  final String runtimeTarget;
+  final String manifestDigest;
+  final String status;
+  final String? traceId;
+  final String? notes;
+  final String? reportedBy;
+  final Timestamp? reportedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningRuntimeActivationRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningRuntimeActivationRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningRuntimeActivationRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeActivationRecordModel(
+      id: id,
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      manifestDigest: data['manifestDigest'] as String? ?? '',
+      status: data['status'] as String? ?? 'resolved',
+      traceId: data['traceId'] as String?,
+      notes: data['notes'] as String?,
+      reportedBy: data['reportedBy'] as String?,
+      reportedAt: _timestampOrNull(data['reportedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'deliveryRecordId': deliveryRecordId,
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'siteId': siteId,
+        'runtimeTarget': runtimeTarget,
+        'manifestDigest': manifestDigest,
+        'status': status,
+        'traceId': traceId,
+        'notes': notes,
+        'reportedBy': reportedBy,
+        'reportedAt': reportedAt ?? Timestamp.now(),
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class FederatedLearningCandidatePromotionRecordModel {
   const FederatedLearningCandidatePromotionRecordModel({
     required this.id,

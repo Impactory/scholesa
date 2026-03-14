@@ -9,6 +9,7 @@ import {
   buildFederatedLearningPilotExecutionRecordDocId,
   buildFederatedLearningRuntimeDeliveryRecordDocId,
   buildFederatedLearningRuntimeDeliveryManifestDigest,
+  buildFederatedLearningRuntimeActivationRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -23,6 +24,7 @@ import {
   normalizeFederatedLearningPilotApprovalStatus,
   normalizeFederatedLearningPilotExecutionStatus,
   normalizeFederatedLearningRuntimeDeliveryStatus,
+  normalizeFederatedLearningRuntimeActivationStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -59,6 +61,9 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('assigned')).toBe('assigned');
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('revoked')).toBe('revoked');
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningRuntimeActivationStatus('resolved')).toBe('resolved');
+    expect(normalizeFederatedLearningRuntimeActivationStatus('fallback')).toBe('fallback');
+    expect(normalizeFederatedLearningRuntimeActivationStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -84,6 +89,10 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_pilot_execution_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningRuntimeDeliveryRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_delivery_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningRuntimeActivationRecordDocId(
+      'fl_delivery_1cb85e2396ee2ed67818ed78',
+      'site-1',
+    )).toBe('fl_activation_cf2b2e6c70bdbb66d8055edf');
     expect(buildFederatedLearningRuntimeDeliveryManifestDigest(
       'sha256:pkg-1',
       ['site-1', 'site-2'],

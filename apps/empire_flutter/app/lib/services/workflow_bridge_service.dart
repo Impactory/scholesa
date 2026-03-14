@@ -350,6 +350,40 @@ class WorkflowBridgeService {
     return _asTrimmedString(payload['id']);
   }
 
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeActivationRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? siteId,
+    int limit = 60,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningRuntimeActivationRecords',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((candidateModelPackageId ?? '').trim().isNotEmpty)
+          'candidateModelPackageId': candidateModelPackageId!.trim(),
+        if ((siteId ?? '').trim().isNotEmpty) 'siteId': siteId!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+    String? siteId,
+    int limit = 40,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listSiteFederatedLearningRuntimeActivationRecords',
+      <String, dynamic>{
+        if ((siteId ?? '').trim().isNotEmpty) 'siteId': siteId!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
   Future<String?> revokeFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -395,6 +429,16 @@ class WorkflowBridgeService {
   ) async {
     final Map<String, dynamic> payload = await _call(
       'upsertFederatedLearningRuntimeDeliveryRecord',
+      data,
+    );
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<String?> upsertFederatedLearningRuntimeActivationRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload = await _call(
+      'upsertFederatedLearningRuntimeActivationRecord',
       data,
     );
     return _asTrimmedString(payload['id']);
