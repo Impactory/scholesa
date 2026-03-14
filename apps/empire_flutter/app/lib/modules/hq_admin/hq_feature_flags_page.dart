@@ -65,6 +65,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningPilotExecutionRecordModel>
     _pilotExecutionRecordsByPackageId =
     <String, FederatedLearningPilotExecutionRecordModel>{};
+  Map<String, FederatedLearningRuntimeDeliveryRecordModel>
+    _runtimeDeliveryRecordsByPackageId =
+    <String, FederatedLearningRuntimeDeliveryRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -357,6 +360,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestPackage == null
         ? null
         : _pilotExecutionRecordsByPackageId[latestPackage.id];
+    final FederatedLearningRuntimeDeliveryRecordModel? latestRuntimeDelivery =
+      latestPackage == null
+        ? null
+        : _runtimeDeliveryRecordsByPackageId[latestPackage.id];
     final FederatedLearningExperimentReviewRecordModel? reviewRecord =
       _experimentReviewRecordsByExperimentId[experiment.id];
     final FederatedLearningCandidatePromotionRevocationRecordModel?
@@ -472,6 +479,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           ),
                           icon: const Icon(Icons.rocket_launch_rounded),
                           label: Text(_tHqFeatureFlags(context, 'Pilot execution')),
+                        ),
+                      if (latestPackage != null)
+                        TextButton.icon(
+                          onPressed: () => _showRuntimeDeliveryDialog(
+                            experiment: experiment,
+                            candidatePackage: latestPackage,
+                          ),
+                          icon: const Icon(Icons.send_to_mobile_rounded),
+                          label: Text(_tHqFeatureFlags(context, 'Runtime delivery')),
                         ),
                     ],
                   ),
@@ -617,6 +633,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 latestPilotExecution == null
                     ? 'Pilot execution: planned'
                     : 'Pilot execution: ${latestPilotExecution.status} · ${latestPilotExecution.launchedSiteIds.length} sites · ${latestPilotExecution.sessionCount} sessions · ${latestPilotExecution.learnerCount} learners',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                latestRuntimeDelivery == null
+                    ? 'Runtime delivery: pending'
+                    : 'Runtime delivery: ${latestRuntimeDelivery.status} · ${latestRuntimeDelivery.targetSiteIds.length} sites · ${latestRuntimeDelivery.runtimeTarget}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -3219,6 +3248,169 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
+  Future<void> _showRuntimeDeliveryDialog({
+    required FederatedLearningExperimentModel experiment,
+    required FederatedLearningCandidateModelPackageModel candidatePackage,
+  }) async {
+    final FederatedLearningRuntimeDeliveryRecordModel? existingDelivery =
+        _runtimeDeliveryRecordsByPackageId[candidatePackage.id];
+    final TextEditingController targetSitesController = TextEditingController(
+      text: existingDelivery?.targetSiteIds.join(', ') ?? '',
+    );
+    final TextEditingController notesController = TextEditingController(
+      text: existingDelivery?.notes ?? '',
+    );
+    String status = existingDelivery?.status ?? 'prepared';
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(context, 'Runtime delivery record'),
+              ),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'Candidate package: ${candidatePackage.id}',
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: status,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Delivery status'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Assigned and active delivery require observed or completed pilot execution and sites within the experiment cohort.',
+                          ),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'prepared', child: Text('prepared')),
+                          DropdownMenuItem(value: 'assigned', child: Text('assigned')),
+                          DropdownMenuItem(value: 'active', child: Text('active')),
+                          DropdownMenuItem(value: 'revoked', child: Text('revoked')),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            status = value ?? 'prepared';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: targetSitesController,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Target site IDs'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Comma-separated site IDs. Delivery stays bounded to the approved experiment cohort.',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Runtime delivery notes'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(_tHqFeatureFlags(context, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(_tHqFeatureFlags(context, 'Save delivery')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    final List<String> targetSiteIds = targetSitesController.text
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList();
+
+    await _saveRuntimeDeliveryRecord(
+      candidateModelPackageId: candidatePackage.id,
+      status: status,
+      targetSiteIds: targetSiteIds,
+      notes: notesController.text,
+    );
+  }
+
+  Future<void> _saveRuntimeDeliveryRecord({
+    required String candidateModelPackageId,
+    required String status,
+    required List<String> targetSiteIds,
+    required String notes,
+  }) async {
+    try {
+      await _workflowBridge.upsertFederatedLearningRuntimeDeliveryRecord(
+        <String, dynamic>{
+          'candidateModelPackageId': candidateModelPackageId,
+          'status': status,
+          'targetSiteIds': targetSiteIds,
+          'notes': notes.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Runtime delivery saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Runtime delivery failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _showCandidatePromotionRevocationDialog({
     required FederatedLearningCandidatePromotionRecordModel record,
     VoidCallback? refreshDialog,
@@ -3437,6 +3629,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningPilotEvidenceRecords(limit: 120),
         _workflowBridge.listFederatedLearningPilotApprovalRecords(limit: 120),
         _workflowBridge.listFederatedLearningPilotExecutionRecords(limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
@@ -3555,6 +3748,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         pilotExecutionByPackageId[record.candidateModelPackageId] = record;
       }
+      final Map<String, FederatedLearningRuntimeDeliveryRecordModel>
+          runtimeDeliveryByPackageId =
+          <String, FederatedLearningRuntimeDeliveryRecordModel>{};
+      for (final FederatedLearningRuntimeDeliveryRecordModel record
+          in (payloads[8] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_delivery_record',
+                    row,
+                  ))) {
+        runtimeDeliveryByPackageId[record.candidateModelPackageId] = record;
+      }
         final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
@@ -3571,7 +3776,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[8] as List<Map<String, dynamic>>)
+          in (payloads[9] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -3583,7 +3788,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[9] as List<Map<String, dynamic>>)
+          in (payloads[10] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -3600,6 +3805,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _pilotEvidenceRecordsByPackageId = pilotEvidenceByPackageId;
         _pilotApprovalRecordsByPackageId = pilotApprovalByPackageId;
         _pilotExecutionRecordsByPackageId = pilotExecutionByPackageId;
+        _runtimeDeliveryRecordsByPackageId = runtimeDeliveryByPackageId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -3620,6 +3826,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, FederatedLearningPilotApprovalRecordModel>{};
         _pilotExecutionRecordsByPackageId =
           <String, FederatedLearningPilotExecutionRecordModel>{};
+        _runtimeDeliveryRecordsByPackageId =
+          <String, FederatedLearningRuntimeDeliveryRecordModel>{};
         _experimentReviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =

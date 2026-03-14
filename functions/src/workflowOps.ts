@@ -2215,13 +2215,17 @@ export const listSiteFederatedLearningRuntimeDeliveryRecords = onCall(async (req
       ...(snapDoc.data() as Record<string, unknown>),
     }))
     .filter((row) => {
-      const targetSiteIds = toStringArray(row.targetSiteIds);
-      const status = asTrimmedString(row.status);
+      const targetSiteIds = toStringArray((row as Record<string, unknown>).targetSiteIds);
+      const status = asTrimmedString((row as Record<string, unknown>).status);
       return targetSiteIds.includes(targetSiteId) && ['assigned', 'active'].includes(status);
     })
     .sort((a, b) => {
-      const aUpdatedAt = typeof a.updatedAt === 'number' ? a.updatedAt : 0;
-      const bUpdatedAt = typeof b.updatedAt === 'number' ? b.updatedAt : 0;
+      const aUpdatedAt = typeof (a as Record<string, unknown>).updatedAt === 'number'
+        ? ((a as Record<string, unknown>).updatedAt as number)
+        : 0;
+      const bUpdatedAt = typeof (b as Record<string, unknown>).updatedAt === 'number'
+        ? ((b as Record<string, unknown>).updatedAt as number)
+        : 0;
       return bUpdatedAt - aUpdatedAt;
     })
     .slice(0, limitValue);

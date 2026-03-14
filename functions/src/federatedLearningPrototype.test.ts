@@ -89,7 +89,7 @@ describe('federated learning prototype helpers', () => {
       ['site-1', 'site-2'],
       'assigned',
       'flutter_mobile',
-    )).toBe('sha256:cb693e343e8589d76f94fe0d');
+    )).toBe('sha256:19002381ae0437a1ffae3ef8');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

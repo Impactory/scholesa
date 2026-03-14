@@ -32,6 +32,7 @@ Implemented prototype scope:
 - bounded pilot-evidence records for HQ sandbox-eval, metrics-snapshot, and rollback-readiness tracking per staged candidate package
 - bounded pilot-approval records for HQ sign-off on staged candidate packages once review, evidence, and eval prerequisites align
 - bounded pilot-execution records for HQ launch, observation, and completion evidence on approved staged candidate packages within the allowed-site cohort
+- bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -41,6 +42,7 @@ Not claimed by this proof:
 - model updates applied to production systems
 - pilot rollout or delivery beyond bounded review, evidence, and approval records
 - pilot rollout automation or device delivery beyond bounded execution evidence records
+- live model payload delivery or activation beyond bounded runtime-delivery manifests
 - cross-site or global model rollout
 
 ## Implementation files
@@ -97,6 +99,7 @@ Passed on 2026-03-14:
 - HQ can now record bounded pilot evidence per staged candidate package, with ready-for-pilot state gated on completed sandbox evaluation, reviewed metrics snapshot, and verified rollback plan, without claiming a real pilot rollout or production delivery path.
 - HQ can now record bounded pilot approval per staged candidate package, with approval gated on an approved experiment review record, ready-for-pilot evidence, and a non-revoked approved-for-eval promotion, without claiming a production rollout executor or live pilot delivery path.
 - HQ can now record bounded pilot execution per staged candidate package, with launch, observation, and completion states gated on approved pilot approval, allowed-site cohort membership, and positive session and learner counts where required, without claiming a live rollout controller or on-device model-delivery path.
+- HQ can now record bounded runtime-delivery manifests per staged candidate package, with assigned and active states gated on observed or completed pilot execution and target sites constrained to the experiment cohort, while site-scoped Flutter runtime code can resolve those manifests without claiming real weight delivery or model activation.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -106,4 +109,4 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - device runtime beyond the bounded uploader abstraction
 - rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path
-- actual model merge logic and downstream model-delivery path
+- actual model merge logic and live model payload-delivery / activation path
