@@ -105,6 +105,34 @@ function asTrimmedString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function buildGovernanceApprovalError(feature: string): HttpsError {
+  return new HttpsError(
+    'failed-precondition',
+    `${feature} is scaffolded but not approved for production rollout. Complete the governance artifact before enabling this path.`,
+  );
+}
+
+function buildCleverConnectionDocId(siteId: string): string {
+  return `clever_${siteId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+async function getCleverConnection(siteId: string) {
+  const docId = buildCleverConnectionDocId(siteId);
+  const docSnap = await admin.firestore().collection('integrationConnections').doc(docId).get();
+  return docSnap.exists ? { id: docSnap.id, data: docSnap.data() as Record<string, unknown> } : null;
+}
+
+function normalizeReturnUrl(value: unknown): string {
+  const raw = asTrimmedString(value);
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
 function asNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
@@ -763,6 +791,256 @@ export const updateIntegrationConnectionStatus = onCall(async (request: Callable
   }, { merge: true });
 
   return { success: true };
+});
+
+export const createCleverAuthUrl = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const returnUrl = normalizeReturnUrl(request.data?.returnUrl);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+  if (!returnUrl) {
+    throw new HttpsError('invalid-argument', 'A valid returnUrl is required.');
+  }
+
+  const clientId = asTrimmedString(process.env.CLEVER_CLIENT_ID);
+  const redirectUri = asTrimmedString(process.env.CLEVER_REDIRECT_URI);
+  if (!clientId || !redirectUri) {
+    throw buildGovernanceApprovalError('Clever connect');
+  }
+
+  const cleverBaseUrl = asTrimmedString(process.env.CLEVER_AUTH_BASE_URL) || 'https://clever.com/oauth/authorize';
+  const statePayload = Buffer.from(JSON.stringify({
+    siteId,
+    returnUrl,
+    actorUid: actor.uid,
+    provider: 'clever',
+  })).toString('base64url');
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: 'clever.connect.started',
+    collection: 'integrationConnections',
+    documentId: buildCleverConnectionDocId(siteId),
+    timestamp: Date.now(),
+    details: { siteId, returnUrl },
+  });
+
+  const url = new URL(cleverBaseUrl);
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('state', statePayload);
+
+  return {
+    provider: 'clever',
+    siteId,
+    returnUrl,
+    url: url.toString(),
+    stub: true,
+  };
+});
+
+export const listCleverSchools = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const connection = await getCleverConnection(siteId);
+  if (!connection) {
+    throw buildGovernanceApprovalError('Clever school discovery');
+  }
+
+  const schools = Array.isArray(connection.data.cleverSchools)
+    ? connection.data.cleverSchools.map((entry) => ({ ...(entry as Record<string, unknown>) }))
+    : [];
+  return {
+    connectionId: connection.id,
+    schools,
+    stub: true,
+  };
+});
+
+export const listCleverSections = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const schoolId = asTrimmedString(request.data?.schoolId);
+  if (!siteId || !schoolId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site or school.');
+  }
+
+  const connection = await getCleverConnection(siteId);
+  if (!connection) {
+    throw buildGovernanceApprovalError('Clever section discovery');
+  }
+
+  const sectionMap = connection.data.cleverSectionsBySchool;
+  const sections = sectionMap && typeof sectionMap === 'object' && !Array.isArray(sectionMap)
+    ? ((sectionMap as Record<string, unknown>)[schoolId] as Array<Record<string, unknown>> | undefined) || []
+    : [];
+  return {
+    connectionId: connection.id,
+    schoolId,
+    sections,
+    stub: true,
+  };
+});
+
+export const queueCleverRosterSync = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const schoolId = asTrimmedString(request.data?.schoolId);
+  const mode = asTrimmedString(request.data?.mode).toLowerCase() || 'preview';
+  if (!siteId || !schoolId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site or school.');
+  }
+  if (!['preview', 'apply'].includes(mode)) {
+    throw new HttpsError('invalid-argument', 'mode must be preview or apply.');
+  }
+
+  const connection = await getCleverConnection(siteId);
+  if (!connection || asTrimmedString(connection.data.status) !== 'active') {
+    throw buildGovernanceApprovalError('Clever roster sync');
+  }
+
+  const docRef = await admin.firestore().collection('syncJobs').add({
+    siteId,
+    provider: 'clever',
+    type: 'roster_import',
+    jobType: `clever_roster_${mode}`,
+    status: 'queued',
+    schoolId,
+    requestedBy: actor.uid,
+    requestedByRole: actor.role,
+    stub: true,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: 'clever.roster.sync',
+    collection: 'syncJobs',
+    documentId: docRef.id,
+    timestamp: Date.now(),
+    details: { siteId, schoolId, mode, stub: true },
+  });
+
+  return {
+    success: true,
+    id: docRef.id,
+    mode,
+    provider: 'clever',
+    stub: true,
+  };
+});
+
+export const resolveCleverIdentityLink = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const id = asTrimmedString(request.data?.id);
+  const decision = asTrimmedString(request.data?.decision).toLowerCase() || 'link';
+  const scholesaUserId = asTrimmedString(request.data?.scholesaUserId) || null;
+  if (!id) {
+    throw new HttpsError('invalid-argument', 'id is required.');
+  }
+  if (!['link', 'ignore', 'hold'].includes(decision)) {
+    throw new HttpsError('invalid-argument', 'decision must be link, ignore, or hold.');
+  }
+  if (decision === 'link' && !scholesaUserId) {
+    throw new HttpsError('invalid-argument', 'scholesaUserId is required when decision is link.');
+  }
+
+  const ref = admin.firestore().collection('externalIdentityLinks').doc(id);
+  const existing = await ref.get();
+  if (!existing.exists) {
+    throw new HttpsError('not-found', 'Identity link not found.');
+  }
+  const data = existing.data() as Record<string, unknown>;
+  const siteId = asTrimmedString(data.siteId);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+  if (asTrimmedString(data.provider).toLowerCase() !== 'clever') {
+    throw new HttpsError('failed-precondition', 'Identity link is not a Clever link.');
+  }
+
+  const nextStatus = decision === 'link' ? 'linked' : decision === 'ignore' ? 'ignored' : 'held';
+  await ref.set({
+    status: nextStatus,
+    scholesaUserId,
+    approvedBy: actor.uid,
+    approvedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: 'clever.identity.resolve',
+    collection: 'externalIdentityLinks',
+    documentId: id,
+    timestamp: Date.now(),
+    details: { siteId, decision, scholesaUserId },
+  });
+
+  return { success: true, id, status: nextStatus, stub: true };
+});
+
+export const disconnectCleverConnection = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const connection = await getCleverConnection(siteId);
+  if (!connection) {
+    throw new HttpsError('not-found', 'Clever connection not found.');
+  }
+
+  await admin.firestore().collection('integrationConnections').doc(connection.id).set({
+    status: 'revoked',
+    lastError: null,
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: 'clever.disconnect',
+    collection: 'integrationConnections',
+    documentId: connection.id,
+    timestamp: Date.now(),
+    details: { siteId },
+  });
+
+  return { success: true, id: connection.id, status: 'revoked', stub: true };
 });
 
 export const listEnterpriseSsoProviders = onCall(async (request: CallableRequest) => {

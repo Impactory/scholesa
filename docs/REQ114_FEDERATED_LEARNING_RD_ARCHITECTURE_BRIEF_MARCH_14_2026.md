@@ -9,6 +9,10 @@ REQ-114 cannot be implemented honestly from the current repo because no approved
 
 This document defines the minimum R and D brief required before any implementation work should be authorized.
 
+Companion review artifacts:
+- `docs/REQ114_FEDERATED_LEARNING_PRIVACY_REVIEW_FORM_MARCH_14_2026.md`
+- `docs/REQ114_FEDERATED_LEARNING_EXPERIMENT_SIGNOFF_CHECKLIST_MARCH_14_2026.md`
+
 ## 1) Objective
 
 Investigate whether Scholesa can support privacy-preserving on-device learning signals that improve internal models without exporting raw learner content, raw prompts, or direct identifiers.

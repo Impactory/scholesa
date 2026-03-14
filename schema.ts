@@ -220,6 +220,88 @@ export interface EnterpriseSsoProvider {
   updatedAt: number;
 }
 
+export type IntegrationProvider = 'google_classroom' | 'github' | 'lti_1p3' | 'clever' | 'classlink';
+export type IntegrationStatus = 'active' | 'pending' | 'revoked' | 'error';
+
+export interface IntegrationConnection {
+  id: string;
+  ownerUserId: string;
+  provider: IntegrationProvider;
+  status: IntegrationStatus;
+  siteId?: string;
+  scopesGranted?: string[];
+  tokenRef?: string;
+  lastError?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ExternalCourseLink {
+  id: string;
+  provider: IntegrationProvider;
+  providerCourseId: string;
+  ownerUserId: string;
+  siteId: string;
+  sessionId: string;
+  syncPolicy?: 'manual' | 'daily' | 'weekly';
+  lastRosterSyncAt?: number;
+  lastCourseworkSyncAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ExternalUserLink {
+  id: string;
+  provider: IntegrationProvider;
+  providerUserId: string;
+  scholesaUserId: string;
+  siteId: string;
+  roleHint?: 'learner' | 'educator';
+  matchSource?: 'email' | 'manual' | 'sis';
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SyncJob {
+  id: string;
+  type: string;
+  requestedBy: string;
+  status: 'queued' | 'running' | 'failed' | 'completed';
+  siteId?: string;
+  provider?: IntegrationProvider;
+  jobType?: string;
+  cursor?: string;
+  nextPageToken?: string;
+  lastError?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SyncCursor {
+  id: string;
+  ownerUserId: string;
+  provider: IntegrationProvider;
+  providerCourseId: string;
+  cursorType: 'roster' | 'coursework' | 'submissions';
+  nextPageToken?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ExternalIdentityLink {
+  id: string;
+  siteId: string;
+  provider: 'google_classroom' | 'github' | 'clever' | 'classlink';
+  providerUserId: string;
+  scholesaUserId?: string;
+  status: 'unmatched' | 'linked' | 'ignored' | 'held';
+  suggestedMatches?: Array<{ scholesaUserId: string; reason: string; confidence: 'low' | 'med' | 'high' }>;
+  approvedBy?: string;
+  approvedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface LtiPlatformRegistration {
   id: string;
   siteId: string;

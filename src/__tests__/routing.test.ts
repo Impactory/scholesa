@@ -40,4 +40,16 @@ describe('Routing contracts', () => {
       expect(workflowPaths.has(`/${route}` as (typeof WORKFLOW_ROUTE_DEFINITIONS)[number]['path'])).toBe(true);
     }
   });
+
+  it('includes the governed site Clever workflow route', () => {
+    expect(WORKFLOW_ROUTE_DEFINITIONS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: '/site/clever',
+          allowedRoles: ['site', 'hq'],
+          dataMode: 'hybrid',
+        }),
+      ]),
+    );
+  });
 });

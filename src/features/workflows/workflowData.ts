@@ -624,6 +624,13 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
           deleteActionLabel = 'Remove link';
         }
         break;
+      case '/site/clever':
+        if (record.collectionName === 'integrationConnections') {
+          primaryActionLabel = record.status === 'active' || record.status === 'pending'
+            ? 'Disconnect Clever'
+            : 'Reconnect Clever';
+        }
+        break;
       case '/site/ops':
         primaryActionLabel = record.status === 'resolved' ? 'Reopen event' : 'Resolve event';
         break;
@@ -1094,6 +1101,101 @@ async function loadCallableRows(params: {
       });
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
+}
+
+async function loadCleverSchoolOptions(siteId: string | null): Promise<WorkflowFieldOption[]> {
+  if (!siteId) return [];
+
+  const callable = httpsCallable(functions, 'listCleverSchools');
+  const response = await callable({ siteId });
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const schools = Array.isArray(payload.schools) ? payload.schools : [];
+
+  return schools
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      if (!id) return null;
+      const label = asString(entry.name, '')
+        || asString(entry.schoolName, '')
+        || asString(entry.displayName, '')
+        || id;
+      return { value: id, label };
+    })
+    .filter((entry): entry is WorkflowFieldOption => Boolean(entry));
+}
+
+async function loadCleverWorkflowRecords(ctx: WorkflowContext, siteId: string | null): Promise<WorkflowRecord[]> {
+  if (!siteId) return [];
+
+  const healthCallable = httpsCallable(functions, 'getIntegrationsHealth');
+  const [healthResponse, identityRecords] = await Promise.all([
+    healthCallable({ siteId, scope: 'site' }),
+    loadCallableRows({
+      routePath: ctx.routePath,
+      callableName: 'listExternalIdentityLinks',
+      args: { siteId },
+      rowArrayField: 'links',
+      collectionName: 'externalIdentityLinks',
+      titleKeys: ['providerUserId', 'uid'],
+      subtitleKeys: ['status', 'siteId'],
+      statusKeys: ['status'],
+      editable: false,
+      deletable: false,
+    }).catch(() => []),
+  ]);
+
+  const payload = (healthResponse.data || {}) as Record<string, unknown>;
+  const connections = Array.isArray(payload.connections) ? payload.connections : [];
+  const syncJobs = Array.isArray(payload.syncJobs) ? payload.syncJobs : [];
+
+  const connectionRecords = connections
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .filter((entry) => asString(entry.provider, '').toLowerCase() === 'clever')
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      if (!id) return null;
+      return buildRecord({
+        routePath: ctx.routePath,
+        collectionName: 'integrationConnections',
+        id,
+        raw: entry,
+        titleKeys: ['name', 'provider', 'id'],
+        subtitleKeys: ['status', 'siteName', 'lastError'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: false,
+      });
+    })
+    .filter((entry): entry is WorkflowRecord => Boolean(entry));
+
+  const syncJobRecords = syncJobs
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .filter((entry) => asString(entry.provider, '').toLowerCase() === 'clever')
+    .map((entry) => {
+      const id = asString(entry.id, '');
+      if (!id) return null;
+      return buildRecord({
+        routePath: ctx.routePath,
+        collectionName: 'syncJobs',
+        id,
+        raw: entry,
+        titleKeys: ['jobType', 'provider', 'id'],
+        subtitleKeys: ['schoolId', 'siteName', 'siteId'],
+        statusKeys: ['status'],
+        editable: false,
+        deletable: false,
+      });
+    })
+    .filter((entry): entry is WorkflowRecord => Boolean(entry));
+
+  const cleverIdentityRecords = identityRecords.filter((record) => record.metadata.provider?.toLowerCase() === 'clever');
+
+  return sortWorkflowRecords([
+    ...connectionRecords,
+    ...syncJobRecords,
+    ...cleverIdentityRecords,
+  ]);
 }
 
 export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
@@ -1990,6 +2092,44 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createLabel: 'Create',
         createConfig: null,
       };
+    case '/site/clever': {
+      const cleverRecords = await loadCleverWorkflowRecords(ctx, siteId);
+      const connectionRecord = cleverRecords.find((record) => record.collectionName === 'integrationConnections');
+      const schoolOptions = connectionRecord && connectionRecord.status === 'active'
+        ? await loadCleverSchoolOptions(siteId).catch(() => [])
+        : [];
+      const canQueueSync = connectionRecord?.status === 'active' && schoolOptions.length > 0;
+
+      return {
+        records: applyRouteActionLabels(cleverRecords, ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: canQueueSync ? 'Queue Clever sync' : 'Connect Clever',
+        createConfig: canQueueSync
+          ? buildCreateConfig('Queue Clever roster sync', 'Queue sync', [
+              {
+                name: 'schoolId',
+                label: 'School',
+                type: 'select',
+                required: true,
+                defaultValue: schoolOptions[0]?.value || '',
+                options: schoolOptions,
+              },
+              {
+                name: 'mode',
+                label: 'Mode',
+                type: 'select',
+                required: true,
+                defaultValue: 'preview',
+                options: [
+                  { value: 'preview', label: 'Preview sync' },
+                  { value: 'apply', label: 'Apply sync' },
+                ],
+              },
+            ])
+          : buildCreateConfig('Connect Clever', 'Start Clever connect', []),
+      };
+    }
     case '/site/integrations-health':
       return {
         records: await loadCallableRows({
@@ -3182,6 +3322,34 @@ export async function createWorkflowRecord(
       });
       return;
     }
+    case '/site/clever': {
+      if (!siteId) {
+        throw new Error('Active site context is required for Clever workflows.');
+      }
+
+      const schoolId = optionalStringValue(input, 'schoolId');
+      if (schoolId) {
+        const callable = httpsCallable(functions, 'queueCleverRosterSync');
+        await callable({
+          siteId,
+          schoolId,
+          mode: optionalStringValue(input, 'mode') || 'preview',
+        });
+        return;
+      }
+
+      const callable = httpsCallable(functions, 'createCleverAuthUrl');
+      const response = await callable({
+        siteId,
+        returnUrl: typeof window !== 'undefined' ? window.location.href : `/${ctx.locale}/site/clever`,
+      });
+      const payload = (response.data || {}) as Record<string, unknown>;
+      const url = asString(payload.url, '');
+      if (url && typeof window !== 'undefined') {
+        window.location.assign(url);
+      }
+      return;
+    }
     case '/site/integrations-health':
     case '/hq/integrations-health': {
       const callable = httpsCallable(functions, 'triggerIntegrationSyncJob');
@@ -3423,6 +3591,32 @@ export async function updateWorkflowRecord(
       id: target.id,
       enabled: asString(data.status, '') !== 'enabled',
     });
+    return;
+  }
+
+  if (ctx.routePath === '/site/clever' && target.collectionName === 'integrationConnections') {
+    const siteId = activeSiteId(ctx.profile);
+    if (!siteId) {
+      throw new Error('Active site context is required for Clever workflows.');
+    }
+
+    const status = asString(data.status, '').toLowerCase();
+    if (status === 'active' || status === 'pending') {
+      const callable = httpsCallable(functions, 'disconnectCleverConnection');
+      await callable({ siteId });
+      return;
+    }
+
+    const callable = httpsCallable(functions, 'createCleverAuthUrl');
+    const response = await callable({
+      siteId,
+      returnUrl: typeof window !== 'undefined' ? window.location.href : `/${ctx.locale}/site/clever`,
+    });
+    const payload = (response.data || {}) as Record<string, unknown>;
+    const url = asString(payload.url, '');
+    if (url && typeof window !== 'undefined') {
+      window.location.assign(url);
+    }
     return;
   }
 

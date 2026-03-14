@@ -821,6 +821,18 @@ export async function loadE2EWorkflowRecords(ctx: WorkflowContext): Promise<Work
         })),
     };
   }
+  case '/site/clever':
+    return {
+      ...emptyResult(),
+      canCreate: true,
+      createLabel: 'Connect Clever',
+      createConfig: {
+        title: 'Connect Clever',
+        submitLabel: 'Start Clever connect',
+        fields: [],
+      },
+      records: [],
+    };
   case '/partner/listings':
     return {
       ...emptyResult(),
@@ -935,6 +947,8 @@ export async function createE2EWorkflowRecord(ctx: WorkflowContext, input: Workf
     });
     break;
   }
+  case '/site/clever':
+    break;
   case '/partner/listings':
     state.marketplaceListings.push({
       id: nextId('listing'),

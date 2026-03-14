@@ -35,6 +35,7 @@ export const ALL_WORKFLOW_PATHS = [
   '/site/ops',
   '/site/incidents',
   '/site/identity',
+  '/site/clever',
   '/site/integrations-health',
   '/site/billing',
   '/partner/listings',
@@ -254,6 +255,14 @@ export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
     allowedRoles: ['site', 'hq'],
     navGroup: 'site',
     dataMode: 'callable',
+  },
+  {
+    path: '/site/clever',
+    title: 'Site Clever Sync',
+    description: 'Governed Clever connection and roster-sync staging.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'hybrid',
   },
   {
     path: '/site/integrations-health',

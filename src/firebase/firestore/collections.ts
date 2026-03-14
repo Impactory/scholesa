@@ -22,6 +22,12 @@ import type {
   Announcement,
   PortfolioItem,
   EnterpriseSsoProvider,
+  IntegrationConnection,
+  ExternalCourseLink,
+  ExternalUserLink,
+  SyncJob,
+  SyncCursor,
+  ExternalIdentityLink,
   LtiPlatformRegistration,
   LtiResourceLink,
   LtiGradePassbackJob,
@@ -62,6 +68,12 @@ export const alertsCollection = createCollection<Alert>('alerts');
 export const announcementsCollection = createCollection<Announcement>('announcements');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');
 export const enterpriseSsoProvidersCollection = createCollection<EnterpriseSsoProvider>('enterpriseSsoProviders');
+export const integrationConnectionsCollection = createCollection<IntegrationConnection>('integrationConnections');
+export const externalCourseLinksCollection = createCollection<ExternalCourseLink>('externalCourseLinks');
+export const externalUserLinksCollection = createCollection<ExternalUserLink>('externalUserLinks');
+export const syncJobsCollection = createCollection<SyncJob>('syncJobs');
+export const syncCursorsCollection = createCollection<SyncCursor>('syncCursors');
+export const externalIdentityLinksCollection = createCollection<ExternalIdentityLink>('externalIdentityLinks');
 export const ltiPlatformRegistrationsCollection = createCollection<LtiPlatformRegistration>('ltiPlatformRegistrations');
 export const ltiResourceLinksCollection = createCollection<LtiResourceLink>('ltiResourceLinks');
 export const ltiGradePassbackJobsCollection = createCollection<LtiGradePassbackJob>('ltiGradePassbackJobs');
