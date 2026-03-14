@@ -18,6 +18,8 @@ import {
 } from './districtProviderIntegration';
 import {
   buildFederatedLearningAggregationRunDocId,
+  buildFederatedLearningMergeArtifactDocId,
+  buildFederatedLearningMergeArtifactSummary,
   buildFederatedLearningExperimentDocId,
   buildFederatedLearningFeatureFlagId,
   buildFederatedLearningFeatureFlagPayload,
@@ -1610,7 +1612,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   experiment: Record<string, unknown>;
   actorId: string;
   triggerSummaryId: string;
-}): Promise<{ runId: string; created: boolean } | null> {
+}): Promise<{ runId: string; artifactId: string; created: boolean } | null> {
   const aggregateThreshold = asPositiveInteger(experiment.aggregateThreshold, 25);
   const pendingSnap = await admin.firestore()
     .collection('federatedLearningUpdateSummaries')
@@ -1629,12 +1631,15 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   }
 
   const runId = buildFederatedLearningAggregationRunDocId(experimentId, selection.summaryIds);
+  const artifactId = buildFederatedLearningMergeArtifactDocId(runId);
   const runRef = admin.firestore().collection('federatedLearningAggregationRuns').doc(runId);
+  const artifactRef = admin.firestore().collection('federatedLearningMergeArtifacts').doc(artifactId);
   let created = false;
 
   await admin.firestore().runTransaction(async (transaction) => {
     const existingRun = await transaction.get(runRef);
-    if (existingRun.exists) {
+    const existingArtifact = await transaction.get(artifactRef);
+    if (existingRun.exists || existingArtifact.exists) {
       return;
     }
 
@@ -1661,6 +1666,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     if (!refreshedSelection || refreshedSelection.summaryIds.join('|') !== selection.summaryIds.join('|')) {
       return;
     }
+    const artifactSummary = buildFederatedLearningMergeArtifactSummary(refreshedSelection);
 
     transaction.set(runRef, {
       experimentId,
@@ -1682,6 +1688,25 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
+    transaction.set(artifactRef, {
+      experimentId,
+      aggregationRunId: runId,
+      status: 'generated',
+      mergeStrategy: 'prototype_weighted_metadata_digest',
+      boundedDigest: artifactSummary.boundedDigest,
+      sampleCount: artifactSummary.sampleCount,
+      summaryCount: artifactSummary.summaryCount,
+      distinctSiteCount: artifactSummary.distinctSiteCount,
+      schemaVersions: artifactSummary.schemaVersions,
+      runtimeTargets: artifactSummary.runtimeTargets,
+      maxVectorLength: artifactSummary.maxVectorLength,
+      totalPayloadBytes: artifactSummary.totalPayloadBytes,
+      averageUpdateNorm: artifactSummary.averageUpdateNorm,
+      createdBy: actorId,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     for (const row of refreshedRows) {
       transaction.set(row.ref, {
         aggregationStatus: 'materialized',
@@ -1693,6 +1718,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
 
     transaction.set(experimentRef, {
       latestAggregationRunId: runId,
+      latestMergeArtifactId: artifactId,
       lastAggregatedAt: FieldValue.serverTimestamp(),
       lastAggregationSampleCount: refreshedSelection.totalSampleCount,
       lastAggregationSummaryCount: refreshedSelection.summaryCount,
@@ -1702,7 +1728,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     created = true;
   });
 
-  return { runId, created };
+  return { runId, artifactId, created };
 }
 
 export const listFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
@@ -1830,6 +1856,33 @@ export const listFederatedLearningAggregationRuns = onCall(async (request: Calla
     ...(snapDoc.data() as Record<string, unknown>),
   }));
   return { runs };
+});
+
+export const listFederatedLearningMergeArtifacts = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningMergeArtifacts')
+    .orderBy('createdAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+
+  const snap = await query.get();
+  const artifacts = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { artifacts };
 });
 
 export const upsertFederatedLearningExperiment = onCall(async (request: CallableRequest) => {
@@ -1991,6 +2044,18 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
         triggerSummaryId: docRef.id,
       },
     });
+
+    await admin.firestore().collection('auditLogs').add({
+      userId: actor.uid,
+      action: federatedLearningAuditAction('merge_artifact.generated'),
+      collection: 'federatedLearningMergeArtifacts',
+      documentId: aggregationRun.artifactId,
+      timestamp: Date.now(),
+      details: {
+        experimentId,
+        aggregationRunId: aggregationRun.runId,
+      },
+    });
   }
 
   return {
@@ -1999,6 +2064,7 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
     experimentId,
     siteId: summary.siteId,
     aggregationRunId: aggregationRun?.runId || null,
+    mergeArtifactId: aggregationRun?.artifactId || null,
     aggregationMaterialized: aggregationRun?.created === true,
   };
 });
