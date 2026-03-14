@@ -18,6 +18,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? experiments,
     List<Map<String, dynamic>>? siteExperiments,
     List<Map<String, dynamic>>? aggregationRuns,
+    List<Map<String, dynamic>>? mergeArtifacts,
   })  : _flags =
             List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
         _experiments = List<Map<String, dynamic>>.from(
@@ -28,12 +29,16 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _aggregationRuns = List<Map<String, dynamic>>.from(
           aggregationRuns ?? <Map<String, dynamic>>[],
         ),
+        _mergeArtifacts = List<Map<String, dynamic>>.from(
+          mergeArtifacts ?? <Map<String, dynamic>>[],
+        ),
         super(functions: null);
 
   final List<Map<String, dynamic>> _flags;
   final List<Map<String, dynamic>> _experiments;
   final List<Map<String, dynamic>> _siteExperiments;
   final List<Map<String, dynamic>> _aggregationRuns;
+  final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
 
   @override
@@ -121,6 +126,23 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningMergeArtifacts({
+    String? experimentId,
+    int limit = 60,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped =
+        (experimentId == null || experimentId.isEmpty)
+            ? _mergeArtifacts
+            : _mergeArtifacts.where(
+                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+              );
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -143,6 +165,10 @@ Map<String, dynamic> _aggregationRunRow({
     'status': 'materialized',
     'threshold': 20,
     'thresholdMet': true,
+    'mergeArtifactId': 'fl_merge_1',
+    'mergeArtifactStatus': 'generated',
+    'mergeStrategy': 'prototype_weighted_metadata_digest',
+    'boundedDigest': 'sha256:digest-1',
     'triggerSummaryId': 'update-2',
     'summaryIds': <String>['update-1', 'update-2'],
     'summaryCount': summaryCount,
@@ -153,6 +179,29 @@ Map<String, dynamic> _aggregationRunRow({
     'averageUpdateNorm': 1.35,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
+  };
+}
+
+Map<String, dynamic> _mergeArtifactRow({
+  String id = 'fl_merge_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String aggregationRunId = 'fl_agg_1',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'aggregationRunId': aggregationRunId,
+    'status': 'generated',
+    'mergeStrategy': 'prototype_weighted_metadata_digest',
+    'boundedDigest': 'sha256:digest-1',
+    'sampleCount': 24,
+    'summaryCount': 2,
+    'distinctSiteCount': 2,
+    'schemaVersions': <String>['v1'],
+    'runtimeTargets': <String>['flutter_mobile'],
+    'maxVectorLength': 128,
+    'totalPayloadBytes': 1792,
+    'averageUpdateNorm': 1.35,
   };
 }
 
@@ -244,6 +293,10 @@ void main() {
       'status': 'materialized',
       'threshold': 20,
       'thresholdMet': true,
+      'mergeArtifactId': 'fl_merge_1',
+      'mergeArtifactStatus': 'generated',
+      'mergeStrategy': 'prototype_weighted_metadata_digest',
+      'boundedDigest': 'sha256:digest-1',
       'triggerSummaryId': 'update-1',
       'summaryIds': <String>['update-1'],
       'summaryCount': 1,
@@ -256,14 +309,40 @@ void main() {
       'runtimeTargets': <String>['flutter_mobile'],
       'createdAt': DateTime.now(),
     });
+    await firestore
+      .collection('federatedLearningMergeArtifacts')
+      .doc('fl_merge_1')
+      .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'aggregationRunId': 'fl_agg_1',
+      'status': 'generated',
+      'mergeStrategy': 'prototype_weighted_metadata_digest',
+      'boundedDigest': 'sha256:digest-1',
+      'sampleCount': 14,
+      'summaryCount': 1,
+      'distinctSiteCount': 1,
+      'schemaVersions': <String>['v1'],
+      'runtimeTargets': <String>['flutter_mobile'],
+      'maxVectorLength': 128,
+      'totalPayloadBytes': 1024,
+      'averageUpdateNorm': 2.4,
+      'createdAt': DateTime.now(),
+    });
 
     final FederatedLearningAggregationRunRepository aggregationRepository =
       FederatedLearningAggregationRunRepository(firestore: firestore);
+    final FederatedLearningMergeArtifactRepository artifactRepository =
+      FederatedLearningMergeArtifactRepository(firestore: firestore);
     final List<FederatedLearningAggregationRunModel> aggregationRuns =
       await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
+    final List<FederatedLearningMergeArtifactModel> mergeArtifacts =
+      await artifactRepository.listByExperiment('fl_exp_literacy_pilot');
 
     expect(aggregationRuns, hasLength(1));
     expect(aggregationRuns.single.totalSampleCount, 14);
+    expect(aggregationRuns.single.mergeArtifactStatus, 'generated');
+    expect(mergeArtifacts, hasLength(1));
+    expect(mergeArtifacts.single.aggregationRunId, 'fl_agg_1');
 
     await firestore
         .collection('federatedLearningUpdateSummaries')
@@ -390,7 +469,16 @@ void main() {
         },
       ],
       experiments: <Map<String, dynamic>>[_experimentRow()],
-      aggregationRuns: <Map<String, dynamic>>[_aggregationRunRow()],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+        _aggregationRunRow(
+          id: 'fl_agg_2',
+          totalSampleCount: 20,
+          summaryCount: 2,
+          distinctSiteCount: 1,
+        ),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[_mergeArtifactRow()],
     );
 
     await tester.pumpWidget(
@@ -405,6 +493,11 @@ void main() {
         'Latest aggregation: 24 samples from 2 summaries across 2 sites.',
       ),
       findsOneWidget,
+    );
+    expect(find.text('Recent aggregation runs'), findsOneWidget);
+    expect(
+      find.text('Artifact generated: fl_merge_1'),
+      findsWidgets,
     );
 
     await tester.tap(find.text('Create experiment'));
