@@ -3918,6 +3918,71 @@ class FederatedLearningRuntimeActivationRecordModel {
 }
 
 @immutable
+class FederatedLearningRuntimeRolloutAlertRecordModel {
+  const FederatedLearningRuntimeRolloutAlertRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.deliveryRecordId,
+    required this.status,
+    required this.fallbackCount,
+    required this.pendingCount,
+    this.notes,
+    this.acknowledgedBy,
+    this.acknowledgedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String deliveryRecordId;
+  final String status;
+  final int fallbackCount;
+  final int pendingCount;
+  final String? notes;
+  final String? acknowledgedBy;
+  final Timestamp? acknowledgedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningRuntimeRolloutAlertRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeRolloutAlertRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      status: data['status'] as String? ?? 'active',
+      fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
+      pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
+      notes: data['notes'] as String?,
+      acknowledgedBy: data['acknowledgedBy'] as String?,
+      acknowledgedAt: _timestampOrNull(data['acknowledgedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'deliveryRecordId': deliveryRecordId,
+        'status': status,
+        'fallbackCount': fallbackCount,
+        'pendingCount': pendingCount,
+        'notes': notes,
+        'acknowledgedBy': acknowledgedBy,
+        'acknowledgedAt': acknowledgedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class FederatedLearningResolvedRuntimePackageModel {
   const FederatedLearningResolvedRuntimePackageModel({
     required this.packageId,

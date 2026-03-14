@@ -2439,6 +2439,45 @@ export const listFederatedLearningRuntimeActivationRecords = onCall(async (reque
   return { records };
 });
 
+export const listFederatedLearningRuntimeRolloutAlertRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  const status = normalizeFederatedLearningRuntimeRolloutAlertStatus(request.data?.status);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningRuntimeRolloutAlertRecords')
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+  if (candidateModelPackageId) {
+    query = query.where('candidateModelPackageId', '==', candidateModelPackageId);
+  }
+  if (deliveryRecordId) {
+    query = query.where('deliveryRecordId', '==', deliveryRecordId);
+  }
+  if (status) {
+    query = query.where('status', '==', status);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
 export const listSiteFederatedLearningRuntimeActivationRecords = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (!['site', 'hq'].includes(actor.role)) {
@@ -3132,6 +3171,105 @@ export const upsertFederatedLearningRuntimeActivationRecord = onCall(async (requ
     id: activationId,
     deliveryRecordId,
     status,
+  };
+});
+
+export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  if (!deliveryRecordId) {
+    throw new HttpsError('invalid-argument', 'deliveryRecordId is required.');
+  }
+
+  const status = normalizeFederatedLearningRuntimeRolloutAlertStatus(request.data?.status);
+  if (!status) {
+    throw new HttpsError('invalid-argument', 'status must be active or acknowledged.');
+  }
+
+  const notes = asTrimmedString(request.data?.notes).slice(0, 500);
+  const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryRecordId);
+  const deliverySnap = await deliveryRef.get();
+  if (!deliverySnap.exists) {
+    throw new HttpsError('not-found', 'Runtime delivery record not found.');
+  }
+
+  const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
+  const experimentId = asTrimmedString(deliveryData.experimentId);
+  const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
+  const targetSiteIds = toStringArray(deliveryData.targetSiteIds);
+  const alertId = buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryRecordId);
+  const alertRef = admin.firestore().collection('federatedLearningRuntimeRolloutAlertRecords').doc(alertId);
+
+  const activationSnap = await admin.firestore()
+    .collection('federatedLearningRuntimeActivationRecords')
+    .where('deliveryRecordId', '==', deliveryRecordId)
+    .limit(Math.max(50, targetSiteIds.length || 0) + 50)
+    .get();
+
+  const activationStatusBySite = new Map<string, string>();
+  activationSnap.docs.forEach((snapDoc) => {
+    const row = (snapDoc.data() || {}) as Record<string, unknown>;
+    const siteId = asTrimmedString(row.siteId);
+    const activationStatus = normalizeFederatedLearningRuntimeActivationStatus(row.status);
+    if (siteId && activationStatus) {
+      activationStatusBySite.set(siteId, activationStatus);
+    }
+  });
+
+  let fallbackCount = 0;
+  let pendingCount = 0;
+  targetSiteIds.forEach((siteId) => {
+    const activationStatus = activationStatusBySite.get(siteId);
+    if (activationStatus === 'fallback') {
+      fallbackCount += 1;
+      return;
+    }
+    if (!activationStatus) {
+      pendingCount += 1;
+    }
+  });
+
+  await alertRef.set({
+    experimentId,
+    candidateModelPackageId,
+    deliveryRecordId,
+    status,
+    fallbackCount,
+    pendingCount,
+    notes,
+    acknowledgedBy: status === 'acknowledged' ? actor.uid : FieldValue.delete(),
+    acknowledgedAt: status === 'acknowledged' ? FieldValue.serverTimestamp() : FieldValue.delete(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('runtime_rollout_alert_record.upsert'),
+    collection: 'federatedLearningRuntimeRolloutAlertRecords',
+    documentId: alertId,
+    timestamp: Date.now(),
+    details: {
+      deliveryRecordId,
+      experimentId,
+      candidateModelPackageId,
+      status,
+      fallbackCount,
+      pendingCount,
+    },
+  });
+
+  return {
+    success: true,
+    id: alertId,
+    deliveryRecordId,
+    status,
+    fallbackCount,
+    pendingCount,
   };
 });
 

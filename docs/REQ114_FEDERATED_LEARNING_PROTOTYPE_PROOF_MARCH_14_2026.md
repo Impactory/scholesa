@@ -41,6 +41,7 @@ Implemented prototype scope:
 - HQ runtime-activation history visibility for the latest package, including status counts and per-site activation or fallback evidence drill-in
 - HQ rollout-alert highlighting on experiment cards when fallback or pending site statuses exist for the latest runtime delivery
 - HQ alert-first ordering of experiment cards so fallback and pending rollout issues surface ahead of healthy prototype experiments
+- HQ persisted rollout-alert triage records so fallback and pending delivery issues can be acknowledged with notes instead of remaining permanently raw operator alerts
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -119,6 +120,7 @@ Passed on 2026-03-14:
 - The HQ feature-flags surface now also exposes the underlying runtime-activation history for the latest package so operators can audit the actual site reports behind the rollout-health summary without leaving the bounded prototype workflow.
 - The HQ feature-flags surface now also raises a bounded rollout alert directly on the experiment card whenever the latest delivery has fallback or pending site states, so operators can spot drift without opening the rollout dialogs first.
 - The HQ feature-flags surface now also prioritizes those alerted experiments above healthy ones, so fallback and pending rollout issues rise to the top of the bounded operator queue.
+- HQ can now persist rollout-alert triage records per runtime delivery, including fallback and pending counts, acknowledgement status, acknowledgement metadata, and operator notes, so reviewed rollout issues stop surfacing as permanently raw alerts while remaining bounded to the prototype operator workflow.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

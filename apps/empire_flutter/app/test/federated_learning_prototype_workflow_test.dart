@@ -29,6 +29,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? pilotExecutionRecords,
     List<Map<String, dynamic>>? runtimeDeliveryRecords,
     List<Map<String, dynamic>>? runtimeActivationRecords,
+    List<Map<String, dynamic>>? runtimeRolloutAlertRecords,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -65,6 +66,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _runtimeActivationRecords = List<Map<String, dynamic>>.from(
           runtimeActivationRecords ?? <Map<String, dynamic>>[],
         ),
+        _runtimeRolloutAlertRecords = List<Map<String, dynamic>>.from(
+          runtimeRolloutAlertRecords ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -85,6 +89,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _pilotExecutionRecords;
   final List<Map<String, dynamic>> _runtimeDeliveryRecords;
   final List<Map<String, dynamic>> _runtimeActivationRecords;
+  final List<Map<String, dynamic>> _runtimeRolloutAlertRecords;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
@@ -99,6 +104,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final List<Map<String, dynamic>> recordedRuntimeDeliverySaves =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedRuntimeActivationSaves =
+      <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> recordedRuntimeRolloutAlertSaves =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
@@ -456,6 +463,42 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (siteId != null && siteId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) => row['siteId'] == siteId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAlertRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? status,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _runtimeRolloutAlertRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (status != null && status.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['status'] == status,
       );
     }
     return scoped
@@ -901,6 +944,62 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<String?> upsertFederatedLearningRuntimeRolloutAlertRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String deliveryRecordId =
+        (data['deliveryRecordId'] as String? ?? '').trim();
+    final Map<String, dynamic> deliveryRow = _runtimeDeliveryRecords.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+      orElse: () => <String, dynamic>{},
+    );
+    final List<dynamic> targetSiteIds =
+        deliveryRow['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+    int fallbackCount = 0;
+    int pendingCount = 0;
+    for (final dynamic siteEntry in targetSiteIds) {
+      final String siteId = '$siteEntry';
+      final Map<String, dynamic> activationRow = _runtimeActivationRecords.firstWhere(
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRecordId && row['siteId'] == siteId,
+        orElse: () => <String, dynamic>{},
+      );
+      final String activationStatus =
+          (activationRow['status'] as String? ?? '').trim();
+      if (activationStatus == 'fallback') {
+        fallbackCount += 1;
+      } else if (activationStatus.isEmpty) {
+        pendingCount += 1;
+      }
+    }
+
+    final String alertId =
+        'fl_rollout_alert_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
+    final String status = (data['status'] as String? ?? 'active').trim();
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': alertId,
+      'experimentId': deliveryRow['experimentId'] ?? '',
+      'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
+      'deliveryRecordId': deliveryRecordId,
+      'status': status,
+      'fallbackCount': fallbackCount,
+      'pendingCount': pendingCount,
+      'notes': (data['notes'] as String? ?? '').trim(),
+      'acknowledgedBy': status == 'acknowledged' ? 'hq-1' : null,
+      'acknowledgedAt':
+          status == 'acknowledged' ? DateTime(2026, 3, 14, 21) : null,
+      'createdAt': DateTime(2026, 3, 14, 21),
+      'updatedAt': DateTime(2026, 3, 14, 21),
+    };
+    _runtimeRolloutAlertRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == alertId,
+    );
+    _runtimeRolloutAlertRecords.insert(0, record);
+    recordedRuntimeRolloutAlertSaves.add(<String, dynamic>{...record});
+    return alertId;
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -1127,6 +1226,36 @@ Map<String, dynamic> _runtimeActivationRecordRow({
     'reportedAt': DateTime(2026, 3, 14, 20),
     'createdAt': DateTime(2026, 3, 14, 20),
     'updatedAt': DateTime(2026, 3, 14, 20),
+  };
+}
+
+Map<String, dynamic> _runtimeRolloutAlertRecordRow({
+  String id = 'fl_rollout_alert_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String deliveryRecordId = 'fl_delivery_1',
+  String status = 'active',
+  int fallbackCount = 1,
+  int pendingCount = 0,
+  String notes = '',
+  String? acknowledgedBy,
+  DateTime? acknowledgedAt,
+  DateTime? createdAt,
+  DateTime? updatedAt,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'deliveryRecordId': deliveryRecordId,
+    'status': status,
+    'fallbackCount': fallbackCount,
+    'pendingCount': pendingCount,
+    'notes': notes,
+    'acknowledgedBy': acknowledgedBy,
+    'acknowledgedAt': acknowledgedAt,
+    'createdAt': createdAt ?? DateTime(2026, 3, 14, 21),
+    'updatedAt': updatedAt ?? DateTime(2026, 3, 14, 21),
   };
 }
 
@@ -2679,6 +2808,201 @@ void main() {
     );
     expect(find.text('site-2 · fallback'), findsOneWidget);
     expect(find.text('Latest site report requested fallback.'), findsOneWidget);
+  });
+
+  testWidgets('HQ page shows acknowledged rollout alert triage',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(
+          id: 'fl_rollout_alert_1',
+          deliveryRecordId: 'fl_delivery_1',
+          status: 'acknowledged',
+          notes: 'Reviewed with site ops and monitoring in place.',
+          acknowledgedBy: 'hq-1',
+          acknowledgedAt: DateTime(2026, 3, 14, 21),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Rollout alert acknowledged: 1 fallback site statuses reviewed. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('HQ notes: Reviewed with site ops and monitoring in place.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Update triage'), findsOneWidget);
+  });
+
+  testWidgets('HQ page re-raises rollout alerts when acknowledged counts drift',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(
+          id: 'fl_rollout_alert_1',
+          deliveryRecordId: 'fl_delivery_1',
+          status: 'acknowledged',
+          fallbackCount: 0,
+          pendingCount: 1,
+          notes: 'Previously reviewed pending site.',
+          acknowledgedBy: 'hq-1',
+          acknowledgedAt: DateTime(2026, 3, 14, 21),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsOneWidget);
+    expect(
+      find.text('HQ notes: Previously reviewed pending site.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('HQ page saves rollout alert triage acknowledgements',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder acknowledgeAlertButton = find.widgetWithText(
+      TextButton,
+      'Acknowledge alert',
+    );
+    await tester.ensureVisible(acknowledgeAlertButton.first);
+    final TextButton acknowledgeAlertControl = tester.widget<TextButton>(
+      acknowledgeAlertButton.first,
+    );
+    acknowledgeAlertControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'HQ notes'),
+      'Fallback reviewed with site ops.',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedRuntimeRolloutAlertSaves, isNotEmpty);
+    expect(
+      bridge.recordedRuntimeRolloutAlertSaves.last['deliveryRecordId'],
+      'fl_delivery_1',
+    );
+    expect(
+      bridge.recordedRuntimeRolloutAlertSaves.last['status'],
+      'acknowledged',
+    );
+    expect(
+      bridge.recordedRuntimeRolloutAlertSaves.last['fallbackCount'],
+      1,
+    );
+    expect(
+      find.text(
+        'Rollout alert acknowledged: 1 fallback site statuses reviewed. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('HQ page orders rollout alerts ahead of healthy experiments',

@@ -370,6 +370,29 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAlertRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? status,
+    int limit = 60,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningRuntimeRolloutAlertRecords',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((candidateModelPackageId ?? '').trim().isNotEmpty)
+          'candidateModelPackageId': candidateModelPackageId!.trim(),
+        if ((deliveryRecordId ?? '').trim().isNotEmpty)
+          'deliveryRecordId': deliveryRecordId!.trim(),
+        if ((status ?? '').trim().isNotEmpty) 'status': status!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
   Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
     String? siteId,
     int limit = 40,
@@ -464,6 +487,16 @@ class WorkflowBridgeService {
   ) async {
     final Map<String, dynamic> payload = await _call(
       'upsertFederatedLearningRuntimeActivationRecord',
+      data,
+    );
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<String?> upsertFederatedLearningRuntimeRolloutAlertRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload = await _call(
+      'upsertFederatedLearningRuntimeRolloutAlertRecord',
       data,
     );
     return _asTrimmedString(payload['id']);
