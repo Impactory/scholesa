@@ -304,7 +304,7 @@ class EducatorService extends ChangeNotifier {
                 ) ??
                 emailValue ??
                 learnerIdValue ??
-                'Learner ${rowIndex}';
+                'Learner $rowIndex';
 
         String? resolvedLearnerId = learnerIdValue?.trim();
         if ((resolvedLearnerId == null || resolvedLearnerId.isEmpty) &&
