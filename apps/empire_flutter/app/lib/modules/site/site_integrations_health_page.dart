@@ -695,7 +695,11 @@ class _SiteIntegrationsHealthPageState
         final List<Map<String, dynamic>> providerJobs = syncRows
             .where((Map<String, dynamic> row) =>
                 _typeMatchesProvider(
-                    ((row['type'] as String?) ?? '').toLowerCase(), providerKey))
+              ((row['provider'] as String?) ??
+                  (row['type'] as String?) ??
+                  '')
+                .toLowerCase(),
+              providerKey))
             .toList();
 
         DateTime? lastSync;

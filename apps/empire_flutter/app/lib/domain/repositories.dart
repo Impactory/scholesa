@@ -914,8 +914,13 @@ class RubricApplicationRepository {
 }
 
 class IntegrationConnectionRepository {
+  IntegrationConnectionRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('integrationConnections');
+      _firestore.collection('integrationConnections');
 
   Future<void> upsert(IntegrationConnectionModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
@@ -932,8 +937,13 @@ class IntegrationConnectionRepository {
 }
 
 class ExternalCourseLinkRepository {
+  ExternalCourseLinkRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('externalCourseLinks');
+      _firestore.collection('externalCourseLinks');
 
   Future<void> upsert(ExternalCourseLinkModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
@@ -950,8 +960,13 @@ class ExternalCourseLinkRepository {
 }
 
 class ExternalUserLinkRepository {
+  ExternalUserLinkRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('externalUserLinks');
+      _firestore.collection('externalUserLinks');
 
   Future<void> upsert(ExternalUserLinkModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
@@ -968,8 +983,13 @@ class ExternalUserLinkRepository {
 }
 
 class ExternalCourseworkLinkRepository {
+  ExternalCourseworkLinkRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('externalCourseworkLinks');
+      _firestore.collection('externalCourseworkLinks');
 
   Future<void> upsert(ExternalCourseworkLinkModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));

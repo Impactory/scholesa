@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../offline/offline_queue.dart';
+import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/telemetry_service.dart';
@@ -11,10 +13,13 @@ class MessageService extends ChangeNotifier {
     required FirestoreService firestoreService,
     required this.userId,
     NotificationService? notificationService,
+    SyncCoordinator? syncCoordinator,
   })  : _firestoreService = firestoreService,
-        _notificationService = notificationService ?? NotificationService.instance;
+        _notificationService = notificationService ?? NotificationService.instance,
+        _syncCoordinator = syncCoordinator;
   final FirestoreService _firestoreService;
   final NotificationService _notificationService;
+  final SyncCoordinator? _syncCoordinator;
   final String userId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -262,53 +267,125 @@ class MessageService extends ChangeNotifier {
           await _loadDisplayName(recipientId, fallback: recipientId);
       DocumentReference<Map<String, dynamic>> threadRef;
       String siteId = fallbackSiteId;
+      final bool isOnline = _syncCoordinator?.isOnline ?? true;
       if (conversationId != null && conversationId.trim().isNotEmpty) {
         threadRef = _firestore.collection('messageThreads').doc(conversationId);
         final DocumentSnapshot<Map<String, dynamic>> threadDoc =
-          await threadRef.get();
+            await threadRef.get();
         final Map<String, dynamic> threadData =
-          threadDoc.data() ?? <String, dynamic>{};
+            threadDoc.data() ?? <String, dynamic>{};
         siteId = (threadData['siteId'] as String? ?? siteId).trim();
       } else {
         threadRef = _firestore.collection('messageThreads').doc();
+        if (isOnline) {
+          await threadRef.set(<String, dynamic>{
+            'participantIds': <String>[userId, recipientId],
+            'participantNames': <String>[senderName, recipientName],
+            if (siteId.isNotEmpty) 'siteId': siteId,
+            'title': 'Direct conversation',
+            'status': 'open',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      }
+
+      final DateTime now = DateTime.now();
+      String? messageId;
+      if (isOnline) {
         await threadRef.set(<String, dynamic>{
           'participantIds': <String>[userId, recipientId],
           'participantNames': <String>[senderName, recipientName],
           if (siteId.isNotEmpty) 'siteId': siteId,
-          'title': 'Direct conversation',
           'status': 'open',
-          'createdAt': FieldValue.serverTimestamp(),
+          'lastMessagePreview': body,
+          'lastMessageSenderId': userId,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+
+        final DocumentReference<Map<String, dynamic>> messageRef =
+            await _firestore.collection('messages').add(<String, dynamic>{
+          'threadId': threadRef.id,
+          'title': 'Direct message',
+          'body': body,
+          'type': 'direct',
+          'priority': 'normal',
+          'senderId': userId,
+          'senderName': senderName,
+          'recipientId': recipientId,
+          if (siteId.isNotEmpty) 'siteId': siteId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+          'status': 'sent',
+          'metadata': <String, dynamic>{'threadId': threadRef.id},
+        });
+        messageId = messageRef.id;
+      } else {
+        final QueuedOp queued = await _syncCoordinator!.queueOperation(
+          OpType.messageSend,
+          <String, dynamic>{
+            'threadId': threadRef.id,
+            'participantIds': <String>[userId, recipientId],
+            'participantNames': <String>[senderName, recipientName],
+            if (siteId.isNotEmpty) 'siteId': siteId,
+            'title': 'Direct conversation',
+            'body': body,
+            'type': 'direct',
+            'priority': 'normal',
+            'senderId': userId,
+            'senderName': senderName,
+            'recipientId': recipientId,
+            'isRead': false,
+            'status': 'queued',
+            'queuedAtClient': now.millisecondsSinceEpoch,
+            'metadata': <String, dynamic>{'threadId': threadRef.id},
+          },
+        );
+        messageId = queued.idempotencyKey ?? queued.id;
+        _messages = <Message>[
+          Message(
+            id: messageId,
+            title: 'Direct message',
+            body: body,
+            type: MessageType.direct,
+            priority: MessagePriority.normal,
+            senderId: userId,
+            senderName: senderName,
+            recipientId: recipientId,
+            siteId: siteId.isNotEmpty ? siteId : null,
+            createdAt: now,
+            isRead: false,
+            metadata: <String, dynamic>{'threadId': threadRef.id},
+          ),
+          ..._messages,
+        ];
+        _conversations = <Conversation>[
+          Conversation(
+            id: threadRef.id,
+            participantIds: <String>[userId, recipientId],
+            participantNames: <String>[senderName, recipientName],
+            lastMessage: Message(
+              id: messageId,
+              title: 'Direct message',
+              body: body,
+              type: MessageType.direct,
+              priority: MessagePriority.normal,
+              senderId: userId,
+              senderName: senderName,
+              recipientId: recipientId,
+              siteId: siteId.isNotEmpty ? siteId : null,
+              createdAt: now,
+              isRead: false,
+              metadata: <String, dynamic>{'threadId': threadRef.id},
+            ),
+            updatedAt: now,
+          ),
+          ..._conversations.where((Conversation conversation) =>
+              conversation.id != threadRef.id),
+        ];
+        notifyListeners();
       }
-
-      await threadRef.set(<String, dynamic>{
-        'participantIds': <String>[userId, recipientId],
-        'participantNames': <String>[senderName, recipientName],
-        if (siteId.isNotEmpty) 'siteId': siteId,
-        'status': 'open',
-        'lastMessagePreview': body,
-        'lastMessageSenderId': userId,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      final DocumentReference<Map<String, dynamic>> messageRef =
-          await _firestore.collection('messages').add(<String, dynamic>{
-        'threadId': threadRef.id,
-        'title': 'Direct message',
-        'body': body,
-        'type': 'direct',
-        'priority': 'normal',
-        'senderId': userId,
-        'senderName': senderName,
-        'recipientId': recipientId,
-        if (siteId.isNotEmpty) 'siteId': siteId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-        'status': 'sent',
-        'metadata': <String, dynamic>{'threadId': threadRef.id},
-      });
 
       await TelemetryService.instance.logEvent(
         event: 'message.sent',
@@ -316,20 +393,24 @@ class MessageService extends ChangeNotifier {
           'recipient_id': recipientId,
           'conversation_id': threadRef.id,
           'message_length': body.length,
+          'queued_offline': !isOnline,
         },
       );
 
-      if (siteId.isNotEmpty &&
+      if (isOnline &&
+          siteId.isNotEmpty &&
           <String>{'educator', 'site', 'hq'}.contains(senderRole)) {
         await _notificationService.requestSend(
           channel: 'push',
           threadId: threadRef.id,
-          messageId: messageRef.id,
+          messageId: messageId,
           siteId: siteId,
         );
       }
 
-      await loadMessages();
+      if (isOnline) {
+        await loadMessages();
+      }
       return true;
     } catch (e) {
       debugPrint('Error sending message: $e');

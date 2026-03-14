@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../offline/offline_queue.dart';
+import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import 'mission_models.dart';
@@ -105,8 +107,11 @@ class MissionService extends ChangeNotifier {
   MissionService({
     required FirestoreService firestoreService,
     required this.learnerId,
-  }) : _firestoreService = firestoreService;
+    SyncCoordinator? syncCoordinator,
+  })  : _firestoreService = firestoreService,
+        _syncCoordinator = syncCoordinator;
   final FirestoreService _firestoreService;
+  final SyncCoordinator? _syncCoordinator;
   final String learnerId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -319,26 +324,63 @@ class MissionService extends ChangeNotifier {
     final MissionProofBundle? existing = await loadProofBundle(missionId);
     final String? siteId = existing?.siteId ?? await _resolveSiteIdForMission(missionId);
     final DocumentReference<Map<String, dynamic>> ref = _proofBundleRef(missionId);
-    await ref.set(<String, dynamic>{
-      'missionId': missionId,
-      'learnerId': learnerId,
-      if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
-      'explainItBack': explainItBack?.trim() ?? existing?.explainItBack ?? '',
-      'oralCheckResponse':
-          oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '',
-      'miniRebuildPlan':
-          miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '',
-      if (existing != null)
-        'versionHistory':
-            existing.versionHistory.map((MissionProofCheckpoint entry) => entry.toMap()).toList(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      'createdAt': existing == null
-          ? FieldValue.serverTimestamp()
-          : (existing.createdAt == null
-              ? FieldValue.serverTimestamp()
-              : Timestamp.fromDate(existing.createdAt!)),
-    }, SetOptions(merge: true));
-    return loadProofBundle(missionId);
+    final String explain = explainItBack?.trim() ?? existing?.explainItBack ?? '';
+    final String oral =
+        oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '';
+    final String rebuild =
+        miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '';
+    final List<Map<String, dynamic>> versionHistory = existing == null
+        ? <Map<String, dynamic>>[]
+        : existing.versionHistory
+            .map((MissionProofCheckpoint entry) => entry.toMap())
+            .toList();
+
+    if (_syncCoordinator?.isOnline ?? true) {
+      await ref.set(<String, dynamic>{
+        'missionId': missionId,
+        'learnerId': learnerId,
+        if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+        'explainItBack': explain,
+        'oralCheckResponse': oral,
+        'miniRebuildPlan': rebuild,
+        if (existing != null) 'versionHistory': versionHistory,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': existing == null
+            ? FieldValue.serverTimestamp()
+            : (existing.createdAt == null
+                ? FieldValue.serverTimestamp()
+                : Timestamp.fromDate(existing.createdAt!)),
+      }, SetOptions(merge: true));
+      return loadProofBundle(missionId);
+    }
+
+    await _syncCoordinator!.queueOperation(
+      OpType.attemptSaveDraft,
+      <String, dynamic>{
+        'docPath': ref.path,
+        'missionId': missionId,
+        'learnerId': learnerId,
+        if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
+        'explainItBack': explain,
+        'oralCheckResponse': oral,
+        'miniRebuildPlan': rebuild,
+        'versionHistory': versionHistory,
+        'createdAtClient': DateTime.now().millisecondsSinceEpoch,
+      },
+    );
+
+    return MissionProofBundle(
+      id: ref.id,
+      missionId: missionId,
+      learnerId: learnerId,
+      siteId: siteId,
+      explainItBack: explain,
+      oralCheckResponse: oral,
+      miniRebuildPlan: rebuild,
+      versionHistory: existing?.versionHistory ?? const <MissionProofCheckpoint>[],
+      createdAt: existing?.createdAt ?? DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
   }
 
   Future<MissionProofBundle?> addVersionCheckpoint({

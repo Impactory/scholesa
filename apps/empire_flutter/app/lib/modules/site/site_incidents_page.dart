@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
+import '../../offline/offline_queue.dart';
+import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -604,10 +606,10 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     required String learnerName,
   }) async {
     final FirestoreService firestoreService = context.read<FirestoreService>();
+    final SyncCoordinator syncCoordinator = context.read<SyncCoordinator>();
     final User? user = FirebaseAuth.instance.currentUser;
     final String siteId = _siteId ?? '';
-
-    await firestoreService.firestore.collection('incidents').add(<String, dynamic>{
+    final Map<String, dynamic> incidentPayload = <String, dynamic>{
       if (siteId.isNotEmpty) 'siteId': siteId,
       'title': title,
       'description': title,
@@ -618,16 +620,32 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
       'reportedBy': user?.uid,
       'reportedByName':
           (user?.displayName?.trim().isNotEmpty ?? false) ? user!.displayName : 'Staff',
-      'reportedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      'reportedAtClient': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    if (syncCoordinator.isOnline) {
+      await firestoreService.firestore.collection('incidents').add(<String, dynamic>{
+        ...incidentPayload,
+        'reportedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await syncCoordinator.queueOperation(OpType.incidentSubmit, incidentPayload);
+    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_tSiteIncidents(context, 'Incident reported'))),
+      SnackBar(
+        content: Text(_tSiteIncidents(
+          context,
+          syncCoordinator.isOnline ? 'Incident reported' : 'Incident queued for sync',
+        )),
+      ),
     );
-    await _loadIncidents();
+    if (syncCoordinator.isOnline) {
+      await _loadIncidents();
+    }
   }
 
   Future<void> _advanceIncidentStatus(_Incident incident) async {

@@ -6,7 +6,7 @@ import {
 
 describe('notificationPipeline', () => {
   it('sends direct message notification payloads to the notify provider', async () => {
-    const fetchImpl = jest.fn(async (_url: string, init: { body: string }) => ({
+    const fetchImpl = jest.fn(async (_url: string, _init: { body: string }) => ({
       ok: true,
       status: 200,
       text: async () => '',
@@ -36,7 +36,7 @@ describe('notificationPipeline', () => {
   });
 
   it('sends typed learner reminder payloads to the notify provider', async () => {
-    const fetchImpl = jest.fn(async (_url: string, init: { body: string }) => ({
+    const fetchImpl = jest.fn(async (_url: string, _init: { body: string }) => ({
       ok: true,
       status: 200,
       text: async () => '',

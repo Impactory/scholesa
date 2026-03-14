@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../offline/offline_queue.dart';
+import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import 'checkin_models.dart';
 
@@ -8,8 +10,11 @@ class CheckinService extends ChangeNotifier {
   CheckinService({
     required FirestoreService firestoreService,
     required this.siteId,
-  }) : _firestoreService = firestoreService;
+    SyncCoordinator? syncCoordinator,
+  })  : _firestoreService = firestoreService,
+        _syncCoordinator = syncCoordinator;
   final FirestoreService _firestoreService;
+  final SyncCoordinator? _syncCoordinator;
   final String siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -230,27 +235,43 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      final DocumentReference<Map<String, dynamic>> createdRef =
-          await _firestore.collection('checkins').add(<String, dynamic>{
+      final DateTime now = DateTime.now();
+      final Map<String, dynamic> payload = <String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'learnerName': learnerName,
         'type': 'checkin',
         'status': 'completed',
-        'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': now.millisecondsSinceEpoch,
         'recordedBy': visitorId,
         'recorderName': visitorName,
         'notes': notes,
-      });
+      };
+
+      String createdId = 'offline-checkin-${now.microsecondsSinceEpoch}';
+      if (_syncCoordinator?.isOnline ?? true) {
+        final DocumentReference<Map<String, dynamic>> createdRef =
+            await _firestore.collection('checkins').add(<String, dynamic>{
+          ...payload,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        createdId = createdRef.id;
+      } else {
+        final QueuedOp queued = await _syncCoordinator!.queueOperation(
+          OpType.presenceCheckin,
+          payload,
+        );
+        createdId = queued.idempotencyKey ?? queued.id;
+      }
 
       final CheckRecord record = CheckRecord(
-        id: createdRef.id,
+        id: createdId,
         visitorId: visitorId,
         visitorName: visitorName,
         learnerId: learnerId,
         learnerName: learnerName,
         siteId: siteId,
-        timestamp: DateTime.now(),
+        timestamp: now,
         status: CheckStatus.checkedIn,
         notes: notes,
       );
@@ -267,7 +288,7 @@ class CheckinService extends ChangeNotifier {
           learnerName: summary.learnerName,
           learnerPhoto: summary.learnerPhoto,
           currentStatus: CheckStatus.checkedIn,
-          checkedInAt: DateTime.now(),
+          checkedInAt: now,
           checkedInBy: visitorName,
           authorizedPickups: summary.authorizedPickups,
         );
@@ -291,27 +312,43 @@ class CheckinService extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      final DocumentReference<Map<String, dynamic>> createdRef =
-          await _firestore.collection('checkins').add(<String, dynamic>{
+      final DateTime now = DateTime.now();
+      final Map<String, dynamic> payload = <String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'learnerName': learnerName,
         'type': 'checkout',
         'status': 'completed',
-        'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': now.millisecondsSinceEpoch,
         'recordedBy': visitorId,
         'recorderName': visitorName,
         'notes': notes,
-      });
+      };
+
+      String createdId = 'offline-checkout-${now.microsecondsSinceEpoch}';
+      if (_syncCoordinator?.isOnline ?? true) {
+        final DocumentReference<Map<String, dynamic>> createdRef =
+            await _firestore.collection('checkins').add(<String, dynamic>{
+          ...payload,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        createdId = createdRef.id;
+      } else {
+        final QueuedOp queued = await _syncCoordinator!.queueOperation(
+          OpType.presenceCheckout,
+          payload,
+        );
+        createdId = queued.idempotencyKey ?? queued.id;
+      }
 
       final CheckRecord record = CheckRecord(
-        id: createdRef.id,
+        id: createdId,
         visitorId: visitorId,
         visitorName: visitorName,
         learnerId: learnerId,
         learnerName: learnerName,
         siteId: siteId,
-        timestamp: DateTime.now(),
+        timestamp: now,
         status: CheckStatus.checkedOut,
         notes: notes,
       );
@@ -330,7 +367,7 @@ class CheckinService extends ChangeNotifier {
           currentStatus: CheckStatus.checkedOut,
           checkedInAt: summary.checkedInAt,
           checkedInBy: summary.checkedInBy,
-          checkedOutAt: DateTime.now(),
+          checkedOutAt: now,
           checkedOutBy: visitorName,
           authorizedPickups: summary.authorizedPickups,
         );

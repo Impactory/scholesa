@@ -10,7 +10,7 @@ import {
   enqueueLearnerGoalReminders,
   sendNotification as sendExternalNotification,
 } from './notificationPipeline';
-import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
+import { callInternalInferenceJson } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
 import {
@@ -3316,7 +3316,7 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
     metadata: {
       productId,
       targetUserId,
-      if (listingId) listingId,
+      ...(listingId ? { listingId } : {}),
     },
   });
 
@@ -3439,8 +3439,11 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       targetUserId: intent.userId,
       amount: product.amount,
       currency: product.currency,
-      if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
-        listingId: intent.listingId,
+      ...(
+        typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+            ? { listingId: intent.listingId }
+            : {}
+      ),
     },
   });
 
@@ -3581,8 +3584,11 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         amount: product.amount,
         currency: product.currency,
         via: 'webhook',
-        if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
-          listingId: intent.listingId,
+        ...(
+          typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+              ? { listingId: intent.listingId }
+              : {}
+        ),
       },
     });
 
@@ -4602,8 +4608,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       currency: session.currency,
       via: 'stripe_webhook',
       stripeSessionId: session.id,
-      if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
-        listingId: intent.listingId,
+      ...(
+        typeof intent.listingId === 'string' && intent.listingId.trim().length > 0
+            ? { listingId: intent.listingId }
+            : {}
+      ),
     },
   });
 

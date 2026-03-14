@@ -273,6 +273,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => CheckinService(
             firestoreService: _firestoreService,
             siteId: '',
+            syncCoordinator: _syncCoordinator,
           ),
           update:
               (_, AppState appState, CheckinService? previousCheckinService) {
@@ -285,6 +286,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
             final CheckinService service = CheckinService(
               firestoreService: _firestoreService,
               siteId: siteId,
+              syncCoordinator: _syncCoordinator,
             );
             if (siteId.isNotEmpty &&
                 (appState.role == UserRole.site ||
@@ -336,6 +338,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => MissionService(
             firestoreService: _firestoreService,
             learnerId: '',
+            syncCoordinator: _syncCoordinator,
           ),
           update: (_, AppState appState, MissionService? previousMission) {
             final String learnerId = _normalizeContextValue(appState.userId);
@@ -346,6 +349,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
             final MissionService service = MissionService(
               firestoreService: _firestoreService,
               learnerId: learnerId,
+              syncCoordinator: _syncCoordinator,
             );
             if (learnerId.isNotEmpty &&
                 (appState.role == UserRole.learner ||
@@ -384,6 +388,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => MessageService(
             firestoreService: _firestoreService,
             userId: '',
+            syncCoordinator: _syncCoordinator,
           ),
           update:
               (_, AppState appState, MessageService? previousMessageService) {
@@ -395,6 +400,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
             final MessageService service = MessageService(
               firestoreService: _firestoreService,
               userId: userId,
+              syncCoordinator: _syncCoordinator,
             );
             if (userId.isNotEmpty) {
               Future<void>.microtask(service.loadMessages);

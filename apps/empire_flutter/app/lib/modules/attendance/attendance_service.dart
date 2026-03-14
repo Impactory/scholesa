@@ -202,13 +202,6 @@ class AttendanceService extends ChangeNotifier {
   /// Record attendance (offline-capable) to Firebase
   Future<void> recordAttendance(AttendanceRecord record) async {
     try {
-      // Queue for offline sync
-      await _syncCoordinator.queueOperation(
-        OpType.attendanceRecord,
-        record.toJson(),
-      );
-
-      // Write to Firebase
       if (_syncCoordinator.isOnline) {
         await _firestore.collection('attendanceRecords').add(<String, dynamic>{
           'occurrenceId': record.occurrenceId,
@@ -218,6 +211,18 @@ class AttendanceService extends ChangeNotifier {
           'recordedBy': record.recordedBy,
           'notes': record.notes,
         });
+      } else {
+        await _syncCoordinator.queueOperation(
+          OpType.attendanceRecord,
+          <String, dynamic>{
+            'occurrenceId': record.occurrenceId,
+            'learnerId': record.learnerId,
+            'status': record.status.name,
+            'recordedAtClient': DateTime.now().millisecondsSinceEpoch,
+            'recordedBy': record.recordedBy,
+            'notes': record.notes,
+          },
+        );
       }
 
       // Optimistically update local state

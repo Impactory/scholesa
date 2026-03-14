@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import '../services/firestore_service.dart';
@@ -150,12 +151,7 @@ class SyncCoordinator extends ChangeNotifier {
             .set(payload);
         break;
       case OpType.presenceCheckout:
-        // Checkout updates an existing checkin doc — already idempotent
-        final String docId = payload['checkinId'] as String? ?? '';
-        if (docId.isNotEmpty) {
-          payload.remove('checkinId');
-          await firestore.collection('checkins').doc(docId).update(payload);
-        }
+        await firestore.collection('checkins').doc(op.idempotencyKey).set(payload);
         break;
       case OpType.incidentSubmit:
         await firestore
@@ -164,16 +160,58 @@ class SyncCoordinator extends ChangeNotifier {
             .set(payload);
         break;
       case OpType.messageSend:
-        await firestore
-            .collection('messages')
-            .doc(op.idempotencyKey)
-            .set(payload);
+        final String threadId = payload['threadId'] as String? ?? '';
+        final List<String> participantIds =
+            List<String>.from(payload['participantIds'] as List? ?? <String>[]);
+        final List<String> participantNames = List<String>.from(
+            payload['participantNames'] as List? ?? <String>[]);
+        final String body = payload['body'] as String? ?? '';
+        if (threadId.isNotEmpty) {
+          await firestore.collection('messageThreads').doc(threadId).set(
+            <String, dynamic>{
+              'participantIds': participantIds,
+              'participantNames': participantNames,
+              if ((payload['siteId'] as String?)?.isNotEmpty == true)
+                'siteId': payload['siteId'],
+              'title': payload['title'] as String? ?? 'Direct conversation',
+              'status': 'open',
+              'lastMessagePreview': body,
+              'lastMessageSenderId': payload['senderId'],
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+        payload.remove('participantIds');
+        payload.remove('participantNames');
+        payload.remove('queuedAtClient');
+        await firestore.collection('messages').doc(op.idempotencyKey).set(
+          <String, dynamic>{
+            ...payload,
+            'status': 'sent',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
         break;
       case OpType.attemptSaveDraft:
-        await firestore
-            .collection('drafts')
-            .doc(op.idempotencyKey)
-            .set(payload);
+        final String docPath = payload.remove('docPath') as String? ?? '';
+        final DocumentReference<Map<String, dynamic>> targetRef =
+            docPath.isNotEmpty
+                ? firestore.doc(docPath)
+                : firestore
+                    .collection('proofOfLearningBundles')
+                    .doc('${payload['learnerId']}_${payload['missionId']}');
+        payload.remove('createdAtClient');
+        await targetRef.set(
+          <String, dynamic>{
+            ...payload,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
         break;
     }
   }

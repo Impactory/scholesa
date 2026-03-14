@@ -43,6 +43,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+
       - name: Workflow no-mock audit
         run: npm run qa:workflow:no-mock
 

@@ -495,6 +495,7 @@ export const triggerIntegrationSyncJob = onCall(async (request: CallableRequest)
   const docRef = await admin.firestore().collection('syncJobs').add({
     siteId: requestedSiteId,
     provider,
+    type: provider,
     status: 'queued',
     requestedBy: actor.uid,
     requestedByRole: actor.role,
