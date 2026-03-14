@@ -249,6 +249,9 @@ Map<String, dynamic> _candidatePackageRow({
   String aggregationRunId = 'fl_agg_1',
   String mergeArtifactId = 'fl_merge_1',
   String boundedDigest = 'sha256:digest-1',
+  int sampleCount = 24,
+  int summaryCount = 2,
+  int distinctSiteCount = 2,
 }) {
   return <String, dynamic>{
     'id': id,
@@ -262,9 +265,9 @@ Map<String, dynamic> _candidatePackageRow({
     'latestPromotionStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
-    'sampleCount': 24,
-    'summaryCount': 2,
-    'distinctSiteCount': 2,
+    'sampleCount': sampleCount,
+    'summaryCount': summaryCount,
+    'distinctSiteCount': distinctSiteCount,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'maxVectorLength': 128,
@@ -672,6 +675,7 @@ void main() {
           aggregationRunId: 'fl_agg_2',
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
+          sampleCount: 20,
         ),
       ],
       promotionRecords: <Map<String, dynamic>>[
@@ -773,7 +777,15 @@ void main() {
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('View packages').first);
+    final Finder viewPackagesButton = find.widgetWithText(
+      TextButton,
+      'View packages',
+    );
+    await tester.ensureVisible(viewPackagesButton.first);
+    final TextButton viewPackagesControl = tester.widget<TextButton>(
+      viewPackagesButton.first,
+    );
+    viewPackagesControl.onPressed?.call();
     await tester.pumpAndSettle();
 
     expect(find.text('Candidate packages: Literacy Pilot'), findsOneWidget);
@@ -834,7 +846,7 @@ void main() {
       find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
       findsOneWidget,
     );
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -845,10 +857,18 @@ void main() {
     expect(find.text('Artifact: fl_merge_2'), findsOneWidget);
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
 
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Create experiment'));
+    final Finder createExperimentButton = find.widgetWithText(
+      FilledButton,
+      'Create experiment',
+    );
+    await tester.ensureVisible(createExperimentButton);
+    final FilledButton createExperimentControl = tester.widget<FilledButton>(
+      createExperimentButton,
+    );
+    createExperimentControl.onPressed?.call();
     await tester.pumpAndSettle();
 
     await tester.enterText(
