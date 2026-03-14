@@ -17,10 +17,12 @@ import {
   districtProviderSectionsField,
 } from './districtProviderIntegration';
 import {
+  buildFederatedLearningAggregationRunDocId,
   buildFederatedLearningExperimentDocId,
   buildFederatedLearningFeatureFlagId,
   buildFederatedLearningFeatureFlagPayload,
   federatedLearningAuditAction,
+  selectFederatedLearningAggregationBatch,
   sanitizeFederatedLearningExperimentConfig,
   sanitizeFederatedLearningUpdateSummary,
 } from './federatedLearningPrototype';
@@ -1554,6 +1556,157 @@ export const upsertFeatureFlag = onCall(async (request: CallableRequest) => {
   return { success: true, id };
 });
 
+interface FederatedPendingSummaryRow {
+  id: string;
+  siteId: string;
+  sampleCount: number;
+  vectorLength: number;
+  payloadBytes: number;
+  updateNorm: number;
+  schemaVersion: string;
+  runtimeTarget?: string | null;
+  traceId: string;
+  aggregationStatus: string;
+  aggregationRunId?: string;
+  ref: FirebaseFirestore.DocumentReference;
+}
+
+function asPositiveInteger(value: unknown, fallback: number): number {
+  const parsed = typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function mapPendingFederatedSummary(
+  snapDoc: FirebaseFirestore.QueryDocumentSnapshot,
+): FederatedPendingSummaryRow {
+  const data = (snapDoc.data() || {}) as Record<string, unknown>;
+  return {
+    id: snapDoc.id,
+    siteId: asTrimmedString(data.siteId),
+    sampleCount: asPositiveInteger(data.sampleCount, 0),
+    vectorLength: asPositiveInteger(data.vectorLength, 0),
+    payloadBytes: asPositiveInteger(data.payloadBytes, 0),
+    updateNorm: asNumber(data.updateNorm) ?? 0,
+    schemaVersion: asTrimmedString(data.schemaVersion) || 'v1',
+    runtimeTarget: asTrimmedString(data.runtimeTarget) || null,
+    traceId: asTrimmedString(data.traceId),
+    aggregationStatus: asTrimmedString(data.aggregationStatus) || 'pending',
+    aggregationRunId: asTrimmedString(data.aggregationRunId) || undefined,
+    ref: snapDoc.ref,
+  };
+}
+
+async function maybeMaterializeFederatedLearningAggregationRun({
+  experimentId,
+  experimentRef,
+  experiment,
+  actorId,
+  triggerSummaryId,
+}: {
+  experimentId: string;
+  experimentRef: FirebaseFirestore.DocumentReference;
+  experiment: Record<string, unknown>;
+  actorId: string;
+  triggerSummaryId: string;
+}): Promise<{ runId: string; created: boolean } | null> {
+  const aggregateThreshold = asPositiveInteger(experiment.aggregateThreshold, 25);
+  const pendingSnap = await admin.firestore()
+    .collection('federatedLearningUpdateSummaries')
+    .where('experimentId', '==', experimentId)
+    .where('status', '==', 'accepted')
+    .orderBy('createdAt', 'asc')
+    .limit(200)
+    .get();
+
+  const pendingRows = pendingSnap.docs
+    .map(mapPendingFederatedSummary)
+    .filter((row) => row.aggregationStatus !== 'materialized' && !row.aggregationRunId);
+  const selection = selectFederatedLearningAggregationBatch(pendingRows, aggregateThreshold);
+  if (!selection) {
+    return null;
+  }
+
+  const runId = buildFederatedLearningAggregationRunDocId(experimentId, selection.summaryIds);
+  const runRef = admin.firestore().collection('federatedLearningAggregationRuns').doc(runId);
+  let created = false;
+
+  await admin.firestore().runTransaction(async (transaction) => {
+    const existingRun = await transaction.get(runRef);
+    if (existingRun.exists) {
+      return;
+    }
+
+    const selectedRows = selection.summaryIds
+      .map((summaryId) => pendingRows.find((row) => row.id === summaryId))
+      .filter((row): row is FederatedPendingSummaryRow => row != null);
+    if (selectedRows.length !== selection.summaryIds.length) {
+      return;
+    }
+
+    const selectedSnapshots = await Promise.all(
+      selectedRows.map((row) => transaction.get(row.ref)),
+    );
+    if (selectedSnapshots.some((snapDoc) => !snapDoc.exists)) {
+      return;
+    }
+
+    const refreshedRows = selectedSnapshots.map((snapDoc) => mapPendingFederatedSummary(
+      snapDoc as FirebaseFirestore.QueryDocumentSnapshot,
+    ));
+    if (refreshedRows.some((row) => row.aggregationStatus === 'materialized' || row.aggregationRunId)) {
+      return;
+    }
+
+    const refreshedSelection = selectFederatedLearningAggregationBatch(refreshedRows, aggregateThreshold);
+    if (!refreshedSelection || refreshedSelection.summaryIds.join('|') !== selection.summaryIds.join('|')) {
+      return;
+    }
+
+    transaction.set(runRef, {
+      experimentId,
+      status: 'materialized',
+      threshold: aggregateThreshold,
+      thresholdMet: true,
+      triggerSummaryId,
+      summaryIds: refreshedSelection.summaryIds,
+      summaryCount: refreshedSelection.summaryCount,
+      distinctSiteCount: refreshedSelection.distinctSiteCount,
+      totalSampleCount: refreshedSelection.totalSampleCount,
+      maxVectorLength: refreshedSelection.maxVectorLength,
+      totalPayloadBytes: refreshedSelection.totalPayloadBytes,
+      averageUpdateNorm: refreshedSelection.averageUpdateNorm,
+      schemaVersions: refreshedSelection.schemaVersions,
+      runtimeTargets: refreshedSelection.runtimeTargets,
+      createdBy: actorId,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    for (const row of refreshedRows) {
+      transaction.set(row.ref, {
+        aggregationStatus: 'materialized',
+        aggregationRunId: runId,
+        aggregatedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    transaction.set(experimentRef, {
+      latestAggregationRunId: runId,
+      lastAggregatedAt: FieldValue.serverTimestamp(),
+      lastAggregationSampleCount: refreshedSelection.totalSampleCount,
+      lastAggregationSummaryCount: refreshedSelection.summaryCount,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    created = true;
+  });
+
+  return { runId, created };
+}
+
 export const listFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (actor.role !== 'hq') {
@@ -1652,6 +1805,33 @@ export const listSiteFederatedLearningExperiments = onCall(async (request: Calla
     });
 
   return { siteId: targetSiteId, experiments };
+});
+
+export const listFederatedLearningAggregationRuns = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningAggregationRuns')
+    .orderBy('createdAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+
+  const snap = await query.get();
+  const runs = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { runs };
 });
 
 export const upsertFederatedLearningExperiment = onCall(async (request: CallableRequest) => {
@@ -1771,9 +1951,18 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
     runtimeTarget: experiment.runtimeTarget || null,
     requestedBy: actor.uid,
     status: 'accepted',
+    aggregationStatus: 'pending',
     ...summary,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const aggregationRun = await maybeMaterializeFederatedLearningAggregationRun({
+    experimentId,
+    experimentRef,
+    experiment,
+    actorId: actor.uid,
+    triggerSummaryId: docRef.id,
   });
 
   await admin.firestore().collection('auditLogs').add({
@@ -1792,7 +1981,28 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
     },
   });
 
-  return { success: true, id: docRef.id, experimentId, siteId: summary.siteId };
+  if (aggregationRun?.created) {
+    await admin.firestore().collection('auditLogs').add({
+      userId: actor.uid,
+      action: federatedLearningAuditAction('aggregation_run.materialized'),
+      collection: 'federatedLearningAggregationRuns',
+      documentId: aggregationRun.runId,
+      timestamp: Date.now(),
+      details: {
+        experimentId,
+        triggerSummaryId: docRef.id,
+      },
+    });
+  }
+
+  return {
+    success: true,
+    id: docRef.id,
+    experimentId,
+    siteId: summary.siteId,
+    aggregationRunId: aggregationRun?.runId || null,
+    aggregationMaterialized: aggregationRun?.created === true,
+  };
 });
 
 export const listWorkflowContacts = onCall(async (request: CallableRequest) => {

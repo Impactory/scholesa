@@ -148,6 +148,21 @@ class WorkflowBridgeService {
     return _asTrimmedString(payload['id']);
   }
 
+  Future<List<Map<String, dynamic>>> listFederatedLearningAggregationRuns({
+    String? experimentId,
+    int limit = 60,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningAggregationRuns',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['runs']);
+  }
+
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {

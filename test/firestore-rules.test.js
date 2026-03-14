@@ -222,7 +222,29 @@ beforeEach(async () => {
       batteryState: 'charging',
       networkType: 'wifi',
       status: 'accepted',
+      aggregationStatus: 'materialized',
+      aggregationRunId: 'fl_agg_demo_1',
       requestedBy: siteAdminUser.uid,
+    });
+
+    await setDoc(doc(db, 'federatedLearningAggregationRuns', 'fl_agg_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      status: 'materialized',
+      threshold: 25,
+      thresholdMet: true,
+      triggerSummaryId: 'fl_update_1',
+      summaryIds: ['fl_update_1'],
+      summaryCount: 1,
+      distinctSiteCount: 1,
+      totalSampleCount: 18,
+      maxVectorLength: 128,
+      totalPayloadBytes: 2048,
+      averageUpdateNorm: 3.2,
+      schemaVersions: ['v1'],
+      runtimeTargets: ['flutter_mobile'],
+      createdBy: siteAdminUser.uid,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
   });
 });
@@ -486,6 +508,20 @@ describe('Federated Learning Prototype Collections', () => {
         batteryState: 'ok',
         networkType: 'wifi',
       }),
+    );
+  });
+
+  test('HQ can read materialized federated aggregation runs', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningAggregationRuns', 'fl_agg_demo_1')),
+    );
+  });
+
+  test('site admins cannot read cross-site aggregation runs directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningAggregationRuns', 'fl_agg_demo_1')),
     );
   });
 });

@@ -1,7 +1,10 @@
+import { createHash } from 'crypto';
+
 export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
 export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
 export type FederatedLearningBatteryState = 'low' | 'ok' | 'charging' | 'unknown';
 export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'unknown';
+export type FederatedLearningAggregationRunStatus = 'materialized';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -25,6 +28,29 @@ export interface FederatedLearningUpdateSummary {
   payloadDigest: string;
   batteryState: FederatedLearningBatteryState;
   networkType: FederatedLearningNetworkType;
+}
+
+export interface FederatedLearningAggregationCandidate {
+  id: string;
+  siteId: string;
+  sampleCount: number;
+  vectorLength: number;
+  payloadBytes: number;
+  updateNorm: number;
+  schemaVersion: string;
+  runtimeTarget?: string | null;
+}
+
+export interface FederatedLearningAggregationSelection {
+  summaryIds: string[];
+  summaryCount: number;
+  distinctSiteCount: number;
+  totalSampleCount: number;
+  maxVectorLength: number;
+  totalPayloadBytes: number;
+  averageUpdateNorm: number;
+  schemaVersions: string[];
+  runtimeTargets: string[];
 }
 
 function asTrimmedString(value: unknown): string {
@@ -117,6 +143,17 @@ export function buildFederatedLearningExperimentDocId(nameOrId: string): string 
 
 export function buildFederatedLearningFeatureFlagId(experimentId: string): string {
   return `feature_${experimentId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+export function buildFederatedLearningAggregationRunDocId(
+  experimentId: string,
+  summaryIds: string[],
+): string {
+  const digest = createHash('sha256')
+    .update(`${experimentId}|${summaryIds.join('|')}`)
+    .digest('hex')
+    .slice(0, 24);
+  return `fl_agg_${digest}`;
 }
 
 export function federatedLearningAuditAction(action: string): string {
@@ -214,5 +251,61 @@ export function sanitizeFederatedLearningUpdateSummary(
     payloadDigest,
     batteryState: normalizeFederatedLearningBatteryState(input.batteryState),
     networkType: normalizeFederatedLearningNetworkType(input.networkType),
+  };
+}
+
+export function selectFederatedLearningAggregationBatch(
+  candidates: FederatedLearningAggregationCandidate[],
+  aggregateThreshold: number,
+): FederatedLearningAggregationSelection | null {
+  const threshold = asIntegerInRange(
+    aggregateThreshold,
+    'aggregateThreshold',
+    1,
+    1000000,
+    1,
+  );
+  const selected: FederatedLearningAggregationCandidate[] = [];
+  let totalSampleCount = 0;
+  for (const candidate of candidates) {
+    if (candidate.sampleCount <= 0) continue;
+    selected.push(candidate);
+    totalSampleCount += candidate.sampleCount;
+    if (totalSampleCount >= threshold) {
+      break;
+    }
+  }
+  if (totalSampleCount < threshold || selected.length === 0) {
+    return null;
+  }
+
+  const siteIds = new Set<string>();
+  const schemaVersions = new Set<string>();
+  const runtimeTargets = new Set<string>();
+  let totalPayloadBytes = 0;
+  let maxVectorLength = 0;
+  let updateNormTotal = 0;
+
+  for (const candidate of selected) {
+    siteIds.add(candidate.siteId);
+    schemaVersions.add(candidate.schemaVersion);
+    if (typeof candidate.runtimeTarget === 'string' && candidate.runtimeTarget.trim().length > 0) {
+      runtimeTargets.add(candidate.runtimeTarget.trim());
+    }
+    totalPayloadBytes += candidate.payloadBytes;
+    maxVectorLength = Math.max(maxVectorLength, candidate.vectorLength);
+    updateNormTotal += candidate.updateNorm;
+  }
+
+  return {
+    summaryIds: selected.map((candidate) => candidate.id),
+    summaryCount: selected.length,
+    distinctSiteCount: siteIds.size,
+    totalSampleCount,
+    maxVectorLength,
+    totalPayloadBytes,
+    averageUpdateNorm: selected.length > 0 ? Number((updateNormTotal / selected.length).toFixed(6)) : 0,
+    schemaVersions: Array.from(schemaVersions).sort(),
+    runtimeTargets: Array.from(runtimeTargets).sort(),
   };
 }

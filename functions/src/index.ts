@@ -97,6 +97,7 @@ export {
   upsertFeatureFlag,
   listFederatedLearningExperiments,
   listSiteFederatedLearningExperiments,
+  listFederatedLearningAggregationRuns,
   upsertFederatedLearningExperiment,
   recordFederatedLearningPrototypeUpdate,
   listWorkflowContacts,

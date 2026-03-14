@@ -234,7 +234,30 @@ export interface FederatedLearningUpdateSummary {
   payloadDigest: string;
   batteryState?: 'low' | 'ok' | 'charging' | 'unknown';
   networkType?: 'wifi' | 'cellular' | 'offline' | 'unknown';
+  aggregationStatus?: 'pending' | 'materialized';
+  aggregationRunId?: string;
   requestedBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningAggregationRun {
+  id: string;
+  experimentId: string;
+  status: 'materialized';
+  threshold: number;
+  thresholdMet: boolean;
+  triggerSummaryId: string;
+  summaryIds: string[];
+  summaryCount: number;
+  distinctSiteCount: number;
+  totalSampleCount: number;
+  maxVectorLength: number;
+  totalPayloadBytes: number;
+  averageUpdateNorm: number;
+  schemaVersions: string[];
+  runtimeTargets: string[];
+  createdBy?: string;
   createdAt: number;
   updatedAt: number;
 }
