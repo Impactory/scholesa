@@ -36,13 +36,13 @@
 | REQ-030 | Offline queue PortfolioItem/reflection | apps/empire_flutter/app/lib/features/offline/offline_queue.dart, offline/offline_dispatchers.dart | Manual: OFF-LRN-02 | ✅ (Flutter offline queue dispatches via PortfolioItemRepository + audit) |
 | REQ-031 | Invariant enforcement | src/lib/invariants.ts | Unit: invariants.test.ts | ⚠️ Flutter client validation added; web invariants/tests still paused |
 | REQ-032 | Audit logs on privileged writes | missionAttemptRepository.ts, attendanceRepository.ts, portfolioItemRepository.ts; apps/empire_flutter/app/lib/features/offline/offline_dispatchers.dart | Manual: AUDIT-FL-01 | ✅ (Flutter offline dispatchers write audit logs) |
-| REQ-033 | Unit tests (models, routing, invariants) | src/__tests__/models.test.ts, routing.test.ts, invariants.test.ts | Unit: npm test | ⏸️ (web stack paused) |
-| REQ-034 | Smoke/QA scripts | QA_RUNBOOK.md | Manual | ⏸️ (web stack paused) |
-| REQ-035 | Flutter web build/PWA readiness | Web stack paused (Next.js/PWA disabled) | Manual: BUILD-01 | ⏸️ |
-| REQ-036 | Cloud Run API build/health (if API) | Web stack paused (Next.js/PWA disabled) | Manual: API-01 | ⏸️ |
+| REQ-033 | Unit tests (models, routing, invariants) | src/__tests__/models.test.ts, routing.test.ts, invariants.test.ts | Unit: npm test | ⏸️ (referenced web unit-test files are not present in the current repo state, so this suite cannot be honestly re-run yet) |
+| REQ-034 | Smoke/QA scripts | docs/QA_RUNBOOK.md, package.json | Review: docs/REQ034_QA_RUNBOOK_PROOF_MARCH_13_2026.md covers current web/manual smoke flows, BUILD-01/API-01 entries, and matching command entrypoints | ✅ |
+| REQ-035 | Web build/PWA readiness | package.json, next.config.mjs, public/sw.js, public/manifest.webmanifest, docs/QA_RUNBOOK.md | Proof: docs/REQ035_WEB_BUILD_PWA_READINESS_PROOF_MARCH_13_2026.md covers active build script, BUILD-01 runbook path, passing `npm run build`, and current PWA artifacts | ✅ |
+| REQ-036 | Cloud Run API build/health (if API) | Dockerfile, docs/QA_RUNBOOK.md, docs/12_CLOUD_RUN_FIREBASE_DEPLOYMENT.md | Manual: API-01 | ⏸️ (deployment docs exist, but there is no current repo-level Cloud Run API health endpoint/build proof captured for closure) |
 | REQ-037 | Final artifact bundle | SCHEMA_PORT_REPORT.md, COMPLIANCE_REPORT.md, QA_RUNBOOK.md, OFFLINE_VERIFICATION.md | Review | ✅ (docs refreshed for Flutter progress, offline verification, QA steps) |
 | REQ-038 | Storage rules for portfolio media | storage.rules, firestore.rules, firebase.json | Jest: src/__tests__/rules.test.ts | ✅ |
-| REQ-039 | Offline fallback page | public/offline.html, next.config.mjs | Manual: OFFLINE-UX-01 | ⏸️ (web stack paused) |
+| REQ-039 | Offline fallback page | public/offline.html, public/sw.js, app/layout.tsx, src/components/pwa/ServiceWorkerRegister.tsx, src/lib/pwa/registerServiceWorker.ts, next.config.mjs | Proof: docs/REQ039_OFFLINE_FALLBACK_LOCAL_PROOF_MARCH_13_2026.md covers fallback asset presence, Workbox precache wiring, and root-layout registration path | ✅ |
 | REQ-040 | i18n coverage (en/zh-CN/zh-TW) for landing, auth, and protected route entry | locales/en.json, locales/zh-CN.json, locales/zh-TW.json, src/lib/i18n/config.ts, src/lib/i18n/messages.ts, test/e2e/workflow-routes.e2e.spec.ts, scripts/vibe_i18n_keys.js | Playwright: zh-CN landing/login + zh-TW redirect; Audit: vibe_i18n_keys.js | ✅ (tri-locale key consistency passes; locale-first runtime behavior validated end-to-end) |
 | REQ-041 | Dependency baseline maintained | DEPENDENCY_BASELINE_SCHOLESA.md | Review: DEP-BASELINE-CHK | ✅ (updated with flutter + google_fonts) |
 | REQ-042 | Firestore/Storage rules test harness | firestore.rules, storage.rules, src/__tests__/rules.test.ts | Jest: RULES-TEST-01 | ✅ |

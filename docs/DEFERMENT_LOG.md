@@ -1,24 +1,15 @@
 # Deferment Log
 
-These requirements are deferred while the web stack (Next.js/PWA/Cloud Run) remains paused. Flutter equivalents for data models/repos are implemented; revisit when re-enabling web.
+These requirements remain deferred because the current repo still lacks closure-grade proof for them. The list below is narrowed to items that could not be honestly completed from the present code and evidence.
 
 | Req ID | Reason | Notes |
 | --- | --- | --- |
-| REQ-024 to REQ-027 | Web dashboards (parent/site/partner/HQ) paused | Flutter equivalents pending; resume with web stack. |
-| REQ-031 | Web invariants + tests paused | Flutter client-side validation added; formal web tests remain deferred. |
-| REQ-033 | Web unit tests suite | Run/extend when web stack resumes. |
-| REQ-034 | Web smoke/QA scripts | Execute after web reactivation. |
-| REQ-035 | Web build/PWA readiness | Hold until web stack re-enabled. |
-| REQ-036 | Cloud Run/API build | Hold until web/API resumed. |
-| REQ-039 | Web offline fallback page | PWA stack paused. |
-| REQ-040 | Web i18n coverage | Web paused; translations on hold. |
-| REQ-043 | CI checks (web) | Pipeline paused; re-enable with web. |
+| REQ-033 | Web unit tests suite | Referenced `src/__tests__/models.test.ts`, `routing.test.ts`, and `invariants.test.ts` are not present in the current repo state, so `npm test` cannot prove the requested suite yet. |
+| REQ-036 | Cloud Run/API build | Deployment docs and Dockerfile exist, but no current repo-level API health endpoint/build proof was found to satisfy `API-01` honestly. |
 
 ## Re-enable Checklist
-1) Unpause web stack; set env vars.
-2) Run `npm install` and `npm test`.
-3) Run `npm run build` and address PWA/runtimeCaching.
-4) Resume repos/tests for remaining deferred items (REQ-024–027, 031, 033–036, 039–040, 043).
+1) Recreate or relink the intended web unit-test suite for models, routing, and invariants, then run `npm test` for REQ-033.
+2) Decide the canonical API surface for REQ-036, capture a successful `API-01` build path, and record a passing health probe against that surface.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
