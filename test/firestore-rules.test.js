@@ -232,6 +232,10 @@ beforeEach(async () => {
       status: 'materialized',
       threshold: 25,
       thresholdMet: true,
+      mergeArtifactId: 'fl_merge_demo_1',
+      mergeArtifactStatus: 'generated',
+      mergeStrategy: 'prototype_weighted_metadata_digest',
+      boundedDigest: 'sha256:digest-1',
       triggerSummaryId: 'fl_update_1',
       summaryIds: ['fl_update_1'],
       summaryCount: 1,
@@ -242,6 +246,25 @@ beforeEach(async () => {
       averageUpdateNorm: 3.2,
       schemaVersions: ['v1'],
       runtimeTargets: ['flutter_mobile'],
+      createdBy: siteAdminUser.uid,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'federatedLearningMergeArtifacts', 'fl_merge_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      aggregationRunId: 'fl_agg_demo_1',
+      status: 'generated',
+      mergeStrategy: 'prototype_weighted_metadata_digest',
+      boundedDigest: 'sha256:digest-1',
+      sampleCount: 18,
+      summaryCount: 1,
+      distinctSiteCount: 1,
+      schemaVersions: ['v1'],
+      runtimeTargets: ['flutter_mobile'],
+      maxVectorLength: 128,
+      totalPayloadBytes: 2048,
+      averageUpdateNorm: 3.2,
       createdBy: siteAdminUser.uid,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -522,6 +545,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningAggregationRuns', 'fl_agg_demo_1')),
+    );
+  });
+
+  test('HQ can read bounded merge artifacts', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningMergeArtifacts', 'fl_merge_demo_1')),
+    );
+  });
+
+  test('site admins cannot read merge artifacts directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningMergeArtifacts', 'fl_merge_demo_1')),
     );
   });
 });

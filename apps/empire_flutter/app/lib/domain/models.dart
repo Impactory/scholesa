@@ -2972,6 +2972,10 @@ class FederatedLearningAggregationRunModel {
     required this.status,
     required this.threshold,
     required this.thresholdMet,
+    this.mergeArtifactId,
+    this.mergeArtifactStatus,
+    this.mergeStrategy,
+    this.boundedDigest,
     required this.triggerSummaryId,
     required this.summaryIds,
     required this.summaryCount,
@@ -2992,6 +2996,10 @@ class FederatedLearningAggregationRunModel {
   final String status;
   final int threshold;
   final bool thresholdMet;
+  final String? mergeArtifactId;
+  final String? mergeArtifactStatus;
+  final String? mergeStrategy;
+  final String? boundedDigest;
   final String triggerSummaryId;
   final List<String> summaryIds;
   final int summaryCount;
@@ -3025,6 +3033,10 @@ class FederatedLearningAggregationRunModel {
       status: data['status'] as String? ?? 'materialized',
       threshold: (data['threshold'] as num?)?.toInt() ?? 0,
       thresholdMet: data['thresholdMet'] as bool? ?? false,
+      mergeArtifactId: data['mergeArtifactId'] as String?,
+      mergeArtifactStatus: data['mergeArtifactStatus'] as String?,
+      mergeStrategy: data['mergeStrategy'] as String?,
+      boundedDigest: data['boundedDigest'] as String?,
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
@@ -3046,6 +3058,10 @@ class FederatedLearningAggregationRunModel {
         'status': status,
         'threshold': threshold,
         'thresholdMet': thresholdMet,
+        'mergeArtifactId': mergeArtifactId,
+        'mergeArtifactStatus': mergeArtifactStatus,
+        'mergeStrategy': mergeStrategy,
+        'boundedDigest': boundedDigest,
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'summaryCount': summaryCount,
@@ -3056,6 +3072,100 @@ class FederatedLearningAggregationRunModel {
         'averageUpdateNorm': averageUpdateNorm,
         'schemaVersions': schemaVersions,
         'runtimeTargets': runtimeTargets,
+        'createdBy': createdBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningMergeArtifactModel {
+  const FederatedLearningMergeArtifactModel({
+    required this.id,
+    required this.experimentId,
+    required this.aggregationRunId,
+    required this.status,
+    required this.mergeStrategy,
+    required this.boundedDigest,
+    required this.sampleCount,
+    required this.summaryCount,
+    required this.distinctSiteCount,
+    required this.schemaVersions,
+    required this.runtimeTargets,
+    required this.maxVectorLength,
+    required this.totalPayloadBytes,
+    required this.averageUpdateNorm,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String aggregationRunId;
+  final String status;
+  final String mergeStrategy;
+  final String boundedDigest;
+  final int sampleCount;
+  final int summaryCount;
+  final int distinctSiteCount;
+  final List<String> schemaVersions;
+  final List<String> runtimeTargets;
+  final int maxVectorLength;
+  final int totalPayloadBytes;
+  final double averageUpdateNorm;
+  final String? createdBy;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningMergeArtifactModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningMergeArtifactModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningMergeArtifactModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningMergeArtifactModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      status: data['status'] as String? ?? 'generated',
+      mergeStrategy: data['mergeStrategy'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
+      summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
+      distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
+      maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
+      totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
+      averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+      createdBy: data['createdBy'] as String?,
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'aggregationRunId': aggregationRunId,
+        'status': status,
+        'mergeStrategy': mergeStrategy,
+        'boundedDigest': boundedDigest,
+        'sampleCount': sampleCount,
+        'summaryCount': summaryCount,
+        'distinctSiteCount': distinctSiteCount,
+        'schemaVersions': schemaVersions,
+        'runtimeTargets': runtimeTargets,
+        'maxVectorLength': maxVectorLength,
+        'totalPayloadBytes': totalPayloadBytes,
+        'averageUpdateNorm': averageUpdateNorm,
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),

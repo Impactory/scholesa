@@ -43,8 +43,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   List<_FeatureFlag> _flags = <_FeatureFlag>[];
   List<FederatedLearningExperimentModel> _experiments =
       <FederatedLearningExperimentModel>[];
-  Map<String, FederatedLearningAggregationRunModel> _latestAggregationRuns =
-      <String, FederatedLearningAggregationRunModel>{};
+  Map<String, List<FederatedLearningAggregationRunModel>>
+    _aggregationRunsByExperiment =
+    <String, List<FederatedLearningAggregationRunModel>>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -303,8 +304,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Widget _buildExperimentCard(FederatedLearningExperimentModel experiment) {
+    final List<FederatedLearningAggregationRunModel> runs =
+      _aggregationRunsByExperiment[experiment.id] ??
+        const <FederatedLearningAggregationRunModel>[];
     final FederatedLearningAggregationRunModel? latestRun =
-        _latestAggregationRuns[experiment.id];
+      runs.isNotEmpty ? runs.first : null;
     final Color statusColor = switch (experiment.status) {
       'active' => Colors.green,
       'pilot_ready' => Colors.blue,
@@ -425,8 +429,63 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
+            if (runs.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                _tHqFeatureFlags(context, 'Recent aggregation runs'),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...runs.take(3).map(_buildAggregationRunRow),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAggregationRunRow(FederatedLearningAggregationRunModel run) {
+    final String artifactStatus =
+        (run.mergeArtifactStatus ?? '').trim().isNotEmpty
+            ? run.mergeArtifactStatus!
+            : 'missing';
+    final String artifactId = (run.mergeArtifactId ?? '').trim();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Run ${run.id}: ${run.totalSampleCount} samples from ${run.summaryCount} summaries across ${run.distinctSiteCount} sites.',
+            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              artifactId.isNotEmpty
+                  ? 'Artifact $artifactStatus: $artifactId'
+                  : 'Artifact $artifactStatus',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -561,21 +620,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
               return bMillis.compareTo(aMillis);
             });
-      final Map<String, FederatedLearningAggregationRunModel> latestRuns =
-          <String, FederatedLearningAggregationRunModel>{};
+      final Map<String, List<FederatedLearningAggregationRunModel>> runsByExp =
+          <String, List<FederatedLearningAggregationRunModel>>{};
       for (final FederatedLearningAggregationRunModel run in runs) {
-        latestRuns.putIfAbsent(run.experimentId, () => run);
+        runsByExp.putIfAbsent(
+          run.experimentId,
+          () => <FederatedLearningAggregationRunModel>[],
+        ).add(run);
       }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
-        _latestAggregationRuns = latestRuns;
+        _aggregationRunsByExperiment = runsByExp;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _experiments = <FederatedLearningExperimentModel>[];
-        _latestAggregationRuns = <String, FederatedLearningAggregationRunModel>{};
+        _aggregationRunsByExperiment =
+            <String, List<FederatedLearningAggregationRunModel>>{};
       });
     } finally {
       if (mounted) {
