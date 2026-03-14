@@ -2,11 +2,10 @@
 
 These requirements remain deferred because the current repo still lacks closure-grade proof for them. The list below is narrowed to items that could not be honestly completed from the present code and evidence.
 
-| Req ID | Reason | Notes |
-| --- | --- | --- |
+Current status: No remaining deferred items in this narrowed implementation/proof log.
 
 ## Re-enable Checklist
-
+1) Re-open this log only if a requirement drops out of closure-grade proof again.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
