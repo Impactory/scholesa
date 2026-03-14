@@ -866,7 +866,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             child: Text(
                               _tHqFeatureFlags(
                                 context,
-                                'Showing ${startIndex + 1}-${endIndex} of ${filteredRuns.length}',
+                                'Showing ${startIndex + 1}-$endIndex of ${filteredRuns.length}',
                               ),
                               style: const TextStyle(
                                 fontSize: 12,
@@ -1225,7 +1225,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               child: Text(
                                 _tHqFeatureFlags(
                                   context,
-                                  'Showing ${startIndex + 1}-${endIndex} of ${filteredPackages.length}',
+                                  'Showing ${startIndex + 1}-$endIndex of ${filteredPackages.length}',
                                 ),
                                 style: const TextStyle(
                                   fontSize: 12,
