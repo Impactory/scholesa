@@ -959,6 +959,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   promotion?.status != 'approved_for_eval') {
                 return false;
               }
+              if (promotionFilter == 'hold' && promotion?.status != 'hold') {
+                return false;
+              }
               if (promotionFilter == 'awaiting' && promotion != null) {
                 return false;
               }
@@ -990,7 +993,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               return _promotionRecordsByPackageId[package.id]?.status ==
                   'approved_for_eval';
             }).length;
-            final int awaitingCount = filteredPackages.length - approvedCount;
+            final int holdCount = filteredPackages.where((package) {
+              return _promotionRecordsByPackageId[package.id]?.status == 'hold';
+            }).length;
+            final int awaitingCount =
+                filteredPackages.length - approvedCount - holdCount;
             final int sampleTotal = filteredPackages.fold<int>(
               0,
               (int total, FederatedLearningCandidateModelPackageModel package) =>
@@ -1114,6 +1121,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 });
                               },
                             ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'On hold'),
+                              ),
+                              selected: promotionFilter == 'hold',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  promotionFilter = value ? 'hold' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -1134,6 +1153,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               'Awaiting promotion: $awaitingCount',
                               Icons.hourglass_bottom_rounded,
                               color: Colors.orange,
+                            ),
+                            _buildExperimentChip(
+                              'On hold: $holdCount',
+                              Icons.pause_circle_outline_rounded,
+                              color: Colors.redAccent,
                             ),
                             _buildExperimentChip(
                               'Samples: $sampleTotal',
@@ -1167,6 +1191,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     _buildCandidatePackageHistoryEntry(
                                   package,
                                   _promotionRecordsByPackageId[package.id],
+                                  onApprove: () =>
+                                      _showCandidatePromotionDecisionDialog(
+                                    experiment: experiment,
+                                    package: package,
+                                    existingPromotion:
+                                        _promotionRecordsByPackageId[package.id],
+                                    initialStatus: 'approved_for_eval',
+                                    refreshDialog: () {
+                                      setDialogState(() {});
+                                    },
+                                  ),
+                                  onHold: () =>
+                                      _showCandidatePromotionDecisionDialog(
+                                    experiment: experiment,
+                                    package: package,
+                                    existingPromotion:
+                                        _promotionRecordsByPackageId[package.id],
+                                    initialStatus: 'hold',
+                                    refreshDialog: () {
+                                      setDialogState(() {});
+                                    },
+                                  ),
                                 ),
                               )
                               .toList(),

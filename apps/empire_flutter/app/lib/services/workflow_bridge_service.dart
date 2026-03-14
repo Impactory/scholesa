@@ -211,6 +211,16 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
+  Future<String?> upsertFederatedLearningCandidatePromotionRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload = await _call(
+      'upsertFederatedLearningCandidatePromotionRecord',
+      data,
+    );
+    return _asTrimmedString(payload['id']);
+  }
+
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
