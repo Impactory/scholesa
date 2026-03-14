@@ -2974,6 +2974,9 @@ class FederatedLearningAggregationRunModel {
     required this.thresholdMet,
     this.mergeArtifactId,
     this.mergeArtifactStatus,
+    this.candidateModelPackageId,
+    this.candidateModelPackageStatus,
+    this.candidateModelPackageFormat,
     this.mergeStrategy,
     this.boundedDigest,
     required this.triggerSummaryId,
@@ -2998,6 +3001,9 @@ class FederatedLearningAggregationRunModel {
   final bool thresholdMet;
   final String? mergeArtifactId;
   final String? mergeArtifactStatus;
+  final String? candidateModelPackageId;
+  final String? candidateModelPackageStatus;
+  final String? candidateModelPackageFormat;
   final String? mergeStrategy;
   final String? boundedDigest;
   final String triggerSummaryId;
@@ -3035,6 +3041,11 @@ class FederatedLearningAggregationRunModel {
       thresholdMet: data['thresholdMet'] as bool? ?? false,
       mergeArtifactId: data['mergeArtifactId'] as String?,
       mergeArtifactStatus: data['mergeArtifactStatus'] as String?,
+        candidateModelPackageId: data['candidateModelPackageId'] as String?,
+        candidateModelPackageStatus:
+          data['candidateModelPackageStatus'] as String?,
+        candidateModelPackageFormat:
+          data['candidateModelPackageFormat'] as String?,
       mergeStrategy: data['mergeStrategy'] as String?,
       boundedDigest: data['boundedDigest'] as String?,
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
@@ -3060,6 +3071,9 @@ class FederatedLearningAggregationRunModel {
         'thresholdMet': thresholdMet,
         'mergeArtifactId': mergeArtifactId,
         'mergeArtifactStatus': mergeArtifactStatus,
+        'candidateModelPackageId': candidateModelPackageId,
+        'candidateModelPackageStatus': candidateModelPackageStatus,
+        'candidateModelPackageFormat': candidateModelPackageFormat,
         'mergeStrategy': mergeStrategy,
         'boundedDigest': boundedDigest,
         'triggerSummaryId': triggerSummaryId,
@@ -3157,6 +3171,112 @@ class FederatedLearningMergeArtifactModel {
         'aggregationRunId': aggregationRunId,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'boundedDigest': boundedDigest,
+        'sampleCount': sampleCount,
+        'summaryCount': summaryCount,
+        'distinctSiteCount': distinctSiteCount,
+        'schemaVersions': schemaVersions,
+        'runtimeTargets': runtimeTargets,
+        'maxVectorLength': maxVectorLength,
+        'totalPayloadBytes': totalPayloadBytes,
+        'averageUpdateNorm': averageUpdateNorm,
+        'createdBy': createdBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningCandidateModelPackageModel {
+  const FederatedLearningCandidateModelPackageModel({
+    required this.id,
+    required this.experimentId,
+    required this.aggregationRunId,
+    required this.mergeArtifactId,
+    required this.status,
+    required this.packageFormat,
+    required this.rolloutStatus,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.sampleCount,
+    required this.summaryCount,
+    required this.distinctSiteCount,
+    required this.schemaVersions,
+    required this.runtimeTargets,
+    required this.maxVectorLength,
+    required this.totalPayloadBytes,
+    required this.averageUpdateNorm,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String aggregationRunId;
+  final String mergeArtifactId;
+  final String status;
+  final String packageFormat;
+  final String rolloutStatus;
+  final String packageDigest;
+  final String boundedDigest;
+  final int sampleCount;
+  final int summaryCount;
+  final int distinctSiteCount;
+  final List<String> schemaVersions;
+  final List<String> runtimeTargets;
+  final int maxVectorLength;
+  final int totalPayloadBytes;
+  final double averageUpdateNorm;
+  final String? createdBy;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningCandidateModelPackageModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningCandidateModelPackageModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningCandidateModelPackageModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningCandidateModelPackageModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      status: data['status'] as String? ?? 'staged',
+      packageFormat: data['packageFormat'] as String? ?? '',
+      rolloutStatus: data['rolloutStatus'] as String? ?? '',
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
+      summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
+      distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
+      maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
+      totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
+      averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+      createdBy: data['createdBy'] as String?,
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'aggregationRunId': aggregationRunId,
+        'mergeArtifactId': mergeArtifactId,
+        'status': status,
+        'packageFormat': packageFormat,
+        'rolloutStatus': rolloutStatus,
+        'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
         'sampleCount': sampleCount,
         'summaryCount': summaryCount,

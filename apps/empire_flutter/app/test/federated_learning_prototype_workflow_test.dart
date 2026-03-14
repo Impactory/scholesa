@@ -19,6 +19,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? siteExperiments,
     List<Map<String, dynamic>>? aggregationRuns,
     List<Map<String, dynamic>>? mergeArtifacts,
+    List<Map<String, dynamic>>? candidatePackages,
   })  : _flags =
             List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
         _experiments = List<Map<String, dynamic>>.from(
@@ -32,6 +33,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _mergeArtifacts = List<Map<String, dynamic>>.from(
           mergeArtifacts ?? <Map<String, dynamic>>[],
         ),
+        _candidatePackages = List<Map<String, dynamic>>.from(
+          candidatePackages ?? <Map<String, dynamic>>[],
+        ),
         super(functions: null);
 
   final List<Map<String, dynamic>> _flags;
@@ -39,6 +43,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _siteExperiments;
   final List<Map<String, dynamic>> _aggregationRuns;
   final List<Map<String, dynamic>> _mergeArtifacts;
+  final List<Map<String, dynamic>> _candidatePackages;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
 
   @override
@@ -143,6 +148,23 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningCandidateModelPackages({
+    String? experimentId,
+    int limit = 60,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped =
+        (experimentId == null || experimentId.isEmpty)
+            ? _candidatePackages
+            : _candidatePackages.where(
+                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+              );
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -170,6 +192,12 @@ Map<String, dynamic> _aggregationRunRow({
     'thresholdMet': true,
     'mergeArtifactId': mergeArtifactId,
     'mergeArtifactStatus': 'generated',
+    'candidateModelPackageId': mergeArtifactId.isEmpty
+      ? ''
+      : mergeArtifactId.replaceFirst('fl_merge_', 'fl_pkg_'),
+    'candidateModelPackageStatus': mergeArtifactId.isEmpty ? '' : 'staged',
+    'candidateModelPackageFormat':
+      mergeArtifactId.isEmpty ? '' : 'bounded_metadata_manifest',
     'mergeStrategy': 'prototype_weighted_metadata_digest',
     'boundedDigest': boundedDigest,
     'triggerSummaryId': 'update-2',
@@ -183,6 +211,34 @@ Map<String, dynamic> _aggregationRunRow({
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
+  };
+}
+
+Map<String, dynamic> _candidatePackageRow({
+  String id = 'fl_pkg_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String aggregationRunId = 'fl_agg_1',
+  String mergeArtifactId = 'fl_merge_1',
+  String boundedDigest = 'sha256:digest-1',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'aggregationRunId': aggregationRunId,
+    'mergeArtifactId': mergeArtifactId,
+    'status': 'staged',
+    'packageFormat': 'bounded_metadata_manifest',
+    'rolloutStatus': 'not_distributed',
+    'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
+    'boundedDigest': boundedDigest,
+    'sampleCount': 24,
+    'summaryCount': 2,
+    'distinctSiteCount': 2,
+    'schemaVersions': <String>['v1'],
+    'runtimeTargets': <String>['flutter_mobile'],
+    'maxVectorLength': 128,
+    'totalPayloadBytes': 1792,
+    'averageUpdateNorm': 1.35,
   };
 }
 
@@ -333,21 +389,49 @@ void main() {
       'averageUpdateNorm': 2.4,
       'createdAt': DateTime.now(),
     });
+    await firestore
+      .collection('federatedLearningCandidateModelPackages')
+      .doc('fl_pkg_1')
+      .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'aggregationRunId': 'fl_agg_1',
+      'mergeArtifactId': 'fl_merge_1',
+      'status': 'staged',
+      'packageFormat': 'bounded_metadata_manifest',
+      'rolloutStatus': 'not_distributed',
+      'packageDigest': 'sha256:pkg-1',
+      'boundedDigest': 'sha256:digest-1',
+      'sampleCount': 14,
+      'summaryCount': 1,
+      'distinctSiteCount': 1,
+      'schemaVersions': <String>['v1'],
+      'runtimeTargets': <String>['flutter_mobile'],
+      'maxVectorLength': 128,
+      'totalPayloadBytes': 1024,
+      'averageUpdateNorm': 2.4,
+      'createdAt': DateTime.now(),
+    });
 
     final FederatedLearningAggregationRunRepository aggregationRepository =
       FederatedLearningAggregationRunRepository(firestore: firestore);
     final FederatedLearningMergeArtifactRepository artifactRepository =
       FederatedLearningMergeArtifactRepository(firestore: firestore);
+    final FederatedLearningCandidateModelPackageRepository packageRepository =
+      FederatedLearningCandidateModelPackageRepository(firestore: firestore);
     final List<FederatedLearningAggregationRunModel> aggregationRuns =
       await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningMergeArtifactModel> mergeArtifacts =
       await artifactRepository.listByExperiment('fl_exp_literacy_pilot');
+    final List<FederatedLearningCandidateModelPackageModel> candidatePackages =
+      await packageRepository.listByExperiment('fl_exp_literacy_pilot');
 
     expect(aggregationRuns, hasLength(1));
     expect(aggregationRuns.single.totalSampleCount, 14);
     expect(aggregationRuns.single.mergeArtifactStatus, 'generated');
     expect(mergeArtifacts, hasLength(1));
     expect(mergeArtifacts.single.aggregationRunId, 'fl_agg_1');
+    expect(candidatePackages, hasLength(1));
+    expect(candidatePackages.single.mergeArtifactId, 'fl_merge_1');
 
     await firestore
         .collection('federatedLearningUpdateSummaries')
@@ -505,6 +589,15 @@ void main() {
           boundedDigest: 'sha256:digest-2',
         ),
       ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
     );
 
     await tester.pumpWidget(
@@ -525,6 +618,10 @@ void main() {
       find.text('Artifact generated: fl_merge_1'),
       findsWidgets,
     );
+    expect(
+      find.text('Latest candidate package: fl_pkg_1 (bounded_metadata_manifest)'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('View history').first);
     await tester.pumpAndSettle();
@@ -544,35 +641,52 @@ void main() {
     expect(find.text('Latest only'), findsOneWidget);
     expect(find.text('Artifact generated'), findsWidgets);
     expect(find.text('Artifact missing'), findsOneWidget);
+    expect(find.text('Artifacts generated: 2'), findsOneWidget);
+    expect(find.text('Artifacts missing: 1'), findsOneWidget);
+    expect(find.text('Packages staged: 2'), findsOneWidget);
+    expect(find.text('Samples: 62'), findsOneWidget);
     expect(
       find.text('Strategy: prototype_weighted_metadata_digest'),
       findsWidgets,
     );
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
+    expect(find.text('Package: fl_pkg_1'), findsWidgets);
+    expect(
+      find.text('Package format: bounded_metadata_manifest'),
+      findsWidgets,
+    );
     expect(find.text('Showing 1-2 of 3'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Next'));
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    expect(find.text('Artifact missing'), findsOneWidget);
+    expect(find.text('Artifact missing'), findsWidgets);
     expect(find.text('Digest: sha256:digest-3'), findsOneWidget);
     expect(find.text('Showing 3-3 of 3'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Previous'));
     await tester.tap(find.text('Previous'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Latest only'));
     await tester.tap(find.text('Latest only'));
     await tester.pumpAndSettle();
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    expect(find.text('Packages staged: 1'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Latest only'));
     await tester.tap(find.text('Latest only'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Artifact missing'));
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(find.text('Artifact missing'), findsWidgets);
     expect(find.text('Digest: sha256:digest-3'), findsOneWidget);
+    expect(find.text('Packages staged: 0'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Artifact missing'));
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 

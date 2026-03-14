@@ -1614,7 +1614,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   experiment: Record<string, unknown>;
   actorId: string;
   triggerSummaryId: string;
-}): Promise<{ runId: string; artifactId: string; created: boolean } | null> {
+}): Promise<{ runId: string; artifactId: string; packageId: string; created: boolean } | null> {
   const aggregateThreshold = asPositiveInteger(experiment.aggregateThreshold, 25);
   const pendingSnap = await admin.firestore()
     .collection('federatedLearningUpdateSummaries')

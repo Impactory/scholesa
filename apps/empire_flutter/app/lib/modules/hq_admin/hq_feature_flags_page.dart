@@ -50,6 +50,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, List<FederatedLearningMergeArtifactModel>>
     _mergeArtifactsByExperiment =
     <String, List<FederatedLearningMergeArtifactModel>>{};
+  Map<String, List<FederatedLearningCandidateModelPackageModel>>
+    _candidatePackagesByExperiment =
+    <String, List<FederatedLearningCandidateModelPackageModel>>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -311,6 +314,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final List<FederatedLearningAggregationRunModel> runs =
       _aggregationRunsByExperiment[experiment.id] ??
         const <FederatedLearningAggregationRunModel>[];
+    final Map<String, FederatedLearningCandidateModelPackageModel>
+        candidatePackagesByRunId = {
+      for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+              const <FederatedLearningCandidateModelPackageModel>[])
+        package.aggregationRunId: package,
+    };
+    final FederatedLearningCandidateModelPackageModel? latestPackage =
+        runs.isNotEmpty ? candidatePackagesByRunId[runs.first.id] : null;
     final FederatedLearningAggregationRunModel? latestRun =
       runs.isNotEmpty ? runs.first : null;
     final Color statusColor = switch (experiment.status) {
@@ -439,6 +451,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
+            if (latestPackage != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest candidate package: ${latestPackage.id} (${latestPackage.packageFormat})',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
             if (runs.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               Text(
@@ -449,7 +474,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              ...runs.take(3).map(_buildAggregationRunRow),
+              ...runs.take(3).map(
+                (FederatedLearningAggregationRunModel run) =>
+                    _buildAggregationRunRow(
+                  run,
+                  candidatePackagesByRunId[run.id],
+                ),
+              ),
             ],
           ],
         ),
@@ -457,12 +488,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
-  Widget _buildAggregationRunRow(FederatedLearningAggregationRunModel run) {
+  Widget _buildAggregationRunRow(
+    FederatedLearningAggregationRunModel run,
+    FederatedLearningCandidateModelPackageModel? candidatePackage,
+  ) {
     final String artifactStatus =
         (run.mergeArtifactStatus ?? '').trim().isNotEmpty
             ? run.mergeArtifactStatus!
             : 'missing';
     final String artifactId = (run.mergeArtifactId ?? '').trim();
+    final String packageId =
+        (candidatePackage?.id ?? run.candidateModelPackageId ?? '').trim();
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
@@ -495,6 +531,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (packageId.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Package staged: $packageId'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -512,6 +558,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               const <FederatedLearningMergeArtifactModel>[])
         artifact.aggregationRunId: artifact,
     };
+      final Map<String, FederatedLearningCandidateModelPackageModel>
+        candidatePackagesByRunId = {
+        for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+            const <FederatedLearningCandidateModelPackageModel>[])
+        package.aggregationRunId: package,
+      };
     const int pageSize = 2;
     String filterQuery = '';
     int pageIndex = 0;
@@ -576,6 +629,29 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 filteredRuns.first,
               ];
             }
+            final int generatedArtifactCount = filteredRuns.where(
+              (FederatedLearningAggregationRunModel run) {
+                final FederatedLearningMergeArtifactModel? artifact =
+                    artifactsByRunId[run.id];
+                return ((artifact?.id ?? run.mergeArtifactId ?? '').trim()
+                    .isNotEmpty);
+              },
+            ).length;
+            final int missingArtifactCount =
+                filteredRuns.length - generatedArtifactCount;
+            final int stagedPackageCount = filteredRuns.where(
+              (FederatedLearningAggregationRunModel run) {
+                final FederatedLearningCandidateModelPackageModel? package =
+                    candidatePackagesByRunId[run.id];
+                return ((package?.id ?? run.candidateModelPackageId ?? '').trim()
+                    .isNotEmpty);
+              },
+            ).length;
+            final int sampleTotal = filteredRuns.fold<int>(
+              0,
+              (int total, FederatedLearningAggregationRunModel run) =>
+                  total + run.totalSampleCount,
+            );
             final int pageCount = filteredRuns.isEmpty
                 ? 1
                 : ((filteredRuns.length - 1) ~/ pageSize) + 1;
@@ -600,8 +676,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
               content: SizedBox(
                 width: 640,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     if (runs.isNotEmpty) ...<Widget>[
@@ -695,38 +772,66 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _buildExperimentChip(
+                            'Runs: ${filteredRuns.length}',
+                            Icons.timeline_rounded,
+                          ),
+                          _buildExperimentChip(
+                            'Artifacts generated: $generatedArtifactCount',
+                            Icons.inventory_2_rounded,
+                            color: Colors.green,
+                          ),
+                          _buildExperimentChip(
+                            'Artifacts missing: $missingArtifactCount',
+                            Icons.error_outline_rounded,
+                            color: Colors.orange,
+                          ),
+                          _buildExperimentChip(
+                            'Packages staged: $stagedPackageCount',
+                            Icons.inventory_rounded,
+                            color: Colors.blue,
+                          ),
+                          _buildExperimentChip(
+                            'Samples: $sampleTotal',
+                            Icons.stacked_bar_chart_rounded,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                     ],
-                    Flexible(
-                      child: runs.isEmpty
-                          ? Text(
-                              _tHqFeatureFlags(
-                                context,
-                                'No aggregation runs have materialized for this experiment yet.',
+                    if (runs.isEmpty)
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'No aggregation runs have materialized for this experiment yet.',
+                        ),
+                      )
+                    else if (filteredRuns.isEmpty)
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'No aggregation runs match the current filter.',
+                        ),
+                      )
+                    else
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: visibleRuns
+                            .map(
+                              (FederatedLearningAggregationRunModel run) =>
+                                  _buildAggregationHistoryEntry(
+                                run,
+                                artifactsByRunId[run.id],
+                                candidatePackagesByRunId[run.id],
                               ),
                             )
-                          : filteredRuns.isEmpty
-                              ? Text(
-                                  _tHqFeatureFlags(
-                                    context,
-                                    'No aggregation runs match the current filter.',
-                                  ),
-                                )
-                              : SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: visibleRuns
-                                        .map(
-                                          (FederatedLearningAggregationRunModel run) =>
-                                              _buildAggregationHistoryEntry(
-                                            run,
-                                            artifactsByRunId[run.id],
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-                    ),
+                            .toList(),
+                      ),
                     if (filteredRuns.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 12),
                       Row(
@@ -766,7 +871,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ],
                       ),
                     ],
-                  ],
+                    ],
+                  ),
                 ),
               ),
               actions: <Widget>[
@@ -785,6 +891,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Widget _buildAggregationHistoryEntry(
     FederatedLearningAggregationRunModel run,
     FederatedLearningMergeArtifactModel? artifact,
+    FederatedLearningCandidateModelPackageModel? candidatePackage,
   ) {
     final String createdLabel = _formatTimestamp(run.createdAt);
     final String digest =
@@ -793,6 +900,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         (artifact?.mergeStrategy ?? run.mergeStrategy ?? '').trim();
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
+    final String packageId =
+      (candidatePackage?.id ?? run.candidateModelPackageId ?? '').trim();
+    final String packageFormat =
+      (candidatePackage?.packageFormat ??
+          run.candidateModelPackageFormat ??
+          '')
+        .trim();
 
     return Container(
       width: double.infinity,
@@ -838,6 +952,26 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(context, 'Strategy: $strategy'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (packageId.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Package: $packageId'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (packageFormat.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Package format: $packageFormat'),
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
@@ -979,6 +1113,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningExperiments(),
         _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
         _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
+        _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
       ]);
       final List<FederatedLearningExperimentModel> loaded =
           (payloads[0] as List<Map<String, dynamic>>)
@@ -1036,11 +1171,35 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           () => <FederatedLearningMergeArtifactModel>[],
         ).add(artifact);
       }
+      final List<FederatedLearningCandidateModelPackageModel> packages =
+          (payloads[3] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningCandidateModelPackageModel.fromMap(
+                    (row['id'] as String?) ?? 'candidate_package',
+                    row,
+                  ))
+              .toList()
+            ..sort((a, b) {
+              final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+              final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+              return bMillis.compareTo(aMillis);
+            });
+      final Map<String, List<FederatedLearningCandidateModelPackageModel>>
+          packagesByExp =
+          <String, List<FederatedLearningCandidateModelPackageModel>>{};
+      for (final FederatedLearningCandidateModelPackageModel package
+          in packages) {
+        packagesByExp.putIfAbsent(
+          package.experimentId,
+          () => <FederatedLearningCandidateModelPackageModel>[],
+        ).add(package);
+      }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
         _aggregationRunsByExperiment = runsByExp;
         _mergeArtifactsByExperiment = artifactsByExp;
+        _candidatePackagesByExperiment = packagesByExp;
       });
     } catch (_) {
       if (!mounted) return;
@@ -1050,6 +1209,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             <String, List<FederatedLearningAggregationRunModel>>{};
         _mergeArtifactsByExperiment =
             <String, List<FederatedLearningMergeArtifactModel>>{};
+        _candidatePackagesByExperiment =
+            <String, List<FederatedLearningCandidateModelPackageModel>>{};
       });
     } finally {
       if (mounted) {
