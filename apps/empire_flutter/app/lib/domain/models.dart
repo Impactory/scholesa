@@ -3983,6 +3983,60 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
 }
 
 @immutable
+class FederatedLearningRuntimeRolloutEscalationRecordModel {
+  const FederatedLearningRuntimeRolloutEscalationRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.deliveryRecordId,
+    required this.status,
+    required this.fallbackCount,
+    required this.pendingCount,
+    this.ownerUserId,
+    this.notes,
+    this.resolvedBy,
+    this.resolvedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String deliveryRecordId;
+  final String status;
+  final int fallbackCount;
+  final int pendingCount;
+  final String? ownerUserId;
+  final String? notes;
+  final String? resolvedBy;
+  final Timestamp? resolvedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningRuntimeRolloutEscalationRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeRolloutEscalationRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      status: data['status'] as String? ?? 'open',
+      fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
+      pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
+      ownerUserId: data['ownerUserId'] as String?,
+      notes: data['notes'] as String?,
+      resolvedBy: data['resolvedBy'] as String?,
+      resolvedAt: _timestampOrNull(data['resolvedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+}
+
+@immutable
 class FederatedLearningRuntimeRolloutAuditEventModel {
   const FederatedLearningRuntimeRolloutAuditEventModel({
     required this.id,
@@ -4010,6 +4064,9 @@ class FederatedLearningRuntimeRolloutAuditEventModel {
   String get status => details['status'] as String? ?? '';
   String get runtimeTarget => details['runtimeTarget'] as String? ?? '';
   String get manifestDigest => details['manifestDigest'] as String? ?? '';
+  String get notes => details['notes'] as String? ?? '';
+  String get ownerUserId => details['ownerUserId'] as String? ?? '';
+  String get acknowledgedBy => details['acknowledgedBy'] as String? ?? '';
   int get fallbackCount => (details['fallbackCount'] as num?)?.toInt() ?? 0;
   int get pendingCount => (details['pendingCount'] as num?)?.toInt() ?? 0;
   List<String> get targetSiteIds => _stringListOrEmpty(details['targetSiteIds']);

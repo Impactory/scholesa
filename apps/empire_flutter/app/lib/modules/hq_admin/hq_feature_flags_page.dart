@@ -74,6 +74,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningRuntimeRolloutAlertRecordModel>
     _runtimeRolloutAlertsByDeliveryId =
     <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
+  Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
+    _runtimeRolloutEscalationsByDeliveryId =
+    <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -402,6 +405,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestRuntimeRolloutAlert = latestRuntimeDelivery == null
         ? null
         : _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
+    final FederatedLearningRuntimeRolloutEscalationRecordModel?
+      latestRuntimeRolloutEscalation = latestRuntimeDelivery == null
+        ? null
+        : _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
     final String runtimeRolloutAlert = runtimeRolloutHealth == null
       ? ''
       : _buildRuntimeRolloutAlert(
@@ -422,6 +429,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       rolloutAlertAcknowledged && latestRuntimeRolloutAlert != null
         ? 'Acknowledged ${_formatTimestamp(latestRuntimeRolloutAlert.acknowledgedAt)} by ${latestRuntimeRolloutAlert.acknowledgedBy ?? "hq"}'
         : '';
+    final bool rolloutEscalationCurrent = runtimeRolloutHealth != null &&
+      _isRuntimeRolloutEscalationCurrent(
+        runtimeRolloutHealth,
+        latestRuntimeRolloutEscalation,
+      );
+    final String rolloutEscalationSummary = rolloutEscalationCurrent
+      ? _buildRuntimeRolloutEscalationSummary(latestRuntimeRolloutEscalation!)
+      : '';
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
       latestPromotionRevocation,
@@ -831,30 +846,65 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: latestRuntimeDelivery == null
-                            ? null
-                            : () => _showRuntimeRolloutAlertDialog(
-                                  experiment,
-                                  latestRuntimeDelivery,
-                                  runtimeRolloutHealth!,
-                                  latestRuntimeRolloutAlert,
-                                ),
-                        icon: Icon(
-                          rolloutAlertAcknowledged
-                              ? Icons.edit_note_rounded
-                              : Icons.task_alt_rounded,
-                        ),
-                        label: Text(
-                          _tHqFeatureFlags(
-                            context,
-                            rolloutAlertAcknowledged
-                                ? 'Update triage'
-                                : 'Acknowledge alert',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          TextButton.icon(
+                            onPressed: latestRuntimeDelivery == null
+                                ? null
+                                : () => _showRuntimeRolloutAlertDialog(
+                                      experiment,
+                                      latestRuntimeDelivery,
+                                      runtimeRolloutHealth!,
+                                      latestRuntimeRolloutAlert,
+                                    ),
+                            icon: Icon(
+                              rolloutAlertAcknowledged
+                                  ? Icons.edit_note_rounded
+                                  : Icons.task_alt_rounded,
+                            ),
+                            label: Text(
+                              _tHqFeatureFlags(
+                                context,
+                                rolloutAlertAcknowledged
+                                    ? 'Update triage'
+                                    : 'Acknowledge alert',
+                              ),
+                            ),
                           ),
-                        ),
+                          TextButton.icon(
+                            onPressed: latestRuntimeDelivery == null
+                                ? null
+                                : () => _showRuntimeRolloutEscalationDialog(
+                                      experiment,
+                                      latestRuntimeDelivery,
+                                      runtimeRolloutHealth!,
+                                      latestRuntimeRolloutEscalation,
+                                    ),
+                            icon: const Icon(Icons.support_agent_rounded),
+                            label: Text(
+                              _tHqFeatureFlags(
+                                context,
+                                rolloutEscalationCurrent
+                                    ? 'Update escalation'
+                                    : 'Escalate alert',
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    if (rolloutEscalationSummary.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 6),
+                      Text(
+                        _tHqFeatureFlags(context, rolloutEscalationSummary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -3998,6 +4048,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         experimentId: experiment.id,
         limit: 120,
       ),
+      _workflowBridge.listFederatedLearningRuntimeRolloutAuditEvents(
+        experimentId: experiment.id,
+        limit: 160,
+      ),
+      _workflowBridge.listFederatedLearningRuntimeRolloutEscalationRecords(
+        experimentId: experiment.id,
+        limit: 120,
+      ),
     ]);
 
     final List<FederatedLearningRuntimeRolloutAlertRecordModel> records =
@@ -4023,6 +4081,37 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     row,
                   )))
         delivery.id: delivery,
+    };
+    final Map<String, List<FederatedLearningRuntimeRolloutAuditEventModel>>
+        triageEventsByDeliveryId = <String, List<FederatedLearningRuntimeRolloutAuditEventModel>>{};
+    for (final FederatedLearningRuntimeRolloutAuditEventModel event
+        in (payloads[2] as List<Map<String, dynamic>>)
+            .map((Map<String, dynamic> row) =>
+                FederatedLearningRuntimeRolloutAuditEventModel.fromMap(
+                  (row['id'] as String?) ?? 'runtime_rollout_audit_event',
+                  row,
+                ))) {
+      if (!event.action.endsWith('runtime_rollout_alert_record.upsert')) {
+        continue;
+      }
+      triageEventsByDeliveryId
+          .putIfAbsent(event.deliveryRecordId, () => <FederatedLearningRuntimeRolloutAuditEventModel>[])
+          .add(event);
+    }
+    for (final List<FederatedLearningRuntimeRolloutAuditEventModel> events
+        in triageEventsByDeliveryId.values) {
+      events.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    }
+    final Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
+        escalationByDeliveryId = {
+      for (final FederatedLearningRuntimeRolloutEscalationRecordModel record
+          in (payloads[3] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeRolloutEscalationRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_rollout_escalation_record',
+                    row,
+                  )))
+        record.deliveryRecordId: record,
     };
     if (!mounted) return;
 
@@ -4053,6 +4142,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           .map((FederatedLearningRuntimeRolloutAlertRecordModel record) {
                         final FederatedLearningRuntimeDeliveryRecordModel?
                             delivery = deliveriesById[record.deliveryRecordId];
+                        final FederatedLearningRuntimeRolloutEscalationRecordModel?
+                          escalation = escalationByDeliveryId[record.deliveryRecordId];
+                        final List<FederatedLearningRuntimeRolloutAuditEventModel>
+                          triageEvents = triageEventsByDeliveryId[record.deliveryRecordId] ??
+                            const <FederatedLearningRuntimeRolloutAuditEventModel>[];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: Column(
@@ -4098,6 +4192,43 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   ),
                                   style: const TextStyle(
                                     color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (escalation != null) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    _buildRuntimeRolloutEscalationSummary(escalation),
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (triageEvents.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 8),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Triage history',
+                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                ...triageEvents.take(4).map(
+                                  (FederatedLearningRuntimeRolloutAuditEventModel event) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        _runtimeRolloutTriageHistoryLine(event),
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -4160,68 +4291,312 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(
-            _tHqFeatureFlags(
-              dialogContext,
-              deliveryRecordId == null
-                  ? 'Runtime rollout audit: ${experiment.name}'
-                  : 'Runtime rollout audit: ${experiment.name} · $deliveryRecordId',
-            ),
-          ),
-          content: SizedBox(
-            width: 760,
-            child: events.isEmpty
-                ? Text(
-                    _tHqFeatureFlags(
-                      dialogContext,
-                      'No rollout audit events recorded for this scope yet.',
+        String selectedPackageId = '';
+        String selectedSiteId = '';
+        final List<String> packageOptions = events
+            .map((event) => event.candidateModelPackageId)
+            .where((value) => value.trim().isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+        final List<String> siteOptions = <String>{
+          for (final FederatedLearningRuntimeRolloutAuditEventModel event in events)
+            if (event.siteId.trim().isNotEmpty) event.siteId,
+          for (final FederatedLearningRuntimeRolloutAuditEventModel event in events)
+            ...event.targetSiteIds.where((value) => value.trim().isNotEmpty),
+        }.toList()
+          ..sort();
+
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            final List<FederatedLearningRuntimeRolloutAuditEventModel> filteredEvents = events
+                .where((event) =>
+                    (selectedPackageId.isEmpty || event.candidateModelPackageId == selectedPackageId) &&
+                    (selectedSiteId.isEmpty ||
+                        event.siteId == selectedSiteId ||
+                        event.targetSiteIds.contains(selectedSiteId)))
+                .toList(growable: false);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  dialogContext,
+                  deliveryRecordId == null
+                      ? 'Runtime rollout audit: ${experiment.name}'
+                      : 'Runtime rollout audit: ${experiment.name} · $deliveryRecordId',
+                ),
+              ),
+              content: SizedBox(
+                width: 760,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (packageOptions.isNotEmpty || siteOptions.isNotEmpty) ...<Widget>[
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: <Widget>[
+                          if (packageOptions.isNotEmpty)
+                            SizedBox(
+                              width: 240,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: selectedPackageId,
+                                decoration: InputDecoration(
+                                  labelText: _tHqFeatureFlags(dialogContext, 'Package filter'),
+                                ),
+                                items: <DropdownMenuItem<String>>[
+                                  DropdownMenuItem(
+                                    value: '',
+                                    child: Text(_tHqFeatureFlags(dialogContext, 'All packages')),
+                                  ),
+                                  ...packageOptions.map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (String? value) {
+                                  setDialogState(() {
+                                    selectedPackageId = value ?? '';
+                                  });
+                                },
+                              ),
+                            ),
+                          if (siteOptions.isNotEmpty)
+                            SizedBox(
+                              width: 220,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: selectedSiteId,
+                                decoration: InputDecoration(
+                                  labelText: _tHqFeatureFlags(dialogContext, 'Site filter'),
+                                ),
+                                items: <DropdownMenuItem<String>>[
+                                  DropdownMenuItem(
+                                    value: '',
+                                    child: Text(_tHqFeatureFlags(dialogContext, 'All sites')),
+                                  ),
+                                  ...siteOptions.map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (String? value) {
+                                  setDialogState(() {
+                                    selectedSiteId = value ?? '';
+                                  });
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Text(
+                      _tHqFeatureFlags(
+                        dialogContext,
+                        'Showing ${filteredEvents.length} audit events',
+                      ),
+                      style: const TextStyle(
+                        color: ScholesaColors.textSecondary,
+                      ),
                     ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: events
-                          .map((FederatedLearningRuntimeRolloutAuditEventModel event) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filteredEvents.isEmpty
+                          ? SingleChildScrollView(
+                              child: Text(
                                 _tHqFeatureFlags(
                                   dialogContext,
-                                  _runtimeRolloutAuditTitle(event),
-                                ),
-                                style: const TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _tHqFeatureFlags(
-                                  dialogContext,
-                                  _runtimeRolloutAuditDetail(event),
-                                ),
-                                style: const TextStyle(
-                                  color: ScholesaColors.textSecondary,
+                                  'No rollout audit events recorded for this scope yet.',
                                 ),
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(growable: false),
+                            )
+                          : SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: filteredEvents
+                                    .map((FederatedLearningRuntimeRolloutAuditEventModel event) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            _runtimeRolloutAuditTitle(event),
+                                          ),
+                                          style: const TextStyle(fontWeight: FontWeight.w700),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            _runtimeRolloutAuditDetail(event),
+                                          ),
+                                          style: const TextStyle(
+                                            color: ScholesaColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(growable: false),
+                              ),
+                            ),
                     ),
-                  ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
-            ),
-          ],
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+  }
+
+  Future<void> _showRuntimeRolloutEscalationDialog(
+    FederatedLearningExperimentModel experiment,
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+    _RuntimeRolloutHealthSummary summary,
+    FederatedLearningRuntimeRolloutEscalationRecordModel? existingEscalation,
+  ) async {
+    String status = existingEscalation?.status ?? 'open';
+    final TextEditingController ownerController = TextEditingController(
+      text: existingEscalation?.ownerUserId ?? '',
+    );
+    final TextEditingController notesController = TextEditingController(
+      text: existingEscalation?.notes ?? '',
+    );
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  dialogContext,
+                  'Rollout escalation: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
+                          'Current issue: ${summary.fallbackCount} fallback · ${summary.pendingCount} pending',
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: status,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Escalation status'),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'open', child: Text('open')),
+                          DropdownMenuItem(
+                            value: 'investigating',
+                            child: Text('investigating'),
+                          ),
+                          DropdownMenuItem(value: 'resolved', child: Text('resolved')),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            status = value ?? 'open';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: ownerController,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Owner user ID'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Escalation notes'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Save')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    try {
+      await _workflowBridge.upsertFederatedLearningRuntimeRolloutEscalationRecord(
+        <String, dynamic>{
+          'deliveryRecordId': delivery.id,
+          'status': status,
+          'ownerUserId': ownerController.text.trim(),
+          'notes': notesController.text.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Rollout escalation saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Rollout escalation failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _showRuntimeActivationHistoryDialog(
@@ -4467,6 +4842,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         (summary.fallbackCount > 0 || summary.pendingCount > 0);
   }
 
+  bool _isRuntimeRolloutEscalationCurrent(
+    _RuntimeRolloutHealthSummary summary,
+    FederatedLearningRuntimeRolloutEscalationRecordModel? escalationRecord,
+  ) {
+    if (escalationRecord == null) {
+      return false;
+    }
+    return escalationRecord.fallbackCount == summary.fallbackCount &&
+        escalationRecord.pendingCount == summary.pendingCount &&
+        (summary.fallbackCount > 0 || summary.pendingCount > 0);
+  }
+
   String _buildRuntimeRolloutAlert(
     _RuntimeRolloutHealthSummary summary,
     FederatedLearningRuntimeRolloutAlertRecordModel? alertRecord,
@@ -4500,6 +4887,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (event.action.endsWith('runtime_activation_record.upsert')) {
       return '$timestamp · Activation ${event.siteId} · ${event.status}';
     }
+    if (event.action.endsWith('runtime_rollout_escalation_record.upsert')) {
+      return '$timestamp · Escalation ${event.deliveryRecordId} · ${event.status}';
+    }
     return '$timestamp · Alert triage ${event.deliveryRecordId} · ${event.status}';
   }
 
@@ -4515,7 +4905,34 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (event.action.endsWith('runtime_activation_record.upsert')) {
       return 'Delivery ${event.deliveryRecordId} · site ${event.siteId} · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
     }
+    if (event.action.endsWith('runtime_rollout_escalation_record.upsert')) {
+      final String owner = event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
+      return 'Delivery ${event.deliveryRecordId} · owner $owner · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
+    }
     return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
+  }
+
+  String _runtimeRolloutTriageHistoryLine(
+    FederatedLearningRuntimeRolloutAuditEventModel event,
+  ) {
+    final String notes = event.notes.trim().isEmpty ? '' : ' · ${event.notes.trim()}';
+    final String actor = event.userId?.trim().isNotEmpty == true ? event.userId!.trim() : 'hq';
+    return '${DateTime.fromMillisecondsSinceEpoch(event.timestamp, isUtc: true).toIso8601String()} · ${event.status} by $actor$notes';
+  }
+
+  String _buildRuntimeRolloutEscalationSummary(
+    FederatedLearningRuntimeRolloutEscalationRecordModel record,
+  ) {
+    final String owner = (record.ownerUserId ?? '').trim().isEmpty
+        ? 'unassigned'
+        : record.ownerUserId!.trim();
+    final String notes = (record.notes ?? '').trim().isEmpty
+        ? ''
+        : ' · ${(record.notes ?? '').trim()}';
+    final String resolved = record.status == 'resolved'
+        ? ' · resolved ${_formatTimestamp(record.resolvedAt)}'
+        : '';
+    return 'Escalation: ${record.status} · owner $owner$resolved$notes';
   }
 
   int _compareExperimentPriority(
@@ -4779,6 +5196,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeActivationRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeRolloutAlertRecords(limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeRolloutEscalationRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
@@ -4946,6 +5364,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         runtimeRolloutAlertsByDeliveryId[record.deliveryRecordId] = record;
       }
+      final Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
+          runtimeRolloutEscalationsByDeliveryId =
+          <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
+      for (final FederatedLearningRuntimeRolloutEscalationRecordModel record
+          in (payloads[11] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeRolloutEscalationRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_rollout_escalation_record',
+                    row,
+                  ))) {
+        runtimeRolloutEscalationsByDeliveryId[record.deliveryRecordId] = record;
+      }
         final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
@@ -4962,7 +5392,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[11] as List<Map<String, dynamic>>)
+          in (payloads[12] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -4974,7 +5404,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[12] as List<Map<String, dynamic>>)
+          in (payloads[13] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -4994,6 +5424,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _runtimeDeliveryRecordsByPackageId = runtimeDeliveryByPackageId;
         _runtimeActivationRecordsByPackageId = runtimeActivationByPackageId;
         _runtimeRolloutAlertsByDeliveryId = runtimeRolloutAlertsByDeliveryId;
+        _runtimeRolloutEscalationsByDeliveryId = runtimeRolloutEscalationsByDeliveryId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -5020,6 +5451,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
         _runtimeRolloutAlertsByDeliveryId =
           <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
+        _runtimeRolloutEscalationsByDeliveryId =
+          <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
         _experimentReviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =

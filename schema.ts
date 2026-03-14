@@ -213,10 +213,12 @@ export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | '
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked';
 export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
+export type FederatedLearningRuntimeRolloutEscalationStatus = 'open' | 'investigating' | 'resolved';
 export type FederatedLearningRuntimeRolloutAuditAction =
   | 'runtime_delivery_record.upsert'
   | 'runtime_activation_record.upsert'
-  | 'runtime_rollout_alert_record.upsert';
+  | 'runtime_rollout_alert_record.upsert'
+  | 'runtime_rollout_escalation_record.upsert';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -498,6 +500,22 @@ export interface FederatedLearningRuntimeRolloutAlertRecord {
   notes?: string;
   acknowledgedBy?: string;
   acknowledgedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningRuntimeRolloutEscalationRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  deliveryRecordId: string;
+  status: FederatedLearningRuntimeRolloutEscalationStatus;
+  fallbackCount: number;
+  pendingCount: number;
+  ownerUserId?: string;
+  notes?: string;
+  resolvedBy?: string;
+  resolvedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

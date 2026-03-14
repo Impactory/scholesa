@@ -272,6 +272,10 @@ export function buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryId:
   return `fl_rollout_alert_${deliveryId.replace(/^fl_delivery_/, '')}`;
 }
 
+export function buildFederatedLearningRuntimeRolloutEscalationRecordDocId(deliveryId: string): string {
+  return `fl_rollout_escalation_${deliveryId.replace(/^fl_delivery_/, '')}`;
+}
+
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -381,6 +385,20 @@ export function normalizeFederatedLearningRuntimeRolloutAlertStatus(
   if (normalized === 'active') return 'active';
   if (normalized === 'acknowledged' || normalized === 'acknowledge') {
     return 'acknowledged';
+  }
+  return null;
+}
+
+export function normalizeFederatedLearningRuntimeRolloutEscalationStatus(
+  value: unknown,
+): 'open' | 'investigating' | 'resolved' | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'open') return 'open';
+  if (normalized === 'investigating' || normalized === 'in_progress') {
+    return 'investigating';
+  }
+  if (normalized === 'resolved' || normalized === 'closed') {
+    return 'resolved';
   }
   return null;
 }
