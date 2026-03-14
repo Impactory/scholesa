@@ -5,6 +5,7 @@ export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'activ
 export type FederatedLearningBatteryState = 'low' | 'ok' | 'charging' | 'unknown';
 export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'unknown';
 export type FederatedLearningAggregationRunStatus = 'materialized';
+export type FederatedLearningMergeArtifactStatus = 'generated';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -51,6 +52,18 @@ export interface FederatedLearningAggregationSelection {
   averageUpdateNorm: number;
   schemaVersions: string[];
   runtimeTargets: string[];
+}
+
+export interface FederatedLearningMergeArtifactSummary {
+  sampleCount: number;
+  summaryCount: number;
+  distinctSiteCount: number;
+  schemaVersions: string[];
+  runtimeTargets: string[];
+  maxVectorLength: number;
+  totalPayloadBytes: number;
+  averageUpdateNorm: number;
+  boundedDigest: string;
 }
 
 function asTrimmedString(value: unknown): string {
@@ -154,6 +167,10 @@ export function buildFederatedLearningAggregationRunDocId(
     .digest('hex')
     .slice(0, 24);
   return `fl_agg_${digest}`;
+}
+
+export function buildFederatedLearningMergeArtifactDocId(runId: string): string {
+  return `fl_merge_${runId.replace(/^fl_agg_/, '')}`;
 }
 
 export function federatedLearningAuditAction(action: string): string {
@@ -307,5 +324,35 @@ export function selectFederatedLearningAggregationBatch(
     averageUpdateNorm: selected.length > 0 ? Number((updateNormTotal / selected.length).toFixed(6)) : 0,
     schemaVersions: Array.from(schemaVersions).sort(),
     runtimeTargets: Array.from(runtimeTargets).sort(),
+  };
+}
+
+export function buildFederatedLearningMergeArtifactSummary(
+  selection: FederatedLearningAggregationSelection,
+): FederatedLearningMergeArtifactSummary {
+  const boundedDigest = createHash('sha256')
+    .update(JSON.stringify({
+      summaryIds: selection.summaryIds,
+      totalSampleCount: selection.totalSampleCount,
+      summaryCount: selection.summaryCount,
+      distinctSiteCount: selection.distinctSiteCount,
+      maxVectorLength: selection.maxVectorLength,
+      totalPayloadBytes: selection.totalPayloadBytes,
+      averageUpdateNorm: selection.averageUpdateNorm,
+      schemaVersions: selection.schemaVersions,
+      runtimeTargets: selection.runtimeTargets,
+    }))
+    .digest('hex');
+
+  return {
+    sampleCount: selection.totalSampleCount,
+    summaryCount: selection.summaryCount,
+    distinctSiteCount: selection.distinctSiteCount,
+    schemaVersions: selection.schemaVersions,
+    runtimeTargets: selection.runtimeTargets,
+    maxVectorLength: selection.maxVectorLength,
+    totalPayloadBytes: selection.totalPayloadBytes,
+    averageUpdateNorm: selection.averageUpdateNorm,
+    boundedDigest: `sha256:${boundedDigest}`,
   };
 }
