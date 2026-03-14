@@ -269,6 +269,28 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningCandidateModelPackages', 'fl_pkg_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      aggregationRunId: 'fl_agg_demo_1',
+      mergeArtifactId: 'fl_merge_demo_1',
+      status: 'staged',
+      packageFormat: 'bounded_metadata_manifest',
+      rolloutStatus: 'not_distributed',
+      packageDigest: 'sha256:pkg-digest-1',
+      boundedDigest: 'sha256:digest-1',
+      sampleCount: 18,
+      summaryCount: 1,
+      distinctSiteCount: 1,
+      schemaVersions: ['v1'],
+      runtimeTargets: ['flutter_mobile'],
+      maxVectorLength: 128,
+      totalPayloadBytes: 2048,
+      averageUpdateNorm: 3.2,
+      createdBy: siteAdminUser.uid,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -559,6 +581,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningMergeArtifacts', 'fl_merge_demo_1')),
+    );
+  });
+
+  test('HQ can read bounded candidate model packages', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningCandidateModelPackages', 'fl_pkg_demo_1')),
+    );
+  });
+
+  test('site admins cannot read candidate model packages directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningCandidateModelPackages', 'fl_pkg_demo_1')),
     );
   });
 });

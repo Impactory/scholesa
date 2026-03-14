@@ -18,6 +18,8 @@ import {
 } from './districtProviderIntegration';
 import {
   buildFederatedLearningAggregationRunDocId,
+  buildFederatedLearningCandidateModelPackageDocId,
+  buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
   buildFederatedLearningExperimentDocId,
@@ -1632,14 +1634,17 @@ async function maybeMaterializeFederatedLearningAggregationRun({
 
   const runId = buildFederatedLearningAggregationRunDocId(experimentId, selection.summaryIds);
   const artifactId = buildFederatedLearningMergeArtifactDocId(runId);
+  const packageId = buildFederatedLearningCandidateModelPackageDocId(runId);
   const runRef = admin.firestore().collection('federatedLearningAggregationRuns').doc(runId);
   const artifactRef = admin.firestore().collection('federatedLearningMergeArtifacts').doc(artifactId);
+  const packageRef = admin.firestore().collection('federatedLearningCandidateModelPackages').doc(packageId);
   let created = false;
 
   await admin.firestore().runTransaction(async (transaction) => {
     const existingRun = await transaction.get(runRef);
     const existingArtifact = await transaction.get(artifactRef);
-    if (existingRun.exists || existingArtifact.exists) {
+    const existingPackage = await transaction.get(packageRef);
+    if (existingRun.exists || existingArtifact.exists || existingPackage.exists) {
       return;
     }
 
@@ -1667,6 +1672,11 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       return;
     }
     const artifactSummary = buildFederatedLearningMergeArtifactSummary(refreshedSelection);
+    const packageSummary = buildFederatedLearningCandidateModelPackageSummary(
+      runId,
+      artifactId,
+      artifactSummary,
+    );
 
     transaction.set(runRef, {
       experimentId,
@@ -1675,6 +1685,9 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       thresholdMet: true,
       mergeArtifactId: artifactId,
       mergeArtifactStatus: 'generated',
+      candidateModelPackageId: packageId,
+      candidateModelPackageStatus: 'staged',
+      candidateModelPackageFormat: packageSummary.packageFormat,
       mergeStrategy: 'prototype_weighted_metadata_digest',
       triggerSummaryId,
       summaryIds: refreshedSelection.summaryIds,
@@ -1711,6 +1724,28 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
+    transaction.set(packageRef, {
+      experimentId,
+      aggregationRunId: runId,
+      mergeArtifactId: artifactId,
+      status: 'staged',
+      packageFormat: packageSummary.packageFormat,
+      rolloutStatus: packageSummary.rolloutStatus,
+      packageDigest: packageSummary.packageDigest,
+      boundedDigest: packageSummary.boundedDigest,
+      sampleCount: packageSummary.sampleCount,
+      summaryCount: packageSummary.summaryCount,
+      distinctSiteCount: packageSummary.distinctSiteCount,
+      schemaVersions: packageSummary.schemaVersions,
+      runtimeTargets: packageSummary.runtimeTargets,
+      maxVectorLength: packageSummary.maxVectorLength,
+      totalPayloadBytes: packageSummary.totalPayloadBytes,
+      averageUpdateNorm: packageSummary.averageUpdateNorm,
+      createdBy: actorId,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     for (const row of refreshedRows) {
       transaction.set(row.ref, {
         aggregationStatus: 'materialized',
@@ -1723,6 +1758,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     transaction.set(experimentRef, {
       latestAggregationRunId: runId,
       latestMergeArtifactId: artifactId,
+      latestCandidateModelPackageId: packageId,
       lastAggregatedAt: FieldValue.serverTimestamp(),
       lastAggregationSampleCount: refreshedSelection.totalSampleCount,
       lastAggregationSummaryCount: refreshedSelection.summaryCount,
@@ -1732,7 +1768,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     created = true;
   });
 
-  return { runId, artifactId, created };
+  return { runId, artifactId, packageId, created };
 }
 
 export const listFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
@@ -1887,6 +1923,33 @@ export const listFederatedLearningMergeArtifacts = onCall(async (request: Callab
     ...(snapDoc.data() as Record<string, unknown>),
   }));
   return { artifacts };
+});
+
+export const listFederatedLearningCandidateModelPackages = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningCandidateModelPackages')
+    .orderBy('createdAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+
+  const snap = await query.get();
+  const packages = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { packages };
 });
 
 export const upsertFederatedLearningExperiment = onCall(async (request: CallableRequest) => {
@@ -2060,6 +2123,19 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
         aggregationRunId: aggregationRun.runId,
       },
     });
+
+    await admin.firestore().collection('auditLogs').add({
+      userId: actor.uid,
+      action: federatedLearningAuditAction('candidate_model_package.staged'),
+      collection: 'federatedLearningCandidateModelPackages',
+      documentId: aggregationRun.packageId,
+      timestamp: Date.now(),
+      details: {
+        experimentId,
+        aggregationRunId: aggregationRun.runId,
+        mergeArtifactId: aggregationRun.artifactId,
+      },
+    });
   }
 
   return {
@@ -2069,6 +2145,7 @@ export const recordFederatedLearningPrototypeUpdate = onCall(async (request: Cal
     siteId: summary.siteId,
     aggregationRunId: aggregationRun?.runId || null,
     mergeArtifactId: aggregationRun?.artifactId || null,
+    candidateModelPackageId: aggregationRun?.packageId || null,
     aggregationMaterialized: aggregationRun?.created === true,
   };
 });

@@ -24,6 +24,7 @@ Implemented prototype scope:
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
 - HQ visibility for the latest materialized aggregation run per experiment
 - bounded merge-artifact records generated for each materialized aggregation run
+- bounded candidate-model-package records staged from each generated merge artifact
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -80,6 +81,7 @@ Passed on 2026-03-14:
 - Runtime BOS signals now feed a bounded event-window summarizer, which uploads prototype summaries on mission/checkpoint/session triggers without sending raw learner content.
 - When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and exposes the run back to HQ without claiming a true model merge.
 - Each materialized run now also emits a bounded merge-artifact record with a deterministic digest over safe metadata only; the artifact is auditable, HQ-readable, and explicitly not a deployed model binary or weight payload.
+- Each generated merge artifact now also stages a bounded candidate-model-package manifest record for downstream inspection; this is metadata-only, HQ-readable, and explicitly not a production model delivery or rollout path.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
 ## Remaining gap to full REQ-114

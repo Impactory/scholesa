@@ -6,6 +6,7 @@ export type FederatedLearningBatteryState = 'low' | 'ok' | 'charging' | 'unknown
 export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'unknown';
 export type FederatedLearningAggregationRunStatus = 'materialized';
 export type FederatedLearningMergeArtifactStatus = 'generated';
+export type FederatedLearningCandidateModelPackageStatus = 'staged';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -64,6 +65,21 @@ export interface FederatedLearningMergeArtifactSummary {
   totalPayloadBytes: number;
   averageUpdateNorm: number;
   boundedDigest: string;
+}
+
+export interface FederatedLearningCandidateModelPackageSummary {
+  packageFormat: 'bounded_metadata_manifest';
+  rolloutStatus: 'not_distributed';
+  packageDigest: string;
+  boundedDigest: string;
+  sampleCount: number;
+  summaryCount: number;
+  distinctSiteCount: number;
+  schemaVersions: string[];
+  runtimeTargets: string[];
+  maxVectorLength: number;
+  totalPayloadBytes: number;
+  averageUpdateNorm: number;
 }
 
 function asTrimmedString(value: unknown): string {
@@ -171,6 +187,10 @@ export function buildFederatedLearningAggregationRunDocId(
 
 export function buildFederatedLearningMergeArtifactDocId(runId: string): string {
   return `fl_merge_${runId.replace(/^fl_agg_/, '')}`;
+}
+
+export function buildFederatedLearningCandidateModelPackageDocId(runId: string): string {
+  return `fl_pkg_${runId.replace(/^fl_agg_/, '')}`;
 }
 
 export function federatedLearningAuditAction(action: string): string {
@@ -354,5 +374,46 @@ export function buildFederatedLearningMergeArtifactSummary(
     totalPayloadBytes: selection.totalPayloadBytes,
     averageUpdateNorm: selection.averageUpdateNorm,
     boundedDigest: `sha256:${boundedDigest}`,
+  };
+}
+
+export function buildFederatedLearningCandidateModelPackageSummary(
+  runId: string,
+  artifactId: string,
+  artifactSummary: FederatedLearningMergeArtifactSummary,
+): FederatedLearningCandidateModelPackageSummary {
+  const packageFormat = 'bounded_metadata_manifest';
+  const rolloutStatus = 'not_distributed';
+  const packageDigest = createHash('sha256')
+    .update(JSON.stringify({
+      runId,
+      artifactId,
+      packageFormat,
+      rolloutStatus,
+      boundedDigest: artifactSummary.boundedDigest,
+      sampleCount: artifactSummary.sampleCount,
+      summaryCount: artifactSummary.summaryCount,
+      distinctSiteCount: artifactSummary.distinctSiteCount,
+      schemaVersions: artifactSummary.schemaVersions,
+      runtimeTargets: artifactSummary.runtimeTargets,
+      maxVectorLength: artifactSummary.maxVectorLength,
+      totalPayloadBytes: artifactSummary.totalPayloadBytes,
+      averageUpdateNorm: artifactSummary.averageUpdateNorm,
+    }))
+    .digest('hex');
+
+  return {
+    packageFormat,
+    rolloutStatus,
+    packageDigest: `sha256:${packageDigest}`,
+    boundedDigest: artifactSummary.boundedDigest,
+    sampleCount: artifactSummary.sampleCount,
+    summaryCount: artifactSummary.summaryCount,
+    distinctSiteCount: artifactSummary.distinctSiteCount,
+    schemaVersions: artifactSummary.schemaVersions,
+    runtimeTargets: artifactSummary.runtimeTargets,
+    maxVectorLength: artifactSummary.maxVectorLength,
+    totalPayloadBytes: artifactSummary.totalPayloadBytes,
+    averageUpdateNorm: artifactSummary.averageUpdateNorm,
   };
 }

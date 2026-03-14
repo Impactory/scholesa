@@ -99,6 +99,7 @@ export {
   listSiteFederatedLearningExperiments,
   listFederatedLearningAggregationRuns,
   listFederatedLearningMergeArtifacts,
+  listFederatedLearningCandidateModelPackages,
   upsertFederatedLearningExperiment,
   recordFederatedLearningPrototypeUpdate,
   listWorkflowContacts,

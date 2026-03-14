@@ -249,6 +249,9 @@ export interface FederatedLearningAggregationRun {
   thresholdMet: boolean;
   mergeArtifactId?: string;
   mergeArtifactStatus?: 'generated';
+  candidateModelPackageId?: string;
+  candidateModelPackageStatus?: 'staged';
+  candidateModelPackageFormat?: 'bounded_metadata_manifest';
   mergeStrategy?: string;
   boundedDigest?: string;
   triggerSummaryId: string;
@@ -272,6 +275,29 @@ export interface FederatedLearningMergeArtifact {
   aggregationRunId: string;
   status: 'generated';
   mergeStrategy: string;
+  boundedDigest: string;
+  sampleCount: number;
+  summaryCount: number;
+  distinctSiteCount: number;
+  schemaVersions: string[];
+  runtimeTargets: string[];
+  maxVectorLength: number;
+  totalPayloadBytes: number;
+  averageUpdateNorm: number;
+  createdBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningCandidateModelPackage {
+  id: string;
+  experimentId: string;
+  aggregationRunId: string;
+  mergeArtifactId: string;
+  status: 'staged';
+  packageFormat: 'bounded_metadata_manifest';
+  rolloutStatus: 'not_distributed';
+  packageDigest: string;
   boundedDigest: string;
   sampleCount: number;
   summaryCount: number;

@@ -1,5 +1,7 @@
 import {
   buildFederatedLearningAggregationRunDocId,
+  buildFederatedLearningCandidateModelPackageDocId,
+  buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
   buildFederatedLearningExperimentDocId,
@@ -32,6 +34,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_agg_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningMergeArtifactDocId('fl_agg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_merge_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningCandidateModelPackageDocId('fl_agg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_pkg_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({
@@ -142,6 +146,25 @@ describe('federated learning prototype helpers', () => {
       totalPayloadBytes: 1792,
       averageUpdateNorm: 1.35,
       boundedDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+    });
+
+    expect(buildFederatedLearningCandidateModelPackageSummary(
+      'fl_agg_1cb85e2396ee2ed67818ed78',
+      'fl_merge_1cb85e2396ee2ed67818ed78',
+      buildFederatedLearningMergeArtifactSummary(selection!),
+    )).toEqual({
+      packageFormat: 'bounded_metadata_manifest',
+      rolloutStatus: 'not_distributed',
+      packageDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      boundedDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      sampleCount: 18,
+      summaryCount: 2,
+      distinctSiteCount: 2,
+      schemaVersions: ['v1'],
+      runtimeTargets: ['flutter_mobile'],
+      maxVectorLength: 128,
+      totalPayloadBytes: 1792,
+      averageUpdateNorm: 1.35,
     });
   });
 
