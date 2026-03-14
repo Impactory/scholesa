@@ -33,6 +33,7 @@ Implemented prototype scope:
 - bounded pilot-approval records for HQ sign-off on staged candidate packages once review, evidence, and eval prerequisites align
 - bounded pilot-execution records for HQ launch, observation, and completion evidence on approved staged candidate packages within the allowed-site cohort
 - bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
+- bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -42,7 +43,7 @@ Not claimed by this proof:
 - model updates applied to production systems
 - pilot rollout or delivery beyond bounded review, evidence, and approval records
 - pilot rollout automation or device delivery beyond bounded execution evidence records
-- live model payload delivery or activation beyond bounded runtime-delivery manifests
+- live model payload delivery or activation beyond bounded runtime-delivery manifests and bounded runtime-activation evidence
 - cross-site or global model rollout
 
 ## Implementation files
@@ -57,7 +58,9 @@ Not claimed by this proof:
 - apps/empire_flutter/app/lib/domain/repositories.dart
 - apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart
 - apps/empire_flutter/app/lib/services/federated_learning_prototype_uploader.dart
+- apps/empire_flutter/app/lib/services/federated_learning_runtime_activation_reporter.dart
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_adapter.dart
+- apps/empire_flutter/app/lib/services/federated_learning_runtime_delivery_resolver.dart
 - apps/empire_flutter/app/lib/services/workflow_bridge_service.dart
 - apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart
 - test/firestore-rules.test.js
@@ -100,6 +103,7 @@ Passed on 2026-03-14:
 - HQ can now record bounded pilot approval per staged candidate package, with approval gated on an approved experiment review record, ready-for-pilot evidence, and a non-revoked approved-for-eval promotion, without claiming a production rollout executor or live pilot delivery path.
 - HQ can now record bounded pilot execution per staged candidate package, with launch, observation, and completion states gated on approved pilot approval, allowed-site cohort membership, and positive session and learner counts where required, without claiming a live rollout controller or on-device model-delivery path.
 - HQ can now record bounded runtime-delivery manifests per staged candidate package, with assigned and active states gated on observed or completed pilot execution and target sites constrained to the experiment cohort, while site-scoped Flutter runtime code can resolve those manifests without claiming real weight delivery or model activation.
+- Site-scoped Flutter runtime code can now report bounded runtime-activation evidence against assigned delivery manifests, with the backend enforcing site membership on the manifest target cohort and HQ surfaces showing the latest activation status per candidate package without claiming real payload loading or production model execution.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
