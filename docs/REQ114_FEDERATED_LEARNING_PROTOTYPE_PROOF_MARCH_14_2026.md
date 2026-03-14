@@ -25,7 +25,7 @@ Implemented prototype scope:
 - HQ visibility for the latest materialized aggregation run per experiment
 - bounded merge-artifact records generated for each materialized aggregation run
 - bounded candidate-model-package records staged from each generated merge artifact
-- HQ candidate-package history drill-in with search, paging, latest-only filtering, promotion-state visibility, and bounded HQ decision capture for sandbox-eval package approvals or holds
+- HQ candidate-package history drill-in with search, paging, latest-only filtering, promotion-state visibility, bounded HQ decision capture for sandbox-eval package approvals or holds, and a separate HQ promotion-history drill-in
 - bounded candidate-promotion records for HQ sandbox-eval approvals linked to staged candidate packages
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
@@ -85,6 +85,7 @@ Passed on 2026-03-14:
 - Each materialized run now also emits a bounded merge-artifact record with a deterministic digest over safe metadata only; the artifact is auditable, HQ-readable, and explicitly not a deployed model binary or weight payload.
 - Each generated merge artifact now also stages a bounded candidate-model-package manifest record for downstream inspection; this is metadata-only, HQ-readable, and explicitly not a production model delivery or rollout path.
 - HQ can now inspect candidate-package history separately from aggregation runs, including package digests, linked artifacts, whether a package is still awaiting promotion, on hold, or approved for eval, and can write the bounded decision record directly from the package drill-in dialog.
+- HQ can now inspect promotion decisions in a dedicated history dialog with status filtering, decision metadata, linked package/artifact context, and rationale search without claiming a production rollout console.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

@@ -490,6 +490,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
+            if ((_promotionRecordsByPackageId.values
+                    .where((record) => record.experimentId == experiment.id)
+                    .isNotEmpty)) ...<Widget>[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => _showPromotionHistoryDialog(experiment),
+                  icon: const Icon(Icons.approval_rounded),
+                  label: Text(
+                    _tHqFeatureFlags(context, 'View promotions'),
+                  ),
+                ),
+              ),
+            ],
             if (runs.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               Text(
@@ -1658,6 +1673,421 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       rationale: rationaleController.text,
     );
     refreshDialog?.call();
+  }
+
+  Future<void> _showPromotionHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+  ) {
+    final List<FederatedLearningCandidatePromotionRecordModel> records =
+        _promotionRecordsByPackageId.values
+            .where((record) => record.experimentId == experiment.id)
+            .toList(growable: false)
+          ..sort((a, b) {
+            final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+            final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+            return bMillis.compareTo(aMillis);
+          });
+    final Map<String, FederatedLearningCandidateModelPackageModel> packagesById = {
+      for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+              const <FederatedLearningCandidateModelPackageModel>[])
+        package.id: package,
+    };
+    const int pageSize = 2;
+    String filterQuery = '';
+    int pageIndex = 0;
+    String sortMode = 'newest';
+    String statusFilter = 'all';
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            final String normalizedQuery = filterQuery.trim().toLowerCase();
+            final List<FederatedLearningCandidatePromotionRecordModel>
+                sortedRecords =
+                List<FederatedLearningCandidatePromotionRecordModel>.from(records);
+            if (sortMode == 'oldest') {
+              sortedRecords.sort((a, b) {
+                final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+                return aMillis.compareTo(bMillis);
+              });
+            } else if (sortMode == 'approved_first') {
+              sortedRecords.sort((a, b) {
+                final int statusCompare =
+                    _promotionStatusRank(a.status).compareTo(
+                  _promotionStatusRank(b.status),
+                );
+                if (statusCompare != 0) return statusCompare;
+                final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+                return bMillis.compareTo(aMillis);
+              });
+            }
+
+            final List<FederatedLearningCandidatePromotionRecordModel>
+                filteredRecords = sortedRecords.where((record) {
+              if (statusFilter == 'approved' &&
+                  record.status != 'approved_for_eval') {
+                return false;
+              }
+              if (statusFilter == 'hold' && record.status != 'hold') {
+                return false;
+              }
+              if (normalizedQuery.isEmpty) {
+                return true;
+              }
+              final FederatedLearningCandidateModelPackageModel? package =
+                  packagesById[record.candidateModelPackageId];
+              final String haystack = <String>[
+                record.id,
+                record.candidateModelPackageId,
+                record.aggregationRunId,
+                record.mergeArtifactId,
+                record.status,
+                record.target,
+                record.rationale ?? '',
+                record.decidedBy ?? '',
+                package?.packageDigest ?? '',
+                package?.boundedDigest ?? '',
+              ].join(' ').toLowerCase();
+              return haystack.contains(normalizedQuery);
+            }).toList(growable: false);
+
+            final int approvedCount = filteredRecords
+                .where((record) => record.status == 'approved_for_eval')
+                .length;
+            final int holdCount =
+                filteredRecords.where((record) => record.status == 'hold').length;
+            final int sampleTotal = filteredRecords.fold<int>(
+              0,
+              (int total, FederatedLearningCandidatePromotionRecordModel record) =>
+                  total + (packagesById[record.candidateModelPackageId]?.sampleCount ?? 0),
+            );
+            final int pageCount = filteredRecords.isEmpty
+                ? 1
+                : ((filteredRecords.length - 1) ~/ pageSize) + 1;
+            if (pageIndex >= pageCount) {
+              pageIndex = pageCount - 1;
+            }
+            final int startIndex = filteredRecords.isEmpty ? 0 : pageIndex * pageSize;
+            final int endIndex = filteredRecords.isEmpty
+                ? 0
+                : (startIndex + pageSize > filteredRecords.length
+                    ? filteredRecords.length
+                    : startIndex + pageSize);
+            final List<FederatedLearningCandidatePromotionRecordModel>
+                visibleRecords = filteredRecords.sublist(startIndex, endIndex);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Promotion history: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 640,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (records.isNotEmpty) ...<Widget>[
+                        TextField(
+                          onChanged: (String value) {
+                            setDialogState(() {
+                              filterQuery = value;
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(
+                              context,
+                              'Filter by package ID, artifact ID, decision ID, or rationale',
+                            ),
+                            prefixIcon: const Icon(Icons.search_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: sortMode,
+                          onChanged: (String? value) {
+                            setDialogState(() {
+                              sortMode = value ?? 'newest';
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(
+                              context,
+                              'Sort promotions',
+                            ),
+                          ),
+                          items: <DropdownMenuItem<String>>[
+                            DropdownMenuItem(
+                              value: 'newest',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Newest first'),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'oldest',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Oldest first'),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'approved_first',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Approved first'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Approved for eval'),
+                              ),
+                              selected: statusFilter == 'approved',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  statusFilter = value ? 'approved' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'On hold'),
+                              ),
+                              selected: statusFilter == 'hold',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  statusFilter = value ? 'hold' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            _buildExperimentChip(
+                              'Decisions: ${filteredRecords.length}',
+                              Icons.approval_rounded,
+                            ),
+                            _buildExperimentChip(
+                              'Approved: $approvedCount',
+                              Icons.check_circle_outline_rounded,
+                              color: Colors.green,
+                            ),
+                            _buildExperimentChip(
+                              'On hold: $holdCount',
+                              Icons.pause_circle_outline_rounded,
+                              color: Colors.redAccent,
+                            ),
+                            _buildExperimentChip(
+                              'Samples: $sampleTotal',
+                              Icons.stacked_bar_chart_rounded,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (records.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'No promotion decisions have been recorded for this experiment yet.',
+                          ),
+                        )
+                      else if (filteredRecords.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'No promotion decisions match the current filter.',
+                          ),
+                        )
+                      else
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: visibleRecords
+                              .map(
+                                (FederatedLearningCandidatePromotionRecordModel record) =>
+                                    _buildPromotionHistoryEntry(
+                                  record,
+                                  packagesById[record.candidateModelPackageId],
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      if (filteredRecords.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _tHqFeatureFlags(
+                                  context,
+                                  'Showing ${startIndex + 1}-$endIndex of ${filteredRecords.length}',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: pageIndex > 0
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex -= 1;
+                                      });
+                                    }
+                                  : null,
+                              child: Text(_tHqFeatureFlags(context, 'Previous')),
+                            ),
+                            TextButton(
+                              onPressed: pageIndex < pageCount - 1
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex += 1;
+                                      });
+                                    }
+                                  : null,
+                              child: Text(_tHqFeatureFlags(context, 'Next')),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(_tHqFeatureFlags(context, 'Close')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  int _promotionStatusRank(String status) {
+    switch (status) {
+      case 'approved_for_eval':
+        return 0;
+      case 'hold':
+        return 1;
+      default:
+        return 2;
+    }
+  }
+
+  Widget _buildPromotionHistoryEntry(
+    FederatedLearningCandidatePromotionRecordModel record,
+    FederatedLearningCandidateModelPackageModel? package,
+  ) {
+    final String decidedLabel = _formatTimestamp(record.decidedAt);
+    final String updatedLabel = _formatTimestamp(record.updatedAt);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Decision ${record.id} · ${record.status} (${record.target})',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Package: ${record.candidateModelPackageId} · Artifact: ${record.mergeArtifactId}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Run: ${record.aggregationRunId} · Decided: $decidedLabel',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Updated: $updatedLabel${(record.decidedBy ?? '').trim().isEmpty ? '' : ' · By: ${record.decidedBy}'}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          if (package != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Samples: ${package.sampleCount} · Digest: ${package.boundedDigest}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if ((record.rationale ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Rationale: ${record.rationale}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Future<void> _saveCandidatePromotionDecision({

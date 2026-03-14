@@ -962,6 +962,80 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
+    final Finder viewPromotionsButton = find.widgetWithText(
+      TextButton,
+      'View promotions',
+    );
+    await tester.ensureVisible(viewPromotionsButton.first);
+    final TextButton viewPromotionsControl = tester.widget<TextButton>(
+      viewPromotionsButton.first,
+    );
+    viewPromotionsControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Promotion history: Literacy Pilot'), findsOneWidget);
+    expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, or rationale',
+      ),
+      findsOneWidget,
+    );
+    final Finder approvedPromotionChip = find.widgetWithText(
+      FilterChip,
+      'Approved for eval',
+    );
+    final Finder holdPromotionChip = find.widgetWithText(
+      FilterChip,
+      'On hold',
+    );
+    expect(find.text('Sort promotions'), findsOneWidget);
+    expect(approvedPromotionChip, findsOneWidget);
+    expect(holdPromotionChip, findsOneWidget);
+    expect(find.text('Decisions: 2'), findsOneWidget);
+    expect(find.text('Approved: 1'), findsOneWidget);
+    expect(find.text('On hold: 1'), findsOneWidget);
+    expect(find.text('Samples: 44'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(holdPromotionChip);
+    await tester.tap(holdPromotionChip);
+    await tester.pumpAndSettle();
+    expect(find.text('Decisions: 1'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Rationale: Need another bounded review pass.'),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(holdPromotionChip);
+    await tester.tap(holdPromotionChip);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, or rationale',
+      ),
+      'fl_prom_2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
     await tester.enterText(
       find.widgetWithText(TextField, 'Filter by run ID, artifact ID, or digest'),
       'digest-2',
