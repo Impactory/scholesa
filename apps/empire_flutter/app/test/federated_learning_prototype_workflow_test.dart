@@ -2134,6 +2134,12 @@ void main() {
       find.text('Runtime delivery: active · 2 sites · flutter_mobile'),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'Rollout alert: 1 pending site statuses need review. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
+    );
 
     final Finder deliveryHistoryButton = find.widgetWithText(
       TextButton,
@@ -2604,6 +2610,199 @@ void main() {
       bridge._experiments
           .any((Map<String, dynamic> row) => row['name'] == 'Math Pilot'),
       isTrue,
+    );
+  });
+
+  testWidgets('HQ page highlights runtime rollout fallback alerts',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+          traceId: 'fallback-trace-2',
+          notes: 'Site requested fallback after bounded runtime mismatch.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Site rollout: 1 resolved · 0 staged · 1 fallback · 0 pending'),
+      findsOneWidget,
+    );
+
+    final Finder siteRolloutButton = find.widgetWithText(
+      TextButton,
+      'Site rollout',
+    );
+    await tester.ensureVisible(siteRolloutButton.first);
+    final TextButton siteRolloutControl = tester.widget<TextButton>(
+      siteRolloutButton.first,
+    );
+    siteRolloutControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Summary: 1 resolved · 0 staged · 1 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(find.text('site-2 · fallback'), findsOneWidget);
+    expect(find.text('Latest site report requested fallback.'), findsOneWidget);
+  });
+
+  testWidgets('HQ page orders rollout alerts ahead of healthy experiments',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(
+          id: 'fl_exp_literacy_pilot',
+          name: 'Literacy Pilot',
+          allowedSiteIds: const <String>['site-1'],
+        ),
+        _experimentRow(
+          id: 'fl_exp_numeracy_pilot',
+          name: 'Numeracy Pilot',
+          allowedSiteIds: const <String>['site-1', 'site-2'],
+        ),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(
+          id: 'fl_agg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+        ),
+        _aggregationRunRow(
+          id: 'fl_agg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(
+          id: 'fl_merge_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          boundedDigest: 'sha256:digest-1',
+        ),
+        _mergeArtifactRow(
+          id: 'fl_merge_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(
+          id: 'fl_pkg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+        ),
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-1',
+          deliveryRecordId: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-1',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-2',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-2',
+          status: 'fallback',
+          notes: 'Site requested fallback after bounded runtime mismatch.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final double numeracyY = tester.getTopLeft(find.text('Numeracy Pilot')).dy;
+    final double literacyY = tester.getTopLeft(find.text('Literacy Pilot')).dy;
+
+    expect(numeracyY, lessThan(literacyY));
+    expect(
+      find.text(
+        'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
+      ),
+      findsOneWidget,
     );
   });
 }

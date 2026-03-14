@@ -164,6 +164,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Widget _buildExperimentSection() {
+    final List<FederatedLearningExperimentModel> sortedExperiments =
+        List<FederatedLearningExperimentModel>.from(_experiments)
+          ..sort(_compareExperimentPriority);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -224,7 +227,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             ),
           )
         else
-          ..._experiments.map(_buildExperimentCard),
+          ...sortedExperiments.map(_buildExperimentCard),
       ],
     );
   }
@@ -392,6 +395,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 latestRuntimeDelivery,
                 runtimeActivationRecords,
               );
+    final String runtimeRolloutAlert = runtimeRolloutHealth == null
+      ? ''
+      : _buildRuntimeRolloutAlert(runtimeRolloutHealth);
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
       latestPromotionRevocation,
@@ -719,6 +725,45 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (runtimeRolloutAlert.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        size: 16,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _tHqFeatureFlags(context, runtimeRolloutAlert),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -3950,6 +3995,78 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'live until ${_formatTimestamp(record.expiresAt)}';
     }
     return 'no expiry recorded';
+  }
+
+  String _buildRuntimeRolloutAlert(_RuntimeRolloutHealthSummary summary) {
+    final List<String> parts = <String>[];
+    if (summary.fallbackCount > 0) {
+      parts.add('${summary.fallbackCount} fallback');
+    }
+    if (summary.pendingCount > 0) {
+      parts.add('${summary.pendingCount} pending');
+    }
+    if (parts.isEmpty) {
+      return '';
+    }
+    return 'Rollout alert: ${parts.join(' · ')} site statuses need review. Use Site rollout for detail.';
+  }
+
+  int _compareExperimentPriority(
+    FederatedLearningExperimentModel a,
+    FederatedLearningExperimentModel b,
+  ) {
+    final int severityDelta =
+        _rolloutAlertSeverityForExperiment(b) - _rolloutAlertSeverityForExperiment(a);
+    if (severityDelta != 0) {
+      return severityDelta;
+    }
+    final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+    final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+    return bMillis.compareTo(aMillis);
+  }
+
+  int _rolloutAlertSeverityForExperiment(
+    FederatedLearningExperimentModel experiment,
+  ) {
+    final List<FederatedLearningAggregationRunModel> runs =
+        _aggregationRunsByExperiment[experiment.id] ??
+            const <FederatedLearningAggregationRunModel>[];
+    if (runs.isEmpty) {
+      return 0;
+    }
+    final Map<String, FederatedLearningCandidateModelPackageModel>
+        candidatePackagesByRunId = {
+      for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+              const <FederatedLearningCandidateModelPackageModel>[])
+        package.aggregationRunId: package,
+    };
+    final FederatedLearningCandidateModelPackageModel? latestPackage =
+        candidatePackagesByRunId[runs.first.id];
+    if (latestPackage == null) {
+      return 0;
+    }
+    final FederatedLearningRuntimeDeliveryRecordModel? latestRuntimeDelivery =
+        _runtimeDeliveryRecordsByPackageId[latestPackage.id];
+    if (latestRuntimeDelivery == null) {
+      return 0;
+    }
+    final List<FederatedLearningRuntimeActivationRecordModel>
+        runtimeActivationRecords =
+        _runtimeActivationRecordsByPackageId[latestPackage.id] ??
+            const <FederatedLearningRuntimeActivationRecordModel>[];
+    final _RuntimeRolloutHealthSummary summary =
+        _buildRuntimeRolloutHealthSummary(
+      latestRuntimeDelivery,
+      runtimeActivationRecords,
+    );
+    if (summary.fallbackCount > 0) {
+      return 2;
+    }
+    if (summary.pendingCount > 0) {
+      return 1;
+    }
+    return 0;
   }
 
   _RuntimeRolloutHealthSummary _buildRuntimeRolloutHealthSummary(

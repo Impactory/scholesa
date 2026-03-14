@@ -39,6 +39,8 @@ Implemented prototype scope:
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
 - HQ runtime-activation history visibility for the latest package, including status counts and per-site activation or fallback evidence drill-in
+- HQ rollout-alert highlighting on experiment cards when fallback or pending site statuses exist for the latest runtime delivery
+- HQ alert-first ordering of experiment cards so fallback and pending rollout issues surface ahead of healthy prototype experiments
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -115,6 +117,8 @@ Passed on 2026-03-14:
 - The HQ feature-flags surface now exposes recent runtime-delivery history per experiment so operators can inspect delivery status, site spread, expiry windows, and revocation rationale without leaving the bounded prototype workflow.
 - The HQ feature-flags surface now also derives per-site rollout health from runtime-delivery and activation records so operators can inspect which sites are resolved, pending, staged, or already in fallback for the latest bounded delivery.
 - The HQ feature-flags surface now also exposes the underlying runtime-activation history for the latest package so operators can audit the actual site reports behind the rollout-health summary without leaving the bounded prototype workflow.
+- The HQ feature-flags surface now also raises a bounded rollout alert directly on the experiment card whenever the latest delivery has fallback or pending site states, so operators can spot drift without opening the rollout dialogs first.
+- The HQ feature-flags surface now also prioritizes those alerted experiments above healthy ones, so fallback and pending rollout issues rise to the top of the bounded operator queue.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
