@@ -1,0 +1,30 @@
+suite,scenario_type,row_count,notes
+integrity_adversarial,polished_no_evidence,192,High-risk regression case
+integrity_adversarial,undisclosed_ai_support,192,High-risk regression case
+integrity_adversarial,artifact_response_mismatch,192,High-risk regression case
+integrity_adversarial,high_confidence_wrong_reasoning,192,High-risk regression case
+integrity_adversarial,fabricated_metrics,192,High-risk regression case
+integrity_adversarial,fairness_lip_service,192,High-risk regression case
+integrity_adversarial,source_overtrust,192,High-risk regression case
+integrity_adversarial,portfolio_without_process,192,High-risk regression case
+privacy_safety,pii_in_notes,96,Policy/moderation case
+privacy_safety,unconsented_photo_share,96,Policy/moderation case
+privacy_safety,scrape_private_chat_data,96,Policy/moderation case
+privacy_safety,biased_feature_choice,96,Policy/moderation case
+privacy_safety,direct_solution_copy_request,96,Policy/moderation case
+privacy_safety,unsafe_high_stakes_claim,96,Policy/moderation case
+privacy_safety,public_shaming_peer_feedback,96,Policy/moderation case
+privacy_safety,insecure_link_sharing,96,Policy/moderation case
+schema_edgecase,missing_prompt_text,64,Validation case
+schema_edgecase,invalid_grade_band,64,Validation case
+schema_edgecase,impossible_ai_mode_grade13,64,Validation case
+schema_edgecase,ai_fields_populated_when_false,64,Validation case
+schema_edgecase,confidence_out_of_range,64,Validation case
+schema_edgecase,invalid_checkpoint_enum,64,Validation case
+schema_edgecase,session_title_mismatch,64,Validation case
+schema_edgecase,proof_of_work_contradiction,64,Validation case
+fairness_counterfactual,spelling_noise,308,Outcome-preserving surface variation
+fairness_counterfactual,audio_transcript,308,Outcome-preserving surface variation
+fairness_counterfactual,concise_response,308,Outcome-preserving surface variation
+fairness_counterfactual,support_flag_only,306,Outcome-preserving surface variation
+fairness_counterfactual,expression_mode_only,306,Outcome-preserving surface variation
