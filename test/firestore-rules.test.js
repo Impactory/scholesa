@@ -305,6 +305,21 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningCandidatePromotionRevocationRecords', 'fl_prom_revoke_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      candidateModelPackageId: 'fl_pkg_demo_1',
+      candidatePromotionRecordId: 'fl_prom_demo_1',
+      aggregationRunId: 'fl_agg_demo_1',
+      mergeArtifactId: 'fl_merge_demo_1',
+      revokedStatus: 'approved_for_eval',
+      target: 'sandbox_eval',
+      rationale: 'Rollback verified in sandbox.',
+      revokedBy: hqUser.uid,
+      revokedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -623,6 +638,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningCandidatePromotionRecords', 'fl_prom_demo_1')),
+    );
+  });
+
+  test('HQ can read candidate promotion revocation records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningCandidatePromotionRevocationRecords', 'fl_prom_revoke_demo_1')),
+    );
+  });
+
+  test('site admins cannot read candidate promotion revocation records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningCandidatePromotionRevocationRecords', 'fl_prom_revoke_demo_1')),
     );
   });
 });

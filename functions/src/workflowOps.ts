@@ -20,6 +20,7 @@ import {
   buildFederatedLearningAggregationRunDocId,
   buildFederatedLearningCandidateModelPackageDocId,
   buildFederatedLearningCandidatePromotionRecordDocId,
+  buildFederatedLearningCandidatePromotionRevocationRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -1986,6 +1987,37 @@ export const listFederatedLearningCandidatePromotionRecords = onCall(async (requ
   return { records };
 });
 
+export const listFederatedLearningCandidatePromotionRevocationRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningCandidatePromotionRevocationRecords')
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+  if (candidateModelPackageId) {
+    query = query.where('candidateModelPackageId', '==', candidateModelPackageId);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
 export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (actor.role !== 'hq') {
@@ -2039,6 +2071,7 @@ export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (req
     transaction.set(packageRef, {
       latestPromotionRecordId: promotionId,
       latestPromotionStatus: status,
+      latestPromotionRevocationRecordId: FieldValue.delete(),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });
@@ -2065,6 +2098,88 @@ export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (req
     candidateModelPackageId,
     status,
     target,
+  };
+});
+
+export const revokeFederatedLearningCandidatePromotionRecord = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  if (!candidateModelPackageId) {
+    throw new HttpsError('invalid-argument', 'candidateModelPackageId is required.');
+  }
+
+  const rationale = asTrimmedString(request.data?.rationale).slice(0, 500);
+  const packageRef = admin.firestore().collection('federatedLearningCandidateModelPackages').doc(candidateModelPackageId);
+  const packageSnap = await packageRef.get();
+  if (!packageSnap.exists) {
+    throw new HttpsError('not-found', 'Candidate model package not found.');
+  }
+
+  const promotionId = buildFederatedLearningCandidatePromotionRecordDocId(candidateModelPackageId);
+  const promotionRef = admin.firestore().collection('federatedLearningCandidatePromotionRecords').doc(promotionId);
+  const promotionSnap = await promotionRef.get();
+  if (!promotionSnap.exists) {
+    throw new HttpsError('failed-precondition', 'Promotion record not found for candidate model package.');
+  }
+
+  const packageData = (packageSnap.data() || {}) as Record<string, unknown>;
+  const promotionData = (promotionSnap.data() || {}) as Record<string, unknown>;
+  const revocationId = buildFederatedLearningCandidatePromotionRevocationRecordDocId(candidateModelPackageId);
+  const revocationRef = admin.firestore().collection('federatedLearningCandidatePromotionRevocationRecords').doc(revocationId);
+  const experimentId = asTrimmedString(packageData.experimentId);
+  const aggregationRunId = asTrimmedString(packageData.aggregationRunId || promotionData.aggregationRunId);
+  const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId || promotionData.mergeArtifactId);
+  const revokedStatus = asTrimmedString(promotionData.status);
+  const target = asTrimmedString(promotionData.target) || 'sandbox_eval';
+
+  await admin.firestore().runTransaction(async (transaction) => {
+    transaction.set(revocationRef, {
+      experimentId,
+      candidateModelPackageId,
+      candidatePromotionRecordId: promotionId,
+      aggregationRunId,
+      mergeArtifactId,
+      revokedStatus,
+      target,
+      rationale,
+      revokedBy: actor.uid,
+      revokedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    transaction.set(packageRef, {
+      latestPromotionStatus: 'revoked',
+      latestPromotionRevocationRecordId: revocationId,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('candidate_promotion_record.revoke'),
+    collection: 'federatedLearningCandidatePromotionRevocationRecords',
+    documentId: revocationId,
+    timestamp: Date.now(),
+    details: {
+      experimentId,
+      candidateModelPackageId,
+      candidatePromotionRecordId: promotionId,
+      aggregationRunId,
+      mergeArtifactId,
+      revokedStatus,
+      target,
+    },
+  });
+
+  return {
+    success: true,
+    id: revocationId,
+    candidateModelPackageId,
   };
 });
 

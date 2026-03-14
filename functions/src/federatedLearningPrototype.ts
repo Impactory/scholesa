@@ -199,6 +199,10 @@ export function buildFederatedLearningCandidatePromotionRecordDocId(packageId: s
   return `fl_prom_${packageId.replace(/^fl_pkg_/, '')}`;
 }
 
+export function buildFederatedLearningCandidatePromotionRevocationRecordDocId(packageId: string): string {
+  return `fl_prom_revoke_${packageId.replace(/^fl_pkg_/, '')}`;
+}
+
 export function normalizeFederatedLearningCandidatePromotionStatus(
   value: unknown,
 ): FederatedLearningCandidatePromotionStatus | null {

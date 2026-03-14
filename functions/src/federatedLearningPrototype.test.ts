@@ -2,6 +2,7 @@ import {
   buildFederatedLearningAggregationRunDocId,
   buildFederatedLearningCandidateModelPackageDocId,
   buildFederatedLearningCandidatePromotionRecordDocId,
+  buildFederatedLearningCandidatePromotionRevocationRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -46,6 +47,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_pkg_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningCandidatePromotionRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_prom_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningCandidatePromotionRevocationRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_prom_revoke_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({
