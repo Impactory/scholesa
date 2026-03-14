@@ -21,6 +21,9 @@ import type {
   Alert,
   Announcement,
   PortfolioItem,
+  LtiPlatformRegistration,
+  LtiResourceLink,
+  LtiGradePassbackJob,
   EducatorFeedback,
   LearnerMotivationProfile,
   LearnerInteraction,
@@ -57,6 +60,9 @@ export const accountabilityReviewsCollection = createCollection<AccountabilityRe
 export const alertsCollection = createCollection<Alert>('alerts');
 export const announcementsCollection = createCollection<Announcement>('announcements');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');
+export const ltiPlatformRegistrationsCollection = createCollection<LtiPlatformRegistration>('ltiPlatformRegistrations');
+export const ltiResourceLinksCollection = createCollection<LtiResourceLink>('ltiResourceLinks');
+export const ltiGradePassbackJobsCollection = createCollection<LtiGradePassbackJob>('ltiGradePassbackJobs');
 
 // Motivation & Personalization System
 export const educatorFeedbackCollection = createCollection<EducatorFeedback>('educatorFeedback');

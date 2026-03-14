@@ -190,6 +190,58 @@ export interface PortfolioItem {
   createdAt: Timestamp;
 }
 
+export interface LtiPlatformRegistration {
+  id: string;
+  siteId: string;
+  issuer: string;
+  clientId: string;
+  deploymentId: string;
+  authLoginUrl: string;
+  accessTokenUrl: string;
+  jwksUrl: string;
+  ownerUserId: string;
+  status: 'active' | 'paused' | 'revoked';
+  platformName?: string;
+  lineItemsScope?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface LtiResourceLink {
+  id: string;
+  registrationId: string;
+  siteId: string;
+  resourceLinkId: string;
+  title?: string;
+  missionId?: string;
+  sessionId?: string;
+  locale?: string;
+  targetPath?: string;
+  lineItemId?: string;
+  lineItemUrl?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface LtiGradePassbackJob {
+  id: string;
+  siteId: string;
+  learnerId: string;
+  missionAttemptId: string;
+  requestedBy: string;
+  lineItemId?: string;
+  lineItemUrl?: string;
+  scoreGiven: number;
+  scoreMaximum: number;
+  activityProgress: 'Initialized' | 'Started' | 'InProgress' | 'Submitted' | 'Completed';
+  gradingProgress: 'Pending' | 'PendingManual' | 'FullyGraded' | 'Failed';
+  status: 'queued' | 'running' | 'failed' | 'completed';
+  idempotencyKey: string;
+  lastError?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // --- Motivation & Personalization System ---
 
 /**
