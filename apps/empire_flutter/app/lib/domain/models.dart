@@ -2778,6 +2778,13 @@ List<String> _stringListOrEmpty(dynamic value) {
   return value.map((dynamic entry) => entry.toString()).toList(growable: false);
 }
 
+List<double> _doubleListOrEmpty(dynamic value) {
+  if (value is! List) return const <double>[];
+  return value
+      .map((dynamic entry) => entry is num ? entry.toDouble() : double.tryParse(entry.toString()) ?? 0)
+      .toList(growable: false);
+}
+
 Map<String, dynamic>? _mapOrNull(dynamic value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) {
@@ -3051,6 +3058,10 @@ class FederatedLearningAggregationRunModel {
     this.candidateModelPackageFormat,
     this.mergeStrategy,
     this.boundedDigest,
+    this.payloadFormat,
+    this.modelVersion,
+    this.runtimeVectorLength,
+    this.runtimeVectorDigest,
     required this.triggerSummaryId,
     required this.summaryIds,
     required this.summaryCount,
@@ -3078,6 +3089,10 @@ class FederatedLearningAggregationRunModel {
   final String? candidateModelPackageFormat;
   final String? mergeStrategy;
   final String? boundedDigest;
+  final String? payloadFormat;
+  final String? modelVersion;
+  final int? runtimeVectorLength;
+  final String? runtimeVectorDigest;
   final String triggerSummaryId;
   final List<String> summaryIds;
   final int summaryCount;
@@ -3120,6 +3135,10 @@ class FederatedLearningAggregationRunModel {
           data['candidateModelPackageFormat'] as String?,
       mergeStrategy: data['mergeStrategy'] as String?,
       boundedDigest: data['boundedDigest'] as String?,
+        payloadFormat: data['payloadFormat'] as String?,
+        modelVersion: data['modelVersion'] as String?,
+        runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt(),
+        runtimeVectorDigest: data['runtimeVectorDigest'] as String?,
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
@@ -3148,6 +3167,10 @@ class FederatedLearningAggregationRunModel {
         'candidateModelPackageFormat': candidateModelPackageFormat,
         'mergeStrategy': mergeStrategy,
         'boundedDigest': boundedDigest,
+        'payloadFormat': payloadFormat,
+        'modelVersion': modelVersion,
+        'runtimeVectorLength': runtimeVectorLength,
+        'runtimeVectorDigest': runtimeVectorDigest,
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'summaryCount': summaryCount,
@@ -3173,6 +3196,11 @@ class FederatedLearningMergeArtifactModel {
     required this.status,
     required this.mergeStrategy,
     required this.boundedDigest,
+    required this.payloadFormat,
+    required this.modelVersion,
+    required this.runtimeVectorLength,
+    required this.runtimeVector,
+    required this.runtimeVectorDigest,
     required this.sampleCount,
     required this.summaryCount,
     required this.distinctSiteCount,
@@ -3192,6 +3220,11 @@ class FederatedLearningMergeArtifactModel {
   final String status;
   final String mergeStrategy;
   final String boundedDigest;
+  final String payloadFormat;
+  final String modelVersion;
+  final int runtimeVectorLength;
+  final List<double> runtimeVector;
+  final String runtimeVectorDigest;
   final int sampleCount;
   final int summaryCount;
   final int distinctSiteCount;
@@ -3224,6 +3257,11 @@ class FederatedLearningMergeArtifactModel {
       status: data['status'] as String? ?? 'generated',
       mergeStrategy: data['mergeStrategy'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
+      payloadFormat: data['payloadFormat'] as String? ?? 'runtime_vector_v1',
+      modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
+      runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
+      runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
+      runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
       distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
@@ -3244,6 +3282,11 @@ class FederatedLearningMergeArtifactModel {
         'status': status,
         'mergeStrategy': mergeStrategy,
         'boundedDigest': boundedDigest,
+        'payloadFormat': payloadFormat,
+        'modelVersion': modelVersion,
+        'runtimeVectorLength': runtimeVectorLength,
+        'runtimeVector': runtimeVector,
+        'runtimeVectorDigest': runtimeVectorDigest,
         'sampleCount': sampleCount,
         'summaryCount': summaryCount,
         'distinctSiteCount': distinctSiteCount,
@@ -3279,8 +3322,12 @@ class FederatedLearningCandidateModelPackageModel {
     this.latestPilotExecutionStatus,
     this.latestRuntimeDeliveryRecordId,
     this.latestRuntimeDeliveryStatus,
+    required this.modelVersion,
     required this.packageDigest,
     required this.boundedDigest,
+    required this.runtimeVectorLength,
+    required this.runtimeVector,
+    required this.runtimeVectorDigest,
     required this.sampleCount,
     required this.summaryCount,
     required this.distinctSiteCount,
@@ -3312,8 +3359,12 @@ class FederatedLearningCandidateModelPackageModel {
   final String? latestPilotExecutionStatus;
   final String? latestRuntimeDeliveryRecordId;
   final String? latestRuntimeDeliveryStatus;
+  final String modelVersion;
   final String packageDigest;
   final String boundedDigest;
+  final int runtimeVectorLength;
+  final List<double> runtimeVector;
+  final String runtimeVectorDigest;
   final int sampleCount;
   final int summaryCount;
   final int distinctSiteCount;
@@ -3365,8 +3416,12 @@ class FederatedLearningCandidateModelPackageModel {
             data['latestRuntimeDeliveryRecordId'] as String?,
           latestRuntimeDeliveryStatus:
             data['latestRuntimeDeliveryStatus'] as String?,
+      modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
+      runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
+      runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
+      runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
       distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
@@ -3399,8 +3454,12 @@ class FederatedLearningCandidateModelPackageModel {
         'latestPilotExecutionStatus': latestPilotExecutionStatus,
         'latestRuntimeDeliveryRecordId': latestRuntimeDeliveryRecordId,
         'latestRuntimeDeliveryStatus': latestRuntimeDeliveryStatus,
+        'modelVersion': modelVersion,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
+        'runtimeVectorLength': runtimeVectorLength,
+        'runtimeVector': runtimeVector,
+        'runtimeVectorDigest': runtimeVectorDigest,
         'sampleCount': sampleCount,
         'summaryCount': summaryCount,
         'distinctSiteCount': distinctSiteCount,
@@ -3839,6 +3898,79 @@ class FederatedLearningRuntimeActivationRecordModel {
         'reportedAt': reportedAt ?? Timestamp.now(),
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningResolvedRuntimePackageModel {
+  const FederatedLearningResolvedRuntimePackageModel({
+    required this.packageId,
+    required this.deliveryRecordId,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.siteId,
+    required this.runtimeTarget,
+    required this.packageDigest,
+    required this.manifestDigest,
+    required this.modelVersion,
+    required this.runtimeVectorLength,
+    required this.runtimeVector,
+    required this.runtimeVectorDigest,
+    required this.rolloutStatus,
+    this.resolvedAt,
+  });
+
+  final String packageId;
+  final String deliveryRecordId;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String siteId;
+  final String runtimeTarget;
+  final String packageDigest;
+  final String manifestDigest;
+  final String modelVersion;
+  final int runtimeVectorLength;
+  final List<double> runtimeVector;
+  final String runtimeVectorDigest;
+  final String rolloutStatus;
+  final Timestamp? resolvedAt;
+
+  factory FederatedLearningResolvedRuntimePackageModel.fromMap(
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningResolvedRuntimePackageModel(
+      packageId: data['packageId'] as String? ?? '',
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      packageDigest: data['packageDigest'] as String? ?? '',
+      manifestDigest: data['manifestDigest'] as String? ?? '',
+      modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
+      runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
+      runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
+      runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
+      rolloutStatus: data['rolloutStatus'] as String? ?? 'not_distributed',
+      resolvedAt: _timestampOrNull(data['resolvedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'packageId': packageId,
+        'deliveryRecordId': deliveryRecordId,
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'siteId': siteId,
+        'runtimeTarget': runtimeTarget,
+        'packageDigest': packageDigest,
+        'manifestDigest': manifestDigest,
+        'modelVersion': modelVersion,
+        'runtimeVectorLength': runtimeVectorLength,
+        'runtimeVector': runtimeVector,
+        'runtimeVectorDigest': runtimeVectorDigest,
+        'rolloutStatus': rolloutStatus,
+        'resolvedAt': resolvedAt ?? Timestamp.now(),
       };
 }
 

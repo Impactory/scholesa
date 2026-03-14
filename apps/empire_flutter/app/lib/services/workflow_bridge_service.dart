@@ -384,6 +384,27 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
+  Future<Map<String, dynamic>?> resolveSiteFederatedLearningRuntimePackage({
+    String? siteId,
+    String? experimentId,
+    String? runtimeTarget,
+    String? deliveryRecordId,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'resolveSiteFederatedLearningRuntimePackage',
+      <String, dynamic>{
+        if ((siteId ?? '').trim().isNotEmpty) 'siteId': siteId!.trim(),
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((runtimeTarget ?? '').trim().isNotEmpty)
+          'runtimeTarget': runtimeTarget!.trim(),
+        if ((deliveryRecordId ?? '').trim().isNotEmpty)
+          'deliveryRecordId': deliveryRecordId!.trim(),
+      },
+    );
+    return _mapOrNull(payload['package']);
+  }
+
   Future<String?> revokeFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {

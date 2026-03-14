@@ -110,6 +110,7 @@ export {
   listFederatedLearningRuntimeActivationRecords,
   listSiteFederatedLearningRuntimeDeliveryRecords,
   listSiteFederatedLearningRuntimeActivationRecords,
+  resolveSiteFederatedLearningRuntimePackage,
   upsertFederatedLearningExperiment,
   upsertFederatedLearningExperimentReviewRecord,
   upsertFederatedLearningPilotEvidenceRecord,

@@ -28,6 +28,7 @@ import {
   buildFederatedLearningRuntimeDeliveryRecordDocId,
   buildFederatedLearningRuntimeDeliveryManifestDigest,
   buildFederatedLearningRuntimeActivationRecordDocId,
+  buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -1583,6 +1584,7 @@ interface FederatedPendingSummaryRow {
   siteId: string;
   sampleCount: number;
   vectorLength: number;
+  vectorSketch: number[];
   payloadBytes: number;
   updateNorm: number;
   schemaVersion: string;
@@ -1609,6 +1611,11 @@ function mapPendingFederatedSummary(
     siteId: asTrimmedString(data.siteId),
     sampleCount: asPositiveInteger(data.sampleCount, 0),
     vectorLength: asPositiveInteger(data.vectorLength, 0),
+    vectorSketch: Array.isArray(data.vectorSketch)
+      ? data.vectorSketch
+        .map((entry) => asNumber(entry) ?? 0)
+        .map((entry) => Number(entry.toFixed(6)))
+      : [],
     payloadBytes: asPositiveInteger(data.payloadBytes, 0),
     updateNorm: asNumber(data.updateNorm) ?? 0,
     schemaVersion: asTrimmedString(data.schemaVersion) || 'v1',
@@ -1689,7 +1696,14 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     if (!refreshedSelection || refreshedSelection.summaryIds.join('|') !== selection.summaryIds.join('|')) {
       return;
     }
-    const artifactSummary = buildFederatedLearningMergeArtifactSummary(refreshedSelection);
+    const mergedRuntimeVector = buildFederatedLearningMergedRuntimeVector(
+      refreshedRows,
+      refreshedSelection.maxVectorLength,
+    );
+    const artifactSummary = buildFederatedLearningMergeArtifactSummary(
+      refreshedSelection,
+      mergedRuntimeVector,
+    );
     const packageSummary = buildFederatedLearningCandidateModelPackageSummary(
       runId,
       artifactId,
@@ -1706,7 +1720,11 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       candidateModelPackageId: packageId,
       candidateModelPackageStatus: 'staged',
       candidateModelPackageFormat: packageSummary.packageFormat,
-      mergeStrategy: 'prototype_weighted_metadata_digest',
+      payloadFormat: artifactSummary.payloadFormat,
+      modelVersion: artifactSummary.modelVersion,
+      runtimeVectorLength: artifactSummary.runtimeVectorLength,
+      runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
+      mergeStrategy: 'weighted_runtime_vector_average_v1',
       triggerSummaryId,
       summaryIds: refreshedSelection.summaryIds,
       summaryCount: refreshedSelection.summaryCount,
@@ -1727,8 +1745,13 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       experimentId,
       aggregationRunId: runId,
       status: 'generated',
-      mergeStrategy: 'prototype_weighted_metadata_digest',
+      mergeStrategy: 'weighted_runtime_vector_average_v1',
       boundedDigest: artifactSummary.boundedDigest,
+      payloadFormat: artifactSummary.payloadFormat,
+      modelVersion: artifactSummary.modelVersion,
+      runtimeVectorLength: artifactSummary.runtimeVectorLength,
+      runtimeVector: artifactSummary.runtimeVector,
+      runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
       sampleCount: artifactSummary.sampleCount,
       summaryCount: artifactSummary.summaryCount,
       distinctSiteCount: artifactSummary.distinctSiteCount,
@@ -1749,8 +1772,12 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       status: 'staged',
       packageFormat: packageSummary.packageFormat,
       rolloutStatus: packageSummary.rolloutStatus,
+      modelVersion: packageSummary.modelVersion,
       packageDigest: packageSummary.packageDigest,
       boundedDigest: packageSummary.boundedDigest,
+      runtimeVectorLength: packageSummary.runtimeVectorLength,
+      runtimeVector: packageSummary.runtimeVector,
+      runtimeVectorDigest: packageSummary.runtimeVectorDigest,
       sampleCount: packageSummary.sampleCount,
       summaryCount: packageSummary.summaryCount,
       distinctSiteCount: packageSummary.distinctSiteCount,
@@ -2232,6 +2259,121 @@ export const listSiteFederatedLearningRuntimeDeliveryRecords = onCall(async (req
     })
     .slice(0, limitValue);
   return { records };
+});
+
+export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  const targetSiteId = requestedSiteId
+    || asTrimmedString(actor.profile.activeSiteId)
+    || asTrimmedString(actor.profile.siteIds?.[0]);
+  if (!targetSiteId) {
+    throw new HttpsError('failed-precondition', 'No site context provided.');
+  }
+  if (!actorCanAccessSite(actor, targetSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const runtimeTarget = normalizeFederatedLearningRuntimeTarget(request.data?.runtimeTarget);
+
+  let deliveryData: Record<string, unknown> | null = null;
+  let resolvedDeliveryId = deliveryRecordId;
+
+  if (deliveryRecordId) {
+    const deliverySnap = await admin.firestore()
+      .collection('federatedLearningRuntimeDeliveryRecords')
+      .doc(deliveryRecordId)
+      .get();
+    if (!deliverySnap.exists) {
+      throw new HttpsError('not-found', 'Runtime delivery record not found.');
+    }
+    deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
+  } else {
+    const deliverySnap = await admin.firestore()
+      .collection('federatedLearningRuntimeDeliveryRecords')
+      .where('targetSiteIds', 'array-contains', targetSiteId)
+      .limit(50)
+      .get()
+      .catch(() => admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').limit(200).get());
+
+    const candidateDeliveries = deliverySnap.docs
+      .map((snapDoc) => ({
+        id: snapDoc.id,
+        ...(snapDoc.data() as Record<string, unknown>),
+      }))
+      .filter((row) => {
+        const allowedSites = toStringArray(row.targetSiteIds);
+        const status = asTrimmedString(row.status);
+        const rowExperimentId = asTrimmedString(row.experimentId);
+        const rowRuntimeTarget = normalizeFederatedLearningRuntimeTarget(row.runtimeTarget);
+        return allowedSites.includes(targetSiteId)
+          && ['assigned', 'active'].includes(status)
+          && (!experimentId || rowExperimentId === experimentId)
+          && (!runtimeTarget || rowRuntimeTarget === runtimeTarget);
+      })
+      .sort((a, b) => {
+        const statusRank = (value: string) => (value === 'active' ? 2 : value === 'assigned' ? 1 : 0);
+        const statusDelta = statusRank(asTrimmedString(b.status)) - statusRank(asTrimmedString(a.status));
+        if (statusDelta !== 0) return statusDelta;
+        const aUpdatedAt = typeof a.updatedAt === 'number' ? a.updatedAt : 0;
+        const bUpdatedAt = typeof b.updatedAt === 'number' ? b.updatedAt : 0;
+        return bUpdatedAt - aUpdatedAt;
+      });
+    if (candidateDeliveries.length === 0) {
+      return { package: null };
+    }
+    resolvedDeliveryId = asTrimmedString(candidateDeliveries[0].id);
+    deliveryData = candidateDeliveries[0] as Record<string, unknown>;
+  }
+
+  const deliveryStatus = asTrimmedString(deliveryData.status);
+  const allowedSites = toStringArray(deliveryData.targetSiteIds);
+  if (!['assigned', 'active'].includes(deliveryStatus) || !allowedSites.includes(targetSiteId)) {
+    throw new HttpsError('permission-denied', 'No active or assigned runtime delivery available for the requested site.');
+  }
+
+  const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
+  const packageSnap = await admin.firestore()
+    .collection('federatedLearningCandidateModelPackages')
+    .doc(candidateModelPackageId)
+    .get();
+  if (!packageSnap.exists) {
+    throw new HttpsError('not-found', 'Candidate model package not found.');
+  }
+
+  const packageData = (packageSnap.data() || {}) as Record<string, unknown>;
+  const packageRuntimeTarget = normalizeFederatedLearningRuntimeTarget(deliveryData.runtimeTarget)
+    || normalizeFederatedLearningRuntimeTarget(toStringArray(packageData.runtimeTargets)[0])
+    || 'flutter_mobile';
+
+  return {
+    package: {
+      packageId: candidateModelPackageId,
+      deliveryRecordId: resolvedDeliveryId,
+      experimentId: asTrimmedString(deliveryData.experimentId),
+      candidateModelPackageId,
+      siteId: targetSiteId,
+      runtimeTarget: packageRuntimeTarget,
+      packageDigest: asTrimmedString(packageData.packageDigest),
+      manifestDigest: asTrimmedString(deliveryData.manifestDigest),
+      modelVersion: asTrimmedString(packageData.modelVersion) || 'fl_runtime_model_v1',
+      runtimeVectorLength: asPositiveInteger(packageData.runtimeVectorLength, 0),
+      runtimeVector: Array.isArray(packageData.runtimeVector)
+        ? packageData.runtimeVector
+          .map((entry) => asNumber(entry) ?? 0)
+          .map((entry) => Number(entry.toFixed(6)))
+        : [],
+      runtimeVectorDigest: asTrimmedString(packageData.runtimeVectorDigest),
+      rolloutStatus: asTrimmedString(packageData.rolloutStatus) || 'not_distributed',
+      resolvedAt: Date.now(),
+    },
+  };
 });
 
 export const listFederatedLearningRuntimeActivationRecords = onCall(async (request: CallableRequest) => {
@@ -2796,6 +2938,7 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
     transaction.set(packageRef, {
       latestRuntimeDeliveryRecordId: deliveryId,
       latestRuntimeDeliveryStatus: status,
+      rolloutStatus: ['assigned', 'active'].includes(status) ? 'distributed' : 'not_distributed',
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });

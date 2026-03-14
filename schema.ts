@@ -235,6 +235,7 @@ export interface FederatedLearningUpdateSummary {
   schemaVersion: string;
   sampleCount: number;
   vectorLength: number;
+  vectorSketch: number[];
   payloadBytes: number;
   updateNorm: number;
   payloadDigest: string;
@@ -271,9 +272,13 @@ export interface FederatedLearningAggregationRun {
   mergeArtifactStatus?: 'generated';
   candidateModelPackageId?: string;
   candidateModelPackageStatus?: 'staged';
-  candidateModelPackageFormat?: 'bounded_metadata_manifest';
+  candidateModelPackageFormat?: 'runtime_vector_v1';
   mergeStrategy?: string;
   boundedDigest?: string;
+  payloadFormat?: 'runtime_vector_v1';
+  modelVersion?: string;
+  runtimeVectorLength?: number;
+  runtimeVectorDigest?: string;
   triggerSummaryId: string;
   summaryIds: string[];
   summaryCount: number;
@@ -296,6 +301,11 @@ export interface FederatedLearningMergeArtifact {
   status: 'generated';
   mergeStrategy: string;
   boundedDigest: string;
+  payloadFormat: 'runtime_vector_v1';
+  modelVersion: string;
+  runtimeVectorLength: number;
+  runtimeVector: number[];
+  runtimeVectorDigest: string;
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
@@ -315,8 +325,9 @@ export interface FederatedLearningCandidateModelPackage {
   aggregationRunId: string;
   mergeArtifactId: string;
   status: 'staged';
-  packageFormat: 'bounded_metadata_manifest';
-  rolloutStatus: 'not_distributed';
+  packageFormat: 'runtime_vector_v1';
+  rolloutStatus: 'not_distributed' | 'distributed';
+  modelVersion: string;
   latestPromotionRecordId?: string;
   latestPromotionStatus?: 'approved_for_eval' | 'hold' | 'revoked';
   latestPromotionRevocationRecordId?: string;
@@ -330,6 +341,9 @@ export interface FederatedLearningCandidateModelPackage {
   latestRuntimeDeliveryStatus?: FederatedLearningRuntimeDeliveryStatus;
   packageDigest: string;
   boundedDigest: string;
+  runtimeVectorLength: number;
+  runtimeVector: number[];
+  runtimeVectorDigest: string;
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
@@ -461,6 +475,23 @@ export interface FederatedLearningRuntimeActivationRecord {
   reportedAt?: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface FederatedLearningResolvedRuntimePackage {
+  packageId: string;
+  deliveryRecordId: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  siteId: string;
+  runtimeTarget: FederatedLearningRuntimeTarget;
+  packageDigest: string;
+  manifestDigest: string;
+  modelVersion: string;
+  runtimeVectorLength: number;
+  runtimeVector: number[];
+  runtimeVectorDigest: string;
+  rolloutStatus: 'not_distributed' | 'distributed';
+  resolvedAt: number;
 }
 
 export interface EnterpriseSsoProvider {

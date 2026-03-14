@@ -33,6 +33,7 @@ export interface FederatedLearningUpdateSummary {
   schemaVersion: string;
   sampleCount: number;
   vectorLength: number;
+  vectorSketch: number[];
   payloadBytes: number;
   updateNorm: number;
   payloadDigest: string;
@@ -45,6 +46,7 @@ export interface FederatedLearningAggregationCandidate {
   siteId: string;
   sampleCount: number;
   vectorLength: number;
+  vectorSketch: number[];
   payloadBytes: number;
   updateNorm: number;
   schemaVersion: string;
@@ -64,22 +66,31 @@ export interface FederatedLearningAggregationSelection {
 }
 
 export interface FederatedLearningMergeArtifactSummary {
+  payloadFormat: 'runtime_vector_v1';
+  modelVersion: string;
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
   schemaVersions: string[];
   runtimeTargets: string[];
   maxVectorLength: number;
+  runtimeVectorLength: number;
+  runtimeVector: number[];
+  runtimeVectorDigest: string;
   totalPayloadBytes: number;
   averageUpdateNorm: number;
   boundedDigest: string;
 }
 
 export interface FederatedLearningCandidateModelPackageSummary {
-  packageFormat: 'bounded_metadata_manifest';
+  packageFormat: 'runtime_vector_v1';
   rolloutStatus: 'not_distributed';
+  modelVersion: string;
   packageDigest: string;
   boundedDigest: string;
+  runtimeVectorLength: number;
+  runtimeVector: number[];
+  runtimeVectorDigest: string;
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
@@ -116,6 +127,26 @@ function asIntegerInRange(
     throw new Error(`${fieldName} must be an integer between ${min} and ${max}.`);
   }
   return candidate;
+}
+
+function normalizeFederatedLearningVectorSketch(
+  value: unknown,
+  fieldName: string,
+  maxLength = 24,
+): number[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an array.`);
+  }
+  if (value.length === 0 || value.length > maxLength) {
+    throw new Error(`${fieldName} must contain between 1 and ${maxLength} values.`);
+  }
+  return value.map((entry, index) => {
+    const parsed = asFiniteNumber(entry);
+    if (parsed === null || parsed < -1000 || parsed > 1000) {
+      throw new Error(`${fieldName}[${index}] must be a finite number between -1000 and 1000.`);
+    }
+    return Number(parsed.toFixed(6));
+  });
 }
 
 export function normalizeFederatedLearningRuntimeTarget(
@@ -415,6 +446,10 @@ export function sanitizeFederatedLearningUpdateSummary(
 
   const sampleCount = asIntegerInRange(input.sampleCount, 'sampleCount', 1, 10000, 1);
   const vectorLength = asIntegerInRange(input.vectorLength, 'vectorLength', 1, 100000, 1);
+  const vectorSketch = normalizeFederatedLearningVectorSketch(input.vectorSketch, 'vectorSketch');
+  if (vectorSketch.length !== vectorLength) {
+    throw new Error('vectorLength must match vectorSketch length.');
+  }
   const payloadBytes = asIntegerInRange(input.payloadBytes, 'payloadBytes', 1, rawUpdateMaxBytes, 1);
   const updateNorm = asFiniteNumber(input.updateNorm);
   if (updateNorm === null || updateNorm < 0 || updateNorm > 1000000) {
@@ -427,6 +462,7 @@ export function sanitizeFederatedLearningUpdateSummary(
     schemaVersion,
     sampleCount,
     vectorLength,
+    vectorSketch,
     payloadBytes,
     updateNorm,
     payloadDigest,
@@ -491,9 +527,44 @@ export function selectFederatedLearningAggregationBatch(
   };
 }
 
+export function buildFederatedLearningMergedRuntimeVector(
+  candidates: Array<Pick<FederatedLearningAggregationCandidate, 'sampleCount' | 'vectorSketch'>>,
+  vectorLength: number,
+): number[] {
+  const boundedLength = asIntegerInRange(vectorLength, 'vectorLength', 1, 100000, 1);
+  const merged = Array.from({ length: boundedLength }, () => 0);
+  let totalWeight = 0;
+
+  for (const candidate of candidates) {
+    const weight = Math.max(0, candidate.sampleCount);
+    if (weight <= 0) continue;
+    totalWeight += weight;
+    for (let index = 0; index < boundedLength; index += 1) {
+      merged[index] += (candidate.vectorSketch[index] ?? 0) * weight;
+    }
+  }
+
+  if (totalWeight <= 0) {
+    return merged;
+  }
+
+  return merged.map((value) => Number((value / totalWeight).toFixed(6)));
+}
+
 export function buildFederatedLearningMergeArtifactSummary(
   selection: FederatedLearningAggregationSelection,
+  runtimeVector: number[],
 ): FederatedLearningMergeArtifactSummary {
+  const payloadFormat = 'runtime_vector_v1';
+  const modelVersion = 'fl_runtime_model_v1';
+  const normalizedRuntimeVector = runtimeVector.map((value) => Number(value.toFixed(6)));
+  const runtimeVectorDigest = createHash('sha256')
+    .update(JSON.stringify({
+      payloadFormat,
+      modelVersion,
+      runtimeVector: normalizedRuntimeVector,
+    }))
+    .digest('hex');
   const boundedDigest = createHash('sha256')
     .update(JSON.stringify({
       summaryIds: selection.summaryIds,
@@ -501,6 +572,10 @@ export function buildFederatedLearningMergeArtifactSummary(
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
       maxVectorLength: selection.maxVectorLength,
+      payloadFormat,
+      modelVersion,
+      runtimeVector: normalizedRuntimeVector,
+      runtimeVectorDigest: `sha256:${runtimeVectorDigest}`,
       totalPayloadBytes: selection.totalPayloadBytes,
       averageUpdateNorm: selection.averageUpdateNorm,
       schemaVersions: selection.schemaVersions,
@@ -509,12 +584,17 @@ export function buildFederatedLearningMergeArtifactSummary(
     .digest('hex');
 
   return {
+    payloadFormat,
+    modelVersion,
     sampleCount: selection.totalSampleCount,
     summaryCount: selection.summaryCount,
     distinctSiteCount: selection.distinctSiteCount,
     schemaVersions: selection.schemaVersions,
     runtimeTargets: selection.runtimeTargets,
     maxVectorLength: selection.maxVectorLength,
+    runtimeVectorLength: normalizedRuntimeVector.length,
+    runtimeVector: normalizedRuntimeVector,
+    runtimeVectorDigest: `sha256:${runtimeVectorDigest}`,
     totalPayloadBytes: selection.totalPayloadBytes,
     averageUpdateNorm: selection.averageUpdateNorm,
     boundedDigest: `sha256:${boundedDigest}`,
@@ -526,7 +606,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
   artifactId: string,
   artifactSummary: FederatedLearningMergeArtifactSummary,
 ): FederatedLearningCandidateModelPackageSummary {
-  const packageFormat = 'bounded_metadata_manifest';
+  const packageFormat = artifactSummary.payloadFormat;
   const rolloutStatus = 'not_distributed';
   const packageDigest = createHash('sha256')
     .update(JSON.stringify({
@@ -534,7 +614,11 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       artifactId,
       packageFormat,
       rolloutStatus,
+      modelVersion: artifactSummary.modelVersion,
       boundedDigest: artifactSummary.boundedDigest,
+      runtimeVectorLength: artifactSummary.runtimeVectorLength,
+      runtimeVector: artifactSummary.runtimeVector,
+      runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
       sampleCount: artifactSummary.sampleCount,
       summaryCount: artifactSummary.summaryCount,
       distinctSiteCount: artifactSummary.distinctSiteCount,
@@ -549,8 +633,12 @@ export function buildFederatedLearningCandidateModelPackageSummary(
   return {
     packageFormat,
     rolloutStatus,
+    modelVersion: artifactSummary.modelVersion,
     packageDigest: `sha256:${packageDigest}`,
     boundedDigest: artifactSummary.boundedDigest,
+    runtimeVectorLength: artifactSummary.runtimeVectorLength,
+    runtimeVector: artifactSummary.runtimeVector,
+    runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
     sampleCount: artifactSummary.sampleCount,
     summaryCount: artifactSummary.summaryCount,
     distinctSiteCount: artifactSummary.distinctSiteCount,
