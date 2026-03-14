@@ -7,11 +7,27 @@ import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import 'site_marketplace_panel.dart';
+
+typedef SiteBillingSnapshotLoader = Future<Map<String, dynamic>> Function(
+  String siteId,
+);
 
 /// Site billing page
 /// Based on docs/13_PAYMENTS_BILLING_SPEC.md
 class SiteBillingPage extends StatefulWidget {
-  const SiteBillingPage({super.key});
+  const SiteBillingPage({
+    super.key,
+    this.firestore,
+    this.loadBillingSnapshot,
+    this.createCheckoutIntent,
+    this.completeCheckout,
+  });
+
+  final FirebaseFirestore? firestore;
+  final SiteBillingSnapshotLoader? loadBillingSnapshot;
+  final SiteCreateCheckoutIntent? createCheckoutIntent;
+  final SiteCompleteCheckout? completeCheckout;
 
   @override
   State<SiteBillingPage> createState() => _SiteBillingPageState();
@@ -66,6 +82,12 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                 ),
               ),
             _buildSubscriptionCard(context),
+            const SizedBox(height: 24),
+            SiteMarketplacePanel(
+              firestore: widget.firestore,
+              createCheckoutIntent: widget.createCheckoutIntent,
+              completeCheckout: widget.completeCheckout,
+            ),
             const SizedBox(height: 24),
             _buildUsageSection(context),
             const SizedBox(height: 24),
@@ -477,11 +499,16 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('getSiteBillingSnapshot');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'siteId': siteId});
-      final Map<String, dynamic> payload = _asMap(result.data);
+      final Map<String, dynamic> payload;
+      if (widget.loadBillingSnapshot != null) {
+        payload = await widget.loadBillingSnapshot!(siteId);
+      } else {
+        final HttpsCallable callable =
+            FirebaseFunctions.instance.httpsCallable('getSiteBillingSnapshot');
+        final HttpsCallableResult<dynamic> result =
+            await callable.call(<String, dynamic>{'siteId': siteId});
+        payload = _asMap(result.data);
+      }
       final DateTime? nextBilling = _toDateTime(payload['nextBillingDate']);
 
       final List<_InvoiceItem> invoices = _asMapList(payload['invoices'])

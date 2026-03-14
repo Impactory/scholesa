@@ -49,6 +49,8 @@ class MarketplaceListing {
     required this.description,
     required this.status,
     required this.category,
+    required this.productId,
+    this.currency = 'USD',
     this.price,
     this.imageUrl,
     this.createdAt,
@@ -61,6 +63,8 @@ class MarketplaceListing {
   final String description;
   final ListingStatus status;
   final String category;
+  final String productId;
+  final String currency;
   final double? price;
   final String? imageUrl;
   final DateTime? createdAt;

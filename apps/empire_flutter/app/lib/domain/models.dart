@@ -1501,6 +1501,7 @@ class MarketplaceListingModel {
     required this.title,
     required this.price,
     required this.currency,
+    this.productId,
     this.description,
     this.status = 'draft',
     this.entitlementRoles = const <String>[],
@@ -1519,6 +1520,7 @@ class MarketplaceListingModel {
   final String title;
   final String price;
   final String currency;
+  final String? productId;
   final String? description;
   final String status;
   final List<String> entitlementRoles;
@@ -1540,6 +1542,7 @@ class MarketplaceListingModel {
       title: data['title'] as String? ?? '',
       price: data['price'] as String? ?? '0',
       currency: data['currency'] as String? ?? 'USD',
+      productId: data['productId'] as String?,
       description: data['description'] as String?,
       status: data['status'] as String? ?? 'draft',
       entitlementRoles: List<String>.from(
@@ -1560,6 +1563,7 @@ class MarketplaceListingModel {
         'title': title,
         'price': price,
         'currency': currency,
+        'productId': productId,
         'description': description,
         'status': status,
         'entitlementRoles': entitlementRoles,

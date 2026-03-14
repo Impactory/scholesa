@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../services/billing_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
@@ -20,6 +21,21 @@ class PartnerListingsPage extends StatefulWidget {
 }
 
 class _PartnerListingsPageState extends State<PartnerListingsPage> {
+  BillingProductCatalogEntry _productEntry(String productId) {
+    return BillingService.productCatalog[productId] ??
+        const BillingProductCatalogEntry(
+          id: 'custom',
+          label: 'Custom Offering',
+          amount: '0',
+          currency: 'USD',
+        );
+  }
+
+  String _formatMoney(double amount, String currency) {
+    final String symbol = currency.toUpperCase() == 'USD' ? '\$' : currency;
+    return '$symbol${amount.toStringAsFixed(2)}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -192,6 +208,14 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         color: ScholesaColors.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _productEntry(listing.productId).label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: ScholesaColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: <Widget>[
@@ -199,7 +223,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         const Spacer(),
                         if (listing.price != null)
                           Text(
-                            '\$${listing.price!.toStringAsFixed(2)}',
+                            _formatMoney(listing.price!, listing.currency),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -272,8 +296,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
     );
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
-    final TextEditingController priceController = TextEditingController();
     String selectedCategory = 'Programs';
+    String selectedProductId = 'learner-seat';
     bool isSubmitting = false;
 
     showDialog<void>(
@@ -303,6 +327,28 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                     labelText: _tPartnerListings(context, 'Description'),
                     border: OutlineInputBorder(),
                   ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedProductId,
+                  decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Product'),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: BillingService.productCatalog.values
+                      .map((BillingProductCatalogEntry product) =>
+                          DropdownMenuItem<String>(
+                            value: product.id,
+                            child: Text(
+                              '${_tPartnerListings(context, product.label)} • ${_formatMoney(product.amountValue, product.currency)}',
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setLocalState(() => selectedProductId = value);
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -336,13 +382,14 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: priceController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: _tPartnerListings(context, 'Price (optional)'),
-                    border: OutlineInputBorder(),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${_tPartnerListings(context, 'Checkout price')}: ${_formatMoney(_productEntry(selectedProductId).amountValue, _productEntry(selectedProductId).currency)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: ScholesaColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -355,7 +402,6 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                   : () {
                       titleController.dispose();
                       descriptionController.dispose();
-                      priceController.dispose();
                       Navigator.pop(dialogContext);
                     },
               child: Text(_tPartnerListings(context, 'Cancel')),
@@ -378,8 +424,8 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                       }
 
                       setLocalState(() => isSubmitting = true);
-                      final double? price =
-                          double.tryParse(priceController.text.trim());
+                      final BillingProductCatalogEntry product =
+                          _productEntry(selectedProductId);
                       final PartnerService service =
                           context.read<PartnerService>();
                       final MarketplaceListing? created =
@@ -387,7 +433,9 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         title: title,
                         description: description,
                         category: selectedCategory,
-                        price: price,
+                        productId: selectedProductId,
+                        price: product.amountValue,
+                        currency: product.currency,
                       );
 
                       if (!context.mounted) {
@@ -411,7 +459,6 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
 
                       titleController.dispose();
                       descriptionController.dispose();
-                      priceController.dispose();
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
@@ -420,6 +467,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                           'surface': 'create_listing_dialog',
                           'listing_id': created.id,
                           'category': created.category,
+                          'product_id': created.productId,
                         },
                       );
                       Navigator.pop(dialogContext);
@@ -477,13 +525,21 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             const SizedBox(height: 8),
             Text(listing.description),
             const SizedBox(height: 16),
+            Text(
+              _productEntry(listing.productId).label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: <Widget>[
                 _buildStatusChip(listing.status),
                 const Spacer(),
                 if (listing.price != null)
                   Text(
-                    '\$${listing.price!.toStringAsFixed(2)}',
+                    _formatMoney(listing.price!, listing.currency),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

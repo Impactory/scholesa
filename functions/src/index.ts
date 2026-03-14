@@ -188,6 +188,7 @@ const AUDIT_COLLECTION = 'auditLogs';
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
+const FULFILLMENTS_COLLECTION = 'fulfillments';
 const NOTIFICATION_REQUESTS_COLLECTION = 'notificationRequests';
 const LEARNER_REMINDER_PREFERENCES_COLLECTION = 'learnerReminderPreferences';
 const NOTIFICATION_RATE_COLLECTION = 'notificationRateLimits';
@@ -3264,6 +3265,7 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
   const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
   const targetUserId = typeof request.data?.userId === 'string' ? request.data.userId.trim() : '';
   const productId = typeof request.data?.productId === 'string' ? request.data.productId.trim() : '' as ProductId;
+  const listingId = typeof request.data?.listingId === 'string' ? request.data.listingId.trim() : '';
   const idempotencyKey = typeof request.data?.idempotencyKey === 'string' ? request.data.idempotencyKey.trim() : '';
 
   if (!siteId || !targetUserId) throw new HttpsError('invalid-argument', 'siteId and userId are required');
@@ -3282,7 +3284,13 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
     .get();
   if (!existing.empty) {
     const doc = existing.docs[0];
-    return { orderId: doc.id, amount: doc.data().amount, currency: doc.data().currency, status: doc.data().status };
+    return {
+      intentId: doc.id,
+      orderId: doc.id,
+      amount: doc.data().amount,
+      currency: doc.data().currency,
+      status: doc.data().status,
+    };
   }
 
   const intentRef = admin.firestore().collection(CHECKOUT_INTENTS_COLLECTION).doc();
@@ -3296,6 +3304,7 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
     status: 'intent',
     actorId: actor.uid,
     actorRole: actor.role,
+    listingId: listingId || null,
     createdAt: FieldValue.serverTimestamp(),
   });
 
@@ -3304,10 +3313,20 @@ export const createCheckoutIntent = onCall(async (request: CallableRequest) => {
     userId: actor.uid,
     role: actor.role,
     siteId,
-    metadata: { productId, targetUserId },
+    metadata: {
+      productId,
+      targetUserId,
+      if (listingId) listingId,
+    },
   });
 
-  return { orderId: intentRef.id, amount: product.amount, currency: product.currency, status: 'intent' };
+  return {
+    intentId: intentRef.id,
+    orderId: intentRef.id,
+    amount: product.amount,
+    currency: product.currency,
+    status: 'intent',
+  };
 });
 
 export const completeCheckout = onCall(async (request: CallableRequest) => {
@@ -3331,7 +3350,9 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
   if (amountPaid && amountPaid != product.amount) throw new HttpsError('invalid-argument', 'Amount mismatch');
   if (currencyPaid && currencyPaid != product.currency) throw new HttpsError('invalid-argument', 'Currency mismatch');
 
+  const orderRef = admin.firestore().collection(ORDERS_COLLECTION).doc(intentId);
   const entitlementRef = admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc();
+  const fulfillmentRef = admin.firestore().collection(FULFILLMENTS_COLLECTION).doc();
 
   await admin.firestore().runTransaction(async (tx) => {
     const intentDoc = await tx.get(intentSnap.ref);
@@ -3345,6 +3366,21 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       entitlementId: entitlementRef.id,
     }, { merge: true });
 
+    tx.set(orderRef, {
+      siteId: current.siteId,
+      userId: current.userId,
+      productId,
+      amount: product.amount,
+      currency: product.currency,
+      status: 'paid',
+      entitlementRoles: product.roles,
+      actorId: actor.uid,
+      actorRole: actor.role,
+      listingId: current.listingId ?? null,
+      createdAt: FieldValue.serverTimestamp(),
+      paidAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     tx.set(entitlementRef, {
       userId: current.userId,
       siteId: current.siteId,
@@ -3352,6 +3388,19 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
       roles: product.roles,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    if (typeof current.listingId === 'string' && current.listingId.trim().length > 0) {
+      tx.set(fulfillmentRef, {
+        orderId: orderRef.id,
+        listingId: current.listingId.trim(),
+        userId: current.userId,
+        siteId: current.siteId,
+        status: 'pending',
+        note: 'Awaiting partner fulfillment',
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
 
     const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
     tx.set(
@@ -3384,10 +3433,25 @@ export const completeCheckout = onCall(async (request: CallableRequest) => {
     userId: actor.uid,
     role: actor.role,
     siteId: intent.siteId as string,
-    metadata: { orderId: intentId, productId, targetUserId: intent.userId, amount: product.amount, currency: product.currency },
+    metadata: {
+      orderId: orderRef.id,
+      productId,
+      targetUserId: intent.userId,
+      amount: product.amount,
+      currency: product.currency,
+      if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
+        listingId: intent.listingId,
+    },
   });
 
-  return { orderId: intentId, entitlementId: entitlementRef.id, status: 'paid', amount: product.amount, currency: product.currency };
+  return {
+    orderId: orderRef.id,
+    entitlementId: entitlementRef.id,
+    status: 'paid',
+    amount: product.amount,
+    currency: product.currency,
+    listingId: intent.listingId ?? null,
+  };
 });
 
 export const completeCheckoutWebhook = onRequest(async (req, res) => {
@@ -3427,7 +3491,9 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
     if (amountPaid && amountPaid != product.amount) throw new Error('Amount mismatch');
     if (currencyPaid && currencyPaid != product.currency) throw new Error('Currency mismatch');
 
+    const orderRef = admin.firestore().collection(ORDERS_COLLECTION).doc(intentId);
     const entitlementRef = admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc();
+    const fulfillmentRef = admin.firestore().collection(FULFILLMENTS_COLLECTION).doc();
 
     await admin.firestore().runTransaction(async (tx) => {
       const snap = await tx.get(intentSnap.ref);
@@ -3441,6 +3507,21 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         entitlementId: entitlementRef.id,
       }, { merge: true });
 
+      tx.set(orderRef, {
+        siteId: current.siteId,
+        userId: current.userId,
+        productId,
+        amount: product.amount,
+        currency: product.currency,
+        status: 'paid',
+        entitlementRoles: product.roles,
+        actorId: current.actorId ?? 'webhook',
+        actorRole: current.actorRole ?? 'hq',
+        listingId: current.listingId ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+        paidAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
       tx.set(entitlementRef, {
         userId: current.userId,
         siteId: current.siteId,
@@ -3448,6 +3529,19 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
         roles: product.roles,
         createdAt: FieldValue.serverTimestamp(),
       });
+
+      if (typeof current.listingId === 'string' && current.listingId.trim().length > 0) {
+        tx.set(fulfillmentRef, {
+          orderId: orderRef.id,
+          listingId: current.listingId.trim(),
+          userId: current.userId,
+          siteId: current.siteId,
+          status: 'pending',
+          note: 'Awaiting partner fulfillment',
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
 
       const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
       tx.set(
@@ -3480,10 +3574,24 @@ export const completeCheckoutWebhook = onRequest(async (req, res) => {
       userId: (intent.actorId as string | undefined) ?? 'system',
       role: intent.actorRole as Role | undefined,
       siteId: intent.siteId as string,
-      metadata: { orderId: intentId, productId, targetUserId: intent.userId, amount: product.amount, currency: product.currency, via: 'webhook' },
+      metadata: {
+        orderId: orderRef.id,
+        productId,
+        targetUserId: intent.userId,
+        amount: product.amount,
+        currency: product.currency,
+        via: 'webhook',
+        if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
+          listingId: intent.listingId,
+      },
     });
 
-    res.status(200).send({ status: 'paid', orderId: intentId, entitlementId: entitlementRef.id });
+    res.status(200).send({
+      status: 'paid',
+      orderId: orderRef.id,
+      entitlementId: entitlementRef.id,
+      listingId: intent.listingId ?? null,
+    });
   } catch (e: any) {
     res.status(500).send(e?.message ?? 'error');
   }
@@ -4388,7 +4496,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   }
 
   const product = PRODUCT_CATALOG[productId];
+  const orderRef = admin.firestore().collection(ORDERS_COLLECTION).doc(intentId);
   const entitlementRef = admin.firestore().collection(ENTITLEMENTS_COLLECTION).doc();
+  const fulfillmentRef = admin.firestore().collection(FULFILLMENTS_COLLECTION).doc();
 
   await admin.firestore().runTransaction(async (tx) => {
     const snap = await tx.get(intentSnap.ref);
@@ -4404,6 +4514,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       stripePaymentStatus: session.payment_status,
     }, { merge: true });
 
+    tx.set(orderRef, {
+      siteId: current.siteId,
+      userId: current.userId,
+      productId,
+      amount: product.amount,
+      currency: product.currency,
+      status: 'paid',
+      entitlementRoles: product.roles,
+      actorId: current.actorId ?? 'stripe_webhook',
+      actorRole: current.actorRole ?? 'system',
+      listingId: current.listingId ?? null,
+      stripeSessionId: session.id,
+      stripePaymentIntentId: session.payment_intent,
+      createdAt: FieldValue.serverTimestamp(),
+      paidAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     // Create entitlement
     tx.set(entitlementRef, {
       userId: current.userId,
@@ -4413,6 +4540,19 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       stripeSessionId: session.id,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    if (typeof current.listingId === 'string' && current.listingId.trim().length > 0) {
+      tx.set(fulfillmentRef, {
+        orderId: orderRef.id,
+        listingId: current.listingId.trim(),
+        userId: current.userId,
+        siteId: current.siteId,
+        status: 'pending',
+        note: 'Awaiting partner fulfillment',
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
 
     // Update user roles
     const userRef = admin.firestore().collection(USERS_COLLECTION).doc(current.userId as string);
@@ -4455,13 +4595,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     role: intent.actorRole as Role | undefined,
     siteId: intent.siteId as string,
     metadata: {
-      orderId: intentId,
+      orderId: orderRef.id,
       productId,
       targetUserId: intent.userId,
       amount: session.amount_total,
       currency: session.currency,
       via: 'stripe_webhook',
       stripeSessionId: session.id,
+      if (typeof intent.listingId === 'string' && intent.listingId.trim().length > 0)
+        listingId: intent.listingId,
     },
   });
 

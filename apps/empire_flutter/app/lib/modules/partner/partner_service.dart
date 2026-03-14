@@ -67,6 +67,8 @@ class PartnerService extends ChangeNotifier {
                 description: doc['description'] as String? ?? '',
                 status: _parseListingStatus(doc['status'] as String?),
                 category: doc['category'] as String? ?? 'General',
+                productId: doc['productId'] as String? ?? '',
+                currency: doc['currency'] as String? ?? 'USD',
                 price: (doc['price'] as num?)?.toDouble(),
                 imageUrl: doc['imageUrl'] as String?,
               ))
@@ -86,7 +88,9 @@ class PartnerService extends ChangeNotifier {
     required String title,
     required String description,
     required String category,
-    double? price,
+    required String productId,
+    required double price,
+    String currency = 'USD',
   }) async {
     _error = null;
     notifyListeners();
@@ -99,7 +103,9 @@ class PartnerService extends ChangeNotifier {
           'title': title,
           'description': description,
           'category': category,
+          'productId': productId,
           'price': price,
+          'currency': currency,
           'status': 'draft',
         },
       );
@@ -111,6 +117,8 @@ class PartnerService extends ChangeNotifier {
         description: description,
         status: ListingStatus.draft,
         category: category,
+        productId: productId,
+        currency: currency,
         price: price,
       );
 
