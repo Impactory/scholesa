@@ -415,6 +415,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
 
   String _providerKeyFromType(String type) {
     if (type.contains('github')) return 'github';
+    if (type.contains('lti') || type.contains('grade_push')) return 'lti_1p3';
     if (type.contains('canvas')) return 'canvas';
     if (type.contains('google') || type.contains('classroom')) {
       return 'google_classroom';
@@ -426,6 +427,8 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     switch (providerKey) {
       case 'github':
         return 'GitHub';
+      case 'lti_1p3':
+        return 'LTI 1.3 / Grade Passback';
       case 'canvas':
         return 'Canvas LMS';
       default:

@@ -144,15 +144,15 @@ class _SiteIntegrationsHealthPageState
         children: <Widget>[
           Expanded(
               child: _buildStatusStat(
-                _t('Healthy'), healthyCount, Icons.check_circle_rounded)),
+                  _t('Healthy'), healthyCount, Icons.check_circle_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
           Expanded(
               child: _buildStatusStat(
-                _t('Warning'), warningCount, Icons.warning_rounded)),
+                  _t('Warning'), warningCount, Icons.warning_rounded)),
           Container(width: 1, height: 50, color: Colors.white30),
           Expanded(
-              child:
-                _buildStatusStat(_t('Issues'), errorCount, Icons.error_rounded)),
+              child: _buildStatusStat(
+                  _t('Issues'), errorCount, Icons.error_rounded)),
         ],
       ),
     );
@@ -263,7 +263,8 @@ class _SiteIntegrationsHealthPageState
                       integration.lastSync != null
                           ? _formatTime(integration.lastSync!)
                           : _t('Never')),
-                  _buildMetric(_t('Synced'), '${integration.syncedItems} ${_t('items')}'),
+                  _buildMetric(_t('Synced'),
+                      '${integration.syncedItems} ${_t('items')}'),
                   _buildMetric(_t('Errors'), '${integration.errors}'),
                 ],
               ),
@@ -536,7 +537,8 @@ class _SiteIntegrationsHealthPageState
             ),
             ListTile(
               leading: const Icon(Icons.link_off_rounded, color: Colors.red),
-              title: Text(_t('Disconnect'), style: const TextStyle(color: Colors.red)),
+              title: Text(_t('Disconnect'),
+                  style: const TextStyle(color: Colors.red)),
               onTap: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
@@ -590,7 +592,8 @@ class _SiteIntegrationsHealthPageState
     await _loadIntegrations();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} ${_t('synced successfully')}')),
+      SnackBar(
+          content: Text('${integration.name} ${_t('synced successfully')}')),
     );
   }
 
@@ -622,7 +625,8 @@ class _SiteIntegrationsHealthPageState
     );
   }
 
-  Future<void> _handleMarkRosterImportReviewed(RosterImportModel importRow) async {
+  Future<void> _handleMarkRosterImportReviewed(
+      RosterImportModel importRow) async {
     final AppState appState = context.read<AppState>();
     final String reviewerId = (appState.userId ?? '').trim();
     if (reviewerId.isEmpty) return;
@@ -671,47 +675,48 @@ class _SiteIntegrationsHealthPageState
 
     try {
       final Map<String, dynamic> payload = widget.healthLoader != null
-        ? await widget.healthLoader!(siteId)
-        : await _fetchHealthPayload(siteId);
-      final List<Map<String, dynamic>> connectionsRows =
-          (payload['connections'] as List<dynamic>? ?? <dynamic>[])
-              .whereType<Map<dynamic, dynamic>>()
-              .map((Map<dynamic, dynamic> row) =>
-                  row.map((dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value)))
-              .toList();
-      final List<Map<String, dynamic>> syncRows =
-          (payload['syncJobs'] as List<dynamic>? ?? <dynamic>[])
-              .whereType<Map<dynamic, dynamic>>()
-              .map((Map<dynamic, dynamic> row) =>
-                  row.map((dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value)))
-              .toList();
+          ? await widget.healthLoader!(siteId)
+          : await _fetchHealthPayload(siteId);
+      final List<Map<String, dynamic>> connectionsRows = (payload['connections']
+                  as List<dynamic>? ??
+              <dynamic>[])
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .toList();
+      final List<Map<String, dynamic>> syncRows = (payload['syncJobs']
+                  as List<dynamic>? ??
+              <dynamic>[])
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .toList();
 
-      final List<_Integration> loaded = connectionsRows
-          .map((Map<String, dynamic> data) {
+      final List<_Integration> loaded =
+          connectionsRows.map((Map<String, dynamic> data) {
         final String providerKey =
             ((data['provider'] as String?) ?? 'google_classroom').toLowerCase();
         final List<Map<String, dynamic>> providerJobs = syncRows
-            .where((Map<String, dynamic> row) =>
-                _typeMatchesProvider(
-              ((row['provider'] as String?) ??
-                  (row['type'] as String?) ??
-                  '')
-                .toLowerCase(),
-              providerKey))
+            .where((Map<String, dynamic> row) => _typeMatchesProvider(
+                ((row['provider'] as String?) ?? (row['type'] as String?) ?? '')
+                    .toLowerCase(),
+                providerKey))
             .toList();
 
         DateTime? lastSync;
         int synced = 0;
         int errors = 0;
         for (final Map<String, dynamic> row in providerJobs) {
-          final String status = ((row['status'] as String?) ?? '').toLowerCase();
+          final String status =
+              ((row['status'] as String?) ?? '').toLowerCase();
           final DateTime? created = _toDateTime(row['createdAt']);
-          if (created != null && (lastSync == null || created.isAfter(lastSync))) {
+          if (created != null &&
+              (lastSync == null || created.isAfter(lastSync))) {
             lastSync = created;
           }
-          if (status == 'completed' || status == 'success' || status == 'done') {
+          if (status == 'completed' ||
+              status == 'success' ||
+              status == 'done') {
             synced += 1;
           }
           if (status == 'failed' || status == 'error') {
@@ -797,6 +802,11 @@ class _SiteIntegrationsHealthPageState
     if (providerKey.contains('github')) {
       return type.contains('github');
     }
+    if (providerKey.contains('lti')) {
+      return type.contains('lti') ||
+          type.contains('grade_push') ||
+          type.contains('canvas');
+    }
     if (providerKey.contains('canvas')) {
       return type.contains('canvas');
     }
@@ -810,6 +820,13 @@ class _SiteIntegrationsHealthPageState
         name: 'GitHub',
         icon: Icons.code_rounded,
         color: Colors.black87,
+      );
+    }
+    if (providerKey.contains('lti')) {
+      return (
+        name: 'LTI 1.3 / Grade Passback',
+        icon: Icons.link_rounded,
+        color: Colors.deepOrange,
       );
     }
     if (providerKey.contains('canvas')) {

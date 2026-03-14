@@ -182,18 +182,18 @@ class LearnerProfileModel {
       interests:
           List<String>.from(data['interests'] as List? ?? const <String>[]),
       goals: List<String>.from(data['goals'] as List? ?? const <String>[]),
-        readingLevelSelfCheck: data['readingLevelSelfCheck'] as String?,
-        diagnosticConfidenceBand: data['diagnosticConfidenceBand'] as String?,
-        weeklyTargetMinutes: data['weeklyTargetMinutes'] as int?,
-        reminderSchedule: data['reminderSchedule'] as String?,
-        valuePrompt: data['valuePrompt'] as String?,
-        ttsEnabled: data['ttsEnabled'] as bool? ?? false,
-        reducedDistractionEnabled:
+      readingLevelSelfCheck: data['readingLevelSelfCheck'] as String?,
+      diagnosticConfidenceBand: data['diagnosticConfidenceBand'] as String?,
+      weeklyTargetMinutes: data['weeklyTargetMinutes'] as int?,
+      reminderSchedule: data['reminderSchedule'] as String?,
+      valuePrompt: data['valuePrompt'] as String?,
+      ttsEnabled: data['ttsEnabled'] as bool? ?? false,
+      reducedDistractionEnabled:
           data['reducedDistractionEnabled'] as bool? ?? false,
-        keyboardOnlyEnabled: data['keyboardOnlyEnabled'] as bool? ?? false,
-        highContrastEnabled: data['highContrastEnabled'] as bool? ?? false,
-        onboardingCompleted: data['onboardingCompleted'] as bool? ?? false,
-        lastSetupAt: data['lastSetupAt'] as Timestamp?,
+      keyboardOnlyEnabled: data['keyboardOnlyEnabled'] as bool? ?? false,
+      highContrastEnabled: data['highContrastEnabled'] as bool? ?? false,
+      onboardingCompleted: data['onboardingCompleted'] as bool? ?? false,
+      lastSetupAt: data['lastSetupAt'] as Timestamp?,
       emergencyContact: data['emergencyContact'] as Map<String, dynamic>?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -2546,6 +2546,222 @@ class SyncJobModel {
         'cursor': cursor,
         'nextPageToken': nextPageToken,
         'lastError': lastError,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class LtiPlatformRegistrationModel {
+  const LtiPlatformRegistrationModel({
+    required this.id,
+    required this.siteId,
+    required this.ownerUserId,
+    required this.issuer,
+    required this.clientId,
+    required this.deploymentId,
+    required this.authLoginUrl,
+    required this.accessTokenUrl,
+    required this.jwksUrl,
+    this.platformName,
+    this.status = 'active',
+    this.lineItemsScope = true,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String ownerUserId;
+  final String issuer;
+  final String clientId;
+  final String deploymentId;
+  final String authLoginUrl;
+  final String accessTokenUrl;
+  final String jwksUrl;
+  final String? platformName;
+  final String status;
+  final bool lineItemsScope;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory LtiPlatformRegistrationModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return LtiPlatformRegistrationModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      ownerUserId: data['ownerUserId'] as String? ?? '',
+      issuer: data['issuer'] as String? ?? '',
+      clientId: data['clientId'] as String? ?? '',
+      deploymentId: data['deploymentId'] as String? ?? '',
+      authLoginUrl: data['authLoginUrl'] as String? ?? '',
+      accessTokenUrl: data['accessTokenUrl'] as String? ?? '',
+      jwksUrl: data['jwksUrl'] as String? ?? '',
+      platformName: data['platformName'] as String?,
+      status: data['status'] as String? ?? 'active',
+      lineItemsScope: data['lineItemsScope'] as bool? ?? true,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'ownerUserId': ownerUserId,
+        'issuer': issuer,
+        'clientId': clientId,
+        'deploymentId': deploymentId,
+        'authLoginUrl': authLoginUrl,
+        'accessTokenUrl': accessTokenUrl,
+        'jwksUrl': jwksUrl,
+        'platformName': platformName,
+        'status': status,
+        'lineItemsScope': lineItemsScope,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class LtiResourceLinkModel {
+  const LtiResourceLinkModel({
+    required this.id,
+    required this.registrationId,
+    required this.siteId,
+    required this.resourceLinkId,
+    this.title,
+    this.missionId,
+    this.sessionId,
+    this.targetPath,
+    this.locale,
+    this.lineItemId,
+    this.lineItemUrl,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String registrationId;
+  final String siteId;
+  final String resourceLinkId;
+  final String? title;
+  final String? missionId;
+  final String? sessionId;
+  final String? targetPath;
+  final String? locale;
+  final String? lineItemId;
+  final String? lineItemUrl;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory LtiResourceLinkModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return LtiResourceLinkModel(
+      id: doc.id,
+      registrationId: data['registrationId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      resourceLinkId: data['resourceLinkId'] as String? ?? '',
+      title: data['title'] as String?,
+      missionId: data['missionId'] as String?,
+      sessionId: data['sessionId'] as String?,
+      targetPath: data['targetPath'] as String?,
+      locale: data['locale'] as String?,
+      lineItemId: data['lineItemId'] as String?,
+      lineItemUrl: data['lineItemUrl'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'registrationId': registrationId,
+        'siteId': siteId,
+        'resourceLinkId': resourceLinkId,
+        'title': title,
+        'missionId': missionId,
+        'sessionId': sessionId,
+        'targetPath': targetPath,
+        'locale': locale,
+        'lineItemId': lineItemId,
+        'lineItemUrl': lineItemUrl,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class LtiGradePassbackJobModel {
+  const LtiGradePassbackJobModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.missionAttemptId,
+    required this.requestedBy,
+    required this.scoreGiven,
+    required this.scoreMaximum,
+    required this.idempotencyKey,
+    this.lineItemId,
+    this.lineItemUrl,
+    this.activityProgress = 'Submitted',
+    this.gradingProgress = 'PendingManual',
+    this.status = 'queued',
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String missionAttemptId;
+  final String requestedBy;
+  final String? lineItemId;
+  final String? lineItemUrl;
+  final double scoreGiven;
+  final double scoreMaximum;
+  final String activityProgress;
+  final String gradingProgress;
+  final String status;
+  final String idempotencyKey;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory LtiGradePassbackJobModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return LtiGradePassbackJobModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      missionAttemptId: data['missionAttemptId'] as String? ?? '',
+      requestedBy: data['requestedBy'] as String? ?? '',
+      lineItemId: data['lineItemId'] as String?,
+      lineItemUrl: data['lineItemUrl'] as String?,
+      scoreGiven: (data['scoreGiven'] as num?)?.toDouble() ?? 0,
+      scoreMaximum: (data['scoreMaximum'] as num?)?.toDouble() ?? 0,
+      activityProgress: data['activityProgress'] as String? ?? 'Submitted',
+      gradingProgress: data['gradingProgress'] as String? ?? 'PendingManual',
+      status: data['status'] as String? ?? 'queued',
+      idempotencyKey: data['idempotencyKey'] as String? ?? '',
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'missionAttemptId': missionAttemptId,
+        'requestedBy': requestedBy,
+        'lineItemId': lineItemId,
+        'lineItemUrl': lineItemUrl,
+        'scoreGiven': scoreGiven,
+        'scoreMaximum': scoreMaximum,
+        'activityProgress': activityProgress,
+        'gradingProgress': gradingProgress,
+        'status': status,
+        'idempotencyKey': idempotencyKey,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };

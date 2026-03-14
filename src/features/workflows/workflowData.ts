@@ -2014,6 +2014,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             defaultValue: 'google-classroom',
             options: [
               { value: 'google-classroom', label: 'Google Classroom' },
+              { value: 'lti_1p3', label: 'LTI 1.3 / Grade Passback' },
               { value: 'google-workspace', label: 'Google Workspace' },
               { value: 'canvas', label: 'Canvas' },
             ],
@@ -2456,6 +2457,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             defaultValue: 'google-classroom',
             options: [
               { value: 'google-classroom', label: 'Google Classroom' },
+              { value: 'lti_1p3', label: 'LTI 1.3 / Grade Passback' },
               { value: 'google-workspace', label: 'Google Workspace' },
               { value: 'canvas', label: 'Canvas' },
             ],

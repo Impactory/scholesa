@@ -1,6 +1,11 @@
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
+import {
+  buildLtiGradePassbackAuditLog,
+  buildLtiGradePassbackJob,
+  normalizeIntegrationProvider,
+} from './ltiIntegration';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -107,6 +112,16 @@ function asNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function buildLtiRegistrationDocId(siteId: string, issuer: string, clientId: string, deploymentId: string): string {
+  const raw = `${siteId.trim()}|${issuer.trim()}|${clientId.trim()}|${deploymentId.trim()}`;
+  return `lti_${Buffer.from(raw).toString('base64url').slice(0, 120)}`;
+}
+
+function buildLtiResourceLinkDocId(registrationId: string, resourceLinkId: string): string {
+  const raw = `${registrationId.trim()}|${resourceLinkId.trim()}`;
+  return `lti_link_${Buffer.from(raw).toString('base64url').slice(0, 120)}`;
 }
 
 function toDateValue(value: unknown): Date | null {
@@ -491,11 +506,16 @@ export const triggerIntegrationSyncJob = onCall(async (request: CallableRequest)
     throw new HttpsError('permission-denied', 'No access to requested site.');
   }
 
-  const provider = typeof request.data?.provider === 'string' ? request.data.provider : 'google-classroom';
+  const provider = normalizeIntegrationProvider(
+    typeof request.data?.provider === 'string' ? request.data.provider : 'google-classroom',
+  );
+  const requestedType = typeof request.data?.type === 'string' ? request.data.type.trim().toLowerCase() : '';
+  const jobType = requestedType || provider;
   const docRef = await admin.firestore().collection('syncJobs').add({
     siteId: requestedSiteId,
     provider,
-    type: provider,
+    type: jobType,
+    jobType,
     status: 'queued',
     requestedBy: actor.uid,
     requestedByRole: actor.role,
@@ -504,6 +524,213 @@ export const triggerIntegrationSyncJob = onCall(async (request: CallableRequest)
   });
 
   return { success: true, id: docRef.id };
+});
+
+export const upsertLtiPlatformRegistration = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['educator', 'site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Educator, Site, or HQ role required.');
+  }
+
+  const requestedSiteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : actor.profile.activeSiteId;
+  if (!requestedSiteId || !actorCanAccessSite(actor, requestedSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const issuer = asTrimmedString(request.data?.issuer);
+  const clientId = asTrimmedString(request.data?.clientId);
+  const deploymentId = asTrimmedString(request.data?.deploymentId);
+  const authLoginUrl = asTrimmedString(request.data?.authLoginUrl);
+  const accessTokenUrl = asTrimmedString(request.data?.accessTokenUrl);
+  const jwksUrl = asTrimmedString(request.data?.jwksUrl);
+  if (!issuer || !clientId || !deploymentId || !authLoginUrl || !accessTokenUrl || !jwksUrl) {
+    throw new HttpsError('invalid-argument', 'issuer, clientId, deploymentId, authLoginUrl, accessTokenUrl, and jwksUrl are required.');
+  }
+
+  const docId = typeof request.data?.id === 'string' && request.data.id.trim().length > 0
+    ? request.data.id.trim()
+    : buildLtiRegistrationDocId(requestedSiteId, issuer, clientId, deploymentId);
+  const platformName = asTrimmedString(request.data?.platformName) || 'LTI 1.3';
+  const lineItemsScope = request.data?.lineItemsScope !== false;
+  const registrationPayload = {
+    siteId: requestedSiteId,
+    issuer,
+    clientId,
+    deploymentId,
+    authLoginUrl,
+    accessTokenUrl,
+    jwksUrl,
+    ownerUserId: actor.uid,
+    platformName,
+    lineItemsScope,
+    provider: 'lti_1p3',
+    status: 'active',
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  };
+
+  await admin.firestore().collection('ltiPlatformRegistrations').doc(docId).set(registrationPayload, { merge: true });
+  await admin.firestore().collection('integrationConnections').doc(docId).set({
+    siteId: requestedSiteId,
+    ownerUserId: actor.uid,
+    provider: 'lti_1p3',
+    name: platformName,
+    status: 'active',
+    issuer,
+    clientId,
+    deploymentId,
+    lineItemsScope,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return { success: true, id: docId };
+});
+
+export const upsertLtiResourceLink = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['educator', 'site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Educator, Site, or HQ role required.');
+  }
+
+  const registrationId = asTrimmedString(request.data?.registrationId);
+  const resourceLinkId = asTrimmedString(request.data?.resourceLinkId);
+  if (!registrationId || !resourceLinkId) {
+    throw new HttpsError('invalid-argument', 'registrationId and resourceLinkId are required.');
+  }
+
+  const registrationSnap = await admin.firestore().collection('ltiPlatformRegistrations').doc(registrationId).get();
+  if (!registrationSnap.exists) {
+    throw new HttpsError('not-found', 'LTI platform registration not found.');
+  }
+  const registration = registrationSnap.data() as Record<string, unknown>;
+  const siteId = asTrimmedString(registration.siteId);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const docId = typeof request.data?.id === 'string' && request.data.id.trim().length > 0
+    ? request.data.id.trim()
+    : buildLtiResourceLinkDocId(registrationId, resourceLinkId);
+  const locale = asTrimmedString(request.data?.locale) || null;
+  const targetPath = asTrimmedString(request.data?.targetPath) || null;
+  const missionId = asTrimmedString(request.data?.missionId) || null;
+  const sessionId = asTrimmedString(request.data?.sessionId) || null;
+  const lineItemId = asTrimmedString(request.data?.lineItemId) || null;
+  const lineItemUrl = asTrimmedString(request.data?.lineItemUrl) || null;
+  const title = asTrimmedString(request.data?.title) || null;
+
+  await admin.firestore().collection('ltiResourceLinks').doc(docId).set({
+    registrationId,
+    siteId,
+    resourceLinkId,
+    locale,
+    targetPath,
+    missionId,
+    sessionId,
+    lineItemId,
+    lineItemUrl,
+    title,
+    provider: 'lti_1p3',
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return { success: true, id: docId };
+});
+
+export const queueLtiGradePassback = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['educator', 'site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Educator, Site, or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId;
+  if (!requestedSiteId || !actorCanAccessSite(actor, requestedSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const missionAttemptId = asTrimmedString(request.data?.missionAttemptId);
+  if (!missionAttemptId) {
+    throw new HttpsError('invalid-argument', 'missionAttemptId is required.');
+  }
+
+  const attemptSnap = await admin.firestore().collection('missionAttempts').doc(missionAttemptId).get();
+  if (!attemptSnap.exists) {
+    throw new HttpsError('not-found', 'Mission attempt not found.');
+  }
+  const attempt = attemptSnap.data() as Record<string, unknown>;
+  const attemptSiteId = asTrimmedString(attempt.siteId);
+  if (attemptSiteId !== requestedSiteId) {
+    throw new HttpsError('permission-denied', 'Mission attempt is outside the requested site.');
+  }
+
+  const learnerId = asTrimmedString(request.data?.learnerId) || asTrimmedString(attempt.learnerId);
+  const scoreGiven = asNumber(request.data?.scoreGiven);
+  const scoreMaximum = asNumber(request.data?.scoreMaximum);
+  if (scoreGiven === null || scoreMaximum === null) {
+    throw new HttpsError('invalid-argument', 'scoreGiven and scoreMaximum are required.');
+  }
+
+  let lineItemId = asTrimmedString(request.data?.lineItemId) || undefined;
+  let lineItemUrl = asTrimmedString(request.data?.lineItemUrl) || undefined;
+  if (!lineItemId && !lineItemUrl) {
+    const resourceLinkId = asTrimmedString(request.data?.resourceLinkId);
+    if (resourceLinkId) {
+      const linkSnap = await admin.firestore().collection('ltiResourceLinks')
+        .where('resourceLinkId', '==', resourceLinkId)
+        .where('siteId', '==', requestedSiteId)
+        .limit(1)
+        .get();
+      const link = linkSnap.docs[0]?.data() as Record<string, unknown> | undefined;
+      lineItemId = asTrimmedString(link?.lineItemId) || undefined;
+      lineItemUrl = asTrimmedString(link?.lineItemUrl) || undefined;
+    }
+  }
+
+  const job = buildLtiGradePassbackJob({
+    siteId: requestedSiteId,
+    learnerId,
+    missionAttemptId,
+    requestedBy: actor.uid,
+    lineItemId,
+    lineItemUrl,
+    scoreGiven,
+    scoreMaximum,
+    activityProgress: asTrimmedString(request.data?.activityProgress) || undefined,
+    gradingProgress: asTrimmedString(request.data?.gradingProgress) || undefined,
+  });
+
+  const duplicateSnap = await admin.firestore().collection('syncJobs')
+    .where('provider', '==', 'lti_1p3')
+    .where('idempotencyKey', '==', job.idempotencyKey)
+    .limit(1)
+    .get();
+  if (!duplicateSnap.empty) {
+    return {
+      success: true,
+      deduped: true,
+      id: duplicateSnap.docs[0].id,
+      idempotencyKey: job.idempotencyKey,
+    };
+  }
+
+  const docRef = await admin.firestore().collection('syncJobs').add({
+    ...job,
+    requestedByRole: actor.role,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  await admin.firestore().collection('auditLogs').add(buildLtiGradePassbackAuditLog(job, actor.uid));
+
+  return {
+    success: true,
+    deduped: false,
+    id: docRef.id,
+    idempotencyKey: job.idempotencyKey,
+  };
 });
 
 export const updateIntegrationConnectionStatus = onCall(async (request: CallableRequest) => {

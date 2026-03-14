@@ -260,18 +260,18 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
                     },
                     itemBuilder: (BuildContext context) =>
                         <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                           value: 'Sync',
                           child: Text(
-                            _tEducatorIntegrations(context, 'Sync Now'))),
-                        PopupMenuItem<String>(
+                              _tEducatorIntegrations(context, 'Sync Now'))),
+                      PopupMenuItem<String>(
                           value: 'Settings',
                           child: Text(
-                            _tEducatorIntegrations(context, 'Settings'))),
-                        PopupMenuItem<String>(
+                              _tEducatorIntegrations(context, 'Settings'))),
+                      PopupMenuItem<String>(
                           value: 'Disconnect',
                           child: Text(
-                            _tEducatorIntegrations(context, 'Disconnect'))),
+                              _tEducatorIntegrations(context, 'Disconnect'))),
                     ],
                   )
                 : ElevatedButton(
@@ -313,41 +313,45 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
       final Map<String, dynamic> payload = widget.healthLoader != null
           ? await widget.healthLoader!(siteId)
           : await _fetchHealthPayload(siteId);
-      final List<Map<String, dynamic>> connectionsRows =
-          (payload['connections'] as List<dynamic>? ?? <dynamic>[])
-              .whereType<Map<dynamic, dynamic>>()
-              .map((Map<dynamic, dynamic> row) => row.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value)))
-              .toList();
-      final List<Map<String, dynamic>> syncRows =
-          (payload['syncJobs'] as List<dynamic>? ?? <dynamic>[])
-              .whereType<Map<dynamic, dynamic>>()
-              .map((Map<dynamic, dynamic> row) => row.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value)))
-              .toList();
+      final List<Map<String, dynamic>> connectionsRows = (payload['connections']
+                  as List<dynamic>? ??
+              <dynamic>[])
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .toList();
+      final List<Map<String, dynamic>> syncRows = (payload['syncJobs']
+                  as List<dynamic>? ??
+              <dynamic>[])
+          .whereType<Map<dynamic, dynamic>>()
+          .map((Map<dynamic, dynamic> row) => row.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value)))
+          .toList();
 
       final Set<String> providerKeys = <String>{
         'google_classroom',
         'github_classroom',
+        'lti_1p3',
         ...connectionsRows
             .map((Map<String, dynamic> row) =>
                 ((row['provider'] as String?) ?? '').toLowerCase())
             .where((String provider) => provider.isNotEmpty),
       };
 
-      final List<_EducatorIntegration> loaded = providerKeys.map((String providerKey) {
-        final Map<String, dynamic>? connection = connectionsRows.cast<Map<String, dynamic>?>().firstWhere(
-              (Map<String, dynamic>? row) =>
-                  ((row?['provider'] as String?) ?? '').toLowerCase() ==
-                  providerKey,
-              orElse: () => null,
-            );
+      final List<_EducatorIntegration> loaded = providerKeys
+          .map((String providerKey) {
+        final Map<String, dynamic>? connection =
+            connectionsRows.cast<Map<String, dynamic>?>().firstWhere(
+                  (Map<String, dynamic>? row) =>
+                      ((row?['provider'] as String?) ?? '').toLowerCase() ==
+                      providerKey,
+                  orElse: () => null,
+                );
         final List<Map<String, dynamic>> providerJobs = syncRows
-            .where((Map<String, dynamic> row) =>
-                _typeMatchesProvider(
-                  ((row['provider'] as String?) ?? (row['type'] as String?) ?? '')
+            .where((Map<String, dynamic> row) => _typeMatchesProvider(
+                  ((row['provider'] as String?) ??
+                          (row['type'] as String?) ??
+                          '')
                       .toLowerCase(),
                   providerKey,
                 ))
@@ -356,11 +360,14 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         DateTime? lastSync;
         int errorCount = 0;
         for (final Map<String, dynamic> row in providerJobs) {
-          final DateTime? created = _toDateTime(row['updatedAt']) ?? _toDateTime(row['createdAt']);
-          if (created != null && (lastSync == null || created.isAfter(lastSync))) {
+          final DateTime? created =
+              _toDateTime(row['updatedAt']) ?? _toDateTime(row['createdAt']);
+          if (created != null &&
+              (lastSync == null || created.isAfter(lastSync))) {
             lastSync = created;
           }
-          final String status = ((row['status'] as String?) ?? '').toLowerCase();
+          final String status =
+              ((row['status'] as String?) ?? '').toLowerCase();
           if (status == 'failed' || status == 'error') {
             errorCount += 1;
           }
@@ -369,14 +376,16 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         final ({String name, IconData icon, Color color}) visual =
             _providerVisual(providerKey);
         final String connectionStatus =
-            ((connection?['status'] as String?) ?? 'disconnected').toLowerCase();
+            ((connection?['status'] as String?) ?? 'disconnected')
+                .toLowerCase();
         return _EducatorIntegration(
           id: (connection?['id'] as String?) ?? providerKey,
           providerKey: providerKey,
           name: visual.name,
           icon: visual.icon,
           color: visual.color,
-          isConnected: connectionStatus == 'active' || connectionStatus == 'healthy',
+          isConnected:
+              connectionStatus == 'active' || connectionStatus == 'healthy',
           lastSync: lastSync,
           errorCount: errorCount,
         );
@@ -401,7 +410,8 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
     return Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
   }
 
-  Future<void> _handleForceSyncIntegration(_EducatorIntegration integration) async {
+  Future<void> _handleForceSyncIntegration(
+      _EducatorIntegration integration) async {
     if (_siteId == null || _siteId!.isEmpty) {
       return;
     }
@@ -465,15 +475,28 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
     if (providerKey.contains('github')) {
       return type.contains('github');
     }
+    if (providerKey.contains('lti')) {
+      return type.contains('lti') ||
+          type.contains('grade_push') ||
+          type.contains('canvas');
+    }
     return type.contains(providerKey);
   }
 
-  ({String name, IconData icon, Color color}) _providerVisual(String providerKey) {
+  ({String name, IconData icon, Color color}) _providerVisual(
+      String providerKey) {
     if (providerKey.contains('github')) {
       return (
         name: 'GitHub Classroom',
         icon: Icons.code_rounded,
         color: Colors.black87,
+      );
+    }
+    if (providerKey.contains('lti')) {
+      return (
+        name: 'LTI 1.3 / Grade Passback',
+        icon: Icons.link_rounded,
+        color: Colors.deepOrange,
       );
     }
     return (

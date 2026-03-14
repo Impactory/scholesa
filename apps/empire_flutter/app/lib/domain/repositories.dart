@@ -112,9 +112,8 @@ class MetacognitiveCalibrationRepository {
         .where('learnerId', isEqualTo: learnerId)
         .limit(limit)
         .get();
-    final List<MetacognitiveCalibrationRecordModel> records = snap.docs
-        .map(MetacognitiveCalibrationRecordModel.fromDoc)
-        .toList();
+    final List<MetacognitiveCalibrationRecordModel> records =
+        snap.docs.map(MetacognitiveCalibrationRecordModel.fromDoc).toList();
     records.sort((a, b) {
       final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
       final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
@@ -1037,6 +1036,75 @@ class SyncJobRepository {
   }
 }
 
+class LtiPlatformRegistrationRepository {
+  LtiPlatformRegistrationRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('ltiPlatformRegistrations');
+
+  Future<void> upsert(LtiPlatformRegistrationModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<LtiPlatformRegistrationModel>> listBySite(String siteId,
+      {int limit = 20}) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map(LtiPlatformRegistrationModel.fromDoc).toList();
+  }
+}
+
+class LtiResourceLinkRepository {
+  LtiResourceLinkRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('ltiResourceLinks');
+
+  Future<void> upsert(LtiResourceLinkModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<LtiResourceLinkModel>> listBySite(String siteId,
+      {int limit = 20}) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map(LtiResourceLinkModel.fromDoc).toList();
+  }
+}
+
+class LtiGradePassbackJobRepository {
+  LtiGradePassbackJobRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('ltiGradePassbackJobs');
+
+  Future<void> upsert(LtiGradePassbackJobModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<LtiGradePassbackJobModel>> listBySite(String siteId,
+      {int limit = 20}) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map(LtiGradePassbackJobModel.fromDoc).toList();
+  }
+}
+
 class RosterImportRepository {
   RosterImportRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -1055,7 +1123,8 @@ class RosterImportRepository {
     if (pendingOnly) {
       query = query.where('status', isEqualTo: 'pending_provisioning');
     }
-    final QuerySnapshot<Map<String, dynamic>> snap = await query.limit(limit).get();
+    final QuerySnapshot<Map<String, dynamic>> snap =
+        await query.limit(limit).get();
     final List<RosterImportModel> rows =
         snap.docs.map(RosterImportModel.fromDoc).toList();
     rows.sort((a, b) {
@@ -1296,7 +1365,8 @@ class PartnerDeliverableRepository {
     FirebaseFirestore? firestore,
     AuditLogRepository? auditLogRepository,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auditLogRepository = auditLogRepository ?? AuditLogRepository(firestore: firestore);
+        _auditLogRepository =
+            auditLogRepository ?? AuditLogRepository(firestore: firestore);
 
   final FirebaseFirestore _firestore;
 
@@ -2053,7 +2123,9 @@ class ItemResponseRepository {
     required String responseId,
     required ItemResponseModel model,
   }) async {
-    if (responseId.isEmpty || model.confidenceLevel == null || model.isCorrect == null) {
+    if (responseId.isEmpty ||
+        model.confidenceLevel == null ||
+        model.isCorrect == null) {
       return;
     }
 
