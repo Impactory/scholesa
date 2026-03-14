@@ -190,6 +190,23 @@ export interface PortfolioItem {
   createdAt: Timestamp;
 }
 
+export interface EnterpriseSsoProvider {
+  id: string;
+  providerId: string;
+  providerType: 'oidc' | 'saml';
+  displayName: string;
+  siteIds: string[];
+  defaultSiteId?: string;
+  defaultRole: 'learner' | 'parent' | 'educator' | 'site' | 'partner' | 'hq';
+  allowedDomains?: string[];
+  organizationId?: string;
+  buttonText?: string;
+  jitProvisioning: boolean;
+  enabled: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface LtiPlatformRegistration {
   id: string;
   siteId: string;

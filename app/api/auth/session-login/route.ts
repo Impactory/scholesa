@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/src/firebase/admin-init';
 import { resolveRequestLocale } from '@/src/lib/i18n/localeHeaders';
 import { encodeE2ESession } from '@/src/testing/e2e/fakeSession';
+import {
+  buildEnterpriseSsoProfileUpdate,
+  extractSignInProvider,
+  isEnterpriseSsoProviderId,
+  sanitizeEnterpriseSsoProvider,
+} from '@/src/lib/auth/enterpriseSso';
+
+async function loadEnterpriseSsoProvider(db: ReturnType<typeof getAdminDb>, providerId: string) {
+  if (!isEnterpriseSsoProviderId(providerId)) return null;
+
+  const snap = await db.collection('enterpriseSsoProviders')
+    .where('providerId', '==', providerId)
+    .limit(1)
+    .get();
+  const docSnap = snap.docs[0];
+  if (!docSnap) return null;
+  return sanitizeEnterpriseSsoProvider({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
+}
 
 export async function POST(request: Request) {
   const resolvedLocale = resolveRequestLocale(request.headers);
@@ -53,19 +71,63 @@ export async function POST(request: Request) {
 
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
+    const signInProvider = extractSignInProvider(decodedToken as Record<string, unknown> & { uid: string });
+    const enterpriseSsoProvider = await loadEnterpriseSsoProvider(db, signInProvider);
+    if (isEnterpriseSsoProviderId(signInProvider) && !enterpriseSsoProvider) {
+      return NextResponse.json({ error: 'Enterprise SSO provider is not configured.' }, { status: 403 });
+    }
 
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
+    const existingUser = userDoc.exists ? (userDoc.data() as Record<string, unknown>) : null;
 
-    if (!userDoc.exists) {
+    if (enterpriseSsoProvider) {
+      const nextProfile = buildEnterpriseSsoProfileUpdate({
+        token: decodedToken as Record<string, unknown> & { uid: string },
+        existingUser,
+        provider: enterpriseSsoProvider,
+        locale: resolvedLocale,
+      });
+
+      await userRef.set(
+        userDoc.exists
+          ? nextProfile
+          : {
+              uid,
+              ...nextProfile,
+              createdAt: new Date(),
+            },
+        { merge: true },
+      );
+
+      await db.collection('auditLogs').add({
+        userId: uid,
+        action: 'auth.sso.login',
+        collection: 'enterpriseSsoProviders',
+        documentId: enterpriseSsoProvider.id,
+        timestamp: Date.now(),
+        details: {
+          providerId: enterpriseSsoProvider.providerId,
+          providerType: enterpriseSsoProvider.providerType,
+          role: nextProfile.role,
+          activeSiteId: nextProfile.activeSiteId,
+          locale: resolvedLocale,
+        },
+      });
+    }
+
+    if (!userDoc.exists && !enterpriseSsoProvider) {
       await userRef.set({
         email: decodedToken.email,
+        displayName: decodedToken.name || decodedToken.email || 'User',
         preferredLocale: resolvedLocale,
         createdAt: new Date(),
       });
-    } else {
+    } else if (!enterpriseSsoProvider) {
       await userRef.set(
         {
+          email: decodedToken.email,
+          displayName: decodedToken.name || existingUser?.displayName || decodedToken.email || 'User',
           preferredLocale: resolvedLocale,
           updatedAt: new Date(),
         },
@@ -90,8 +152,9 @@ export async function POST(request: Request) {
 
     console.info(
       JSON.stringify({
-        event: 'auth.session.created',
+        event: enterpriseSsoProvider ? 'auth.sso.login' : 'auth.session.created',
         uid,
+        providerId: enterpriseSsoProvider?.providerId || signInProvider || 'password',
         targetLocale: resolvedLocale,
       }),
     );

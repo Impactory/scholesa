@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { auth, firestore, googleProvider } from '@/src/firebase/client-init';
+import { auth, createFederatedAuthProvider, firestore } from '@/src/firebase/client-init';
 import { UserProfile } from '@/src/types/user';
 import { clearSessionCookie, syncSessionCookie } from './sessionClient';
 import { signOutE2EUser, subscribeE2EAuthState } from '@/src/testing/e2e/fakeWebBackend';
@@ -13,6 +13,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithProvider: (providerId: string, locale?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   signInWithGoogle: async () => {},
+  signInWithProvider: async () => {},
   signOut: async () => {},
 });
 
@@ -93,8 +95,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Google sign-in is disabled in E2E test mode.');
     }
 
-    const credential = await signInWithPopup(auth, googleProvider);
-    await syncSessionCookie(credential.user);
+    await signInWithProvider('google.com');
+  };
+
+  const signInWithProvider = async (providerId: string, locale?: string) => {
+    if (isE2ETestMode) {
+      throw new Error('Federated sign-in is disabled in E2E test mode.');
+    }
+
+    const provider = createFederatedAuthProvider(providerId);
+    const credential = await signInWithPopup(auth, provider);
+    await syncSessionCookie(credential.user, locale);
   };
 
   const signOut = async () => {
@@ -129,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signInWithProvider, signOut }}>
       {children}
     </AuthContext.Provider>
   );

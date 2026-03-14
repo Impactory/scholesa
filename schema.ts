@@ -203,6 +203,23 @@ export interface AuditLog {
   details?: Record<string, any>;
 }
 
+export interface EnterpriseSsoProvider {
+  id: string;
+  providerId: string;
+  providerType: 'oidc' | 'saml';
+  displayName: string;
+  siteIds: string[];
+  defaultSiteId?: string;
+  defaultRole: Role;
+  allowedDomains?: string[];
+  organizationId?: string;
+  buttonText?: string;
+  jitProvisioning: boolean;
+  enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface LtiPlatformRegistration {
   id: string;
   siteId: string;

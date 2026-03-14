@@ -21,6 +21,7 @@ import type {
   Alert,
   Announcement,
   PortfolioItem,
+  EnterpriseSsoProvider,
   LtiPlatformRegistration,
   LtiResourceLink,
   LtiGradePassbackJob,
@@ -60,6 +61,7 @@ export const accountabilityReviewsCollection = createCollection<AccountabilityRe
 export const alertsCollection = createCollection<Alert>('alerts');
 export const announcementsCollection = createCollection<Announcement>('announcements');
 export const portfolioItemsCollection = createCollection<PortfolioItem>('portfolioItems');
+export const enterpriseSsoProvidersCollection = createCollection<EnterpriseSsoProvider>('enterpriseSsoProviders');
 export const ltiPlatformRegistrationsCollection = createCollection<LtiPlatformRegistration>('ltiPlatformRegistrations');
 export const ltiResourceLinksCollection = createCollection<LtiResourceLink>('ltiResourceLinks');
 export const ltiGradePassbackJobsCollection = createCollection<LtiGradePassbackJob>('ltiGradePassbackJobs');

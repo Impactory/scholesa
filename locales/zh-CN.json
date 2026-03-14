@@ -37,6 +37,10 @@
     "login": {
       "title": "欢迎回来",
       "subtitle": "登录以继续进入你的 Scholesa 工作流。",
+      "enterpriseHeading": "企业单点登录",
+      "loadingEnterprise": "正在加载组织登录选项...",
+      "ssoUnavailable": "此工作区尚未配置企业登录选项。",
+      "ssoFailed": "企业登录失败。如果问题持续，请联系站点或总部管理员。",
       "emailLabel": "邮箱地址",
       "emailPlaceholder": "邮箱地址",
       "passwordLabel": "密码",

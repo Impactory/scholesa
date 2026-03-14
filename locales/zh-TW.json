@@ -37,6 +37,10 @@
     "login": {
       "title": "歡迎回來",
       "subtitle": "登入以繼續進入你的 Scholesa 工作流程。",
+      "enterpriseHeading": "企業單一登入",
+      "loadingEnterprise": "正在載入組織登入選項...",
+      "ssoUnavailable": "此工作區尚未設定企業登入選項。",
+      "ssoFailed": "企業登入失敗。如果問題持續，請聯絡站點或總部管理員。",
       "emailLabel": "電子郵件地址",
       "emailPlaceholder": "電子郵件地址",
       "passwordLabel": "密碼",

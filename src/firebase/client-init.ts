@@ -3,6 +3,8 @@ import {
   connectAuthEmulator,
   getAuth,
   GoogleAuthProvider,
+  OAuthProvider,
+  SAMLAuthProvider,
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -113,6 +115,21 @@ if (firestoreEmulatorHost && !(globalThis as Record<string, unknown>).__scholesa
 
 export const firestore = db;
 export const googleProvider = new GoogleAuthProvider();
+
+export function createFederatedAuthProvider(providerId: string) {
+  const normalized = providerId.trim();
+  if (normalized === 'google.com') {
+    return googleProvider;
+  }
+  if (normalized.startsWith('oidc.')) {
+    return new OAuthProvider(normalized);
+  }
+  if (normalized.startsWith('saml.')) {
+    return new SAMLAuthProvider(normalized);
+  }
+
+  throw new Error(`Unsupported auth provider: ${providerId}`);
+}
 
 if (functionsEmulatorHost && typeof window !== 'undefined' && !(globalThis as Record<string, unknown>).__scholesaFunctionsEmulatorConnected) {
   const [host, portRaw] = functionsEmulatorHost.split(':');

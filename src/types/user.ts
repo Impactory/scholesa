@@ -11,6 +11,10 @@ export interface UserProfile {
   siteIds?: string[];
   activeSiteId?: string;
   organizationId?: string;
+  authProviderId?: string;
+  authProviderType?: 'oidc' | 'saml' | 'google' | 'password' | 'custom';
+  authMethods?: string[];
+  jitProvisioned?: boolean;
   isActive?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;

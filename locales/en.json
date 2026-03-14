@@ -33,6 +33,10 @@
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to continue into your Scholesa workflow.",
+      "enterpriseHeading": "Enterprise SSO",
+      "loadingEnterprise": "Loading organization sign-in options...",
+      "ssoUnavailable": "No enterprise sign-in options are configured for this workspace.",
+      "ssoFailed": "Enterprise sign-in failed. Contact your site or HQ administrator if the problem persists.",
       "emailLabel": "Email address",
       "emailPlaceholder": "Email address",
       "passwordLabel": "Password",

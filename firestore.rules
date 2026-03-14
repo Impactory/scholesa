@@ -211,6 +211,12 @@ service cloud.firestore {
       allow write: if false; // Server-only
     }
 
+    // Enterprise SSO provider catalog: readable for site/HQ operations, server-only writes.
+    match /enterpriseSsoProviders/{id} {
+      allow read: if isHQ() || hasRoleSafe('site');
+      allow write: if false;
+    }
+
     // Telemetry: Users can write their own events, educators/HQ can read
     match /telemetryEvents/{id} {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;

@@ -74,6 +74,8 @@ export {
   getIntegrationsHealth,
   triggerIntegrationSyncJob,
   updateIntegrationConnectionStatus,
+  listEnterpriseSsoProviders,
+  upsertEnterpriseSsoProvider,
   upsertLtiPlatformRegistration,
   upsertLtiResourceLink,
   queueLtiGradePassback,

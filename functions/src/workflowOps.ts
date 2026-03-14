@@ -765,6 +765,94 @@ export const updateIntegrationConnectionStatus = onCall(async (request: Callable
   return { success: true };
 });
 
+export const listEnterpriseSsoProviders = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const requestedSiteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : actor.profile.activeSiteId;
+  if (requestedSiteId && !actorCanAccessSite(actor, requestedSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const query = requestedSiteId
+    ? admin.firestore().collection('enterpriseSsoProviders').where('siteIds', 'array-contains', requestedSiteId).limit(50)
+    : admin.firestore().collection('enterpriseSsoProviders').limit(50);
+
+  const snap = await query.get();
+  const providers = snap.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...stripSecretFields(docSnap.data() as Record<string, unknown>),
+  }));
+
+  return { providers };
+});
+
+export const upsertEnterpriseSsoProvider = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const providerId = asTrimmedString(request.data?.providerId).toLowerCase();
+  const providerType = asTrimmedString(request.data?.providerType).toLowerCase();
+  const displayName = asTrimmedString(request.data?.displayName);
+  if (!providerId || !displayName || !['oidc', 'saml'].includes(providerType)) {
+    throw new HttpsError('invalid-argument', 'providerId, providerType, and displayName are required.');
+  }
+  if ((providerType === 'oidc' && !providerId.startsWith('oidc.')) || (providerType === 'saml' && !providerId.startsWith('saml.'))) {
+    throw new HttpsError('invalid-argument', 'providerId prefix must match providerType.');
+  }
+
+  const siteIds = toStringArray(request.data?.siteIds);
+  if (siteIds.length === 0) {
+    const fallbackSiteId = asTrimmedString(request.data?.defaultSiteId) || actor.profile.activeSiteId || '';
+    if (!fallbackSiteId) {
+      throw new HttpsError('invalid-argument', 'At least one siteId is required.');
+    }
+    siteIds.push(fallbackSiteId);
+  }
+  if (!siteIds.every((siteId) => actorCanAccessSite(actor, siteId))) {
+    throw new HttpsError('permission-denied', 'No access to one or more requested sites.');
+  }
+
+  const docId = asTrimmedString(request.data?.id) || providerId.replace(/[^a-z0-9_.-]/g, '_');
+  const payload = {
+    providerId,
+    providerType,
+    displayName,
+    siteIds,
+    defaultSiteId: asTrimmedString(request.data?.defaultSiteId) || siteIds[0],
+    defaultRole: asTrimmedString(request.data?.defaultRole) || 'educator',
+    allowedDomains: toStringArray(request.data?.allowedDomains),
+    organizationId: asTrimmedString(request.data?.organizationId) || null,
+    buttonText: asTrimmedString(request.data?.buttonText) || null,
+    jitProvisioning: request.data?.jitProvisioning !== false,
+    enabled: request.data?.enabled !== false,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  };
+
+  await admin.firestore().collection('enterpriseSsoProviders').doc(docId).set(payload, { merge: true });
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: 'auth.sso.provider.updated',
+    collection: 'enterpriseSsoProviders',
+    documentId: docId,
+    timestamp: Date.now(),
+    details: {
+      providerId,
+      providerType,
+      siteIds,
+      defaultRole: payload.defaultRole,
+      enabled: payload.enabled,
+    },
+  });
+
+  return { success: true, id: docId };
+});
+
 export const listExternalIdentityLinks = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (!['site', 'hq'].includes(actor.role)) {
