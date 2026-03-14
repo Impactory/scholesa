@@ -62,6 +62,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningPilotApprovalRecordModel>
     _pilotApprovalRecordsByPackageId =
     <String, FederatedLearningPilotApprovalRecordModel>{};
+  Map<String, FederatedLearningPilotExecutionRecordModel>
+    _pilotExecutionRecordsByPackageId =
+    <String, FederatedLearningPilotExecutionRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -350,6 +353,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestPackage == null
         ? null
         : _pilotApprovalRecordsByPackageId[latestPackage.id];
+    final FederatedLearningPilotExecutionRecordModel? latestPilotExecution =
+      latestPackage == null
+        ? null
+        : _pilotExecutionRecordsByPackageId[latestPackage.id];
     final FederatedLearningExperimentReviewRecordModel? reviewRecord =
       _experimentReviewRecordsByExperimentId[experiment.id];
     final FederatedLearningCandidatePromotionRevocationRecordModel?
@@ -456,6 +463,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           ),
                           icon: const Icon(Icons.verified_rounded),
                           label: Text(_tHqFeatureFlags(context, 'Pilot approval')),
+                        ),
+                      if (latestPackage != null)
+                        TextButton.icon(
+                          onPressed: () => _showPilotExecutionDialog(
+                            experiment: experiment,
+                            candidatePackage: latestPackage,
+                          ),
+                          icon: const Icon(Icons.rocket_launch_rounded),
+                          label: Text(_tHqFeatureFlags(context, 'Pilot execution')),
                         ),
                     ],
                   ),
@@ -588,6 +604,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 latestPilotApproval == null
                     ? 'Pilot approval: pending'
                     : 'Pilot approval: ${latestPilotApproval.status} (${latestPilotApproval.promotionTarget})',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                latestPilotExecution == null
+                    ? 'Pilot execution: planned'
+                    : 'Pilot execution: ${latestPilotExecution.status} · ${latestPilotExecution.launchedSiteIds.length} sites · ${latestPilotExecution.sessionCount} sessions · ${latestPilotExecution.learnerCount} learners',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -2997,6 +3026,199 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
+  Future<void> _showPilotExecutionDialog({
+    required FederatedLearningExperimentModel experiment,
+    required FederatedLearningCandidateModelPackageModel candidatePackage,
+  }) async {
+    final FederatedLearningPilotExecutionRecordModel? existingExecution =
+        _pilotExecutionRecordsByPackageId[candidatePackage.id];
+    final TextEditingController launchedSitesController = TextEditingController(
+      text: existingExecution?.launchedSiteIds.join(', ') ?? '',
+    );
+    final TextEditingController sessionCountController = TextEditingController(
+      text: (existingExecution?.sessionCount ?? 0).toString(),
+    );
+    final TextEditingController learnerCountController = TextEditingController(
+      text: (existingExecution?.learnerCount ?? 0).toString(),
+    );
+    final TextEditingController notesController = TextEditingController(
+      text: existingExecution?.notes ?? '',
+    );
+    String status = existingExecution?.status ?? 'planned';
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(context, 'Pilot execution record'),
+              ),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'Candidate package: ${candidatePackage.id}',
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: status,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Execution status'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Launched, observed, and completed require approved pilot approval. Observed and completed also require launched sites plus positive session and learner counts.',
+                          ),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'planned', child: Text('planned')),
+                          DropdownMenuItem(value: 'launched', child: Text('launched')),
+                          DropdownMenuItem(value: 'observed', child: Text('observed')),
+                          DropdownMenuItem(value: 'completed', child: Text('completed')),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            status = value ?? 'planned';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: launchedSitesController,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Launched site IDs'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Comma-separated site IDs. All sites must already be in the experiment cohort.',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: sessionCountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Session count'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: learnerCountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Learner count'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Pilot execution notes'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(_tHqFeatureFlags(context, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(_tHqFeatureFlags(context, 'Save execution')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    final List<String> launchedSiteIds = launchedSitesController.text
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList();
+    final int sessionCount = int.tryParse(sessionCountController.text.trim()) ?? 0;
+    final int learnerCount = int.tryParse(learnerCountController.text.trim()) ?? 0;
+
+    await _savePilotExecutionRecord(
+      candidateModelPackageId: candidatePackage.id,
+      status: status,
+      launchedSiteIds: launchedSiteIds,
+      sessionCount: sessionCount,
+      learnerCount: learnerCount,
+      notes: notesController.text,
+    );
+  }
+
+  Future<void> _savePilotExecutionRecord({
+    required String candidateModelPackageId,
+    required String status,
+    required List<String> launchedSiteIds,
+    required int sessionCount,
+    required int learnerCount,
+    required String notes,
+  }) async {
+    try {
+      await _workflowBridge.upsertFederatedLearningPilotExecutionRecord(
+        <String, dynamic>{
+          'candidateModelPackageId': candidateModelPackageId,
+          'status': status,
+          'launchedSiteIds': launchedSiteIds,
+          'sessionCount': sessionCount,
+          'learnerCount': learnerCount,
+          'notes': notes.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Pilot execution saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Pilot execution failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _showCandidatePromotionRevocationDialog({
     required FederatedLearningCandidatePromotionRecordModel record,
     VoidCallback? refreshDialog,
@@ -3214,6 +3436,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
         _workflowBridge.listFederatedLearningPilotEvidenceRecords(limit: 120),
         _workflowBridge.listFederatedLearningPilotApprovalRecords(limit: 120),
+        _workflowBridge.listFederatedLearningPilotExecutionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
@@ -3320,6 +3543,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         pilotApprovalByPackageId[record.candidateModelPackageId] = record;
       }
+      final Map<String, FederatedLearningPilotExecutionRecordModel>
+          pilotExecutionByPackageId =
+          <String, FederatedLearningPilotExecutionRecordModel>{};
+      for (final FederatedLearningPilotExecutionRecordModel record
+          in (payloads[7] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningPilotExecutionRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'pilot_execution_record',
+                    row,
+                  ))) {
+        pilotExecutionByPackageId[record.candidateModelPackageId] = record;
+      }
         final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
@@ -3336,7 +3571,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[7] as List<Map<String, dynamic>>)
+          in (payloads[8] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -3348,7 +3583,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[8] as List<Map<String, dynamic>>)
+          in (payloads[9] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -3364,6 +3599,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _candidatePackagesByExperiment = packagesByExp;
         _pilotEvidenceRecordsByPackageId = pilotEvidenceByPackageId;
         _pilotApprovalRecordsByPackageId = pilotApprovalByPackageId;
+        _pilotExecutionRecordsByPackageId = pilotExecutionByPackageId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -3382,6 +3618,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, FederatedLearningPilotEvidenceRecordModel>{};
         _pilotApprovalRecordsByPackageId =
           <String, FederatedLearningPilotApprovalRecordModel>{};
+        _pilotExecutionRecordsByPackageId =
+          <String, FederatedLearningPilotExecutionRecordModel>{};
         _experimentReviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =

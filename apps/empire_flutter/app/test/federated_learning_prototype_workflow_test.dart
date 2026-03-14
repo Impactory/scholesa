@@ -23,6 +23,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? experimentReviewRecords,
     List<Map<String, dynamic>>? pilotEvidenceRecords,
     List<Map<String, dynamic>>? pilotApprovalRecords,
+    List<Map<String, dynamic>>? pilotExecutionRecords,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -50,6 +51,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _pilotApprovalRecords = List<Map<String, dynamic>>.from(
           pilotApprovalRecords ?? <Map<String, dynamic>>[],
         ),
+        _pilotExecutionRecords = List<Map<String, dynamic>>.from(
+          pilotExecutionRecords ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -67,6 +71,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _experimentReviewRecords;
     final List<Map<String, dynamic>> _pilotEvidenceRecords;
   final List<Map<String, dynamic>> _pilotApprovalRecords;
+  final List<Map<String, dynamic>> _pilotExecutionRecords;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
@@ -76,6 +81,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       <Map<String, dynamic>>[];
       final List<Map<String, dynamic>> recordedPilotApprovalSaves =
         <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedPilotExecutionSaves =
+      <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionRevocations =
@@ -342,6 +349,30 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningPilotExecutionRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _pilotExecutionRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -533,6 +564,55 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<String?> upsertFederatedLearningPilotExecutionRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String packageId =
+        (data['candidateModelPackageId'] as String? ?? '').trim();
+    final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String executionId =
+        'fl_pilot_execution_${packageId.replaceAll('fl_pkg_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': executionId,
+      'experimentId': packageRow['experimentId'] ?? '',
+      'candidateModelPackageId': packageId,
+      'aggregationRunId': packageRow['aggregationRunId'] ?? '',
+      'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
+      'pilotApprovalRecordId': 'fl_pilot_approval_${packageId.replaceAll('fl_pkg_', '')}',
+      'status': (data['status'] as String? ?? 'planned').trim(),
+      'launchedSiteIds': List<String>.from(
+        data['launchedSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'sessionCount': data['sessionCount'] as int? ?? 0,
+      'learnerCount': data['learnerCount'] as int? ?? 0,
+      'notes': (data['notes'] as String? ?? '').trim(),
+      'recordedBy': 'hq-1',
+      'recordedAt': DateTime(2026, 3, 14, 18),
+      'createdAt': DateTime(2026, 3, 14, 18),
+      'updatedAt': DateTime(2026, 3, 14, 18),
+    };
+    _pilotExecutionRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == executionId,
+    );
+    _pilotExecutionRecords.insert(0, record);
+    final int packageIndex = _candidatePackages.indexWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+    );
+    if (packageIndex >= 0) {
+      _candidatePackages[packageIndex] = <String, dynamic>{
+        ..._candidatePackages[packageIndex],
+        'latestPilotExecutionRecordId': executionId,
+        'latestPilotExecutionStatus': record['status'],
+      };
+    }
+    recordedPilotExecutionSaves.add(<String, dynamic>{...record});
+    return executionId;
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -607,6 +687,8 @@ Map<String, dynamic> _candidatePackageRow({
     'latestPilotEvidenceStatus': '',
     'latestPilotApprovalRecordId': '',
     'latestPilotApprovalStatus': '',
+    'latestPilotExecutionRecordId': '',
+    'latestPilotExecutionStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
     'sampleCount': sampleCount,
@@ -645,6 +727,37 @@ Map<String, dynamic> _pilotApprovalRecordRow({
     'approvedAt': DateTime(2026, 3, 14, 16),
     'createdAt': DateTime(2026, 3, 14, 16),
     'updatedAt': DateTime(2026, 3, 14, 16),
+  };
+}
+
+Map<String, dynamic> _pilotExecutionRecordRow({
+  String id = 'fl_pilot_execution_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String aggregationRunId = 'fl_agg_1',
+  String mergeArtifactId = 'fl_merge_1',
+  String status = 'planned',
+  List<String> launchedSiteIds = const <String>['site1'],
+  int sessionCount = 0,
+  int learnerCount = 0,
+  String notes = 'Bounded pilot execution planning captured for the approved package.',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'aggregationRunId': aggregationRunId,
+    'mergeArtifactId': mergeArtifactId,
+    'pilotApprovalRecordId': 'fl_pilot_approval_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'status': status,
+    'launchedSiteIds': launchedSiteIds,
+    'sessionCount': sessionCount,
+    'learnerCount': learnerCount,
+    'notes': notes,
+    'recordedBy': 'hq-1',
+    'recordedAt': DateTime(2026, 3, 14, 18),
+    'createdAt': DateTime(2026, 3, 14, 18),
+    'updatedAt': DateTime(2026, 3, 14, 18),
   };
 }
 
@@ -1086,6 +1199,9 @@ void main() {
       pilotApprovalRecords: <Map<String, dynamic>>[
         _pilotApprovalRecordRow(),
       ],
+      pilotExecutionRecords: <Map<String, dynamic>>[
+        _pilotExecutionRecordRow(),
+      ],
       promotionRecords: <Map<String, dynamic>>[
         _promotionRecordRow(),
       ],
@@ -1125,6 +1241,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Pilot approval: pending (sandbox_eval)'), findsOneWidget);
+    expect(find.text('Pilot execution: planned · 1 sites · 0 sessions · 0 learners'), findsOneWidget);
 
     final Finder reviewChecklistButton = find.widgetWithText(
       TextButton,
@@ -1313,6 +1430,71 @@ void main() {
       'approved',
     );
     expect(find.text('Pilot approval: approved (sandbox_eval)'), findsOneWidget);
+
+    final Finder pilotExecutionButton = find.widgetWithText(
+      TextButton,
+      'Pilot execution',
+    );
+    await tester.ensureVisible(pilotExecutionButton.first);
+    final TextButton pilotExecutionControl = tester.widget<TextButton>(
+      pilotExecutionButton.first,
+    );
+    pilotExecutionControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pilot execution record'), findsOneWidget);
+    final Finder executionStatusDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Execution status',
+    );
+    await tester.tap(executionStatusDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('observed').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Launched site IDs'),
+      'site1, site2',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Session count'),
+      '6',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Learner count'),
+      '42',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Pilot execution notes'),
+      'Observed bounded pilot execution across both approved literacy sites.',
+    );
+    final Finder saveExecutionButton = find.widgetWithText(
+      FilledButton,
+      'Save execution',
+    );
+    final FilledButton saveExecutionControl = tester.widget<FilledButton>(
+      saveExecutionButton,
+    );
+    saveExecutionControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedPilotExecutionSaves, hasLength(1));
+    expect(
+      bridge.recordedPilotExecutionSaves.single['candidateModelPackageId'],
+      'fl_pkg_1',
+    );
+    expect(
+      bridge.recordedPilotExecutionSaves.single['status'],
+      'observed',
+    );
+    expect(
+      bridge.recordedPilotExecutionSaves.single['launchedSiteIds'],
+      <String>['site1', 'site2'],
+    );
+    expect(
+      find.text('Pilot execution: observed · 2 sites · 6 sessions · 42 learners'),
+      findsOneWidget,
+    );
 
     final Finder viewHistoryButton = find.widgetWithText(
       TextButton,

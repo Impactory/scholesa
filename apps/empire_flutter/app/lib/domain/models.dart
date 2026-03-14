@@ -3275,6 +3275,8 @@ class FederatedLearningCandidateModelPackageModel {
     this.latestPilotEvidenceStatus,
     this.latestPilotApprovalRecordId,
     this.latestPilotApprovalStatus,
+    this.latestPilotExecutionRecordId,
+    this.latestPilotExecutionStatus,
     required this.packageDigest,
     required this.boundedDigest,
     required this.sampleCount,
@@ -3304,6 +3306,8 @@ class FederatedLearningCandidateModelPackageModel {
   final String? latestPilotEvidenceStatus;
   final String? latestPilotApprovalRecordId;
   final String? latestPilotApprovalStatus;
+  final String? latestPilotExecutionRecordId;
+  final String? latestPilotExecutionStatus;
   final String packageDigest;
   final String boundedDigest;
   final int sampleCount;
@@ -3349,6 +3353,10 @@ class FederatedLearningCandidateModelPackageModel {
           latestPilotApprovalRecordId:
             data['latestPilotApprovalRecordId'] as String?,
           latestPilotApprovalStatus: data['latestPilotApprovalStatus'] as String?,
+          latestPilotExecutionRecordId:
+            data['latestPilotExecutionRecordId'] as String?,
+          latestPilotExecutionStatus:
+            data['latestPilotExecutionStatus'] as String?,
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
@@ -3379,6 +3387,8 @@ class FederatedLearningCandidateModelPackageModel {
         'latestPilotEvidenceStatus': latestPilotEvidenceStatus,
         'latestPilotApprovalRecordId': latestPilotApprovalRecordId,
         'latestPilotApprovalStatus': latestPilotApprovalStatus,
+        'latestPilotExecutionRecordId': latestPilotExecutionRecordId,
+        'latestPilotExecutionStatus': latestPilotExecutionStatus,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
         'sampleCount': sampleCount,
@@ -3559,6 +3569,92 @@ class FederatedLearningPilotApprovalRecordModel {
         'notes': notes,
         'approvedBy': approvedBy,
         'approvedAt': approvedAt ?? Timestamp.now(),
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningPilotExecutionRecordModel {
+  const FederatedLearningPilotExecutionRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.aggregationRunId,
+    required this.mergeArtifactId,
+    required this.pilotApprovalRecordId,
+    required this.status,
+    required this.launchedSiteIds,
+    required this.sessionCount,
+    required this.learnerCount,
+    this.notes,
+    this.recordedBy,
+    this.recordedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String aggregationRunId;
+  final String mergeArtifactId;
+  final String pilotApprovalRecordId;
+  final String status;
+  final List<String> launchedSiteIds;
+  final int sessionCount;
+  final int learnerCount;
+  final String? notes;
+  final String? recordedBy;
+  final Timestamp? recordedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningPilotExecutionRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningPilotExecutionRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningPilotExecutionRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningPilotExecutionRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      pilotApprovalRecordId: data['pilotApprovalRecordId'] as String? ?? '',
+      status: data['status'] as String? ?? 'planned',
+      launchedSiteIds: _stringListOrEmpty(data['launchedSiteIds']),
+      sessionCount: (data['sessionCount'] as num?)?.toInt() ?? 0,
+      learnerCount: (data['learnerCount'] as num?)?.toInt() ?? 0,
+      notes: data['notes'] as String?,
+      recordedBy: data['recordedBy'] as String?,
+      recordedAt: _timestampOrNull(data['recordedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'aggregationRunId': aggregationRunId,
+        'mergeArtifactId': mergeArtifactId,
+        'pilotApprovalRecordId': pilotApprovalRecordId,
+        'status': status,
+        'launchedSiteIds': launchedSiteIds,
+        'sessionCount': sessionCount,
+        'learnerCount': learnerCount,
+        'notes': notes,
+        'recordedBy': recordedBy,
+        'recordedAt': recordedAt ?? Timestamp.now(),
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
