@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
@@ -46,6 +47,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, List<FederatedLearningAggregationRunModel>>
     _aggregationRunsByExperiment =
     <String, List<FederatedLearningAggregationRunModel>>{};
+  Map<String, List<FederatedLearningMergeArtifactModel>>
+    _mergeArtifactsByExperiment =
+    <String, List<FederatedLearningMergeArtifactModel>>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -360,6 +364,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   icon: const Icon(Icons.edit_rounded),
                   label: Text(_tHqFeatureFlags(context, 'Edit')),
                 ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => _showAggregationHistoryDialog(experiment),
+                  icon: const Icon(Icons.timeline_rounded),
+                  label: Text(_tHqFeatureFlags(context, 'View history')),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -490,6 +500,158 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  Future<void> _showAggregationHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+  ) {
+    final List<FederatedLearningAggregationRunModel> runs =
+        _aggregationRunsByExperiment[experiment.id] ??
+            const <FederatedLearningAggregationRunModel>[];
+    final Map<String, FederatedLearningMergeArtifactModel> artifactsByRunId = {
+      for (final FederatedLearningMergeArtifactModel artifact
+          in _mergeArtifactsByExperiment[experiment.id] ??
+              const <FederatedLearningMergeArtifactModel>[])
+        artifact.aggregationRunId: artifact,
+    };
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              context,
+              'Aggregation history: ${experiment.name}',
+            ),
+          ),
+          content: SizedBox(
+            width: 640,
+            child: runs.isEmpty
+                ? Text(
+                    _tHqFeatureFlags(
+                      context,
+                      'No aggregation runs have materialized for this experiment yet.',
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: runs
+                          .map(
+                            (FederatedLearningAggregationRunModel run) =>
+                                _buildAggregationHistoryEntry(
+                              run,
+                              artifactsByRunId[run.id],
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(_tHqFeatureFlags(context, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAggregationHistoryEntry(
+    FederatedLearningAggregationRunModel run,
+    FederatedLearningMergeArtifactModel? artifact,
+  ) {
+    final String createdLabel = _formatTimestamp(run.createdAt);
+    final String digest =
+        (artifact?.boundedDigest ?? run.boundedDigest ?? '').trim();
+    final String strategy =
+        (artifact?.mergeStrategy ?? run.mergeStrategy ?? '').trim();
+    final String artifactId =
+        (artifact?.id ?? run.mergeArtifactId ?? '').trim();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Run ${run.id} · ${run.totalSampleCount} samples · ${run.summaryCount} summaries · ${run.distinctSiteCount} sites',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Created: $createdLabel',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          if (artifactId.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Artifact: $artifactId'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (strategy.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Strategy: $strategy'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (digest.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Digest: $digest'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Vector ceiling: ${run.maxVectorLength} · Payload: ${run.totalPayloadBytes} bytes · Avg norm: ${run.averageUpdateNorm}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimestamp(Timestamp? value) {
+    if (value == null) return _tHqFeatureFlags(context, 'unknown');
+    return value.toDate().toIso8601String();
+  }
+
   Widget _buildExperimentChip(
     String label,
     IconData icon, {
@@ -593,6 +755,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       final List<dynamic> payloads = await Future.wait<dynamic>(<Future<dynamic>>[
         _workflowBridge.listFederatedLearningExperiments(),
         _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
+        _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
       ]);
       final List<FederatedLearningExperimentModel> loaded =
           (payloads[0] as List<Map<String, dynamic>>)
@@ -628,10 +791,33 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           () => <FederatedLearningAggregationRunModel>[],
         ).add(run);
       }
+      final List<FederatedLearningMergeArtifactModel> artifacts =
+          (payloads[2] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningMergeArtifactModel.fromMap(
+                    (row['id'] as String?) ?? 'merge_artifact',
+                    row,
+                  ))
+              .toList()
+            ..sort((a, b) {
+              final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+              final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+              return bMillis.compareTo(aMillis);
+            });
+      final Map<String, List<FederatedLearningMergeArtifactModel>>
+          artifactsByExp =
+          <String, List<FederatedLearningMergeArtifactModel>>{};
+      for (final FederatedLearningMergeArtifactModel artifact in artifacts) {
+        artifactsByExp.putIfAbsent(
+          artifact.experimentId,
+          () => <FederatedLearningMergeArtifactModel>[],
+        ).add(artifact);
+      }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
         _aggregationRunsByExperiment = runsByExp;
+        _mergeArtifactsByExperiment = artifactsByExp;
       });
     } catch (_) {
       if (!mounted) return;
@@ -639,6 +825,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _experiments = <FederatedLearningExperimentModel>[];
         _aggregationRunsByExperiment =
             <String, List<FederatedLearningAggregationRunModel>>{};
+        _mergeArtifactsByExperiment =
+            <String, List<FederatedLearningMergeArtifactModel>>{};
       });
     } finally {
       if (mounted) {
