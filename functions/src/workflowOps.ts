@@ -16,6 +16,14 @@ import {
   districtProviderSchoolField,
   districtProviderSectionsField,
 } from './districtProviderIntegration';
+import {
+  buildFederatedLearningExperimentDocId,
+  buildFederatedLearningFeatureFlagId,
+  buildFederatedLearningFeatureFlagPayload,
+  federatedLearningAuditAction,
+  sanitizeFederatedLearningExperimentConfig,
+  sanitizeFederatedLearningUpdateSummary,
+} from './federatedLearningPrototype';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -1526,11 +1534,17 @@ export const upsertFeatureFlag = onCall(async (request: CallableRequest) => {
   const name = typeof request.data?.name === 'string' ? request.data.name : id;
   const description = typeof request.data?.description === 'string' ? request.data.description : '';
   const enabled = typeof request.data?.enabled === 'boolean' ? request.data.enabled : false;
+  const scope = ['global', 'site', 'user'].includes(asTrimmedString(request.data?.scope))
+    ? asTrimmedString(request.data?.scope)
+    : 'global';
+  const enabledSites = toStringArray(request.data?.enabledSites);
 
   await ref.set({
     name,
     description,
     enabled,
+    scope,
+    enabledSites,
     updatedBy: actor.uid,
     updatedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
@@ -1538,6 +1552,161 @@ export const upsertFeatureFlag = onCall(async (request: CallableRequest) => {
   }, { merge: true });
 
   return { success: true, id };
+});
+
+export const listFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const snap = await admin.firestore().collection('federatedLearningExperiments').limit(200).get();
+  const experiments = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { experiments };
+});
+
+export const upsertFederatedLearningExperiment = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  let config;
+  try {
+    config = sanitizeFederatedLearningExperimentConfig((request.data || {}) as Record<string, unknown>);
+  } catch (error) {
+    throw new HttpsError('invalid-argument', error instanceof Error ? error.message : 'Invalid experiment config.');
+  }
+
+  const requestedId = asTrimmedString(request.data?.id);
+  const id = requestedId || buildFederatedLearningExperimentDocId(config.name);
+  const featureFlagId = buildFederatedLearningFeatureFlagId(id);
+  const ref = admin.firestore().collection('federatedLearningExperiments').doc(id);
+
+  await ref.set({
+    ...config,
+    featureFlagId,
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('featureFlags').doc(featureFlagId).set({
+    ...buildFederatedLearningFeatureFlagPayload(id, config),
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('experiment.upsert'),
+    collection: 'federatedLearningExperiments',
+    documentId: id,
+    timestamp: Date.now(),
+    details: {
+      runtimeTarget: config.runtimeTarget,
+      status: config.status,
+      allowedSiteIds: config.allowedSiteIds,
+      aggregateThreshold: config.aggregateThreshold,
+      rawUpdateMaxBytes: config.rawUpdateMaxBytes,
+      featureFlagId,
+    },
+  });
+
+  return { success: true, id, featureFlagId };
+});
+
+export const recordFederatedLearningPrototypeUpdate = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  if (!experimentId) {
+    throw new HttpsError('invalid-argument', 'experimentId is required.');
+  }
+
+  const experimentRef = admin.firestore().collection('federatedLearningExperiments').doc(experimentId);
+  const experimentSnap = await experimentRef.get();
+  if (!experimentSnap.exists) {
+    throw new HttpsError('not-found', 'Federated learning experiment not found.');
+  }
+
+  const experiment = (experimentSnap.data() || {}) as Record<string, unknown>;
+  const siteId = asTrimmedString(request.data?.siteId);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const allowedSiteIds = toStringArray(experiment.allowedSiteIds);
+  if (allowedSiteIds.length === 0 || !allowedSiteIds.includes(siteId)) {
+    throw new HttpsError('failed-precondition', 'Site is not enrolled in the requested experiment.');
+  }
+
+  const status = asTrimmedString(experiment.status);
+  if (!['pilot_ready', 'active'].includes(status)) {
+    throw new HttpsError('failed-precondition', 'Experiment is not accepting prototype updates.');
+  }
+  if (experiment.enablePrototypeUploads !== true) {
+    throw new HttpsError('failed-precondition', 'Prototype uploads are disabled for this experiment.');
+  }
+
+  const featureFlagId = asTrimmedString(experiment.featureFlagId);
+  if (featureFlagId) {
+    const flagSnap = await admin.firestore().collection('featureFlags').doc(featureFlagId).get();
+    const flagData = (flagSnap.data() || {}) as Record<string, unknown>;
+    if (flagData.enabled !== true) {
+      throw new HttpsError('failed-precondition', 'Experiment feature flag is disabled.');
+    }
+    const scope = asTrimmedString(flagData.scope) || 'site';
+    const enabledSites = toStringArray(flagData.enabledSites);
+    if (scope === 'site' && enabledSites.length > 0 && !enabledSites.includes(siteId)) {
+      throw new HttpsError('failed-precondition', 'Site is outside the enabled feature-flag cohort.');
+    }
+  }
+
+  const rawUpdateMaxBytes = typeof experiment.rawUpdateMaxBytes === 'number'
+    ? experiment.rawUpdateMaxBytes
+    : Number(experiment.rawUpdateMaxBytes || 16384);
+  let summary;
+  try {
+    summary = sanitizeFederatedLearningUpdateSummary((request.data || {}) as Record<string, unknown>, rawUpdateMaxBytes);
+  } catch (error) {
+    throw new HttpsError('invalid-argument', error instanceof Error ? error.message : 'Invalid update summary.');
+  }
+
+  const docRef = await admin.firestore().collection('federatedLearningUpdateSummaries').add({
+    experimentId,
+    runtimeTarget: experiment.runtimeTarget || null,
+    requestedBy: actor.uid,
+    status: 'accepted',
+    ...summary,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('prototype_update.recorded'),
+    collection: 'federatedLearningUpdateSummaries',
+    documentId: docRef.id,
+    timestamp: Date.now(),
+    details: {
+      experimentId,
+      siteId: summary.siteId,
+      sampleCount: summary.sampleCount,
+      vectorLength: summary.vectorLength,
+      payloadBytes: summary.payloadBytes,
+      traceId: summary.traceId,
+    },
+  });
+
+  return { success: true, id: docRef.id, experimentId, siteId: summary.siteId };
 });
 
 export const listWorkflowContacts = onCall(async (request: CallableRequest) => {

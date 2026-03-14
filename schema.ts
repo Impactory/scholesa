@@ -203,6 +203,42 @@ export interface AuditLog {
   details?: Record<string, any>;
 }
 
+export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
+export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
+
+export interface FederatedLearningExperiment {
+  id: string;
+  name: string;
+  description?: string;
+  runtimeTarget: FederatedLearningRuntimeTarget;
+  status: FederatedLearningExperimentStatus;
+  allowedSiteIds: string[];
+  aggregateThreshold: number;
+  rawUpdateMaxBytes: number;
+  enablePrototypeUploads: boolean;
+  featureFlagId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningUpdateSummary {
+  id: string;
+  experimentId: string;
+  siteId: string;
+  traceId: string;
+  schemaVersion: string;
+  sampleCount: number;
+  vectorLength: number;
+  payloadBytes: number;
+  updateNorm: number;
+  payloadDigest: string;
+  batteryState?: 'low' | 'ok' | 'charging' | 'unknown';
+  networkType?: 'wifi' | 'cellular' | 'offline' | 'unknown';
+  requestedBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface EnterpriseSsoProvider {
   id: string;
   providerId: string;

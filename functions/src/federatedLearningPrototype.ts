@@ -1,0 +1,218 @@
+export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
+export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
+export type FederatedLearningBatteryState = 'low' | 'ok' | 'charging' | 'unknown';
+export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'unknown';
+
+export interface FederatedLearningExperimentConfig {
+  name: string;
+  description: string;
+  runtimeTarget: FederatedLearningRuntimeTarget;
+  status: FederatedLearningExperimentStatus;
+  allowedSiteIds: string[];
+  aggregateThreshold: number;
+  rawUpdateMaxBytes: number;
+  enablePrototypeUploads: boolean;
+}
+
+export interface FederatedLearningUpdateSummary {
+  siteId: string;
+  traceId: string;
+  schemaVersion: string;
+  sampleCount: number;
+  vectorLength: number;
+  payloadBytes: number;
+  updateNorm: number;
+  payloadDigest: string;
+  batteryState: FederatedLearningBatteryState;
+  networkType: FederatedLearningNetworkType;
+}
+
+function asTrimmedString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function asFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function asIntegerInRange(
+  value: unknown,
+  fieldName: string,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  const parsed = value === undefined ? fallback : asFiniteNumber(value);
+  const candidate = parsed === null ? Number.NaN : parsed;
+  if (!Number.isInteger(candidate) || candidate < min || candidate > max) {
+    throw new Error(`${fieldName} must be an integer between ${min} and ${max}.`);
+  }
+  return candidate;
+}
+
+export function normalizeFederatedLearningRuntimeTarget(
+  value: unknown,
+): FederatedLearningRuntimeTarget | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (['flutter_mobile', 'flutter-mobile', 'flutter'].includes(normalized)) {
+    return 'flutter_mobile';
+  }
+  if (['web_pwa', 'web-pwa', 'web'].includes(normalized)) {
+    return 'web_pwa';
+  }
+  if (normalized === 'hybrid') {
+    return 'hybrid';
+  }
+  return null;
+}
+
+export function normalizeFederatedLearningExperimentStatus(
+  value: unknown,
+): FederatedLearningExperimentStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (['draft', 'pilot_ready', 'pilot-ready', 'active', 'paused', 'disabled'].includes(normalized)) {
+    if (normalized === 'pilot-ready') return 'pilot_ready';
+    return normalized as FederatedLearningExperimentStatus;
+  }
+  return null;
+}
+
+export function normalizeFederatedLearningBatteryState(
+  value: unknown,
+): FederatedLearningBatteryState {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'low' || normalized === 'ok' || normalized === 'charging') {
+    return normalized;
+  }
+  return 'unknown';
+}
+
+export function normalizeFederatedLearningNetworkType(
+  value: unknown,
+): FederatedLearningNetworkType {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'wifi' || normalized === 'cellular' || normalized === 'offline') {
+    return normalized;
+  }
+  return 'unknown';
+}
+
+export function normalizeFederatedLearningSiteIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value
+    .map((entry) => asTrimmedString(entry))
+    .filter((entry) => entry.length > 0)));
+}
+
+export function buildFederatedLearningExperimentDocId(nameOrId: string): string {
+  const normalized = nameOrId.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+  const suffix = normalized.length > 0 ? normalized.slice(0, 72) : 'prototype';
+  return `fl_exp_${suffix}`;
+}
+
+export function buildFederatedLearningFeatureFlagId(experimentId: string): string {
+  return `feature_${experimentId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+export function federatedLearningAuditAction(action: string): string {
+  return `federated_learning.${action.trim().replace(/\s+/g, '_')}`;
+}
+
+export function sanitizeFederatedLearningExperimentConfig(
+  input: Record<string, unknown>,
+): FederatedLearningExperimentConfig {
+  const name = asTrimmedString(input.name);
+  if (!name) {
+    throw new Error('name is required.');
+  }
+
+  const runtimeTarget = normalizeFederatedLearningRuntimeTarget(input.runtimeTarget);
+  if (!runtimeTarget) {
+    throw new Error('runtimeTarget must be flutter_mobile, web_pwa, or hybrid.');
+  }
+
+  const status = normalizeFederatedLearningExperimentStatus(input.status) ?? 'draft';
+  const allowedSiteIds = normalizeFederatedLearningSiteIds(input.allowedSiteIds);
+  const aggregateThreshold = asIntegerInRange(input.aggregateThreshold, 'aggregateThreshold', 5, 10000, 25);
+  const rawUpdateMaxBytes = asIntegerInRange(input.rawUpdateMaxBytes, 'rawUpdateMaxBytes', 256, 262144, 16384);
+  const enablePrototypeUploads = input.enablePrototypeUploads === true;
+
+  if ((status === 'pilot_ready' || status === 'active') && allowedSiteIds.length === 0) {
+    throw new Error('allowedSiteIds are required when status is pilot_ready or active.');
+  }
+
+  return {
+    name,
+    description: asTrimmedString(input.description),
+    runtimeTarget,
+    status,
+    allowedSiteIds,
+    aggregateThreshold,
+    rawUpdateMaxBytes,
+    enablePrototypeUploads,
+  };
+}
+
+export function buildFederatedLearningFeatureFlagPayload(
+  experimentId: string,
+  config: FederatedLearningExperimentConfig,
+): Record<string, unknown> {
+  return {
+    name: `Federated Learning Prototype: ${config.name}`,
+    description: config.description || `Prototype gate for ${config.name}`,
+    enabled: config.enablePrototypeUploads && (config.status === 'pilot_ready' || config.status === 'active'),
+    status: config.enablePrototypeUploads && (config.status === 'pilot_ready' || config.status === 'active')
+      ? 'enabled'
+      : 'disabled',
+    scope: 'site',
+    enabledSites: config.allowedSiteIds,
+    experimentId,
+  };
+}
+
+export function sanitizeFederatedLearningUpdateSummary(
+  input: Record<string, unknown>,
+  rawUpdateMaxBytes: number,
+): FederatedLearningUpdateSummary {
+  const forbiddenFields = ['prompt', 'transcript', 'messageBody', 'artifactBody', 'rawUpdate', 'gradientValues'];
+  for (const field of forbiddenFields) {
+    if (field in input) {
+      throw new Error(`${field} is not allowed in prototype update summaries.`);
+    }
+  }
+
+  const siteId = asTrimmedString(input.siteId);
+  const traceId = asTrimmedString(input.traceId);
+  const schemaVersion = asTrimmedString(input.schemaVersion);
+  const payloadDigest = asTrimmedString(input.payloadDigest);
+  if (!siteId) throw new Error('siteId is required.');
+  if (!traceId) throw new Error('traceId is required.');
+  if (!schemaVersion) throw new Error('schemaVersion is required.');
+  if (!payloadDigest) throw new Error('payloadDigest is required.');
+
+  const sampleCount = asIntegerInRange(input.sampleCount, 'sampleCount', 1, 10000, 1);
+  const vectorLength = asIntegerInRange(input.vectorLength, 'vectorLength', 1, 100000, 1);
+  const payloadBytes = asIntegerInRange(input.payloadBytes, 'payloadBytes', 1, rawUpdateMaxBytes, 1);
+  const updateNorm = asFiniteNumber(input.updateNorm);
+  if (updateNorm === null || updateNorm < 0 || updateNorm > 1000000) {
+    throw new Error('updateNorm must be a finite number between 0 and 1000000.');
+  }
+
+  return {
+    siteId,
+    traceId,
+    schemaVersion,
+    sampleCount,
+    vectorLength,
+    payloadBytes,
+    updateNorm,
+    payloadDigest,
+    batteryState: normalizeFederatedLearningBatteryState(input.batteryState),
+    networkType: normalizeFederatedLearningNetworkType(input.networkType),
+  };
+}
