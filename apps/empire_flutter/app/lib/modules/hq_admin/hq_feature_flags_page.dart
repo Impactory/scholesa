@@ -515,6 +515,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     const int pageSize = 2;
     String filterQuery = '';
     int pageIndex = 0;
+    String sortMode = 'newest';
+    String artifactFilter = 'all';
+    bool latestOnly = false;
 
     return showDialog<void>(
       context: context,
@@ -522,23 +525,57 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
             final String normalizedQuery = filterQuery.trim().toLowerCase();
-            final List<FederatedLearningAggregationRunModel> filteredRuns =
-                normalizedQuery.isEmpty
-                    ? runs
-                    : runs.where((FederatedLearningAggregationRunModel run) {
-                        final FederatedLearningMergeArtifactModel? artifact =
-                            artifactsByRunId[run.id];
-                        final String haystack = <String>[
-                          run.id,
-                          run.mergeArtifactId ?? '',
-                          run.mergeStrategy ?? '',
-                          run.boundedDigest ?? '',
-                          artifact?.id ?? '',
-                          artifact?.mergeStrategy ?? '',
-                          artifact?.boundedDigest ?? '',
-                        ].join(' ').toLowerCase();
-                        return haystack.contains(normalizedQuery);
-                      }).toList(growable: false);
+            final List<FederatedLearningAggregationRunModel> sortedRuns =
+                List<FederatedLearningAggregationRunModel>.from(runs);
+            if (sortMode == 'oldest') {
+              sortedRuns.sort((a, b) {
+                final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+                return aMillis.compareTo(bMillis);
+              });
+            } else if (sortMode == 'largest_batch') {
+              sortedRuns.sort((a, b) {
+                final int sampleCompare =
+                    b.totalSampleCount.compareTo(a.totalSampleCount);
+                if (sampleCompare != 0) return sampleCompare;
+                final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+                return bMillis.compareTo(aMillis);
+              });
+            }
+
+            List<FederatedLearningAggregationRunModel> filteredRuns = sortedRuns
+                .where((FederatedLearningAggregationRunModel run) {
+              final FederatedLearningMergeArtifactModel? artifact =
+                  artifactsByRunId[run.id];
+              final bool hasArtifact =
+                  ((artifact?.id ?? run.mergeArtifactId ?? '').trim().isNotEmpty);
+              if (artifactFilter == 'generated' && !hasArtifact) {
+                return false;
+              }
+              if (artifactFilter == 'missing' && hasArtifact) {
+                return false;
+              }
+              if (normalizedQuery.isEmpty) {
+                return true;
+              }
+              final String haystack = <String>[
+                run.id,
+                run.mergeArtifactId ?? '',
+                run.mergeStrategy ?? '',
+                run.boundedDigest ?? '',
+                artifact?.id ?? '',
+                artifact?.mergeStrategy ?? '',
+                artifact?.boundedDigest ?? '',
+              ].join(' ').toLowerCase();
+              return haystack.contains(normalizedQuery);
+            }).toList(growable: false);
+
+            if (latestOnly && filteredRuns.isNotEmpty) {
+              filteredRuns = <FederatedLearningAggregationRunModel>[
+                filteredRuns.first,
+              ];
+            }
             final int pageCount = filteredRuns.isEmpty
                 ? 1
                 : ((filteredRuns.length - 1) ~/ pageSize) + 1;
@@ -582,6 +619,80 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           ),
                           prefixIcon: const Icon(Icons.search_rounded),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: sortMode,
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            sortMode = value ?? 'newest';
+                            pageIndex = 0;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText:
+                              _tHqFeatureFlags(context, 'Sort runs'),
+                        ),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            value: 'newest',
+                            child:
+                                Text(_tHqFeatureFlags(context, 'Newest first')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oldest',
+                            child:
+                                Text(_tHqFeatureFlags(context, 'Oldest first')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'largest_batch',
+                            child: Text(
+                              _tHqFeatureFlags(context, 'Largest batch first'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          FilterChip(
+                            label:
+                                Text(_tHqFeatureFlags(context, 'Latest only')),
+                            selected: latestOnly,
+                            onSelected: (bool value) {
+                              setDialogState(() {
+                                latestOnly = value;
+                                pageIndex = 0;
+                              });
+                            },
+                          ),
+                          FilterChip(
+                            label: Text(
+                              _tHqFeatureFlags(context, 'Artifact generated'),
+                            ),
+                            selected: artifactFilter == 'generated',
+                            onSelected: (bool value) {
+                              setDialogState(() {
+                                artifactFilter = value ? 'generated' : 'all';
+                                pageIndex = 0;
+                              });
+                            },
+                          ),
+                          FilterChip(
+                            label: Text(
+                              _tHqFeatureFlags(context, 'Artifact missing'),
+                            ),
+                            selected: artifactFilter == 'missing',
+                            onSelected: (bool value) {
+                              setDialogState(() {
+                                artifactFilter = value ? 'missing' : 'all';
+                                pageIndex = 0;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                     ],
