@@ -6,6 +6,7 @@ import {
   buildFederatedLearningExperimentReviewRecordDocId,
   buildFederatedLearningPilotEvidenceRecordDocId,
   buildFederatedLearningPilotApprovalRecordDocId,
+  buildFederatedLearningPilotExecutionRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -18,6 +19,7 @@ import {
   normalizeFederatedLearningExperimentReviewStatus,
   normalizeFederatedLearningPilotEvidenceStatus,
   normalizeFederatedLearningPilotApprovalStatus,
+  normalizeFederatedLearningPilotExecutionStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -48,6 +50,9 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningPilotApprovalStatus('approved')).toBe('approved');
     expect(normalizeFederatedLearningPilotApprovalStatus('blocked')).toBe('blocked');
     expect(normalizeFederatedLearningPilotApprovalStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningPilotExecutionStatus('launched')).toBe('launched');
+    expect(normalizeFederatedLearningPilotExecutionStatus('completed')).toBe('completed');
+    expect(normalizeFederatedLearningPilotExecutionStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -69,6 +74,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_pilot_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningPilotApprovalRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_pilot_approval_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningPilotExecutionRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_pilot_execution_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

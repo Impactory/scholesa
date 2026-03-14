@@ -24,6 +24,7 @@ import {
   buildFederatedLearningExperimentReviewRecordDocId,
   buildFederatedLearningPilotEvidenceRecordDocId,
   buildFederatedLearningPilotApprovalRecordDocId,
+  buildFederatedLearningPilotExecutionRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -36,6 +37,7 @@ import {
   normalizeFederatedLearningExperimentReviewStatus,
   normalizeFederatedLearningPilotEvidenceStatus,
   normalizeFederatedLearningPilotApprovalStatus,
+  normalizeFederatedLearningPilotExecutionStatus,
   selectFederatedLearningAggregationBatch,
   sanitizeFederatedLearningExperimentConfig,
   sanitizeFederatedLearningUpdateSummary,
@@ -2113,6 +2115,37 @@ export const listFederatedLearningPilotApprovalRecords = onCall(async (request: 
   return { records };
 });
 
+export const listFederatedLearningPilotExecutionRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningPilotExecutionRecords')
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+  if (candidateModelPackageId) {
+    query = query.where('candidateModelPackageId', '==', candidateModelPackageId);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
 export const upsertFederatedLearningExperimentReviewRecord = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (actor.role !== 'hq') {
@@ -2387,6 +2420,118 @@ export const upsertFederatedLearningPilotApprovalRecord = onCall(async (request:
   return {
     success: true,
     id: approvalId,
+    candidateModelPackageId,
+    status,
+  };
+});
+
+export const upsertFederatedLearningPilotExecutionRecord = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  if (!candidateModelPackageId) {
+    throw new HttpsError('invalid-argument', 'candidateModelPackageId is required.');
+  }
+
+  const status = normalizeFederatedLearningPilotExecutionStatus(request.data?.status);
+  if (!status) {
+    throw new HttpsError('invalid-argument', 'status must be planned, launched, observed, or completed.');
+  }
+
+  const launchedSiteIds = toStringArray(request.data?.launchedSiteIds);
+  const sessionCount = typeof request.data?.sessionCount === 'number' && Number.isFinite(request.data.sessionCount)
+    ? Math.max(0, Math.trunc(request.data.sessionCount))
+    : 0;
+  const learnerCount = typeof request.data?.learnerCount === 'number' && Number.isFinite(request.data.learnerCount)
+    ? Math.max(0, Math.trunc(request.data.learnerCount))
+    : 0;
+  const notes = asTrimmedString(request.data?.notes).slice(0, 500);
+
+  const packageRef = admin.firestore().collection('federatedLearningCandidateModelPackages').doc(candidateModelPackageId);
+  const packageSnap = await packageRef.get();
+  if (!packageSnap.exists) {
+    throw new HttpsError('not-found', 'Candidate model package not found.');
+  }
+
+  const packageData = (packageSnap.data() || {}) as Record<string, unknown>;
+  const experimentId = asTrimmedString(packageData.experimentId);
+  const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
+  const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
+  const approvalId = buildFederatedLearningPilotApprovalRecordDocId(candidateModelPackageId);
+  const executionId = buildFederatedLearningPilotExecutionRecordDocId(candidateModelPackageId);
+  const approvalSnap = await admin.firestore().collection('federatedLearningPilotApprovalRecords').doc(approvalId).get();
+  const approvalData = (approvalSnap.data() || {}) as Record<string, unknown>;
+
+  if (['launched', 'observed', 'completed'].includes(status)) {
+    if (!approvalSnap.exists || asTrimmedString(approvalData.status) !== 'approved') {
+      throw new HttpsError('failed-precondition', 'Pilot execution beyond planning requires an approved pilot approval record.');
+    }
+  }
+  if (['observed', 'completed'].includes(status) && (launchedSiteIds.length === 0 || sessionCount <= 0 || learnerCount <= 0)) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Observed or completed pilot execution requires launched sites plus positive session and learner counts.',
+    );
+  }
+
+  const experimentSnap = await admin.firestore().collection('federatedLearningExperiments').doc(experimentId).get();
+  const experimentData = (experimentSnap.data() || {}) as Record<string, unknown>;
+  const allowedSiteIds = toStringArray(experimentData.allowedSiteIds);
+  if (launchedSiteIds.some((siteId) => !allowedSiteIds.includes(siteId))) {
+    throw new HttpsError('failed-precondition', 'Pilot execution sites must be within the experiment allowed-site cohort.');
+  }
+
+  const executionRef = admin.firestore().collection('federatedLearningPilotExecutionRecords').doc(executionId);
+  await admin.firestore().runTransaction(async (transaction) => {
+    transaction.set(executionRef, {
+      experimentId,
+      candidateModelPackageId,
+      aggregationRunId,
+      mergeArtifactId,
+      pilotApprovalRecordId: approvalId,
+      status,
+      launchedSiteIds,
+      sessionCount,
+      learnerCount,
+      notes,
+      recordedBy: actor.uid,
+      recordedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    transaction.set(packageRef, {
+      latestPilotExecutionRecordId: executionId,
+      latestPilotExecutionStatus: status,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('pilot_execution_record.upsert'),
+    collection: 'federatedLearningPilotExecutionRecords',
+    documentId: executionId,
+    timestamp: Date.now(),
+    details: {
+      experimentId,
+      candidateModelPackageId,
+      aggregationRunId,
+      mergeArtifactId,
+      pilotApprovalRecordId: approvalId,
+      status,
+      launchedSiteIds,
+      sessionCount,
+      learnerCount,
+    },
+  });
+
+  return {
+    success: true,
+    id: executionId,
     candidateModelPackageId,
     status,
   };
