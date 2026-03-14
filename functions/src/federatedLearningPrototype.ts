@@ -11,6 +11,7 @@ export type FederatedLearningCandidatePromotionStatus = 'approved_for_eval' | 'h
 export type FederatedLearningCandidatePromotionTarget = 'sandbox_eval';
 export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
+export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -213,6 +214,10 @@ export function buildFederatedLearningPilotEvidenceRecordDocId(packageId: string
   return `fl_pilot_${packageId.replace(/^fl_pkg_/, '')}`;
 }
 
+export function buildFederatedLearningPilotApprovalRecordDocId(packageId: string): string {
+  return `fl_pilot_approval_${packageId.replace(/^fl_pkg_/, '')}`;
+}
+
 export function normalizeFederatedLearningExperimentReviewStatus(
   value: unknown,
 ): FederatedLearningExperimentReviewStatus | null {
@@ -254,6 +259,16 @@ export function normalizeFederatedLearningPilotEvidenceStatus(
   if (normalized === 'ready_for_pilot' || normalized === 'ready-for-pilot') {
     return 'ready_for_pilot';
   }
+  if (normalized === 'blocked') return 'blocked';
+  return null;
+}
+
+export function normalizeFederatedLearningPilotApprovalStatus(
+  value: unknown,
+): FederatedLearningPilotApprovalStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'pending') return 'pending';
+  if (normalized === 'approved') return 'approved';
   if (normalized === 'blocked') return 'blocked';
   return null;
 }

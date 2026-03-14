@@ -3273,6 +3273,8 @@ class FederatedLearningCandidateModelPackageModel {
     this.latestPromotionRevocationRecordId,
     this.latestPilotEvidenceRecordId,
     this.latestPilotEvidenceStatus,
+    this.latestPilotApprovalRecordId,
+    this.latestPilotApprovalStatus,
     required this.packageDigest,
     required this.boundedDigest,
     required this.sampleCount,
@@ -3300,6 +3302,8 @@ class FederatedLearningCandidateModelPackageModel {
   final String? latestPromotionRevocationRecordId;
   final String? latestPilotEvidenceRecordId;
   final String? latestPilotEvidenceStatus;
+  final String? latestPilotApprovalRecordId;
+  final String? latestPilotApprovalStatus;
   final String packageDigest;
   final String boundedDigest;
   final int sampleCount;
@@ -3342,6 +3346,9 @@ class FederatedLearningCandidateModelPackageModel {
         latestPilotEvidenceRecordId:
           data['latestPilotEvidenceRecordId'] as String?,
         latestPilotEvidenceStatus: data['latestPilotEvidenceStatus'] as String?,
+          latestPilotApprovalRecordId:
+            data['latestPilotApprovalRecordId'] as String?,
+          latestPilotApprovalStatus: data['latestPilotApprovalStatus'] as String?,
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
@@ -3370,6 +3377,8 @@ class FederatedLearningCandidateModelPackageModel {
         'latestPromotionRevocationRecordId': latestPromotionRevocationRecordId,
         'latestPilotEvidenceRecordId': latestPilotEvidenceRecordId,
         'latestPilotEvidenceStatus': latestPilotEvidenceStatus,
+        'latestPilotApprovalRecordId': latestPilotApprovalRecordId,
+        'latestPilotApprovalStatus': latestPilotApprovalStatus,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
         'sampleCount': sampleCount,
@@ -3463,6 +3472,93 @@ class FederatedLearningPilotEvidenceRecordModel {
         'notes': notes,
         'reviewedBy': reviewedBy,
         'reviewedAt': reviewedAt ?? Timestamp.now(),
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningPilotApprovalRecordModel {
+  const FederatedLearningPilotApprovalRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.aggregationRunId,
+    required this.mergeArtifactId,
+    required this.experimentReviewRecordId,
+    required this.pilotEvidenceRecordId,
+    required this.candidatePromotionRecordId,
+    required this.promotionTarget,
+    required this.status,
+    this.notes,
+    this.approvedBy,
+    this.approvedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String aggregationRunId;
+  final String mergeArtifactId;
+  final String experimentReviewRecordId;
+  final String pilotEvidenceRecordId;
+  final String candidatePromotionRecordId;
+  final String promotionTarget;
+  final String status;
+  final String? notes;
+  final String? approvedBy;
+  final Timestamp? approvedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningPilotApprovalRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningPilotApprovalRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningPilotApprovalRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningPilotApprovalRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      experimentReviewRecordId: data['experimentReviewRecordId'] as String? ?? '',
+      pilotEvidenceRecordId: data['pilotEvidenceRecordId'] as String? ?? '',
+      candidatePromotionRecordId:
+          data['candidatePromotionRecordId'] as String? ?? '',
+      promotionTarget: data['promotionTarget'] as String? ?? '',
+      status: data['status'] as String? ?? 'pending',
+      notes: data['notes'] as String?,
+      approvedBy: data['approvedBy'] as String?,
+      approvedAt: _timestampOrNull(data['approvedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'aggregationRunId': aggregationRunId,
+        'mergeArtifactId': mergeArtifactId,
+        'experimentReviewRecordId': experimentReviewRecordId,
+        'pilotEvidenceRecordId': pilotEvidenceRecordId,
+        'candidatePromotionRecordId': candidatePromotionRecordId,
+        'promotionTarget': promotionTarget,
+        'status': status,
+        'notes': notes,
+        'approvedBy': approvedBy,
+        'approvedAt': approvedAt ?? Timestamp.now(),
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };

@@ -5,6 +5,7 @@ import {
   buildFederatedLearningCandidatePromotionRevocationRecordDocId,
   buildFederatedLearningExperimentReviewRecordDocId,
   buildFederatedLearningPilotEvidenceRecordDocId,
+  buildFederatedLearningPilotApprovalRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -16,6 +17,7 @@ import {
   normalizeFederatedLearningCandidatePromotionTarget,
   normalizeFederatedLearningExperimentReviewStatus,
   normalizeFederatedLearningPilotEvidenceStatus,
+  normalizeFederatedLearningPilotApprovalStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -43,6 +45,9 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningPilotEvidenceStatus('ready-for-pilot')).toBe('ready_for_pilot');
     expect(normalizeFederatedLearningPilotEvidenceStatus('blocked')).toBe('blocked');
     expect(normalizeFederatedLearningPilotEvidenceStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningPilotApprovalStatus('approved')).toBe('approved');
+    expect(normalizeFederatedLearningPilotApprovalStatus('blocked')).toBe('blocked');
+    expect(normalizeFederatedLearningPilotApprovalStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -62,6 +67,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_prom_revoke_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningPilotEvidenceRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_pilot_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningPilotApprovalRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_pilot_approval_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

@@ -349,6 +349,23 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningPilotApprovalRecords', 'fl_pilot_approval_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      candidateModelPackageId: 'fl_pkg_demo_1',
+      aggregationRunId: 'fl_agg_demo_1',
+      mergeArtifactId: 'fl_merge_demo_1',
+      experimentReviewRecordId: 'fl_review_literacy_pilot',
+      pilotEvidenceRecordId: 'fl_pilot_demo_1',
+      candidatePromotionRecordId: 'fl_prom_demo_1',
+      promotionTarget: 'sandbox_eval',
+      status: 'pending',
+      notes: 'Awaiting bounded HQ pilot approval sign-off.',
+      approvedBy: hqUser.uid,
+      approvedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -709,6 +726,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningPilotEvidenceRecords', 'fl_pilot_demo_1')),
+    );
+  });
+
+  test('HQ can read pilot approval records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningPilotApprovalRecords', 'fl_pilot_approval_demo_1')),
+    );
+  });
+
+  test('site admins cannot read pilot approval records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningPilotApprovalRecords', 'fl_pilot_approval_demo_1')),
     );
   });
 });

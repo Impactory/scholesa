@@ -207,6 +207,7 @@ export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hyb
 export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
 export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
+export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -318,6 +319,8 @@ export interface FederatedLearningCandidateModelPackage {
   latestPromotionRevocationRecordId?: string;
   latestPilotEvidenceRecordId?: string;
   latestPilotEvidenceStatus?: FederatedLearningPilotEvidenceStatus;
+  latestPilotApprovalRecordId?: string;
+  latestPilotApprovalStatus?: FederatedLearningPilotApprovalStatus;
   packageDigest: string;
   boundedDigest: string;
   sampleCount: number;
@@ -377,6 +380,24 @@ export interface FederatedLearningPilotEvidenceRecord {
   notes?: string;
   reviewedBy?: string;
   reviewedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningPilotApprovalRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  aggregationRunId: string;
+  mergeArtifactId: string;
+  experimentReviewRecordId: string;
+  pilotEvidenceRecordId: string;
+  candidatePromotionRecordId: string;
+  promotionTarget: 'sandbox_eval';
+  status: FederatedLearningPilotApprovalStatus;
+  notes?: string;
+  approvedBy?: string;
+  approvedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

@@ -21,6 +21,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? mergeArtifacts,
     List<Map<String, dynamic>>? candidatePackages,
     List<Map<String, dynamic>>? experimentReviewRecords,
+    List<Map<String, dynamic>>? pilotEvidenceRecords,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -42,6 +43,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _experimentReviewRecords = List<Map<String, dynamic>>.from(
           experimentReviewRecords ?? <Map<String, dynamic>>[],
         ),
+        _pilotEvidenceRecords = List<Map<String, dynamic>>.from(
+          pilotEvidenceRecords ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -57,10 +61,13 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> _candidatePackages;
   final List<Map<String, dynamic>> _experimentReviewRecords;
+    final List<Map<String, dynamic>> _pilotEvidenceRecords;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedExperimentReviewSaves =
+      <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> recordedPilotEvidenceSaves =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
@@ -280,6 +287,30 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningPilotEvidenceRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _pilotEvidenceRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -377,6 +408,52 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<String?> upsertFederatedLearningPilotEvidenceRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String packageId =
+        (data['candidateModelPackageId'] as String? ?? '').trim();
+    final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String evidenceId =
+        'fl_pilot_${packageId.replaceAll('fl_pkg_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': evidenceId,
+      'experimentId': packageRow['experimentId'] ?? '',
+      'candidateModelPackageId': packageId,
+      'aggregationRunId': packageRow['aggregationRunId'] ?? '',
+      'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
+      'status': (data['status'] as String? ?? 'pending').trim(),
+      'sandboxEvalComplete': data['sandboxEvalComplete'] == true,
+      'metricsSnapshotComplete': data['metricsSnapshotComplete'] == true,
+      'rollbackPlanVerified': data['rollbackPlanVerified'] == true,
+      'notes': (data['notes'] as String? ?? '').trim(),
+      'reviewedBy': 'hq-1',
+      'reviewedAt': DateTime(2026, 3, 14, 16),
+      'createdAt': DateTime(2026, 3, 14, 16),
+      'updatedAt': DateTime(2026, 3, 14, 16),
+    };
+    _pilotEvidenceRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == evidenceId,
+    );
+    _pilotEvidenceRecords.insert(0, record);
+    final int packageIndex = _candidatePackages.indexWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+    );
+    if (packageIndex >= 0) {
+      _candidatePackages[packageIndex] = <String, dynamic>{
+        ..._candidatePackages[packageIndex],
+        'latestPilotEvidenceRecordId': evidenceId,
+        'latestPilotEvidenceStatus': record['status'],
+      };
+    }
+    recordedPilotEvidenceSaves.add(<String, dynamic>{...record});
+    return evidenceId;
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -447,6 +524,8 @@ Map<String, dynamic> _candidatePackageRow({
     'latestPromotionRecordId': '',
     'latestPromotionStatus': '',
     'latestPromotionRevocationRecordId': '',
+    'latestPilotEvidenceRecordId': '',
+    'latestPilotEvidenceStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
     'sampleCount': sampleCount,
@@ -457,6 +536,36 @@ Map<String, dynamic> _candidatePackageRow({
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
+  };
+}
+
+Map<String, dynamic> _pilotEvidenceRecordRow({
+  String id = 'fl_pilot_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String aggregationRunId = 'fl_agg_1',
+  String mergeArtifactId = 'fl_merge_1',
+  String status = 'pending',
+  bool sandboxEvalComplete = true,
+  bool metricsSnapshotComplete = false,
+  bool rollbackPlanVerified = true,
+  String notes = 'Awaiting metrics snapshot review.',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'aggregationRunId': aggregationRunId,
+    'mergeArtifactId': mergeArtifactId,
+    'status': status,
+    'sandboxEvalComplete': sandboxEvalComplete,
+    'metricsSnapshotComplete': metricsSnapshotComplete,
+    'rollbackPlanVerified': rollbackPlanVerified,
+    'notes': notes,
+    'reviewedBy': 'hq-1',
+    'reviewedAt': DateTime(2026, 3, 14, 15),
+    'createdAt': DateTime(2026, 3, 14, 15),
+    'updatedAt': DateTime(2026, 3, 14, 15),
   };
 }
 
@@ -862,6 +971,9 @@ void main() {
           sampleCount: 20,
         ),
       ],
+      pilotEvidenceRecords: <Map<String, dynamic>>[
+        _pilotEvidenceRecordRow(),
+      ],
       promotionRecords: <Map<String, dynamic>>[
         _promotionRecordRow(),
       ],
@@ -894,6 +1006,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Review status: pending'), findsOneWidget);
+    expect(
+      find.text(
+        'Pilot evidence: pending · sandbox eval done · metrics open · rollback verified',
+      ),
+      findsOneWidget,
+    );
 
     final Finder reviewChecklistButton = find.widgetWithText(
       TextButton,
@@ -964,6 +1082,75 @@ void main() {
     expect(
       find.text(
         'Checklist: privacy done · sign-off done · rollout risk acknowledged',
+      ),
+      findsOneWidget,
+    );
+
+    final Finder pilotEvidenceButton = find.widgetWithText(
+      TextButton,
+      'Pilot evidence',
+    );
+    await tester.ensureVisible(pilotEvidenceButton.first);
+    final TextButton pilotEvidenceControl = tester.widget<TextButton>(
+      pilotEvidenceButton.first,
+    );
+    pilotEvidenceControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pilot evidence checklist'), findsOneWidget);
+    final Finder pilotEvidenceDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Evidence status',
+    );
+    await tester.tap(pilotEvidenceDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ready_for_pilot').last);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile sandboxEvalTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Sandbox eval complete'),
+    );
+    sandboxEvalTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile metricsSnapshotTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Metrics snapshot reviewed'),
+    );
+    metricsSnapshotTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile rollbackPlanTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Rollback plan verified'),
+    );
+    rollbackPlanTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Pilot evidence notes'),
+      'Sandbox eval metrics and rollback readiness reviewed for bounded pilot evidence.',
+    );
+    final Finder saveEvidenceButton = find.widgetWithText(
+      FilledButton,
+      'Save evidence',
+    );
+    final FilledButton saveEvidenceControl = tester.widget<FilledButton>(
+      saveEvidenceButton,
+    );
+    saveEvidenceControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedPilotEvidenceSaves, hasLength(1));
+    expect(
+      bridge.recordedPilotEvidenceSaves.single['candidateModelPackageId'],
+      'fl_pkg_1',
+    );
+    expect(
+      bridge.recordedPilotEvidenceSaves.single['status'],
+      'ready_for_pilot',
+    );
+    expect(
+      find.text(
+        'Pilot evidence: ready_for_pilot · sandbox eval done · metrics done · rollback verified',
       ),
       findsOneWidget,
     );

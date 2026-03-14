@@ -29,6 +29,7 @@ Implemented prototype scope:
 - bounded candidate-promotion records for HQ sandbox-eval approvals linked to staged candidate packages
 - bounded candidate-promotion revocation records for HQ rollback evidence tied to sandbox-eval package decisions
 - bounded experiment privacy-review and sign-off checklist records for HQ approval readiness tracking
+- bounded pilot-evidence records for HQ sandbox-eval, metrics-snapshot, and rollback-readiness tracking per staged candidate package
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -90,6 +91,7 @@ Passed on 2026-03-14:
 - HQ can now inspect promotion decisions in a dedicated history dialog with status filtering, decision metadata, linked package/artifact context, and rationale search without claiming a production rollout console.
 - HQ can now record bounded rollback evidence for sandbox-eval package decisions via promotion revocation records, and the same package/promotion history surfaces now show effective revoked state plus rollback rationale without claiming a deployed rollback executor.
 - HQ can now record bounded experiment privacy-review and sign-off checklist status per prototype experiment, with approval gated on completed privacy review, completed sign-off checklist, and acknowledged rollout risk, without claiming a completed pilot approval workflow.
+- HQ can now record bounded pilot evidence per staged candidate package, with ready-for-pilot state gated on completed sandbox evaluation, reviewed metrics snapshot, and verified rollback plan, without claiming a real pilot rollout or production delivery path.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -99,6 +101,6 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - completed pilot approval flow beyond the bounded experiment review checklist records
 - device runtime beyond the bounded uploader abstraction
-- pilot evidence beyond the current bounded rollback-proof records
+- pilot execution evidence beyond the current bounded HQ readiness records
 - rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path
 - actual model merge logic and downstream model-delivery path
