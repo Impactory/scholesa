@@ -44,6 +44,10 @@ export function normalizeIntegrationProvider(provider: string | null | undefined
   if (!normalized) return 'google-classroom';
   if (['lti', 'lti1p3', 'lti-1p3', 'lti_1p3'].includes(normalized)) return 'lti_1p3';
   if (normalized === 'google_classroom') return 'google-classroom';
+  if (normalized === 'clever') return 'clever';
+  if (['classlink', 'class_link', 'class-link', 'one-roster', 'one_roster', 'oneroster'].includes(normalized)) {
+    return 'classlink';
+  }
   return normalized;
 }
 

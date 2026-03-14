@@ -807,6 +807,12 @@ class _SiteIntegrationsHealthPageState
           type.contains('grade_push') ||
           type.contains('canvas');
     }
+    if (providerKey.contains('clever')) {
+      return type.contains('clever');
+    }
+    if (providerKey.contains('classlink')) {
+      return type.contains('classlink');
+    }
     if (providerKey.contains('canvas')) {
       return type.contains('canvas');
     }
@@ -834,6 +840,20 @@ class _SiteIntegrationsHealthPageState
         name: 'Canvas LMS',
         icon: Icons.dashboard_rounded,
         color: Colors.red,
+      );
+    }
+    if (providerKey.contains('clever')) {
+      return (
+        name: 'Clever',
+        icon: Icons.apartment_rounded,
+        color: Colors.orange,
+      );
+    }
+    if (providerKey.contains('classlink')) {
+      return (
+        name: 'ClassLink',
+        icon: Icons.hub_rounded,
+        color: Colors.purple,
       );
     }
     return (

@@ -332,6 +332,8 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         'google_classroom',
         'github_classroom',
         'lti_1p3',
+        'clever',
+        'classlink',
         ...connectionsRows
             .map((Map<String, dynamic> row) =>
                 ((row['provider'] as String?) ?? '').toLowerCase())
@@ -480,6 +482,12 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
           type.contains('grade_push') ||
           type.contains('canvas');
     }
+    if (providerKey.contains('clever')) {
+      return type.contains('clever');
+    }
+    if (providerKey.contains('classlink')) {
+      return type.contains('classlink');
+    }
     return type.contains(providerKey);
   }
 
@@ -497,6 +505,20 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         name: 'LTI 1.3 / Grade Passback',
         icon: Icons.link_rounded,
         color: Colors.deepOrange,
+      );
+    }
+    if (providerKey.contains('clever')) {
+      return (
+        name: 'Clever',
+        icon: Icons.apartment_rounded,
+        color: Colors.orange,
+      );
+    }
+    if (providerKey.contains('classlink')) {
+      return (
+        name: 'ClassLink',
+        icon: Icons.hub_rounded,
+        color: Colors.purple,
       );
     }
     return (

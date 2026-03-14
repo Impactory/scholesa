@@ -6,6 +6,16 @@ import {
   buildLtiGradePassbackJob,
   normalizeIntegrationProvider,
 } from './ltiIntegration';
+import {
+  buildDistrictConnectionDocId,
+  type DistrictProvider,
+  districtProviderAuditAction,
+  districtProviderDefaultAuthBaseUrl,
+  districtProviderDisplayName,
+  districtProviderRosterSyncJobType,
+  districtProviderSchoolField,
+  districtProviderSectionsField,
+} from './districtProviderIntegration';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 
@@ -112,14 +122,32 @@ function buildGovernanceApprovalError(feature: string): HttpsError {
   );
 }
 
+function buildDistrictProviderGovernanceError(provider: DistrictProvider, feature: string): HttpsError {
+  return buildGovernanceApprovalError(`${districtProviderDisplayName(provider)} ${feature}`);
+}
+
 function buildCleverConnectionDocId(siteId: string): string {
-  return `clever_${siteId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  return buildDistrictConnectionDocId('clever', siteId);
 }
 
 async function getCleverConnection(siteId: string) {
-  const docId = buildCleverConnectionDocId(siteId);
+  const docId = buildDistrictConnectionDocId('clever', siteId);
   const docSnap = await admin.firestore().collection('integrationConnections').doc(docId).get();
   return docSnap.exists ? { id: docSnap.id, data: docSnap.data() as Record<string, unknown> } : null;
+}
+
+function buildClassLinkConnectionDocId(siteId: string): string {
+  return buildDistrictConnectionDocId('classlink', siteId);
+}
+
+async function getDistrictProviderConnection(provider: DistrictProvider, siteId: string) {
+  const docId = buildDistrictConnectionDocId(provider, siteId);
+  const docSnap = await admin.firestore().collection('integrationConnections').doc(docId).get();
+  return docSnap.exists ? { id: docSnap.id, data: docSnap.data() as Record<string, unknown> } : null;
+}
+
+async function getClassLinkConnection(siteId: string) {
+  return getDistrictProviderConnection('classlink', siteId);
 }
 
 function normalizeReturnUrl(value: unknown): string {
@@ -131,6 +159,41 @@ function normalizeReturnUrl(value: unknown): string {
   } catch {
     return '';
   }
+}
+
+function districtProviderClientId(provider: DistrictProvider): string {
+  const envKey = provider === 'clever' ? 'CLEVER_CLIENT_ID' : 'CLASSLINK_CLIENT_ID';
+  return asTrimmedString(process.env[envKey]);
+}
+
+function districtProviderRedirectUri(provider: DistrictProvider): string {
+  const envKey = provider === 'clever' ? 'CLEVER_REDIRECT_URI' : 'CLASSLINK_REDIRECT_URI';
+  return asTrimmedString(process.env[envKey]);
+}
+
+function districtProviderAuthBaseUrl(provider: DistrictProvider): string {
+  const envKey = provider === 'clever' ? 'CLEVER_AUTH_BASE_URL' : 'CLASSLINK_AUTH_BASE_URL';
+  return asTrimmedString(process.env[envKey]) || districtProviderDefaultAuthBaseUrl(provider);
+}
+
+function districtProviderSchools(provider: DistrictProvider, data: Record<string, unknown>): Array<Record<string, unknown>> {
+  const field = districtProviderSchoolField(provider);
+  const schools = data[field];
+  return Array.isArray(schools)
+    ? schools.map((entry) => ({ ...(entry as Record<string, unknown>) }))
+    : [];
+}
+
+function districtProviderSections(
+  provider: DistrictProvider,
+  data: Record<string, unknown>,
+  schoolId: string,
+): Array<Record<string, unknown>> {
+  const field = districtProviderSectionsField(provider);
+  const sectionMap = data[field];
+  return sectionMap && typeof sectionMap === 'object' && !Array.isArray(sectionMap)
+    ? ((sectionMap as Record<string, unknown>)[schoolId] as Array<Record<string, unknown>> | undefined) || []
+    : [];
 }
 
 function asNumber(value: unknown): number | null {
@@ -1034,6 +1097,248 @@ export const disconnectCleverConnection = onCall(async (request: CallableRequest
   await admin.firestore().collection('auditLogs').add({
     userId: actor.uid,
     action: 'clever.disconnect',
+    collection: 'integrationConnections',
+    documentId: connection.id,
+    timestamp: Date.now(),
+    details: { siteId },
+  });
+
+  return { success: true, id: connection.id, status: 'revoked', stub: true };
+});
+
+export const createClassLinkAuthUrl = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const returnUrl = normalizeReturnUrl(request.data?.returnUrl);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+  if (!returnUrl) {
+    throw new HttpsError('invalid-argument', 'A valid returnUrl is required.');
+  }
+
+  const clientId = districtProviderClientId('classlink');
+  const redirectUri = districtProviderRedirectUri('classlink');
+  if (!clientId || !redirectUri) {
+    throw buildDistrictProviderGovernanceError('classlink', 'connect');
+  }
+
+  const statePayload = Buffer.from(JSON.stringify({
+    siteId,
+    returnUrl,
+    actorUid: actor.uid,
+    provider: 'classlink',
+  })).toString('base64url');
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: districtProviderAuditAction('classlink', 'connect.started'),
+    collection: 'integrationConnections',
+    documentId: buildClassLinkConnectionDocId(siteId),
+    timestamp: Date.now(),
+    details: { siteId, returnUrl },
+  });
+
+  const url = new URL(districtProviderAuthBaseUrl('classlink'));
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('state', statePayload);
+
+  return {
+    provider: 'classlink',
+    siteId,
+    returnUrl,
+    url: url.toString(),
+    stub: true,
+  };
+});
+
+export const listClassLinkSchools = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const connection = await getClassLinkConnection(siteId);
+  if (!connection) {
+    throw buildDistrictProviderGovernanceError('classlink', 'school discovery');
+  }
+
+  return {
+    connectionId: connection.id,
+    schools: districtProviderSchools('classlink', connection.data),
+    stub: true,
+  };
+});
+
+export const listClassLinkSections = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const schoolId = asTrimmedString(request.data?.schoolId);
+  if (!siteId || !schoolId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site or school.');
+  }
+
+  const connection = await getClassLinkConnection(siteId);
+  if (!connection) {
+    throw buildDistrictProviderGovernanceError('classlink', 'section discovery');
+  }
+
+  return {
+    connectionId: connection.id,
+    schoolId,
+    sections: districtProviderSections('classlink', connection.data, schoolId),
+    stub: true,
+  };
+});
+
+export const queueClassLinkRosterSync = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  const schoolId = asTrimmedString(request.data?.schoolId);
+  const mode = asTrimmedString(request.data?.mode).toLowerCase() || 'preview';
+  if (!siteId || !schoolId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site or school.');
+  }
+  if (!['preview', 'apply'].includes(mode)) {
+    throw new HttpsError('invalid-argument', 'mode must be preview or apply.');
+  }
+
+  const connection = await getClassLinkConnection(siteId);
+  if (!connection || asTrimmedString(connection.data.status) !== 'active') {
+    throw buildDistrictProviderGovernanceError('classlink', 'roster sync');
+  }
+
+  const docRef = await admin.firestore().collection('syncJobs').add({
+    siteId,
+    provider: 'classlink',
+    type: 'roster_import',
+    jobType: districtProviderRosterSyncJobType('classlink', mode as 'preview' | 'apply'),
+    status: 'queued',
+    schoolId,
+    requestedBy: actor.uid,
+    requestedByRole: actor.role,
+    stub: true,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: districtProviderAuditAction('classlink', 'roster.sync'),
+    collection: 'syncJobs',
+    documentId: docRef.id,
+    timestamp: Date.now(),
+    details: { siteId, schoolId, mode, stub: true },
+  });
+
+  return {
+    success: true,
+    id: docRef.id,
+    mode,
+    provider: 'classlink',
+    stub: true,
+  };
+});
+
+export const resolveClassLinkIdentityLink = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const id = asTrimmedString(request.data?.id);
+  const decision = asTrimmedString(request.data?.decision).toLowerCase() || 'link';
+  const scholesaUserId = asTrimmedString(request.data?.scholesaUserId) || null;
+  if (!id) {
+    throw new HttpsError('invalid-argument', 'id is required.');
+  }
+  if (!['link', 'ignore', 'hold'].includes(decision)) {
+    throw new HttpsError('invalid-argument', 'decision must be link, ignore, or hold.');
+  }
+  if (decision === 'link' && !scholesaUserId) {
+    throw new HttpsError('invalid-argument', 'scholesaUserId is required when decision is link.');
+  }
+
+  const ref = admin.firestore().collection('externalIdentityLinks').doc(id);
+  const existing = await ref.get();
+  if (!existing.exists) {
+    throw new HttpsError('not-found', 'Identity link not found.');
+  }
+  const data = existing.data() as Record<string, unknown>;
+  const siteId = asTrimmedString(data.siteId);
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+  if (asTrimmedString(data.provider).toLowerCase() !== 'classlink') {
+    throw new HttpsError('failed-precondition', 'Identity link is not a ClassLink link.');
+  }
+
+  const nextStatus = decision === 'link' ? 'linked' : decision === 'ignore' ? 'ignored' : 'held';
+  await ref.set({
+    status: nextStatus,
+    scholesaUserId,
+    approvedBy: actor.uid,
+    approvedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: districtProviderAuditAction('classlink', 'identity.resolve'),
+    collection: 'externalIdentityLinks',
+    documentId: id,
+    timestamp: Date.now(),
+    details: { siteId, decision, scholesaUserId },
+  });
+
+  return { success: true, id, status: nextStatus, stub: true };
+});
+
+export const disconnectClassLinkConnection = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId) || actor.profile.activeSiteId || '';
+  if (!siteId || !actorCanAccessSite(actor, siteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const connection = await getClassLinkConnection(siteId);
+  if (!connection) {
+    throw new HttpsError('not-found', 'ClassLink connection not found.');
+  }
+
+  await admin.firestore().collection('integrationConnections').doc(connection.id).set({
+    status: 'revoked',
+    lastError: null,
+    updatedBy: actor.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: districtProviderAuditAction('classlink', 'disconnect'),
     collection: 'integrationConnections',
     documentId: connection.id,
     timestamp: Date.now(),

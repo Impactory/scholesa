@@ -14,7 +14,19 @@ String _tSiteIdentity(BuildContext context, String input) {
 /// Site identity resolution page
 /// Based on docs/46_IDENTITY_MATCHING_RESOLUTION_SPEC.md
 class SiteIdentityPage extends StatefulWidget {
-  const SiteIdentityPage({super.key});
+  const SiteIdentityPage({
+    super.key,
+    this.identityLoader,
+    this.identityResolver,
+  });
+
+  final Future<List<Map<String, dynamic>>> Function(String siteId)? identityLoader;
+  final Future<void> Function(
+    String id,
+    String rawProvider,
+    String decision,
+    String? suggestedUserId,
+  )? identityResolver;
 
   @override
   State<SiteIdentityPage> createState() => _SiteIdentityPageState();
@@ -233,9 +245,19 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       case 'google classroom':
         icon = Icons.school_rounded;
         color = Colors.blue;
+        break;
+      case 'clever':
+        icon = Icons.apartment_rounded;
+        color = Colors.orange;
+        break;
+      case 'classlink':
+        icon = Icons.hub_rounded;
+        color = Colors.purple;
+        break;
       case 'github':
         icon = Icons.code_rounded;
         color = Colors.black87;
+        break;
       default:
         icon = Icons.cloud_rounded;
         color = Colors.grey;
@@ -321,12 +343,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       },
     );
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance
-          .httpsCallable('resolveExternalIdentityLink');
-      await callable.call(<String, dynamic>{
-        'id': match.id,
-        'status': 'linked',
-      });
+      await _resolveMatch(match, 'link');
       if (!mounted) return;
       setState(() {
         _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
@@ -361,12 +378,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       },
     );
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance
-          .httpsCallable('resolveExternalIdentityLink');
-      await callable.call(<String, dynamic>{
-        'id': match.id,
-        'status': 'ignored',
-      });
+      await _resolveMatch(match, 'ignore');
       if (!mounted) return;
       setState(() {
         _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
@@ -404,14 +416,9 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         return;
       }
 
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listExternalIdentityLinks');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'siteId': siteId});
-      final Map<String, dynamic> payload =
-          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
-      final List<dynamic> rows =
-          payload['links'] as List<dynamic>? ?? <dynamic>[];
+      final List<dynamic> rows = widget.identityLoader != null
+          ? await widget.identityLoader!(siteId)
+          : await _fetchIdentityRows(siteId);
       final List<_IdentityMatch> loaded = rows
           .whereType<Map<dynamic, dynamic>>()
           .map((Map<dynamic, dynamic> row) => row.map(
@@ -434,7 +441,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           localName: localName,
           externalName: externalName,
           provider: _providerLabel(
-              (data['provider'] as String?) ?? 'google_classroom'),
+            (data['provider'] as String?) ?? 'google_classroom'),
+          rawProvider: (data['provider'] as String?) ?? 'google_classroom',
           confidence: confidence,
           status: _MatchStatus.pending,
           suggestedUserId: (data['scholesaUserId'] as String?) ??
@@ -458,7 +466,65 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     final String provider = rawProvider.trim().toLowerCase();
     if (provider.contains('github')) return 'GitHub';
     if (provider.contains('canvas')) return 'Canvas LMS';
+    if (provider.contains('clever')) return 'Clever';
+    if (provider.contains('classlink')) return 'ClassLink';
     return 'Google Classroom';
+  }
+
+  Future<List<dynamic>> _fetchIdentityRows(String siteId) async {
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('listExternalIdentityLinks');
+    final HttpsCallableResult<dynamic> result =
+        await callable.call(<String, dynamic>{'siteId': siteId});
+    final Map<String, dynamic> payload =
+        Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+    return payload['links'] as List<dynamic>? ?? <dynamic>[];
+  }
+
+  Future<void> _resolveMatch(_IdentityMatch match, String decision) async {
+    if (widget.identityResolver != null) {
+      await widget.identityResolver!(
+        match.id,
+        match.rawProvider,
+        decision,
+        match.suggestedUserId,
+      );
+      return;
+    }
+
+    final String provider = match.rawProvider.trim().toLowerCase();
+    final bool hasSuggestedUser =
+        match.suggestedUserId != null && match.suggestedUserId!.trim().isNotEmpty;
+
+    if (provider.contains('clever')) {
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('resolveCleverIdentityLink');
+      await callable.call(<String, dynamic>{
+        'id': match.id,
+        'decision': decision,
+        if (decision == 'link' && hasSuggestedUser)
+          'scholesaUserId': match.suggestedUserId,
+      });
+      return;
+    }
+    if (provider.contains('classlink')) {
+      final HttpsCallable callable = FirebaseFunctions.instance
+          .httpsCallable('resolveClassLinkIdentityLink');
+      await callable.call(<String, dynamic>{
+        'id': match.id,
+        'decision': decision,
+        if (decision == 'link' && hasSuggestedUser)
+          'scholesaUserId': match.suggestedUserId,
+      });
+      return;
+    }
+
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('resolveExternalIdentityLink');
+    await callable.call(<String, dynamic>{
+      'id': match.id,
+      'status': decision == 'ignore' ? 'ignored' : 'linked',
+    });
   }
 }
 
@@ -471,6 +537,7 @@ class _IdentityMatch {
     required this.localName,
     required this.externalName,
     required this.provider,
+    required this.rawProvider,
     required this.confidence,
     required this.status,
     this.suggestedUserId,
@@ -480,6 +547,7 @@ class _IdentityMatch {
   final String localName;
   final String externalName;
   final String provider;
+  final String rawProvider;
   final double confidence;
   final _MatchStatus status;
   final String? suggestedUserId;
