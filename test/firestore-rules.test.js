@@ -20,6 +20,7 @@ const educatorUser = { uid: 'educator-1', email: 'educator@site1.com' };
 const parentUser = { uid: 'parent-1', email: 'parent@example.com' };
 const otherParentUser = { uid: 'parent-2', email: 'parent2@example.com' };
 const learnerUser = { uid: 'learner-1', email: 'learner@example.com' };
+const siteAdminUser = { uid: 'site-admin-1', email: 'siteadmin@site1.com' };
 const otherSiteUser = { uid: 'other-site-user', email: 'other@site2.com' };
 const partnerUser = { uid: 'partner-1', email: 'partner@example.com' };
 
@@ -82,6 +83,13 @@ beforeEach(async () => {
       role: 'learner',
       siteIds: ['site1'],
       parentIds: [parentUser.uid],
+    });
+
+    await setDoc(doc(db, 'users', siteAdminUser.uid), {
+      email: siteAdminUser.email,
+      role: 'site',
+      siteIds: ['site1'],
+      activeSiteId: 'site1',
     });
     
     await setDoc(doc(db, 'users', otherSiteUser.uid), {
@@ -164,6 +172,57 @@ beforeEach(async () => {
       status: 'sent',
       createdAt: Date.now(),
       updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'featureFlags', 'feature_fl_exp_literacy_pilot'), {
+      name: 'Federated Learning Prototype: Literacy Pilot',
+      enabled: true,
+      status: 'enabled',
+      scope: 'site',
+      enabledSites: ['site1'],
+      experimentId: 'fl_exp_literacy_pilot',
+    });
+
+    await setDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_literacy_pilot'), {
+      name: 'Literacy Pilot',
+      description: 'Site-scoped literacy prototype cohort',
+      runtimeTarget: 'flutter_mobile',
+      status: 'pilot_ready',
+      allowedSiteIds: ['site1'],
+      aggregateThreshold: 25,
+      rawUpdateMaxBytes: 16384,
+      enablePrototypeUploads: true,
+      featureFlagId: 'feature_fl_exp_literacy_pilot',
+      siteId: 'site1',
+    });
+
+    await setDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_other_site'), {
+      name: 'Other Site Pilot',
+      description: 'Other site only',
+      runtimeTarget: 'flutter_mobile',
+      status: 'pilot_ready',
+      allowedSiteIds: ['site2'],
+      aggregateThreshold: 25,
+      rawUpdateMaxBytes: 16384,
+      enablePrototypeUploads: true,
+      featureFlagId: 'feature_fl_exp_other_site',
+      siteId: 'site2',
+    });
+
+    await setDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      siteId: 'site1',
+      traceId: 'trace-1',
+      schemaVersion: 'v1',
+      sampleCount: 18,
+      vectorLength: 128,
+      payloadBytes: 2048,
+      updateNorm: 3.2,
+      payloadDigest: 'digest-1',
+      batteryState: 'charging',
+      networkType: 'wifi',
+      status: 'accepted',
+      requestedBy: siteAdminUser.uid,
     });
   });
 });
@@ -372,6 +431,62 @@ describe('Support Interventions Collection', () => {
       context: 'individual',
       outcome: 'helped',
     }));
+  });
+});
+
+describe('Federated Learning Prototype Collections', () => {
+  test('HQ can read federated learning experiments', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_literacy_pilot')),
+    );
+  });
+
+  test('site admin can read enrolled federated learning experiments', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_literacy_pilot')),
+    );
+  });
+
+  test('site admin cannot read other site federated learning experiments', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_other_site')),
+    );
+  });
+
+  test('site admin can read prototype update summaries for their site', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_1')),
+    );
+  });
+
+  test('parents cannot read federated learning update summaries', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_1')),
+    );
+  });
+
+  test('site admins cannot write federated learning update summaries directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      setDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_2'), {
+        experimentId: 'fl_exp_literacy_pilot',
+        siteId: 'site1',
+        traceId: 'trace-2',
+        schemaVersion: 'v1',
+        sampleCount: 12,
+        vectorLength: 64,
+        payloadBytes: 1024,
+        updateNorm: 2.4,
+        payloadDigest: 'digest-2',
+        batteryState: 'ok',
+        networkType: 'wifi',
+      }),
+    );
   });
 });
 

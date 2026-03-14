@@ -2767,6 +2767,203 @@ class LtiGradePassbackJobModel {
       };
 }
 
+Timestamp? _timestampOrNull(dynamic value) {
+  if (value is Timestamp) return value;
+  if (value is DateTime) return Timestamp.fromDate(value);
+  return null;
+}
+
+List<String> _stringListOrEmpty(dynamic value) {
+  if (value is! List) return const <String>[];
+  return value.map((dynamic entry) => entry.toString()).toList(growable: false);
+}
+
+Map<String, dynamic>? _mapOrNull(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) {
+    return value.map(
+      (dynamic key, dynamic entryValue) => MapEntry(key.toString(), entryValue),
+    );
+  }
+  return null;
+}
+
+@immutable
+class FederatedLearningExperimentModel {
+  const FederatedLearningExperimentModel({
+    required this.id,
+    required this.name,
+    required this.runtimeTarget,
+    required this.status,
+    required this.allowedSiteIds,
+    required this.aggregateThreshold,
+    required this.rawUpdateMaxBytes,
+    required this.enablePrototypeUploads,
+    this.description,
+    this.featureFlagId,
+    this.featureFlag,
+    this.updatedBy,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String name;
+  final String runtimeTarget;
+  final String status;
+  final List<String> allowedSiteIds;
+  final int aggregateThreshold;
+  final int rawUpdateMaxBytes;
+  final bool enablePrototypeUploads;
+  final String? description;
+  final String? featureFlagId;
+  final Map<String, dynamic>? featureFlag;
+  final String? updatedBy;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  bool get acceptsPrototypeUploads =>
+      enablePrototypeUploads && (status == 'pilot_ready' || status == 'active');
+
+  factory FederatedLearningExperimentModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningExperimentModel.fromMap(doc.id, doc.data() ?? <String, dynamic>{});
+  }
+
+  factory FederatedLearningExperimentModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningExperimentModel(
+      id: id,
+      name: data['name'] as String? ?? id,
+      description: data['description'] as String?,
+      runtimeTarget: data['runtimeTarget'] as String? ?? 'flutter_mobile',
+      status: data['status'] as String? ?? 'draft',
+      allowedSiteIds: _stringListOrEmpty(data['allowedSiteIds']),
+      aggregateThreshold: (data['aggregateThreshold'] as num?)?.toInt() ?? 25,
+      rawUpdateMaxBytes: (data['rawUpdateMaxBytes'] as num?)?.toInt() ?? 16384,
+      enablePrototypeUploads: data['enablePrototypeUploads'] as bool? ?? false,
+      featureFlagId: data['featureFlagId'] as String?,
+      featureFlag: _mapOrNull(data['featureFlag']),
+      updatedBy: data['updatedBy'] as String?,
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'name': name,
+        'description': description,
+        'runtimeTarget': runtimeTarget,
+        'status': status,
+        'allowedSiteIds': allowedSiteIds,
+        'aggregateThreshold': aggregateThreshold,
+        'rawUpdateMaxBytes': rawUpdateMaxBytes,
+        'enablePrototypeUploads': enablePrototypeUploads,
+        'featureFlagId': featureFlagId,
+        'featureFlag': featureFlag,
+        'updatedBy': updatedBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningUpdateSummaryModel {
+  const FederatedLearningUpdateSummaryModel({
+    required this.id,
+    required this.experimentId,
+    required this.siteId,
+    required this.traceId,
+    required this.schemaVersion,
+    required this.sampleCount,
+    required this.vectorLength,
+    required this.payloadBytes,
+    required this.updateNorm,
+    required this.payloadDigest,
+    required this.batteryState,
+    required this.networkType,
+    this.runtimeTarget,
+    this.requestedBy,
+    this.status,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String siteId;
+  final String traceId;
+  final String schemaVersion;
+  final int sampleCount;
+  final int vectorLength;
+  final int payloadBytes;
+  final double updateNorm;
+  final String payloadDigest;
+  final String batteryState;
+  final String networkType;
+  final String? runtimeTarget;
+  final String? requestedBy;
+  final String? status;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningUpdateSummaryModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningUpdateSummaryModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningUpdateSummaryModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningUpdateSummaryModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      traceId: data['traceId'] as String? ?? '',
+      schemaVersion: data['schemaVersion'] as String? ?? 'v1',
+      sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
+      vectorLength: (data['vectorLength'] as num?)?.toInt() ?? 0,
+      payloadBytes: (data['payloadBytes'] as num?)?.toInt() ?? 0,
+      updateNorm: (data['updateNorm'] as num?)?.toDouble() ?? 0,
+      payloadDigest: data['payloadDigest'] as String? ?? '',
+      batteryState: data['batteryState'] as String? ?? 'unknown',
+      networkType: data['networkType'] as String? ?? 'unknown',
+      runtimeTarget: data['runtimeTarget'] as String?,
+      requestedBy: data['requestedBy'] as String?,
+      status: data['status'] as String?,
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'siteId': siteId,
+        'traceId': traceId,
+        'schemaVersion': schemaVersion,
+        'sampleCount': sampleCount,
+        'vectorLength': vectorLength,
+        'payloadBytes': payloadBytes,
+        'updateNorm': updateNorm,
+        'payloadDigest': payloadDigest,
+        'batteryState': batteryState,
+        'networkType': networkType,
+        'runtimeTarget': runtimeTarget,
+        'requestedBy': requestedBy,
+        'status': status,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
 @immutable
 class RosterImportModel {
   const RosterImportModel({

@@ -103,6 +103,60 @@ class WorkflowBridgeService {
     return _asTrimmedString(payload['id']);
   }
 
+  Future<List<Map<String, dynamic>>> listFeatureFlags({
+    int limit = 300,
+  }) async {
+    final Map<String, dynamic> payload =
+        await _call('listFeatureFlags', <String, dynamic>{'limit': limit});
+    return _asMapList(payload['flags']);
+  }
+
+  Future<String?> upsertFeatureFlag(Map<String, dynamic> data) async {
+    final Map<String, dynamic> payload =
+        await _call('upsertFeatureFlag', data);
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<List<Map<String, dynamic>>> listFederatedLearningExperiments({
+    int limit = 120,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningExperiments',
+      <String, dynamic>{'limit': limit},
+    );
+    return _asMapList(payload['experiments']);
+  }
+
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningExperiments({
+    String? siteId,
+    int limit = 40,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listSiteFederatedLearningExperiments',
+      <String, dynamic>{
+        if ((siteId ?? '').trim().isNotEmpty) 'siteId': siteId!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['experiments']);
+  }
+
+  Future<String?> upsertFederatedLearningExperiment(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload =
+        await _call('upsertFederatedLearningExperiment', data);
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<String?> recordFederatedLearningPrototypeUpdate(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload =
+        await _call('recordFederatedLearningPrototypeUpdate', data);
+    return _asTrimmedString(payload['id']);
+  }
+
   Future<Map<String, dynamic>> _call(
     String callableName,
     Map<String, dynamic> payload,

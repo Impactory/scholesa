@@ -1568,6 +1568,90 @@ export const listFederatedLearningExperiments = onCall(async (request: CallableR
   return { experiments };
 });
 
+export const listSiteFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  const targetSiteId = requestedSiteId
+    || asTrimmedString(actor.profile.activeSiteId)
+    || asTrimmedString(actor.profile.siteIds?.[0]);
+  if (!targetSiteId) {
+    throw new HttpsError('failed-precondition', 'No site context provided.');
+  }
+  if (!actorCanAccessSite(actor, targetSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 40;
+
+  const experimentSnap = await admin.firestore()
+    .collection('federatedLearningExperiments')
+    .where('allowedSiteIds', 'array-contains', targetSiteId)
+    .limit(limitValue)
+    .get()
+    .catch(() => admin.firestore().collection('federatedLearningExperiments').limit(200).get());
+
+  const scopedExperiments = experimentSnap.docs
+    .map((snapDoc) => ({
+      id: snapDoc.id,
+      ...(snapDoc.data() as Record<string, unknown>),
+    }))
+    .filter((row) => {
+      const allowedSiteIds = toStringArray(row.allowedSiteIds);
+      const status = asTrimmedString(row.status);
+      return allowedSiteIds.includes(targetSiteId) && ['pilot_ready', 'active'].includes(status);
+    });
+
+  const flagIds = Array.from(new Set(
+    scopedExperiments
+      .map((row) => asTrimmedString(row.featureFlagId))
+      .filter((value) => value.length > 0),
+  ));
+  const flagDocs = flagIds.length > 0
+    ? await admin.firestore().getAll(
+      ...flagIds.map((flagId) => admin.firestore().collection('featureFlags').doc(flagId)),
+    )
+    : [];
+  const flagMap = new Map<string, Record<string, unknown>>();
+  flagDocs.forEach((docSnap) => {
+    if (docSnap.exists) {
+      flagMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
+    }
+  });
+
+  const experiments = scopedExperiments
+    .map((row) => {
+      const featureFlagId = asTrimmedString(row.featureFlagId);
+      const flag = featureFlagId ? flagMap.get(featureFlagId) : null;
+      if (!flag || flag.enabled !== true) return null;
+
+      const scope = asTrimmedString(flag.scope) || 'site';
+      const enabledSites = toStringArray(flag.enabledSites);
+      if (scope === 'site' && enabledSites.length > 0 && !enabledSites.includes(targetSiteId)) {
+        return null;
+      }
+
+      return {
+        ...row,
+        featureFlag: {
+          id: featureFlagId,
+          enabled: true,
+          scope,
+          enabledSites,
+          status: asTrimmedString(flag.status) || 'enabled',
+        },
+      };
+    })
+    .filter((row): row is Record<string, unknown> => Boolean(row));
+
+  return { siteId: targetSiteId, experiments };
+});
+
 export const upsertFederatedLearningExperiment = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (actor.role !== 'hq') {

@@ -707,6 +707,21 @@ service cloud.firestore {
       allow read: if isHQ();
       allow write: if false; // Server-only via callable boundary.
     }
+    match /federatedLearningExperiments/{id} {
+      allow read: if isHQ() || (
+        hasRoleSafe('site')
+        && resource.data.keys().hasAny(['allowedSiteIds'])
+        && resource.data.allowedSiteIds.hasAny(actorSiteIds())
+      );
+      allow write: if false; // Server-only via callable boundary.
+    }
+    match /federatedLearningUpdateSummaries/{id} {
+      allow read: if isHQ() || (
+        hasRoleSafe('site')
+        && isSiteScopedRead(resource.data)
+      );
+      allow write: if false; // Server-only via callable boundary.
+    }
     match /supportInterventions/{id} {
       allow read: if isEducator() && isSiteScopedRead(resource.data);
       allow write: if false; // Server-only via callable boundary.

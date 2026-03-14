@@ -1105,6 +1105,107 @@ class LtiGradePassbackJobRepository {
   }
 }
 
+class FederatedLearningExperimentRepository {
+  FederatedLearningExperimentRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('federatedLearningExperiments');
+
+  Future<FederatedLearningExperimentModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return FederatedLearningExperimentModel.fromDoc(doc);
+  }
+
+  Future<List<FederatedLearningExperimentModel>> listAll({
+    int limit = 100,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col.limit(limit).get();
+    final List<FederatedLearningExperimentModel> rows =
+        snap.docs.map(FederatedLearningExperimentModel.fromDoc).toList();
+    rows.sort((a, b) {
+      final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+
+  Future<List<FederatedLearningExperimentModel>> listBySite(
+    String siteId, {
+    int limit = 40,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('allowedSiteIds', arrayContains: siteId)
+        .limit(limit)
+        .get();
+    final List<FederatedLearningExperimentModel> rows = snap.docs
+        .map(FederatedLearningExperimentModel.fromDoc)
+        .where((model) => model.allowedSiteIds.contains(siteId))
+        .toList();
+    rows.sort((a, b) {
+      final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+}
+
+class FederatedLearningUpdateSummaryRepository {
+  FederatedLearningUpdateSummaryRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('federatedLearningUpdateSummaries');
+
+  Future<List<FederatedLearningUpdateSummaryModel>> listByExperiment(
+    String experimentId, {
+    String? siteId,
+    int limit = 50,
+  }) async {
+    Query<Map<String, dynamic>> query =
+        _col.where('experimentId', isEqualTo: experimentId).limit(limit);
+    if (siteId != null && siteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: siteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> snap = await query.get();
+    final List<FederatedLearningUpdateSummaryModel> rows = snap.docs
+        .map(FederatedLearningUpdateSummaryModel.fromDoc)
+        .toList();
+    rows.sort((a, b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+
+  Future<List<FederatedLearningUpdateSummaryModel>> listBySite(
+    String siteId, {
+    int limit = 50,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .limit(limit)
+        .get();
+    final List<FederatedLearningUpdateSummaryModel> rows = snap.docs
+        .map(FederatedLearningUpdateSummaryModel.fromDoc)
+        .toList();
+    rows.sort((a, b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+}
+
 class RosterImportRepository {
   RosterImportRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
