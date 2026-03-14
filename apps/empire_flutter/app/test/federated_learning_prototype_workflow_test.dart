@@ -846,10 +846,22 @@ void main() {
       ),
       findsOneWidget,
     );
+    final Finder approvedFilterChip = find.widgetWithText(
+      FilterChip,
+      'Approved for eval',
+    );
+    final Finder awaitingFilterChip = find.widgetWithText(
+      FilterChip,
+      'Awaiting promotion',
+    );
+    final Finder holdFilterChip = find.widgetWithText(
+      FilterChip,
+      'On hold',
+    );
     expect(find.text('Sort packages'), findsOneWidget);
-    expect(find.text('Approved for eval'), findsOneWidget);
-    expect(find.text('Awaiting promotion'), findsOneWidget);
-    expect(find.text('On hold'), findsOneWidget);
+    expect(approvedFilterChip, findsOneWidget);
+    expect(awaitingFilterChip, findsOneWidget);
+    expect(holdFilterChip, findsOneWidget);
     expect(find.text('Packages: 2'), findsOneWidget);
     expect(find.text('Approved for eval: 1'), findsOneWidget);
     expect(find.text('Awaiting promotion: 1'), findsOneWidget);
@@ -861,8 +873,8 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.text('Approved for eval'));
-    await tester.tap(find.text('Approved for eval'));
+    await tester.ensureVisible(approvedFilterChip);
+    await tester.tap(approvedFilterChip);
     await tester.pumpAndSettle();
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(
@@ -870,11 +882,11 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.text('Approved for eval'));
-    await tester.tap(find.text('Approved for eval'));
+    await tester.ensureVisible(approvedFilterChip);
+    await tester.tap(approvedFilterChip);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Awaiting promotion'));
-    await tester.tap(find.text('Awaiting promotion'));
+    await tester.ensureVisible(awaitingFilterChip);
+    await tester.tap(awaitingFilterChip);
     await tester.pumpAndSettle();
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(
@@ -915,6 +927,10 @@ void main() {
       bridge.recordedPromotionDecisions.single['candidateModelPackageId'],
       'fl_pkg_2',
     );
+
+    await tester.ensureVisible(holdFilterChip);
+    await tester.tap(holdFilterChip);
+    await tester.pumpAndSettle();
     expect(find.text('Promotion: hold (sandbox_eval)'), findsOneWidget);
     expect(
       find.text('Rationale: Need another bounded review pass.'),
@@ -922,18 +938,14 @@ void main() {
     );
     expect(find.text('Awaiting promotion: 0'), findsOneWidget);
     expect(find.text('On hold: 1'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('On hold'));
-    await tester.tap(find.text('On hold'));
-    await tester.pumpAndSettle();
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(
       find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
       findsOneWidget,
     );
 
-    await tester.ensureVisible(find.text('On hold'));
-    await tester.tap(find.text('On hold'));
+    await tester.ensureVisible(holdFilterChip);
+    await tester.tap(holdFilterChip);
     await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(
