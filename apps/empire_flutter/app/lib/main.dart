@@ -19,6 +19,7 @@ import 'services/firestore_service.dart';
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'services/session_bootstrap.dart';
+import 'services/federated_learning_runtime_adapter.dart';
 import 'services/telemetry_service.dart';
 import 'services/theme_service.dart';
 import 'offline/offline_queue.dart';
@@ -159,6 +160,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
       _sessionBootstrap = SessionBootstrap(
         auth: FirebaseAuth.instance,
         firestoreService: _firestoreService,
+        appState: _appState,
+      );
+
+      FederatedLearningRuntimeAdapter.instance.configure(
         appState: _appState,
       );
 

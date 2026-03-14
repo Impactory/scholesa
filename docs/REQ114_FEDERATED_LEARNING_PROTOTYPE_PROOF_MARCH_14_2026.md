@@ -19,6 +19,7 @@ Implemented prototype scope:
 - Flutter HQ management surface for experiment cohorts inside the existing feature-flags page
 - Flutter domain models/repositories for experiment and summary records
 - Flutter device-side uploader service that resolves active site context and submits bounded update summaries through the callable boundary
+- Flutter runtime adapter that converts BOS event windows into bounded prototype summaries on real mission/session triggers
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
 
 Not claimed by this proof:
@@ -41,6 +42,7 @@ Not claimed by this proof:
 - apps/empire_flutter/app/lib/domain/repositories.dart
 - apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart
 - apps/empire_flutter/app/lib/services/federated_learning_prototype_uploader.dart
+- apps/empire_flutter/app/lib/services/federated_learning_runtime_adapter.dart
 - apps/empire_flutter/app/lib/services/workflow_bridge_service.dart
 - apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart
 - test/firestore-rules.test.js
@@ -71,6 +73,7 @@ Passed on 2026-03-14:
 - Audit logs record both experiment changes and accepted prototype updates.
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
+- Runtime BOS signals now feed a bounded event-window summarizer, which uploads prototype summaries on mission/checkpoint/session triggers without sending raw learner content.
 
 ## Remaining gap to full REQ-114
 
@@ -80,4 +83,4 @@ REQ-114 remains partial until all of the following exist and are approved:
 - device runtime beyond the bounded uploader abstraction
 - aggregation threshold execution path
 - pilot evidence and rollback proof
-- rollout wiring from uploader abstraction into a real runtime trigger path
+- rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path

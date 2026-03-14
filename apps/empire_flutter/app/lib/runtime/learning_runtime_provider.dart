@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'bos_models.dart';
 import 'bos_event_bus.dart';
+import '../services/federated_learning_runtime_adapter.dart';
 
 // ──────────────────────────────────────────────────────
 // Learning Runtime Provider
@@ -99,6 +100,16 @@ class LearningRuntimeProvider extends ChangeNotifier {
     String? checkpointId,
     Map<String, dynamic> payload = const <String, dynamic>{},
   }) {
+    unawaited(FederatedLearningRuntimeAdapter.instance.handleRuntimeEvent(
+      eventType: eventType,
+      siteId: siteId,
+      learnerId: learnerId,
+      gradeBand: gradeBand,
+      sessionOccurrenceId: sessionOccurrenceId,
+      missionId: missionId,
+      checkpointId: checkpointId,
+      payload: payload,
+    ));
     BosEventBus.instance.track(
       eventType: eventType,
       siteId: siteId,
@@ -130,6 +141,11 @@ class LearningRuntimeProvider extends ChangeNotifier {
   void dispose() {
     _stateSub?.cancel();
     _mvlSub?.cancel();
+    unawaited(FederatedLearningRuntimeAdapter.instance.flushForContext(
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceId: sessionOccurrenceId,
+    ));
     BosEventBus.instance.flushNow();
     super.dispose();
   }

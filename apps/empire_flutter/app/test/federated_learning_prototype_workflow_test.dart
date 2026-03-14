@@ -7,7 +7,10 @@ import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_feature_flags_page.dart';
 import 'package:scholesa_app/services/federated_learning_prototype_uploader.dart';
+import 'package:scholesa_app/services/federated_learning_runtime_adapter.dart';
 import 'package:scholesa_app/services/workflow_bridge_service.dart';
+import 'package:scholesa_app/runtime/bos_models.dart';
+import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 
 class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   _FakeWorkflowBridgeService({
@@ -165,6 +168,10 @@ Widget _wrapWithMaterial(Widget child) {
 }
 
 void main() {
+  setUp(() {
+    FederatedLearningRuntimeAdapter.instance.resetForTesting();
+  });
+
   test('repositories list federated experiments and summaries by site',
       () async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -247,6 +254,49 @@ void main() {
     expect(bridge.recordedUpdates.single['siteId'], 'site-1');
     expect(
         bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
+  });
+
+  test('runtime adapter uploads bounded BOS summaries on real triggers',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[_experimentRow(status: 'active')],
+    );
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final AppState appState = _buildSiteState();
+    FederatedLearningRuntimeAdapter.instance.configure(
+      appState: appState,
+      workflowBridge: bridge,
+    );
+
+    final LearningRuntimeProvider runtime = LearningRuntimeProvider(
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      sessionOccurrenceId: 'occ-1',
+      gradeBand: GradeBand.g4_6,
+      firestore: firestore,
+    );
+    addTearDown(runtime.dispose);
+
+    runtime.trackEvent(
+      'mission_started',
+      missionId: 'mission-1',
+      payload: <String, dynamic>{'source': 'test'},
+    );
+    runtime.trackEvent(
+      'checkpoint_submitted',
+      missionId: 'mission-1',
+      checkpointId: 'checkpoint-1',
+      payload: <String, dynamic>{'attempt': 1, 'confidence': 0.8},
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(bridge.recordedUpdates, hasLength(1));
+    expect(bridge.recordedUpdates.single['siteId'], 'site-1');
+    expect(
+        bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
+    expect(bridge.recordedUpdates.single['sampleCount'], 2);
+    expect(
+        bridge.recordedUpdates.single['schemaVersion'], 'fl-prototype-bos-v1');
   });
 
   testWidgets('HQ page renders experiment section and saves a new cohort',
