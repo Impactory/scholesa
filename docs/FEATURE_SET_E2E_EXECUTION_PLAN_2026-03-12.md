@@ -65,7 +65,7 @@ These blockers must be resolved at the planning layer before implementation clai
 | Blocker | Why it blocks end-to-end status | Resolution |
 | --- | --- | --- |
 | Source feature file mixes shipped and future-state items | Causes false confidence and unclear release scope | Every item in the March 12 file must be marked as `shipped`, `partial`, `planned`, or `deferred` in traceability updates |
-| PostHog/Segment listed in feature spec | Current compliance posture bans ad-tech style vendor analytics paths | Replace vendor wording with internal telemetry capture plus warehouse-friendly export posture and keep vendor capture unapproved unless governance explicitly changes |
+| Historical PostHog/Segment wording in early feature drafts | Current compliance posture bans ad-tech style vendor analytics paths, and the source contract now uses internal telemetry capture plus warehouse-friendly export posture | Keep vendor capture unapproved unless governance explicitly changes; treat internal telemetry as the satisfied implementation contract |
 | SAML/OIDC listed as baseline security | Current codebase supports Firebase auth baseline, not enterprise SSO parity | Split into a dedicated enterprise auth workstream with separate acceptance gates |
 | Federated learning listed as moat | No implementation, infrastructure, or compliance review exists | Reclassify as R and D until architecture, privacy review, and device-runtime plan exist |
 | WCAG 2.2 AA stated as global fact | Current repo has accessibility intent but not full automated enforcement | Add automated accessibility gates before claiming compliance completeness |
