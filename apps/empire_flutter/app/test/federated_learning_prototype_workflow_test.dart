@@ -158,6 +158,8 @@ Map<String, dynamic> _aggregationRunRow({
   int totalSampleCount = 24,
   int summaryCount = 2,
   int distinctSiteCount = 2,
+  String mergeArtifactId = 'fl_merge_1',
+  String boundedDigest = 'sha256:digest-1',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -165,10 +167,10 @@ Map<String, dynamic> _aggregationRunRow({
     'status': 'materialized',
     'threshold': 20,
     'thresholdMet': true,
-    'mergeArtifactId': 'fl_merge_1',
+    'mergeArtifactId': mergeArtifactId,
     'mergeArtifactStatus': 'generated',
     'mergeStrategy': 'prototype_weighted_metadata_digest',
-    'boundedDigest': 'sha256:digest-1',
+    'boundedDigest': boundedDigest,
     'triggerSummaryId': 'update-2',
     'summaryIds': <String>['update-1', 'update-2'],
     'summaryCount': summaryCount,
@@ -476,9 +478,17 @@ void main() {
           totalSampleCount: 20,
           summaryCount: 2,
           distinctSiteCount: 1,
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
         ),
       ],
-      mergeArtifacts: <Map<String, dynamic>>[_mergeArtifactRow()],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+        _mergeArtifactRow(
+          id: 'fl_merge_2',
+          aggregationRunId: 'fl_agg_2',
+        ),
+      ],
     );
 
     await tester.pumpWidget(
@@ -499,6 +509,23 @@ void main() {
       find.text('Artifact generated: fl_merge_1'),
       findsWidgets,
     );
+
+    await tester.tap(find.text('View history').first);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Aggregation history: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Strategy: prototype_weighted_metadata_digest'),
+      findsWidgets,
+    );
+    expect(find.text('Digest: sha256:digest-1'), findsWidgets);
+    expect(find.text('Artifact: fl_merge_1'), findsWidgets);
+
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Create experiment'));
     await tester.pumpAndSettle();
