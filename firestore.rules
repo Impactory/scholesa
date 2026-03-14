@@ -726,6 +726,10 @@ service cloud.firestore {
       allow read: if isHQ();
       allow write: if false; // Server-only via callable boundary.
     }
+    match /federatedLearningMergeArtifacts/{id} {
+      allow read: if isHQ();
+      allow write: if false; // Server-only via callable boundary.
+    }
     match /supportInterventions/{id} {
       allow read: if isEducator() && isSiteScopedRead(resource.data);
       allow write: if false; // Server-only via callable boundary.
