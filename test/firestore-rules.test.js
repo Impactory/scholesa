@@ -291,6 +291,20 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningCandidatePromotionRecords', 'fl_prom_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      candidateModelPackageId: 'fl_pkg_demo_1',
+      aggregationRunId: 'fl_agg_demo_1',
+      mergeArtifactId: 'fl_merge_demo_1',
+      status: 'approved_for_eval',
+      target: 'sandbox_eval',
+      rationale: 'Ready for bounded sandbox evaluation.',
+      decidedBy: hqUser.uid,
+      decidedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -595,6 +609,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningCandidateModelPackages', 'fl_pkg_demo_1')),
+    );
+  });
+
+  test('HQ can read candidate promotion records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningCandidatePromotionRecords', 'fl_prom_demo_1')),
+    );
+  });
+
+  test('site admins cannot read candidate promotion records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningCandidatePromotionRecords', 'fl_prom_demo_1')),
     );
   });
 });

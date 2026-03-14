@@ -20,6 +20,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? aggregationRuns,
     List<Map<String, dynamic>>? mergeArtifacts,
     List<Map<String, dynamic>>? candidatePackages,
+    List<Map<String, dynamic>>? promotionRecords,
   })  : _flags =
             List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
         _experiments = List<Map<String, dynamic>>.from(
@@ -36,6 +37,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _candidatePackages = List<Map<String, dynamic>>.from(
           candidatePackages ?? <Map<String, dynamic>>[],
         ),
+        _promotionRecords = List<Map<String, dynamic>>.from(
+          promotionRecords ?? <Map<String, dynamic>>[],
+        ),
         super(functions: null);
 
   final List<Map<String, dynamic>> _flags;
@@ -44,6 +48,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _aggregationRuns;
   final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> _candidatePackages;
+  final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
 
   @override
@@ -165,6 +170,30 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningCandidatePromotionRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _promotionRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -229,6 +258,8 @@ Map<String, dynamic> _candidatePackageRow({
     'status': 'staged',
     'packageFormat': 'bounded_metadata_manifest',
     'rolloutStatus': 'not_distributed',
+    'latestPromotionRecordId': '',
+    'latestPromotionStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
     'sampleCount': 24,
@@ -239,6 +270,31 @@ Map<String, dynamic> _candidatePackageRow({
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
+  };
+}
+
+Map<String, dynamic> _promotionRecordRow({
+  String id = 'fl_prom_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String aggregationRunId = 'fl_agg_1',
+  String mergeArtifactId = 'fl_merge_1',
+  String status = 'approved_for_eval',
+  String rationale = 'Ready for bounded sandbox evaluation.',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'aggregationRunId': aggregationRunId,
+    'mergeArtifactId': mergeArtifactId,
+    'status': status,
+    'target': 'sandbox_eval',
+    'rationale': rationale,
+    'decidedBy': 'hq-1',
+    'decidedAt': DateTime(2026, 3, 14, 12),
+    'createdAt': DateTime(2026, 3, 14, 12),
+    'updatedAt': DateTime(2026, 3, 14, 12),
   };
 }
 
@@ -411,6 +467,20 @@ void main() {
       'averageUpdateNorm': 2.4,
       'createdAt': DateTime.now(),
     });
+    await firestore
+      .collection('federatedLearningCandidatePromotionRecords')
+      .doc('fl_prom_1')
+      .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'candidateModelPackageId': 'fl_pkg_1',
+      'aggregationRunId': 'fl_agg_1',
+      'mergeArtifactId': 'fl_merge_1',
+      'status': 'approved_for_eval',
+      'target': 'sandbox_eval',
+      'rationale': 'Ready for bounded sandbox evaluation.',
+      'createdAt': DateTime.now(),
+      'updatedAt': DateTime.now(),
+    });
 
     final FederatedLearningAggregationRunRepository aggregationRepository =
       FederatedLearningAggregationRunRepository(firestore: firestore);
@@ -418,12 +488,16 @@ void main() {
       FederatedLearningMergeArtifactRepository(firestore: firestore);
     final FederatedLearningCandidateModelPackageRepository packageRepository =
       FederatedLearningCandidateModelPackageRepository(firestore: firestore);
+    final FederatedLearningCandidatePromotionRecordRepository promotionRepository =
+      FederatedLearningCandidatePromotionRecordRepository(firestore: firestore);
     final List<FederatedLearningAggregationRunModel> aggregationRuns =
       await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningMergeArtifactModel> mergeArtifacts =
       await artifactRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningCandidateModelPackageModel> candidatePackages =
       await packageRepository.listByExperiment('fl_exp_literacy_pilot');
+    final List<FederatedLearningCandidatePromotionRecordModel> promotions =
+      await promotionRepository.listByExperiment('fl_exp_literacy_pilot');
 
     expect(aggregationRuns, hasLength(1));
     expect(aggregationRuns.single.totalSampleCount, 14);
@@ -432,6 +506,8 @@ void main() {
     expect(mergeArtifacts.single.aggregationRunId, 'fl_agg_1');
     expect(candidatePackages, hasLength(1));
     expect(candidatePackages.single.mergeArtifactId, 'fl_merge_1');
+    expect(promotions, hasLength(1));
+    expect(promotions.single.candidateModelPackageId, 'fl_pkg_1');
 
     await firestore
         .collection('federatedLearningUpdateSummaries')
@@ -598,6 +674,9 @@ void main() {
           boundedDigest: 'sha256:digest-2',
         ),
       ],
+      promotionRecords: <Map<String, dynamic>>[
+        _promotionRecordRow(),
+      ],
     );
 
     await tester.pumpWidget(
@@ -620,6 +699,10 @@ void main() {
     );
     expect(
       find.text('Latest candidate package: fl_pkg_1 (bounded_metadata_manifest)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Latest package promotion: approved_for_eval (sandbox_eval)'),
       findsOneWidget,
     );
 
@@ -688,6 +771,70 @@ void main() {
 
     await tester.ensureVisible(find.text('Artifact missing'));
     await tester.tap(find.text('Artifact missing'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('View packages').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Candidate packages: Literacy Pilot'), findsOneWidget);
+    expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, or digest',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Sort packages'), findsOneWidget);
+    expect(find.text('Approved for eval'), findsOneWidget);
+    expect(find.text('Awaiting promotion'), findsOneWidget);
+    expect(find.text('Packages: 2'), findsOneWidget);
+    expect(find.text('Approved for eval: 1'), findsOneWidget);
+    expect(find.text('Awaiting promotion: 1'), findsOneWidget);
+    expect(find.text('Samples: 44'), findsOneWidget);
+    expect(find.text('Promotion: approved_for_eval (sandbox_eval)'), findsOneWidget);
+    expect(
+      find.text('Rationale: Ready for bounded sandbox evaluation.'),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.text('Approved for eval'));
+    await tester.tap(find.text('Approved for eval'));
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(
+      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.text('Approved for eval'));
+    await tester.tap(find.text('Approved for eval'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Awaiting promotion'));
+    await tester.tap(find.text('Awaiting promotion'));
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(
+      find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+    expect(find.text('Promotion: awaiting decision'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Awaiting promotion'));
+    await tester.tap(find.text('Awaiting promotion'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, or digest',
+      ),
+      'pkg_2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 
     await tester.enterText(

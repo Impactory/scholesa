@@ -3196,6 +3196,8 @@ class FederatedLearningCandidateModelPackageModel {
     required this.status,
     required this.packageFormat,
     required this.rolloutStatus,
+    this.latestPromotionRecordId,
+    this.latestPromotionStatus,
     required this.packageDigest,
     required this.boundedDigest,
     required this.sampleCount,
@@ -3218,6 +3220,8 @@ class FederatedLearningCandidateModelPackageModel {
   final String status;
   final String packageFormat;
   final String rolloutStatus;
+  final String? latestPromotionRecordId;
+  final String? latestPromotionStatus;
   final String packageDigest;
   final String boundedDigest;
   final int sampleCount;
@@ -3253,6 +3257,8 @@ class FederatedLearningCandidateModelPackageModel {
       status: data['status'] as String? ?? 'staged',
       packageFormat: data['packageFormat'] as String? ?? '',
       rolloutStatus: data['rolloutStatus'] as String? ?? '',
+      latestPromotionRecordId: data['latestPromotionRecordId'] as String?,
+      latestPromotionStatus: data['latestPromotionStatus'] as String?,
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
@@ -3276,6 +3282,8 @@ class FederatedLearningCandidateModelPackageModel {
         'status': status,
         'packageFormat': packageFormat,
         'rolloutStatus': rolloutStatus,
+        'latestPromotionRecordId': latestPromotionRecordId,
+        'latestPromotionStatus': latestPromotionStatus,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
         'sampleCount': sampleCount,
@@ -3287,6 +3295,80 @@ class FederatedLearningCandidateModelPackageModel {
         'totalPayloadBytes': totalPayloadBytes,
         'averageUpdateNorm': averageUpdateNorm,
         'createdBy': createdBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningCandidatePromotionRecordModel {
+  const FederatedLearningCandidatePromotionRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.aggregationRunId,
+    required this.mergeArtifactId,
+    required this.status,
+    required this.target,
+    this.rationale,
+    this.decidedBy,
+    this.decidedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String aggregationRunId;
+  final String mergeArtifactId;
+  final String status;
+  final String target;
+  final String? rationale;
+  final String? decidedBy;
+  final Timestamp? decidedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningCandidatePromotionRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningCandidatePromotionRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningCandidatePromotionRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningCandidatePromotionRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      status: data['status'] as String? ?? '',
+      target: data['target'] as String? ?? '',
+      rationale: data['rationale'] as String?,
+      decidedBy: data['decidedBy'] as String?,
+      decidedAt: _timestampOrNull(data['decidedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'aggregationRunId': aggregationRunId,
+        'mergeArtifactId': mergeArtifactId,
+        'status': status,
+        'target': target,
+        'rationale': rationale,
+        'decidedBy': decidedBy,
+        'decidedAt': decidedAt ?? Timestamp.now(),
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };

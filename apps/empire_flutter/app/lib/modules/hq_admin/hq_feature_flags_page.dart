@@ -53,6 +53,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, List<FederatedLearningCandidateModelPackageModel>>
     _candidatePackagesByExperiment =
     <String, List<FederatedLearningCandidateModelPackageModel>>{};
+  Map<String, FederatedLearningCandidatePromotionRecordModel>
+    _promotionRecordsByPackageId =
+    <String, FederatedLearningCandidatePromotionRecordModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -323,6 +326,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     };
     final FederatedLearningCandidateModelPackageModel? latestPackage =
         runs.isNotEmpty ? candidatePackagesByRunId[runs.first.id] : null;
+    final FederatedLearningCandidatePromotionRecordModel? latestPromotion =
+      latestPackage == null
+        ? null
+        : _promotionRecordsByPackageId[latestPackage.id];
     final FederatedLearningAggregationRunModel? latestRun =
       runs.isNotEmpty ? runs.first : null;
     final Color statusColor = switch (experiment.status) {
@@ -381,6 +388,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   onPressed: () => _showAggregationHistoryDialog(experiment),
                   icon: const Icon(Icons.timeline_rounded),
                   label: Text(_tHqFeatureFlags(context, 'View history')),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => _showCandidatePackageHistoryDialog(experiment),
+                  icon: const Icon(Icons.inventory_rounded),
+                  label: Text(_tHqFeatureFlags(context, 'View packages')),
                 ),
               ],
             ),
@@ -457,6 +470,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Latest candidate package: ${latestPackage.id} (${latestPackage.packageFormat})',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (latestPromotion != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest package promotion: ${latestPromotion.status} (${latestPromotion.target})',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -888,6 +914,319 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  Future<void> _showCandidatePackageHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+  ) {
+    final List<FederatedLearningCandidateModelPackageModel> packages =
+        _candidatePackagesByExperiment[experiment.id] ??
+            const <FederatedLearningCandidateModelPackageModel>[];
+    const int pageSize = 2;
+    String filterQuery = '';
+    int pageIndex = 0;
+    String sortMode = 'newest';
+    String promotionFilter = 'all';
+    bool latestOnly = false;
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            final String normalizedQuery = filterQuery.trim().toLowerCase();
+            final List<FederatedLearningCandidateModelPackageModel> sortedPackages =
+                List<FederatedLearningCandidateModelPackageModel>.from(packages);
+            if (sortMode == 'oldest') {
+              sortedPackages.sort((a, b) {
+                final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+                return aMillis.compareTo(bMillis);
+              });
+            } else if (sortMode == 'largest_batch') {
+              sortedPackages.sort((a, b) {
+                final int sampleCompare = b.sampleCount.compareTo(a.sampleCount);
+                if (sampleCompare != 0) return sampleCompare;
+                final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+                final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+                return bMillis.compareTo(aMillis);
+              });
+            }
+
+            List<FederatedLearningCandidateModelPackageModel> filteredPackages =
+                sortedPackages.where((FederatedLearningCandidateModelPackageModel package) {
+              final FederatedLearningCandidatePromotionRecordModel? promotion =
+                  _promotionRecordsByPackageId[package.id];
+              if (promotionFilter == 'approved' &&
+                  promotion?.status != 'approved_for_eval') {
+                return false;
+              }
+              if (promotionFilter == 'awaiting' && promotion != null) {
+                return false;
+              }
+              if (normalizedQuery.isEmpty) {
+                return true;
+              }
+              final String haystack = <String>[
+                package.id,
+                package.mergeArtifactId,
+                package.packageDigest,
+                package.boundedDigest,
+                package.packageFormat,
+                package.rolloutStatus,
+                promotion?.id ?? '',
+                promotion?.status ?? '',
+                promotion?.target ?? '',
+                promotion?.rationale ?? '',
+              ].join(' ').toLowerCase();
+              return haystack.contains(normalizedQuery);
+            }).toList(growable: false);
+
+            if (latestOnly && filteredPackages.isNotEmpty) {
+              filteredPackages = <FederatedLearningCandidateModelPackageModel>[
+                filteredPackages.first,
+              ];
+            }
+
+            final int approvedCount = filteredPackages.where((package) {
+              return _promotionRecordsByPackageId[package.id]?.status ==
+                  'approved_for_eval';
+            }).length;
+            final int awaitingCount = filteredPackages.length - approvedCount;
+            final int sampleTotal = filteredPackages.fold<int>(
+              0,
+              (int total, FederatedLearningCandidateModelPackageModel package) =>
+                  total + package.sampleCount,
+            );
+            final int pageCount = filteredPackages.isEmpty
+                ? 1
+                : ((filteredPackages.length - 1) ~/ pageSize) + 1;
+            if (pageIndex >= pageCount) {
+              pageIndex = pageCount - 1;
+            }
+            final int startIndex = filteredPackages.isEmpty ? 0 : pageIndex * pageSize;
+            final int endIndex = filteredPackages.isEmpty
+                ? 0
+                : (startIndex + pageSize > filteredPackages.length
+                    ? filteredPackages.length
+                    : startIndex + pageSize);
+            final List<FederatedLearningCandidateModelPackageModel> visiblePackages =
+                filteredPackages.sublist(startIndex, endIndex);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Candidate packages: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 640,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (packages.isNotEmpty) ...<Widget>[
+                        TextField(
+                          onChanged: (String value) {
+                            setDialogState(() {
+                              filterQuery = value;
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(
+                              context,
+                              'Filter by package ID, artifact ID, or digest',
+                            ),
+                            prefixIcon: const Icon(Icons.search_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: sortMode,
+                          onChanged: (String? value) {
+                            setDialogState(() {
+                              sortMode = value ?? 'newest';
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText:
+                                _tHqFeatureFlags(context, 'Sort packages'),
+                          ),
+                          items: <DropdownMenuItem<String>>[
+                            DropdownMenuItem(
+                              value: 'newest',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Newest first'),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'oldest',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Oldest first'),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'largest_batch',
+                              child: Text(
+                                _tHqFeatureFlags(context, 'Largest batch first'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            FilterChip(
+                              label: Text(_tHqFeatureFlags(context, 'Latest only')),
+                              selected: latestOnly,
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  latestOnly = value;
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Approved for eval'),
+                              ),
+                              selected: promotionFilter == 'approved',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  promotionFilter = value ? 'approved' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Awaiting promotion'),
+                              ),
+                              selected: promotionFilter == 'awaiting',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  promotionFilter = value ? 'awaiting' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            _buildExperimentChip(
+                              'Packages: ${filteredPackages.length}',
+                              Icons.inventory_rounded,
+                            ),
+                            _buildExperimentChip(
+                              'Approved for eval: $approvedCount',
+                              Icons.approval_rounded,
+                              color: Colors.green,
+                            ),
+                            _buildExperimentChip(
+                              'Awaiting promotion: $awaitingCount',
+                              Icons.hourglass_bottom_rounded,
+                              color: Colors.orange,
+                            ),
+                            _buildExperimentChip(
+                              'Samples: $sampleTotal',
+                              Icons.stacked_bar_chart_rounded,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (packages.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'No candidate packages have been staged for this experiment yet.',
+                          ),
+                        )
+                      else if (filteredPackages.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'No candidate packages match the current filter.',
+                          ),
+                        )
+                      else
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: visiblePackages
+                              .map(
+                                (FederatedLearningCandidateModelPackageModel package) =>
+                                    _buildCandidatePackageHistoryEntry(
+                                  package,
+                                  _promotionRecordsByPackageId[package.id],
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      if (filteredPackages.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _tHqFeatureFlags(
+                                  context,
+                                  'Showing ${startIndex + 1}-${endIndex} of ${filteredPackages.length}',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: pageIndex > 0
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex -= 1;
+                                      });
+                                    }
+                                  : null,
+                              child: Text(_tHqFeatureFlags(context, 'Previous')),
+                            ),
+                            TextButton(
+                              onPressed: pageIndex < pageCount - 1
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex += 1;
+                                      });
+                                    }
+                                  : null,
+                              child: Text(_tHqFeatureFlags(context, 'Next')),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(_tHqFeatureFlags(context, 'Close')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildAggregationHistoryEntry(
     FederatedLearningAggregationRunModel run,
     FederatedLearningMergeArtifactModel? artifact,
@@ -1004,6 +1343,105 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  Widget _buildCandidatePackageHistoryEntry(
+    FederatedLearningCandidateModelPackageModel package,
+    FederatedLearningCandidatePromotionRecordModel? promotion,
+  ) {
+    final String createdLabel = _formatTimestamp(package.createdAt);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Package ${package.id} · ${package.sampleCount} samples · ${package.summaryCount} summaries · ${package.distinctSiteCount} sites',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tHqFeatureFlags(context, 'Created: $createdLabel'),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Artifact: ${package.mergeArtifactId} · Format: ${package.packageFormat}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(context, 'Rollout status: ${package.rolloutStatus}'),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(context, 'Package digest: ${package.packageDigest}'),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(context, 'Bounded digest: ${package.boundedDigest}'),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              promotion == null
+                  ? 'Promotion: awaiting decision'
+                  : 'Promotion: ${promotion.status} (${promotion.target})',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          if ((promotion?.rationale ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Rationale: ${promotion!.rationale}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   String _formatTimestamp(Timestamp? value) {
     if (value == null) return _tHqFeatureFlags(context, 'unknown');
     return value.toDate().toIso8601String();
@@ -1114,6 +1552,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
         _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
         _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
+        _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
       ]);
       final List<FederatedLearningExperimentModel> loaded =
           (payloads[0] as List<Map<String, dynamic>>)
@@ -1194,12 +1633,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           () => <FederatedLearningCandidateModelPackageModel>[],
         ).add(package);
       }
+      final Map<String, FederatedLearningCandidatePromotionRecordModel>
+          promotionsByPackageId =
+          <String, FederatedLearningCandidatePromotionRecordModel>{};
+      for (final FederatedLearningCandidatePromotionRecordModel record
+          in (payloads[4] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningCandidatePromotionRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'promotion_record',
+                    row,
+                  ))) {
+        promotionsByPackageId[record.candidateModelPackageId] = record;
+      }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
         _aggregationRunsByExperiment = runsByExp;
         _mergeArtifactsByExperiment = artifactsByExp;
         _candidatePackagesByExperiment = packagesByExp;
+        _promotionRecordsByPackageId = promotionsByPackageId;
       });
     } catch (_) {
       if (!mounted) return;
@@ -1211,6 +1663,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             <String, List<FederatedLearningMergeArtifactModel>>{};
         _candidatePackagesByExperiment =
             <String, List<FederatedLearningCandidateModelPackageModel>>{};
+        _promotionRecordsByPackageId =
+          <String, FederatedLearningCandidatePromotionRecordModel>{};
       });
     } finally {
       if (mounted) {

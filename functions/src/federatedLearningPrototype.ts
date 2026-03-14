@@ -7,6 +7,8 @@ export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'un
 export type FederatedLearningAggregationRunStatus = 'materialized';
 export type FederatedLearningMergeArtifactStatus = 'generated';
 export type FederatedLearningCandidateModelPackageStatus = 'staged';
+export type FederatedLearningCandidatePromotionStatus = 'approved_for_eval' | 'hold';
+export type FederatedLearningCandidatePromotionTarget = 'sandbox_eval';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -191,6 +193,33 @@ export function buildFederatedLearningMergeArtifactDocId(runId: string): string 
 
 export function buildFederatedLearningCandidateModelPackageDocId(runId: string): string {
   return `fl_pkg_${runId.replace(/^fl_agg_/, '')}`;
+}
+
+export function buildFederatedLearningCandidatePromotionRecordDocId(packageId: string): string {
+  return `fl_prom_${packageId.replace(/^fl_pkg_/, '')}`;
+}
+
+export function normalizeFederatedLearningCandidatePromotionStatus(
+  value: unknown,
+): FederatedLearningCandidatePromotionStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'approved_for_eval' || normalized === 'approved-for-eval') {
+    return 'approved_for_eval';
+  }
+  if (normalized === 'hold') {
+    return 'hold';
+  }
+  return null;
+}
+
+export function normalizeFederatedLearningCandidatePromotionTarget(
+  value: unknown,
+): FederatedLearningCandidatePromotionTarget | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'sandbox_eval' || normalized === 'sandbox-eval') {
+    return 'sandbox_eval';
+  }
+  return null;
 }
 
 export function federatedLearningAuditAction(action: string): string {

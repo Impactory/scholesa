@@ -297,6 +297,8 @@ export interface FederatedLearningCandidateModelPackage {
   status: 'staged';
   packageFormat: 'bounded_metadata_manifest';
   rolloutStatus: 'not_distributed';
+  latestPromotionRecordId?: string;
+  latestPromotionStatus?: 'approved_for_eval' | 'hold';
   packageDigest: string;
   boundedDigest: string;
   sampleCount: number;
@@ -308,6 +310,21 @@ export interface FederatedLearningCandidateModelPackage {
   totalPayloadBytes: number;
   averageUpdateNorm: number;
   createdBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningCandidatePromotionRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  aggregationRunId: string;
+  mergeArtifactId: string;
+  status: 'approved_for_eval' | 'hold';
+  target: 'sandbox_eval';
+  rationale?: string;
+  decidedBy?: string;
+  decidedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

@@ -1,6 +1,7 @@
 import {
   buildFederatedLearningAggregationRunDocId,
   buildFederatedLearningCandidateModelPackageDocId,
+  buildFederatedLearningCandidatePromotionRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -8,6 +9,8 @@ import {
   buildFederatedLearningFeatureFlagId,
   buildFederatedLearningFeatureFlagPayload,
   federatedLearningAuditAction,
+  normalizeFederatedLearningCandidatePromotionStatus,
+  normalizeFederatedLearningCandidatePromotionTarget,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -24,6 +27,11 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningExperimentStatus('pilot-ready')).toBe('pilot_ready');
     expect(normalizeFederatedLearningExperimentStatus('active')).toBe('active');
     expect(normalizeFederatedLearningExperimentStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningCandidatePromotionStatus('approved-for-eval')).toBe('approved_for_eval');
+    expect(normalizeFederatedLearningCandidatePromotionStatus('hold')).toBe('hold');
+    expect(normalizeFederatedLearningCandidatePromotionStatus('rejected')).toBeNull();
+    expect(normalizeFederatedLearningCandidatePromotionTarget('sandbox-eval')).toBe('sandbox_eval');
+    expect(normalizeFederatedLearningCandidatePromotionTarget('production')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -36,6 +44,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_merge_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningCandidateModelPackageDocId('fl_agg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_pkg_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningCandidatePromotionRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_prom_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({
