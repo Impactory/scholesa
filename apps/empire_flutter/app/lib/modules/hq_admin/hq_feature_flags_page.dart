@@ -332,7 +332,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      if ((experiment.description ?? '').trim().isNotEmpty) ...<Widget>[
+                      if ((experiment.description ?? '')
+                          .trim()
+                          .isNotEmpty) ...<Widget>[
                         const SizedBox(height: 4),
                         Text(
                           experiment.description!,
@@ -357,7 +359,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               spacing: 8,
               runSpacing: 8,
               children: <Widget>[
-                _buildExperimentChip(experiment.runtimeTarget, Icons.phone_iphone_rounded),
+                _buildExperimentChip(
+                    experiment.runtimeTarget, Icons.phone_iphone_rounded),
                 _buildExperimentChip(experiment.status, Icons.flag_rounded,
                     color: statusColor),
                 _buildExperimentChip(
@@ -488,9 +491,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (!mounted) return;
     setState(() => _isLoadingFlags = true);
     try {
-      final List<_FeatureFlag> loaded = (await _workflowBridge.listFeatureFlags())
-          .map(_mapToFeatureFlag)
-          .toList();
+      final List<_FeatureFlag> loaded =
+          (await _workflowBridge.listFeatureFlags())
+              .map(_mapToFeatureFlag)
+              .toList();
 
       if (!mounted) return;
       setState(() {
@@ -559,7 +563,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tHqFeatureFlags(context, 'Feature flag update failed')),
+          content:
+              Text(_tHqFeatureFlags(context, 'Feature flag update failed')),
           backgroundColor: Colors.red,
         ),
       );
@@ -611,7 +616,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: nameController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Experiment name'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Experiment name'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -627,7 +633,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: runtimeTarget,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Runtime target'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Runtime target'),
                         ),
                         items: const <DropdownMenuItem<String>>[
                           DropdownMenuItem(
@@ -656,13 +663,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           labelText: _tHqFeatureFlags(context, 'Status'),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'draft', child: Text('draft')),
+                          DropdownMenuItem(
+                              value: 'draft', child: Text('draft')),
                           DropdownMenuItem(
                             value: 'pilot_ready',
                             child: Text('pilot_ready'),
                           ),
-                          DropdownMenuItem(value: 'active', child: Text('active')),
-                          DropdownMenuItem(value: 'paused', child: Text('paused')),
+                          DropdownMenuItem(
+                              value: 'active', child: Text('active')),
+                          DropdownMenuItem(
+                              value: 'paused', child: Text('paused')),
                           DropdownMenuItem(
                             value: 'disabled',
                             child: Text('disabled'),
@@ -678,7 +688,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: sitesController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Enabled site IDs'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Enabled site IDs'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Comma-separated site IDs for the prototype cohort.',
@@ -693,8 +704,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               controller: thresholdController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                labelText:
-                                    _tHqFeatureFlags(context, 'Aggregate threshold'),
+                                labelText: _tHqFeatureFlags(
+                                    context, 'Aggregate threshold'),
                               ),
                             ),
                           ),
@@ -704,8 +715,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               controller: rawBytesController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                labelText:
-                                    _tHqFeatureFlags(context, 'Raw update max bytes'),
+                                labelText: _tHqFeatureFlags(
+                                    context, 'Raw update max bytes'),
                               ),
                             ),
                           ),
@@ -763,12 +774,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         enablePrototypeUploads: enablePrototypeUploads,
       );
     }
-
-    nameController.dispose();
-    descriptionController.dispose();
-    sitesController.dispose();
-    thresholdController.dispose();
-    rawBytesController.dispose();
   }
 
   Future<void> _saveExperiment({
@@ -782,8 +787,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String rawUpdateMaxBytesText,
     required bool enablePrototypeUploads,
   }) async {
-    final int aggregateThreshold = int.tryParse(aggregateThresholdText.trim()) ?? 25;
-    final int rawUpdateMaxBytes = int.tryParse(rawUpdateMaxBytesText.trim()) ?? 16384;
+    final int aggregateThreshold =
+        int.tryParse(aggregateThresholdText.trim()) ?? 25;
+    final int rawUpdateMaxBytes =
+        int.tryParse(rawUpdateMaxBytesText.trim()) ?? 16384;
     final List<String> allowedSiteIds = enabledSiteIds
         .split(',')
         .map((String entry) => entry.trim())
@@ -827,13 +834,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   _FeatureFlag _mapToFeatureFlag(Map<String, dynamic> data) {
-    final List<String>? enabledSites =
-        (data['enabledSites'] as List?)?.map((dynamic e) => e.toString()).toList();
+    final List<String>? enabledSites = (data['enabledSites'] as List?)
+        ?.map((dynamic e) => e.toString())
+        .toList();
     return _FeatureFlag(
       id: (data['id'] as String?) ?? (data['name'] as String?) ?? 'flag',
       name: (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag',
       description: (data['description'] as String?) ?? '',
-      isEnabled: (data['enabled'] as bool?) ?? (data['isEnabled'] as bool?) ?? false,
+      isEnabled:
+          (data['enabled'] as bool?) ?? (data['isEnabled'] as bool?) ?? false,
       scope: (data['scope'] as String?) ?? 'global',
       enabledSites: enabledSites,
     );

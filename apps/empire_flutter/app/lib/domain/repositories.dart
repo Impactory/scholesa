@@ -1123,7 +1123,8 @@ class FederatedLearningExperimentRepository {
   Future<List<FederatedLearningExperimentModel>> listAll({
     int limit = 100,
   }) async {
-    final QuerySnapshot<Map<String, dynamic>> snap = await _col.limit(limit).get();
+    final QuerySnapshot<Map<String, dynamic>> snap =
+        await _col.limit(limit).get();
     final List<FederatedLearningExperimentModel> rows =
         snap.docs.map(FederatedLearningExperimentModel.fromDoc).toList();
     rows.sort((a, b) {
@@ -1175,9 +1176,8 @@ class FederatedLearningUpdateSummaryRepository {
       query = query.where('siteId', isEqualTo: siteId);
     }
     final QuerySnapshot<Map<String, dynamic>> snap = await query.get();
-    final List<FederatedLearningUpdateSummaryModel> rows = snap.docs
-        .map(FederatedLearningUpdateSummaryModel.fromDoc)
-        .toList();
+    final List<FederatedLearningUpdateSummaryModel> rows =
+        snap.docs.map(FederatedLearningUpdateSummaryModel.fromDoc).toList();
     rows.sort((a, b) {
       final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
       final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
@@ -1190,13 +1190,10 @@ class FederatedLearningUpdateSummaryRepository {
     String siteId, {
     int limit = 50,
   }) async {
-    final QuerySnapshot<Map<String, dynamic>> snap = await _col
-        .where('siteId', isEqualTo: siteId)
-        .limit(limit)
-        .get();
-    final List<FederatedLearningUpdateSummaryModel> rows = snap.docs
-        .map(FederatedLearningUpdateSummaryModel.fromDoc)
-        .toList();
+    final QuerySnapshot<Map<String, dynamic>> snap =
+        await _col.where('siteId', isEqualTo: siteId).limit(limit).get();
+    final List<FederatedLearningUpdateSummaryModel> rows =
+        snap.docs.map(FederatedLearningUpdateSummaryModel.fromDoc).toList();
     rows.sort((a, b) {
       final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
       final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;

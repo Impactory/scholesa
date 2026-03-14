@@ -14,9 +14,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? flags,
     List<Map<String, dynamic>>? experiments,
     List<Map<String, dynamic>>? siteExperiments,
-  })  : _flags = List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
-        _experiments =
-            List<Map<String, dynamic>>.from(experiments ?? <Map<String, dynamic>>[]),
+  })  : _flags =
+            List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
+        _experiments = List<Map<String, dynamic>>.from(
+            experiments ?? <Map<String, dynamic>>[]),
         _siteExperiments = List<Map<String, dynamic>>.from(
           siteExperiments ?? experiments ?? <Map<String, dynamic>>[],
         ),
@@ -29,7 +30,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
   @override
   Future<List<Map<String, dynamic>>> listFeatureFlags({int limit = 300}) async {
-    return _flags.take(limit).map((row) => Map<String, dynamic>.from(row)).toList();
+    return _flags
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
   }
 
   @override
@@ -59,13 +63,14 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? siteId,
     int limit = 40,
   }) async {
-    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
-        ? _siteExperiments
-        : _siteExperiments.where((Map<String, dynamic> row) {
-            final List<dynamic> allowedSiteIds =
-                row['allowedSiteIds'] as List<dynamic>? ?? <dynamic>[];
-            return allowedSiteIds.contains(siteId);
-          });
+    final Iterable<Map<String, dynamic>> scoped =
+        (siteId == null || siteId.isEmpty)
+            ? _siteExperiments
+            : _siteExperiments.where((Map<String, dynamic> row) {
+                final List<dynamic> allowedSiteIds =
+                    row['allowedSiteIds'] as List<dynamic>? ?? <dynamic>[];
+                return allowedSiteIds.contains(siteId);
+              });
     return scoped
         .take(limit)
         .map((row) => Map<String, dynamic>.from(row))
@@ -160,7 +165,8 @@ Widget _wrapWithMaterial(Widget child) {
 }
 
 void main() {
-  test('repositories list federated experiments and summaries by site', () async {
+  test('repositories list federated experiments and summaries by site',
+      () async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await firestore
         .collection('federatedLearningExperiments')
@@ -239,7 +245,8 @@ void main() {
     expect(updateId, 'update-1');
     expect(bridge.recordedUpdates, hasLength(1));
     expect(bridge.recordedUpdates.single['siteId'], 'site-1');
-    expect(bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
+    expect(
+        bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
   });
 
   testWidgets('HQ page renders experiment section and saves a new cohort',
@@ -295,7 +302,8 @@ void main() {
 
     expect(find.text('Math Pilot'), findsOneWidget);
     expect(
-      bridge._experiments.any((Map<String, dynamic> row) => row['name'] == 'Math Pilot'),
+      bridge._experiments
+          .any((Map<String, dynamic> row) => row['name'] == 'Math Pilot'),
       isTrue,
     );
   });

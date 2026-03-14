@@ -112,8 +112,7 @@ class WorkflowBridgeService {
   }
 
   Future<String?> upsertFeatureFlag(Map<String, dynamic> data) async {
-    final Map<String, dynamic> payload =
-        await _call('upsertFeatureFlag', data);
+    final Map<String, dynamic> payload = await _call('upsertFeatureFlag', data);
     return _asTrimmedString(payload['id']);
   }
 
@@ -161,7 +160,8 @@ class WorkflowBridgeService {
     String callableName,
     Map<String, dynamic> payload,
   ) async {
-    final HttpsCallable callable = _requiredFunctions.httpsCallable(callableName);
+    final HttpsCallable callable =
+        _requiredFunctions.httpsCallable(callableName);
     final HttpsCallableResult<dynamic> result = await callable.call(payload);
     return asMap(result.data);
   }

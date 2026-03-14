@@ -81,7 +81,8 @@ class FederatedLearningPrototypeUploader {
             ? _appState.activeSiteId!.trim()
             : (_appState.siteIds.isNotEmpty ? _appState.siteIds.first : ''));
     if (resolved.isEmpty) {
-      throw StateError('No active site available for federated-learning uploads.');
+      throw StateError(
+          'No active site available for federated-learning uploads.');
     }
     return resolved;
   }

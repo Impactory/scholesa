@@ -1596,11 +1596,14 @@ export const listSiteFederatedLearningExperiments = onCall(async (request: Calla
     .get()
     .catch(() => admin.firestore().collection('federatedLearningExperiments').limit(200).get());
 
-  const scopedExperiments = experimentSnap.docs
-    .map((snapDoc) => ({
-      id: snapDoc.id,
-      ...(snapDoc.data() as Record<string, unknown>),
-    }))
+  const scopedExperiments: Array<Record<string, unknown> & { id: string }> = experimentSnap.docs
+    .map((snapDoc) => {
+      const data = snapDoc.data() as Record<string, unknown>;
+      return {
+        id: snapDoc.id,
+        ...data,
+      } as Record<string, unknown> & { id: string };
+    })
     .filter((row) => {
       const allowedSiteIds = toStringArray(row.allowedSiteIds);
       const status = asTrimmedString(row.status);
@@ -1624,19 +1627,19 @@ export const listSiteFederatedLearningExperiments = onCall(async (request: Calla
     }
   });
 
-  const experiments = scopedExperiments
-    .map((row) => {
+  const experiments: Record<string, unknown>[] = [];
+  scopedExperiments.forEach((row) => {
       const featureFlagId = asTrimmedString(row.featureFlagId);
       const flag = featureFlagId ? flagMap.get(featureFlagId) : null;
-      if (!flag || flag.enabled !== true) return null;
+      if (!flag || flag.enabled !== true) return;
 
       const scope = asTrimmedString(flag.scope) || 'site';
       const enabledSites = toStringArray(flag.enabledSites);
       if (scope === 'site' && enabledSites.length > 0 && !enabledSites.includes(targetSiteId)) {
-        return null;
+        return;
       }
 
-      return {
+      experiments.push({
         ...row,
         featureFlag: {
           id: featureFlagId,
@@ -1645,9 +1648,8 @@ export const listSiteFederatedLearningExperiments = onCall(async (request: Calla
           enabledSites,
           status: asTrimmedString(flag.status) || 'enabled',
         },
-      };
-    })
-    .filter((row): row is Record<string, unknown> => Boolean(row));
+      });
+    });
 
   return { siteId: targetSiteId, experiments };
 });
