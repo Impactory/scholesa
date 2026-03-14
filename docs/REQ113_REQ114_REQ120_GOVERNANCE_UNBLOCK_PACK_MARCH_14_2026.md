@@ -15,6 +15,12 @@ Canonical supporting evidence already present in the repo:
 - `docs/REQ113_REQ114_REQ120_BLOCKER_STATUS_MARCH_14_2026.md`
 - `docs/TRACEABILITY_MATRIX.md`
 
+Draft decision artifacts created from this pack:
+
+- `docs/REQ120_CLEVER_CLASSLINK_INTEGRATION_CHARTER_DRAFT_MARCH_14_2026.md`
+- `docs/REQ113_INTERNAL_TELEMETRY_REPLACEMENT_PROPOSAL_MARCH_14_2026.md`
+- `docs/REQ114_FEDERATED_LEARNING_RD_ARCHITECTURE_BRIEF_MARCH_14_2026.md`
+
 ## Current Decision Summary
 
 | Requirement | Current state | Why it is not green today | Decision needed |
