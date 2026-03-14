@@ -1,5 +1,7 @@
 import {
   buildFederatedLearningAggregationRunDocId,
+  buildFederatedLearningMergeArtifactDocId,
+  buildFederatedLearningMergeArtifactSummary,
   buildFederatedLearningExperimentDocId,
   buildFederatedLearningFeatureFlagId,
   buildFederatedLearningFeatureFlagPayload,
@@ -28,6 +30,8 @@ describe('federated learning prototype helpers', () => {
     expect(buildFederatedLearningFeatureFlagId(experimentId)).toBe('feature_fl_exp_my_pilot_alpha');
     expect(buildFederatedLearningAggregationRunDocId(experimentId, ['sum-1', 'sum-2']))
       .toBe('fl_agg_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningMergeArtifactDocId('fl_agg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_merge_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({
@@ -126,6 +130,18 @@ describe('federated learning prototype helpers', () => {
       averageUpdateNorm: 1.35,
       schemaVersions: ['v1'],
       runtimeTargets: ['flutter_mobile'],
+    });
+
+    expect(buildFederatedLearningMergeArtifactSummary(selection!)).toEqual({
+      sampleCount: 18,
+      summaryCount: 2,
+      distinctSiteCount: 2,
+      schemaVersions: ['v1'],
+      runtimeTargets: ['flutter_mobile'],
+      maxVectorLength: 128,
+      totalPayloadBytes: 1792,
+      averageUpdateNorm: 1.35,
+      boundedDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
     });
   });
 
