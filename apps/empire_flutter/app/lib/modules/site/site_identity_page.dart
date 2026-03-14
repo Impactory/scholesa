@@ -20,7 +20,8 @@ class SiteIdentityPage extends StatefulWidget {
     this.identityResolver,
   });
 
-  final Future<List<Map<String, dynamic>>> Function(String siteId)? identityLoader;
+  final Future<List<Map<String, dynamic>>> Function(String siteId)?
+      identityLoader;
   final Future<void> Function(
     String id,
     String rawProvider,
@@ -441,7 +442,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           localName: localName,
           externalName: externalName,
           provider: _providerLabel(
-            (data['provider'] as String?) ?? 'google_classroom'),
+              (data['provider'] as String?) ?? 'google_classroom'),
           rawProvider: (data['provider'] as String?) ?? 'google_classroom',
           confidence: confidence,
           status: _MatchStatus.pending,
@@ -493,8 +494,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     }
 
     final String provider = match.rawProvider.trim().toLowerCase();
-    final bool hasSuggestedUser =
-        match.suggestedUserId != null && match.suggestedUserId!.trim().isNotEmpty;
+    final bool hasSuggestedUser = match.suggestedUserId != null &&
+        match.suggestedUserId!.trim().isNotEmpty;
 
     if (provider.contains('clever')) {
       final HttpsCallable callable =
