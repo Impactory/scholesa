@@ -1318,6 +1318,35 @@ class FederatedLearningExperimentReviewRecordRepository {
   }
 }
 
+class FederatedLearningPilotEvidenceRecordRepository {
+  FederatedLearningPilotEvidenceRecordRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('federatedLearningPilotEvidenceRecords');
+
+  Future<List<FederatedLearningPilotEvidenceRecordModel>> listByExperiment(
+    String experimentId, {
+    int limit = 20,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('experimentId', isEqualTo: experimentId)
+        .limit(limit)
+        .get();
+    final List<FederatedLearningPilotEvidenceRecordModel> rows = snap.docs
+        .map(FederatedLearningPilotEvidenceRecordModel.fromDoc)
+        .toList();
+    rows.sort((a, b) {
+      final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+}
+
 class FederatedLearningCandidatePromotionRecordRepository {
   FederatedLearningCandidatePromotionRecordRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
