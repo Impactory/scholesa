@@ -37,6 +37,8 @@ Implemented prototype scope:
 - bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and real merged runtime vectors staged inside aggregation artifacts and candidate packages
 - bounded runtime-delivery lifecycle control, including expiry windows, explicit revocation reasons, fallback reporting, and device-side invalidation of stale runtime payloads
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
+- HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
+- HQ runtime-activation history visibility for the latest package, including status counts and per-site activation or fallback evidence drill-in
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -111,6 +113,8 @@ Passed on 2026-03-14:
 - Site-scoped Flutter runtime code can now resolve a bounded runtime package payload for the latest assigned or active delivery, automatically report activation evidence when that payload is loaded, and apply the merged runtime vector when encoding subsequent update sketches.
 - HQ runtime-delivery records now carry bounded expiry and revocation metadata, the resolver returns explicit resolved-versus-expired-versus-revoked package state, and the device runtime reports fallback evidence while refusing to reuse stale payload vectors after expiry or revocation.
 - The HQ feature-flags surface now exposes recent runtime-delivery history per experiment so operators can inspect delivery status, site spread, expiry windows, and revocation rationale without leaving the bounded prototype workflow.
+- The HQ feature-flags surface now also derives per-site rollout health from runtime-delivery and activation records so operators can inspect which sites are resolved, pending, staged, or already in fallback for the latest bounded delivery.
+- The HQ feature-flags surface now also exposes the underlying runtime-activation history for the latest package so operators can audit the actual site reports behind the rollout-health summary without leaving the bounded prototype workflow.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

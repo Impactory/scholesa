@@ -1775,6 +1775,10 @@ void main() {
     expect(find.textContaining('Runtime activation: resolved'), findsOneWidget);
     expect(find.textContaining('Runtime lifecycle: live until'), findsOneWidget);
     expect(
+      find.text('Site rollout: 1 resolved · 0 staged · 0 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(
       find.text('Artifact generated: fl_merge_1'),
       findsWidgets,
     );
@@ -1797,6 +1801,29 @@ void main() {
     expect(find.text('Pilot execution: planned · 1 sites · 0 sessions · 0 learners'), findsOneWidget);
     expect(find.text('Runtime delivery: assigned · 1 sites · flutter_mobile'), findsOneWidget);
     expect(find.text('Runtime activation: resolved · 1 site reports · flutter_mobile'), findsOneWidget);
+
+    final Finder activationHistoryButton = find.widgetWithText(
+      TextButton,
+      'Activation history',
+    );
+    await tester.ensureVisible(activationHistoryButton.first);
+    final TextButton activationHistoryControl = tester.widget<TextButton>(
+      activationHistoryButton.first,
+    );
+    activationHistoryControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime activation history: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Summary: 1 resolved · 0 staged · 0 fallback'),
+      findsOneWidget,
+    );
+    expect(find.text('site-1 · resolved · flutter_mobile'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pumpAndSettle();
 
     final Finder reviewChecklistButton = find.widgetWithText(
       TextButton,
@@ -2124,6 +2151,30 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Lifecycle: live until'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pumpAndSettle();
+
+    final Finder siteRolloutButton = find.widgetWithText(
+      TextButton,
+      'Site rollout',
+    );
+    await tester.ensureVisible(siteRolloutButton.first);
+    final TextButton siteRolloutControl = tester.widget<TextButton>(
+      siteRolloutButton.first,
+    );
+    siteRolloutControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime rollout health: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Summary: 1 resolved · 0 staged · 0 fallback · 1 pending'),
+      findsOneWidget,
+    );
+    expect(find.text('site-1 · resolved'), findsOneWidget);
+    expect(find.text('site-2 · pending'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 

@@ -385,6 +385,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
         ? ''
         : _summarizeRuntimeDeliveryLifecycle(latestRuntimeDelivery);
+    final _RuntimeRolloutHealthSummary? runtimeRolloutHealth =
+        latestRuntimeDelivery == null
+            ? null
+            : _buildRuntimeRolloutHealthSummary(
+                latestRuntimeDelivery,
+                runtimeActivationRecords,
+              );
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
       latestPromotionRevocation,
@@ -509,6 +516,26 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         icon: const Icon(Icons.history_toggle_off_rounded),
                         label: Text(_tHqFeatureFlags(context, 'Delivery history')),
                       ),
+                      if (latestRuntimeDelivery != null)
+                        TextButton.icon(
+                          onPressed: () => _showRuntimeRolloutHealthDialog(
+                            experiment,
+                            latestRuntimeDelivery,
+                            runtimeActivationRecords,
+                          ),
+                          icon: const Icon(Icons.monitor_heart_rounded),
+                          label: Text(_tHqFeatureFlags(context, 'Site rollout')),
+                        ),
+                      if (latestPackage != null)
+                        TextButton.icon(
+                          onPressed: () => _showRuntimeActivationHistoryDialog(
+                            experiment,
+                            latestPackage,
+                            runtimeActivationRecords,
+                          ),
+                          icon: const Icon(Icons.fact_check_rounded),
+                          label: Text(_tHqFeatureFlags(context, 'Activation history')),
+                        ),
                     ],
                   ),
                 ),
@@ -676,6 +703,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(context, runtimeDeliveryLifecycle),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (runtimeRolloutHealth != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Site rollout: ${runtimeRolloutHealth.resolvedCount} resolved · ${runtimeRolloutHealth.stagedCount} staged · ${runtimeRolloutHealth.fallbackCount} fallback · ${runtimeRolloutHealth.pendingCount} pending',
+                ),
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
@@ -3608,6 +3648,183 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  Future<void> _showRuntimeRolloutHealthDialog(
+    FederatedLearningExperimentModel experiment,
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+    List<FederatedLearningRuntimeActivationRecordModel> activationRecords,
+  ) async {
+    final _RuntimeRolloutHealthSummary summary =
+        _buildRuntimeRolloutHealthSummary(delivery, activationRecords);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              dialogContext,
+              'Runtime rollout health: ${experiment.name}',
+            ),
+          ),
+          content: SizedBox(
+            width: 640,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'Summary: ${summary.resolvedCount} resolved · ${summary.stagedCount} staged · ${summary.fallbackCount} fallback · ${summary.pendingCount} pending',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  ...summary.siteRows.map(
+                    (_RuntimeRolloutHealthRow row) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              '${row.siteId} · ${row.statusLabel}',
+                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _tHqFeatureFlags(dialogContext, row.detailLabel),
+                            style: const TextStyle(
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showRuntimeActivationHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+    FederatedLearningCandidateModelPackageModel candidatePackage,
+    List<FederatedLearningRuntimeActivationRecordModel> activationRecords,
+  ) async {
+    final List<FederatedLearningRuntimeActivationRecordModel> records =
+        List<FederatedLearningRuntimeActivationRecordModel>.from(
+      activationRecords,
+    )..sort((a, b) {
+            final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+            final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+            return bMillis.compareTo(aMillis);
+          });
+    final int resolvedCount =
+        records.where((record) => record.status == 'resolved').length;
+    final int stagedCount =
+        records.where((record) => record.status == 'staged').length;
+    final int fallbackCount =
+        records.where((record) => record.status == 'fallback').length;
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              dialogContext,
+              'Runtime activation history: ${experiment.name}',
+            ),
+          ),
+          content: SizedBox(
+            width: 640,
+            child: records.isEmpty
+                ? Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'No runtime activation reports recorded for ${candidatePackage.id} yet.',
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _tHqFeatureFlags(
+                            dialogContext,
+                            'Summary: $resolvedCount resolved · $stagedCount staged · $fallbackCount fallback',
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        ...records.map(
+                          (FederatedLearningRuntimeActivationRecordModel record) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    '${record.siteId} · ${record.status} · ${record.runtimeTarget}',
+                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Reported ${_formatTimestamp(record.updatedAt)} · manifest ${record.manifestDigest}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                                if ((record.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _tHqFeatureFlags(dialogContext, record.notes!),
+                                    style: const TextStyle(
+                                      color: ScholesaColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _showCandidatePromotionRevocationDialog({
     required FederatedLearningCandidatePromotionRecordModel record,
     VoidCallback? refreshDialog,
@@ -3733,6 +3950,92 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'live until ${_formatTimestamp(record.expiresAt)}';
     }
     return 'no expiry recorded';
+  }
+
+  _RuntimeRolloutHealthSummary _buildRuntimeRolloutHealthSummary(
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+    List<FederatedLearningRuntimeActivationRecordModel> activationRecords,
+  ) {
+    final Map<String, FederatedLearningRuntimeActivationRecordModel>
+        latestActivationBySite =
+        <String, FederatedLearningRuntimeActivationRecordModel>{};
+    for (final FederatedLearningRuntimeActivationRecordModel record
+        in activationRecords) {
+      if (record.deliveryRecordId != delivery.id) {
+        continue;
+      }
+      final FederatedLearningRuntimeActivationRecordModel? existing =
+          latestActivationBySite[record.siteId];
+      final int recordMillis = record.updatedAt?.millisecondsSinceEpoch ?? 0;
+      final int existingMillis = existing?.updatedAt?.millisecondsSinceEpoch ?? 0;
+      if (existing == null || recordMillis > existingMillis) {
+        latestActivationBySite[record.siteId] = record;
+      }
+    }
+
+    final List<_RuntimeRolloutHealthRow> rows = delivery.targetSiteIds
+        .map((_siteId) => _buildRuntimeRolloutHealthRow(
+              _siteId,
+              delivery,
+              latestActivationBySite[_siteId],
+            ))
+        .toList(growable: false);
+
+    return _RuntimeRolloutHealthSummary(
+      siteRows: rows,
+      resolvedCount: rows.where((row) => row.status == 'resolved').length,
+      stagedCount: rows.where((row) => row.status == 'staged').length,
+      fallbackCount: rows.where((row) => row.status == 'fallback').length,
+      pendingCount: rows.where((row) => row.status == 'pending').length,
+    );
+  }
+
+  _RuntimeRolloutHealthRow _buildRuntimeRolloutHealthRow(
+    String siteId,
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+    FederatedLearningRuntimeActivationRecordModel? activation,
+  ) {
+    if (delivery.status == 'revoked' || delivery.revokedAt != null) {
+      final String reason = (delivery.revocationReason ?? '').trim().isNotEmpty
+          ? delivery.revocationReason!.trim()
+          : 'HQ revoked this delivery';
+      return _RuntimeRolloutHealthRow(
+        siteId: siteId,
+        status: 'fallback',
+        statusLabel: 'fallback',
+        detailLabel: 'Delivery revoked. $reason',
+      );
+    }
+
+    final DateTime? expiresAt = delivery.expiresAt?.toDate().toUtc();
+    if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
+      return _RuntimeRolloutHealthRow(
+        siteId: siteId,
+        status: 'fallback',
+        statusLabel: 'fallback',
+        detailLabel: 'Delivery expired at ${_formatTimestamp(delivery.expiresAt)}.',
+      );
+    }
+
+    if (activation == null) {
+      return _RuntimeRolloutHealthRow(
+        siteId: siteId,
+        status: 'pending',
+        statusLabel: 'pending',
+        detailLabel: 'No site activation report recorded yet.',
+      );
+    }
+
+    final String label = activation.status;
+    final String detail = activation.status == 'fallback'
+        ? 'Latest site report requested fallback.'
+        : 'Latest site report ${activation.status} at ${_formatTimestamp(activation.updatedAt)}.';
+    return _RuntimeRolloutHealthRow(
+      siteId: siteId,
+      status: activation.status,
+      statusLabel: label,
+      detailLabel: detail,
+    );
   }
 
   Widget _buildExperimentChip(
@@ -4394,4 +4697,34 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       enabledSites: enabledSites,
     );
   }
+}
+
+class _RuntimeRolloutHealthSummary {
+  const _RuntimeRolloutHealthSummary({
+    required this.siteRows,
+    required this.resolvedCount,
+    required this.stagedCount,
+    required this.fallbackCount,
+    required this.pendingCount,
+  });
+
+  final List<_RuntimeRolloutHealthRow> siteRows;
+  final int resolvedCount;
+  final int stagedCount;
+  final int fallbackCount;
+  final int pendingCount;
+}
+
+class _RuntimeRolloutHealthRow {
+  const _RuntimeRolloutHealthRow({
+    required this.siteId,
+    required this.status,
+    required this.statusLabel,
+    required this.detailLabel,
+  });
+
+  final String siteId;
+  final String status;
+  final String statusLabel;
+  final String detailLabel;
 }
