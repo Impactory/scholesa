@@ -91,7 +91,7 @@ The BOS is a computer-implemented system for closed-loop regulation of learner i
 | **Privacy & Compliance** | **COPPA-ready, PIPEDA-aligned, and FERPA-oriented**. Includes active school-consent enforcement, data minimization, site-scoped authorization, auditability, and DPA templates. |
 | **Security** | SSO SAML/OIDC, **Role-Based Access Control (RBAC)**, encryption at rest/transport, secrets vault, rate limiting, and audit logs. |
 | **Longitudinal Data** | Collects proprietary data on **metacognitive calibration** (student verification and confidence alignment). |
-| **Data Architecture** | Caliper/xAPI emit, PostHog/Segment capture, and BigQuery/Snowflake sink. |
+| **Data Architecture** | Caliper/xAPI emit, internal telemetry capture with warehouse-friendly export posture, and BigQuery/Snowflake-compatible sink patterns. |
 | **Data Moat** | Leveraging **Federated Learning** for on-device feature extraction, transmitting only anonymized gradient updates. |
 | **WCAG Compliance** | **WCAG 2.2 AA** checks: Keyboard traps check, focus not obscured, target size, drag alternatives, and reduced motion. |
 | **CI/CD** | Trunk-based development, preview environments for pre-production only, **full big-bang production cutover after all gates pass**, and migrations with zero-downtime. No production release is validated through partial canary exposure. |

@@ -140,6 +140,94 @@ REQ-114 must remain deferred until all of the following exist:
 - tests
 - proof doc tied to actual implementation
 
+## 10) Threat model draft
+
+### Protected assets
+
+- learner-derived local feature vectors
+- uploaded client update blobs
+- aggregation configuration
+- experiment enrollment lists
+- model checkpoints and derived evaluation outputs
+
+### Trust boundaries
+
+1. learner device runtime
+2. transport from device to Scholesa backend
+3. aggregation service and staging storage
+4. evaluation and rollout decision surfaces
+
+### Primary threats
+
+| Threat | Description | Required mitigation before pilot |
+| --- | --- | --- |
+| update inversion | attacker or operator reconstructs sensitive learner signals from uploaded updates | keep updates bounded, aggregated only above threshold, and never expose raw per-client updates to product operators |
+| membership inference | attacker infers whether a learner participated in training | site-limited cohorts, minimum cohort thresholds, no external reporting at individual level |
+| cross-site contamination | updates from one site affect another without approval | site isolation by default and explicit policy for any broader aggregation |
+| malicious client poisoning | compromised client uploads adversarial or malformed updates | signed config, schema validation, bounded update size, anomaly rejection, rollout kill switch |
+| operator overreach | internal users inspect raw experimental data beyond approved purpose | narrow admin access, audit logs, short retention, documented review roles |
+| battery or bandwidth harm | experimental runtime degrades learner devices | charge/network gating, runtime budget, remote disablement, pilot-only rollout |
+| consent mismatch | experimental participation exceeds approved school or parent consent posture | experiment enrollment bound to approved sites and consent records before activation |
+
+### Security controls required before prototype merge
+
+- signed experiment configuration
+- per-site feature flags
+- bounded payload schemas
+- server-side validation and rejection metrics
+- audit logging for experiment enrollment and configuration changes
+- storage retention policy for raw update blobs
+
+## 11) Privacy impact checklist draft
+
+Use this checklist before moving REQ-114 out of deferred status.
+
+### Data classification
+
+- [ ] Document every field in the client update payload.
+- [ ] Confirm no direct identifiers are present.
+- [ ] Confirm no raw prompts, transcripts, free-text reflections, or artifact content are present.
+- [ ] Confirm no hidden identifiers can be reconstructed from payload combinations.
+
+### Legal and consent posture
+
+- [ ] Identify whether school consent is sufficient or parent notice is additionally required.
+- [ ] Confirm experiment participation is limited to approved sites.
+- [ ] Confirm opt-out or disable rules are documented.
+
+### Storage and retention
+
+- [ ] Define where raw update blobs are stored.
+- [ ] Define retention limit for raw blobs.
+- [ ] Define retention limit for aggregates and checkpoints.
+- [ ] Define deletion process for experiment shutdown.
+
+### Access control
+
+- [ ] List every role allowed to view experiment configuration.
+- [ ] List every role allowed to inspect raw update metrics.
+- [ ] Confirm no educator or parent surface exposes experimental raw data.
+
+### Transport and device safety
+
+- [ ] Require secure transport for all update uploads.
+- [ ] Define device-side budget for battery, CPU, and network.
+- [ ] Define offline, low-battery, and metered-network behavior.
+
+### Evaluation and reporting
+
+- [ ] Define aggregate-only reporting thresholds.
+- [ ] Confirm no per-learner model quality reporting leaves the experiment boundary.
+- [ ] Confirm rollback trigger thresholds are documented.
+
+### Approval block
+
+- Privacy reviewer:
+- Security reviewer:
+- Product reviewer:
+- Date:
+- Result: APPROVED / HOLD
+
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
 - Wired end-to-end: no

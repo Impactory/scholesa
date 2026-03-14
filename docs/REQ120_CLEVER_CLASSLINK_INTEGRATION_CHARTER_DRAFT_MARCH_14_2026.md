@@ -11,6 +11,9 @@ Recommendation:
 - Fund one provider first.
 - Default recommendation: approve Clever first for roster and SSO parity, then evaluate ClassLink after the first district pilot.
 
+Provider-first draft contract:
+- `docs/REQ120_CLEVER_INTERNAL_API_CONTRACT_DRAFT_MARCH_14_2026.md`
+
 This recommendation keeps rollout disciplined because the repo already supports:
 - CSV SIS import
 - Google Classroom integration
