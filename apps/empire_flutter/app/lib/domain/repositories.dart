@@ -493,8 +493,13 @@ class AccountabilityReviewRepository {
 }
 
 class AuditLogRepository {
+  AuditLogRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('auditLogs');
+      _firestore.collection('auditLogs');
 
   Future<void> log(AuditLogModel model) =>
       _col.doc(model.id).set(model.toMap());
@@ -1179,8 +1184,13 @@ class PartnerOrgRepository {
 }
 
 class PartnerContractRepository {
+  PartnerContractRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('partnerContracts');
+      _firestore.collection('partnerContracts');
 
   Future<String> createDraft({
     required String partnerOrgId,
@@ -1262,9 +1272,17 @@ class PartnerContractRepository {
 }
 
 class PartnerDeliverableRepository {
+  PartnerDeliverableRepository({
+    FirebaseFirestore? firestore,
+    AuditLogRepository? auditLogRepository,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auditLogRepository = auditLogRepository ?? AuditLogRepository(firestore: firestore);
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('partnerDeliverables');
-  final AuditLogRepository _auditLogRepository = AuditLogRepository();
+      _firestore.collection('partnerDeliverables');
+  final AuditLogRepository _auditLogRepository;
 
   Future<String> submit({
     required String contractId,
@@ -1373,8 +1391,13 @@ class PartnerDeliverableRepository {
 }
 
 class PayoutRepository {
+  PayoutRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('payouts');
+      _firestore.collection('payouts');
 
   Future<String> createPending({
     required String contractId,
@@ -1756,8 +1779,13 @@ class PickupAuthorizationRepository {
 }
 
 class AiDraftRepository {
+  AiDraftRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('aiDrafts');
+      _firestore.collection('aiDrafts');
 
   Future<String> createRequest({
     required String requesterId,

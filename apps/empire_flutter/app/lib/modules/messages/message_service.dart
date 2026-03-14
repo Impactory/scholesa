@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
+import '../../services/notification_service.dart';
 import '../../services/telemetry_service.dart';
 import 'message_models.dart';
 
@@ -9,8 +10,11 @@ class MessageService extends ChangeNotifier {
   MessageService({
     required FirestoreService firestoreService,
     required this.userId,
-  }) : _firestoreService = firestoreService;
+    NotificationService? notificationService,
+  })  : _firestoreService = firestoreService,
+        _notificationService = notificationService ?? NotificationService.instance;
   final FirestoreService _firestoreService;
+  final NotificationService _notificationService;
   final String userId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -241,19 +245,36 @@ class MessageService extends ChangeNotifier {
       // Get sender info
       final DocumentSnapshot<Map<String, dynamic>> senderDoc =
           await _firestore.collection('users').doc(userId).get();
+      final Map<String, dynamic> senderData =
+          senderDoc.data() ?? <String, dynamic>{};
       final String senderName =
-          senderDoc.data()?['displayName'] as String? ?? 'Unknown';
+          senderData['displayName'] as String? ?? 'Unknown';
+      final String senderRole =
+          (senderData['role'] as String? ?? '').trim().toLowerCase();
+      final List<String> senderSiteIds =
+          List<String>.from(senderData['siteIds'] as List? ?? <String>[]);
+      final String fallbackSiteId =
+          ((senderData['activeSiteId'] as String?) ??
+                  (senderSiteIds.isNotEmpty ? senderSiteIds.first : ''))
+              .trim();
 
       final String recipientName =
           await _loadDisplayName(recipientId, fallback: recipientId);
       DocumentReference<Map<String, dynamic>> threadRef;
+      String siteId = fallbackSiteId;
       if (conversationId != null && conversationId.trim().isNotEmpty) {
         threadRef = _firestore.collection('messageThreads').doc(conversationId);
+        final DocumentSnapshot<Map<String, dynamic>> threadDoc =
+          await threadRef.get();
+        final Map<String, dynamic> threadData =
+          threadDoc.data() ?? <String, dynamic>{};
+        siteId = (threadData['siteId'] as String? ?? siteId).trim();
       } else {
         threadRef = _firestore.collection('messageThreads').doc();
         await threadRef.set(<String, dynamic>{
           'participantIds': <String>[userId, recipientId],
           'participantNames': <String>[senderName, recipientName],
+          if (siteId.isNotEmpty) 'siteId': siteId,
           'title': 'Direct conversation',
           'status': 'open',
           'createdAt': FieldValue.serverTimestamp(),
@@ -264,13 +285,15 @@ class MessageService extends ChangeNotifier {
       await threadRef.set(<String, dynamic>{
         'participantIds': <String>[userId, recipientId],
         'participantNames': <String>[senderName, recipientName],
+        if (siteId.isNotEmpty) 'siteId': siteId,
         'status': 'open',
         'lastMessagePreview': body,
         'lastMessageSenderId': userId,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      await _firestore.collection('messages').add(<String, dynamic>{
+      final DocumentReference<Map<String, dynamic>> messageRef =
+          await _firestore.collection('messages').add(<String, dynamic>{
         'threadId': threadRef.id,
         'title': 'Direct message',
         'body': body,
@@ -279,6 +302,7 @@ class MessageService extends ChangeNotifier {
         'senderId': userId,
         'senderName': senderName,
         'recipientId': recipientId,
+        if (siteId.isNotEmpty) 'siteId': siteId,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isRead': false,
@@ -290,10 +314,20 @@ class MessageService extends ChangeNotifier {
         event: 'message.sent',
         metadata: <String, dynamic>{
           'recipient_id': recipientId,
-          'conversation_id': conversationId,
+          'conversation_id': threadRef.id,
           'message_length': body.length,
         },
       );
+
+      if (siteId.isNotEmpty &&
+          <String>{'educator', 'site', 'hq'}.contains(senderRole)) {
+        await _notificationService.requestSend(
+          channel: 'push',
+          threadId: threadRef.id,
+          messageId: messageRef.id,
+          siteId: siteId,
+        );
+      }
 
       await loadMessages();
       return true;

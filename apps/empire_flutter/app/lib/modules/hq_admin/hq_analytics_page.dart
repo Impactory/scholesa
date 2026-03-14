@@ -12,7 +12,20 @@ import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Analytics Page - Platform-wide analytics and insights
 class HqAnalyticsPage extends StatefulWidget {
-  const HqAnalyticsPage({super.key});
+  const HqAnalyticsPage({
+    super.key,
+    this.metricsLoader,
+    this.kpiPacksLoader,
+  });
+
+  final Future<TelemetryDashboardMetrics> Function({
+    String? siteId,
+    String period,
+  })? metricsLoader;
+  final Future<List<Map<String, dynamic>>> Function({
+    String? siteId,
+    int limit,
+  })? kpiPacksLoader;
 
   @override
   State<HqAnalyticsPage> createState() => _HqAnalyticsPageState();
@@ -73,11 +86,15 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final String? siteId = _selectedSite == 'all'
           ? null
           : _resolveSiteId(_selectedSite, appState);
-      final TelemetryDashboardMetrics metrics =
-          await _analyticsService.getTelemetryDashboardMetrics(
-        siteId: siteId,
-        period: _selectedPeriod,
-      );
+      final TelemetryDashboardMetrics metrics = widget.metricsLoader != null
+          ? await widget.metricsLoader!(
+              siteId: siteId,
+              period: _selectedPeriod,
+            )
+          : await _analyticsService.getTelemetryDashboardMetrics(
+              siteId: siteId,
+              period: _selectedPeriod,
+            );
       if (!mounted) return;
       setState(() {
         _metrics = metrics;
@@ -1602,11 +1619,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final String? siteId = _selectedSite == 'all'
           ? null
           : _resolveSiteId(_selectedSite, context.read<AppState>());
-      final List<Map<String, dynamic>> rows =
-          await _workflowBridgeService.listKpiPacks(
-        siteId: siteId,
-        limit: 24,
-      );
+      final List<Map<String, dynamic>> rows = widget.kpiPacksLoader != null
+          ? await widget.kpiPacksLoader!(siteId: siteId, limit: 24)
+          : await _workflowBridgeService.listKpiPacks(
+              siteId: siteId,
+              limit: 24,
+            );
       final List<_HqKpiPackSummary> packs =
           rows.map((Map<String, dynamic> row) {
         return _HqKpiPackSummary(

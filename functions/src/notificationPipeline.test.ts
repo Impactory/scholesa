@@ -5,6 +5,36 @@ import {
 } from './notificationPipeline';
 
 describe('notificationPipeline', () => {
+  it('sends direct message notification payloads to the notify provider', async () => {
+    const fetchImpl = jest.fn(async (_url: string, init: { body: string }) => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({ providerMessageId: 'provider-message-123' }),
+    }));
+
+    const result = await sendNotification(
+      {
+        channel: 'push',
+        siteId: 'site-1',
+        threadId: 'thread-1',
+        messageId: 'message-1',
+      },
+      {
+        endpoint: 'https://notify.example.test',
+        apiKey: 'secret-key',
+        fetchImpl,
+      },
+    );
+
+    expect(result.providerMessageId).toBe('provider-message-123');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(body.threadId).toBe('thread-1');
+    expect(body.messageId).toBe('message-1');
+    expect(body.siteId).toBe('site-1');
+  });
+
   it('sends typed learner reminder payloads to the notify provider', async () => {
     const fetchImpl = jest.fn(async (_url: string, init: { body: string }) => ({
       ok: true,

@@ -570,9 +570,9 @@ service cloud.firestore {
 
     // --- AI Drafts ---
     match /aiDrafts/{id} {
-      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isEducator());
+      allow read: if isAuthenticated() && ((resource.data.requesterId == request.auth.uid || resource.data.requestedBy == request.auth.uid) || isEducator());
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isEducator());
+      allow update: if isAuthenticated() && ((resource.data.requesterId == request.auth.uid || resource.data.requestedBy == request.auth.uid) || isEducator());
       allow delete: if false;
     }
 

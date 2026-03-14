@@ -11,7 +11,15 @@ String _tHqApprovals(BuildContext context, String input) {
 /// HQ Approvals page for approving partner contracts, curriculum, etc.
 /// Based on docs/16_PARTNER_CONTRACTING_WORKFLOWS_SPEC.md
 class HqApprovalsPage extends StatefulWidget {
-  const HqApprovalsPage({super.key});
+  const HqApprovalsPage({
+    super.key,
+    this.loadApprovals,
+    this.decideApproval,
+  });
+
+  final Future<List<Map<String, dynamic>>> Function()? loadApprovals;
+  final Future<void> Function({required String id, required String status})?
+      decideApproval;
 
   @override
   State<HqApprovalsPage> createState() => _HqApprovalsPageState();
@@ -319,13 +327,18 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     setState(() => _isLoading = true);
     try {
       final List<_ApprovalItem> loaded = <_ApprovalItem>[];
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listWorkflowApprovals');
+      final List<dynamic> rows;
+      if (widget.loadApprovals != null) {
+      rows = await widget.loadApprovals!();
+      } else {
+      final HttpsCallable callable = FirebaseFunctions.instance
+        .httpsCallable('listWorkflowApprovals');
       final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'limit': 200});
+        await callable.call(<String, dynamic>{'limit': 200});
       final Map<String, dynamic> payload =
-          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
-      final List<dynamic> rows = payload['approvals'] as List<dynamic>? ?? <dynamic>[];
+        Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      rows = payload['approvals'] as List<dynamic>? ?? <dynamic>[];
+      }
 
       for (final dynamic row in rows) {
         if (row is! Map) continue;
@@ -374,12 +387,16 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         newStatus == _ApprovalStatus.approved ? 'approved' : 'rejected';
 
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('decideWorkflowApproval');
-      await callable.call(<String, dynamic>{
-        'id': item.id,
-        'status': statusLabel,
-      });
+      if (widget.decideApproval != null) {
+        await widget.decideApproval!(id: item.id, status: statusLabel);
+      } else {
+        final HttpsCallable callable = FirebaseFunctions.instance
+            .httpsCallable('decideWorkflowApproval');
+        await callable.call(<String, dynamic>{
+          'id': item.id,
+          'status': statusLabel,
+        });
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
