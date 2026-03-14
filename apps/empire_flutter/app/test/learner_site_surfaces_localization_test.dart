@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
@@ -50,9 +51,24 @@ Widget _buildHarness({
   required List<SingleChildWidget> providers,
   ThemeData? theme,
 }) {
+  final GoRouter router = GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) => child,
+      ),
+      GoRoute(
+        path: '/learner/onboarding',
+        builder: (BuildContext context, GoRouterState state) => child,
+      ),
+    ],
+  );
+
   return MultiProvider(
     providers: providers,
-    child: MaterialApp(
+    child: MaterialApp.router(
+      routerConfig: router,
       theme: theme ?? ScholesaTheme.light.copyWith(
         splashFactory: NoSplash.splashFactory,
       ),
@@ -67,7 +83,6 @@ Widget _buildHarness({
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: child,
     ),
   );
 }

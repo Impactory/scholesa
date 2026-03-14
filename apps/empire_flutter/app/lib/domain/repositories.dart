@@ -90,6 +90,40 @@ class LearnerReflectionRepository {
   }
 }
 
+class MetacognitiveCalibrationRepository {
+  MetacognitiveCalibrationRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('metacognitiveCalibrationRecords');
+
+  Future<void> upsert(MetacognitiveCalibrationRecordModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<MetacognitiveCalibrationRecordModel>> listByLearner({
+    required String siteId,
+    required String learnerId,
+    int limit = 100,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .where('learnerId', isEqualTo: learnerId)
+        .limit(limit)
+        .get();
+    final List<MetacognitiveCalibrationRecordModel> records = snap.docs
+        .map(MetacognitiveCalibrationRecordModel.fromDoc)
+        .toList();
+    records.sort((a, b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return records;
+  }
+}
+
 class ParentProfileRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('parentProfiles');
@@ -975,6 +1009,50 @@ class SyncJobRepository {
         .limit(limit)
         .get();
     return snap.docs.map(SyncJobModel.fromDoc).toList();
+  }
+}
+
+class RosterImportRepository {
+  RosterImportRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('rosterImports');
+
+  Future<List<RosterImportModel>> listBySite(
+    String siteId, {
+    int limit = 50,
+    bool pendingOnly = false,
+  }) async {
+    Query<Map<String, dynamic>> query = _col.where('siteId', isEqualTo: siteId);
+    if (pendingOnly) {
+      query = query.where('status', isEqualTo: 'pending_provisioning');
+    }
+    final QuerySnapshot<Map<String, dynamic>> snap = await query.limit(limit).get();
+    final List<RosterImportModel> rows =
+        snap.docs.map(RosterImportModel.fromDoc).toList();
+    rows.sort((a, b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+
+  Future<void> markReviewed({
+    required String id,
+    required String reviewerId,
+    String? reviewNotes,
+  }) {
+    return _col.doc(id).set(<String, dynamic>{
+      'status': 'reviewed',
+      'reviewedBy': reviewerId,
+      'reviewedAt': Timestamp.now(),
+      'reviewNotes': reviewNotes,
+      'updatedAt': Timestamp.now(),
+    }, SetOptions(merge: true));
   }
 }
 
@@ -1865,11 +1943,25 @@ class AssessmentInstrumentRepository {
 }
 
 class ItemResponseRepository {
-  CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('itemResponses');
+  ItemResponseRepository({
+    FirebaseFirestore? firestore,
+    MetacognitiveCalibrationRepository? calibrationRepository,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _calibrationRepository = calibrationRepository ??
+            MetacognitiveCalibrationRepository(
+              firestore: firestore ?? FirebaseFirestore.instance,
+            );
 
-  Future<void> upsert(ItemResponseModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+  final FirebaseFirestore _firestore;
+  final MetacognitiveCalibrationRepository _calibrationRepository;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('itemResponses');
+
+  Future<void> upsert(ItemResponseModel model) async {
+    await _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+    await _persistCalibrationRecord(responseId: model.id, model: model);
+  }
 
   Future<List<ItemResponseModel>> listByLearner({
     required String siteId,
@@ -1903,6 +1995,52 @@ class ItemResponseRepository {
   Future<String> submit(ItemResponseModel model) async {
     final doc = _col.doc();
     await doc.set(model.toMap());
+    await _persistCalibrationRecord(responseId: doc.id, model: model);
     return doc.id;
+  }
+
+  Future<void> _persistCalibrationRecord({
+    required String responseId,
+    required ItemResponseModel model,
+  }) async {
+    if (responseId.isEmpty || model.confidenceLevel == null || model.isCorrect == null) {
+      return;
+    }
+
+    final double confidenceScore = model.confidenceLevel!.clamp(1, 5) / 5.0;
+    final double accuracyScore = model.isCorrect! ? 1.0 : 0.0;
+    final MetacognitiveCalibrationRecordModel record =
+        MetacognitiveCalibrationRecordModel(
+      id: responseId,
+      siteId: model.siteId,
+      learnerId: model.learnerId,
+      sourceType: 'item_response',
+      sourceId: responseId,
+      instrumentId: model.instrumentId,
+      itemId: model.itemId,
+      confidenceLevel: model.confidenceLevel!,
+      confidenceScore: confidenceScore,
+      accuracyScore: accuracyScore,
+      calibrationDelta: confidenceScore - accuracyScore,
+      createdAt: model.createdAt ?? Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    );
+
+    await _calibrationRepository.upsert(record);
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'calibration.recorded',
+        role: 'learner',
+        siteId: model.siteId,
+        metadata: <String, dynamic>{
+          'sourceType': 'item_response',
+          'instrumentId': model.instrumentId,
+          'itemId': model.itemId,
+          'confidenceLevel': model.confidenceLevel,
+          'accuracyScore': accuracyScore,
+          'calibrationDelta': confidenceScore - accuracyScore,
+        },
+      );
+    } catch (_) {}
   }
 }

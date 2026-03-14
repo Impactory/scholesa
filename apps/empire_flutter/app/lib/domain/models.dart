@@ -2548,6 +2548,87 @@ class SyncJobModel {
 }
 
 @immutable
+class RosterImportModel {
+  const RosterImportModel({
+    required this.id,
+    required this.sessionId,
+    required this.educatorId,
+    required this.status,
+    required this.source,
+    required this.rowNumber,
+    this.siteId,
+    this.displayName,
+    this.email,
+    this.learnerIdCandidate,
+    this.rawRow = const <String>[],
+    this.reviewNotes,
+    this.reviewedBy,
+    this.reviewedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String? siteId;
+  final String sessionId;
+  final String educatorId;
+  final String status;
+  final String source;
+  final int rowNumber;
+  final String? displayName;
+  final String? email;
+  final String? learnerIdCandidate;
+  final List<String> rawRow;
+  final String? reviewNotes;
+  final String? reviewedBy;
+  final Timestamp? reviewedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory RosterImportModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return RosterImportModel(
+      id: doc.id,
+      siteId: data['siteId'] as String?,
+      sessionId: data['sessionId'] as String? ?? '',
+      educatorId: data['educatorId'] as String? ?? '',
+      status: data['status'] as String? ?? 'pending_provisioning',
+      source: data['source'] as String? ?? 'csv_import',
+      rowNumber: data['rowNumber'] as int? ?? 0,
+      displayName: data['displayName'] as String?,
+      email: data['email'] as String?,
+      learnerIdCandidate: data['learnerIdCandidate'] as String?,
+      rawRow: List<String>.from(data['rawRow'] as List? ?? const <String>[]),
+      reviewNotes: data['reviewNotes'] as String?,
+      reviewedBy: data['reviewedBy'] as String?,
+      reviewedAt: data['reviewedAt'] as Timestamp?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        if (siteId != null) 'siteId': siteId,
+        'sessionId': sessionId,
+        'educatorId': educatorId,
+        'status': status,
+        'source': source,
+        'rowNumber': rowNumber,
+        if (displayName != null) 'displayName': displayName,
+        if (email != null) 'email': email,
+        if (learnerIdCandidate != null)
+          'learnerIdCandidate': learnerIdCandidate,
+        'rawRow': rawRow,
+        if (reviewNotes != null) 'reviewNotes': reviewNotes,
+        if (reviewedBy != null) 'reviewedBy': reviewedBy,
+        if (reviewedAt != null) 'reviewedAt': reviewedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class SyncCursorModel {
   const SyncCursorModel({
     required this.id,
@@ -3387,5 +3468,72 @@ class ItemResponseModel {
         'timeSpentMs': timeSpentMs,
         if (confidenceLevel != null) 'confidenceLevel': confidenceLevel,
         'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+class MetacognitiveCalibrationRecordModel {
+  MetacognitiveCalibrationRecordModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.sourceType,
+    required this.sourceId,
+    required this.confidenceLevel,
+    required this.confidenceScore,
+    required this.accuracyScore,
+    required this.calibrationDelta,
+    this.instrumentId,
+    this.itemId,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String sourceType;
+  final String sourceId;
+  final int confidenceLevel;
+  final double confidenceScore;
+  final double accuracyScore;
+  final double calibrationDelta;
+  final String? instrumentId;
+  final String? itemId;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory MetacognitiveCalibrationRecordModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    return MetacognitiveCalibrationRecordModel(
+      id: doc.id,
+      siteId: m['siteId'] as String? ?? '',
+      learnerId: m['learnerId'] as String? ?? '',
+      sourceType: m['sourceType'] as String? ?? 'item_response',
+      sourceId: m['sourceId'] as String? ?? doc.id,
+      confidenceLevel: m['confidenceLevel'] as int? ?? 0,
+      confidenceScore: (m['confidenceScore'] as num?)?.toDouble() ?? 0,
+      accuracyScore: (m['accuracyScore'] as num?)?.toDouble() ?? 0,
+      calibrationDelta: (m['calibrationDelta'] as num?)?.toDouble() ?? 0,
+      instrumentId: m['instrumentId'] as String?,
+      itemId: m['itemId'] as String?,
+      createdAt: m['createdAt'] as Timestamp?,
+      updatedAt: m['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'sourceType': sourceType,
+        'sourceId': sourceId,
+        'confidenceLevel': confidenceLevel,
+        'confidenceScore': confidenceScore,
+        'accuracyScore': accuracyScore,
+        'calibrationDelta': calibrationDelta,
+        if (instrumentId != null) 'instrumentId': instrumentId,
+        if (itemId != null) 'itemId': itemId,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
       };
 }

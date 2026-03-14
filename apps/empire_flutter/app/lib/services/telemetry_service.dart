@@ -57,6 +57,7 @@ class TelemetryService {
     'onboarding.started',
     'onboarding.completed',
     'diagnostic.submitted',
+    'calibration.recorded',
     'learner.goal.updated',
     'accessibility.setting.changed',
     'reflection.submitted',

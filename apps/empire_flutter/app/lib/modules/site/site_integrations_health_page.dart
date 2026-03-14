@@ -4,6 +4,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/models.dart';
+import '../../domain/repositories.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -11,7 +13,14 @@ import '../../ui/theme/scholesa_theme.dart';
 /// Site integrations health page
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class SiteIntegrationsHealthPage extends StatefulWidget {
-  const SiteIntegrationsHealthPage({super.key});
+  const SiteIntegrationsHealthPage({
+    super.key,
+    this.healthLoader,
+    this.rosterImportRepository,
+  });
+
+  final Future<Map<String, dynamic>> Function(String siteId)? healthLoader;
+  final RosterImportRepository? rosterImportRepository;
 
   @override
   State<SiteIntegrationsHealthPage> createState() =>
@@ -25,8 +34,12 @@ class _SiteIntegrationsHealthPageState
   }
 
   List<_Integration> _integrations = <_Integration>[];
+  List<RosterImportModel> _rosterImports = <RosterImportModel>[];
   bool _isLoading = false;
   String? _siteId;
+
+  RosterImportRepository get _rosterImportRepository =>
+      widget.rosterImportRepository ?? RosterImportRepository();
 
   @override
   void initState() {
@@ -95,6 +108,10 @@ class _SiteIntegrationsHealthPageState
                 ),
               ),
             ),
+          if (!_isLoading && _rosterImports.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 24),
+            _buildRosterImportQueue(),
+          ],
           ..._integrations
               .map((integration) => _buildIntegrationCard(integration)),
         ],
@@ -312,6 +329,123 @@ class _SiteIntegrationsHealthPageState
     );
   }
 
+  Widget _buildRosterImportQueue() {
+    return Card(
+      color: ScholesaColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t('Roster Review Queue'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t('Queued CSV rows that still need an admin review before provisioning.'),
+              style: const TextStyle(
+                fontSize: 13,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ..._rosterImports.map(_buildRosterImportTile),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRosterImportTile(RosterImportModel importRow) {
+    final String primaryLabel = importRow.displayName?.trim().isNotEmpty == true
+        ? importRow.displayName!.trim()
+        : (importRow.email?.trim().isNotEmpty == true
+            ? importRow.email!.trim()
+            : 'Queued learner');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFF7F9FC),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      primaryLabel,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: ScholesaColors.textPrimary,
+                      ),
+                    ),
+                    if (importRow.email != null &&
+                        importRow.email != primaryLabel) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        importRow.email!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_t('Session')}: ${importRow.sessionId} • ${_t('Row')}: ${importRow.rowNumber}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: ScholesaColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: const Color(0xFFFEF3C7),
+                ),
+                child: Text(
+                  importRow.status,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _handleMarkRosterImportReviewed(importRow),
+              icon: const Icon(Icons.task_alt_rounded),
+              label: Text(_t('Mark reviewed')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(_IntegrationStatus status) {
     switch (status) {
       case _IntegrationStatus.healthy:
@@ -488,6 +622,32 @@ class _SiteIntegrationsHealthPageState
     );
   }
 
+  Future<void> _handleMarkRosterImportReviewed(RosterImportModel importRow) async {
+    final AppState appState = context.read<AppState>();
+    final String reviewerId = (appState.userId ?? '').trim();
+    if (reviewerId.isEmpty) return;
+
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_integrations_health',
+        'cta_id': 'mark_roster_import_reviewed',
+        'surface': 'roster_review_queue',
+        'roster_import_id': importRow.id,
+      },
+    );
+
+    await _rosterImportRepository.markReviewed(
+      id: importRow.id,
+      reviewerId: reviewerId,
+    );
+    await _loadIntegrations();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_t('Roster row marked reviewed'))),
+    );
+  }
+
   String _formatTime(DateTime time) {
     final Duration diff = DateTime.now().difference(time);
     if (diff.inMinutes < 60) {
@@ -510,12 +670,9 @@ class _SiteIntegrationsHealthPageState
     setState(() => _isLoading = true);
 
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'siteId': siteId});
-      final Map<String, dynamic> payload =
-          Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
+      final Map<String, dynamic> payload = widget.healthLoader != null
+        ? await widget.healthLoader!(siteId)
+        : await _fetchHealthPayload(siteId);
       final List<Map<String, dynamic>> connectionsRows =
           (payload['connections'] as List<dynamic>? ?? <dynamic>[])
               .whereType<Map<dynamic, dynamic>>()
@@ -586,16 +743,37 @@ class _SiteIntegrationsHealthPageState
 
       loaded.sort((_Integration a, _Integration b) => a.name.compareTo(b.name));
 
+      final List<RosterImportModel> rosterImports = siteId.isEmpty
+          ? <RosterImportModel>[]
+          : await _rosterImportRepository.listBySite(
+              siteId,
+              pendingOnly: true,
+            );
+
       if (!mounted) return;
-      setState(() => _integrations = loaded);
+      setState(() {
+        _integrations = loaded;
+        _rosterImports = rosterImports;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _integrations = <_Integration>[]);
+      setState(() {
+        _integrations = <_Integration>[];
+        _rosterImports = <RosterImportModel>[];
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<Map<String, dynamic>> _fetchHealthPayload(String siteId) async {
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
+    final HttpsCallableResult<dynamic> result =
+        await callable.call(<String, dynamic>{'siteId': siteId});
+    return Map<String, dynamic>.from(result.data as Map<dynamic, dynamic>);
   }
 
   DateTime? _toDateTime(dynamic value) {

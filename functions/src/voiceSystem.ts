@@ -13,7 +13,7 @@ import { isCoppaConsentActive } from './coppaGuards';
 export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
 export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
 type VoiceRole = 'student' | 'teacher' | 'admin';
-type VoiceRequesterRole = VoiceRole | 'parent';
+export type VoiceRequesterRole = VoiceRole | 'parent';
 type SafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
 type GradeBand = 'K-5' | '6-8' | '9-12' | 'All';
 type VoiceIntent =
@@ -101,7 +101,7 @@ interface VoiceAuthContext {
   gradeBand: GradeBand;
 }
 
-interface SafetyDecision {
+export interface SafetyDecision {
   safetyOutcome: SafetyOutcome;
   safetyReasonCode: string;
   localizedMessage: string;
@@ -952,7 +952,7 @@ function inferCategory(message: string, role: VoiceRequesterRole): SafetyDecisio
   return 'generic';
 }
 
-function evaluateSafetyDecision(message: string, role: VoiceRequesterRole, locale: VoiceLocale): SafetyDecision {
+export function evaluateSafetyDecision(message: string, role: VoiceRequesterRole, locale: VoiceLocale): SafetyDecision {
   const normalized = message.trim();
   const category = inferCategory(normalized, role);
   if (SELF_HARM_PATTERNS.some((pattern) => pattern.test(normalized))) {

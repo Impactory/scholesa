@@ -247,6 +247,7 @@ const ALLOWED_TELEMETRY_EVENTS: Set<string> = new Set([
   'onboarding.started',
   'onboarding.completed',
   'diagnostic.submitted',
+  'calibration.recorded',
   'learner.goal.updated',
   'accessibility.setting.changed',
   'fsrs.review.rated',

@@ -18,7 +18,13 @@ const DEFAULT_INTERNAL_AI_HOST_MARKERS = [
 ];
 
 type GuardMode = 'general' | 'internal-ai-only';
-type BlockReason = 'blocked_host' | 'non_internal_host' | 'invalid_url';
+export type BlockReason = 'blocked_host' | 'non_internal_host' | 'invalid_url';
+
+export interface GuardEvaluationResult {
+  allowed: boolean;
+  host: string;
+  reason?: BlockReason;
+}
 
 function hostnameFromUrl(url: string): string {
   try {
@@ -64,43 +70,69 @@ async function emitSecurityEgressBlocked(details: {
   }
 }
 
+export function evaluateGuardedEgressTarget(
+  url: string,
+  options: { mode?: GuardMode; allowMarkers?: string[] },
+): GuardEvaluationResult {
+  const host = hostnameFromUrl(url);
+  if (!host) {
+    return {
+      allowed: false,
+      host: '',
+      reason: 'invalid_url',
+    };
+  }
+
+  const blocked = BLOCKED_AI_HOST_MARKERS.some((marker) =>
+    matchesHostMarker(host, marker),
+  );
+  if (blocked) {
+    return {
+      allowed: false,
+      host,
+      reason: 'blocked_host',
+    };
+  }
+
+  if (options.mode === 'internal-ai-only') {
+    const allowMarkers = options.allowMarkers ?? internalAllowMarkers();
+    const allowed = allowMarkers.some((marker) => matchesHostMarker(host, marker));
+    if (!allowed) {
+      return {
+        allowed: false,
+        host,
+        reason: 'non_internal_host',
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    host,
+  };
+}
+
 export async function guardedFetch(
   url: string,
   init: RequestInit,
   options: { source: string; mode?: GuardMode }
 ): Promise<Response> {
-  const host = hostnameFromUrl(url);
-  if (!host) {
+  const evaluation = evaluateGuardedEgressTarget(url, { mode: options.mode });
+  if (!evaluation.allowed) {
     await emitSecurityEgressBlocked({
       source: options.source,
       url,
-      host: '',
-      reason: 'invalid_url',
+      host: evaluation.host,
+      reason: evaluation.reason ?? 'invalid_url',
     });
-    throw new Error(`Invalid outbound URL: ${url}`);
-  }
-
-  const blocked = BLOCKED_AI_HOST_MARKERS.some((marker) => matchesHostMarker(host, marker));
-  if (blocked) {
-    await emitSecurityEgressBlocked({
-      source: options.source,
-      url,
-      host,
-      reason: 'blocked_host',
-    });
-    throw new Error(`Blocked outbound host: ${host}`);
-  }
-
-  if (options.mode === 'internal-ai-only') {
-    const allowed = internalAllowMarkers().some((marker) => matchesHostMarker(host, marker));
-    if (!allowed) {
-      await emitSecurityEgressBlocked({
-        source: options.source,
-        url,
-        host,
-        reason: 'non_internal_host',
-      });
-      throw new Error(`Non-internal AI host blocked: ${host}`);
+    if (evaluation.reason === 'invalid_url') {
+      throw new Error(`Invalid outbound URL: ${url}`);
+    }
+    if (evaluation.reason === 'blocked_host') {
+      throw new Error(`Blocked outbound host: ${evaluation.host}`);
+    }
+    if (evaluation.reason === 'non_internal_host') {
+      throw new Error(`Non-internal AI host blocked: ${evaluation.host}`);
     }
   }
 
