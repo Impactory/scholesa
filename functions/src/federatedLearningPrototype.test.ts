@@ -4,6 +4,7 @@ import {
   buildFederatedLearningCandidatePromotionRecordDocId,
   buildFederatedLearningCandidatePromotionRevocationRecordDocId,
   buildFederatedLearningExperimentReviewRecordDocId,
+  buildFederatedLearningPilotEvidenceRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -14,6 +15,7 @@ import {
   normalizeFederatedLearningCandidatePromotionStatus,
   normalizeFederatedLearningCandidatePromotionTarget,
   normalizeFederatedLearningExperimentReviewStatus,
+  normalizeFederatedLearningPilotEvidenceStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -38,6 +40,9 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningExperimentReviewStatus('approved')).toBe('approved');
     expect(normalizeFederatedLearningExperimentReviewStatus('blocked')).toBe('blocked');
     expect(normalizeFederatedLearningExperimentReviewStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningPilotEvidenceStatus('ready-for-pilot')).toBe('ready_for_pilot');
+    expect(normalizeFederatedLearningPilotEvidenceStatus('blocked')).toBe('blocked');
+    expect(normalizeFederatedLearningPilotEvidenceStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -55,6 +60,8 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_prom_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningCandidatePromotionRevocationRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_prom_revoke_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningPilotEvidenceRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_pilot_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

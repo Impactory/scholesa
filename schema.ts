@@ -206,6 +206,7 @@ export interface AuditLog {
 export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
 export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
 export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
+export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -315,6 +316,8 @@ export interface FederatedLearningCandidateModelPackage {
   latestPromotionRecordId?: string;
   latestPromotionStatus?: 'approved_for_eval' | 'hold' | 'revoked';
   latestPromotionRevocationRecordId?: string;
+  latestPilotEvidenceRecordId?: string;
+  latestPilotEvidenceStatus?: FederatedLearningPilotEvidenceStatus;
   packageDigest: string;
   boundedDigest: string;
   sampleCount: number;
@@ -357,6 +360,23 @@ export interface FederatedLearningCandidatePromotionRevocationRecord {
   rationale?: string;
   revokedBy?: string;
   revokedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningPilotEvidenceRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  aggregationRunId: string;
+  mergeArtifactId: string;
+  status: FederatedLearningPilotEvidenceStatus;
+  sandboxEvalComplete: boolean;
+  metricsSnapshotComplete: boolean;
+  rollbackPlanVerified: boolean;
+  notes?: string;
+  reviewedBy?: string;
+  reviewedAt?: number;
   createdAt: number;
   updatedAt: number;
 }
