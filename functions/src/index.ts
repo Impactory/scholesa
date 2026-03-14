@@ -109,6 +109,7 @@ export {
   listFederatedLearningRuntimeDeliveryRecords,
   listFederatedLearningRuntimeActivationRecords,
   listFederatedLearningRuntimeRolloutAlertRecords,
+  listFederatedLearningRuntimeRolloutAuditEvents,
   listSiteFederatedLearningRuntimeDeliveryRecords,
   listSiteFederatedLearningRuntimeActivationRecords,
   resolveSiteFederatedLearningRuntimePackage,

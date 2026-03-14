@@ -3983,6 +3983,56 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
 }
 
 @immutable
+class FederatedLearningRuntimeRolloutAuditEventModel {
+  const FederatedLearningRuntimeRolloutAuditEventModel({
+    required this.id,
+    required this.action,
+    required this.collection,
+    required this.documentId,
+    required this.timestamp,
+    required this.details,
+    this.userId,
+  });
+
+  final String id;
+  final String action;
+  final String collection;
+  final String documentId;
+  final int timestamp;
+  final Map<String, dynamic> details;
+  final String? userId;
+
+  String get experimentId => details['experimentId'] as String? ?? '';
+  String get candidateModelPackageId =>
+      details['candidateModelPackageId'] as String? ?? '';
+  String get deliveryRecordId => details['deliveryRecordId'] as String? ?? '';
+  String get siteId => details['siteId'] as String? ?? '';
+  String get status => details['status'] as String? ?? '';
+  String get runtimeTarget => details['runtimeTarget'] as String? ?? '';
+  String get manifestDigest => details['manifestDigest'] as String? ?? '';
+  int get fallbackCount => (details['fallbackCount'] as num?)?.toInt() ?? 0;
+  int get pendingCount => (details['pendingCount'] as num?)?.toInt() ?? 0;
+  List<String> get targetSiteIds => _stringListOrEmpty(details['targetSiteIds']);
+
+  factory FederatedLearningRuntimeRolloutAuditEventModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeRolloutAuditEventModel(
+      id: id,
+      action: data['action'] as String? ?? '',
+      collection: data['collection'] as String? ?? '',
+      documentId: data['documentId'] as String? ?? '',
+      timestamp: (data['timestamp'] as num?)?.toInt() ?? 0,
+      details: Map<String, dynamic>.from(
+        data['details'] as Map? ?? <String, dynamic>{},
+      ),
+      userId: data['userId'] as String?,
+    );
+  }
+}
+
+@immutable
 class FederatedLearningResolvedRuntimePackageModel {
   const FederatedLearningResolvedRuntimePackageModel({
     required this.packageId,

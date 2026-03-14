@@ -42,6 +42,7 @@ Implemented prototype scope:
 - HQ rollout-alert highlighting on experiment cards when fallback or pending site statuses exist for the latest runtime delivery
 - HQ alert-first ordering of experiment cards so fallback and pending rollout issues surface ahead of healthy prototype experiments
 - HQ persisted rollout-alert triage records so fallback and pending delivery issues can be acknowledged with notes instead of remaining permanently raw operator alerts
+- HQ rollout-alert history visibility across runtime deliveries, plus a bounded rollout-audit feed covering delivery, activation, and alert-triage state changes per experiment
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -121,6 +122,7 @@ Passed on 2026-03-14:
 - The HQ feature-flags surface now also raises a bounded rollout alert directly on the experiment card whenever the latest delivery has fallback or pending site states, so operators can spot drift without opening the rollout dialogs first.
 - The HQ feature-flags surface now also prioritizes those alerted experiments above healthy ones, so fallback and pending rollout issues rise to the top of the bounded operator queue.
 - HQ can now persist rollout-alert triage records per runtime delivery, including fallback and pending counts, acknowledgement status, acknowledgement metadata, and operator notes, so reviewed rollout issues stop surfacing as permanently raw alerts while remaining bounded to the prototype operator workflow.
+- HQ can now inspect rollout-alert history across recent runtime deliveries and open a bounded rollout-audit feed that shows the underlying delivery, activation, and alert-triage state changes per experiment or per delivery without claiming a generalized production rollout control plane.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

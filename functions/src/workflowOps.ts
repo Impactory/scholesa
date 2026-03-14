@@ -2478,6 +2478,73 @@ export const listFederatedLearningRuntimeRolloutAlertRecords = onCall(async (req
   return { records };
 });
 
+export const listFederatedLearningRuntimeRolloutAuditEvents = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 200
+    ? request.data.limit
+    : 80;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  const siteId = asTrimmedString(request.data?.siteId);
+  const actionFilter = new Set<string>([
+    federatedLearningAuditAction('runtime_delivery_record.upsert'),
+    federatedLearningAuditAction('runtime_activation_record.upsert'),
+    federatedLearningAuditAction('runtime_rollout_alert_record.upsert'),
+  ]);
+
+  const snap = await admin.firestore()
+    .collection('auditLogs')
+    .where('action', 'in', Array.from(actionFilter))
+    .orderBy('timestamp', 'desc')
+    .limit(Math.min(limitValue * 3, 200))
+    .get()
+    .catch(() => admin.firestore().collection('auditLogs').limit(400).get());
+
+  const records = snap.docs
+    .map((snapDoc) => ({
+      id: snapDoc.id,
+      ...(snapDoc.data() as Record<string, unknown>),
+    }))
+    .filter((row) => {
+      const rowData = row as Record<string, unknown>;
+      const details = (rowData.details || {}) as Record<string, unknown>;
+      const rowAction = asTrimmedString(rowData.action);
+      if (!actionFilter.has(rowAction)) {
+        return false;
+      }
+      if (experimentId && asTrimmedString(details.experimentId) !== experimentId) {
+        return false;
+      }
+      if (candidateModelPackageId && asTrimmedString(details.candidateModelPackageId) !== candidateModelPackageId) {
+        return false;
+      }
+      if (deliveryRecordId && asTrimmedString(details.deliveryRecordId) !== deliveryRecordId) {
+        return false;
+      }
+      if (siteId && asTrimmedString(details.siteId) !== siteId) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const aTimestamp = typeof (a as Record<string, unknown>).timestamp === 'number'
+        ? ((a as Record<string, unknown>).timestamp as number)
+        : 0;
+      const bTimestamp = typeof (b as Record<string, unknown>).timestamp === 'number'
+        ? ((b as Record<string, unknown>).timestamp as number)
+        : 0;
+      return bTimestamp - aTimestamp;
+    })
+    .slice(0, limitValue);
+
+  return { records };
+});
+
 export const listSiteFederatedLearningRuntimeActivationRecords = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (!['site', 'hq'].includes(actor.role)) {

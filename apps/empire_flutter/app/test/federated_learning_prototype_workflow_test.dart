@@ -30,6 +30,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? runtimeDeliveryRecords,
     List<Map<String, dynamic>>? runtimeActivationRecords,
     List<Map<String, dynamic>>? runtimeRolloutAlertRecords,
+    List<Map<String, dynamic>>? runtimeRolloutAuditEvents,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -69,6 +70,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _runtimeRolloutAlertRecords = List<Map<String, dynamic>>.from(
           runtimeRolloutAlertRecords ?? <Map<String, dynamic>>[],
         ),
+        _runtimeRolloutAuditEvents = List<Map<String, dynamic>>.from(
+          runtimeRolloutAuditEvents ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -90,6 +94,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _runtimeDeliveryRecords;
   final List<Map<String, dynamic>> _runtimeActivationRecords;
   final List<Map<String, dynamic>> _runtimeRolloutAlertRecords;
+  final List<Map<String, dynamic>> _runtimeRolloutAuditEvents;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
@@ -499,6 +504,45 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (status != null && status.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) => row['status'] == status,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAuditEvents({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? siteId,
+    int limit = 80,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _runtimeRolloutAuditEvents;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (siteId != null && siteId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['siteId'] == siteId,
       );
     }
     return scoped
@@ -1256,6 +1300,33 @@ Map<String, dynamic> _runtimeRolloutAlertRecordRow({
     'acknowledgedAt': acknowledgedAt,
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 21),
     'updatedAt': updatedAt ?? DateTime(2026, 3, 14, 21),
+  };
+}
+
+Map<String, dynamic> _runtimeRolloutAuditEventRow({
+  String id = 'audit-1',
+  String action = 'federated_learning.runtime_rollout_alert_record.upsert',
+  String collection = 'federatedLearningRuntimeRolloutAlertRecords',
+  String documentId = 'fl_rollout_alert_1',
+  int timestamp = 1773522000000,
+  String userId = 'hq-1',
+  Map<String, dynamic>? details,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'action': action,
+    'collection': collection,
+    'documentId': documentId,
+    'timestamp': timestamp,
+    'userId': userId,
+    'details': details ?? <String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'candidateModelPackageId': 'fl_pkg_1',
+      'deliveryRecordId': 'fl_delivery_1',
+      'status': 'acknowledged',
+      'fallbackCount': 1,
+      'pendingCount': 0,
+    },
   };
 }
 
@@ -2869,6 +2940,68 @@ void main() {
     expect(find.widgetWithText(TextButton, 'Update triage'), findsOneWidget);
   });
 
+  testWidgets('HQ page shows runtime rollout alert history',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(
+          status: 'acknowledged',
+          notes: 'Reviewed with site ops and monitoring in place.',
+          acknowledgedBy: 'hq-1',
+          acknowledgedAt: DateTime(2026, 3, 14, 21),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder alertHistoryButton = find.widgetWithText(
+      TextButton,
+      'Alert history',
+    );
+    await tester.ensureVisible(alertHistoryButton.first);
+    final TextButton alertHistoryControl = tester.widget<TextButton>(
+      alertHistoryButton.first,
+    );
+    alertHistoryControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime rollout alert history: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('fl_delivery_1 · acknowledged · 1 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('HQ notes: Reviewed with site ops and monitoring in place.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'View audit feed'), findsWidgets);
+  });
+
   testWidgets('HQ page re-raises rollout alerts when acknowledged counts drift',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
@@ -3001,6 +3134,95 @@ void main() {
       find.text(
         'Rollout alert acknowledged: 1 fallback site statuses reviewed. Use Site rollout for detail.',
       ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('HQ page shows runtime rollout audit feed',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(status: 'acknowledged'),
+      ],
+      runtimeRolloutAuditEvents: <Map<String, dynamic>>[
+        _runtimeRolloutAuditEventRow(
+          id: 'audit-alert',
+          action: 'federated_learning.runtime_rollout_alert_record.upsert',
+          collection: 'federatedLearningRuntimeRolloutAlertRecords',
+          documentId: 'fl_rollout_alert_1',
+          timestamp: 1773522000000,
+        ),
+        _runtimeRolloutAuditEventRow(
+          id: 'audit-activation',
+          action: 'federated_learning.runtime_activation_record.upsert',
+          collection: 'federatedLearningRuntimeActivationRecords',
+          documentId: 'fl_runtime_activation_1_site-2',
+          timestamp: 1773521940000,
+          details: <String, dynamic>{
+            'experimentId': 'fl_exp_literacy_pilot',
+            'candidateModelPackageId': 'fl_pkg_1',
+            'deliveryRecordId': 'fl_delivery_1',
+            'siteId': 'site-2',
+            'runtimeTarget': 'flutter_mobile',
+            'status': 'fallback',
+            'manifestDigest': 'sha256:delivery-1',
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder alertHistoryButton = find.widgetWithText(
+      TextButton,
+      'Alert history',
+    );
+    await tester.ensureVisible(alertHistoryButton.first);
+    tester.widget<TextButton>(alertHistoryButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    final Finder auditFeedButton = find.widgetWithText(
+      TextButton,
+      'View rollout audit',
+    );
+    tester.widget<TextButton>(auditFeedButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime rollout audit: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Alert triage fl_delivery_1 · acknowledged'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Activation site-2 · fallback'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Delivery fl_delivery_1 · 1 fallback · 0 pending'),
       findsOneWidget,
     );
   });

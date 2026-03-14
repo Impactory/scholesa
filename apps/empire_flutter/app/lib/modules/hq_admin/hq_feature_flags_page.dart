@@ -556,6 +556,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           icon: const Icon(Icons.monitor_heart_rounded),
                           label: Text(_tHqFeatureFlags(context, 'Site rollout')),
                         ),
+                      if (latestRuntimeDelivery != null)
+                        TextButton.icon(
+                          onPressed: () => _showRuntimeRolloutAlertHistoryDialog(
+                            experiment,
+                          ),
+                          icon: const Icon(Icons.notifications_active_rounded),
+                          label: Text(_tHqFeatureFlags(context, 'Alert history')),
+                        ),
                       if (latestPackage != null)
                         TextButton.icon(
                           onPressed: () => _showRuntimeActivationHistoryDialog(
@@ -3978,6 +3986,244 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
+  Future<void> _showRuntimeRolloutAlertHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+  ) async {
+    final List<dynamic> payloads = await Future.wait<dynamic>(<Future<dynamic>>[
+      _workflowBridge.listFederatedLearningRuntimeRolloutAlertRecords(
+        experimentId: experiment.id,
+        limit: 120,
+      ),
+      _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(
+        experimentId: experiment.id,
+        limit: 120,
+      ),
+    ]);
+
+    final List<FederatedLearningRuntimeRolloutAlertRecordModel> records =
+        (payloads[0] as List<Map<String, dynamic>>)
+            .map((Map<String, dynamic> row) =>
+                FederatedLearningRuntimeRolloutAlertRecordModel.fromMap(
+                  (row['id'] as String?) ?? 'runtime_rollout_alert_record',
+                  row,
+                ))
+            .toList()
+          ..sort((a, b) {
+            final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+            final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+            return bMillis.compareTo(aMillis);
+          });
+    final Map<String, FederatedLearningRuntimeDeliveryRecordModel>
+        deliveriesById = {
+      for (final FederatedLearningRuntimeDeliveryRecordModel delivery
+          in (payloads[1] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_delivery_record',
+                    row,
+                  )))
+        delivery.id: delivery,
+    };
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              dialogContext,
+              'Runtime rollout alert history: ${experiment.name}',
+            ),
+          ),
+          content: SizedBox(
+            width: 700,
+            child: records.isEmpty
+                ? Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'No rollout alert triage records recorded for this experiment yet.',
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: records
+                          .map((FederatedLearningRuntimeRolloutAlertRecordModel record) {
+                        final FederatedLearningRuntimeDeliveryRecordModel?
+                            delivery = deliveriesById[record.deliveryRecordId];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  '${record.deliveryRecordId} · ${record.status} · ${record.fallbackCount} fallback · ${record.pendingCount} pending',
+                                ),
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              if (delivery != null) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Delivery: ${delivery.status} · ${delivery.targetSiteIds.length} sites · ${delivery.runtimeTarget}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if ((record.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'HQ notes: ${record.notes!.trim()}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (record.status == 'acknowledged') ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Acknowledged ${_formatTimestamp(record.acknowledgedAt)} by ${record.acknowledgedBy ?? 'hq'}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 6),
+                              TextButton.icon(
+                                onPressed: () => _showRuntimeRolloutAuditDialog(
+                                  experiment,
+                                  deliveryRecordId: record.deliveryRecordId,
+                                ),
+                                icon: const Icon(Icons.receipt_long_rounded),
+                                label: Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'View audit feed',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(growable: false),
+                    ),
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton.icon(
+              onPressed: () => _showRuntimeRolloutAuditDialog(experiment),
+              icon: const Icon(Icons.receipt_long_rounded),
+              label: Text(_tHqFeatureFlags(dialogContext, 'View rollout audit')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showRuntimeRolloutAuditDialog(
+    FederatedLearningExperimentModel experiment, {
+    String? deliveryRecordId,
+  }) async {
+    final List<FederatedLearningRuntimeRolloutAuditEventModel> events =
+        (await _workflowBridge.listFederatedLearningRuntimeRolloutAuditEvents(
+      experimentId: experiment.id,
+      deliveryRecordId: deliveryRecordId,
+      limit: 160,
+    ))
+            .map((Map<String, dynamic> row) =>
+                FederatedLearningRuntimeRolloutAuditEventModel.fromMap(
+                  (row['id'] as String?) ?? 'runtime_rollout_audit_event',
+                  row,
+                ))
+            .toList()
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              dialogContext,
+              deliveryRecordId == null
+                  ? 'Runtime rollout audit: ${experiment.name}'
+                  : 'Runtime rollout audit: ${experiment.name} · $deliveryRecordId',
+            ),
+          ),
+          content: SizedBox(
+            width: 760,
+            child: events.isEmpty
+                ? Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'No rollout audit events recorded for this scope yet.',
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: events
+                          .map((FederatedLearningRuntimeRolloutAuditEventModel event) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  _runtimeRolloutAuditTitle(event),
+                                ),
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  _runtimeRolloutAuditDetail(event),
+                                ),
+                                style: const TextStyle(
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(growable: false),
+                    ),
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _showRuntimeActivationHistoryDialog(
     FederatedLearningExperimentModel experiment,
     FederatedLearningCandidateModelPackageModel candidatePackage,
@@ -4239,6 +4485,37 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'Rollout alert acknowledged: ${parts.join(' · ')} site statuses reviewed. Use Site rollout for detail.';
     }
     return 'Rollout alert: ${parts.join(' · ')} site statuses need review. Use Site rollout for detail.';
+  }
+
+  String _runtimeRolloutAuditTitle(
+    FederatedLearningRuntimeRolloutAuditEventModel event,
+  ) {
+    final String timestamp = DateTime.fromMillisecondsSinceEpoch(
+      event.timestamp,
+      isUtc: true,
+    ).toIso8601String();
+    if (event.action.endsWith('runtime_delivery_record.upsert')) {
+      return '$timestamp · Delivery ${event.deliveryRecordId} · ${event.status}';
+    }
+    if (event.action.endsWith('runtime_activation_record.upsert')) {
+      return '$timestamp · Activation ${event.siteId} · ${event.status}';
+    }
+    return '$timestamp · Alert triage ${event.deliveryRecordId} · ${event.status}';
+  }
+
+  String _runtimeRolloutAuditDetail(
+    FederatedLearningRuntimeRolloutAuditEventModel event,
+  ) {
+    if (event.action.endsWith('runtime_delivery_record.upsert')) {
+      final String sites = event.targetSiteIds.isEmpty
+          ? 'no target sites'
+          : event.targetSiteIds.join(', ');
+      return 'Sites: $sites · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
+    }
+    if (event.action.endsWith('runtime_activation_record.upsert')) {
+      return 'Delivery ${event.deliveryRecordId} · site ${event.siteId} · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
+    }
+    return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
   }
 
   int _compareExperimentPriority(
