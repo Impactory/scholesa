@@ -383,6 +383,24 @@ beforeEach(async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    await setDoc(doc(db, 'federatedLearningRuntimeDeliveryRecords', 'fl_delivery_demo_1'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      candidateModelPackageId: 'fl_pkg_demo_1',
+      aggregationRunId: 'fl_agg_demo_1',
+      mergeArtifactId: 'fl_merge_demo_1',
+      pilotExecutionRecordId: 'fl_pilot_execution_demo_1',
+      runtimeTarget: 'flutter_mobile',
+      targetSiteIds: ['site1'],
+      status: 'assigned',
+      packageDigest: 'sha256:pkg-demo-1',
+      manifestDigest: 'sha256:delivery-demo-1',
+      notes: 'Bounded runtime-delivery manifest assigned to the approved pilot site.',
+      assignedBy: hqUser.uid,
+      assignedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 });
 
@@ -771,6 +789,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningPilotExecutionRecords', 'fl_pilot_execution_demo_1')),
+    );
+  });
+
+  test('HQ can read runtime delivery records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningRuntimeDeliveryRecords', 'fl_delivery_demo_1')),
+    );
+  });
+
+  test('site admins cannot read runtime delivery records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningRuntimeDeliveryRecords', 'fl_delivery_demo_1')),
     );
   });
 });

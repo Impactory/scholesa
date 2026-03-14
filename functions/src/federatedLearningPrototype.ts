@@ -13,6 +13,7 @@ export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | '
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
+export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -223,6 +224,23 @@ export function buildFederatedLearningPilotExecutionRecordDocId(packageId: strin
   return `fl_pilot_execution_${packageId.replace(/^fl_pkg_/, '')}`;
 }
 
+export function buildFederatedLearningRuntimeDeliveryRecordDocId(packageId: string): string {
+  return `fl_delivery_${packageId.replace(/^fl_pkg_/, '')}`;
+}
+
+export function buildFederatedLearningRuntimeDeliveryManifestDigest(
+  packageDigest: string,
+  targetSiteIds: string[],
+  status: FederatedLearningRuntimeDeliveryStatus,
+  runtimeTarget: FederatedLearningRuntimeTarget,
+): string {
+  const digest = createHash('sha256')
+    .update(`${packageDigest}|${runtimeTarget}|${status}|${targetSiteIds.join('|')}`)
+    .digest('hex')
+    .slice(0, 24);
+  return `sha256:${digest}`;
+}
+
 export function normalizeFederatedLearningExperimentReviewStatus(
   value: unknown,
 ): FederatedLearningExperimentReviewStatus | null {
@@ -286,6 +304,17 @@ export function normalizeFederatedLearningPilotExecutionStatus(
   if (normalized === 'launched') return 'launched';
   if (normalized === 'observed') return 'observed';
   if (normalized === 'completed') return 'completed';
+  return null;
+}
+
+export function normalizeFederatedLearningRuntimeDeliveryStatus(
+  value: unknown,
+): FederatedLearningRuntimeDeliveryStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'prepared') return 'prepared';
+  if (normalized === 'assigned') return 'assigned';
+  if (normalized === 'active') return 'active';
+  if (normalized === 'revoked') return 'revoked';
   return null;
 }
 

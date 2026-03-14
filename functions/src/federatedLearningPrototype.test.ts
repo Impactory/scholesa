@@ -7,6 +7,8 @@ import {
   buildFederatedLearningPilotEvidenceRecordDocId,
   buildFederatedLearningPilotApprovalRecordDocId,
   buildFederatedLearningPilotExecutionRecordDocId,
+  buildFederatedLearningRuntimeDeliveryRecordDocId,
+  buildFederatedLearningRuntimeDeliveryManifestDigest,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -20,6 +22,7 @@ import {
   normalizeFederatedLearningPilotEvidenceStatus,
   normalizeFederatedLearningPilotApprovalStatus,
   normalizeFederatedLearningPilotExecutionStatus,
+  normalizeFederatedLearningRuntimeDeliveryStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -53,6 +56,9 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningPilotExecutionStatus('launched')).toBe('launched');
     expect(normalizeFederatedLearningPilotExecutionStatus('completed')).toBe('completed');
     expect(normalizeFederatedLearningPilotExecutionStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningRuntimeDeliveryStatus('assigned')).toBe('assigned');
+    expect(normalizeFederatedLearningRuntimeDeliveryStatus('revoked')).toBe('revoked');
+    expect(normalizeFederatedLearningRuntimeDeliveryStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -76,6 +82,14 @@ describe('federated learning prototype helpers', () => {
       .toBe('fl_pilot_approval_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningPilotExecutionRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
       .toBe('fl_pilot_execution_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningRuntimeDeliveryRecordDocId('fl_pkg_1cb85e2396ee2ed67818ed78'))
+      .toBe('fl_delivery_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningRuntimeDeliveryManifestDigest(
+      'sha256:pkg-1',
+      ['site-1', 'site-2'],
+      'assigned',
+      'flutter_mobile',
+    )).toBe('sha256:cb693e343e8589d76f94fe0d');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

@@ -209,6 +209,7 @@ export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | '
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
+export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -324,6 +325,8 @@ export interface FederatedLearningCandidateModelPackage {
   latestPilotApprovalStatus?: FederatedLearningPilotApprovalStatus;
   latestPilotExecutionRecordId?: string;
   latestPilotExecutionStatus?: FederatedLearningPilotExecutionStatus;
+  latestRuntimeDeliveryRecordId?: string;
+  latestRuntimeDeliveryStatus?: FederatedLearningRuntimeDeliveryStatus;
   packageDigest: string;
   boundedDigest: string;
   sampleCount: number;
@@ -419,6 +422,25 @@ export interface FederatedLearningPilotExecutionRecord {
   notes?: string;
   recordedBy?: string;
   recordedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningRuntimeDeliveryRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  aggregationRunId: string;
+  mergeArtifactId: string;
+  pilotExecutionRecordId: string;
+  runtimeTarget: FederatedLearningRuntimeTarget;
+  targetSiteIds: string[];
+  status: FederatedLearningRuntimeDeliveryStatus;
+  packageDigest: string;
+  manifestDigest: string;
+  notes?: string;
+  assignedBy?: string;
+  assignedAt?: number;
   createdAt: number;
   updatedAt: number;
 }
