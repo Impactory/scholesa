@@ -1392,8 +1392,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Widget _buildCandidatePackageHistoryEntry(
     FederatedLearningCandidateModelPackageModel package,
     FederatedLearningCandidatePromotionRecordModel? promotion,
+    {
+    VoidCallback? onApprove,
+    VoidCallback? onHold,
+  }
   ) {
     final String createdLabel = _formatTimestamp(package.createdAt);
+    final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
+    final bool isApproved = promotion?.status == 'approved_for_eval';
+    final bool isHold = promotion?.status == 'hold';
 
     return Container(
       width: double.infinity,
@@ -1470,6 +1477,32 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (promotion != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Decision record: ${promotion.id} · $decidedLabel',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            if ((promotion.decidedBy ?? '').trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Decided by: ${promotion.decidedBy}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
           if ((promotion?.rationale ?? '').trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -1483,9 +1516,186 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              FilledButton.tonal(
+                onPressed: isApproved ? null : onApprove,
+                child: Text(
+                  _tHqFeatureFlags(
+                    context,
+                    isApproved ? 'Approved for eval' : 'Approve for eval',
+                  ),
+                ),
+              ),
+              OutlinedButton(
+                onPressed: isHold ? null : onHold,
+                child: Text(
+                  _tHqFeatureFlags(
+                    context,
+                    isHold ? 'On hold' : 'Mark hold',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _showCandidatePromotionDecisionDialog({
+    required FederatedLearningExperimentModel experiment,
+    required FederatedLearningCandidateModelPackageModel package,
+    required String initialStatus,
+    FederatedLearningCandidatePromotionRecordModel? existingPromotion,
+    VoidCallback? refreshDialog,
+  }) async {
+    final TextEditingController rationaleController = TextEditingController(
+      text: existingPromotion?.rationale ?? '',
+    );
+    String selectedStatus = initialStatus;
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(context, 'Record package decision'),
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'Experiment: ${experiment.name}',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          'Package: ${package.id} · ${package.sampleCount} samples',
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedStatus,
+                        decoration: InputDecoration(
+                          labelText:
+                              _tHqFeatureFlags(context, 'Promotion decision'),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            value: 'approved_for_eval',
+                            child: Text('approved_for_eval'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'hold',
+                            child: Text('hold'),
+                          ),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            selectedStatus = value ?? initialStatus;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: rationaleController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Rationale'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Saved with the bounded sandbox-eval promotion record.',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(_tHqFeatureFlags(context, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(_tHqFeatureFlags(context, 'Save decision')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    await _saveCandidatePromotionDecision(
+      package: package,
+      status: selectedStatus,
+      rationale: rationaleController.text,
+    );
+    refreshDialog?.call();
+  }
+
+  Future<void> _saveCandidatePromotionDecision({
+    required FederatedLearningCandidateModelPackageModel package,
+    required String status,
+    required String rationale,
+  }) async {
+    try {
+      await _workflowBridge.upsertFederatedLearningCandidatePromotionRecord(
+        <String, dynamic>{
+          'candidateModelPackageId': package.id,
+          'status': status,
+          'target': 'sandbox_eval',
+          'rationale': rationale.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Candidate package decision saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Candidate package decision failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String _formatTimestamp(Timestamp? value) {
