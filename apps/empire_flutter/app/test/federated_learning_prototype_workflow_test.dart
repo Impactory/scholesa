@@ -460,33 +460,6 @@ Map<String, dynamic> _candidatePackageRow({
   };
 }
 
-Map<String, dynamic> _promotionRevocationRecordRow({
-  String id = 'fl_prom_revoke_1',
-  String experimentId = 'fl_exp_literacy_pilot',
-  String candidateModelPackageId = 'fl_pkg_1',
-  String candidatePromotionRecordId = 'fl_prom_1',
-  String aggregationRunId = 'fl_agg_1',
-  String mergeArtifactId = 'fl_merge_1',
-  String revokedStatus = 'approved_for_eval',
-  String rationale = 'Sandbox regression exceeded the bounded threshold.',
-}) {
-  return <String, dynamic>{
-    'id': id,
-    'experimentId': experimentId,
-    'candidateModelPackageId': candidateModelPackageId,
-    'candidatePromotionRecordId': candidatePromotionRecordId,
-    'aggregationRunId': aggregationRunId,
-    'mergeArtifactId': mergeArtifactId,
-    'revokedStatus': revokedStatus,
-    'target': 'sandbox_eval',
-    'rationale': rationale,
-    'revokedBy': 'hq-1',
-    'revokedAt': DateTime(2026, 3, 14, 14),
-    'createdAt': DateTime(2026, 3, 14, 14),
-    'updatedAt': DateTime(2026, 3, 14, 14),
-  };
-}
-
 Map<String, dynamic> _promotionRecordRow({
   String id = 'fl_prom_1',
   String experimentId = 'fl_exp_literacy_pilot',
@@ -995,7 +968,15 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.text('View history').first);
+    final Finder viewHistoryButton = find.widgetWithText(
+      TextButton,
+      'View history',
+    );
+    await tester.ensureVisible(viewHistoryButton.first);
+    final TextButton viewHistoryControl = tester.widget<TextButton>(
+      viewHistoryButton.first,
+    );
+    viewHistoryControl.onPressed?.call();
     await tester.pumpAndSettle();
 
     expect(

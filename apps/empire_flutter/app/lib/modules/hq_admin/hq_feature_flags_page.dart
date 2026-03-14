@@ -398,28 +398,35 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     ],
                   ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _showExperimentDialog(existing: experiment),
-                  icon: const Icon(Icons.edit_rounded),
-                  label: Text(_tHqFeatureFlags(context, 'Edit')),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: () => _showAggregationHistoryDialog(experiment),
-                  icon: const Icon(Icons.timeline_rounded),
-                  label: Text(_tHqFeatureFlags(context, 'View history')),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: () => _showCandidatePackageHistoryDialog(experiment),
-                  icon: const Icon(Icons.inventory_rounded),
-                  label: Text(_tHqFeatureFlags(context, 'View packages')),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: () => _showExperimentReviewDialog(experiment),
-                  icon: const Icon(Icons.fact_check_rounded),
-                  label: Text(_tHqFeatureFlags(context, 'Review checklist')),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: <Widget>[
+                      OutlinedButton.icon(
+                        onPressed: () => _showExperimentDialog(existing: experiment),
+                        icon: const Icon(Icons.edit_rounded),
+                        label: Text(_tHqFeatureFlags(context, 'Edit')),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _showAggregationHistoryDialog(experiment),
+                        icon: const Icon(Icons.timeline_rounded),
+                        label: Text(_tHqFeatureFlags(context, 'View history')),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _showCandidatePackageHistoryDialog(experiment),
+                        icon: const Icon(Icons.inventory_rounded),
+                        label: Text(_tHqFeatureFlags(context, 'View packages')),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _showExperimentReviewDialog(experiment),
+                        icon: const Icon(Icons.fact_check_rounded),
+                        label: Text(_tHqFeatureFlags(context, 'Review checklist')),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
