@@ -7,6 +7,7 @@ import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_feature_flags_page.dart';
 import 'package:scholesa_app/services/federated_learning_runtime_activation_reporter.dart';
+import 'package:scholesa_app/services/federated_learning_runtime_package_resolver.dart';
 import 'package:scholesa_app/services/federated_learning_runtime_delivery_resolver.dart';
 import 'package:scholesa_app/services/federated_learning_prototype_uploader.dart';
 import 'package:scholesa_app/services/federated_learning_runtime_adapter.dart';
@@ -479,6 +480,68 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<Map<String, dynamic>?> resolveSiteFederatedLearningRuntimePackage({
+    String? siteId,
+    String? experimentId,
+    String? runtimeTarget,
+    String? deliveryRecordId,
+  }) async {
+    final String resolvedSiteId = (siteId ?? '').trim();
+    final Map<String, dynamic> deliveryRow = deliveryRecordId != null &&
+            deliveryRecordId.isNotEmpty
+        ? _runtimeDeliveryRecords.firstWhere(
+            (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+            orElse: () => <String, dynamic>{},
+          )
+        : _runtimeDeliveryRecords.firstWhere(
+            (Map<String, dynamic> row) {
+              final List<dynamic> targetSiteIds =
+                  row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+              final String status = (row['status'] as String? ?? '').trim();
+              final bool matchesExperiment =
+                  (experimentId ?? '').trim().isEmpty ||
+                      row['experimentId'] == experimentId;
+              final bool matchesRuntime =
+                  (runtimeTarget ?? '').trim().isEmpty ||
+                      row['runtimeTarget'] == runtimeTarget;
+              return targetSiteIds.contains(resolvedSiteId) &&
+                  (status == 'assigned' || status == 'active') &&
+                  matchesExperiment &&
+                  matchesRuntime;
+            },
+            orElse: () => <String, dynamic>{},
+          );
+    if (deliveryRow.isEmpty) {
+      return null;
+    }
+    final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
+      (Map<String, dynamic> row) =>
+          row['id'] == deliveryRow['candidateModelPackageId'],
+      orElse: () => <String, dynamic>{},
+    );
+    if (packageRow.isEmpty) {
+      return null;
+    }
+    return <String, dynamic>{
+      'packageId': packageRow['id'] ?? '',
+      'deliveryRecordId': deliveryRow['id'] ?? '',
+      'experimentId': deliveryRow['experimentId'] ?? '',
+      'candidateModelPackageId': packageRow['id'] ?? '',
+      'siteId': resolvedSiteId,
+      'runtimeTarget': deliveryRow['runtimeTarget'] ?? 'flutter_mobile',
+      'packageDigest': packageRow['packageDigest'] ?? '',
+      'manifestDigest': deliveryRow['manifestDigest'] ?? '',
+      'modelVersion': packageRow['modelVersion'] ?? 'fl_runtime_model_v1',
+      'runtimeVectorLength': packageRow['runtimeVectorLength'] ?? 0,
+      'runtimeVector':
+          List<double>.from(packageRow['runtimeVector'] as List<dynamic>? ?? const <double>[]),
+      'runtimeVectorDigest': packageRow['runtimeVectorDigest'] ?? '',
+      'rolloutStatus': packageRow['rolloutStatus'] ?? 'not_distributed',
+      'resolvedAt': DateTime(2026, 3, 14, 20),
+    };
+  }
+
+  @override
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -839,8 +902,12 @@ Map<String, dynamic> _aggregationRunRow({
       : mergeArtifactId.replaceFirst('fl_merge_', 'fl_pkg_'),
     'candidateModelPackageStatus': mergeArtifactId.isEmpty ? '' : 'staged',
     'candidateModelPackageFormat':
-      mergeArtifactId.isEmpty ? '' : 'bounded_metadata_manifest',
-    'mergeStrategy': 'prototype_weighted_metadata_digest',
+      mergeArtifactId.isEmpty ? '' : 'runtime_vector_v1',
+    'payloadFormat': 'runtime_vector_v1',
+    'modelVersion': 'fl_runtime_model_v1',
+    'runtimeVectorLength': 8,
+    'runtimeVectorDigest': 'sha256:runtime-digest-1',
+    'mergeStrategy': 'weighted_runtime_vector_average_v1',
     'boundedDigest': boundedDigest,
     'triggerSummaryId': 'update-2',
     'summaryIds': <String>['update-1', 'update-2'],
@@ -850,6 +917,7 @@ Map<String, dynamic> _aggregationRunRow({
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
+    'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
@@ -872,8 +940,9 @@ Map<String, dynamic> _candidatePackageRow({
     'aggregationRunId': aggregationRunId,
     'mergeArtifactId': mergeArtifactId,
     'status': 'staged',
-    'packageFormat': 'bounded_metadata_manifest',
+    'packageFormat': 'runtime_vector_v1',
     'rolloutStatus': 'not_distributed',
+    'modelVersion': 'fl_runtime_model_v1',
     'latestPromotionRecordId': '',
     'latestPromotionStatus': '',
     'latestPromotionRevocationRecordId': '',
@@ -887,6 +956,9 @@ Map<String, dynamic> _candidatePackageRow({
     'latestRuntimeDeliveryStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
+    'runtimeVectorLength': 8,
+    'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
+    'runtimeVectorDigest': 'sha256:runtime-digest-${id.replaceAll('fl_pkg_', '')}',
     'sampleCount': sampleCount,
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
@@ -1085,8 +1157,13 @@ Map<String, dynamic> _mergeArtifactRow({
     'experimentId': experimentId,
     'aggregationRunId': aggregationRunId,
     'status': 'generated',
-    'mergeStrategy': 'prototype_weighted_metadata_digest',
+    'mergeStrategy': 'weighted_runtime_vector_average_v1',
     'boundedDigest': boundedDigest,
+    'payloadFormat': 'runtime_vector_v1',
+    'modelVersion': 'fl_runtime_model_v1',
+    'runtimeVectorLength': 8,
+    'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
+    'runtimeVectorDigest': 'sha256:runtime-digest-${id.replaceAll('fl_merge_', '')}',
     'sampleCount': 24,
     'summaryCount': 2,
     'distinctSiteCount': 2,
@@ -1188,7 +1265,14 @@ void main() {
       'thresholdMet': true,
       'mergeArtifactId': 'fl_merge_1',
       'mergeArtifactStatus': 'generated',
-      'mergeStrategy': 'prototype_weighted_metadata_digest',
+      'candidateModelPackageId': 'fl_pkg_1',
+      'candidateModelPackageStatus': 'staged',
+      'candidateModelPackageFormat': 'runtime_vector_v1',
+      'payloadFormat': 'runtime_vector_v1',
+      'modelVersion': 'fl_runtime_model_v1',
+      'runtimeVectorLength': 8,
+      'runtimeVectorDigest': 'sha256:runtime-digest-1',
+      'mergeStrategy': 'weighted_runtime_vector_average_v1',
       'boundedDigest': 'sha256:digest-1',
       'triggerSummaryId': 'update-1',
       'summaryIds': <String>['update-1'],
@@ -1209,8 +1293,13 @@ void main() {
       'experimentId': 'fl_exp_literacy_pilot',
       'aggregationRunId': 'fl_agg_1',
       'status': 'generated',
-      'mergeStrategy': 'prototype_weighted_metadata_digest',
+      'mergeStrategy': 'weighted_runtime_vector_average_v1',
       'boundedDigest': 'sha256:digest-1',
+      'payloadFormat': 'runtime_vector_v1',
+      'modelVersion': 'fl_runtime_model_v1',
+      'runtimeVectorLength': 8,
+      'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
+      'runtimeVectorDigest': 'sha256:runtime-digest-1',
       'sampleCount': 14,
       'summaryCount': 1,
       'distinctSiteCount': 1,
@@ -1229,10 +1318,14 @@ void main() {
       'aggregationRunId': 'fl_agg_1',
       'mergeArtifactId': 'fl_merge_1',
       'status': 'staged',
-      'packageFormat': 'bounded_metadata_manifest',
+      'packageFormat': 'runtime_vector_v1',
       'rolloutStatus': 'not_distributed',
+      'modelVersion': 'fl_runtime_model_v1',
       'packageDigest': 'sha256:pkg-1',
       'boundedDigest': 'sha256:digest-1',
+      'runtimeVectorLength': 8,
+      'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
+      'runtimeVectorDigest': 'sha256:runtime-digest-1',
       'sampleCount': 14,
       'summaryCount': 1,
       'distinctSiteCount': 1,
@@ -1295,6 +1388,7 @@ void main() {
       'schemaVersion': 'v1',
       'sampleCount': 14,
       'vectorLength': 128,
+      'vectorSketch': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
       'payloadBytes': 1024,
       'updateNorm': 2.4,
       'payloadDigest': 'digest-1',
@@ -1338,7 +1432,8 @@ void main() {
       traceId: 'trace-42',
       schemaVersion: 'v1',
       sampleCount: 12,
-      vectorLength: 96,
+      vectorLength: 8,
+      vectorSketch: <double>[1.0, 0.3, 0.8, 0.2, 0.1, 0.4, 0.2, 0.05],
       payloadBytes: 768,
       updateNorm: 1.7,
       payloadDigest: 'digest-42',
@@ -1351,6 +1446,40 @@ void main() {
     expect(bridge.recordedUpdates.single['siteId'], 'site-1');
     expect(
         bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
+    expect(bridge.recordedUpdates.single['vectorSketch'], hasLength(8));
+  });
+
+  test('runtime package resolver resolves delivered payload and records activation',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(status: 'active', targetSiteIds: <String>['site-1']),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNotNull);
+    expect(package!.candidateModelPackageId, 'fl_pkg_1');
+    expect(package.runtimeVectorLength, 8);
+    expect(package.runtimeVector, hasLength(8));
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'resolved');
   });
 
   test('runtime delivery resolver lists site-scoped bounded manifests',
@@ -1563,7 +1692,7 @@ void main() {
       findsWidgets,
     );
     expect(
-      find.text('Latest candidate package: fl_pkg_1 (bounded_metadata_manifest)'),
+      find.text('Latest candidate package: fl_pkg_1 (runtime_vector_v1)'),
       findsOneWidget,
     );
     expect(
@@ -1923,14 +2052,14 @@ void main() {
     expect(find.text('Packages staged: 2'), findsOneWidget);
     expect(find.text('Samples: 62'), findsOneWidget);
     expect(
-      find.text('Strategy: prototype_weighted_metadata_digest'),
+      find.text('Strategy: weighted_runtime_vector_average_v1'),
       findsWidgets,
     );
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
     expect(find.text('Package: fl_pkg_1'), findsWidgets);
     expect(
-      find.text('Package format: bounded_metadata_manifest'),
+      find.text('Package format: runtime_vector_v1'),
       findsWidgets,
     );
     expect(find.text('Showing 1-2 of 3'), findsOneWidget);

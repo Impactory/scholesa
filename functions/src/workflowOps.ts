@@ -2308,10 +2308,11 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
         ...(snapDoc.data() as Record<string, unknown>),
       }))
       .filter((row) => {
-        const allowedSites = toStringArray(row.targetSiteIds);
-        const status = asTrimmedString(row.status);
-        const rowExperimentId = asTrimmedString(row.experimentId);
-        const rowRuntimeTarget = normalizeFederatedLearningRuntimeTarget(row.runtimeTarget);
+        const rowData = row as Record<string, unknown>;
+        const allowedSites = toStringArray(rowData.targetSiteIds);
+        const status = asTrimmedString(rowData.status);
+        const rowExperimentId = asTrimmedString(rowData.experimentId);
+        const rowRuntimeTarget = normalizeFederatedLearningRuntimeTarget(rowData.runtimeTarget);
         return allowedSites.includes(targetSiteId)
           && ['assigned', 'active'].includes(status)
           && (!experimentId || rowExperimentId === experimentId)
@@ -2319,10 +2320,12 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
       })
       .sort((a, b) => {
         const statusRank = (value: string) => (value === 'active' ? 2 : value === 'assigned' ? 1 : 0);
-        const statusDelta = statusRank(asTrimmedString(b.status)) - statusRank(asTrimmedString(a.status));
+        const aData = a as Record<string, unknown>;
+        const bData = b as Record<string, unknown>;
+        const statusDelta = statusRank(asTrimmedString(bData.status)) - statusRank(asTrimmedString(aData.status));
         if (statusDelta !== 0) return statusDelta;
-        const aUpdatedAt = typeof a.updatedAt === 'number' ? a.updatedAt : 0;
-        const bUpdatedAt = typeof b.updatedAt === 'number' ? b.updatedAt : 0;
+        const aUpdatedAt = typeof aData.updatedAt === 'number' ? aData.updatedAt : 0;
+        const bUpdatedAt = typeof bData.updatedAt === 'number' ? bData.updatedAt : 0;
         return bUpdatedAt - aUpdatedAt;
       });
     if (candidateDeliveries.length === 0) {

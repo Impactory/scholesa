@@ -4,6 +4,8 @@ import 'dart:convert';
 import '../auth/app_state.dart';
 import '../domain/models.dart';
 import '../runtime/bos_models.dart';
+import 'federated_learning_runtime_activation_reporter.dart';
+import 'federated_learning_runtime_package_resolver.dart';
 import 'federated_learning_prototype_uploader.dart';
 import 'workflow_bridge_service.dart';
 
@@ -25,6 +27,7 @@ class FederatedLearningRuntimeAdapter {
   AppState? _appState;
   WorkflowBridgeService? _workflowBridge;
   FederatedLearningPrototypeUploader? _uploader;
+  FederatedLearningRuntimePackageResolver? _packageResolver;
   DateTime? _assignmentCacheLoadedAt;
   Map<String, List<FederatedLearningExperimentModel>> _assignmentCache =
       <String, List<FederatedLearningExperimentModel>>{};
@@ -44,6 +47,14 @@ class FederatedLearningRuntimeAdapter {
       appState: appState,
       workflowBridge: _workflowBridge,
     );
+    _packageResolver = FederatedLearningRuntimePackageResolver(
+      appState: appState,
+      workflowBridge: _workflowBridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: appState,
+        workflowBridge: _workflowBridge,
+      ),
+    );
     if (stateChanged || bridgeChanged) {
       _assignmentCacheLoadedAt = null;
       _assignmentCache = <String, List<FederatedLearningExperimentModel>>{};
@@ -55,6 +66,8 @@ class FederatedLearningRuntimeAdapter {
     _appState = null;
     _workflowBridge = null;
     _uploader = null;
+    _packageResolver?.resetForTesting();
+    _packageResolver = null;
     _assignmentCacheLoadedAt = null;
     _assignmentCache = <String, List<FederatedLearningExperimentModel>>{};
     _windows.clear();
@@ -194,8 +207,28 @@ class FederatedLearningRuntimeAdapter {
             sample.signature,
           ])),
     ).toUnsigned(32);
+    final FederatedLearningResolvedRuntimePackageModel? runtimePackage =
+        _packageResolver == null
+            ? null
+            : await _packageResolver!.resolveActivePackage(
+                siteId: window.siteId,
+                experimentId: experiment.id,
+                runtimeTarget: experiment.runtimeTarget,
+              );
+    final List<double> vectorSketch = _buildVectorSketch(
+      samples,
+      runtimePackage: runtimePackage,
+    );
+    final double baseNorm = samples.length + (vectorDimensions.length / 100.0);
+    final double runtimeBias = runtimePackage == null ||
+            runtimePackage.runtimeVector.isEmpty
+        ? 0
+        : runtimePackage.runtimeVector
+                .take(vectorSketch.length)
+                .fold<double>(0, (sum, value) => sum + value.abs()) /
+            runtimePackage.runtimeVector.length;
     final double updateNorm =
-        samples.length + (vectorDimensions.length / 100.0);
+      double.parse((baseNorm + runtimeBias).toStringAsFixed(6));
 
     try {
       await _uploader!.uploadSummary(
@@ -205,10 +238,15 @@ class FederatedLearningRuntimeAdapter {
             '${experiment.id}:${window.learnerId}:${window.sessionOccurrenceId ?? 'sessionless'}:${DateTime.now().toUtc().millisecondsSinceEpoch}',
         schemaVersion: _schemaVersion,
         sampleCount: samples.length,
-        vectorLength: vectorDimensions.length.clamp(1, 100000),
+        vectorLength: vectorSketch.length.clamp(1, 100000),
+        vectorSketch: vectorSketch,
         payloadBytes: payloadBytes.clamp(1, experiment.rawUpdateMaxBytes),
         updateNorm: updateNorm,
-        payloadDigest: digestValue.toRadixString(16).padLeft(8, '0'),
+        payloadDigest: _buildPayloadDigest(
+          digestValue: digestValue,
+          vectorSketch: vectorSketch,
+          runtimeVectorDigest: runtimePackage?.runtimeVectorDigest,
+        ),
         batteryState: 'unknown',
         networkType: 'unknown',
       );
@@ -230,6 +268,64 @@ class FederatedLearningRuntimeAdapter {
     String? sessionOccurrenceId,
   }) {
     return '$experimentId::$siteId::$learnerId::${(sessionOccurrenceId ?? '').trim()}';
+  }
+
+  List<double> _buildVectorSketch(
+    List<_RuntimeSample> samples, {
+    FederatedLearningResolvedRuntimePackageModel? runtimePackage,
+  }) {
+    final Map<String, int> eventCounts = <String, int>{};
+    final Set<String> missionIds = <String>{};
+    final Set<String> checkpointIds = <String>{};
+    int payloadKeyCount = 0;
+    for (final _RuntimeSample sample in samples) {
+      eventCounts.update(sample.eventType, (value) => value + 1,
+          ifAbsent: () => 1);
+      if ((sample.missionId ?? '').isNotEmpty) {
+        missionIds.add(sample.missionId!);
+      }
+      if ((sample.checkpointId ?? '').isNotEmpty) {
+        checkpointIds.add(sample.checkpointId!);
+      }
+      payloadKeyCount += sample.payload.length;
+    }
+
+    final List<double> baseVector = <double>[
+      samples.length.toDouble(),
+      (eventCounts['mission_started'] ?? 0).toDouble(),
+      (eventCounts['checkpoint_submitted'] ?? 0).toDouble(),
+      (eventCounts['mission_completed'] ?? 0).toDouble(),
+      (eventCounts['session_left'] ?? 0).toDouble(),
+      missionIds.length.toDouble(),
+      checkpointIds.length.toDouble(),
+      payloadKeyCount.toDouble(),
+    ];
+
+    final List<double> runtimeVector = runtimePackage?.runtimeVector ?? const <double>[];
+    final int targetLength = runtimeVector.isNotEmpty
+        ? runtimeVector.length
+        : baseVector.length;
+    final List<double> sketch = List<double>.generate(targetLength, (int index) {
+      final double baseValue = index < baseVector.length ? baseVector[index] : 0;
+      final double runtimeWeight = index < runtimeVector.length ? runtimeVector[index] : 0;
+      return double.parse(
+        (baseValue * (1 + runtimeWeight)).toStringAsFixed(6),
+      );
+    });
+    return sketch;
+  }
+
+  String _buildPayloadDigest({
+    required int digestValue,
+    required List<double> vectorSketch,
+    String? runtimeVectorDigest,
+  }) {
+    final int payloadSignature = Object.hashAll(<Object?>[
+      digestValue,
+      runtimeVectorDigest,
+      ...vectorSketch,
+    ]);
+    return payloadSignature.toUnsigned(32).toRadixString(16).padLeft(8, '0');
   }
 }
 

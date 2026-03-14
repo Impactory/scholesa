@@ -402,7 +402,11 @@ class WorkflowBridgeService {
           'deliveryRecordId': deliveryRecordId!.trim(),
       },
     );
-    return _mapOrNull(payload['package']);
+    final dynamic package = payload['package'];
+    if (package == null) {
+      return null;
+    }
+    return asMap(package);
   }
 
   Future<String?> revokeFederatedLearningCandidatePromotionRecord(

@@ -34,6 +34,7 @@ Implemented prototype scope:
 - bounded pilot-execution records for HQ launch, observation, and completion evidence on approved staged candidate packages within the allowed-site cohort
 - bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
 - bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
+- bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and real merged runtime vectors staged inside aggregation artifacts and candidate packages
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -43,7 +44,7 @@ Not claimed by this proof:
 - model updates applied to production systems
 - pilot rollout or delivery beyond bounded review, evidence, and approval records
 - pilot rollout automation or device delivery beyond bounded execution evidence records
-- live model payload delivery or activation beyond bounded runtime-delivery manifests and bounded runtime-activation evidence
+- generalized production model delivery beyond the bounded runtime-vector package path implemented here
 - cross-site or global model rollout
 
 ## Implementation files
@@ -61,6 +62,7 @@ Not claimed by this proof:
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_activation_reporter.dart
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_adapter.dart
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_delivery_resolver.dart
+- apps/empire_flutter/app/lib/services/federated_learning_runtime_package_resolver.dart
 - apps/empire_flutter/app/lib/services/workflow_bridge_service.dart
 - apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart
 - test/firestore-rules.test.js
@@ -87,14 +89,14 @@ Passed on 2026-03-14:
 - Upserting an experiment also writes a site-scoped feature flag so the existing governance surface can gate cohorts.
 - Site-admin devices now have a dedicated callable to discover only enrolled, enabled experiment assignments.
 - Prototype update ingestion rejects raw content fields such as prompts, transcripts, raw updates, and artifact bodies.
-- Accepted summaries are limited to metadata such as payload size, vector length, sample count, digest, and trace identifier.
+- Accepted summaries are now limited to bounded numeric runtime-vector sketches plus safe metadata such as payload size, vector length, sample count, digest, and trace identifier.
 - Audit logs record both experiment changes and accepted prototype updates.
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
-- Runtime BOS signals now feed a bounded event-window summarizer, which uploads prototype summaries on mission/checkpoint/session triggers without sending raw learner content.
-- When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and exposes the run back to HQ without claiming a true model merge.
-- Each materialized run now also emits a bounded merge-artifact record with a deterministic digest over safe metadata only; the artifact is auditable, HQ-readable, and explicitly not a deployed model binary or weight payload.
-- Each generated merge artifact now also stages a bounded candidate-model-package manifest record for downstream inspection; this is metadata-only, HQ-readable, and explicitly not a production model delivery or rollout path.
+- Runtime BOS signals now feed a bounded event-window summarizer, which uploads bounded numeric runtime-vector sketches on mission/checkpoint/session triggers without sending raw learner content.
+- When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded runtime-vector sketches into a weighted runtime payload instead of only emitting metadata.
+- Each materialized run now also emits a bounded merge-artifact record that includes the merged runtime vector, model version, and payload digest alongside the aggregate metadata, while remaining an auditable bounded payload rather than a general model binary.
+- Each generated merge artifact now also stages a bounded candidate-model-package payload record for downstream inspection and delivery, carrying the merged runtime vector for site-scoped resolution without claiming a generalized production rollout path.
 - HQ can now inspect candidate-package history separately from aggregation runs, including package digests, linked artifacts, whether a package is still awaiting promotion, on hold, or approved for eval, and can write the bounded decision record directly from the package drill-in dialog.
 - HQ can now inspect promotion decisions in a dedicated history dialog with status filtering, decision metadata, linked package/artifact context, and rationale search without claiming a production rollout console.
 - HQ can now record bounded rollback evidence for sandbox-eval package decisions via promotion revocation records, and the same package/promotion history surfaces now show effective revoked state plus rollback rationale without claiming a deployed rollback executor.
@@ -104,6 +106,7 @@ Passed on 2026-03-14:
 - HQ can now record bounded pilot execution per staged candidate package, with launch, observation, and completion states gated on approved pilot approval, allowed-site cohort membership, and positive session and learner counts where required, without claiming a live rollout controller or on-device model-delivery path.
 - HQ can now record bounded runtime-delivery manifests per staged candidate package, with assigned and active states gated on observed or completed pilot execution and target sites constrained to the experiment cohort, while site-scoped Flutter runtime code can resolve those manifests without claiming real weight delivery or model activation.
 - Site-scoped Flutter runtime code can now report bounded runtime-activation evidence against assigned delivery manifests, with the backend enforcing site membership on the manifest target cohort and HQ surfaces showing the latest activation status per candidate package without claiming real payload loading or production model execution.
+- Site-scoped Flutter runtime code can now resolve a bounded runtime package payload for the latest assigned or active delivery, automatically report activation evidence when that payload is loaded, and apply the merged runtime vector when encoding subsequent update sketches.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -111,6 +114,6 @@ Passed on 2026-03-14:
 
 REQ-114 remains partial until all of the following exist and are approved:
 
-- device runtime beyond the bounded uploader abstraction
-- rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path
-- actual model merge logic and live model payload-delivery / activation path
+- true on-device training beyond the bounded runtime-vector sketch path
+- richer merge semantics than the current weighted runtime-vector averaging path
+- production-grade rollout orchestration, revocation, and long-lived model lifecycle management beyond the current site-scoped callable delivery path
