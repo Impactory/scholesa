@@ -50,6 +50,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _candidatePackages;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedPromotionDecisions =
+      <Map<String, dynamic>>[];
 
   @override
   Future<List<Map<String, dynamic>>> listFeatureFlags({int limit = 300}) async {
@@ -191,6 +193,54 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         .take(limit)
         .map((row) => Map<String, dynamic>.from(row))
         .toList();
+  }
+
+  @override
+  Future<String?> upsertFederatedLearningCandidatePromotionRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String packageId =
+        (data['candidateModelPackageId'] as String? ?? '').trim();
+    final String status = (data['status'] as String? ?? '').trim();
+    final String rawTarget = (data['target'] as String? ?? 'sandbox_eval').trim();
+    final String target = rawTarget.isEmpty ? 'sandbox_eval' : rawTarget;
+    final String rationale = (data['rationale'] as String? ?? '').trim();
+    final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String promotionId =
+        'fl_prom_${packageId.replaceAll('fl_pkg_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': promotionId,
+      'experimentId': packageRow['experimentId'] ?? '',
+      'candidateModelPackageId': packageId,
+      'aggregationRunId': packageRow['aggregationRunId'] ?? '',
+      'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
+      'status': status,
+      'target': target,
+      'rationale': rationale,
+      'decidedBy': 'hq-1',
+      'decidedAt': DateTime(2026, 3, 14, 13),
+      'createdAt': DateTime(2026, 3, 14, 13),
+      'updatedAt': DateTime(2026, 3, 14, 13),
+    };
+    _promotionRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == promotionId,
+    );
+    _promotionRecords.insert(0, record);
+    final int packageIndex = _candidatePackages.indexWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+    );
+    if (packageIndex >= 0) {
+      _candidatePackages[packageIndex] = <String, dynamic>{
+        ..._candidatePackages[packageIndex],
+        'latestPromotionRecordId': promotionId,
+        'latestPromotionStatus': status,
+      };
+    }
+    recordedPromotionDecisions.add(<String, dynamic>{...record});
+    return promotionId;
   }
 
   @override
@@ -799,9 +849,11 @@ void main() {
     expect(find.text('Sort packages'), findsOneWidget);
     expect(find.text('Approved for eval'), findsOneWidget);
     expect(find.text('Awaiting promotion'), findsOneWidget);
+    expect(find.text('On hold'), findsOneWidget);
     expect(find.text('Packages: 2'), findsOneWidget);
     expect(find.text('Approved for eval: 1'), findsOneWidget);
     expect(find.text('Awaiting promotion: 1'), findsOneWidget);
+    expect(find.text('On hold: 0'), findsOneWidget);
     expect(find.text('Samples: 44'), findsOneWidget);
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'), findsOneWidget);
     expect(
@@ -831,8 +883,57 @@ void main() {
     );
     expect(find.text('Promotion: awaiting decision'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Awaiting promotion'));
-    await tester.tap(find.text('Awaiting promotion'));
+    final Finder holdButton = find.widgetWithText(
+      OutlinedButton,
+      'Mark hold',
+    );
+    await tester.ensureVisible(holdButton.first);
+    final OutlinedButton holdControl = tester.widget<OutlinedButton>(
+      holdButton.first,
+    );
+    holdControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Record package decision'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Rationale'),
+      'Need another bounded review pass.',
+    );
+    final Finder saveDecisionButton = find.widgetWithText(
+      FilledButton,
+      'Save decision',
+    );
+    final FilledButton saveDecisionControl = tester.widget<FilledButton>(
+      saveDecisionButton,
+    );
+    saveDecisionControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedPromotionDecisions, hasLength(1));
+    expect(bridge.recordedPromotionDecisions.single['status'], 'hold');
+    expect(
+      bridge.recordedPromotionDecisions.single['candidateModelPackageId'],
+      'fl_pkg_2',
+    );
+    expect(find.text('Promotion: hold (sandbox_eval)'), findsOneWidget);
+    expect(
+      find.text('Rationale: Need another bounded review pass.'),
+      findsOneWidget,
+    );
+    expect(find.text('Awaiting promotion: 0'), findsOneWidget);
+    expect(find.text('On hold: 1'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('On hold'));
+    await tester.tap(find.text('On hold'));
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(
+      find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.text('On hold'));
+    await tester.tap(find.text('On hold'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(
