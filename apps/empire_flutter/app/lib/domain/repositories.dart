@@ -1203,6 +1203,34 @@ class FederatedLearningUpdateSummaryRepository {
   }
 }
 
+class FederatedLearningAggregationRunRepository {
+  FederatedLearningAggregationRunRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _col =>
+      _firestore.collection('federatedLearningAggregationRuns');
+
+  Future<List<FederatedLearningAggregationRunModel>> listByExperiment(
+    String experimentId, {
+    int limit = 20,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col
+        .where('experimentId', isEqualTo: experimentId)
+        .limit(limit)
+        .get();
+    final List<FederatedLearningAggregationRunModel> rows =
+        snap.docs.map(FederatedLearningAggregationRunModel.fromDoc).toList();
+    rows.sort((a, b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return rows;
+  }
+}
+
 class RosterImportRepository {
   RosterImportRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;

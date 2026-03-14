@@ -2965,6 +2965,104 @@ class FederatedLearningUpdateSummaryModel {
 }
 
 @immutable
+class FederatedLearningAggregationRunModel {
+  const FederatedLearningAggregationRunModel({
+    required this.id,
+    required this.experimentId,
+    required this.status,
+    required this.threshold,
+    required this.thresholdMet,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.summaryCount,
+    required this.distinctSiteCount,
+    required this.totalSampleCount,
+    required this.maxVectorLength,
+    required this.totalPayloadBytes,
+    required this.averageUpdateNorm,
+    required this.schemaVersions,
+    required this.runtimeTargets,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String status;
+  final int threshold;
+  final bool thresholdMet;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final int summaryCount;
+  final int distinctSiteCount;
+  final int totalSampleCount;
+  final int maxVectorLength;
+  final int totalPayloadBytes;
+  final double averageUpdateNorm;
+  final List<String> schemaVersions;
+  final List<String> runtimeTargets;
+  final String? createdBy;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningAggregationRunModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningAggregationRunModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningAggregationRunModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningAggregationRunModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      status: data['status'] as String? ?? 'materialized',
+      threshold: (data['threshold'] as num?)?.toInt() ?? 0,
+      thresholdMet: data['thresholdMet'] as bool? ?? false,
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
+      distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      totalSampleCount: (data['totalSampleCount'] as num?)?.toInt() ?? 0,
+      maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
+      totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
+      averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
+      createdBy: data['createdBy'] as String?,
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'status': status,
+        'threshold': threshold,
+        'thresholdMet': thresholdMet,
+        'triggerSummaryId': triggerSummaryId,
+        'summaryIds': summaryIds,
+        'summaryCount': summaryCount,
+        'distinctSiteCount': distinctSiteCount,
+        'totalSampleCount': totalSampleCount,
+        'maxVectorLength': maxVectorLength,
+        'totalPayloadBytes': totalPayloadBytes,
+        'averageUpdateNorm': averageUpdateNorm,
+        'schemaVersions': schemaVersions,
+        'runtimeTargets': runtimeTargets,
+        'createdBy': createdBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class RosterImportModel {
   const RosterImportModel({
     required this.id,

@@ -43,6 +43,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   List<_FeatureFlag> _flags = <_FeatureFlag>[];
   List<FederatedLearningExperimentModel> _experiments =
       <FederatedLearningExperimentModel>[];
+  Map<String, FederatedLearningAggregationRunModel> _latestAggregationRuns =
+      <String, FederatedLearningAggregationRunModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -301,6 +303,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Widget _buildExperimentCard(FederatedLearningExperimentModel experiment) {
+    final FederatedLearningAggregationRunModel? latestRun =
+        _latestAggregationRuns[experiment.id];
     final Color statusColor = switch (experiment.status) {
       'active' => Colors.green,
       'pilot_ready' => Colors.blue,
@@ -401,6 +405,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Flag: ${experiment.featureFlagId}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (latestRun != null) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest aggregation: ${latestRun.totalSampleCount} samples from ${latestRun.summaryCount} summaries across ${latestRun.distinctSiteCount} sites.',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -514,8 +531,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (!mounted) return;
     setState(() => _isLoadingExperiments = true);
     try {
+      final List<dynamic> payloads = await Future.wait<dynamic>(<Future<dynamic>>[
+        _workflowBridge.listFederatedLearningExperiments(),
+        _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
+      ]);
       final List<FederatedLearningExperimentModel> loaded =
-          (await _workflowBridge.listFederatedLearningExperiments())
+          (payloads[0] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningExperimentModel.fromMap(
                     (row['id'] as String?) ?? 'experiment',
@@ -527,11 +548,35 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
               return bMillis.compareTo(aMillis);
             });
+      final List<FederatedLearningAggregationRunModel> runs =
+          (payloads[1] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningAggregationRunModel.fromMap(
+                    (row['id'] as String?) ?? 'aggregation_run',
+                    row,
+                  ))
+              .toList()
+            ..sort((a, b) {
+              final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+              final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+              return bMillis.compareTo(aMillis);
+            });
+      final Map<String, FederatedLearningAggregationRunModel> latestRuns =
+          <String, FederatedLearningAggregationRunModel>{};
+      for (final FederatedLearningAggregationRunModel run in runs) {
+        latestRuns.putIfAbsent(run.experimentId, () => run);
+      }
       if (!mounted) return;
-      setState(() => _experiments = loaded);
+      setState(() {
+        _experiments = loaded;
+        _latestAggregationRuns = latestRuns;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _experiments = <FederatedLearningExperimentModel>[]);
+      setState(() {
+        _experiments = <FederatedLearningExperimentModel>[];
+        _latestAggregationRuns = <String, FederatedLearningAggregationRunModel>{};
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingExperiments = false);
