@@ -24,7 +24,7 @@ export default function LandingPage() {
         <div className="mt-10 flex items-center justify-center gap-x-6">
           <Link
             href={`/${locale}/login`}
-            className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
+            className="min-touch-target rounded-md bg-app-primary px-4 py-3 text-sm font-semibold text-app-primary-foreground shadow-sm hover:bg-app-primary-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring"
             onClick={() => trackInteraction('feature_discovered', { cta: 'landing_login' })}
           >
             {t('landing.loginCta')}

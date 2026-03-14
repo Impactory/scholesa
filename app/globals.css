@@ -17,7 +17,7 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
   --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted-foreground: 215 18% 40%;
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
@@ -93,12 +93,24 @@ html[data-theme='dark'] body {
   background-color: hsl(var(--surface-raised));
 }
 
+.bg-app-primary {
+  background-color: hsl(var(--primary));
+}
+
 .text-app-foreground {
   color: hsl(var(--foreground));
 }
 
 .text-app-muted {
   color: hsl(var(--muted-foreground));
+}
+
+.text-app-primary {
+  color: hsl(var(--primary));
+}
+
+.text-app-primary-foreground {
+  color: hsl(var(--primary-foreground));
 }
 
 .border-app {
@@ -111,6 +123,32 @@ html[data-theme='dark'] body {
 
 .divide-app > :not([hidden]) ~ :not([hidden]) {
   border-color: hsl(var(--border));
+}
+
+.min-touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.app-touch-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.hover\:bg-app-primary-emphasis:hover {
+  background-color: hsl(var(--primary) / 0.88);
+}
+
+.hover\:text-app-primary-emphasis:hover {
+  color: hsl(var(--primary) / 0.78);
+}
+
+.focus-visible\:outline-app-ring:focus-visible {
+  outline-color: hsl(var(--ring));
 }
 
 html[data-theme='dark'] .bg-white,

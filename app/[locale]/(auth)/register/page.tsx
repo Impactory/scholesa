@@ -154,7 +154,7 @@ export default function RegisterPage() {
               type="submit"
               disabled={loading}
               onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}
-              className="group relative flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))] disabled:opacity-50"
+              className="min-touch-target relative flex w-full justify-center rounded-md bg-app-primary px-4 py-3 text-sm font-semibold text-app-primary-foreground hover:bg-app-primary-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring disabled:opacity-50"
             >
               {loading ? t('auth.register.submitting') : t('auth.register.submit')}
             </button>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
           <div className="text-center text-sm">
             <a
               href={`/${locale}/login`}
-              className="font-medium text-primary hover:text-primary/80"
+              className="app-touch-link font-medium text-app-primary hover:text-app-primary-emphasis"
               onClick={() => trackInteraction('feature_discovered', { cta: 'auth_register_to_login' })}
             >
               {t('auth.register.switchToLogin')}

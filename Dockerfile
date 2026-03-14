@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Next.js production on Cloud Run
 # Build stage
-FROM node:18-bullseye-slim AS builder
+FROM node:24-bullseye-slim AS builder
 WORKDIR /app
 
 # Copy package files first for better caching
@@ -18,7 +18,7 @@ RUN npm run build
 RUN npm prune --production
 
 # Production image
-FROM node:18-bullseye-slim AS runner
+FROM node:24-bullseye-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -31,8 +31,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
 # Expose default Next.js port (Cloud Run uses port from $PORT env var)
-ENV PORT 8080
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
 EXPOSE 8080
 
 # Use a lightweight non-root user

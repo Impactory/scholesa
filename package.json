@@ -18,6 +18,7 @@
     "test": "jest --runInBand",
     "test:e2e:web:install": "npx playwright install chromium",
     "test:e2e:web": "npx playwright test --config playwright.config.ts",
+    "test:e2e:web:wcag": "npx playwright test --config playwright.config.ts --grep @wcag",
     "test:integration:rules": "npx --yes firebase-tools emulators:exec --only firestore \"npx jest --runInBand --config jest.rules.config.js\"",
     "test:integration:analytics": "npx --yes firebase-tools emulators:exec --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest --runInBand --config jest.analytics.config.js\"",
     "test:integration:analytics:live": "npx --yes firebase-tools emulators:exec --only firestore \"RUN_EXTERNAL_ANALYTICS_TESTS=1 jest --runInBand --config jest.analytics.config.js\"",
@@ -128,6 +129,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
     "@firebase/rules-unit-testing": "^4.0.1",

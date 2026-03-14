@@ -55,10 +55,10 @@ export function ThemeModeToggle({
               setPreference(option.value);
               onPreferenceChange?.(option.value);
             }}
-            className={`rounded-md px-2.5 py-1.5 font-medium transition-colors ${
+            className={`min-touch-target rounded-md px-3 py-2 font-medium transition-colors ${
               isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'text-app-muted hover:bg-app-surface-muted hover:text-app-foreground'
+                ? 'bg-app-primary text-app-primary-foreground'
+                : 'text-app-foreground hover:bg-app-surface-muted'
             }`}
           >
             {option.label}

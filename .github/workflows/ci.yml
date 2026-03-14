@@ -66,6 +66,9 @@ jobs:
       - name: Jest rules integration
         run: npm run test:integration:rules
 
+      - name: WCAG 2.2 AA browser audit
+        run: npm run test:e2e:web:wcag
+
       - name: Web browser workflow E2E
         run: npm run test:e2e:web
 

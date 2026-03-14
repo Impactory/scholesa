@@ -92,6 +92,7 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 
 | Tool | Current version | Supported range | Notes |
 | --- | --- | --- | --- |
+| @axe-core/playwright | ^4.11.1 | 4.x only | WCAG browser automation baseline for the web CI gate. |
 | jest | ^29.7.0 | 29.x only | Root and functions should remain on the same major. |
 | @playwright/test | ^1.58.2 | 1.x only | Browser automation baseline. `npm run test:e2e:web` is intentionally non-emulator and depends on the `NEXT_PUBLIC_E2E_TEST_MODE` browser test harness instead of Firebase emulators. This harness is never a production dependency or release gate substitute. |
 | @firebase/rules-unit-testing | ^4.0.1 | 4.x only | Rules harness baseline. |

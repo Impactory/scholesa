@@ -4,12 +4,10 @@ These requirements remain deferred because the current repo still lacks closure-
 
 | Req ID | Reason | Notes |
 | --- | --- | --- |
-| REQ-033 | Web unit tests suite | Referenced `src/__tests__/models.test.ts`, `routing.test.ts`, and `invariants.test.ts` are not present in the current repo state, so `npm test` cannot prove the requested suite yet. |
 | REQ-036 | Cloud Run/API build | Deployment docs and Dockerfile exist, but no current repo-level API health endpoint/build proof was found to satisfy `API-01` honestly. |
 
 ## Re-enable Checklist
-1) Recreate or relink the intended web unit-test suite for models, routing, and invariants, then run `npm test` for REQ-033.
-2) Decide the canonical API surface for REQ-036, capture a successful `API-01` build path, and record a passing health probe against that surface.
+1) Decide the canonical API surface for REQ-036, capture a successful `API-01` build path, and record a passing health probe against that surface.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
