@@ -27,7 +27,7 @@ describe('federated learning prototype helpers', () => {
     expect(experimentId).toBe('fl_exp_my_pilot_alpha');
     expect(buildFederatedLearningFeatureFlagId(experimentId)).toBe('feature_fl_exp_my_pilot_alpha');
     expect(buildFederatedLearningAggregationRunDocId(experimentId, ['sum-1', 'sum-2']))
-      .toBe('fl_agg_5d4e2d02f90f7a83ff0b2369');
+      .toBe('fl_agg_1cb85e2396ee2ed67818ed78');
     expect(federatedLearningAuditAction('experiment.upsert')).toBe('federated_learning.experiment.upsert');
 
     const config = sanitizeFederatedLearningExperimentConfig({

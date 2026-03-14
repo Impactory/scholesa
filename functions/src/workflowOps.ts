@@ -1579,7 +1579,7 @@ function asPositiveInteger(value: unknown, fallback: number): number {
 }
 
 function mapPendingFederatedSummary(
-  snapDoc: FirebaseFirestore.QueryDocumentSnapshot,
+  snapDoc: FirebaseFirestore.DocumentSnapshot,
 ): FederatedPendingSummaryRow {
   const data = (snapDoc.data() || {}) as Record<string, unknown>;
   return {
@@ -1652,9 +1652,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       return;
     }
 
-    const refreshedRows = selectedSnapshots.map((snapDoc) => mapPendingFederatedSummary(
-      snapDoc as FirebaseFirestore.QueryDocumentSnapshot,
-    ));
+    const refreshedRows = selectedSnapshots.map((snapDoc) => mapPendingFederatedSummary(snapDoc));
     if (refreshedRows.some((row) => row.aggregationStatus === 'materialized' || row.aggregationRunId)) {
       return;
     }

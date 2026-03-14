@@ -17,6 +17,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? flags,
     List<Map<String, dynamic>>? experiments,
     List<Map<String, dynamic>>? siteExperiments,
+    List<Map<String, dynamic>>? aggregationRuns,
   })  : _flags =
             List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
         _experiments = List<Map<String, dynamic>>.from(
@@ -24,11 +25,15 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _siteExperiments = List<Map<String, dynamic>>.from(
           siteExperiments ?? experiments ?? <Map<String, dynamic>>[],
         ),
+        _aggregationRuns = List<Map<String, dynamic>>.from(
+          aggregationRuns ?? <Map<String, dynamic>>[],
+        ),
         super(functions: null);
 
   final List<Map<String, dynamic>> _flags;
   final List<Map<String, dynamic>> _experiments;
   final List<Map<String, dynamic>> _siteExperiments;
+  final List<Map<String, dynamic>> _aggregationRuns;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
 
   @override
@@ -99,6 +104,23 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningAggregationRuns({
+    String? experimentId,
+    int limit = 60,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped =
+        (experimentId == null || experimentId.isEmpty)
+            ? _aggregationRuns
+            : _aggregationRuns.where(
+                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+              );
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> recordFederatedLearningPrototypeUpdate(
     Map<String, dynamic> data,
   ) async {
@@ -106,6 +128,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     recordedUpdates.add(<String, dynamic>{'id': id, ...data});
     return id;
   }
+}
+
+Map<String, dynamic> _aggregationRunRow({
+  String id = 'fl_agg_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  int totalSampleCount = 24,
+  int summaryCount = 2,
+  int distinctSiteCount = 2,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'status': 'materialized',
+    'threshold': 20,
+    'thresholdMet': true,
+    'triggerSummaryId': 'update-2',
+    'summaryIds': <String>['update-1', 'update-2'],
+    'summaryCount': summaryCount,
+    'distinctSiteCount': distinctSiteCount,
+    'totalSampleCount': totalSampleCount,
+    'maxVectorLength': 128,
+    'totalPayloadBytes': 1792,
+    'averageUpdateNorm': 1.35,
+    'schemaVersions': <String>['v1'],
+    'runtimeTargets': <String>['flutter_mobile'],
+  };
 }
 
 AppState _buildSiteState() {
@@ -188,6 +236,35 @@ void main() {
       'enablePrototypeUploads': true,
       'updatedAt': DateTime.now(),
     });
+    await firestore
+      .collection('federatedLearningAggregationRuns')
+      .doc('fl_agg_1')
+      .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'status': 'materialized',
+      'threshold': 20,
+      'thresholdMet': true,
+      'triggerSummaryId': 'update-1',
+      'summaryIds': <String>['update-1'],
+      'summaryCount': 1,
+      'distinctSiteCount': 1,
+      'totalSampleCount': 14,
+      'maxVectorLength': 128,
+      'totalPayloadBytes': 1024,
+      'averageUpdateNorm': 2.4,
+      'schemaVersions': <String>['v1'],
+      'runtimeTargets': <String>['flutter_mobile'],
+      'createdAt': DateTime.now(),
+    });
+
+    final FederatedLearningAggregationRunRepository aggregationRepository =
+      FederatedLearningAggregationRunRepository(firestore: firestore);
+    final List<FederatedLearningAggregationRunModel> aggregationRuns =
+      await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
+
+    expect(aggregationRuns, hasLength(1));
+    expect(aggregationRuns.single.totalSampleCount, 14);
+
     await firestore
         .collection('federatedLearningUpdateSummaries')
         .doc('update-1')
@@ -313,6 +390,7 @@ void main() {
         },
       ],
       experiments: <Map<String, dynamic>>[_experimentRow()],
+      aggregationRuns: <Map<String, dynamic>>[_aggregationRunRow()],
     );
 
     await tester.pumpWidget(
@@ -322,6 +400,12 @@ void main() {
 
     expect(find.text('Federated learning experiments'), findsOneWidget);
     expect(find.text('Literacy Pilot'), findsOneWidget);
+    expect(
+      find.text(
+        'Latest aggregation: 24 samples from 2 summaries across 2 sites.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Create experiment'));
     await tester.pumpAndSettle();

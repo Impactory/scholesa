@@ -20,12 +20,14 @@ Implemented prototype scope:
 - Flutter domain models/repositories for experiment and summary records
 - Flutter device-side uploader service that resolves active site context and submits bounded update summaries through the callable boundary
 - Flutter runtime adapter that converts BOS event windows into bounded prototype summaries on real mission/session triggers
+- backend aggregation-run materialization once accepted summary windows cross the configured threshold
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
+- HQ visibility for the latest materialized aggregation run per experiment
 
 Not claimed by this proof:
 
 - on-device training runtime
-- aggregation service
+- true gradient or weight aggregation service
 - model updates applied to production systems
 - pilot approval or privacy sign-off completion
 - cross-site or global model rollout
@@ -74,6 +76,7 @@ Passed on 2026-03-14:
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
 - Runtime BOS signals now feed a bounded event-window summarizer, which uploads prototype summaries on mission/checkpoint/session triggers without sending raw learner content.
+- When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and exposes the run back to HQ without claiming a true model merge.
 
 ## Remaining gap to full REQ-114
 
@@ -81,6 +84,6 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - approved privacy review and sign-off checklist
 - device runtime beyond the bounded uploader abstraction
-- aggregation threshold execution path
 - pilot evidence and rollback proof
 - rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path
+- actual model merge logic and downstream model-delivery path
