@@ -1,254 +1,258 @@
-self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/", "revision": "PBYClAHrb2KwJoFmDEmBY" },
+self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/", "revision": "yiUQay0SuHCl8Dj63eKZY" },
   {
     "revision": "d751713988987e9331980363e24189ce",
     "url": "/_next/dynamic-css-manifest.json"
   },
   {
-    "revision": "bdcebbf648a3656f2955d63a522f7eb7",
+    "revision": "dff391b505ec934f180abe04999cf396",
     "url": "/_next/server/app/[locale]/(auth)/login/page_client-reference-manifest.js"
   },
   {
-    "revision": "6a0416ed4d80e0fed2db442383d84a45",
+    "revision": "4427e3938410a55ca84292f35b832e26",
     "url": "/_next/server/app/[locale]/(auth)/register/page_client-reference-manifest.js"
   },
   {
-    "revision": "6d4791af1a6811eea86081cdeb9fee85",
+    "revision": "7e41357c9ee8bad40cc804efa272a2b8",
     "url": "/_next/server/app/[locale]/(protected)/dashboard/page_client-reference-manifest.js"
   },
   {
-    "revision": "02dfb4987b40d47859ac40c56f461037",
+    "revision": "51194febe4f260e05b64703530f57bb5",
     "url": "/_next/server/app/[locale]/(protected)/educator/analytics/page_client-reference-manifest.js"
   },
   {
-    "revision": "c7e75e1ef8dba33a8f87e73652a0f0eb",
+    "revision": "e20009110edafdf62f1ccea3eba24708",
     "url": "/_next/server/app/[locale]/(protected)/educator/attendance/page_client-reference-manifest.js"
   },
   {
-    "revision": "e6c674a3224c8b6a08e02787601fc2e9",
+    "revision": "bbc492a937f71ebf5eea2a959ae07976",
     "url": "/_next/server/app/[locale]/(protected)/educator/integrations/page_client-reference-manifest.js"
   },
   {
-    "revision": "72d914529f97959622e91bc3240effa1",
+    "revision": "4812acae099dfd5f02b62a44b49f69a9",
     "url": "/_next/server/app/[locale]/(protected)/educator/learner-supports/page_client-reference-manifest.js"
   },
   {
-    "revision": "c3cebfde3c9679581d10989504a7a583",
+    "revision": "34c64e32014be244436de6bbc02ee1f2",
     "url": "/_next/server/app/[locale]/(protected)/educator/learners/page_client-reference-manifest.js"
   },
   {
-    "revision": "c4ffe0f34e1ca5b2e813b5baf7959b87",
+    "revision": "8c8405e5558a4c31dc0b528900346db3",
     "url": "/_next/server/app/[locale]/(protected)/educator/mission-plans/page_client-reference-manifest.js"
   },
   {
-    "revision": "594ccd544366cce9356d2a7b11dc837a",
+    "revision": "c39b1a319fdcfefdb44c794973183292",
     "url": "/_next/server/app/[locale]/(protected)/educator/missions/review/page_client-reference-manifest.js"
   },
   {
-    "revision": "e2ea74b3c0c69f067d22ec0ec4eb1c95",
+    "revision": "2b060af0f180eb132090685e0c42dca1",
     "url": "/_next/server/app/[locale]/(protected)/educator/page_client-reference-manifest.js"
   },
   {
-    "revision": "b7346336a1b1a288201514e00f54ed97",
+    "revision": "9b5368e84d238949d89c8033c489ab30",
     "url": "/_next/server/app/[locale]/(protected)/educator/sessions/page_client-reference-manifest.js"
   },
   {
-    "revision": "eb3520971084ea7066ec31977ed1d0e0",
+    "revision": "96e050dd449a6021c6f217e706a135e4",
     "url": "/_next/server/app/[locale]/(protected)/educator/today/page_client-reference-manifest.js"
   },
   {
-    "revision": "ee7390c2901b2a1a684e235d38d2b4cb",
+    "revision": "afd9c05ccb86b0ef788e2b3c8ed07c21",
     "url": "/_next/server/app/[locale]/(protected)/hq/analytics/page_client-reference-manifest.js"
   },
   {
-    "revision": "c2ee7b9f4b1896e713313cce5a579a5a",
+    "revision": "3272602332f576bc4a7a09ce3d695252",
     "url": "/_next/server/app/[locale]/(protected)/hq/approvals/page_client-reference-manifest.js"
   },
   {
-    "revision": "0cb950df1e4d6d1e8c1cb82da8ae2065",
+    "revision": "5e4d247354763683c9f3f83187b99216",
     "url": "/_next/server/app/[locale]/(protected)/hq/audit/page_client-reference-manifest.js"
   },
   {
-    "revision": "1e645439f1faf2756e7adbdc76e41974",
+    "revision": "739c6600b91977a712b47392cb696a3f",
     "url": "/_next/server/app/[locale]/(protected)/hq/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "bfa5641ed85f7427e18c11c580a8769c",
+    "revision": "0ac2db478138f6ad8b260d87e7360081",
     "url": "/_next/server/app/[locale]/(protected)/hq/curriculum/page_client-reference-manifest.js"
   },
   {
-    "revision": "29261379e8a5f8b9845675ce3a07ae16",
+    "revision": "315d61d7dbbd03a87ee38f578c277559",
     "url": "/_next/server/app/[locale]/(protected)/hq/feature-flags/page_client-reference-manifest.js"
   },
   {
-    "revision": "d95d984c62a613f55b6bd00ba9dc8e61",
+    "revision": "7b389697a5a78812034b357de26c8d4c",
     "url": "/_next/server/app/[locale]/(protected)/hq/integrations-health/page_client-reference-manifest.js"
   },
   {
-    "revision": "43271dbff1e7f8886c17f30fcc7e65ae",
+    "revision": "78056d54a274fb05f1c6821b004f2811",
     "url": "/_next/server/app/[locale]/(protected)/hq/page_client-reference-manifest.js"
   },
   {
-    "revision": "59086624648670c3714c163d71ef8870",
+    "revision": "25a031b99baaaf37b6855c217391d561",
     "url": "/_next/server/app/[locale]/(protected)/hq/role-switcher/page_client-reference-manifest.js"
   },
   {
-    "revision": "fe4d0fbd3036cee1b0b594fd2e66edec",
+    "revision": "eaccf405199278d92246505c438a8068",
     "url": "/_next/server/app/[locale]/(protected)/hq/safety/page_client-reference-manifest.js"
   },
   {
-    "revision": "fc8ed3019f12539014218105b4db6fec",
+    "revision": "69d3f30bd3439737ca3054c5626e058b",
     "url": "/_next/server/app/[locale]/(protected)/hq/sites/page_client-reference-manifest.js"
   },
   {
-    "revision": "19ef2b3e59a2e6f93ee1c9627d2e5da9",
+    "revision": "99e80834c181b294fd2a0cdf2b3600a3",
     "url": "/_next/server/app/[locale]/(protected)/hq/user-admin/page_client-reference-manifest.js"
   },
   {
-    "revision": "f231bd4f64e7c79bfe0ac55fb3bb6e86",
+    "revision": "ebd0a7d0ba1c786ffbf982f1381a228c",
     "url": "/_next/server/app/[locale]/(protected)/learner/habits/page_client-reference-manifest.js"
   },
   {
-    "revision": "76a2bafcbd95150a44ae7b6253d0db79",
+    "revision": "e350aca4b8d59b7bd24ecc03ff471c88",
     "url": "/_next/server/app/[locale]/(protected)/learner/missions/page_client-reference-manifest.js"
   },
   {
-    "revision": "98141dee4ed2ac2452d128f3043987a2",
+    "revision": "190c6f7d089a0138eaac3aedafadb042",
     "url": "/_next/server/app/[locale]/(protected)/learner/page_client-reference-manifest.js"
   },
   {
-    "revision": "f2ac87a94fc097e4f5cbcec69ed688d3",
+    "revision": "3706f29461a9bb541f0b28ae5ef96f59",
     "url": "/_next/server/app/[locale]/(protected)/learner/portfolio/page_client-reference-manifest.js"
   },
   {
-    "revision": "f2a73fb84c6189f4bb6f879fdd01578b",
+    "revision": "5cd442ef5c14a2279aedfefb25ade570",
     "url": "/_next/server/app/[locale]/(protected)/learner/profile/page_client-reference-manifest.js"
   },
   {
-    "revision": "e6a9023c06ba9eb815ebf5c8371b6e71",
+    "revision": "0684da07de5b36f7f2f54265543b2d6c",
     "url": "/_next/server/app/[locale]/(protected)/learner/today/page_client-reference-manifest.js"
   },
   {
-    "revision": "b5e35cf02561067cd977200f006f95c8",
+    "revision": "40f6d8a830839a0e35e731042deecdc7",
     "url": "/_next/server/app/[locale]/(protected)/messages/page_client-reference-manifest.js"
   },
   {
-    "revision": "1c001504d5528c18f949d56cafd1ec08",
+    "revision": "13bf1263f3081446b6c5a5bee559f3c9",
     "url": "/_next/server/app/[locale]/(protected)/notifications/page_client-reference-manifest.js"
   },
   {
-    "revision": "03812fedee17671b2863b4b1ec0cac7d",
+    "revision": "95c85b6a136964ac5606128967f7323c",
     "url": "/_next/server/app/[locale]/(protected)/parent/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "723ea72f054d50f7f99dc1286f5ce2c6",
+    "revision": "7d92d55e19b26a2dce959b34c14f187a",
     "url": "/_next/server/app/[locale]/(protected)/parent/page_client-reference-manifest.js"
   },
   {
-    "revision": "a610d3b44c7251703b9945090c8e9b78",
+    "revision": "33f97e40a6f1252c7eadda1e22d1fde7",
     "url": "/_next/server/app/[locale]/(protected)/parent/portfolio/page_client-reference-manifest.js"
   },
   {
-    "revision": "5b814b0c24b487ac3a0a1a32e7238196",
+    "revision": "4da4803664a19b56ee3acdf676b9bd6f",
     "url": "/_next/server/app/[locale]/(protected)/parent/schedule/page_client-reference-manifest.js"
   },
   {
-    "revision": "6b588b321d677b04874bbb557d819116",
+    "revision": "d4e76f780844316c7d2b013c77205c55",
     "url": "/_next/server/app/[locale]/(protected)/parent/summary/page_client-reference-manifest.js"
   },
   {
-    "revision": "6bfdb2430d73fc1c4ba3175c0ca0cc94",
+    "revision": "e22115248c741a316729aaafc971ab60",
     "url": "/_next/server/app/[locale]/(protected)/partner/contracts/page_client-reference-manifest.js"
   },
   {
-    "revision": "2fb8a8d4072ad18dd3a8517f87ee5a6b",
+    "revision": "0b53594132ffae2f5fe94fa5b1f4bbc2",
     "url": "/_next/server/app/[locale]/(protected)/partner/listings/page_client-reference-manifest.js"
   },
   {
-    "revision": "f4332ddf877f1341fd568fc61f6f2129",
+    "revision": "2fa701df6d3105ec5d411e05f52d7f82",
     "url": "/_next/server/app/[locale]/(protected)/partner/page_client-reference-manifest.js"
   },
   {
-    "revision": "ad933c8a7b922dcd82faf55c09a182e0",
+    "revision": "bf7439d5bb4aeaf6aba7f329afed4d1d",
     "url": "/_next/server/app/[locale]/(protected)/partner/payouts/page_client-reference-manifest.js"
   },
   {
-    "revision": "1203d3d6edbdbf27b1ca118b1ca824ca",
+    "revision": "de98323b8ef434720f37808d9729f5fc",
     "url": "/_next/server/app/[locale]/(protected)/profile/page_client-reference-manifest.js"
   },
   {
-    "revision": "cb36b0292a31d34a6b637f56777ffdfd",
+    "revision": "f06e21afcb1f071d7aff56fa5eb386e3",
     "url": "/_next/server/app/[locale]/(protected)/settings/page_client-reference-manifest.js"
   },
   {
-    "revision": "2e56a3a62056398248e2d9acca5d947d",
+    "revision": "d17137702058ae09269e64941279d487",
     "url": "/_next/server/app/[locale]/(protected)/site/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "49b6541d09f01a2099c78a3dddef6dcb",
+    "revision": "cf556bdde759d3070a573a96748a1642",
     "url": "/_next/server/app/[locale]/(protected)/site/checkin/page_client-reference-manifest.js"
   },
   {
-    "revision": "d5e82d09d9ceb9d4080ae85b2dff737a",
+    "revision": "f96b01e308890daf0762df8c3f14e76a",
+    "url": "/_next/server/app/[locale]/(protected)/site/clever/page_client-reference-manifest.js"
+  },
+  {
+    "revision": "d5c45acc20e9300ffe4c339ba8231b2b",
     "url": "/_next/server/app/[locale]/(protected)/site/dashboard/page_client-reference-manifest.js"
   },
   {
-    "revision": "49ad5dfa57af6c70795adf72f9218040",
+    "revision": "84d5e216f31be4cb5c60960d0fb507c7",
     "url": "/_next/server/app/[locale]/(protected)/site/identity/page_client-reference-manifest.js"
   },
   {
-    "revision": "6db944c5688f3b069d0858df0de4ab41",
+    "revision": "fca71426c887b35c014d2163c443903a",
     "url": "/_next/server/app/[locale]/(protected)/site/incidents/page_client-reference-manifest.js"
   },
   {
-    "revision": "6da17d3ba255739af692273693d4bfdc",
+    "revision": "458b8cb1eba6d47088a4818b6b3066f9",
     "url": "/_next/server/app/[locale]/(protected)/site/integrations-health/page_client-reference-manifest.js"
   },
   {
-    "revision": "f5312973d432fa73bf4d61b1d30ed661",
+    "revision": "ac18be17ba18d4a308472cec93fc91b9",
     "url": "/_next/server/app/[locale]/(protected)/site/ops/page_client-reference-manifest.js"
   },
   {
-    "revision": "ef11c5d7bf992c4d8fc9355808f6541a",
+    "revision": "651585f3282cd418a70d3dcf69ce63fa",
     "url": "/_next/server/app/[locale]/(protected)/site/page_client-reference-manifest.js"
   },
   {
-    "revision": "0d53f28eadc0b2da34251dbe3d7574a2",
+    "revision": "e94177156dad9bb66ffab5c435390b3d",
     "url": "/_next/server/app/[locale]/(protected)/site/provisioning/page_client-reference-manifest.js"
   },
   {
-    "revision": "841ae89753b085a174be4cfd567f6e24",
+    "revision": "a0cae19aee11dadf9749552df139c0bc",
     "url": "/_next/server/app/[locale]/(protected)/site/sessions/page_client-reference-manifest.js"
   },
   {
-    "revision": "9e84f1bcc7f695ebb27be93b47a92bd0",
+    "revision": "7349add0c2d216e220942d973111e437",
     "url": "/_next/server/app/[locale]/page_client-reference-manifest.js"
   },
   {
-    "revision": "5fe3b71cde658cdb69c13075381d5fcf",
+    "revision": "9af3003b364da6680ac91014da5d87dd",
     "url": "/_next/server/app/_not-found/page_client-reference-manifest.js"
   },
   {
-    "revision": "0604d6279fe92177ff5496eeb710ba07",
+    "revision": "d2e77b9c3d1aa9d52e3eb0f61ea24abe",
     "url": "/_next/server/app/api/ai/complete/route_client-reference-manifest.js"
   },
   {
-    "revision": "3f715adcbee2d515df9db40baa293949",
+    "revision": "4c9b458dc7be74d658f29779fedfbf67",
     "url": "/_next/server/app/api/auth/session-login/route_client-reference-manifest.js"
   },
   {
-    "revision": "7a08ca1979b51e60800b992cc21aa7e1",
+    "revision": "d1763aac58a69c02eff3ac2f33af06a9",
     "url": "/_next/server/app/api/auth/session-logout/route_client-reference-manifest.js"
   },
   {
-    "revision": "1710ba203a1c568e586d19af5e887a0e",
+    "revision": "975c16d9b6880d704c7e5aca8ca39053",
     "url": "/_next/server/app/api/auth/sso/providers/route_client-reference-manifest.js"
   },
   {
-    "revision": "826351544616351754cf70836ce5614c",
+    "revision": "db69b50f601b3c9ac80c611dee8ce0fe",
     "url": "/_next/server/app/api/healthz/route_client-reference-manifest.js"
   },
   {
-    "revision": "4665d63d53610b6b8f0027b80e806010",
+    "revision": "bd944f12bd5d5d194374ccf95ae82e0a",
     "url": "/_next/server/app/api/lti/launch/route_client-reference-manifest.js"
   },
   {
@@ -272,16 +276,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/server/next-font-manifest.json"
   },
   {
-    "revision": "e79e7ec0505694c13f30cfd0a7632c44",
-    "url": "/_next/static/PBYClAHrb2KwJoFmDEmBY/_buildManifest.js"
-  },
-  {
-    "revision": "b6652df95db52feb4daf4eca35380933",
-    "url": "/_next/static/PBYClAHrb2KwJoFmDEmBY/_ssgManifest.js"
-  },
-  {
-    "revision": "ba285c795a06eec7",
-    "url": "/_next/static/chunks/1633-55d452d5f94e4e2a.js"
+    "revision": "d33da0020e8481c3",
+    "url": "/_next/static/chunks/1633-14b458e7510d4940.js"
   },
   {
     "revision": "2000b62ffb845afa",
@@ -300,8 +296,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/4bd1b696-0ae268a5a152f031.js"
   },
   {
-    "revision": "e8e416904d07441c",
-    "url": "/_next/static/chunks/6850-d4079516813790de.js"
+    "revision": "d68fd33857da1616",
+    "url": "/_next/static/chunks/6850-a6bdc5c6e8f64c81.js"
   },
   {
     "revision": "7f60956bf984def5",
@@ -328,8 +324,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/layout-76f8dad05d699041.js"
   },
   {
-    "revision": "43a92610d99a52c5",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/page-7defe3507110fd21.js"
+    "revision": "28e88e71a243c215",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/page-d876c76b814ff464.js"
   },
   {
     "revision": "f0bc5aa44f343199",
@@ -428,8 +424,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/hq/user-admin/page-f5f3537920fb5847.js"
   },
   {
-    "revision": "b56a11d3f747ab09",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/layout-fb8fbe0349cdb7a4.js"
+    "revision": "00881c4bc88df48d",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/layout-c71a4d02fe1c5823.js"
   },
   {
     "revision": "9ccf2315f3998732",
@@ -526,6 +522,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
   {
     "revision": "ce5c566b95df3aaa",
     "url": "/_next/static/chunks/app/[locale]/(protected)/site/checkin/page-d61588971e3174f1.js"
+  },
+  {
+    "revision": "7940e4d51066b221",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/site/clever/page-e606866434353d52.js"
   },
   {
     "revision": "726a9468891a851d",
@@ -654,5 +654,13 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
   {
     "revision": "dd6d46335dbf06c4",
     "url": "/_next/static/css/aa74458ff183e2b4.css"
+  },
+  {
+    "revision": "e79e7ec0505694c13f30cfd0a7632c44",
+    "url": "/_next/static/yiUQay0SuHCl8Dj63eKZY/_buildManifest.js"
+  },
+  {
+    "revision": "b6652df95db52feb4daf4eca35380933",
+    "url": "/_next/static/yiUQay0SuHCl8Dj63eKZY/_ssgManifest.js"
   }
 ]);

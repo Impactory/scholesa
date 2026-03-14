@@ -27,6 +27,7 @@ Implemented prototype scope:
 - bounded candidate-model-package records staged from each generated merge artifact
 - HQ candidate-package history drill-in with search, paging, latest-only filtering, promotion-state visibility, bounded HQ decision capture for sandbox-eval package approvals or holds, and a separate HQ promotion-history drill-in
 - bounded candidate-promotion records for HQ sandbox-eval approvals linked to staged candidate packages
+- bounded candidate-promotion revocation records for HQ rollback evidence tied to sandbox-eval package decisions
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -86,6 +87,7 @@ Passed on 2026-03-14:
 - Each generated merge artifact now also stages a bounded candidate-model-package manifest record for downstream inspection; this is metadata-only, HQ-readable, and explicitly not a production model delivery or rollout path.
 - HQ can now inspect candidate-package history separately from aggregation runs, including package digests, linked artifacts, whether a package is still awaiting promotion, on hold, or approved for eval, and can write the bounded decision record directly from the package drill-in dialog.
 - HQ can now inspect promotion decisions in a dedicated history dialog with status filtering, decision metadata, linked package/artifact context, and rationale search without claiming a production rollout console.
+- HQ can now record bounded rollback evidence for sandbox-eval package decisions via promotion revocation records, and the same package/promotion history surfaces now show effective revoked state plus rollback rationale without claiming a deployed rollback executor.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -95,6 +97,6 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - approved privacy review and sign-off checklist
 - device runtime beyond the bounded uploader abstraction
-- pilot evidence and rollback proof
+- pilot evidence beyond the current bounded rollback-proof records
 - rollout beyond the current BOS event-window prototype summarizer into a true on-device training/runtime path
 - actual model merge logic and downstream model-delivery path
