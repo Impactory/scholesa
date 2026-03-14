@@ -13,13 +13,12 @@ These requirements are deferred while the web stack (Next.js/PWA/Cloud Run) rema
 | REQ-039 | Web offline fallback page | PWA stack paused. |
 | REQ-040 | Web i18n coverage | Web paused; translations on hold. |
 | REQ-043 | CI checks (web) | Pipeline paused; re-enable with web. |
-| REQ-045 | PWA cache strategy | Paused with web. |
 
 ## Re-enable Checklist
 1) Unpause web stack; set env vars.
 2) Run `npm install` and `npm test`.
 3) Run `npm run build` and address PWA/runtimeCaching.
-4) Resume repos/tests for remaining deferred items (REQ-024–027, 031, 033–036, 039–040, 043, 045).
+4) Resume repos/tests for remaining deferred items (REQ-024–027, 031, 033–036, 039–040, 043).
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
