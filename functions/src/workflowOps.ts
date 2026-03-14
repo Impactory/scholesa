@@ -2314,12 +2314,12 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
         const rowExperimentId = asTrimmedString(rowData.experimentId);
         const rowRuntimeTarget = normalizeFederatedLearningRuntimeTarget(rowData.runtimeTarget);
         return allowedSites.includes(targetSiteId)
-          && ['assigned', 'active'].includes(status)
+          && ['assigned', 'active', 'revoked'].includes(status)
           && (!experimentId || rowExperimentId === experimentId)
           && (!runtimeTarget || rowRuntimeTarget === runtimeTarget);
       })
       .sort((a, b) => {
-        const statusRank = (value: string) => (value === 'active' ? 2 : value === 'assigned' ? 1 : 0);
+        const statusRank = (value: string) => (value === 'active' ? 3 : value === 'assigned' ? 2 : value === 'revoked' ? 1 : 0);
         const aData = a as Record<string, unknown>;
         const bData = b as Record<string, unknown>;
         const statusDelta = statusRank(asTrimmedString(bData.status)) - statusRank(asTrimmedString(aData.status));
@@ -2337,8 +2337,24 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
 
   const deliveryStatus = asTrimmedString(deliveryData.status);
   const allowedSites = toStringArray(deliveryData.targetSiteIds);
-  if (!['assigned', 'active'].includes(deliveryStatus) || !allowedSites.includes(targetSiteId)) {
+  if (!allowedSites.includes(targetSiteId)) {
     throw new HttpsError('permission-denied', 'No active or assigned runtime delivery available for the requested site.');
+  }
+
+  const expiresAt = typeof deliveryData.expiresAt === 'number' ? Math.trunc(deliveryData.expiresAt) : 0;
+  const revokedAt = typeof deliveryData.revokedAt === 'number' ? Math.trunc(deliveryData.revokedAt) : 0;
+  const revokedBy = asTrimmedString(deliveryData.revokedBy);
+  const revocationReason = asTrimmedString(deliveryData.revocationReason);
+  const now = Date.now();
+  const resolutionStatus = deliveryStatus === 'revoked' || revokedAt > 0
+    ? 'revoked'
+    : (expiresAt > 0 && expiresAt <= now)
+      ? 'expired'
+      : ['assigned', 'active'].includes(deliveryStatus)
+        ? 'resolved'
+        : null;
+  if (!resolutionStatus) {
+    return { package: null };
   }
 
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
@@ -2365,15 +2381,22 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
       runtimeTarget: packageRuntimeTarget,
       packageDigest: asTrimmedString(packageData.packageDigest),
       manifestDigest: asTrimmedString(deliveryData.manifestDigest),
+      resolutionStatus,
       modelVersion: asTrimmedString(packageData.modelVersion) || 'fl_runtime_model_v1',
-      runtimeVectorLength: asPositiveInteger(packageData.runtimeVectorLength, 0),
-      runtimeVector: Array.isArray(packageData.runtimeVector)
+      runtimeVectorLength: resolutionStatus === 'resolved'
+        ? asPositiveInteger(packageData.runtimeVectorLength, 0)
+        : 0,
+      runtimeVector: resolutionStatus === 'resolved' && Array.isArray(packageData.runtimeVector)
         ? packageData.runtimeVector
           .map((entry) => asNumber(entry) ?? 0)
           .map((entry) => Number(entry.toFixed(6)))
         : [],
       runtimeVectorDigest: asTrimmedString(packageData.runtimeVectorDigest),
       rolloutStatus: asTrimmedString(packageData.rolloutStatus) || 'not_distributed',
+      expiresAt: expiresAt > 0 ? expiresAt : null,
+      revokedAt: revokedAt > 0 ? revokedAt : null,
+      revokedBy: revokedBy || null,
+      revocationReason: revocationReason || null,
       resolvedAt: Date.now(),
     },
   };
@@ -2861,6 +2884,12 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
 
   const targetSiteIds = toStringArray(request.data?.targetSiteIds);
   const notes = asTrimmedString(request.data?.notes).slice(0, 500);
+  const requestedExpiresAtValue = asNumber(request.data?.expiresAt);
+  const requestedExpiresAt = requestedExpiresAtValue == null
+    ? null
+    : Math.max(0, Math.trunc(requestedExpiresAtValue));
+  const revocationReason = asTrimmedString(request.data?.revocationReason).slice(0, 500);
+  const now = Date.now();
 
   const packageRef = admin.firestore().collection('federatedLearningCandidateModelPackages').doc(candidateModelPackageId);
   const packageSnap = await packageRef.get();
@@ -2875,10 +2904,12 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
   const packageDigest = asTrimmedString(packageData.packageDigest);
   const executionId = buildFederatedLearningPilotExecutionRecordDocId(candidateModelPackageId);
   const deliveryId = buildFederatedLearningRuntimeDeliveryRecordDocId(candidateModelPackageId);
+  const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryId);
 
-  const [experimentSnap, executionSnap] = await Promise.all([
+  const [experimentSnap, executionSnap, existingDeliverySnap] = await Promise.all([
     admin.firestore().collection('federatedLearningExperiments').doc(experimentId).get(),
     admin.firestore().collection('federatedLearningPilotExecutionRecords').doc(executionId).get(),
+    deliveryRef.get(),
   ]);
   if (!experimentSnap.exists) {
     throw new HttpsError('not-found', 'Federated learning experiment not found.');
@@ -2886,8 +2917,30 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
 
   const experimentData = (experimentSnap.data() || {}) as Record<string, unknown>;
   const executionData = (executionSnap.data() || {}) as Record<string, unknown>;
+  const existingDeliveryData = (existingDeliverySnap.data() || {}) as Record<string, unknown>;
   const allowedSiteIds = toStringArray(experimentData.allowedSiteIds);
   const executionStatus = asTrimmedString(executionData.status);
+  const existingTargetSiteIds = toStringArray(existingDeliveryData.targetSiteIds);
+  const existingExpiresAt = typeof existingDeliveryData.expiresAt === 'number'
+    ? Math.trunc(existingDeliveryData.expiresAt)
+    : 0;
+  const effectiveTargetSiteIds = targetSiteIds.length > 0
+    ? targetSiteIds
+    : (status === 'revoked' ? existingTargetSiteIds : []);
+
+  if (['assigned', 'active'].includes(status) && requestedExpiresAt != null && requestedExpiresAt <= now) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Assigned or active runtime delivery requires expiresAt to be in the future.',
+    );
+  }
+  if (status === 'revoked' && !revocationReason) {
+    throw new HttpsError('failed-precondition', 'Revoked runtime delivery requires a revocationReason.');
+  }
+
+  const effectiveExpiresAt = ['assigned', 'active'].includes(status)
+    ? (requestedExpiresAt ?? (existingExpiresAt > now ? existingExpiresAt : now + (7 * 24 * 60 * 60 * 1000)))
+    : (status === 'revoked' && existingExpiresAt > 0 ? existingExpiresAt : null);
 
   if (['assigned', 'active'].includes(status)) {
     if (!executionSnap.exists || !['observed', 'completed'].includes(executionStatus)) {
@@ -2903,7 +2956,7 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       );
     }
   }
-  if (targetSiteIds.some((siteId) => !allowedSiteIds.includes(siteId))) {
+  if (effectiveTargetSiteIds.some((siteId) => !allowedSiteIds.includes(siteId))) {
     throw new HttpsError('failed-precondition', 'Runtime delivery sites must be within the experiment allowed-site cohort.');
   }
 
@@ -2913,11 +2966,11 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
     || 'flutter_mobile';
   const manifestDigest = buildFederatedLearningRuntimeDeliveryManifestDigest(
     packageDigest,
-    targetSiteIds,
+    effectiveTargetSiteIds,
     status,
     runtimeTarget,
+    effectiveExpiresAt ?? undefined,
   );
-  const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryId);
 
   await admin.firestore().runTransaction(async (transaction) => {
     transaction.set(deliveryRef, {
@@ -2927,10 +2980,14 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       mergeArtifactId,
       pilotExecutionRecordId: executionId,
       runtimeTarget,
-      targetSiteIds,
+      targetSiteIds: effectiveTargetSiteIds,
       status,
       packageDigest,
       manifestDigest,
+      expiresAt: effectiveExpiresAt ?? FieldValue.delete(),
+      revokedAt: status === 'revoked' ? FieldValue.serverTimestamp() : FieldValue.delete(),
+      revokedBy: status === 'revoked' ? actor.uid : FieldValue.delete(),
+      revocationReason: status === 'revoked' ? revocationReason : FieldValue.delete(),
       notes,
       assignedBy: actor.uid,
       assignedAt: FieldValue.serverTimestamp(),
@@ -3011,11 +3068,21 @@ export const upsertFederatedLearningRuntimeActivationRecord = onCall(async (requ
   const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
   const deliveryStatus = asTrimmedString(deliveryData.status);
   const targetSiteIds = toStringArray(deliveryData.targetSiteIds);
-  if (!['assigned', 'active'].includes(deliveryStatus)) {
-    throw new HttpsError('failed-precondition', 'Runtime activation evidence requires an assigned or active runtime delivery record.');
-  }
   if (!targetSiteIds.includes(targetSiteId)) {
     throw new HttpsError('permission-denied', 'Runtime delivery record is not assigned to the requested site.');
+  }
+  const deliveryExpiresAt = typeof deliveryData.expiresAt === 'number' ? Math.trunc(deliveryData.expiresAt) : 0;
+  const deliveryRevokedAt = typeof deliveryData.revokedAt === 'number' ? Math.trunc(deliveryData.revokedAt) : 0;
+  const now = Date.now();
+  const deliveryUsable = ['assigned', 'active'].includes(deliveryStatus)
+    && deliveryRevokedAt === 0
+    && (deliveryExpiresAt === 0 || deliveryExpiresAt > now);
+  if (status === 'fallback') {
+    if (!['assigned', 'active', 'revoked'].includes(deliveryStatus)) {
+      throw new HttpsError('failed-precondition', 'Runtime fallback evidence requires a delivery record assigned to the requested site.');
+    }
+  } else if (!deliveryUsable) {
+    throw new HttpsError('failed-precondition', 'Runtime activation evidence requires an assigned or active, non-expired runtime delivery record.');
   }
 
   const activationId = buildFederatedLearningRuntimeActivationRecordDocId(deliveryRecordId, targetSiteId);

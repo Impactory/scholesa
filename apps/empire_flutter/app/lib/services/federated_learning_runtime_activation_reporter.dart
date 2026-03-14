@@ -63,9 +63,26 @@ class FederatedLearningRuntimeActivationReporter {
     if (assignment == null) {
       return null;
     }
+    return reportDeliveryActivation(
+      deliveryRecordId: assignment.id,
+      siteId: resolvedSiteId,
+      status: status,
+      traceId: traceId,
+      notes: notes,
+    );
+  }
+
+  Future<String?> reportDeliveryActivation({
+    required String deliveryRecordId,
+    String? siteId,
+    required String status,
+    String? traceId,
+    String? notes,
+  }) async {
+    final String resolvedSiteId = _resolveSiteId(siteId);
     return _workflowBridge.upsertFederatedLearningRuntimeActivationRecord(
       <String, dynamic>{
-        'deliveryRecordId': assignment.id,
+        'deliveryRecordId': deliveryRecordId.trim(),
         'siteId': resolvedSiteId,
         'status': status.trim(),
         if ((traceId ?? '').trim().isNotEmpty) 'traceId': traceId!.trim(),

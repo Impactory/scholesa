@@ -28,7 +28,7 @@ class FederatedLearningRuntimeDeliveryResolver {
             ))
         .where((FederatedLearningRuntimeDeliveryRecordModel model) =>
             model.targetSiteIds.contains(resolvedSiteId) &&
-            (model.status == 'assigned' || model.status == 'active'))
+        _isUsableAssignment(model))
         .toList(growable: false);
   }
 
@@ -71,5 +71,19 @@ class FederatedLearningRuntimeDeliveryResolver {
           'No active site available for federated-learning runtime delivery.');
     }
     return resolved;
+  }
+
+  bool _isUsableAssignment(FederatedLearningRuntimeDeliveryRecordModel model) {
+    if (!(model.status == 'assigned' || model.status == 'active')) {
+      return false;
+    }
+    if (model.revokedAt != null || (model.revokedBy ?? '').trim().isNotEmpty) {
+      return false;
+    }
+    final DateTime? expiry = model.expiresAt?.toDate().toUtc();
+    if (expiry != null && !expiry.isAfter(DateTime.now().toUtc())) {
+      return false;
+    }
+    return true;
   }
 }

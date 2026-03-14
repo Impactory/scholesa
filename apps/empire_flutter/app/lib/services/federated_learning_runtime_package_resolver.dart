@@ -32,21 +32,34 @@ class FederatedLearningRuntimePackageResolver {
     final _CachedRuntimePackage? cached = _cache[cacheKey];
     final DateTime now = DateTime.now().toUtc();
     if (cached != null && now.difference(cached.loadedAt) < _cacheTtl) {
-      return cached.package;
+      final FederatedLearningResolvedRuntimePackageModel? cachedPackage =
+          cached.package;
+      if (cachedPackage != null && !cachedPackage.isUsable) {
+        _cache.remove(cacheKey);
+      }
     }
 
-    final Map<String, dynamic>? row =
-        await _workflowBridge.resolveSiteFederatedLearningRuntimePackage(
-      siteId: resolvedSiteId,
-      experimentId: experimentId,
-      runtimeTarget: runtimeTarget,
-    );
+    Map<String, dynamic>? row;
+    try {
+      row = await _workflowBridge.resolveSiteFederatedLearningRuntimePackage(
+        siteId: resolvedSiteId,
+        experimentId: experimentId,
+        runtimeTarget: runtimeTarget,
+      );
+    } catch (_) {
+      final FederatedLearningResolvedRuntimePackageModel? cachedPackage =
+          cached?.package;
+      if (cachedPackage != null && cachedPackage.isUsable) {
+        return cachedPackage;
+      }
+      rethrow;
+    }
     final FederatedLearningResolvedRuntimePackageModel? package = row == null
         ? null
         : FederatedLearningResolvedRuntimePackageModel.fromMap(row);
     _cache[cacheKey] = _CachedRuntimePackage(package: package, loadedAt: now);
     await _reportActivationIfNeeded(package);
-    return package;
+    return package != null && package.isUsable ? package : null;
   }
 
   void resetForTesting() {
@@ -61,19 +74,34 @@ class FederatedLearningRuntimePackageResolver {
       return;
     }
     final String activationKey =
-        '${package.deliveryRecordId}::${package.siteId}::${package.runtimeVectorDigest}';
+        '${package.deliveryRecordId}::${package.siteId}::${package.resolutionStatus}::${package.runtimeVectorDigest}';
     if (_reportedActivationKeys.contains(activationKey)) {
       return;
     }
-    await _activationReporter.reportLatestAssignmentActivation(
-      siteId: package.siteId,
-      experimentId: package.experimentId,
-      runtimeTarget: package.runtimeTarget,
-      status: 'resolved',
-      traceId: package.runtimeVectorDigest,
-      notes:
-          'Resolved runtime package ${package.packageId} (${package.modelVersion}) for bounded device inference.',
-    );
+    if (package.resolutionStatus == 'resolved') {
+      await _activationReporter.reportDeliveryActivation(
+        deliveryRecordId: package.deliveryRecordId,
+        siteId: package.siteId,
+        status: 'resolved',
+        traceId: package.runtimeVectorDigest,
+        notes:
+            'Resolved runtime package ${package.packageId} (${package.modelVersion}) for bounded device inference.',
+      );
+    } else {
+      final String reason = package.resolutionStatus == 'revoked'
+          ? ((package.revocationReason ?? '').trim().isNotEmpty
+              ? package.revocationReason!.trim()
+              : 'delivery revoked by HQ')
+          : 'delivery expired for this site';
+      await _activationReporter.reportDeliveryActivation(
+        deliveryRecordId: package.deliveryRecordId,
+        siteId: package.siteId,
+        status: 'fallback',
+        traceId: package.runtimeVectorDigest,
+        notes:
+            'Falling back to local runtime because ${package.packageId} is ${package.resolutionStatus}: $reason.',
+      );
+    }
     _reportedActivationKeys.add(activationKey);
   }
 

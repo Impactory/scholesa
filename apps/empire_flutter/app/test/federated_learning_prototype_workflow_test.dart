@@ -505,7 +505,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
                   (runtimeTarget ?? '').trim().isEmpty ||
                       row['runtimeTarget'] == runtimeTarget;
               return targetSiteIds.contains(resolvedSiteId) &&
-                  (status == 'assigned' || status == 'active') &&
+                  (status == 'assigned' || status == 'active' ||
+                      status == 'revoked') &&
                   matchesExperiment &&
                   matchesRuntime;
             },
@@ -522,6 +523,15 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (packageRow.isEmpty) {
       return null;
     }
+    final DateTime now = DateTime(2026, 3, 14, 20, 30);
+    final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+    final DateTime? revokedAt = deliveryRow['revokedAt'] as DateTime?;
+    final String status = (deliveryRow['status'] as String? ?? '').trim();
+    final String resolutionStatus = status == 'revoked' || revokedAt != null
+        ? 'revoked'
+        : (expiresAt != null && !expiresAt.isAfter(now))
+            ? 'expired'
+            : 'resolved';
     return <String, dynamic>{
       'packageId': packageRow['id'] ?? '',
       'deliveryRecordId': deliveryRow['id'] ?? '',
@@ -531,12 +541,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'runtimeTarget': deliveryRow['runtimeTarget'] ?? 'flutter_mobile',
       'packageDigest': packageRow['packageDigest'] ?? '',
       'manifestDigest': deliveryRow['manifestDigest'] ?? '',
+      'resolutionStatus': resolutionStatus,
       'modelVersion': packageRow['modelVersion'] ?? 'fl_runtime_model_v1',
-      'runtimeVectorLength': packageRow['runtimeVectorLength'] ?? 0,
-      'runtimeVector':
-          List<double>.from(packageRow['runtimeVector'] as List<dynamic>? ?? const <double>[]),
+      'runtimeVectorLength': resolutionStatus == 'resolved'
+          ? (packageRow['runtimeVectorLength'] ?? 0)
+          : 0,
+      'runtimeVector': resolutionStatus == 'resolved'
+          ? List<double>.from(packageRow['runtimeVector'] as List<dynamic>? ?? const <double>[])
+          : const <double>[],
       'runtimeVectorDigest': packageRow['runtimeVectorDigest'] ?? '',
       'rolloutStatus': packageRow['rolloutStatus'] ?? 'not_distributed',
+      'expiresAt': deliveryRow['expiresAt'],
+      'revokedAt': deliveryRow['revokedAt'],
+      'revokedBy': deliveryRow['revokedBy'],
+      'revocationReason': deliveryRow['revocationReason'],
       'resolvedAt': DateTime(2026, 3, 14, 20),
     };
   }
@@ -808,6 +826,19 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'status': (data['status'] as String? ?? 'prepared').trim(),
       'packageDigest': packageRow['packageDigest'] ?? '',
       'manifestDigest': 'sha256:delivery-${packageId.replaceAll('fl_pkg_', '')}',
+        'expiresAt': data['expiresAt'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(
+            data['expiresAt'] as int,
+            isUtc: true,
+          ),
+        'revokedAt': (data['status'] as String? ?? '').trim() == 'revoked'
+          ? DateTime(2026, 3, 14, 20, 45)
+          : null,
+        'revokedBy': (data['status'] as String? ?? '').trim() == 'revoked'
+          ? 'hq-1'
+          : null,
+        'revocationReason': (data['revocationReason'] as String? ?? '').trim(),
       'notes': (data['notes'] as String? ?? '').trim(),
       'assignedBy': 'hq-1',
       'assignedAt': DateTime(2026, 3, 14, 19),
@@ -1037,6 +1068,10 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   String mergeArtifactId = 'fl_merge_1',
   String status = 'assigned',
   List<String> targetSiteIds = const <String>['site-1'],
+  DateTime? expiresAt,
+  DateTime? revokedAt,
+  String? revokedBy,
+  String? revocationReason,
   String notes = 'Bounded runtime-delivery manifest assigned to the approved pilot site.',
 }) {
   return <String, dynamic>{
@@ -1054,6 +1089,10 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
         'sha256:pkg-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'expiresAt': expiresAt ?? DateTime(2026, 3, 21, 19),
+    'revokedAt': revokedAt,
+    'revokedBy': revokedBy,
+    'revocationReason': revocationReason,
     'notes': notes,
     'assignedBy': 'hq-1',
     'assignedAt': DateTime(2026, 3, 14, 19),
@@ -1476,16 +1515,63 @@ void main() {
 
     expect(package, isNotNull);
     expect(package!.candidateModelPackageId, 'fl_pkg_1');
+    expect(package.resolutionStatus, 'resolved');
     expect(package.runtimeVectorLength, 8);
     expect(package.runtimeVector, hasLength(8));
     expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
     expect(bridge.recordedRuntimeActivationSaves.single['status'], 'resolved');
   });
 
+  test('runtime package resolver falls back when delivery is revoked',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'revoked',
+          targetSiteIds: <String>['site-1'],
+          revokedAt: DateTime(2026, 3, 14, 20, 45),
+          revokedBy: 'hq-1',
+          revocationReason: 'Rollback after bounded pilot regression.',
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNull);
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'fallback');
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['deliveryRecordId'],
+      'fl_delivery_1',
+    );
+  });
+
   test('runtime delivery resolver lists site-scoped bounded manifests',
       () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_expired',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+          expiresAt: DateTime(2024, 3, 14, 19),
+        ),
         _runtimeDeliveryRecordRow(status: 'active', targetSiteIds: <String>['site-1']),
       ],
     );
@@ -1687,6 +1773,7 @@ void main() {
     );
     expect(find.text('Recent aggregation runs'), findsOneWidget);
     expect(find.textContaining('Runtime activation: resolved'), findsOneWidget);
+    expect(find.textContaining('Runtime lifecycle: live until'), findsOneWidget);
     expect(
       find.text('Artifact generated: fl_merge_1'),
       findsWidgets,
@@ -2020,6 +2107,25 @@ void main() {
       find.text('Runtime delivery: active · 2 sites · flutter_mobile'),
       findsOneWidget,
     );
+
+    final Finder deliveryHistoryButton = find.widgetWithText(
+      TextButton,
+      'Delivery history',
+    );
+    await tester.ensureVisible(deliveryHistoryButton.first);
+    final TextButton deliveryHistoryControl = tester.widget<TextButton>(
+      deliveryHistoryButton.first,
+    );
+    deliveryHistoryControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime delivery history: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Lifecycle: live until'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pumpAndSettle();
 
     final Finder viewHistoryButton = find.widgetWithText(
       TextButton,

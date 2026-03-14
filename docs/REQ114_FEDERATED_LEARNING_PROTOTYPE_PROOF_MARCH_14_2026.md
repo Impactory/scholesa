@@ -35,6 +35,8 @@ Implemented prototype scope:
 - bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
 - bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
 - bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and real merged runtime vectors staged inside aggregation artifacts and candidate packages
+- bounded runtime-delivery lifecycle control, including expiry windows, explicit revocation reasons, fallback reporting, and device-side invalidation of stale runtime payloads
+- HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ visibility for recent aggregation-run history and artifact status per experiment
 
 Not claimed by this proof:
@@ -107,6 +109,8 @@ Passed on 2026-03-14:
 - HQ can now record bounded runtime-delivery manifests per staged candidate package, with assigned and active states gated on observed or completed pilot execution and target sites constrained to the experiment cohort, while site-scoped Flutter runtime code can resolve those manifests without claiming real weight delivery or model activation.
 - Site-scoped Flutter runtime code can now report bounded runtime-activation evidence against assigned delivery manifests, with the backend enforcing site membership on the manifest target cohort and HQ surfaces showing the latest activation status per candidate package without claiming real payload loading or production model execution.
 - Site-scoped Flutter runtime code can now resolve a bounded runtime package payload for the latest assigned or active delivery, automatically report activation evidence when that payload is loaded, and apply the merged runtime vector when encoding subsequent update sketches.
+- HQ runtime-delivery records now carry bounded expiry and revocation metadata, the resolver returns explicit resolved-versus-expired-versus-revoked package state, and the device runtime reports fallback evidence while refusing to reuse stale payload vectors after expiry or revocation.
+- The HQ feature-flags surface now exposes recent runtime-delivery history per experiment so operators can inspect delivery status, site spread, expiry windows, and revocation rationale without leaving the bounded prototype workflow.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -116,4 +120,4 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - true on-device training beyond the bounded runtime-vector sketch path
 - richer merge semantics than the current weighted runtime-vector averaging path
-- production-grade rollout orchestration, revocation, and long-lived model lifecycle management beyond the current site-scoped callable delivery path
+- production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, revocation, and fallback path

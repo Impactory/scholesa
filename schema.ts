@@ -211,6 +211,7 @@ export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blo
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
+export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -453,6 +454,10 @@ export interface FederatedLearningRuntimeDeliveryRecord {
   status: FederatedLearningRuntimeDeliveryStatus;
   packageDigest: string;
   manifestDigest: string;
+  expiresAt?: number;
+  revokedAt?: number;
+  revokedBy?: string;
+  revocationReason?: string;
   notes?: string;
   assignedBy?: string;
   assignedAt?: number;
@@ -486,11 +491,16 @@ export interface FederatedLearningResolvedRuntimePackage {
   runtimeTarget: FederatedLearningRuntimeTarget;
   packageDigest: string;
   manifestDigest: string;
+  resolutionStatus: FederatedLearningRuntimeResolutionStatus;
   modelVersion: string;
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;
   rolloutStatus: 'not_distributed' | 'distributed';
+  expiresAt?: number;
+  revokedAt?: number;
+  revokedBy?: string;
+  revocationReason?: string;
   resolvedAt: number;
 }
 

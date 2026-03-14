@@ -382,6 +382,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             : _promotionRevocationRecordsByPackageId[latestPackage.id];
     final FederatedLearningAggregationRunModel? latestRun =
       runs.isNotEmpty ? runs.first : null;
+    final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
+        ? ''
+        : _summarizeRuntimeDeliveryLifecycle(latestRuntimeDelivery);
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
       latestPromotionRevocation,
@@ -499,6 +502,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           icon: const Icon(Icons.send_to_mobile_rounded),
                           label: Text(_tHqFeatureFlags(context, 'Runtime delivery')),
                         ),
+                      TextButton.icon(
+                        onPressed: () => _showRuntimeDeliveryHistoryDialog(
+                          experiment,
+                        ),
+                        icon: const Icon(Icons.history_toggle_off_rounded),
+                        label: Text(_tHqFeatureFlags(context, 'Delivery history')),
+                      ),
                     ],
                   ),
                 ),
@@ -662,6 +672,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 color: ScholesaColors.textSecondary,
               ),
             ),
+            if (runtimeDeliveryLifecycle.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(context, runtimeDeliveryLifecycle),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(
@@ -3283,6 +3303,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final TextEditingController notesController = TextEditingController(
       text: existingDelivery?.notes ?? '',
     );
+    final TextEditingController expiryHoursController = TextEditingController(
+      text: existingDelivery?.expiresAt == null
+          ? '168'
+          : existingDelivery!.expiresAt!
+              .toDate()
+              .difference(DateTime.now())
+              .inHours
+              .clamp(1, 24 * 365)
+              .toString(),
+    );
+    final TextEditingController revocationReasonController =
+        TextEditingController(
+      text: existingDelivery?.revocationReason ?? '',
+    );
     String status = existingDelivery?.status ?? 'prepared';
 
     final bool? shouldSave = await showDialog<bool>(
@@ -3350,6 +3384,33 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        controller: expiryHoursController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Expiry window (hours)'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Assigned and active deliveries expire automatically after this many hours unless HQ refreshes them.',
+                          ),
+                        ),
+                      ),
+                      if (status == 'revoked') ...<Widget>[
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: revocationReasonController,
+                          minLines: 2,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(context, 'Revocation reason'),
+                            helperText: _tHqFeatureFlags(
+                              context,
+                              'Required when revoking a delivered runtime package.',
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      TextFormField(
                         controller: notesController,
                         minLines: 2,
                         maxLines: 4,
@@ -3386,11 +3447,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         .map((String value) => value.trim())
         .where((String value) => value.isNotEmpty)
         .toList();
+    final int? expiryHours = int.tryParse(expiryHoursController.text.trim());
+    final int? expiresAt = (status == 'assigned' || status == 'active') &&
+            expiryHours != null &&
+            expiryHours > 0
+        ? DateTime.now().toUtc().add(Duration(hours: expiryHours)).millisecondsSinceEpoch
+        : null;
 
     await _saveRuntimeDeliveryRecord(
       candidateModelPackageId: candidatePackage.id,
       status: status,
       targetSiteIds: targetSiteIds,
+      expiresAt: expiresAt,
+      revocationReason: revocationReasonController.text,
       notes: notesController.text,
     );
   }
@@ -3399,6 +3468,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String candidateModelPackageId,
     required String status,
     required List<String> targetSiteIds,
+    required int? expiresAt,
+    required String revocationReason,
     required String notes,
   }) async {
     try {
@@ -3407,6 +3478,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           'candidateModelPackageId': candidateModelPackageId,
           'status': status,
           'targetSiteIds': targetSiteIds,
+          if (expiresAt != null) 'expiresAt': expiresAt,
+          if (status == 'revoked' && revocationReason.trim().isNotEmpty)
+            'revocationReason': revocationReason.trim(),
           'notes': notes.trim(),
         },
       );
@@ -3432,6 +3506,106 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         ),
       );
     }
+  }
+
+  Future<void> _showRuntimeDeliveryHistoryDialog(
+    FederatedLearningExperimentModel experiment,
+  ) async {
+    final List<FederatedLearningRuntimeDeliveryRecordModel> records =
+        (await _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(
+      experimentId: experiment.id,
+      limit: 120,
+    ))
+            .map((Map<String, dynamic> row) =>
+                FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+                  (row['id'] as String?) ?? 'runtime_delivery_record',
+                  row,
+                ))
+            .toList()
+          ..sort((a, b) {
+            final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+            final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+            return bMillis.compareTo(aMillis);
+          });
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(
+              dialogContext,
+              'Runtime delivery history: ${experiment.name}',
+            ),
+          ),
+          content: SizedBox(
+            width: 640,
+            child: records.isEmpty
+                ? Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'No runtime deliveries recorded for this experiment yet.',
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: records
+                          .map((FederatedLearningRuntimeDeliveryRecordModel record) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  '${record.id} · ${record.status} · ${record.targetSiteIds.length} sites · ${record.runtimeTarget}',
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  'Lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}',
+                                ),
+                                style: const TextStyle(
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                              if ((record.revocationReason ?? '').trim().isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Revocation reason: ${record.revocationReason}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(growable: false),
+                    ),
+                  ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showCandidatePromotionRevocationDialog({
@@ -3541,6 +3715,24 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   String _formatTimestamp(Timestamp? value) {
     if (value == null) return _tHqFeatureFlags(context, 'unknown');
     return value.toDate().toIso8601String();
+  }
+
+  String _summarizeRuntimeDeliveryLifecycle(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    return 'Runtime lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}';
+  }
+
+  String _runtimeDeliveryLifecycleDetail(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    if (record.status == 'revoked' || record.revokedAt != null) {
+      return 'revoked ${_formatTimestamp(record.revokedAt)}';
+    }
+    if (record.expiresAt != null) {
+      return 'live until ${_formatTimestamp(record.expiresAt)}';
+    }
+    return 'no expiry recorded';
   }
 
   Widget _buildExperimentChip(

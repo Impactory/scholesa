@@ -273,9 +273,11 @@ export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   targetSiteIds: string[],
   status: FederatedLearningRuntimeDeliveryStatus,
   runtimeTarget: FederatedLearningRuntimeTarget,
+  expiresAt?: number,
 ): string {
+  const lifecycleSuffix = expiresAt == null ? '' : `|${expiresAt}`;
   const digest = createHash('sha256')
-    .update(`${packageDigest}|${runtimeTarget}|${status}|${targetSiteIds.join('|')}`)
+    .update(`${packageDigest}|${runtimeTarget}|${status}|${targetSiteIds.join('|')}${lifecycleSuffix}`)
     .digest('hex')
     .slice(0, 24);
   return `sha256:${digest}`;

@@ -3743,6 +3743,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
     required this.status,
     required this.packageDigest,
     required this.manifestDigest,
+    this.expiresAt,
+    this.revokedAt,
+    this.revokedBy,
+    this.revocationReason,
     this.notes,
     this.assignedBy,
     this.assignedAt,
@@ -3761,6 +3765,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
   final String status;
   final String packageDigest;
   final String manifestDigest;
+  final Timestamp? expiresAt;
+  final Timestamp? revokedAt;
+  final String? revokedBy;
+  final String? revocationReason;
   final String? notes;
   final String? assignedBy;
   final Timestamp? assignedAt;
@@ -3792,6 +3800,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       status: data['status'] as String? ?? 'prepared',
       packageDigest: data['packageDigest'] as String? ?? '',
       manifestDigest: data['manifestDigest'] as String? ?? '',
+      expiresAt: _timestampOrNull(data['expiresAt']),
+      revokedAt: _timestampOrNull(data['revokedAt']),
+      revokedBy: data['revokedBy'] as String?,
+      revocationReason: data['revocationReason'] as String?,
       notes: data['notes'] as String?,
       assignedBy: data['assignedBy'] as String?,
       assignedAt: _timestampOrNull(data['assignedAt']),
@@ -3811,6 +3823,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
         'status': status,
         'packageDigest': packageDigest,
         'manifestDigest': manifestDigest,
+        'expiresAt': expiresAt,
+        'revokedAt': revokedAt,
+        'revokedBy': revokedBy,
+        'revocationReason': revocationReason,
         'notes': notes,
         'assignedBy': assignedBy,
         'assignedAt': assignedAt ?? Timestamp.now(),
@@ -3912,11 +3928,16 @@ class FederatedLearningResolvedRuntimePackageModel {
     required this.runtimeTarget,
     required this.packageDigest,
     required this.manifestDigest,
+    required this.resolutionStatus,
     required this.modelVersion,
     required this.runtimeVectorLength,
     required this.runtimeVector,
     required this.runtimeVectorDigest,
     required this.rolloutStatus,
+    this.expiresAt,
+    this.revokedAt,
+    this.revokedBy,
+    this.revocationReason,
     this.resolvedAt,
   });
 
@@ -3928,12 +3949,25 @@ class FederatedLearningResolvedRuntimePackageModel {
   final String runtimeTarget;
   final String packageDigest;
   final String manifestDigest;
+  final String resolutionStatus;
   final String modelVersion;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
   final String runtimeVectorDigest;
   final String rolloutStatus;
+  final Timestamp? expiresAt;
+  final Timestamp? revokedAt;
+  final String? revokedBy;
+  final String? revocationReason;
   final Timestamp? resolvedAt;
+
+  bool get isUsable {
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime? expiry = expiresAt?.toDate().toUtc();
+    return resolutionStatus == 'resolved' &&
+        (expiry == null || expiry.isAfter(now)) &&
+        runtimeVector.isNotEmpty;
+  }
 
   factory FederatedLearningResolvedRuntimePackageModel.fromMap(
     Map<String, dynamic> data,
@@ -3947,11 +3981,16 @@ class FederatedLearningResolvedRuntimePackageModel {
       runtimeTarget: data['runtimeTarget'] as String? ?? '',
       packageDigest: data['packageDigest'] as String? ?? '',
       manifestDigest: data['manifestDigest'] as String? ?? '',
+      resolutionStatus: data['resolutionStatus'] as String? ?? 'resolved',
       modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
       rolloutStatus: data['rolloutStatus'] as String? ?? 'not_distributed',
+      expiresAt: _timestampOrNull(data['expiresAt']),
+      revokedAt: _timestampOrNull(data['revokedAt']),
+      revokedBy: data['revokedBy'] as String?,
+      revocationReason: data['revocationReason'] as String?,
       resolvedAt: _timestampOrNull(data['resolvedAt']),
     );
   }
@@ -3965,11 +4004,16 @@ class FederatedLearningResolvedRuntimePackageModel {
         'runtimeTarget': runtimeTarget,
         'packageDigest': packageDigest,
         'manifestDigest': manifestDigest,
+        'resolutionStatus': resolutionStatus,
         'modelVersion': modelVersion,
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,
         'rolloutStatus': rolloutStatus,
+        'expiresAt': expiresAt,
+        'revokedAt': revokedAt,
+        'revokedBy': revokedBy,
+        'revocationReason': revocationReason,
         'resolvedAt': resolvedAt ?? Timestamp.now(),
       };
 }
