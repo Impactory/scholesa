@@ -481,12 +481,24 @@ void main() {
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
         ),
+        _aggregationRunRow(
+          id: 'fl_agg_3',
+          totalSampleCount: 18,
+          summaryCount: 1,
+          distinctSiteCount: 1,
+          mergeArtifactId: 'fl_merge_3',
+          boundedDigest: 'sha256:digest-3',
+        ),
       ],
       mergeArtifacts: <Map<String, dynamic>>[
         _mergeArtifactRow(),
         _mergeArtifactRow(
           id: 'fl_merge_2',
           aggregationRunId: 'fl_agg_2',
+        ),
+        _mergeArtifactRow(
+          id: 'fl_merge_3',
+          aggregationRunId: 'fl_agg_3',
         ),
       ],
     );
@@ -518,11 +530,32 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, artifact ID, or digest',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text('Strategy: prototype_weighted_metadata_digest'),
       findsWidgets,
     );
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
+    expect(find.text('Showing 1-2 of 3'), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('Run fl_agg_3'), findsOneWidget);
+    expect(find.text('Showing 3-3 of 3'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Filter by run ID, artifact ID, or digest'),
+      'digest-2',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Digest: sha256:digest-2'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
 
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();

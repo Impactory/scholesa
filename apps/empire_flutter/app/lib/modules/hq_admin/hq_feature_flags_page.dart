@@ -512,48 +512,160 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               const <FederatedLearningMergeArtifactModel>[])
         artifact.aggregationRunId: artifact,
     };
+    const int pageSize = 2;
+    String filterQuery = '';
+    int pageIndex = 0;
 
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            _tHqFeatureFlags(
-              context,
-              'Aggregation history: ${experiment.name}',
-            ),
-          ),
-          content: SizedBox(
-            width: 640,
-            child: runs.isEmpty
-                ? Text(
-                    _tHqFeatureFlags(
-                      context,
-                      'No aggregation runs have materialized for this experiment yet.',
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            final String normalizedQuery = filterQuery.trim().toLowerCase();
+            final List<FederatedLearningAggregationRunModel> filteredRuns =
+                normalizedQuery.isEmpty
+                    ? runs
+                    : runs.where((FederatedLearningAggregationRunModel run) {
+                        final FederatedLearningMergeArtifactModel? artifact =
+                            artifactsByRunId[run.id];
+                        final String haystack = <String>[
+                          run.id,
+                          run.mergeArtifactId ?? '',
+                          run.mergeStrategy ?? '',
+                          run.boundedDigest ?? '',
+                          artifact?.id ?? '',
+                          artifact?.mergeStrategy ?? '',
+                          artifact?.boundedDigest ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(normalizedQuery);
+                      }).toList(growable: false);
+            final int pageCount = filteredRuns.isEmpty
+                ? 1
+                : ((filteredRuns.length - 1) ~/ pageSize) + 1;
+            if (pageIndex >= pageCount) {
+              pageIndex = pageCount - 1;
+            }
+            final int startIndex = filteredRuns.isEmpty ? 0 : pageIndex * pageSize;
+            final int endIndex = filteredRuns.isEmpty
+                ? 0
+                : (startIndex + pageSize > filteredRuns.length
+                    ? filteredRuns.length
+                    : startIndex + pageSize);
+            final List<FederatedLearningAggregationRunModel> visibleRuns =
+                filteredRuns.sublist(startIndex, endIndex);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Aggregation history: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 640,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (runs.isNotEmpty) ...<Widget>[
+                      TextField(
+                        onChanged: (String value) {
+                          setDialogState(() {
+                            filterQuery = value;
+                            pageIndex = 0;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(
+                            context,
+                            'Filter by run ID, artifact ID, or digest',
+                          ),
+                          prefixIcon: const Icon(Icons.search_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Flexible(
+                      child: runs.isEmpty
+                          ? Text(
+                              _tHqFeatureFlags(
+                                context,
+                                'No aggregation runs have materialized for this experiment yet.',
+                              ),
+                            )
+                          : filteredRuns.isEmpty
+                              ? Text(
+                                  _tHqFeatureFlags(
+                                    context,
+                                    'No aggregation runs match the current filter.',
+                                  ),
+                                )
+                              : SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: visibleRuns
+                                        .map(
+                                          (FederatedLearningAggregationRunModel run) =>
+                                              _buildAggregationHistoryEntry(
+                                            run,
+                                            artifactsByRunId[run.id],
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                ),
                     ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: runs
-                          .map(
-                            (FederatedLearningAggregationRunModel run) =>
-                                _buildAggregationHistoryEntry(
-                              run,
-                              artifactsByRunId[run.id],
+                    if (filteredRuns.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              _tHqFeatureFlags(
+                                context,
+                                'Showing ${startIndex + 1}-${endIndex} of ${filteredRuns.length}',
+                              ),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: ScholesaColors.textSecondary,
+                              ),
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(_tHqFeatureFlags(context, 'Close')),
-            ),
-          ],
+                          ),
+                          TextButton(
+                            onPressed: pageIndex > 0
+                                ? () {
+                                    setDialogState(() {
+                                      pageIndex -= 1;
+                                    });
+                                  }
+                                : null,
+                            child: Text(_tHqFeatureFlags(context, 'Previous')),
+                          ),
+                          TextButton(
+                            onPressed: pageIndex < pageCount - 1
+                                ? () {
+                                    setDialogState(() {
+                                      pageIndex += 1;
+                                    });
+                                  }
+                                : null,
+                            child: Text(_tHqFeatureFlags(context, 'Next')),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(_tHqFeatureFlags(context, 'Close')),
+                ),
+              ],
+            );
+          },
         );
       },
     );
