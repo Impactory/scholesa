@@ -205,6 +205,7 @@ export interface AuditLog {
 
 export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
 export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
+export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -237,6 +238,20 @@ export interface FederatedLearningUpdateSummary {
   aggregationStatus?: 'pending' | 'materialized';
   aggregationRunId?: string;
   requestedBy?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningExperimentReviewRecord {
+  id: string;
+  experimentId: string;
+  status: FederatedLearningExperimentReviewStatus;
+  privacyReviewComplete: boolean;
+  signoffChecklistComplete: boolean;
+  rolloutRiskAcknowledged: boolean;
+  notes?: string;
+  reviewedBy?: string;
+  reviewedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

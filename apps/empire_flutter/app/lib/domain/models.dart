@@ -2965,6 +2965,78 @@ class FederatedLearningUpdateSummaryModel {
 }
 
 @immutable
+class FederatedLearningExperimentReviewRecordModel {
+  const FederatedLearningExperimentReviewRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.status,
+    required this.privacyReviewComplete,
+    required this.signoffChecklistComplete,
+    required this.rolloutRiskAcknowledged,
+    this.notes,
+    this.reviewedBy,
+    this.reviewedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String status;
+  final bool privacyReviewComplete;
+  final bool signoffChecklistComplete;
+  final bool rolloutRiskAcknowledged;
+  final String? notes;
+  final String? reviewedBy;
+  final Timestamp? reviewedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningExperimentReviewRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningExperimentReviewRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningExperimentReviewRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningExperimentReviewRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      status: data['status'] as String? ?? 'pending',
+      privacyReviewComplete: data['privacyReviewComplete'] as bool? ?? false,
+      signoffChecklistComplete:
+          data['signoffChecklistComplete'] as bool? ?? false,
+      rolloutRiskAcknowledged:
+          data['rolloutRiskAcknowledged'] as bool? ?? false,
+      notes: data['notes'] as String?,
+      reviewedBy: data['reviewedBy'] as String?,
+      reviewedAt: _timestampOrNull(data['reviewedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'status': status,
+        'privacyReviewComplete': privacyReviewComplete,
+        'signoffChecklistComplete': signoffChecklistComplete,
+        'rolloutRiskAcknowledged': rolloutRiskAcknowledged,
+        'notes': notes,
+        'reviewedBy': reviewedBy,
+        'reviewedAt': reviewedAt ?? Timestamp.now(),
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class FederatedLearningAggregationRunModel {
   const FederatedLearningAggregationRunModel({
     required this.id,

@@ -3,6 +3,7 @@ import {
   buildFederatedLearningCandidateModelPackageDocId,
   buildFederatedLearningCandidatePromotionRecordDocId,
   buildFederatedLearningCandidatePromotionRevocationRecordDocId,
+  buildFederatedLearningExperimentReviewRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -12,6 +13,7 @@ import {
   federatedLearningAuditAction,
   normalizeFederatedLearningCandidatePromotionStatus,
   normalizeFederatedLearningCandidatePromotionTarget,
+  normalizeFederatedLearningExperimentReviewStatus,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -33,12 +35,16 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningCandidatePromotionStatus('rejected')).toBeNull();
     expect(normalizeFederatedLearningCandidatePromotionTarget('sandbox-eval')).toBe('sandbox_eval');
     expect(normalizeFederatedLearningCandidatePromotionTarget('production')).toBeNull();
+    expect(normalizeFederatedLearningExperimentReviewStatus('approved')).toBe('approved');
+    expect(normalizeFederatedLearningExperimentReviewStatus('blocked')).toBe('blocked');
+    expect(normalizeFederatedLearningExperimentReviewStatus('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
     const experimentId = buildFederatedLearningExperimentDocId('My Pilot / Alpha');
     expect(experimentId).toBe('fl_exp_my_pilot_alpha');
     expect(buildFederatedLearningFeatureFlagId(experimentId)).toBe('feature_fl_exp_my_pilot_alpha');
+    expect(buildFederatedLearningExperimentReviewRecordDocId(experimentId)).toBe('fl_review_my_pilot_alpha');
     expect(buildFederatedLearningAggregationRunDocId(experimentId, ['sum-1', 'sum-2']))
       .toBe('fl_agg_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningMergeArtifactDocId('fl_agg_1cb85e2396ee2ed67818ed78'))

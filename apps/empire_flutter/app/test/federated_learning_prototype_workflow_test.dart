@@ -20,6 +20,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? aggregationRuns,
     List<Map<String, dynamic>>? mergeArtifacts,
     List<Map<String, dynamic>>? candidatePackages,
+    List<Map<String, dynamic>>? experimentReviewRecords,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
@@ -38,6 +39,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _candidatePackages = List<Map<String, dynamic>>.from(
           candidatePackages ?? <Map<String, dynamic>>[],
         ),
+        _experimentReviewRecords = List<Map<String, dynamic>>.from(
+          experimentReviewRecords ?? <Map<String, dynamic>>[],
+        ),
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
@@ -52,12 +56,15 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _aggregationRuns;
   final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> _candidatePackages;
+  final List<Map<String, dynamic>> _experimentReviewRecords;
   final List<Map<String, dynamic>> _promotionRecords;
-    final List<Map<String, dynamic>> _promotionRevocationRecords;
+  final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedExperimentReviewSaves =
+      <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> recordedPromotionRevocations =
+  final List<Map<String, dynamic>> recordedPromotionRevocations =
       <Map<String, dynamic>>[];
 
   @override
@@ -85,6 +92,23 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     int limit = 120,
   }) async {
     return _experiments
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningExperimentReviewRecords({
+    String? experimentId,
+    int limit = 120,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped =
+        (experimentId == null || experimentId.isEmpty)
+            ? _experimentReviewRecords
+            : _experimentReviewRecords.where(
+                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+              );
+    return scoped
         .take(limit)
         .map((row) => Map<String, dynamic>.from(row))
         .toList();
@@ -125,6 +149,34 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     _siteExperiments.removeWhere((entry) => entry['id'] == id);
     _siteExperiments.insert(0, row);
     return id;
+  }
+
+  @override
+  Future<String?> upsertFederatedLearningExperimentReviewRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String experimentId = (data['experimentId'] as String? ?? '').trim();
+    final String reviewId =
+        'fl_review_${experimentId.replaceAll('fl_exp_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': reviewId,
+      'experimentId': experimentId,
+      'status': (data['status'] as String? ?? 'pending').trim(),
+      'privacyReviewComplete': data['privacyReviewComplete'] == true,
+      'signoffChecklistComplete': data['signoffChecklistComplete'] == true,
+      'rolloutRiskAcknowledged': data['rolloutRiskAcknowledged'] == true,
+      'notes': (data['notes'] as String? ?? '').trim(),
+      'reviewedBy': 'hq-1',
+      'reviewedAt': DateTime(2026, 3, 14, 15),
+      'createdAt': DateTime(2026, 3, 14, 15),
+      'updatedAt': DateTime(2026, 3, 14, 15),
+    };
+    _experimentReviewRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == reviewId,
+    );
+    _experimentReviewRecords.insert(0, record);
+    recordedExperimentReviewSaves.add(<String, dynamic>{...record});
+    return reviewId;
   }
 
   @override
@@ -866,6 +918,80 @@ void main() {
     );
     expect(
       find.text('Latest package promotion: approved_for_eval (sandbox_eval)'),
+      findsOneWidget,
+    );
+    expect(find.text('Review status: pending'), findsOneWidget);
+
+    final Finder reviewChecklistButton = find.widgetWithText(
+      TextButton,
+      'Review checklist',
+    );
+    await tester.ensureVisible(reviewChecklistButton.first);
+    final TextButton reviewChecklistControl = tester.widget<TextButton>(
+      reviewChecklistButton.first,
+    );
+    reviewChecklistControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Experiment review checklist'), findsOneWidget);
+    final Finder reviewStatusDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Review status',
+    );
+    await tester.tap(reviewStatusDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('approved').last);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile privacyReviewTile =
+        tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Privacy review complete'),
+    );
+    privacyReviewTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile signoffChecklistTile =
+        tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Sign-off checklist complete'),
+    );
+    signoffChecklistTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    final CheckboxListTile rolloutRiskTile =
+        tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Rollout risk acknowledged'),
+    );
+    rolloutRiskTile.onChanged?.call(true);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Review notes'),
+      'Privacy review and sign-off checklist complete for bounded pilot gating.',
+    );
+    final Finder saveReviewButton = find.widgetWithText(
+      FilledButton,
+      'Save review',
+    );
+    final FilledButton saveReviewControl = tester.widget<FilledButton>(
+      saveReviewButton,
+    );
+    saveReviewControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedExperimentReviewSaves, hasLength(1));
+    expect(
+      bridge.recordedExperimentReviewSaves.single['experimentId'],
+      'fl_exp_literacy_pilot',
+    );
+    expect(
+      bridge.recordedExperimentReviewSaves.single['status'],
+      'approved',
+    );
+    expect(find.text('Review status: approved'), findsOneWidget);
+    expect(
+      find.text(
+        'Checklist: privacy done · sign-off done · rollout risk acknowledged',
+      ),
       findsOneWidget,
     );
 

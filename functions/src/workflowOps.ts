@@ -21,6 +21,7 @@ import {
   buildFederatedLearningCandidateModelPackageDocId,
   buildFederatedLearningCandidatePromotionRecordDocId,
   buildFederatedLearningCandidatePromotionRevocationRecordDocId,
+  buildFederatedLearningExperimentReviewRecordDocId,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
   buildFederatedLearningMergeArtifactSummary,
@@ -30,6 +31,7 @@ import {
   federatedLearningAuditAction,
   normalizeFederatedLearningCandidatePromotionStatus,
   normalizeFederatedLearningCandidatePromotionTarget,
+  normalizeFederatedLearningExperimentReviewStatus,
   selectFederatedLearningAggregationBatch,
   sanitizeFederatedLearningExperimentConfig,
   sanitizeFederatedLearningUpdateSummary,
@@ -1789,6 +1791,33 @@ export const listFederatedLearningExperiments = onCall(async (request: CallableR
   return { experiments };
 });
 
+export const listFederatedLearningExperimentReviewRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 120;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningExperimentReviewRecords')
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
 export const listSiteFederatedLearningExperiments = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (!['site', 'hq'].includes(actor.role)) {
@@ -2016,6 +2045,79 @@ export const listFederatedLearningCandidatePromotionRevocationRecords = onCall(a
     ...(snapDoc.data() as Record<string, unknown>),
   }));
   return { records };
+});
+
+export const upsertFederatedLearningExperimentReviewRecord = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  if (!experimentId) {
+    throw new HttpsError('invalid-argument', 'experimentId is required.');
+  }
+
+  const experimentRef = admin.firestore().collection('federatedLearningExperiments').doc(experimentId);
+  const experimentSnap = await experimentRef.get();
+  if (!experimentSnap.exists) {
+    throw new HttpsError('not-found', 'Federated learning experiment not found.');
+  }
+
+  const status = normalizeFederatedLearningExperimentReviewStatus(request.data?.status);
+  if (!status) {
+    throw new HttpsError('invalid-argument', 'status must be pending, approved, or blocked.');
+  }
+
+  const privacyReviewComplete = request.data?.privacyReviewComplete === true;
+  const signoffChecklistComplete = request.data?.signoffChecklistComplete === true;
+  const rolloutRiskAcknowledged = request.data?.rolloutRiskAcknowledged === true;
+  const notes = asTrimmedString(request.data?.notes).slice(0, 500);
+
+  if (status === 'approved' && (!privacyReviewComplete || !signoffChecklistComplete || !rolloutRiskAcknowledged)) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Approved review records require privacy review, sign-off checklist, and rollout-risk acknowledgement.',
+    );
+  }
+
+  const reviewId = buildFederatedLearningExperimentReviewRecordDocId(experimentId);
+  const reviewRef = admin.firestore().collection('federatedLearningExperimentReviewRecords').doc(reviewId);
+
+  await reviewRef.set({
+    experimentId,
+    status,
+    privacyReviewComplete,
+    signoffChecklistComplete,
+    rolloutRiskAcknowledged,
+    notes,
+    reviewedBy: actor.uid,
+    reviewedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('experiment_review_record.upsert'),
+    collection: 'federatedLearningExperimentReviewRecords',
+    documentId: reviewId,
+    timestamp: Date.now(),
+    details: {
+      experimentId,
+      status,
+      privacyReviewComplete,
+      signoffChecklistComplete,
+      rolloutRiskAcknowledged,
+    },
+  });
+
+  return {
+    success: true,
+    id: reviewId,
+    experimentId,
+    status,
+  };
 });
 
 export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (request: CallableRequest) => {

@@ -9,6 +9,7 @@ export type FederatedLearningMergeArtifactStatus = 'generated';
 export type FederatedLearningCandidateModelPackageStatus = 'staged';
 export type FederatedLearningCandidatePromotionStatus = 'approved_for_eval' | 'hold';
 export type FederatedLearningCandidatePromotionTarget = 'sandbox_eval';
+export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -176,6 +177,10 @@ export function buildFederatedLearningFeatureFlagId(experimentId: string): strin
   return `feature_${experimentId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
+export function buildFederatedLearningExperimentReviewRecordDocId(experimentId: string): string {
+  return `fl_review_${experimentId.replace(/^fl_exp_/, '')}`;
+}
+
 export function buildFederatedLearningAggregationRunDocId(
   experimentId: string,
   summaryIds: string[],
@@ -201,6 +206,16 @@ export function buildFederatedLearningCandidatePromotionRecordDocId(packageId: s
 
 export function buildFederatedLearningCandidatePromotionRevocationRecordDocId(packageId: string): string {
   return `fl_prom_revoke_${packageId.replace(/^fl_pkg_/, '')}`;
+}
+
+export function normalizeFederatedLearningExperimentReviewStatus(
+  value: unknown,
+): FederatedLearningExperimentReviewStatus | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'pending') return 'pending';
+  if (normalized === 'approved') return 'approved';
+  if (normalized === 'blocked') return 'blocked';
+  return null;
 }
 
 export function normalizeFederatedLearningCandidatePromotionStatus(

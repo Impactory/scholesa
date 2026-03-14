@@ -209,6 +209,19 @@ beforeEach(async () => {
       siteId: 'site2',
     });
 
+    await setDoc(doc(db, 'federatedLearningExperimentReviewRecords', 'fl_review_literacy_pilot'), {
+      experimentId: 'fl_exp_literacy_pilot',
+      status: 'pending',
+      privacyReviewComplete: true,
+      signoffChecklistComplete: false,
+      rolloutRiskAcknowledged: true,
+      notes: 'Awaiting final sign-off checklist completion.',
+      reviewedBy: hqUser.uid,
+      reviewedAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
     await setDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_1'), {
       experimentId: 'fl_exp_literacy_pilot',
       siteId: 'site1',
@@ -549,6 +562,20 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningExperiments', 'fl_exp_other_site')),
+    );
+  });
+
+  test('HQ can read federated learning experiment review records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, 'federatedLearningExperimentReviewRecords', 'fl_review_literacy_pilot')),
+    );
+  });
+
+  test('site admins cannot read federated learning experiment review records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDoc(doc(db, 'federatedLearningExperimentReviewRecords', 'fl_review_literacy_pilot')),
     );
   });
 

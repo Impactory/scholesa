@@ -53,6 +53,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, List<FederatedLearningCandidateModelPackageModel>>
     _candidatePackagesByExperiment =
     <String, List<FederatedLearningCandidateModelPackageModel>>{};
+  Map<String, FederatedLearningExperimentReviewRecordModel>
+    _experimentReviewRecordsByExperimentId =
+    <String, FederatedLearningExperimentReviewRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -333,6 +336,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestPackage == null
         ? null
         : _promotionRecordsByPackageId[latestPackage.id];
+    final FederatedLearningExperimentReviewRecordModel? reviewRecord =
+      _experimentReviewRecordsByExperimentId[experiment.id];
     final FederatedLearningCandidatePromotionRevocationRecordModel?
         latestPromotionRevocation = latestPackage == null
             ? null
@@ -410,6 +415,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   icon: const Icon(Icons.inventory_rounded),
                   label: Text(_tHqFeatureFlags(context, 'View packages')),
                 ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => _showExperimentReviewDialog(experiment),
+                  icon: const Icon(Icons.fact_check_rounded),
+                  label: Text(_tHqFeatureFlags(context, 'Review checklist')),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -485,6 +496,32 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Latest candidate package: ${latestPackage.id} (${latestPackage.packageFormat})',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                reviewRecord == null
+                    ? 'Review status: pending'
+                    : 'Review status: ${reviewRecord.status}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            if (reviewRecord != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Checklist: privacy ${reviewRecord.privacyReviewComplete ? 'done' : 'open'} · sign-off ${reviewRecord.signoffChecklistComplete ? 'done' : 'open'} · rollout risk ${reviewRecord.rolloutRiskAcknowledged ? 'acknowledged' : 'open'}',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -1462,6 +1499,138 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  Future<void> _showExperimentReviewDialog(
+    FederatedLearningExperimentModel experiment,
+  ) async {
+    final FederatedLearningExperimentReviewRecordModel? existingReview =
+        _experimentReviewRecordsByExperimentId[experiment.id];
+    final TextEditingController notesController = TextEditingController(
+      text: existingReview?.notes ?? '',
+    );
+    String status = existingReview?.status ?? 'pending';
+    bool privacyReviewComplete = existingReview?.privacyReviewComplete ?? false;
+    bool signoffChecklistComplete =
+        existingReview?.signoffChecklistComplete ?? false;
+    bool rolloutRiskAcknowledged =
+        existingReview?.rolloutRiskAcknowledged ?? false;
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(context, 'Experiment review checklist'),
+              ),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: status,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Review status'),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'pending', child: Text('pending')),
+                          DropdownMenuItem(value: 'approved', child: Text('approved')),
+                          DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            status = value ?? 'pending';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        value: privacyReviewComplete,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          _tHqFeatureFlags(context, 'Privacy review complete'),
+                        ),
+                        onChanged: (bool? value) {
+                          setDialogState(() {
+                            privacyReviewComplete = value ?? false;
+                          });
+                        },
+                      ),
+                      CheckboxListTile(
+                        value: signoffChecklistComplete,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          _tHqFeatureFlags(context, 'Sign-off checklist complete'),
+                        ),
+                        onChanged: (bool? value) {
+                          setDialogState(() {
+                            signoffChecklistComplete = value ?? false;
+                          });
+                        },
+                      ),
+                      CheckboxListTile(
+                        value: rolloutRiskAcknowledged,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          _tHqFeatureFlags(context, 'Rollout risk acknowledged'),
+                        ),
+                        onChanged: (bool? value) {
+                          setDialogState(() {
+                            rolloutRiskAcknowledged = value ?? false;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(context, 'Review notes'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(_tHqFeatureFlags(context, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(_tHqFeatureFlags(context, 'Save review')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    await _saveExperimentReviewRecord(
+      experiment: experiment,
+      status: status,
+      privacyReviewComplete: privacyReviewComplete,
+      signoffChecklistComplete: signoffChecklistComplete,
+      rolloutRiskAcknowledged: rolloutRiskAcknowledged,
+      notes: notesController.text,
+    );
+  }
+
   Widget _buildCandidatePackageHistoryEntry(
     FederatedLearningCandidateModelPackageModel package,
     FederatedLearningCandidatePromotionRecordModel? promotion,
@@ -2389,6 +2558,49 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
+  Future<void> _saveExperimentReviewRecord({
+    required FederatedLearningExperimentModel experiment,
+    required String status,
+    required bool privacyReviewComplete,
+    required bool signoffChecklistComplete,
+    required bool rolloutRiskAcknowledged,
+    required String notes,
+  }) async {
+    try {
+      await _workflowBridge.upsertFederatedLearningExperimentReviewRecord(
+        <String, dynamic>{
+          'experimentId': experiment.id,
+          'status': status,
+          'privacyReviewComplete': privacyReviewComplete,
+          'signoffChecklistComplete': signoffChecklistComplete,
+          'rolloutRiskAcknowledged': rolloutRiskAcknowledged,
+          'notes': notes.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Experiment review saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Experiment review failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _showCandidatePromotionRevocationDialog({
     required FederatedLearningCandidatePromotionRecordModel record,
     VoidCallback? refreshDialog,
@@ -2600,6 +2812,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     try {
       final List<dynamic> payloads = await Future.wait<dynamic>(<Future<dynamic>>[
         _workflowBridge.listFederatedLearningExperiments(),
+        _workflowBridge.listFederatedLearningExperimentReviewRecords(limit: 120),
         _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
         _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
         _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
@@ -2620,7 +2833,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               return bMillis.compareTo(aMillis);
             });
       final List<FederatedLearningAggregationRunModel> runs =
-          (payloads[1] as List<Map<String, dynamic>>)
+          (payloads[2] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningAggregationRunModel.fromMap(
                     (row['id'] as String?) ?? 'aggregation_run',
@@ -2641,7 +2854,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         ).add(run);
       }
       final List<FederatedLearningMergeArtifactModel> artifacts =
-          (payloads[2] as List<Map<String, dynamic>>)
+          (payloads[3] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningMergeArtifactModel.fromMap(
                     (row['id'] as String?) ?? 'merge_artifact',
@@ -2663,7 +2876,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         ).add(artifact);
       }
       final List<FederatedLearningCandidateModelPackageModel> packages =
-          (payloads[3] as List<Map<String, dynamic>>)
+          (payloads[4] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidateModelPackageModel.fromMap(
                     (row['id'] as String?) ?? 'candidate_package',
@@ -2685,11 +2898,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           () => <FederatedLearningCandidateModelPackageModel>[],
         ).add(package);
       }
+        final Map<String, FederatedLearningExperimentReviewRecordModel>
+          reviewRecordsByExperimentId =
+          <String, FederatedLearningExperimentReviewRecordModel>{};
+        for (final FederatedLearningExperimentReviewRecordModel record
+          in (payloads[1] as List<Map<String, dynamic>>)
+            .map((Map<String, dynamic> row) =>
+              FederatedLearningExperimentReviewRecordModel.fromMap(
+              (row['id'] as String?) ?? 'experiment_review_record',
+              row,
+              ))) {
+        reviewRecordsByExperimentId[record.experimentId] = record;
+        }
       final Map<String, FederatedLearningCandidatePromotionRecordModel>
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[4] as List<Map<String, dynamic>>)
+          in (payloads[5] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -2701,7 +2926,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[5] as List<Map<String, dynamic>>)
+          in (payloads[6] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -2715,6 +2940,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _aggregationRunsByExperiment = runsByExp;
         _mergeArtifactsByExperiment = artifactsByExp;
         _candidatePackagesByExperiment = packagesByExp;
+        _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
       });
@@ -2728,6 +2954,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             <String, List<FederatedLearningMergeArtifactModel>>{};
         _candidatePackagesByExperiment =
             <String, List<FederatedLearningCandidateModelPackageModel>>{};
+        _experimentReviewRecordsByExperimentId =
+          <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
         _promotionRevocationRecordsByPackageId =
