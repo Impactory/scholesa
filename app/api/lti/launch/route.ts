@@ -11,7 +11,7 @@ async function loadPlatformRegistration(input: { issuer: string; deploymentId: s
     .get();
 
   const match = snap.docs
-    .map((docSnap) => ({
+    .map((docSnap): Record<string, unknown> & { id: string } => ({
       id: docSnap.id,
       ...(docSnap.data() as Record<string, unknown>),
     }))

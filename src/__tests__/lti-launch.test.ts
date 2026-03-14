@@ -2,7 +2,7 @@ jest.mock('@/src/firebase/admin-init', () => ({
   getAdminDb: jest.fn(),
 }));
 
-import { createPrivateKey, createPublicKey, createSign, generateKeyPairSync } from 'node:crypto';
+import { createSign, generateKeyPairSync } from 'node:crypto';
 import { getAdminDb } from '@/src/firebase/admin-init';
 import { POST } from '@/app/api/lti/launch/route';
 
@@ -15,7 +15,7 @@ function base64UrlEncode(input: Buffer | string): string {
 
 function buildSignedLtiToken(overrides: Record<string, unknown> = {}) {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  const jwk = createPublicKey(publicKey).export({ format: 'jwk' }) as JsonWebKey;
+  const jwk = publicKey.export({ format: 'jwk' }) as JsonWebKey;
   const header = { alg: 'RS256', typ: 'JWT', kid: 'test-kid' };
   const nowSeconds = Math.floor(Date.now() / 1000);
   const payload = {
@@ -39,7 +39,7 @@ function buildSignedLtiToken(overrides: Record<string, unknown> = {}) {
   const signer = createSign('RSA-SHA256');
   signer.update(`${encodedHeader}.${encodedPayload}`);
   signer.end();
-  const signature = signer.sign(createPrivateKey(privateKey));
+  const signature = signer.sign(privateKey);
 
   return {
     token: `${encodedHeader}.${encodedPayload}.${base64UrlEncode(signature)}`,

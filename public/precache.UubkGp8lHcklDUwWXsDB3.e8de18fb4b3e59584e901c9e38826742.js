@@ -1,247 +1,251 @@
-self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/", "revision": "dfGSo0NfaqBzHorbrei2_" },
+self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/", "revision": "UubkGp8lHcklDUwWXsDB3" },
   {
     "revision": "d751713988987e9331980363e24189ce",
     "url": "/_next/dynamic-css-manifest.json"
   },
   {
-    "revision": "f1938fc67e02bf444057ed9e9f692481",
+    "revision": "d1ac0e3a5253e3fc2d8644999fd8ed30",
     "url": "/_next/server/app/[locale]/(auth)/login/page_client-reference-manifest.js"
   },
   {
-    "revision": "eeb8998ecc5ebb2e99937c3bb98c9295",
+    "revision": "08a6abcbaa8bff99e55a48512791a7c2",
     "url": "/_next/server/app/[locale]/(auth)/register/page_client-reference-manifest.js"
   },
   {
-    "revision": "37095cd738c853bf1370262aafe7df5e",
+    "revision": "04527610a1e1b5e8de7485b9de66521d",
     "url": "/_next/server/app/[locale]/(protected)/dashboard/page_client-reference-manifest.js"
   },
   {
-    "revision": "117ce6d9f651b31644b3962a2dc20152",
+    "revision": "f024af7c4481eacc2fa1a21ecf3ff086",
     "url": "/_next/server/app/[locale]/(protected)/educator/analytics/page_client-reference-manifest.js"
   },
   {
-    "revision": "b13d9511fad07c2e7d2b4c85572fdc32",
+    "revision": "fa58e5ae946504b6028f99a081ea609b",
     "url": "/_next/server/app/[locale]/(protected)/educator/attendance/page_client-reference-manifest.js"
   },
   {
-    "revision": "b198a2cd6489120897f2a2cb23a9c806",
+    "revision": "ae5b617739a93330cfbc65d92a429907",
     "url": "/_next/server/app/[locale]/(protected)/educator/integrations/page_client-reference-manifest.js"
   },
   {
-    "revision": "d1bc0a0eee8228024e8275130a0aa0a2",
+    "revision": "c428dea27e0d10da003b3abb7fd23883",
     "url": "/_next/server/app/[locale]/(protected)/educator/learner-supports/page_client-reference-manifest.js"
   },
   {
-    "revision": "d3f29ba8bc821c46d00841ecb94f0037",
+    "revision": "bfbceda1eb133dbb75a5bd3a06b0d4eb",
     "url": "/_next/server/app/[locale]/(protected)/educator/learners/page_client-reference-manifest.js"
   },
   {
-    "revision": "c9c138741aa1c6eac9e1578cbf240f79",
+    "revision": "c591ba739d950c571346b379bcff6259",
     "url": "/_next/server/app/[locale]/(protected)/educator/mission-plans/page_client-reference-manifest.js"
   },
   {
-    "revision": "d18ed5a38d988ff9f8a22dbeb1e6551c",
+    "revision": "851ccb5eb995c857c65509157011763f",
     "url": "/_next/server/app/[locale]/(protected)/educator/missions/review/page_client-reference-manifest.js"
   },
   {
-    "revision": "506589eeaf7de9bc72b0547d1c6fee19",
+    "revision": "637ca2d5f53eddef4060af1c42741aee",
     "url": "/_next/server/app/[locale]/(protected)/educator/page_client-reference-manifest.js"
   },
   {
-    "revision": "799e100b6f8d69951db1b19ad8054af5",
+    "revision": "9ae92a8db972dd35d7223bb2e68ccd3c",
     "url": "/_next/server/app/[locale]/(protected)/educator/sessions/page_client-reference-manifest.js"
   },
   {
-    "revision": "cdb6b4a401c68baf217f689eb954f03a",
+    "revision": "392f03523832d40c04ae4090055792e9",
     "url": "/_next/server/app/[locale]/(protected)/educator/today/page_client-reference-manifest.js"
   },
   {
-    "revision": "6baa9c489d7e2824e0887aea589fbaf5",
+    "revision": "e7876278cc8cae43fe3066856ad18eb3",
     "url": "/_next/server/app/[locale]/(protected)/hq/analytics/page_client-reference-manifest.js"
   },
   {
-    "revision": "2e152f6e8fd0fe18bfe580029de9fb37",
+    "revision": "db1543cd89586b3f28b15b29f736b518",
     "url": "/_next/server/app/[locale]/(protected)/hq/approvals/page_client-reference-manifest.js"
   },
   {
-    "revision": "d9c8ec99d6cccec5b72c9158d83e3038",
+    "revision": "394d98cfb3c03a12552291f9715db7e1",
     "url": "/_next/server/app/[locale]/(protected)/hq/audit/page_client-reference-manifest.js"
   },
   {
-    "revision": "e6b4191b7ca9432c93b4a888fbb87e2a",
+    "revision": "074778d7ceed52babd32735a5fccff8c",
     "url": "/_next/server/app/[locale]/(protected)/hq/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "c74252ce5d85620619ac6cea4e1b2d6d",
+    "revision": "1da7ece51970743fdf9c60389179f690",
     "url": "/_next/server/app/[locale]/(protected)/hq/curriculum/page_client-reference-manifest.js"
   },
   {
-    "revision": "ac687a565d8302c74c67b92f96336a88",
+    "revision": "106fdbf83ae7b543917e82bd7dc4ad75",
     "url": "/_next/server/app/[locale]/(protected)/hq/feature-flags/page_client-reference-manifest.js"
   },
   {
-    "revision": "6f94e0d0419cbbdff11392727a11edd7",
+    "revision": "67f486f4e74bfe68ffe3dec7472ac578",
     "url": "/_next/server/app/[locale]/(protected)/hq/integrations-health/page_client-reference-manifest.js"
   },
   {
-    "revision": "e6ff620ecde938fcf881150589440dcb",
+    "revision": "d4bb1232ec6a15c3aff3b890270565bd",
     "url": "/_next/server/app/[locale]/(protected)/hq/page_client-reference-manifest.js"
   },
   {
-    "revision": "5dbbf37b541019727450a369bf248fba",
+    "revision": "590eaaedf214b1d03a35fbecb3fd187e",
     "url": "/_next/server/app/[locale]/(protected)/hq/role-switcher/page_client-reference-manifest.js"
   },
   {
-    "revision": "67261c1266308ccaa07ec61ad23903f1",
+    "revision": "10af7cb3f0c71be7ba1dc97835e949a4",
     "url": "/_next/server/app/[locale]/(protected)/hq/safety/page_client-reference-manifest.js"
   },
   {
-    "revision": "fd6713918f5428d87390313b440d3be0",
+    "revision": "4320ac18e64b1b48cb0feb7b6af4a085",
     "url": "/_next/server/app/[locale]/(protected)/hq/sites/page_client-reference-manifest.js"
   },
   {
-    "revision": "e5b9aaa7b5e00cc479c101ef9516e192",
+    "revision": "fc6b47facfeb19855044880d00ef3c99",
     "url": "/_next/server/app/[locale]/(protected)/hq/user-admin/page_client-reference-manifest.js"
   },
   {
-    "revision": "08dcff25c3b1ad7af361091ea17fb7a8",
+    "revision": "ba31b835f35671084c379fc89fc46417",
     "url": "/_next/server/app/[locale]/(protected)/learner/habits/page_client-reference-manifest.js"
   },
   {
-    "revision": "14d2787806abeefe4778275a878d1989",
+    "revision": "6c7f79e1c7696932853e1409f0d5683a",
     "url": "/_next/server/app/[locale]/(protected)/learner/missions/page_client-reference-manifest.js"
   },
   {
-    "revision": "a772789fe034c1f4a1229b6ec5742362",
+    "revision": "ff58a339ecd5cbad046b253c5cce6d79",
     "url": "/_next/server/app/[locale]/(protected)/learner/page_client-reference-manifest.js"
   },
   {
-    "revision": "fc69626e7a3a3529a1bb7dbd7980cd0b",
+    "revision": "518b92372e8a94eeb21b1292cfe936df",
     "url": "/_next/server/app/[locale]/(protected)/learner/portfolio/page_client-reference-manifest.js"
   },
   {
-    "revision": "1bd009bd25fe87c7f9ab110b6200787f",
+    "revision": "f35d787b503281ccd1fb1553babbab54",
     "url": "/_next/server/app/[locale]/(protected)/learner/profile/page_client-reference-manifest.js"
   },
   {
-    "revision": "41584ba6b4be47ea4c31fd8a07c5e763",
+    "revision": "8814009f4e369d6d857526ca6e777fbd",
     "url": "/_next/server/app/[locale]/(protected)/learner/today/page_client-reference-manifest.js"
   },
   {
-    "revision": "ca722961e84e2cbd57be1d018dbd195a",
+    "revision": "bd5eae4e82c9dd1fc3d61833a3f07038",
     "url": "/_next/server/app/[locale]/(protected)/messages/page_client-reference-manifest.js"
   },
   {
-    "revision": "7af67276533ebd235a22b5e6168e603a",
+    "revision": "fa608052bbe66be9ab25783928d370ae",
     "url": "/_next/server/app/[locale]/(protected)/notifications/page_client-reference-manifest.js"
   },
   {
-    "revision": "42e4095b5dee15166e565b75d501ae44",
+    "revision": "754a8d514011466ac64094f6e69dbe81",
     "url": "/_next/server/app/[locale]/(protected)/parent/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "c220fac6f5c706996aac264bc41ba22a",
+    "revision": "35f45ce6d8876d243bead6fea7c56eb1",
     "url": "/_next/server/app/[locale]/(protected)/parent/page_client-reference-manifest.js"
   },
   {
-    "revision": "9dacb2bf829e99210cf85037921ccb0a",
+    "revision": "f4bd75179de158b76c4e46f301ced741",
     "url": "/_next/server/app/[locale]/(protected)/parent/portfolio/page_client-reference-manifest.js"
   },
   {
-    "revision": "60c2ee0781add9e4e428ee0b3ab0f6f1",
+    "revision": "a3a3ee3ce871f7c709c9af720d368b71",
     "url": "/_next/server/app/[locale]/(protected)/parent/schedule/page_client-reference-manifest.js"
   },
   {
-    "revision": "d886fbb8786c9281aaf3ff3a1988bdf1",
+    "revision": "b406157b27b2d0bd5f45527950da0f21",
     "url": "/_next/server/app/[locale]/(protected)/parent/summary/page_client-reference-manifest.js"
   },
   {
-    "revision": "fd5727c42f8ce431cdeda945965aee66",
+    "revision": "82b8202da32d0514c9e64546c1044641",
     "url": "/_next/server/app/[locale]/(protected)/partner/contracts/page_client-reference-manifest.js"
   },
   {
-    "revision": "c5258568d382bb4c02ac105c079ec759",
+    "revision": "557f1d57c5f95640d41181d1b47b3fb8",
     "url": "/_next/server/app/[locale]/(protected)/partner/listings/page_client-reference-manifest.js"
   },
   {
-    "revision": "2d483c44f6c40561e917883d019d7d7d",
+    "revision": "fc371331d4b87b4bc6baaa00ee046714",
     "url": "/_next/server/app/[locale]/(protected)/partner/page_client-reference-manifest.js"
   },
   {
-    "revision": "355b74412a02f14eb1c31004b0fb33eb",
+    "revision": "5190e0b8beb0f366bf29d8f717c3b017",
     "url": "/_next/server/app/[locale]/(protected)/partner/payouts/page_client-reference-manifest.js"
   },
   {
-    "revision": "fbd748e0174ba6f0fa35f5df52e83d39",
+    "revision": "064c5ad52c0848feec2b90d1777faf7b",
     "url": "/_next/server/app/[locale]/(protected)/profile/page_client-reference-manifest.js"
   },
   {
-    "revision": "2f4960a231b1401d384460d3b1aada78",
+    "revision": "32c15a5f6b3de8733dced075ad57bc95",
     "url": "/_next/server/app/[locale]/(protected)/settings/page_client-reference-manifest.js"
   },
   {
-    "revision": "49d5ef337b80699840c933622c6cb36f",
+    "revision": "0e2e95cf47c783c75df95aed4d714981",
     "url": "/_next/server/app/[locale]/(protected)/site/billing/page_client-reference-manifest.js"
   },
   {
-    "revision": "06a7a6ebd24b005c0b43e3ef6b7e277f",
+    "revision": "621381d912e6f27c4d50a502d3a7b0d4",
     "url": "/_next/server/app/[locale]/(protected)/site/checkin/page_client-reference-manifest.js"
   },
   {
-    "revision": "5ac06b6aab759890e9b1a179c1a0f84c",
+    "revision": "d660bfcc5a5b5e04d9acf245425b8730",
     "url": "/_next/server/app/[locale]/(protected)/site/dashboard/page_client-reference-manifest.js"
   },
   {
-    "revision": "9dda8533722e9f137d378464eb8f8a00",
+    "revision": "6c3d95151b973dc446cb32b341517db9",
     "url": "/_next/server/app/[locale]/(protected)/site/identity/page_client-reference-manifest.js"
   },
   {
-    "revision": "db485bc458089f97f5d3bde24d59def1",
+    "revision": "9a865051cb61814b9676bffd2f1ad65f",
     "url": "/_next/server/app/[locale]/(protected)/site/incidents/page_client-reference-manifest.js"
   },
   {
-    "revision": "be380d221bf882dd14daaae9bb399990",
+    "revision": "20ddf607ffa0b95580b4970e2db6691d",
     "url": "/_next/server/app/[locale]/(protected)/site/integrations-health/page_client-reference-manifest.js"
   },
   {
-    "revision": "9ecb57d88f851605eaade158ab5756ab",
+    "revision": "425aa709ad8d1e7f8bab53f957a87878",
     "url": "/_next/server/app/[locale]/(protected)/site/ops/page_client-reference-manifest.js"
   },
   {
-    "revision": "79e1f41ca02897ea4c77b237064b22b3",
+    "revision": "9ae701b77122b275d33e44037ab8a230",
     "url": "/_next/server/app/[locale]/(protected)/site/page_client-reference-manifest.js"
   },
   {
-    "revision": "0d7b3a28bbe8c5a4d229366bb22b6c24",
+    "revision": "1af522e454ce8b3de87c0cb5039edf77",
     "url": "/_next/server/app/[locale]/(protected)/site/provisioning/page_client-reference-manifest.js"
   },
   {
-    "revision": "cfd36d483c8fa22460dc9274ee23d540",
+    "revision": "d11852823f6f2ea8d697f98e0035a4fb",
     "url": "/_next/server/app/[locale]/(protected)/site/sessions/page_client-reference-manifest.js"
   },
   {
-    "revision": "d24a89d7587268b71cf3f58d0d0d894f",
+    "revision": "32cef1b412e6ddfdd1971dce839b9717",
     "url": "/_next/server/app/[locale]/page_client-reference-manifest.js"
   },
   {
-    "revision": "d187f38dfafa9bf8e9cb6a0d6ee049c1",
+    "revision": "84570354af093fbb5e70c87d9eac686c",
     "url": "/_next/server/app/_not-found/page_client-reference-manifest.js"
   },
   {
-    "revision": "05b509aa658d2d537c608962dd6252bc",
+    "revision": "6dfcee4f629fbe9844f0c6cd7724ac1d",
     "url": "/_next/server/app/api/ai/complete/route_client-reference-manifest.js"
   },
   {
-    "revision": "4934df4d67561cb8086275d062ee02f9",
+    "revision": "c2abc80c5242cea423ed67032401a414",
     "url": "/_next/server/app/api/auth/session-login/route_client-reference-manifest.js"
   },
   {
-    "revision": "2aee2f313ce68e675496c32f0130d6a6",
+    "revision": "c59e9662fb9f8b1381be3abc6d172f3a",
     "url": "/_next/server/app/api/auth/session-logout/route_client-reference-manifest.js"
   },
   {
-    "revision": "f1febe4ccac33a290c307b5c7fac2ac3",
+    "revision": "a04856172b49823a7e91a61c27f3d56d",
     "url": "/_next/server/app/api/healthz/route_client-reference-manifest.js"
+  },
+  {
+    "revision": "e1e54be3f1d89fdbadc68ca1538a8d02",
+    "url": "/_next/server/app/api/lti/launch/route_client-reference-manifest.js"
   },
   {
     "revision": "c9a5875cf7496f5dc8655a26286ce3d0",
@@ -264,6 +268,14 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/server/next-font-manifest.json"
   },
   {
+    "revision": "0be0b7a9e79a076643f17a501f4d046a",
+    "url": "/_next/static/UubkGp8lHcklDUwWXsDB3/_buildManifest.js"
+  },
+  {
+    "revision": "b6652df95db52feb4daf4eca35380933",
+    "url": "/_next/static/UubkGp8lHcklDUwWXsDB3/_ssgManifest.js"
+  },
+  {
     "revision": "59c4815146575ff1",
     "url": "/_next/static/chunks/1633-789237a9e64ef94b.js"
   },
@@ -284,8 +296,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/4bd1b696-0ae268a5a152f031.js"
   },
   {
-    "revision": "02ffa84445ac863e",
-    "url": "/_next/static/chunks/6850-3d22b64c68fe8773.js"
+    "revision": "34576db63c1b327f",
+    "url": "/_next/static/chunks/6850-d4079516813790de.js"
   },
   {
     "revision": "67d1db7032fa2358",
@@ -308,16 +320,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(auth)/register/page-e81a28bfa157b5d1.js"
   },
   {
-    "revision": "aea1140d9727a0e5",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/layout-e481e51b3c4a4882.js"
+    "revision": "ecc2edf5296c4e95",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/layout-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "8f0d1a2bf8e5190b",
     "url": "/_next/static/chunks/app/[locale]/(protected)/dashboard/page-6a56f30be4adfbe7.js"
   },
   {
-    "revision": "bad65468fb66a029",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/analytics/page-e481e51b3c4a4882.js"
+    "revision": "2813340c8d5c1aa6",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/analytics/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "2d471e81d055157d",
@@ -328,8 +340,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/educator/integrations/page-a7f122de346b32e3.js"
   },
   {
-    "revision": "a36f56db386ca979",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/layout-e481e51b3c4a4882.js"
+    "revision": "f4c4024d26282811",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/layout-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "9964ef45072324aa",
@@ -348,8 +360,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/educator/missions/review/page-53967656e14b622c.js"
   },
   {
-    "revision": "e88fd9854d389672",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/page-e481e51b3c4a4882.js"
+    "revision": "31d49eaa78c59077",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/educator/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "2aa38988842455b7",
@@ -388,12 +400,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/hq/integrations-health/page-e5340dcd45c60d6f.js"
   },
   {
-    "revision": "cabc2c4a039369b4",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/hq/layout-e481e51b3c4a4882.js"
+    "revision": "504d8845d93aeaf4",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/hq/layout-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "676006061aef09df",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/hq/page-e481e51b3c4a4882.js"
+    "revision": "fefecaa5fa227b6e",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/hq/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "f2babfdffac7eb67",
@@ -420,24 +432,24 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/learner/habits/page-087cc51fefc38fb8.js"
   },
   {
-    "revision": "a2ee1c73dd5a3a60",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/layout-e481e51b3c4a4882.js"
+    "revision": "0c253a1e1c3b6834",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/layout-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "018ad493d020d088",
     "url": "/_next/static/chunks/app/[locale]/(protected)/learner/missions/page-412aae767c2905ca.js"
   },
   {
-    "revision": "aca2e7189602472a",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/page-e481e51b3c4a4882.js"
+    "revision": "1e0afbba539fd01f",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "e4cb3856b8d93885",
     "url": "/_next/static/chunks/app/[locale]/(protected)/learner/portfolio/page-88373090c777a809.js"
   },
   {
-    "revision": "cc0de52ddd6d4eaa",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/profile/page-e481e51b3c4a4882.js"
+    "revision": "c468d5d8214ee09a",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/learner/profile/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "563b2bda14a10a49",
@@ -456,12 +468,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/parent/billing/page-271b968f15242e13.js"
   },
   {
-    "revision": "95983599261466c7",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/parent/layout-e481e51b3c4a4882.js"
+    "revision": "b36a7e5779f101a8",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/parent/layout-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "d60719e6f220dbdc",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/parent/page-e481e51b3c4a4882.js"
+    "revision": "99347b6ea9008dcd",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/parent/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "104c6e29e8ea70ff",
@@ -480,16 +492,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/partner/contracts/page-856d45ebdbc7e480.js"
   },
   {
-    "revision": "8dd539db182d7cf1",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/partner/layout-e481e51b3c4a4882.js"
+    "revision": "3c5705c34f1de6e5",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/partner/layout-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "86caa5f7b23c77f2",
     "url": "/_next/static/chunks/app/[locale]/(protected)/partner/listings/page-a114f164eeaf5e77.js"
   },
   {
-    "revision": "a4857fa087d59db5",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/partner/page-e481e51b3c4a4882.js"
+    "revision": "7a64a2d9eae5aba5",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/partner/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "17bad952739fc3c8",
@@ -528,16 +540,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/(protected)/site/integrations-health/page-fa01d559fc3eee0f.js"
   },
   {
-    "revision": "4878530fe1a8d0db",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/site/layout-e481e51b3c4a4882.js"
+    "revision": "902b96901c944d38",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/site/layout-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "2c80a0fce86e2dcb",
     "url": "/_next/static/chunks/app/[locale]/(protected)/site/ops/page-45a05e499926b801.js"
   },
   {
-    "revision": "5db7efd2dfc37fc3",
-    "url": "/_next/static/chunks/app/[locale]/(protected)/site/page-e481e51b3c4a4882.js"
+    "revision": "64e2ff804b3ed936",
+    "url": "/_next/static/chunks/app/[locale]/(protected)/site/page-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "a52d8aa1f4b8ad24",
@@ -556,24 +568,28 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/app/[locale]/page-72a17fb634928ab6.js"
   },
   {
-    "revision": "324c2d9fb18ad231",
-    "url": "/_next/static/chunks/app/_not-found/page-e481e51b3c4a4882.js"
+    "revision": "bdd27abeee759bd1",
+    "url": "/_next/static/chunks/app/_not-found/page-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "81c7061f42c06647",
-    "url": "/_next/static/chunks/app/api/ai/complete/route-e481e51b3c4a4882.js"
+    "revision": "f72e3598ae5d2ea5",
+    "url": "/_next/static/chunks/app/api/ai/complete/route-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "c2a4b91c3ed3115b",
-    "url": "/_next/static/chunks/app/api/auth/session-login/route-e481e51b3c4a4882.js"
+    "revision": "c8cbe761906d3dd8",
+    "url": "/_next/static/chunks/app/api/auth/session-login/route-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "65bd9b43819e1c78",
-    "url": "/_next/static/chunks/app/api/auth/session-logout/route-e481e51b3c4a4882.js"
+    "revision": "54cdb620c5143c8c",
+    "url": "/_next/static/chunks/app/api/auth/session-logout/route-bcdb7ba5b0846dca.js"
   },
   {
-    "revision": "19581e81ed11b674",
-    "url": "/_next/static/chunks/app/api/healthz/route-e481e51b3c4a4882.js"
+    "revision": "d0d8e210f9314546",
+    "url": "/_next/static/chunks/app/api/healthz/route-bcdb7ba5b0846dca.js"
+  },
+  {
+    "revision": "46db5f7df3b633a4",
+    "url": "/_next/static/chunks/app/api/lti/launch/route-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "5ad1467cfe262f37",
@@ -600,16 +616,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
     "url": "/_next/static/chunks/main-ff3e710c4d789b3b.js"
   },
   {
-    "revision": "4dc0ff07a7455121",
-    "url": "/_next/static/chunks/next/dist/client/components/builtin/forbidden-e481e51b3c4a4882.js"
+    "revision": "889a4c44193128b3",
+    "url": "/_next/static/chunks/next/dist/client/components/builtin/forbidden-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "ff5c8adf7fb95759",
     "url": "/_next/static/chunks/next/dist/client/components/builtin/global-error-b5e613e120a68bb8.js"
   },
   {
-    "revision": "9c532c965bbf6824",
-    "url": "/_next/static/chunks/next/dist/client/components/builtin/unauthorized-e481e51b3c4a4882.js"
+    "revision": "7f1d1ddafd383c6e",
+    "url": "/_next/static/chunks/next/dist/client/components/builtin/unauthorized-bcdb7ba5b0846dca.js"
   },
   {
     "revision": "728b3313c2479b4f",
@@ -630,13 +646,5 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([ { "url": "/",
   {
     "revision": "dd6d46335dbf06c4",
     "url": "/_next/static/css/aa74458ff183e2b4.css"
-  },
-  {
-    "revision": "aacac2f659d046d92f5af88592de7a16",
-    "url": "/_next/static/dfGSo0NfaqBzHorbrei2_/_buildManifest.js"
-  },
-  {
-    "revision": "b6652df95db52feb4daf4eca35380933",
-    "url": "/_next/static/dfGSo0NfaqBzHorbrei2_/_ssgManifest.js"
   }
 ]);

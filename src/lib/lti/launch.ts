@@ -92,6 +92,7 @@ class LtiLaunchError extends Error {
     super(message);
     this.name = 'LtiLaunchError';
     this.status = status;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
@@ -163,10 +164,13 @@ async function verifyTokenSignature(token: string, header: JwtHeader, jwksUrl: s
   }
 
   const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
-  const signingInput = Buffer.from(`${encodedHeader}.${encodedPayload}`);
-  const signature = decodeBase64UrlSegment(encodedSignature);
+  const signingInput = new Uint8Array(Buffer.from(`${encodedHeader}.${encodedPayload}`));
+  const signature = new Uint8Array(decodeBase64UrlSegment(encodedSignature));
   const keys = await loadJwks(jwksUrl, fetchJson);
-  const matchingKey = keys.find((key) => key.kid === header.kid) || keys[0];
+  const matchingKey = keys.find((key) => {
+    const candidateKid = (key as Record<string, unknown>).kid;
+    return typeof candidateKid === 'string' && candidateKid === header.kid;
+  }) || keys[0];
   if (!matchingKey) {
     throw new LtiLaunchError('No matching LTI verification key found.', 401);
   }
