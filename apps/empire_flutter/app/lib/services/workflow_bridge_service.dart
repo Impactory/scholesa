@@ -211,11 +211,39 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
+  Future<List<Map<String, dynamic>>> listFederatedLearningCandidatePromotionRevocationRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    int limit = 60,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningCandidatePromotionRevocationRecords',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((candidateModelPackageId ?? '').trim().isNotEmpty)
+          'candidateModelPackageId': candidateModelPackageId!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
     final Map<String, dynamic> payload = await _call(
       'upsertFederatedLearningCandidatePromotionRecord',
+      data,
+    );
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<String?> revokeFederatedLearningCandidatePromotionRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload = await _call(
+      'revokeFederatedLearningCandidatePromotionRecord',
       data,
     );
     return _asTrimmedString(payload['id']);

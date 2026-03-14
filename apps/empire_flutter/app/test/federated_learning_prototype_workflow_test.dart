@@ -21,6 +21,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? mergeArtifacts,
     List<Map<String, dynamic>>? candidatePackages,
     List<Map<String, dynamic>>? promotionRecords,
+    List<Map<String, dynamic>>? promotionRevocationRecords,
   })  : _flags =
             List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]),
         _experiments = List<Map<String, dynamic>>.from(
@@ -40,6 +41,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _promotionRecords = List<Map<String, dynamic>>.from(
           promotionRecords ?? <Map<String, dynamic>>[],
         ),
+        _promotionRevocationRecords = List<Map<String, dynamic>>.from(
+          promotionRevocationRecords ?? <Map<String, dynamic>>[],
+        ),
         super(functions: null);
 
   final List<Map<String, dynamic>> _flags;
@@ -49,8 +53,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> _candidatePackages;
   final List<Map<String, dynamic>> _promotionRecords;
+    final List<Map<String, dynamic>> _promotionRevocationRecords;
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
+      <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> recordedPromotionRevocations =
       <Map<String, dynamic>>[];
 
   @override
@@ -196,6 +203,31 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidatePromotionRevocationRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _promotionRevocationRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
   Future<String?> upsertFederatedLearningCandidatePromotionRecord(
     Map<String, dynamic> data,
   ) async {
@@ -237,10 +269,59 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         ..._candidatePackages[packageIndex],
         'latestPromotionRecordId': promotionId,
         'latestPromotionStatus': status,
+        'latestPromotionRevocationRecordId': '',
       };
     }
+    _promotionRevocationRecords.removeWhere(
+      (Map<String, dynamic> row) => row['candidateModelPackageId'] == packageId,
+    );
     recordedPromotionDecisions.add(<String, dynamic>{...record});
     return promotionId;
+  }
+
+  @override
+  Future<String?> revokeFederatedLearningCandidatePromotionRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String packageId =
+        (data['candidateModelPackageId'] as String? ?? '').trim();
+    final Map<String, dynamic> promotionRow = _promotionRecords.firstWhere(
+      (Map<String, dynamic> row) => row['candidateModelPackageId'] == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String revocationId =
+        'fl_prom_revoke_${packageId.replaceAll('fl_pkg_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': revocationId,
+      'experimentId': promotionRow['experimentId'] ?? '',
+      'candidateModelPackageId': packageId,
+      'candidatePromotionRecordId': promotionRow['id'] ?? '',
+      'aggregationRunId': promotionRow['aggregationRunId'] ?? '',
+      'mergeArtifactId': promotionRow['mergeArtifactId'] ?? '',
+      'revokedStatus': promotionRow['status'] ?? '',
+      'target': promotionRow['target'] ?? 'sandbox_eval',
+      'rationale': (data['rationale'] as String? ?? '').trim(),
+      'revokedBy': 'hq-1',
+      'revokedAt': DateTime(2026, 3, 14, 14),
+      'createdAt': DateTime(2026, 3, 14, 14),
+      'updatedAt': DateTime(2026, 3, 14, 14),
+    };
+    _promotionRevocationRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == revocationId,
+    );
+    _promotionRevocationRecords.insert(0, record);
+    final int packageIndex = _candidatePackages.indexWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+    );
+    if (packageIndex >= 0) {
+      _candidatePackages[packageIndex] = <String, dynamic>{
+        ..._candidatePackages[packageIndex],
+        'latestPromotionStatus': 'revoked',
+        'latestPromotionRevocationRecordId': revocationId,
+      };
+    }
+    recordedPromotionRevocations.add(<String, dynamic>{...record});
+    return revocationId;
   }
 
   @override
@@ -313,6 +394,7 @@ Map<String, dynamic> _candidatePackageRow({
     'rolloutStatus': 'not_distributed',
     'latestPromotionRecordId': '',
     'latestPromotionStatus': '',
+    'latestPromotionRevocationRecordId': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
     'sampleCount': sampleCount,
@@ -323,6 +405,33 @@ Map<String, dynamic> _candidatePackageRow({
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
+  };
+}
+
+Map<String, dynamic> _promotionRevocationRecordRow({
+  String id = 'fl_prom_revoke_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String candidatePromotionRecordId = 'fl_prom_1',
+  String aggregationRunId = 'fl_agg_1',
+  String mergeArtifactId = 'fl_merge_1',
+  String revokedStatus = 'approved_for_eval',
+  String rationale = 'Sandbox regression exceeded the bounded threshold.',
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'candidatePromotionRecordId': candidatePromotionRecordId,
+    'aggregationRunId': aggregationRunId,
+    'mergeArtifactId': mergeArtifactId,
+    'revokedStatus': revokedStatus,
+    'target': 'sandbox_eval',
+    'rationale': rationale,
+    'revokedBy': 'hq-1',
+    'revokedAt': DateTime(2026, 3, 14, 14),
+    'createdAt': DateTime(2026, 3, 14, 14),
+    'updatedAt': DateTime(2026, 3, 14, 14),
   };
 }
 
@@ -995,6 +1104,7 @@ void main() {
     expect(find.text('Decisions: 2'), findsOneWidget);
     expect(find.text('Approved: 1'), findsOneWidget);
     expect(find.text('On hold: 1'), findsOneWidget);
+    expect(find.text('Revoked: 0'), findsOneWidget);
     expect(find.text('Samples: 44'), findsOneWidget);
     expect(
       find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
@@ -1002,6 +1112,83 @@ void main() {
     );
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, or rationale',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+
+    final Finder revokeDecisionButton = find.widgetWithText(
+      OutlinedButton,
+      'Revoke decision',
+    );
+    final OutlinedButton revokeDecisionControl = tester.widget<OutlinedButton>(
+      revokeDecisionButton.first,
+    );
+    revokeDecisionControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Revoke package decision'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Rollback rationale'),
+      'Sandbox regression exceeded the bounded threshold.',
+    );
+    final Finder saveRollbackButton = find.widgetWithText(
+      FilledButton,
+      'Save rollback',
+    );
+    final FilledButton saveRollbackControl = tester.widget<FilledButton>(
+      saveRollbackButton,
+    );
+    saveRollbackControl.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedPromotionRevocations, hasLength(1));
+    expect(
+      bridge.recordedPromotionRevocations.single['candidateModelPackageId'],
+      'fl_pkg_1',
+    );
+    expect(
+      bridge.recordedPromotionRevocations.single['revokedStatus'],
+      'approved_for_eval',
+    );
+
+    expect(find.text('Decisions: 2'), findsOneWidget);
+    expect(find.text('Approved: 0'), findsOneWidget);
+    expect(find.text('On hold: 1'), findsOneWidget);
+    expect(find.text('Revoked: 1'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Revocation: fl_prom_revoke_1 · revoked approved_for_eval · 2026-03-14T14:00:00.000'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Rollback rationale: Sandbox regression exceeded the bounded threshold.'),
+      findsOneWidget,
+    );
+
+    final Finder revokedPromotionChip = find.widgetWithText(
+      FilterChip,
+      'Revoked',
+    );
+    await tester.ensureVisible(revokedPromotionChip);
+    await tester.tap(revokedPromotionChip);
+    await tester.pumpAndSettle();
+    expect(find.text('Decisions: 1'), findsOneWidget);
+    expect(find.text('Approved: 0'), findsOneWidget);
+    expect(find.text('On hold: 0'), findsOneWidget);
+    expect(find.text('Revoked: 1'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
       findsOneWidget,
     );
 

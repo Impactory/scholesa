@@ -56,6 +56,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
+  Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
+    _promotionRevocationRecordsByPackageId =
+    <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -330,8 +333,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestPackage == null
         ? null
         : _promotionRecordsByPackageId[latestPackage.id];
+    final FederatedLearningCandidatePromotionRevocationRecordModel?
+        latestPromotionRevocation = latestPackage == null
+            ? null
+            : _promotionRevocationRecordsByPackageId[latestPackage.id];
     final FederatedLearningAggregationRunModel? latestRun =
       runs.isNotEmpty ? runs.first : null;
+    final String latestPromotionStatus = _effectivePromotionStatus(
+      latestPromotion,
+      latestPromotionRevocation,
+    );
+    final String latestPromotionTarget = _effectivePromotionTarget(
+      latestPromotion,
+      latestPromotionRevocation,
+    );
     final Color statusColor = switch (experiment.status) {
       'active' => Colors.green,
       'pilot_ready' => Colors.blue,
@@ -477,12 +492,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
-            if (latestPromotion != null) ...<Widget>[
+            if (latestPromotionStatus.isNotEmpty) ...<Widget>[
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(
                   context,
-                  'Latest package promotion: ${latestPromotion.status} (${latestPromotion.target})',
+                  'Latest package promotion: $latestPromotionStatus ($latestPromotionTarget)',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -490,7 +505,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
-            if ((_promotionRecordsByPackageId.values
+                if ((_promotionRecordsByPackageId.values
                     .where((record) => record.experimentId == experiment.id)
                     .isNotEmpty)) ...<Widget>[
               const SizedBox(height: 8),
@@ -970,14 +985,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 sortedPackages.where((FederatedLearningCandidateModelPackageModel package) {
               final FederatedLearningCandidatePromotionRecordModel? promotion =
                   _promotionRecordsByPackageId[package.id];
+              final FederatedLearningCandidatePromotionRevocationRecordModel?
+                  revocation = _promotionRevocationRecordsByPackageId[package.id];
+              final String effectiveStatus =
+                  _effectivePromotionStatus(promotion, revocation);
               if (promotionFilter == 'approved' &&
-                  promotion?.status != 'approved_for_eval') {
+                  effectiveStatus != 'approved_for_eval') {
                 return false;
               }
-              if (promotionFilter == 'hold' && promotion?.status != 'hold') {
+              if (promotionFilter == 'hold' && effectiveStatus != 'hold') {
                 return false;
               }
-              if (promotionFilter == 'awaiting' && promotion != null) {
+              if (promotionFilter == 'revoked' && effectiveStatus != 'revoked') {
+                return false;
+              }
+              if (promotionFilter == 'awaiting' &&
+                  (promotion != null || revocation != null)) {
                 return false;
               }
               if (normalizedQuery.isEmpty) {
@@ -994,6 +1017,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 promotion?.status ?? '',
                 promotion?.target ?? '',
                 promotion?.rationale ?? '',
+                revocation?.id ?? '',
+                revocation?.revokedStatus ?? '',
+                revocation?.rationale ?? '',
               ].join(' ').toLowerCase();
               return haystack.contains(normalizedQuery);
             }).toList(growable: false);
@@ -1005,14 +1031,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             }
 
             final int approvedCount = filteredPackages.where((package) {
-              return _promotionRecordsByPackageId[package.id]?.status ==
+              return _effectivePromotionStatus(
+                    _promotionRecordsByPackageId[package.id],
+                    _promotionRevocationRecordsByPackageId[package.id],
+                  ) ==
                   'approved_for_eval';
             }).length;
             final int holdCount = filteredPackages.where((package) {
-              return _promotionRecordsByPackageId[package.id]?.status == 'hold';
+              return _effectivePromotionStatus(
+                    _promotionRecordsByPackageId[package.id],
+                    _promotionRevocationRecordsByPackageId[package.id],
+                  ) ==
+                  'hold';
+            }).length;
+            final int revokedCount = filteredPackages.where((package) {
+              return _effectivePromotionStatus(
+                    _promotionRecordsByPackageId[package.id],
+                    _promotionRevocationRecordsByPackageId[package.id],
+                  ) ==
+                  'revoked';
             }).length;
             final int awaitingCount =
-                filteredPackages.length - approvedCount - holdCount;
+                filteredPackages.length - approvedCount - holdCount - revokedCount;
             final int sampleTotal = filteredPackages.fold<int>(
               0,
               (int total, FederatedLearningCandidateModelPackageModel package) =>
@@ -1148,6 +1188,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 });
                               },
                             ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Revoked'),
+                              ),
+                              selected: promotionFilter == 'revoked',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  promotionFilter = value ? 'revoked' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -1173,6 +1225,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               'On hold: $holdCount',
                               Icons.pause_circle_outline_rounded,
                               color: Colors.redAccent,
+                            ),
+                            _buildExperimentChip(
+                              'Revoked: $revokedCount',
+                              Icons.undo_rounded,
+                              color: Colors.deepOrange,
                             ),
                             _buildExperimentChip(
                               'Samples: $sampleTotal',
@@ -1206,6 +1263,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     _buildCandidatePackageHistoryEntry(
                                   package,
                                   _promotionRecordsByPackageId[package.id],
+                                  _promotionRevocationRecordsByPackageId[package.id],
                                   onApprove: () =>
                                       _showCandidatePromotionDecisionDialog(
                                     experiment: experiment,
@@ -1407,6 +1465,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Widget _buildCandidatePackageHistoryEntry(
     FederatedLearningCandidateModelPackageModel package,
     FederatedLearningCandidatePromotionRecordModel? promotion,
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
     {
     VoidCallback? onApprove,
     VoidCallback? onHold,
@@ -1414,8 +1473,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   ) {
     final String createdLabel = _formatTimestamp(package.createdAt);
     final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
-    final bool isApproved = promotion?.status == 'approved_for_eval';
-    final bool isHold = promotion?.status == 'hold';
+    final String revokedLabel = _formatTimestamp(revocation?.revokedAt);
+    final String effectiveStatus = _effectivePromotionStatus(promotion, revocation);
+    final String effectiveTarget = _effectivePromotionTarget(promotion, revocation);
+    final bool isApproved = effectiveStatus == 'approved_for_eval';
+    final bool isHold = effectiveStatus == 'hold';
 
     return Container(
       width: double.infinity,
@@ -1485,7 +1547,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               context,
               promotion == null
                   ? 'Promotion: awaiting decision'
-                  : 'Promotion: ${promotion.status} (${promotion.target})',
+                  : 'Promotion: $effectiveStatus ($effectiveTarget)',
             ),
             style: const TextStyle(
               fontSize: 12,
@@ -1518,12 +1580,51 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ],
           ],
+          if (revocation != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Revocation record: ${revocation.id} · revoked ${revocation.revokedStatus} · $revokedLabel',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            if ((revocation.revokedBy ?? '').trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Revoked by: ${revocation.revokedBy}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
           if ((promotion?.rationale ?? '').trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(
                 context,
                 'Rationale: ${promotion!.rationale}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if ((revocation?.rationale ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Rollback rationale: ${revocation!.rationale}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -1730,10 +1831,33 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             final List<FederatedLearningCandidatePromotionRecordModel>
                 filteredRecords = sortedRecords.where((record) {
               if (statusFilter == 'approved' &&
-                  record.status != 'approved_for_eval') {
+                  _effectivePromotionStatus(
+                        record,
+                        _promotionRevocationRecordsByPackageId[
+                          record.candidateModelPackageId
+                        ],
+                      ) !=
+                      'approved_for_eval') {
                 return false;
               }
-              if (statusFilter == 'hold' && record.status != 'hold') {
+              if (statusFilter == 'hold' &&
+                  _effectivePromotionStatus(
+                        record,
+                        _promotionRevocationRecordsByPackageId[
+                          record.candidateModelPackageId
+                        ],
+                      ) !=
+                      'hold') {
+                return false;
+              }
+              if (statusFilter == 'revoked' &&
+                  _effectivePromotionStatus(
+                        record,
+                        _promotionRevocationRecordsByPackageId[
+                          record.candidateModelPackageId
+                        ],
+                      ) !=
+                      'revoked') {
                 return false;
               }
               if (normalizedQuery.isEmpty) {
@@ -1741,6 +1865,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               }
               final FederatedLearningCandidateModelPackageModel? package =
                   packagesById[record.candidateModelPackageId];
+              final FederatedLearningCandidatePromotionRevocationRecordModel?
+                  revocation = _promotionRevocationRecordsByPackageId[
+                      record.candidateModelPackageId];
               final String haystack = <String>[
                 record.id,
                 record.candidateModelPackageId,
@@ -1752,15 +1879,42 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 record.decidedBy ?? '',
                 package?.packageDigest ?? '',
                 package?.boundedDigest ?? '',
+                revocation?.id ?? '',
+                revocation?.revokedStatus ?? '',
+                revocation?.rationale ?? '',
               ].join(' ').toLowerCase();
               return haystack.contains(normalizedQuery);
             }).toList(growable: false);
 
             final int approvedCount = filteredRecords
-                .where((record) => record.status == 'approved_for_eval')
+                .where((record) =>
+                    _effectivePromotionStatus(
+                      record,
+                      _promotionRevocationRecordsByPackageId[
+                        record.candidateModelPackageId
+                      ],
+                    ) ==
+                    'approved_for_eval')
                 .length;
             final int holdCount =
-                filteredRecords.where((record) => record.status == 'hold').length;
+                filteredRecords.where((record) =>
+                    _effectivePromotionStatus(
+                      record,
+                      _promotionRevocationRecordsByPackageId[
+                        record.candidateModelPackageId
+                      ],
+                    ) ==
+                    'hold').length;
+            final int revokedCount = filteredRecords
+                .where((record) =>
+                    _effectivePromotionStatus(
+                      record,
+                      _promotionRevocationRecordsByPackageId[
+                        record.candidateModelPackageId
+                      ],
+                    ) ==
+                    'revoked')
+                .length;
             final int sampleTotal = filteredRecords.fold<int>(
               0,
               (int total, FederatedLearningCandidatePromotionRecordModel record) =>
@@ -1876,6 +2030,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 });
                               },
                             ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Revoked'),
+                              ),
+                              selected: statusFilter == 'revoked',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  statusFilter = value ? 'revoked' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -1896,6 +2062,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               'On hold: $holdCount',
                               Icons.pause_circle_outline_rounded,
                               color: Colors.redAccent,
+                            ),
+                            _buildExperimentChip(
+                              'Revoked: $revokedCount',
+                              Icons.undo_rounded,
+                              color: Colors.deepOrange,
                             ),
                             _buildExperimentChip(
                               'Samples: $sampleTotal',
@@ -1929,6 +2100,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     _buildPromotionHistoryEntry(
                                   record,
                                   packagesById[record.candidateModelPackageId],
+                                  _promotionRevocationRecordsByPackageId[
+                                    record.candidateModelPackageId
+                                  ],
+                                  onRevoke: () =>
+                                      _showCandidatePromotionRevocationDialog(
+                                    record: record,
+                                    refreshDialog: () {
+                                      setDialogState(() {});
+                                    },
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -1995,17 +2176,44 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         return 0;
       case 'hold':
         return 1;
-      default:
+      case 'revoked':
         return 2;
+      default:
+        return 3;
     }
+  }
+
+  String _effectivePromotionStatus(
+    FederatedLearningCandidatePromotionRecordModel? promotion,
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
+  ) {
+    if (revocation != null) {
+      return 'revoked';
+    }
+    return (promotion?.status ?? '').trim();
+  }
+
+  String _effectivePromotionTarget(
+    FederatedLearningCandidatePromotionRecordModel? promotion,
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
+  ) {
+    return (revocation?.target ?? promotion?.target ?? '').trim();
   }
 
   Widget _buildPromotionHistoryEntry(
     FederatedLearningCandidatePromotionRecordModel record,
     FederatedLearningCandidateModelPackageModel? package,
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
+    {
+    VoidCallback? onRevoke,
+  }
   ) {
     final String decidedLabel = _formatTimestamp(record.decidedAt);
     final String updatedLabel = _formatTimestamp(record.updatedAt);
+    final String revokedLabel = _formatTimestamp(revocation?.revokedAt);
+    final String effectiveStatus = _effectivePromotionStatus(record, revocation);
+    final String effectiveTarget = _effectivePromotionTarget(record, revocation);
+    final bool isRevoked = revocation != null;
 
     return Container(
       width: double.infinity,
@@ -2022,7 +2230,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           Text(
             _tHqFeatureFlags(
               context,
-              'Decision ${record.id} · ${record.status} (${record.target})',
+              'Decision ${record.id} · $effectiveStatus ($effectiveTarget)',
             ),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
@@ -2085,6 +2293,59 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          if (revocation != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Revocation: ${revocation.id} · revoked ${revocation.revokedStatus} · $revokedLabel',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            if ((revocation.revokedBy ?? '').trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Revoked by: ${revocation.revokedBy}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if ((revocation.rationale ?? '').trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Rollback rationale: ${revocation.rationale}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: isRevoked ? null : onRevoke,
+              icon: const Icon(Icons.undo_rounded),
+              label: Text(
+                _tHqFeatureFlags(
+                  context,
+                  isRevoked ? 'Revoked' : 'Revoke decision',
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2121,6 +2382,110 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         SnackBar(
           content: Text(
             _tHqFeatureFlags(context, 'Candidate package decision failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showCandidatePromotionRevocationDialog({
+    required FederatedLearningCandidatePromotionRecordModel record,
+    VoidCallback? refreshDialog,
+  }) async {
+    final TextEditingController rationaleController = TextEditingController();
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(context, 'Revoke package decision'),
+          ),
+          content: SizedBox(
+            width: 520,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tHqFeatureFlags(
+                      context,
+                      'Decision: ${record.id} · ${record.status} (${record.target})',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: rationaleController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: _tHqFeatureFlags(context, 'Rollback rationale'),
+                      helperText: _tHqFeatureFlags(
+                        context,
+                        'Saved as bounded rollback proof for the sandbox-eval record.',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(_tHqFeatureFlags(context, 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(_tHqFeatureFlags(context, 'Save rollback')),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    await _revokeCandidatePromotionDecision(
+      candidateModelPackageId: record.candidateModelPackageId,
+      rationale: rationaleController.text,
+    );
+    refreshDialog?.call();
+  }
+
+  Future<void> _revokeCandidatePromotionDecision({
+    required String candidateModelPackageId,
+    required String rationale,
+  }) async {
+    try {
+      await _workflowBridge.revokeFederatedLearningCandidatePromotionRecord(
+        <String, dynamic>{
+          'candidateModelPackageId': candidateModelPackageId,
+          'rationale': rationale.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Candidate package rollback saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Candidate package rollback failed'),
           ),
           backgroundColor: Colors.red,
         ),
@@ -2239,6 +2604,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
         _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
+        _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
       final List<FederatedLearningExperimentModel> loaded =
           (payloads[0] as List<Map<String, dynamic>>)
@@ -2331,6 +2697,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         promotionsByPackageId[record.candidateModelPackageId] = record;
       }
+      final Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
+          revocationsByPackageId =
+          <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
+      for (final FederatedLearningCandidatePromotionRevocationRecordModel record
+          in (payloads[5] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'promotion_revocation_record',
+                    row,
+                  ))) {
+        revocationsByPackageId[record.candidateModelPackageId] = record;
+      }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
@@ -2338,6 +2716,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _mergeArtifactsByExperiment = artifactsByExp;
         _candidatePackagesByExperiment = packagesByExp;
         _promotionRecordsByPackageId = promotionsByPackageId;
+        _promotionRevocationRecordsByPackageId = revocationsByPackageId;
       });
     } catch (_) {
       if (!mounted) return;
@@ -2351,6 +2730,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             <String, List<FederatedLearningCandidateModelPackageModel>>{};
         _promotionRecordsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
+        _promotionRevocationRecordsByPackageId =
+          <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       });
     } finally {
       if (mounted) {

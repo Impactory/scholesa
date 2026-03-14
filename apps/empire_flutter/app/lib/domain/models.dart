@@ -3198,6 +3198,7 @@ class FederatedLearningCandidateModelPackageModel {
     required this.rolloutStatus,
     this.latestPromotionRecordId,
     this.latestPromotionStatus,
+    this.latestPromotionRevocationRecordId,
     required this.packageDigest,
     required this.boundedDigest,
     required this.sampleCount,
@@ -3222,6 +3223,7 @@ class FederatedLearningCandidateModelPackageModel {
   final String rolloutStatus;
   final String? latestPromotionRecordId;
   final String? latestPromotionStatus;
+  final String? latestPromotionRevocationRecordId;
   final String packageDigest;
   final String boundedDigest;
   final int sampleCount;
@@ -3259,6 +3261,8 @@ class FederatedLearningCandidateModelPackageModel {
       rolloutStatus: data['rolloutStatus'] as String? ?? '',
       latestPromotionRecordId: data['latestPromotionRecordId'] as String?,
       latestPromotionStatus: data['latestPromotionStatus'] as String?,
+        latestPromotionRevocationRecordId:
+          data['latestPromotionRevocationRecordId'] as String?,
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
@@ -3284,6 +3288,7 @@ class FederatedLearningCandidateModelPackageModel {
         'rolloutStatus': rolloutStatus,
         'latestPromotionRecordId': latestPromotionRecordId,
         'latestPromotionStatus': latestPromotionStatus,
+        'latestPromotionRevocationRecordId': latestPromotionRevocationRecordId,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
         'sampleCount': sampleCount,
@@ -3369,6 +3374,85 @@ class FederatedLearningCandidatePromotionRecordModel {
         'rationale': rationale,
         'decidedBy': decidedBy,
         'decidedAt': decidedAt ?? Timestamp.now(),
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class FederatedLearningCandidatePromotionRevocationRecordModel {
+  const FederatedLearningCandidatePromotionRevocationRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.candidatePromotionRecordId,
+    required this.aggregationRunId,
+    required this.mergeArtifactId,
+    required this.revokedStatus,
+    required this.target,
+    this.rationale,
+    this.revokedBy,
+    this.revokedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String candidatePromotionRecordId;
+  final String aggregationRunId;
+  final String mergeArtifactId;
+  final String revokedStatus;
+  final String target;
+  final String? rationale;
+  final String? revokedBy;
+  final Timestamp? revokedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningCandidatePromotionRevocationRecordModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
+      doc.id,
+      doc.data() ?? <String, dynamic>{},
+    );
+  }
+
+  factory FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningCandidatePromotionRevocationRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      candidatePromotionRecordId:
+          data['candidatePromotionRecordId'] as String? ?? '',
+      aggregationRunId: data['aggregationRunId'] as String? ?? '',
+      mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      revokedStatus: data['revokedStatus'] as String? ?? '',
+      target: data['target'] as String? ?? '',
+      rationale: data['rationale'] as String?,
+      revokedBy: data['revokedBy'] as String?,
+      revokedAt: _timestampOrNull(data['revokedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'experimentId': experimentId,
+        'candidateModelPackageId': candidateModelPackageId,
+        'candidatePromotionRecordId': candidatePromotionRecordId,
+        'aggregationRunId': aggregationRunId,
+        'mergeArtifactId': mergeArtifactId,
+        'revokedStatus': revokedStatus,
+        'target': target,
+        'rationale': rationale,
+        'revokedBy': revokedBy,
+        'revokedAt': revokedAt ?? Timestamp.now(),
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
