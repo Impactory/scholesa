@@ -1124,6 +1124,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(approvedPromotionChip);
+    await tester.tap(approvedPromotionChip);
+    await tester.pumpAndSettle();
+    expect(find.text('Decisions: 1'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
+      findsOneWidget,
+    );
+
     final Finder revokeDecisionButton = find.widgetWithText(
       OutlinedButton,
       'Revoke decision',
@@ -1158,6 +1167,10 @@ void main() {
       bridge.recordedPromotionRevocations.single['revokedStatus'],
       'approved_for_eval',
     );
+
+    await tester.ensureVisible(approvedPromotionChip);
+    await tester.tap(approvedPromotionChip);
+    await tester.pumpAndSettle();
 
     expect(find.text('Decisions: 2'), findsOneWidget);
     expect(find.text('Approved: 0'), findsOneWidget);
