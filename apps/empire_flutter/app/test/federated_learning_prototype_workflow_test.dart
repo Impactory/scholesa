@@ -160,6 +160,7 @@ Map<String, dynamic> _aggregationRunRow({
   int distinctSiteCount = 2,
   String mergeArtifactId = 'fl_merge_1',
   String boundedDigest = 'sha256:digest-1',
+  DateTime? createdAt,
 }) {
   return <String, dynamic>{
     'id': id,
@@ -181,6 +182,7 @@ Map<String, dynamic> _aggregationRunRow({
     'averageUpdateNorm': 1.35,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
+    'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
   };
 }
 
@@ -473,7 +475,9 @@ void main() {
       ],
       experiments: <Map<String, dynamic>>[_experimentRow()],
       aggregationRuns: <Map<String, dynamic>>[
-        _aggregationRunRow(),
+        _aggregationRunRow(
+          createdAt: DateTime(2026, 3, 14, 12),
+        ),
         _aggregationRunRow(
           id: 'fl_agg_2',
           totalSampleCount: 20,
@@ -481,14 +485,16 @@ void main() {
           distinctSiteCount: 1,
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
+          createdAt: DateTime(2026, 3, 13, 12),
         ),
         _aggregationRunRow(
           id: 'fl_agg_3',
           totalSampleCount: 18,
           summaryCount: 1,
           distinctSiteCount: 1,
-          mergeArtifactId: 'fl_merge_3',
+          mergeArtifactId: '',
           boundedDigest: 'sha256:digest-3',
+          createdAt: DateTime(2026, 3, 12, 12),
         ),
       ],
       mergeArtifacts: <Map<String, dynamic>>[
@@ -496,16 +502,7 @@ void main() {
         _mergeArtifactRow(
           id: 'fl_merge_2',
           aggregationRunId: 'fl_agg_2',
-        ),
-        _mergeArtifactRow(
-          id: 'fl_merge_3',
-          aggregationRunId: 'fl_agg_3',
           boundedDigest: 'sha256:digest-2',
-        ),
-        _mergeArtifactRow(
-          id: 'fl_merge_3',
-          aggregationRunId: 'fl_agg_3',
-          boundedDigest: 'sha256:digest-3',
         ),
       ],
     );
@@ -543,6 +540,10 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Sort runs'), findsOneWidget);
+    expect(find.text('Latest only'), findsOneWidget);
+    expect(find.text('Artifact generated'), findsWidgets);
+    expect(find.text('Artifact missing'), findsOneWidget);
     expect(
       find.text('Strategy: prototype_weighted_metadata_digest'),
       findsWidgets,
@@ -553,9 +554,27 @@ void main() {
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    expect(find.text('Artifact: fl_merge_3'), findsOneWidget);
+    expect(find.text('Artifact missing'), findsOneWidget);
     expect(find.text('Digest: sha256:digest-3'), findsOneWidget);
     expect(find.text('Showing 3-3 of 3'), findsOneWidget);
+
+    await tester.tap(find.text('Previous'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Latest only'));
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+
+    await tester.tap(find.text('Latest only'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Artifact missing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Artifact missing'), findsWidgets);
+    expect(find.text('Digest: sha256:digest-3'), findsOneWidget);
+
+    await tester.tap(find.text('Artifact missing'));
+    await tester.pumpAndSettle();
 
     await tester.enterText(
       find.widgetWithText(TextField, 'Filter by run ID, artifact ID, or digest'),
