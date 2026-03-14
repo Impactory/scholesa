@@ -212,6 +212,7 @@ export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'ob
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked';
+export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -478,6 +479,21 @@ export interface FederatedLearningRuntimeActivationRecord {
   notes?: string;
   reportedBy?: string;
   reportedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningRuntimeRolloutAlertRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  deliveryRecordId: string;
+  status: FederatedLearningRuntimeRolloutAlertStatus;
+  fallbackCount: number;
+  pendingCount: number;
+  notes?: string;
+  acknowledgedBy?: string;
+  acknowledgedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

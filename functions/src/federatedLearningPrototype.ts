@@ -268,6 +268,10 @@ export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: s
   return `fl_activation_${digest}`;
 }
 
+export function buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryId: string): string {
+  return `fl_rollout_alert_${deliveryId.replace(/^fl_delivery_/, '')}`;
+}
+
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -367,6 +371,17 @@ export function normalizeFederatedLearningRuntimeActivationStatus(
   if (normalized === 'resolved') return 'resolved';
   if (normalized === 'staged') return 'staged';
   if (normalized === 'fallback') return 'fallback';
+  return null;
+}
+
+export function normalizeFederatedLearningRuntimeRolloutAlertStatus(
+  value: unknown,
+): 'active' | 'acknowledged' | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'active') return 'active';
+  if (normalized === 'acknowledged' || normalized === 'acknowledge') {
+    return 'acknowledged';
+  }
   return null;
 }
 
