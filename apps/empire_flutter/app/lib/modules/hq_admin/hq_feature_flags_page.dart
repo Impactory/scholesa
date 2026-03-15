@@ -45,47 +45,47 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   List<FederatedLearningExperimentModel> _experiments =
       <FederatedLearningExperimentModel>[];
   Map<String, List<FederatedLearningAggregationRunModel>>
-    _aggregationRunsByExperiment =
-    <String, List<FederatedLearningAggregationRunModel>>{};
+      _aggregationRunsByExperiment =
+      <String, List<FederatedLearningAggregationRunModel>>{};
   Map<String, List<FederatedLearningMergeArtifactModel>>
-    _mergeArtifactsByExperiment =
-    <String, List<FederatedLearningMergeArtifactModel>>{};
+      _mergeArtifactsByExperiment =
+      <String, List<FederatedLearningMergeArtifactModel>>{};
   Map<String, List<FederatedLearningCandidateModelPackageModel>>
-    _candidatePackagesByExperiment =
-    <String, List<FederatedLearningCandidateModelPackageModel>>{};
+      _candidatePackagesByExperiment =
+      <String, List<FederatedLearningCandidateModelPackageModel>>{};
   Map<String, FederatedLearningExperimentReviewRecordModel>
-    _experimentReviewRecordsByExperimentId =
-    <String, FederatedLearningExperimentReviewRecordModel>{};
+      _experimentReviewRecordsByExperimentId =
+      <String, FederatedLearningExperimentReviewRecordModel>{};
   Map<String, FederatedLearningPilotEvidenceRecordModel>
-    _pilotEvidenceRecordsByPackageId =
-    <String, FederatedLearningPilotEvidenceRecordModel>{};
+      _pilotEvidenceRecordsByPackageId =
+      <String, FederatedLearningPilotEvidenceRecordModel>{};
   Map<String, FederatedLearningPilotApprovalRecordModel>
-    _pilotApprovalRecordsByPackageId =
-    <String, FederatedLearningPilotApprovalRecordModel>{};
+      _pilotApprovalRecordsByPackageId =
+      <String, FederatedLearningPilotApprovalRecordModel>{};
   Map<String, FederatedLearningPilotExecutionRecordModel>
-    _pilotExecutionRecordsByPackageId =
-    <String, FederatedLearningPilotExecutionRecordModel>{};
+      _pilotExecutionRecordsByPackageId =
+      <String, FederatedLearningPilotExecutionRecordModel>{};
   Map<String, FederatedLearningRuntimeDeliveryRecordModel>
-    _runtimeDeliveryRecordsByPackageId =
-    <String, FederatedLearningRuntimeDeliveryRecordModel>{};
+      _runtimeDeliveryRecordsByPackageId =
+      <String, FederatedLearningRuntimeDeliveryRecordModel>{};
   Map<String, List<FederatedLearningRuntimeActivationRecordModel>>
-    _runtimeActivationRecordsByPackageId =
-    <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
+      _runtimeActivationRecordsByPackageId =
+      <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
   Map<String, FederatedLearningRuntimeRolloutAlertRecordModel>
-    _runtimeRolloutAlertsByDeliveryId =
-    <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
+      _runtimeRolloutAlertsByDeliveryId =
+      <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
   Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
-    _runtimeRolloutEscalationsByDeliveryId =
-    <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
+      _runtimeRolloutEscalationsByDeliveryId =
+      <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
   Map<String, FederatedLearningRuntimeRolloutControlRecordModel>
-    _runtimeRolloutControlsByDeliveryId =
-    <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
+      _runtimeRolloutControlsByDeliveryId =
+      <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
-    _promotionRecordsByPackageId =
-    <String, FederatedLearningCandidatePromotionRecordModel>{};
+      _promotionRecordsByPackageId =
+      <String, FederatedLearningCandidatePromotionRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
-    _promotionRevocationRecordsByPackageId =
-    <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
+      _promotionRevocationRecordsByPackageId =
+      <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -348,8 +348,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
 
   Widget _buildExperimentCard(FederatedLearningExperimentModel experiment) {
     final List<FederatedLearningAggregationRunModel> runs =
-      _aggregationRunsByExperiment[experiment.id] ??
-        const <FederatedLearningAggregationRunModel>[];
+        _aggregationRunsByExperiment[experiment.id] ??
+            const <FederatedLearningAggregationRunModel>[];
     final Map<String, FederatedLearningCandidateModelPackageModel>
         candidatePackagesByRunId = {
       for (final FederatedLearningCandidateModelPackageModel package
@@ -360,40 +360,42 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final FederatedLearningCandidateModelPackageModel? latestPackage =
         runs.isNotEmpty ? candidatePackagesByRunId[runs.first.id] : null;
     final FederatedLearningCandidatePromotionRecordModel? latestPromotion =
-      latestPackage == null
-        ? null
-        : _promotionRecordsByPackageId[latestPackage.id];
+        latestPackage == null
+            ? null
+            : _promotionRecordsByPackageId[latestPackage.id];
     final FederatedLearningPilotEvidenceRecordModel? latestPilotEvidence =
-      latestPackage == null
-        ? null
-        : _pilotEvidenceRecordsByPackageId[latestPackage.id];
+        latestPackage == null
+            ? null
+            : _pilotEvidenceRecordsByPackageId[latestPackage.id];
     final FederatedLearningPilotApprovalRecordModel? latestPilotApproval =
-      latestPackage == null
-        ? null
-        : _pilotApprovalRecordsByPackageId[latestPackage.id];
+        latestPackage == null
+            ? null
+            : _pilotApprovalRecordsByPackageId[latestPackage.id];
     final FederatedLearningPilotExecutionRecordModel? latestPilotExecution =
-      latestPackage == null
-        ? null
-        : _pilotExecutionRecordsByPackageId[latestPackage.id];
+        latestPackage == null
+            ? null
+            : _pilotExecutionRecordsByPackageId[latestPackage.id];
     final FederatedLearningRuntimeDeliveryRecordModel? latestRuntimeDelivery =
-      latestPackage == null
-        ? null
-        : _runtimeDeliveryRecordsByPackageId[latestPackage.id];
+        latestPackage == null
+            ? null
+            : _runtimeDeliveryRecordsByPackageId[latestPackage.id];
     final List<FederatedLearningRuntimeActivationRecordModel>
-      runtimeActivationRecords = latestPackage == null
-        ? const <FederatedLearningRuntimeActivationRecordModel>[]
-        : (_runtimeActivationRecordsByPackageId[latestPackage.id] ??
-          const <FederatedLearningRuntimeActivationRecordModel>[]);
-    final FederatedLearningRuntimeActivationRecordModel? latestRuntimeActivation =
-      runtimeActivationRecords.isEmpty ? null : runtimeActivationRecords.first;
+        runtimeActivationRecords = latestPackage == null
+            ? const <FederatedLearningRuntimeActivationRecordModel>[]
+            : (_runtimeActivationRecordsByPackageId[latestPackage.id] ??
+                const <FederatedLearningRuntimeActivationRecordModel>[]);
+    final FederatedLearningRuntimeActivationRecordModel?
+        latestRuntimeActivation = runtimeActivationRecords.isEmpty
+            ? null
+            : runtimeActivationRecords.first;
     final FederatedLearningExperimentReviewRecordModel? reviewRecord =
-      _experimentReviewRecordsByExperimentId[experiment.id];
+        _experimentReviewRecordsByExperimentId[experiment.id];
     final FederatedLearningCandidatePromotionRevocationRecordModel?
         latestPromotionRevocation = latestPackage == null
             ? null
             : _promotionRevocationRecordsByPackageId[latestPackage.id];
     final FederatedLearningAggregationRunModel? latestRun =
-      runs.isNotEmpty ? runs.first : null;
+        runs.isNotEmpty ? runs.first : null;
     final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
         ? ''
         : _summarizeRuntimeDeliveryLifecycle(latestRuntimeDelivery);
@@ -405,50 +407,49 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 runtimeActivationRecords,
               );
     final FederatedLearningRuntimeRolloutAlertRecordModel?
-      latestRuntimeRolloutAlert = latestRuntimeDelivery == null
-        ? null
-        : _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
+        latestRuntimeRolloutAlert = latestRuntimeDelivery == null
+            ? null
+            : _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
     final FederatedLearningRuntimeRolloutEscalationRecordModel?
-      latestRuntimeRolloutEscalation = latestRuntimeDelivery == null
-        ? null
-        : _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
+        latestRuntimeRolloutEscalation = latestRuntimeDelivery == null
+            ? null
+            : _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
     final FederatedLearningRuntimeRolloutControlRecordModel?
-      latestRuntimeRolloutControl = latestRuntimeDelivery == null
-        ? null
-        : _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
+        latestRuntimeRolloutControl = latestRuntimeDelivery == null
+            ? null
+            : _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
     final String runtimeRolloutAlert = runtimeRolloutHealth == null
-      ? ''
-      : _buildRuntimeRolloutAlert(
-        runtimeRolloutHealth,
-        latestRuntimeRolloutAlert,
-      );
-    final bool rolloutAlertAcknowledged =
-        runtimeRolloutHealth != null &&
+        ? ''
+        : _buildRuntimeRolloutAlert(
+            runtimeRolloutHealth,
+            latestRuntimeRolloutAlert,
+          );
+    final bool rolloutAlertAcknowledged = runtimeRolloutHealth != null &&
         _isRuntimeRolloutAlertAcknowledged(
           runtimeRolloutHealth,
           latestRuntimeRolloutAlert,
         );
     final Color rolloutAlertColor =
-      rolloutAlertAcknowledged ? Colors.blueGrey : Colors.orange;
+        rolloutAlertAcknowledged ? Colors.blueGrey : Colors.orange;
     final String rolloutAlertNotes =
-      (latestRuntimeRolloutAlert?.notes ?? '').trim();
-    final String rolloutAlertAcknowledgement =
-      rolloutAlertAcknowledged && latestRuntimeRolloutAlert != null
+        (latestRuntimeRolloutAlert?.notes ?? '').trim();
+    final String rolloutAlertAcknowledgement = rolloutAlertAcknowledged &&
+            latestRuntimeRolloutAlert != null
         ? 'Acknowledged ${_formatTimestamp(latestRuntimeRolloutAlert.acknowledgedAt)} by ${latestRuntimeRolloutAlert.acknowledgedBy ?? "hq"}'
         : '';
     final bool rolloutEscalationCurrent = runtimeRolloutHealth != null &&
-      _isRuntimeRolloutEscalationCurrent(
-        runtimeRolloutHealth,
-        latestRuntimeRolloutEscalation,
-      );
+        _isRuntimeRolloutEscalationCurrent(
+          runtimeRolloutHealth,
+          latestRuntimeRolloutEscalation,
+        );
     final String rolloutEscalationSummary = rolloutEscalationCurrent
-      ? _buildRuntimeRolloutEscalationSummary(latestRuntimeRolloutEscalation!)
-      : '';
+        ? _buildRuntimeRolloutEscalationSummary(latestRuntimeRolloutEscalation!)
+        : '';
     final bool rolloutControlActive = latestRuntimeRolloutControl != null &&
-      latestRuntimeRolloutControl.mode != 'monitor';
+        latestRuntimeRolloutControl.mode != 'monitor';
     final String rolloutControlSummary = rolloutControlActive
-      ? _buildRuntimeRolloutControlSummary(latestRuntimeRolloutControl)
-      : '';
+        ? _buildRuntimeRolloutControlSummary(latestRuntimeRolloutControl)
+        : '';
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
       latestPromotionRevocation,
@@ -511,24 +512,29 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     alignment: WrapAlignment.end,
                     children: <Widget>[
                       OutlinedButton.icon(
-                        onPressed: () => _showExperimentDialog(existing: experiment),
+                        onPressed: () =>
+                            _showExperimentDialog(existing: experiment),
                         icon: const Icon(Icons.edit_rounded),
                         label: Text(_tHqFeatureFlags(context, 'Edit')),
                       ),
                       TextButton.icon(
-                        onPressed: () => _showAggregationHistoryDialog(experiment),
+                        onPressed: () =>
+                            _showAggregationHistoryDialog(experiment),
                         icon: const Icon(Icons.timeline_rounded),
                         label: Text(_tHqFeatureFlags(context, 'View history')),
                       ),
                       TextButton.icon(
-                        onPressed: () => _showCandidatePackageHistoryDialog(experiment),
+                        onPressed: () =>
+                            _showCandidatePackageHistoryDialog(experiment),
                         icon: const Icon(Icons.inventory_rounded),
                         label: Text(_tHqFeatureFlags(context, 'View packages')),
                       ),
                       TextButton.icon(
-                        onPressed: () => _showExperimentReviewDialog(experiment),
+                        onPressed: () =>
+                            _showExperimentReviewDialog(experiment),
                         icon: const Icon(Icons.fact_check_rounded),
-                        label: Text(_tHqFeatureFlags(context, 'Review checklist')),
+                        label:
+                            Text(_tHqFeatureFlags(context, 'Review checklist')),
                       ),
                       if (latestPackage != null)
                         TextButton.icon(
@@ -537,7 +543,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             candidatePackage: latestPackage,
                           ),
                           icon: const Icon(Icons.science_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Pilot evidence')),
+                          label:
+                              Text(_tHqFeatureFlags(context, 'Pilot evidence')),
                         ),
                       if (latestPackage != null)
                         TextButton.icon(
@@ -546,7 +553,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             candidatePackage: latestPackage,
                           ),
                           icon: const Icon(Icons.verified_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Pilot approval')),
+                          label:
+                              Text(_tHqFeatureFlags(context, 'Pilot approval')),
                         ),
                       if (latestPackage != null)
                         TextButton.icon(
@@ -555,7 +563,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             candidatePackage: latestPackage,
                           ),
                           icon: const Icon(Icons.rocket_launch_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Pilot execution')),
+                          label: Text(
+                              _tHqFeatureFlags(context, 'Pilot execution')),
                         ),
                       if (latestPackage != null)
                         TextButton.icon(
@@ -564,14 +573,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             candidatePackage: latestPackage,
                           ),
                           icon: const Icon(Icons.send_to_mobile_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Runtime delivery')),
+                          label: Text(
+                              _tHqFeatureFlags(context, 'Runtime delivery')),
                         ),
                       TextButton.icon(
                         onPressed: () => _showRuntimeDeliveryHistoryDialog(
                           experiment,
                         ),
                         icon: const Icon(Icons.history_toggle_off_rounded),
-                        label: Text(_tHqFeatureFlags(context, 'Delivery history')),
+                        label:
+                            Text(_tHqFeatureFlags(context, 'Delivery history')),
                       ),
                       if (latestRuntimeDelivery != null)
                         TextButton.icon(
@@ -581,15 +592,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             runtimeActivationRecords,
                           ),
                           icon: const Icon(Icons.monitor_heart_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Site rollout')),
+                          label:
+                              Text(_tHqFeatureFlags(context, 'Site rollout')),
                         ),
                       if (latestRuntimeDelivery != null)
                         TextButton.icon(
-                          onPressed: () => _showRuntimeRolloutAlertHistoryDialog(
+                          onPressed: () =>
+                              _showRuntimeRolloutAlertHistoryDialog(
                             experiment,
                           ),
                           icon: const Icon(Icons.notifications_active_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Alert history')),
+                          label:
+                              Text(_tHqFeatureFlags(context, 'Alert history')),
                         ),
                       if (latestPackage != null)
                         TextButton.icon(
@@ -599,7 +613,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             runtimeActivationRecords,
                           ),
                           icon: const Icon(Icons.fact_check_rounded),
-                          label: Text(_tHqFeatureFlags(context, 'Activation history')),
+                          label: Text(
+                              _tHqFeatureFlags(context, 'Activation history')),
                         ),
                     ],
                   ),
@@ -829,7 +844,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ),
                       ],
                     ),
-                    if (rolloutAlertAcknowledged && rolloutAlertNotes.isNotEmpty) ...<Widget>[
+                    if (rolloutAlertAcknowledged &&
+                        rolloutAlertNotes.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 6),
                       Text(
                         _tHqFeatureFlags(
@@ -912,7 +928,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       latestRuntimeDelivery,
                                       latestRuntimeRolloutControl,
                                     ),
-                            icon: const Icon(Icons.pause_circle_outline_rounded),
+                            icon:
+                                const Icon(Icons.pause_circle_outline_rounded),
                             label: Text(
                               _tHqFeatureFlags(
                                 context,
@@ -975,9 +992,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
-                if ((_promotionRecordsByPackageId.values
-                    .where((record) => record.experimentId == experiment.id)
-                    .isNotEmpty)) ...<Widget>[
+            if ((_promotionRecordsByPackageId.values
+                .where((record) => record.experimentId == experiment.id)
+                .isNotEmpty)) ...<Widget>[
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
@@ -1001,12 +1018,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
               const SizedBox(height: 8),
               ...runs.take(3).map(
-                (FederatedLearningAggregationRunModel run) =>
-                    _buildAggregationRunRow(
-                  run,
-                  candidatePackagesByRunId[run.id],
-                ),
-              ),
+                    (FederatedLearningAggregationRunModel run) =>
+                        _buildAggregationRunRow(
+                      run,
+                      candidatePackagesByRunId[run.id],
+                    ),
+                  ),
             ],
           ],
         ),
@@ -1084,13 +1101,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               const <FederatedLearningMergeArtifactModel>[])
         artifact.aggregationRunId: artifact,
     };
-      final Map<String, FederatedLearningCandidateModelPackageModel>
+    final Map<String, FederatedLearningCandidateModelPackageModel>
         candidatePackagesByRunId = {
-        for (final FederatedLearningCandidateModelPackageModel package
+      for (final FederatedLearningCandidateModelPackageModel package
           in _candidatePackagesByExperiment[experiment.id] ??
-            const <FederatedLearningCandidateModelPackageModel>[])
+              const <FederatedLearningCandidateModelPackageModel>[])
         package.aggregationRunId: package,
-      };
+    };
     const int pageSize = 2;
     String filterQuery = '';
     int pageIndex = 0;
@@ -1123,12 +1140,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               });
             }
 
-            List<FederatedLearningAggregationRunModel> filteredRuns = sortedRuns
-                .where((FederatedLearningAggregationRunModel run) {
+            List<FederatedLearningAggregationRunModel> filteredRuns =
+                sortedRuns.where((FederatedLearningAggregationRunModel run) {
               final FederatedLearningMergeArtifactModel? artifact =
                   artifactsByRunId[run.id];
               final bool hasArtifact =
-                  ((artifact?.id ?? run.mergeArtifactId ?? '').trim().isNotEmpty);
+                  ((artifact?.id ?? run.mergeArtifactId ?? '')
+                      .trim()
+                      .isNotEmpty);
               if (artifactFilter == 'generated' && !hasArtifact) {
                 return false;
               }
@@ -1159,7 +1178,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               (FederatedLearningAggregationRunModel run) {
                 final FederatedLearningMergeArtifactModel? artifact =
                     artifactsByRunId[run.id];
-                return ((artifact?.id ?? run.mergeArtifactId ?? '').trim()
+                return ((artifact?.id ?? run.mergeArtifactId ?? '')
+                    .trim()
                     .isNotEmpty);
               },
             ).length;
@@ -1169,7 +1189,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               (FederatedLearningAggregationRunModel run) {
                 final FederatedLearningCandidateModelPackageModel? package =
                     candidatePackagesByRunId[run.id];
-                return ((package?.id ?? run.candidateModelPackageId ?? '').trim()
+                return ((package?.id ?? run.candidateModelPackageId ?? '')
+                    .trim()
                     .isNotEmpty);
               },
             ).length;
@@ -1184,7 +1205,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             if (pageIndex >= pageCount) {
               pageIndex = pageCount - 1;
             }
-            final int startIndex = filteredRuns.isEmpty ? 0 : pageIndex * pageSize;
+            final int startIndex =
+                filteredRuns.isEmpty ? 0 : pageIndex * pageSize;
             final int endIndex = filteredRuns.isEmpty
                 ? 0
                 : (startIndex + pageSize > filteredRuns.length
@@ -1205,198 +1227,199 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    if (runs.isNotEmpty) ...<Widget>[
-                      TextField(
-                        onChanged: (String value) {
-                          setDialogState(() {
-                            filterQuery = value;
-                            pageIndex = 0;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (runs.isNotEmpty) ...<Widget>[
+                        TextField(
+                          onChanged: (String value) {
+                            setDialogState(() {
+                              filterQuery = value;
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(
+                              context,
+                              'Filter by run ID, artifact ID, or digest',
+                            ),
+                            prefixIcon: const Icon(Icons.search_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: sortMode,
+                          onChanged: (String? value) {
+                            setDialogState(() {
+                              sortMode = value ?? 'newest';
+                              pageIndex = 0;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _tHqFeatureFlags(context, 'Sort runs'),
+                          ),
+                          items: <DropdownMenuItem<String>>[
+                            DropdownMenuItem(
+                              value: 'newest',
+                              child: Text(
+                                  _tHqFeatureFlags(context, 'Newest first')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'oldest',
+                              child: Text(
+                                  _tHqFeatureFlags(context, 'Oldest first')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'largest_batch',
+                              child: Text(
+                                _tHqFeatureFlags(
+                                    context, 'Largest batch first'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            FilterChip(
+                              label: Text(
+                                  _tHqFeatureFlags(context, 'Latest only')),
+                              selected: latestOnly,
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  latestOnly = value;
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Artifact generated'),
+                              ),
+                              selected: artifactFilter == 'generated',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  artifactFilter = value ? 'generated' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                            FilterChip(
+                              label: Text(
+                                _tHqFeatureFlags(context, 'Artifact missing'),
+                              ),
+                              selected: artifactFilter == 'missing',
+                              onSelected: (bool value) {
+                                setDialogState(() {
+                                  artifactFilter = value ? 'missing' : 'all';
+                                  pageIndex = 0;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            _buildExperimentChip(
+                              'Runs: ${filteredRuns.length}',
+                              Icons.timeline_rounded,
+                            ),
+                            _buildExperimentChip(
+                              'Artifacts generated: $generatedArtifactCount',
+                              Icons.inventory_2_rounded,
+                              color: Colors.green,
+                            ),
+                            _buildExperimentChip(
+                              'Artifacts missing: $missingArtifactCount',
+                              Icons.error_outline_rounded,
+                              color: Colors.orange,
+                            ),
+                            _buildExperimentChip(
+                              'Packages staged: $stagedPackageCount',
+                              Icons.inventory_rounded,
+                              color: Colors.blue,
+                            ),
+                            _buildExperimentChip(
+                              'Samples: $sampleTotal',
+                              Icons.stacked_bar_chart_rounded,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (runs.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
                             context,
-                            'Filter by run ID, artifact ID, or digest',
+                            'No aggregation runs have materialized for this experiment yet.',
                           ),
-                          prefixIcon: const Icon(Icons.search_rounded),
+                        )
+                      else if (filteredRuns.isEmpty)
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'No aggregation runs match the current filter.',
+                          ),
+                        )
+                      else
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: visibleRuns
+                              .map(
+                                (FederatedLearningAggregationRunModel run) =>
+                                    _buildAggregationHistoryEntry(
+                                  run,
+                                  artifactsByRunId[run.id],
+                                  candidatePackagesByRunId[run.id],
+                                ),
+                              )
+                              .toList(),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: sortMode,
-                        onChanged: (String? value) {
-                          setDialogState(() {
-                            sortMode = value ?? 'newest';
-                            pageIndex = 0;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText:
-                              _tHqFeatureFlags(context, 'Sort runs'),
-                        ),
-                        items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(
-                            value: 'newest',
-                            child:
-                                Text(_tHqFeatureFlags(context, 'Newest first')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'oldest',
-                            child:
-                                Text(_tHqFeatureFlags(context, 'Oldest first')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'largest_batch',
-                            child: Text(
-                              _tHqFeatureFlags(context, 'Largest batch first'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: <Widget>[
-                          FilterChip(
-                            label:
-                                Text(_tHqFeatureFlags(context, 'Latest only')),
-                            selected: latestOnly,
-                            onSelected: (bool value) {
-                              setDialogState(() {
-                                latestOnly = value;
-                                pageIndex = 0;
-                              });
-                            },
-                          ),
-                          FilterChip(
-                            label: Text(
-                              _tHqFeatureFlags(context, 'Artifact generated'),
-                            ),
-                            selected: artifactFilter == 'generated',
-                            onSelected: (bool value) {
-                              setDialogState(() {
-                                artifactFilter = value ? 'generated' : 'all';
-                                pageIndex = 0;
-                              });
-                            },
-                          ),
-                          FilterChip(
-                            label: Text(
-                              _tHqFeatureFlags(context, 'Artifact missing'),
-                            ),
-                            selected: artifactFilter == 'missing',
-                            onSelected: (bool value) {
-                              setDialogState(() {
-                                artifactFilter = value ? 'missing' : 'all';
-                                pageIndex = 0;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: <Widget>[
-                          _buildExperimentChip(
-                            'Runs: ${filteredRuns.length}',
-                            Icons.timeline_rounded,
-                          ),
-                          _buildExperimentChip(
-                            'Artifacts generated: $generatedArtifactCount',
-                            Icons.inventory_2_rounded,
-                            color: Colors.green,
-                          ),
-                          _buildExperimentChip(
-                            'Artifacts missing: $missingArtifactCount',
-                            Icons.error_outline_rounded,
-                            color: Colors.orange,
-                          ),
-                          _buildExperimentChip(
-                            'Packages staged: $stagedPackageCount',
-                            Icons.inventory_rounded,
-                            color: Colors.blue,
-                          ),
-                          _buildExperimentChip(
-                            'Samples: $sampleTotal',
-                            Icons.stacked_bar_chart_rounded,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (runs.isEmpty)
-                      Text(
-                        _tHqFeatureFlags(
-                          context,
-                          'No aggregation runs have materialized for this experiment yet.',
-                        ),
-                      )
-                    else if (filteredRuns.isEmpty)
-                      Text(
-                        _tHqFeatureFlags(
-                          context,
-                          'No aggregation runs match the current filter.',
-                        ),
-                      )
-                    else
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: visibleRuns
-                            .map(
-                              (FederatedLearningAggregationRunModel run) =>
-                                  _buildAggregationHistoryEntry(
-                                run,
-                                artifactsByRunId[run.id],
-                                candidatePackagesByRunId[run.id],
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    if (filteredRuns.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              _tHqFeatureFlags(
-                                context,
-                                'Showing ${startIndex + 1}-$endIndex of ${filteredRuns.length}',
-                              ),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: ScholesaColors.textSecondary,
+                      if (filteredRuns.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _tHqFeatureFlags(
+                                  context,
+                                  'Showing ${startIndex + 1}-$endIndex of ${filteredRuns.length}',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ScholesaColors.textSecondary,
+                                ),
                               ),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: pageIndex > 0
-                                ? () {
-                                    setDialogState(() {
-                                      pageIndex -= 1;
-                                    });
-                                  }
-                                : null,
-                            child: Text(_tHqFeatureFlags(context, 'Previous')),
-                          ),
-                          TextButton(
-                            onPressed: pageIndex < pageCount - 1
-                                ? () {
-                                    setDialogState(() {
-                                      pageIndex += 1;
-                                    });
-                                  }
-                                : null,
-                            child: Text(_tHqFeatureFlags(context, 'Next')),
-                          ),
-                        ],
-                      ),
-                    ],
+                            TextButton(
+                              onPressed: pageIndex > 0
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex -= 1;
+                                      });
+                                    }
+                                  : null,
+                              child:
+                                  Text(_tHqFeatureFlags(context, 'Previous')),
+                            ),
+                            TextButton(
+                              onPressed: pageIndex < pageCount - 1
+                                  ? () {
+                                      setDialogState(() {
+                                        pageIndex += 1;
+                                      });
+                                    }
+                                  : null,
+                              child: Text(_tHqFeatureFlags(context, 'Next')),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1433,8 +1456,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
             final String normalizedQuery = filterQuery.trim().toLowerCase();
-            final List<FederatedLearningCandidateModelPackageModel> sortedPackages =
-                List<FederatedLearningCandidateModelPackageModel>.from(packages);
+            final List<FederatedLearningCandidateModelPackageModel>
+                sortedPackages =
+                List<FederatedLearningCandidateModelPackageModel>.from(
+                    packages);
             if (sortMode == 'oldest') {
               sortedPackages.sort((a, b) {
                 final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
@@ -1443,7 +1468,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               });
             } else if (sortMode == 'largest_batch') {
               sortedPackages.sort((a, b) {
-                final int sampleCompare = b.sampleCount.compareTo(a.sampleCount);
+                final int sampleCompare =
+                    b.sampleCount.compareTo(a.sampleCount);
                 if (sampleCompare != 0) return sampleCompare;
                 final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
                 final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
@@ -1452,11 +1478,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             }
 
             List<FederatedLearningCandidateModelPackageModel> filteredPackages =
-                sortedPackages.where((FederatedLearningCandidateModelPackageModel package) {
+                sortedPackages.where(
+                    (FederatedLearningCandidateModelPackageModel package) {
               final FederatedLearningCandidatePromotionRecordModel? promotion =
                   _promotionRecordsByPackageId[package.id];
               final FederatedLearningCandidatePromotionRevocationRecordModel?
-                  revocation = _promotionRevocationRecordsByPackageId[package.id];
+                  revocation =
+                  _promotionRevocationRecordsByPackageId[package.id];
               final String effectiveStatus =
                   _effectivePromotionStatus(promotion, revocation);
               if (promotionFilter == 'approved' &&
@@ -1466,7 +1494,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               if (promotionFilter == 'hold' && effectiveStatus != 'hold') {
                 return false;
               }
-              if (promotionFilter == 'revoked' && effectiveStatus != 'revoked') {
+              if (promotionFilter == 'revoked' &&
+                  effectiveStatus != 'revoked') {
                 return false;
               }
               if (promotionFilter == 'awaiting' &&
@@ -1521,11 +1550,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ) ==
                   'revoked';
             }).length;
-            final int awaitingCount =
-                filteredPackages.length - approvedCount - holdCount - revokedCount;
+            final int awaitingCount = filteredPackages.length -
+                approvedCount -
+                holdCount -
+                revokedCount;
             final int sampleTotal = filteredPackages.fold<int>(
               0,
-              (int total, FederatedLearningCandidateModelPackageModel package) =>
+              (int total,
+                      FederatedLearningCandidateModelPackageModel package) =>
                   total + package.sampleCount,
             );
             final int pageCount = filteredPackages.isEmpty
@@ -1534,13 +1566,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             if (pageIndex >= pageCount) {
               pageIndex = pageCount - 1;
             }
-            final int startIndex = filteredPackages.isEmpty ? 0 : pageIndex * pageSize;
+            final int startIndex =
+                filteredPackages.isEmpty ? 0 : pageIndex * pageSize;
             final int endIndex = filteredPackages.isEmpty
                 ? 0
                 : (startIndex + pageSize > filteredPackages.length
                     ? filteredPackages.length
                     : startIndex + pageSize);
-            final List<FederatedLearningCandidateModelPackageModel> visiblePackages =
+            final List<FederatedLearningCandidateModelPackageModel>
+                visiblePackages =
                 filteredPackages.sublist(startIndex, endIndex);
 
             return AlertDialog(
@@ -1602,7 +1636,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             DropdownMenuItem(
                               value: 'largest_batch',
                               child: Text(
-                                _tHqFeatureFlags(context, 'Largest batch first'),
+                                _tHqFeatureFlags(
+                                    context, 'Largest batch first'),
                               ),
                             ),
                           ],
@@ -1613,7 +1648,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           runSpacing: 8,
                           children: <Widget>[
                             FilterChip(
-                              label: Text(_tHqFeatureFlags(context, 'Latest only')),
+                              label: Text(
+                                  _tHqFeatureFlags(context, 'Latest only')),
                               selected: latestOnly,
                               onSelected: (bool value) {
                                 setDialogState(() {
@@ -1729,17 +1765,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: visiblePackages
                               .map(
-                                (FederatedLearningCandidateModelPackageModel package) =>
+                                (FederatedLearningCandidateModelPackageModel
+                                        package) =>
                                     _buildCandidatePackageHistoryEntry(
                                   package,
                                   _promotionRecordsByPackageId[package.id],
-                                  _promotionRevocationRecordsByPackageId[package.id],
+                                  _promotionRevocationRecordsByPackageId[
+                                      package.id],
                                   onApprove: () =>
                                       _showCandidatePromotionDecisionDialog(
                                     experiment: experiment,
                                     package: package,
                                     existingPromotion:
-                                        _promotionRecordsByPackageId[package.id],
+                                        _promotionRecordsByPackageId[
+                                            package.id],
                                     initialStatus: 'approved_for_eval',
                                     refreshDialog: () {
                                       setDialogState(() {});
@@ -1750,7 +1789,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     experiment: experiment,
                                     package: package,
                                     existingPromotion:
-                                        _promotionRecordsByPackageId[package.id],
+                                        _promotionRecordsByPackageId[
+                                            package.id],
                                     initialStatus: 'hold',
                                     refreshDialog: () {
                                       setDialogState(() {});
@@ -1784,7 +1824,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       });
                                     }
                                   : null,
-                              child: Text(_tHqFeatureFlags(context, 'Previous')),
+                              child:
+                                  Text(_tHqFeatureFlags(context, 'Previous')),
                             ),
                             TextButton(
                               onPressed: pageIndex < pageCount - 1
@@ -1829,11 +1870,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
-      (candidatePackage?.id ?? run.candidateModelPackageId ?? '').trim();
-    final String packageFormat =
-      (candidatePackage?.packageFormat ??
-          run.candidateModelPackageFormat ??
-          '')
+        (candidatePackage?.id ?? run.candidateModelPackageId ?? '').trim();
+    final String packageFormat = (candidatePackage?.packageFormat ??
+            run.candidateModelPackageFormat ??
+            '')
         .trim();
 
     return Container(
@@ -1964,7 +2004,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        _tHqFeatureFlags(
+                            context, 'Experiment: ${experiment.name}'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 12),
@@ -1974,9 +2015,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           labelText: _tHqFeatureFlags(context, 'Review status'),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'pending', child: Text('pending')),
-                          DropdownMenuItem(value: 'approved', child: Text('approved')),
-                          DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                          DropdownMenuItem(
+                              value: 'pending', child: Text('pending')),
+                          DropdownMenuItem(
+                              value: 'approved', child: Text('approved')),
+                          DropdownMenuItem(
+                              value: 'blocked', child: Text('blocked')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -2001,7 +2045,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         value: signoffChecklistComplete,
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          _tHqFeatureFlags(context, 'Sign-off checklist complete'),
+                          _tHqFeatureFlags(
+                              context, 'Sign-off checklist complete'),
                         ),
                         onChanged: (bool? value) {
                           setDialogState(() {
@@ -2013,7 +2058,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         value: rolloutRiskAcknowledged,
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          _tHqFeatureFlags(context, 'Rollout risk acknowledged'),
+                          _tHqFeatureFlags(
+                              context, 'Rollout risk acknowledged'),
                         ),
                         onChanged: (bool? value) {
                           setDialogState(() {
@@ -2067,17 +2113,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Widget _buildCandidatePackageHistoryEntry(
     FederatedLearningCandidateModelPackageModel package,
     FederatedLearningCandidatePromotionRecordModel? promotion,
-    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
-    {
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation, {
     VoidCallback? onApprove,
     VoidCallback? onHold,
-  }
-  ) {
+  }) {
     final String createdLabel = _formatTimestamp(package.createdAt);
     final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
     final String revokedLabel = _formatTimestamp(revocation?.revokedAt);
-    final String effectiveStatus = _effectivePromotionStatus(promotion, revocation);
-    final String effectiveTarget = _effectivePromotionTarget(promotion, revocation);
+    final String effectiveStatus =
+        _effectivePromotionStatus(promotion, revocation);
+    final String effectiveTarget =
+        _effectivePromotionTarget(promotion, revocation);
     final bool isApproved = effectiveStatus == 'approved_for_eval';
     final bool isHold = effectiveStatus == 'hold';
 
@@ -2121,7 +2167,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _tHqFeatureFlags(context, 'Rollout status: ${package.rolloutStatus}'),
+            _tHqFeatureFlags(
+                context, 'Rollout status: ${package.rolloutStatus}'),
             style: const TextStyle(
               fontSize: 12,
               color: ScholesaColors.textSecondary,
@@ -2129,7 +2176,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _tHqFeatureFlags(context, 'Package digest: ${package.packageDigest}'),
+            _tHqFeatureFlags(
+                context, 'Package digest: ${package.packageDigest}'),
             style: const TextStyle(
               fontSize: 12,
               color: ScholesaColors.textSecondary,
@@ -2137,7 +2185,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _tHqFeatureFlags(context, 'Bounded digest: ${package.boundedDigest}'),
+            _tHqFeatureFlags(
+                context, 'Bounded digest: ${package.boundedDigest}'),
             style: const TextStyle(
               fontSize: 12,
               color: ScholesaColors.textSecondary,
@@ -2390,7 +2439,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
             return bMillis.compareTo(aMillis);
           });
-    final Map<String, FederatedLearningCandidateModelPackageModel> packagesById = {
+    final Map<String, FederatedLearningCandidateModelPackageModel>
+        packagesById = {
       for (final FederatedLearningCandidateModelPackageModel package
           in _candidatePackagesByExperiment[experiment.id] ??
               const <FederatedLearningCandidateModelPackageModel>[])
@@ -2410,7 +2460,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             final String normalizedQuery = filterQuery.trim().toLowerCase();
             final List<FederatedLearningCandidatePromotionRecordModel>
                 sortedRecords =
-                List<FederatedLearningCandidatePromotionRecordModel>.from(records);
+                List<FederatedLearningCandidatePromotionRecordModel>.from(
+                    records);
             if (sortMode == 'oldest') {
               sortedRecords.sort((a, b) {
                 final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
@@ -2436,8 +2487,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _effectivePromotionStatus(
                         record,
                         _promotionRevocationRecordsByPackageId[
-                          record.candidateModelPackageId
-                        ],
+                            record.candidateModelPackageId],
                       ) !=
                       'approved_for_eval') {
                 return false;
@@ -2446,8 +2496,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _effectivePromotionStatus(
                         record,
                         _promotionRevocationRecordsByPackageId[
-                          record.candidateModelPackageId
-                        ],
+                            record.candidateModelPackageId],
                       ) !=
                       'hold') {
                 return false;
@@ -2456,8 +2505,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _effectivePromotionStatus(
                         record,
                         _promotionRevocationRecordsByPackageId[
-                          record.candidateModelPackageId
-                        ],
+                            record.candidateModelPackageId],
                       ) !=
                       'revoked') {
                 return false;
@@ -2493,34 +2541,35 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     _effectivePromotionStatus(
                       record,
                       _promotionRevocationRecordsByPackageId[
-                        record.candidateModelPackageId
-                      ],
+                          record.candidateModelPackageId],
                     ) ==
                     'approved_for_eval')
                 .length;
-            final int holdCount =
-                filteredRecords.where((record) =>
+            final int holdCount = filteredRecords
+                .where((record) =>
                     _effectivePromotionStatus(
                       record,
                       _promotionRevocationRecordsByPackageId[
-                        record.candidateModelPackageId
-                      ],
+                          record.candidateModelPackageId],
                     ) ==
-                    'hold').length;
+                    'hold')
+                .length;
             final int revokedCount = filteredRecords
                 .where((record) =>
                     _effectivePromotionStatus(
                       record,
                       _promotionRevocationRecordsByPackageId[
-                        record.candidateModelPackageId
-                      ],
+                          record.candidateModelPackageId],
                     ) ==
                     'revoked')
                 .length;
             final int sampleTotal = filteredRecords.fold<int>(
               0,
-              (int total, FederatedLearningCandidatePromotionRecordModel record) =>
-                  total + (packagesById[record.candidateModelPackageId]?.sampleCount ?? 0),
+              (int total,
+                      FederatedLearningCandidatePromotionRecordModel record) =>
+                  total +
+                  (packagesById[record.candidateModelPackageId]?.sampleCount ??
+                      0),
             );
             final int pageCount = filteredRecords.isEmpty
                 ? 1
@@ -2528,7 +2577,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             if (pageIndex >= pageCount) {
               pageIndex = pageCount - 1;
             }
-            final int startIndex = filteredRecords.isEmpty ? 0 : pageIndex * pageSize;
+            final int startIndex =
+                filteredRecords.isEmpty ? 0 : pageIndex * pageSize;
             final int endIndex = filteredRecords.isEmpty
                 ? 0
                 : (startIndex + pageSize > filteredRecords.length
@@ -2698,13 +2748,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: visibleRecords
                               .map(
-                                (FederatedLearningCandidatePromotionRecordModel record) =>
+                                (FederatedLearningCandidatePromotionRecordModel
+                                        record) =>
                                     _buildPromotionHistoryEntry(
                                   record,
                                   packagesById[record.candidateModelPackageId],
                                   _promotionRevocationRecordsByPackageId[
-                                    record.candidateModelPackageId
-                                  ],
+                                      record.candidateModelPackageId],
                                   onRevoke: () =>
                                       _showCandidatePromotionRevocationDialog(
                                     record: record,
@@ -2740,7 +2790,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       });
                                     }
                                   : null,
-                              child: Text(_tHqFeatureFlags(context, 'Previous')),
+                              child:
+                                  Text(_tHqFeatureFlags(context, 'Previous')),
                             ),
                             TextButton(
                               onPressed: pageIndex < pageCount - 1
@@ -2805,16 +2856,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Widget _buildPromotionHistoryEntry(
     FederatedLearningCandidatePromotionRecordModel record,
     FederatedLearningCandidateModelPackageModel? package,
-    FederatedLearningCandidatePromotionRevocationRecordModel? revocation,
-    {
+    FederatedLearningCandidatePromotionRevocationRecordModel? revocation, {
     VoidCallback? onRevoke,
-  }
-  ) {
+  }) {
     final String decidedLabel = _formatTimestamp(record.decidedAt);
     final String updatedLabel = _formatTimestamp(record.updatedAt);
     final String revokedLabel = _formatTimestamp(revocation?.revokedAt);
-    final String effectiveStatus = _effectivePromotionStatus(record, revocation);
-    final String effectiveTarget = _effectivePromotionTarget(record, revocation);
+    final String effectiveStatus =
+        _effectivePromotionStatus(record, revocation);
+    final String effectiveTarget =
+        _effectivePromotionTarget(record, revocation);
     final bool isRevoked = revocation != null;
 
     return Container(
@@ -3047,8 +3098,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     bool sandboxEvalComplete = existingEvidence?.sandboxEvalComplete ?? false;
     bool metricsSnapshotComplete =
         existingEvidence?.metricsSnapshotComplete ?? false;
-    bool rollbackPlanVerified =
-        existingEvidence?.rollbackPlanVerified ?? false;
+    bool rollbackPlanVerified = existingEvidence?.rollbackPlanVerified ?? false;
 
     final bool? shouldSave = await showDialog<bool>(
       context: context,
@@ -3087,15 +3137,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: status,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Evidence status'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Evidence status'),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'pending', child: Text('pending')),
+                          DropdownMenuItem(
+                              value: 'pending', child: Text('pending')),
                           DropdownMenuItem(
                             value: 'ready_for_pilot',
                             child: Text('ready_for_pilot'),
                           ),
-                          DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                          DropdownMenuItem(
+                              value: 'blocked', child: Text('blocked')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -3120,7 +3173,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         value: metricsSnapshotComplete,
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          _tHqFeatureFlags(context, 'Metrics snapshot reviewed'),
+                          _tHqFeatureFlags(
+                              context, 'Metrics snapshot reviewed'),
                         ),
                         onChanged: (bool? value) {
                           setDialogState(() {
@@ -3146,7 +3200,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Pilot evidence notes'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Pilot evidence notes'),
                         ),
                       ),
                     ],
@@ -3254,7 +3309,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        _tHqFeatureFlags(
+                            context, 'Experiment: ${experiment.name}'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
@@ -3271,16 +3327,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: status,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Approval status'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Approval status'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Approved requires approved review, ready-for-pilot evidence, and a non-revoked approved-for-eval promotion.',
                           ),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'pending', child: Text('pending')),
-                          DropdownMenuItem(value: 'approved', child: Text('approved')),
-                          DropdownMenuItem(value: 'blocked', child: Text('blocked')),
+                          DropdownMenuItem(
+                              value: 'pending', child: Text('pending')),
+                          DropdownMenuItem(
+                              value: 'approved', child: Text('approved')),
+                          DropdownMenuItem(
+                              value: 'blocked', child: Text('blocked')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -3294,7 +3354,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Pilot approval notes'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Pilot approval notes'),
                         ),
                       ),
                     ],
@@ -3402,7 +3463,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        _tHqFeatureFlags(
+                            context, 'Experiment: ${experiment.name}'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
@@ -3419,17 +3481,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: status,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Execution status'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Execution status'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Launched, observed, and completed require approved pilot approval. Observed and completed also require launched sites plus positive session and learner counts.',
                           ),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'planned', child: Text('planned')),
-                          DropdownMenuItem(value: 'launched', child: Text('launched')),
-                          DropdownMenuItem(value: 'observed', child: Text('observed')),
-                          DropdownMenuItem(value: 'completed', child: Text('completed')),
+                          DropdownMenuItem(
+                              value: 'planned', child: Text('planned')),
+                          DropdownMenuItem(
+                              value: 'launched', child: Text('launched')),
+                          DropdownMenuItem(
+                              value: 'observed', child: Text('observed')),
+                          DropdownMenuItem(
+                              value: 'completed', child: Text('completed')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -3441,7 +3508,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: launchedSitesController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Launched site IDs'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Launched site IDs'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Comma-separated site IDs. All sites must already be in the experiment cohort.',
@@ -3470,7 +3538,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Pilot execution notes'),
+                          labelText: _tHqFeatureFlags(
+                              context, 'Pilot execution notes'),
                         ),
                       ),
                     ],
@@ -3502,8 +3571,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         .map((String value) => value.trim())
         .where((String value) => value.isNotEmpty)
         .toList();
-    final int sessionCount = int.tryParse(sessionCountController.text.trim()) ?? 0;
-    final int learnerCount = int.tryParse(learnerCountController.text.trim()) ?? 0;
+    final int sessionCount =
+        int.tryParse(sessionCountController.text.trim()) ?? 0;
+    final int learnerCount =
+        int.tryParse(learnerCountController.text.trim()) ?? 0;
 
     await _savePilotExecutionRecord(
       candidateModelPackageId: candidatePackage.id,
@@ -3603,7 +3674,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _tHqFeatureFlags(context, 'Experiment: ${experiment.name}'),
+                        _tHqFeatureFlags(
+                            context, 'Experiment: ${experiment.name}'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
@@ -3620,17 +3692,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: status,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Delivery status'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Delivery status'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Assigned and active delivery require observed or completed pilot execution and sites within the experiment cohort.',
                           ),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'prepared', child: Text('prepared')),
-                          DropdownMenuItem(value: 'assigned', child: Text('assigned')),
-                          DropdownMenuItem(value: 'active', child: Text('active')),
-                          DropdownMenuItem(value: 'revoked', child: Text('revoked')),
+                          DropdownMenuItem(
+                              value: 'prepared', child: Text('prepared')),
+                          DropdownMenuItem(
+                              value: 'assigned', child: Text('assigned')),
+                          DropdownMenuItem(
+                              value: 'active', child: Text('active')),
+                          DropdownMenuItem(
+                              value: 'revoked', child: Text('revoked')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -3642,7 +3719,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: targetSitesController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Target site IDs'),
+                          labelText:
+                              _tHqFeatureFlags(context, 'Target site IDs'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Comma-separated site IDs. Delivery stays bounded to the approved experiment cohort.',
@@ -3654,7 +3732,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         controller: expiryHoursController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Expiry window (hours)'),
+                          labelText: _tHqFeatureFlags(
+                              context, 'Expiry window (hours)'),
                           helperText: _tHqFeatureFlags(
                             context,
                             'Assigned and active deliveries expire automatically after this many hours unless HQ refreshes them.',
@@ -3668,7 +3747,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           minLines: 2,
                           maxLines: 4,
                           decoration: InputDecoration(
-                            labelText: _tHqFeatureFlags(context, 'Revocation reason'),
+                            labelText:
+                                _tHqFeatureFlags(context, 'Revocation reason'),
                             helperText: _tHqFeatureFlags(
                               context,
                               'Required when revoking a delivered runtime package.',
@@ -3682,7 +3762,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(context, 'Runtime delivery notes'),
+                          labelText: _tHqFeatureFlags(
+                              context, 'Runtime delivery notes'),
                         ),
                       ),
                     ],
@@ -3718,7 +3799,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final int? expiresAt = (status == 'assigned' || status == 'active') &&
             expiryHours != null &&
             expiryHours > 0
-        ? DateTime.now().toUtc().add(Duration(hours: expiryHours)).millisecondsSinceEpoch
+        ? DateTime.now()
+            .toUtc()
+            .add(Duration(hours: expiryHours))
+            .millisecondsSinceEpoch
         : null;
 
     await _saveRuntimeDeliveryRecord(
@@ -3819,8 +3903,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: records
-                          .map((FederatedLearningRuntimeDeliveryRecordModel record) {
+                      children: records.map(
+                          (FederatedLearningRuntimeDeliveryRecordModel record) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Column(
@@ -3845,7 +3929,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   color: ScholesaColors.textSecondary,
                                 ),
                               ),
-                              if ((record.revocationReason ?? '').trim().isNotEmpty) ...<Widget>[
+                              if ((record.revocationReason ?? '')
+                                  .trim()
+                                  .isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 4),
                                 Text(
                                   _tHqFeatureFlags(
@@ -4013,7 +4099,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'HQ notes'),
+                          labelText:
+                              _tHqFeatureFlags(dialogContext, 'HQ notes'),
                           helperText: _tHqFeatureFlags(
                             dialogContext,
                             'Capture triage context for fallback or pending rollout states.',
@@ -4096,7 +4183,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         experimentId: experiment.id,
         limit: 120,
       ),
-      _workflowBridge.listFederatedLearningRuntimeRolloutEscalationHistoryRecords(
+      _workflowBridge
+          .listFederatedLearningRuntimeRolloutEscalationHistoryRecords(
         experimentId: experiment.id,
         limit: 160,
       ),
@@ -4122,8 +4210,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final Map<String, FederatedLearningRuntimeDeliveryRecordModel>
         deliveriesById = {
       for (final FederatedLearningRuntimeDeliveryRecordModel delivery
-          in (payloads[1] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[1] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeDeliveryRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_delivery_record',
                     row,
@@ -4131,10 +4219,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         delivery.id: delivery,
     };
     final Map<String, List<FederatedLearningRuntimeRolloutAuditEventModel>>
-        triageEventsByDeliveryId = <String, List<FederatedLearningRuntimeRolloutAuditEventModel>>{};
+        triageEventsByDeliveryId =
+        <String, List<FederatedLearningRuntimeRolloutAuditEventModel>>{};
     for (final FederatedLearningRuntimeRolloutAuditEventModel event
-        in (payloads[2] as List<Map<String, dynamic>>)
-            .map((Map<String, dynamic> row) =>
+        in (payloads[2] as List<Map<String, dynamic>>).map(
+            (Map<String, dynamic> row) =>
                 FederatedLearningRuntimeRolloutAuditEventModel.fromMap(
                   (row['id'] as String?) ?? 'runtime_rollout_audit_event',
                   row,
@@ -4143,7 +4232,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         continue;
       }
       triageEventsByDeliveryId
-          .putIfAbsent(event.deliveryRecordId, () => <FederatedLearningRuntimeRolloutAuditEventModel>[])
+          .putIfAbsent(event.deliveryRecordId,
+              () => <FederatedLearningRuntimeRolloutAuditEventModel>[])
           .add(event);
     }
     for (final List<FederatedLearningRuntimeRolloutAuditEventModel> events
@@ -4153,32 +4243,38 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
         escalationByDeliveryId = {
       for (final FederatedLearningRuntimeRolloutEscalationRecordModel record
-          in (payloads[3] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[3] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeRolloutEscalationRecordModel.fromMap(
-                    (row['id'] as String?) ?? 'runtime_rollout_escalation_record',
+                    (row['id'] as String?) ??
+                        'runtime_rollout_escalation_record',
                     row,
                   )))
         record.deliveryRecordId: record,
     };
-    final Map<String, List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>
-        escalationHistoryByDeliveryId =
-        <String, List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>{};
+    final Map<String,
+            List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>
+        escalationHistoryByDeliveryId = <String,
+            List<
+                FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>{};
     for (final FederatedLearningRuntimeRolloutEscalationHistoryRecordModel record
-        in (payloads[4] as List<Map<String, dynamic>>)
-            .map((Map<String, dynamic> row) =>
-                FederatedLearningRuntimeRolloutEscalationHistoryRecordModel.fromMap(
-                  (row['id'] as String?) ?? 'runtime_rollout_escalation_history_record',
-                  row,
-                ))) {
+        in (payloads[4] as List<Map<String, dynamic>>).map((Map<String, dynamic>
+                row) =>
+            FederatedLearningRuntimeRolloutEscalationHistoryRecordModel.fromMap(
+              (row['id'] as String?) ??
+                  'runtime_rollout_escalation_history_record',
+              row,
+            ))) {
       escalationHistoryByDeliveryId
           .putIfAbsent(
             record.deliveryRecordId,
-            () => <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[],
+            () =>
+                <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[],
           )
           .add(record);
     }
-    for (final List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel> records
+    for (final List<
+            FederatedLearningRuntimeRolloutEscalationHistoryRecordModel> records
         in escalationHistoryByDeliveryId.values) {
       records.sort((a, b) {
         final int aMillis = a.recordedAt?.millisecondsSinceEpoch ?? 0;
@@ -4189,8 +4285,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final Map<String, FederatedLearningRuntimeRolloutControlRecordModel>
         rolloutControlsByDeliveryId = {
       for (final FederatedLearningRuntimeRolloutControlRecordModel record
-          in (payloads[5] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[5] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeRolloutControlRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_rollout_control_record',
                     row,
@@ -4222,20 +4318,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: records
-                          .map((FederatedLearningRuntimeRolloutAlertRecordModel record) {
+                      children: records.map(
+                          (FederatedLearningRuntimeRolloutAlertRecordModel
+                              record) {
                         final FederatedLearningRuntimeDeliveryRecordModel?
                             delivery = deliveriesById[record.deliveryRecordId];
                         final FederatedLearningRuntimeRolloutEscalationRecordModel?
-                          escalation = escalationByDeliveryId[record.deliveryRecordId];
+                            escalation =
+                            escalationByDeliveryId[record.deliveryRecordId];
                         final FederatedLearningRuntimeRolloutControlRecordModel?
-                          rolloutControl = rolloutControlsByDeliveryId[record.deliveryRecordId];
-                        final List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
-                          escalationHistory = escalationHistoryByDeliveryId[record.deliveryRecordId] ??
-                            const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
-                        final List<FederatedLearningRuntimeRolloutAuditEventModel>
-                          triageEvents = triageEventsByDeliveryId[record.deliveryRecordId] ??
-                            const <FederatedLearningRuntimeRolloutAuditEventModel>[];
+                            rolloutControl = rolloutControlsByDeliveryId[
+                                record.deliveryRecordId];
+                        final List<
+                                FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
+                            escalationHistory = escalationHistoryByDeliveryId[
+                                    record.deliveryRecordId] ??
+                                const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
+                        final List<
+                                FederatedLearningRuntimeRolloutAuditEventModel>
+                            triageEvents =
+                            triageEventsByDeliveryId[record.deliveryRecordId] ??
+                                const <FederatedLearningRuntimeRolloutAuditEventModel>[];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: Column(
@@ -4246,7 +4349,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   dialogContext,
                                   '${record.deliveryRecordId} · ${record.status} · ${record.fallbackCount} fallback · ${record.pendingCount} pending',
                                 ),
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
                               ),
                               if (delivery != null) ...<Widget>[
                                 const SizedBox(height: 4),
@@ -4260,7 +4364,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   ),
                                 ),
                               ],
-                              if ((record.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                              if ((record.notes ?? '')
+                                  .trim()
+                                  .isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 4),
                                 Text(
                                   _tHqFeatureFlags(
@@ -4289,19 +4395,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 Text(
                                   _tHqFeatureFlags(
                                     dialogContext,
-                                    _buildRuntimeRolloutEscalationSummary(escalation),
+                                    _buildRuntimeRolloutEscalationSummary(
+                                        escalation),
                                   ),
                                   style: const TextStyle(
                                     color: ScholesaColors.textSecondary,
                                   ),
                                 ),
                               ],
-                              if (rolloutControl != null && rolloutControl.mode != 'monitor') ...<Widget>[
+                              if (rolloutControl != null &&
+                                  rolloutControl.mode != 'monitor') ...<Widget>[
                                 const SizedBox(height: 4),
                                 Text(
                                   _tHqFeatureFlags(
                                     dialogContext,
-                                    _buildRuntimeRolloutControlSummary(rolloutControl),
+                                    _buildRuntimeRolloutControlSummary(
+                                        rolloutControl),
                                   ),
                                   style: const TextStyle(
                                     color: ScholesaColors.textSecondary,
@@ -4315,23 +4424,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     dialogContext,
                                     'Escalation history',
                                   ),
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
                                 ),
                                 const SizedBox(height: 4),
                                 ...escalationHistory.take(4).map(
-                                  (FederatedLearningRuntimeRolloutEscalationHistoryRecordModel historyRecord) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        _buildRuntimeRolloutEscalationHistoryLine(historyRecord),
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
+                                      (FederatedLearningRuntimeRolloutEscalationHistoryRecordModel
+                                              historyRecord) =>
+                                          Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            _buildRuntimeRolloutEscalationHistoryLine(
+                                                historyRecord),
+                                          ),
+                                          style: const TextStyle(
+                                            color: ScholesaColors.textSecondary,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
                               ],
                               if (triageEvents.isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 8),
@@ -4340,23 +4454,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     dialogContext,
                                     'Triage history',
                                   ),
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
                                 ),
                                 const SizedBox(height: 4),
                                 ...triageEvents.take(4).map(
-                                  (FederatedLearningRuntimeRolloutAuditEventModel event) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        _runtimeRolloutTriageHistoryLine(event),
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
+                                      (FederatedLearningRuntimeRolloutAuditEventModel
+                                              event) =>
+                                          Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            _runtimeRolloutTriageHistoryLine(
+                                                event),
+                                          ),
+                                          style: const TextStyle(
+                                            color: ScholesaColors.textSecondary,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
                               ],
                               const SizedBox(height: 6),
                               TextButton.icon(
@@ -4383,7 +4502,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             TextButton.icon(
               onPressed: () => _showRuntimeRolloutAuditDialog(experiment),
               icon: const Icon(Icons.receipt_long_rounded),
-              label: Text(_tHqFeatureFlags(dialogContext, 'View rollout audit')),
+              label:
+                  Text(_tHqFeatureFlags(dialogContext, 'View rollout audit')),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -4426,22 +4546,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             .toList()
           ..sort();
         final List<String> siteOptions = <String>{
-          for (final FederatedLearningRuntimeRolloutAuditEventModel event in events)
+          for (final FederatedLearningRuntimeRolloutAuditEventModel event
+              in events)
             if (event.siteId.trim().isNotEmpty) event.siteId,
-          for (final FederatedLearningRuntimeRolloutAuditEventModel event in events)
+          for (final FederatedLearningRuntimeRolloutAuditEventModel event
+              in events)
             ...event.targetSiteIds.where((value) => value.trim().isNotEmpty),
         }.toList()
           ..sort();
 
         return StatefulBuilder(
           builder: (BuildContext dialogContext, StateSetter setDialogState) {
-            final List<FederatedLearningRuntimeRolloutAuditEventModel> filteredEvents = events
-                .where((event) =>
-                    (selectedPackageId.isEmpty || event.candidateModelPackageId == selectedPackageId) &&
-                    (selectedSiteId.isEmpty ||
-                        event.siteId == selectedSiteId ||
-                        event.targetSiteIds.contains(selectedSiteId)))
-                .toList(growable: false);
+            final List<FederatedLearningRuntimeRolloutAuditEventModel>
+                filteredEvents = events
+                    .where((event) =>
+                        (selectedPackageId.isEmpty ||
+                            event.candidateModelPackageId ==
+                                selectedPackageId) &&
+                        (selectedSiteId.isEmpty ||
+                            event.siteId == selectedSiteId ||
+                            event.targetSiteIds.contains(selectedSiteId)))
+                    .toList(growable: false);
 
             return AlertDialog(
               title: Text(
@@ -4458,7 +4583,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (packageOptions.isNotEmpty || siteOptions.isNotEmpty) ...<Widget>[
+                    if (packageOptions.isNotEmpty ||
+                        siteOptions.isNotEmpty) ...<Widget>[
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -4469,12 +4595,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               child: DropdownButtonFormField<String>(
                                 initialValue: selectedPackageId,
                                 decoration: InputDecoration(
-                                  labelText: _tHqFeatureFlags(dialogContext, 'Package filter'),
+                                  labelText: _tHqFeatureFlags(
+                                      dialogContext, 'Package filter'),
                                 ),
                                 items: <DropdownMenuItem<String>>[
                                   DropdownMenuItem(
                                     value: '',
-                                    child: Text(_tHqFeatureFlags(dialogContext, 'All packages')),
+                                    child: Text(_tHqFeatureFlags(
+                                        dialogContext, 'All packages')),
                                   ),
                                   ...packageOptions.map(
                                     (value) => DropdownMenuItem<String>(
@@ -4496,12 +4624,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               child: DropdownButtonFormField<String>(
                                 initialValue: selectedSiteId,
                                 decoration: InputDecoration(
-                                  labelText: _tHqFeatureFlags(dialogContext, 'Site filter'),
+                                  labelText: _tHqFeatureFlags(
+                                      dialogContext, 'Site filter'),
                                 ),
                                 items: <DropdownMenuItem<String>>[
                                   DropdownMenuItem(
                                     value: '',
-                                    child: Text(_tHqFeatureFlags(dialogContext, 'All sites')),
+                                    child: Text(_tHqFeatureFlags(
+                                        dialogContext, 'All sites')),
                                   ),
                                   ...siteOptions.map(
                                     (value) => DropdownMenuItem<String>(
@@ -4545,19 +4675,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: filteredEvents
-                                    .map((FederatedLearningRuntimeRolloutAuditEventModel event) {
+                                children: filteredEvents.map(
+                                    (FederatedLearningRuntimeRolloutAuditEventModel
+                                        event) {
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: <Widget>[
                                         Text(
                                           _tHqFeatureFlags(
                                             dialogContext,
                                             _runtimeRolloutAuditTitle(event),
                                           ),
-                                          style: const TextStyle(fontWeight: FontWeight.w700),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
@@ -4636,7 +4769,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: status,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Escalation status'),
+                          labelText: _tHqFeatureFlags(
+                              dialogContext, 'Escalation status'),
                         ),
                         items: const <DropdownMenuItem<String>>[
                           DropdownMenuItem(value: 'open', child: Text('open')),
@@ -4644,7 +4778,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             value: 'investigating',
                             child: Text('investigating'),
                           ),
-                          DropdownMenuItem(value: 'resolved', child: Text('resolved')),
+                          DropdownMenuItem(
+                              value: 'resolved', child: Text('resolved')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -4656,7 +4791,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: ownerController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Owner user ID'),
+                          labelText:
+                              _tHqFeatureFlags(dialogContext, 'Owner user ID'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -4665,7 +4801,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Escalation notes'),
+                          labelText: _tHqFeatureFlags(
+                              dialogContext, 'Escalation notes'),
                         ),
                       ),
                     ],
@@ -4693,7 +4830,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
 
     try {
-      await _workflowBridge.upsertFederatedLearningRuntimeRolloutEscalationRecord(
+      await _workflowBridge
+          .upsertFederatedLearningRuntimeRolloutEscalationRecord(
         <String, dynamic>{
           'deliveryRecordId': delivery.id,
           'status': status,
@@ -4770,12 +4908,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       DropdownButtonFormField<String>(
                         initialValue: mode,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Control mode'),
+                          labelText:
+                              _tHqFeatureFlags(dialogContext, 'Control mode'),
                         ),
                         items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'monitor', child: Text('monitor')),
-                          DropdownMenuItem(value: 'restricted', child: Text('restricted')),
-                          DropdownMenuItem(value: 'paused', child: Text('paused')),
+                          DropdownMenuItem(
+                              value: 'monitor', child: Text('monitor')),
+                          DropdownMenuItem(
+                              value: 'restricted', child: Text('restricted')),
+                          DropdownMenuItem(
+                              value: 'paused', child: Text('paused')),
                         ],
                         onChanged: (String? value) {
                           setDialogState(() {
@@ -4787,7 +4929,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       TextFormField(
                         controller: ownerController,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Owner user ID'),
+                          labelText:
+                              _tHqFeatureFlags(dialogContext, 'Owner user ID'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -4796,7 +4939,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         minLines: 2,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(dialogContext, 'Control reason'),
+                          labelText:
+                              _tHqFeatureFlags(dialogContext, 'Control reason'),
                           helperText: _tHqFeatureFlags(
                             dialogContext,
                             'Restricted or paused control should state the bounded operator reason.',
@@ -4914,7 +5058,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ),
                         const SizedBox(height: 12),
                         ...records.map(
-                          (FederatedLearningRuntimeActivationRecordModel record) => Padding(
+                          (FederatedLearningRuntimeActivationRecordModel
+                                  record) =>
+                              Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -4924,7 +5070,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     dialogContext,
                                     '${record.siteId} · ${record.status} · ${record.runtimeTarget}',
                                   ),
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
@@ -4936,10 +5083,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     color: ScholesaColors.textSecondary,
                                   ),
                                 ),
-                                if ((record.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                                if ((record.notes ?? '')
+                                    .trim()
+                                    .isNotEmpty) ...<Widget>[
                                   const SizedBox(height: 2),
                                   Text(
-                                    _tHqFeatureFlags(dialogContext, record.notes!),
+                                    _tHqFeatureFlags(
+                                        dialogContext, record.notes!),
                                     style: const TextStyle(
                                       color: ScholesaColors.textSecondary,
                                     ),
@@ -4997,7 +5147,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     minLines: 2,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      labelText: _tHqFeatureFlags(context, 'Rollback rationale'),
+                      labelText:
+                          _tHqFeatureFlags(context, 'Rollback rationale'),
                       helperText: _tHqFeatureFlags(
                         context,
                         'Saved as bounded rollback proof for the sandbox-eval record.',
@@ -5170,12 +5321,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'Delivery ${event.deliveryRecordId} · site ${event.siteId} · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
     }
     if (event.action.endsWith('runtime_rollout_escalation_record.upsert')) {
-      final String owner = event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
+      final String owner =
+          event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
       return 'Delivery ${event.deliveryRecordId} · owner $owner · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
     }
     if (event.action.endsWith('runtime_rollout_control_record.upsert')) {
-      final String owner = event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
-      final String reason = event.reason.trim().isEmpty ? '' : ' · ${event.reason.trim()}';
+      final String owner =
+          event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
+      final String reason =
+          event.reason.trim().isEmpty ? '' : ' · ${event.reason.trim()}';
       return 'Delivery ${event.deliveryRecordId} · mode ${event.mode} · owner $owner$reason';
     }
     return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
@@ -5184,8 +5338,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   String _runtimeRolloutTriageHistoryLine(
     FederatedLearningRuntimeRolloutAuditEventModel event,
   ) {
-    final String notes = event.notes.trim().isEmpty ? '' : ' · ${event.notes.trim()}';
-    final String actor = event.userId?.trim().isNotEmpty == true ? event.userId!.trim() : 'hq';
+    final String notes =
+        event.notes.trim().isEmpty ? '' : ' · ${event.notes.trim()}';
+    final String actor =
+        event.userId?.trim().isNotEmpty == true ? event.userId!.trim() : 'hq';
     return '${DateTime.fromMillisecondsSinceEpoch(event.timestamp, isUtc: true).toIso8601String()} · ${event.status} by $actor$notes';
   }
 
@@ -5278,8 +5434,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningExperimentModel a,
     FederatedLearningExperimentModel b,
   ) {
-    final int severityDelta =
-        _rolloutAlertSeverityForExperiment(b) - _rolloutAlertSeverityForExperiment(a);
+    final int severityDelta = _rolloutAlertSeverityForExperiment(b) -
+        _rolloutAlertSeverityForExperiment(a);
     if (severityDelta != 0) {
       return severityDelta;
     }
@@ -5352,7 +5508,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       final FederatedLearningRuntimeActivationRecordModel? existing =
           latestActivationBySite[record.siteId];
       final int recordMillis = record.updatedAt?.millisecondsSinceEpoch ?? 0;
-      final int existingMillis = existing?.updatedAt?.millisecondsSinceEpoch ?? 0;
+      final int existingMillis =
+          existing?.updatedAt?.millisecondsSinceEpoch ?? 0;
       if (existing == null || recordMillis > existingMillis) {
         latestActivationBySite[record.siteId] = record;
       }
@@ -5398,7 +5555,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         siteId: siteId,
         status: 'fallback',
         statusLabel: 'fallback',
-        detailLabel: 'Delivery expired at ${_formatTimestamp(delivery.expiresAt)}.',
+        detailLabel:
+            'Delivery expired at ${_formatTimestamp(delivery.expiresAt)}.',
       );
     }
 
@@ -5523,9 +5681,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (!mounted) return;
     setState(() => _isLoadingExperiments = true);
     try {
-      final List<dynamic> payloads = await Future.wait<dynamic>(<Future<dynamic>>[
+      final List<dynamic> payloads =
+          await Future.wait<dynamic>(<Future<dynamic>>[
         _workflowBridge.listFederatedLearningExperiments(),
-        _workflowBridge.listFederatedLearningExperimentReviewRecords(limit: 120),
+        _workflowBridge.listFederatedLearningExperimentReviewRecords(
+            limit: 120),
         _workflowBridge.listFederatedLearningAggregationRuns(limit: 120),
         _workflowBridge.listFederatedLearningMergeArtifacts(limit: 120),
         _workflowBridge.listFederatedLearningCandidateModelPackages(limit: 120),
@@ -5533,68 +5693,79 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningPilotApprovalRecords(limit: 120),
         _workflowBridge.listFederatedLearningPilotExecutionRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(limit: 120),
-        _workflowBridge.listFederatedLearningRuntimeActivationRecords(limit: 120),
-        _workflowBridge.listFederatedLearningRuntimeRolloutAlertRecords(limit: 120),
-        _workflowBridge.listFederatedLearningRuntimeRolloutEscalationRecords(limit: 120),
-        _workflowBridge.listFederatedLearningRuntimeRolloutControlRecords(limit: 120),
-        _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
-        _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeActivationRecords(
+            limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeRolloutAlertRecords(
+            limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeRolloutEscalationRecords(
+            limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeRolloutControlRecords(
+            limit: 120),
+        _workflowBridge.listFederatedLearningCandidatePromotionRecords(
+            limit: 120),
+        _workflowBridge
+            .listFederatedLearningCandidatePromotionRevocationRecords(
+                limit: 120),
       ]);
-      final List<FederatedLearningExperimentModel> loaded =
-          (payloads[0] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
-                  FederatedLearningExperimentModel.fromMap(
-                    (row['id'] as String?) ?? 'experiment',
-                    row,
-                  ))
-              .toList()
-            ..sort((a, b) {
-              final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
-              final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
-              return bMillis.compareTo(aMillis);
-            });
-      final List<FederatedLearningAggregationRunModel> runs =
-          (payloads[2] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
-                  FederatedLearningAggregationRunModel.fromMap(
-                    (row['id'] as String?) ?? 'aggregation_run',
-                    row,
-                  ))
-              .toList()
-            ..sort((a, b) {
-              final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
-              final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
-              return bMillis.compareTo(aMillis);
-            });
+      final List<FederatedLearningExperimentModel> loaded = (payloads[0]
+              as List<Map<String, dynamic>>)
+          .map((Map<String, dynamic> row) =>
+              FederatedLearningExperimentModel.fromMap(
+                (row['id'] as String?) ?? 'experiment',
+                row,
+              ))
+          .toList()
+        ..sort((a, b) {
+          final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;
+          final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
+          return bMillis.compareTo(aMillis);
+        });
+      final List<FederatedLearningAggregationRunModel> runs = (payloads[2]
+              as List<Map<String, dynamic>>)
+          .map((Map<String, dynamic> row) =>
+              FederatedLearningAggregationRunModel.fromMap(
+                (row['id'] as String?) ?? 'aggregation_run',
+                row,
+              ))
+          .toList()
+        ..sort((a, b) {
+          final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+          final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+          return bMillis.compareTo(aMillis);
+        });
       final Map<String, List<FederatedLearningAggregationRunModel>> runsByExp =
           <String, List<FederatedLearningAggregationRunModel>>{};
       for (final FederatedLearningAggregationRunModel run in runs) {
-        runsByExp.putIfAbsent(
-          run.experimentId,
-          () => <FederatedLearningAggregationRunModel>[],
-        ).add(run);
+        runsByExp
+            .putIfAbsent(
+              run.experimentId,
+              () => <FederatedLearningAggregationRunModel>[],
+            )
+            .add(run);
       }
-      final List<FederatedLearningMergeArtifactModel> artifacts =
-          (payloads[3] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
-                  FederatedLearningMergeArtifactModel.fromMap(
-                    (row['id'] as String?) ?? 'merge_artifact',
-                    row,
-                  ))
-              .toList()
-            ..sort((a, b) {
-              final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
-              final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
-              return bMillis.compareTo(aMillis);
-            });
+      final List<FederatedLearningMergeArtifactModel> artifacts = (payloads[3]
+              as List<Map<String, dynamic>>)
+          .map((Map<String, dynamic> row) =>
+              FederatedLearningMergeArtifactModel.fromMap(
+                (row['id'] as String?) ?? 'merge_artifact',
+                row,
+              ))
+          .toList()
+        ..sort((a, b) {
+          final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+          final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+          return bMillis.compareTo(aMillis);
+        });
       final Map<String, List<FederatedLearningMergeArtifactModel>>
           artifactsByExp =
           <String, List<FederatedLearningMergeArtifactModel>>{};
       for (final FederatedLearningMergeArtifactModel artifact in artifacts) {
-        artifactsByExp.putIfAbsent(
-          artifact.experimentId,
-          () => <FederatedLearningMergeArtifactModel>[],
-        ).add(artifact);
+        artifactsByExp
+            .putIfAbsent(
+              artifact.experimentId,
+              () => <FederatedLearningMergeArtifactModel>[],
+            )
+            .add(artifact);
       }
       final List<FederatedLearningCandidateModelPackageModel> packages =
           (payloads[4] as List<Map<String, dynamic>>)
@@ -5614,17 +5785,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, List<FederatedLearningCandidateModelPackageModel>>{};
       for (final FederatedLearningCandidateModelPackageModel package
           in packages) {
-        packagesByExp.putIfAbsent(
-          package.experimentId,
-          () => <FederatedLearningCandidateModelPackageModel>[],
-        ).add(package);
+        packagesByExp
+            .putIfAbsent(
+              package.experimentId,
+              () => <FederatedLearningCandidateModelPackageModel>[],
+            )
+            .add(package);
       }
       final Map<String, FederatedLearningPilotEvidenceRecordModel>
           pilotEvidenceByPackageId =
           <String, FederatedLearningPilotEvidenceRecordModel>{};
       for (final FederatedLearningPilotEvidenceRecordModel record
-          in (payloads[5] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[5] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningPilotEvidenceRecordModel.fromMap(
                     (row['id'] as String?) ?? 'pilot_evidence_record',
                     row,
@@ -5635,8 +5808,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           pilotApprovalByPackageId =
           <String, FederatedLearningPilotApprovalRecordModel>{};
       for (final FederatedLearningPilotApprovalRecordModel record
-          in (payloads[6] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[6] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningPilotApprovalRecordModel.fromMap(
                     (row['id'] as String?) ?? 'pilot_approval_record',
                     row,
@@ -5647,8 +5820,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           pilotExecutionByPackageId =
           <String, FederatedLearningPilotExecutionRecordModel>{};
       for (final FederatedLearningPilotExecutionRecordModel record
-          in (payloads[7] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[7] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningPilotExecutionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'pilot_execution_record',
                     row,
@@ -5659,8 +5832,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeDeliveryByPackageId =
           <String, FederatedLearningRuntimeDeliveryRecordModel>{};
       for (final FederatedLearningRuntimeDeliveryRecordModel record
-          in (payloads[8] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[8] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeDeliveryRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_delivery_record',
                     row,
@@ -5671,8 +5844,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeActivationByPackageId =
           <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
       for (final FederatedLearningRuntimeActivationRecordModel record
-          in (payloads[9] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[9] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeActivationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_activation_record',
                     row,
@@ -5696,8 +5869,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeRolloutAlertsByDeliveryId =
           <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
       for (final FederatedLearningRuntimeRolloutAlertRecordModel record
-          in (payloads[10] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[10] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeRolloutAlertRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_rollout_alert_record',
                     row,
@@ -5708,10 +5881,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeRolloutEscalationsByDeliveryId =
           <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
       for (final FederatedLearningRuntimeRolloutEscalationRecordModel record
-          in (payloads[11] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[11] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeRolloutEscalationRecordModel.fromMap(
-                    (row['id'] as String?) ?? 'runtime_rollout_escalation_record',
+                    (row['id'] as String?) ??
+                        'runtime_rollout_escalation_record',
                     row,
                   ))) {
         runtimeRolloutEscalationsByDeliveryId[record.deliveryRecordId] = record;
@@ -5720,45 +5894,47 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeRolloutControlsByDeliveryId =
           <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
       for (final FederatedLearningRuntimeRolloutControlRecordModel record
-          in (payloads[12] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[12] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningRuntimeRolloutControlRecordModel.fromMap(
                     (row['id'] as String?) ?? 'runtime_rollout_control_record',
                     row,
                   ))) {
         runtimeRolloutControlsByDeliveryId[record.deliveryRecordId] = record;
       }
-        final Map<String, FederatedLearningExperimentReviewRecordModel>
+      final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
-        for (final FederatedLearningExperimentReviewRecordModel record
-          in (payloads[1] as List<Map<String, dynamic>>)
-            .map((Map<String, dynamic> row) =>
-              FederatedLearningExperimentReviewRecordModel.fromMap(
-              (row['id'] as String?) ?? 'experiment_review_record',
-              row,
-              ))) {
+      for (final FederatedLearningExperimentReviewRecordModel record
+          in (payloads[1] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
+                  FederatedLearningExperimentReviewRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'experiment_review_record',
+                    row,
+                  ))) {
         reviewRecordsByExperimentId[record.experimentId] = record;
-        }
+      }
       final Map<String, FederatedLearningCandidatePromotionRecordModel>
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[13] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
+          in (payloads[13] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
                     row,
                   ))) {
         promotionsByPackageId[record.candidateModelPackageId] = record;
       }
-      final Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
+      final Map<String,
+              FederatedLearningCandidatePromotionRevocationRecordModel>
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[14] as List<Map<String, dynamic>>)
-              .map((Map<String, dynamic> row) =>
-                  FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
+          in (payloads[14] as List<Map<String, dynamic>>).map(
+              (Map<String, dynamic> row) =>
+                  FederatedLearningCandidatePromotionRevocationRecordModel
+                      .fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
                     row,
                   ))) {
@@ -5776,8 +5952,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _runtimeDeliveryRecordsByPackageId = runtimeDeliveryByPackageId;
         _runtimeActivationRecordsByPackageId = runtimeActivationByPackageId;
         _runtimeRolloutAlertsByDeliveryId = runtimeRolloutAlertsByDeliveryId;
-        _runtimeRolloutEscalationsByDeliveryId = runtimeRolloutEscalationsByDeliveryId;
-        _runtimeRolloutControlsByDeliveryId = runtimeRolloutControlsByDeliveryId;
+        _runtimeRolloutEscalationsByDeliveryId =
+            runtimeRolloutEscalationsByDeliveryId;
+        _runtimeRolloutControlsByDeliveryId =
+            runtimeRolloutControlsByDeliveryId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -5793,27 +5971,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _candidatePackagesByExperiment =
             <String, List<FederatedLearningCandidateModelPackageModel>>{};
         _pilotEvidenceRecordsByPackageId =
-          <String, FederatedLearningPilotEvidenceRecordModel>{};
+            <String, FederatedLearningPilotEvidenceRecordModel>{};
         _pilotApprovalRecordsByPackageId =
-          <String, FederatedLearningPilotApprovalRecordModel>{};
+            <String, FederatedLearningPilotApprovalRecordModel>{};
         _pilotExecutionRecordsByPackageId =
-          <String, FederatedLearningPilotExecutionRecordModel>{};
+            <String, FederatedLearningPilotExecutionRecordModel>{};
         _runtimeDeliveryRecordsByPackageId =
-          <String, FederatedLearningRuntimeDeliveryRecordModel>{};
+            <String, FederatedLearningRuntimeDeliveryRecordModel>{};
         _runtimeActivationRecordsByPackageId =
-          <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
+            <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
         _runtimeRolloutAlertsByDeliveryId =
-          <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
+            <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
         _runtimeRolloutEscalationsByDeliveryId =
-          <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
+            <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
         _runtimeRolloutControlsByDeliveryId =
-          <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
+            <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
         _experimentReviewRecordsByExperimentId =
-          <String, FederatedLearningExperimentReviewRecordModel>{};
+            <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =
-          <String, FederatedLearningCandidatePromotionRecordModel>{};
-        _promotionRevocationRecordsByPackageId =
-          <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
+            <String, FederatedLearningCandidatePromotionRecordModel>{};
+        _promotionRevocationRecordsByPackageId = <String,
+            FederatedLearningCandidatePromotionRevocationRecordModel>{};
       });
     } finally {
       if (mounted) {

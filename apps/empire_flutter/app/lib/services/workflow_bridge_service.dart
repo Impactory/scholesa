@@ -126,7 +126,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['experiments']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningExperimentReviewRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningExperimentReviewRecords({
     String? experimentId,
     int limit = 120,
   }) async {
@@ -203,7 +204,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['artifacts']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningCandidateModelPackages({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidateModelPackages({
     String? experimentId,
     int limit = 60,
   }) async {
@@ -218,7 +220,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['packages']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningCandidatePromotionRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidatePromotionRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -236,7 +239,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningCandidatePromotionRevocationRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidatePromotionRevocationRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -290,7 +294,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningPilotExecutionRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningPilotExecutionRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -308,7 +313,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeDeliveryRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeDeliveryRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -326,7 +332,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeDeliveryRecords({
     String? siteId,
     int limit = 40,
   }) async {
@@ -350,7 +357,8 @@ class WorkflowBridgeService {
     return _asTrimmedString(payload['id']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeActivationRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeActivationRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? siteId,
@@ -370,7 +378,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAlertRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutAlertRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -393,7 +402,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutEscalationRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutEscalationRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -416,7 +426,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutEscalationHistoryRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutEscalationHistoryRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -439,7 +450,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutControlRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutControlRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -462,7 +474,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAuditEvents({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutAuditEvents({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -485,7 +498,8 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeActivationRecords({
     String? siteId,
     int limit = 40,
   }) async {

@@ -2781,7 +2781,9 @@ List<String> _stringListOrEmpty(dynamic value) {
 List<double> _doubleListOrEmpty(dynamic value) {
   if (value is! List) return const <double>[];
   return value
-      .map((dynamic entry) => entry is num ? entry.toDouble() : double.tryParse(entry.toString()) ?? 0)
+      .map((dynamic entry) => entry is num
+          ? entry.toDouble()
+          : double.tryParse(entry.toString()) ?? 0)
       .toList(growable: false);
 }
 
@@ -2835,7 +2837,8 @@ class FederatedLearningExperimentModel {
   factory FederatedLearningExperimentModel.fromDoc(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    return FederatedLearningExperimentModel.fromMap(doc.id, doc.data() ?? <String, dynamic>{});
+    return FederatedLearningExperimentModel.fromMap(
+        doc.id, doc.data() ?? <String, dynamic>{});
   }
 
   factory FederatedLearningExperimentModel.fromMap(
@@ -3128,17 +3131,17 @@ class FederatedLearningAggregationRunModel {
       thresholdMet: data['thresholdMet'] as bool? ?? false,
       mergeArtifactId: data['mergeArtifactId'] as String?,
       mergeArtifactStatus: data['mergeArtifactStatus'] as String?,
-        candidateModelPackageId: data['candidateModelPackageId'] as String?,
-        candidateModelPackageStatus:
+      candidateModelPackageId: data['candidateModelPackageId'] as String?,
+      candidateModelPackageStatus:
           data['candidateModelPackageStatus'] as String?,
-        candidateModelPackageFormat:
+      candidateModelPackageFormat:
           data['candidateModelPackageFormat'] as String?,
       mergeStrategy: data['mergeStrategy'] as String?,
       boundedDigest: data['boundedDigest'] as String?,
-        payloadFormat: data['payloadFormat'] as String?,
-        modelVersion: data['modelVersion'] as String?,
-        runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt(),
-        runtimeVectorDigest: data['runtimeVectorDigest'] as String?,
+      payloadFormat: data['payloadFormat'] as String?,
+      modelVersion: data['modelVersion'] as String?,
+      runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt(),
+      runtimeVectorDigest: data['runtimeVectorDigest'] as String?,
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
@@ -3400,22 +3403,21 @@ class FederatedLearningCandidateModelPackageModel {
       rolloutStatus: data['rolloutStatus'] as String? ?? '',
       latestPromotionRecordId: data['latestPromotionRecordId'] as String?,
       latestPromotionStatus: data['latestPromotionStatus'] as String?,
-        latestPromotionRevocationRecordId:
+      latestPromotionRevocationRecordId:
           data['latestPromotionRevocationRecordId'] as String?,
-        latestPilotEvidenceRecordId:
+      latestPilotEvidenceRecordId:
           data['latestPilotEvidenceRecordId'] as String?,
-        latestPilotEvidenceStatus: data['latestPilotEvidenceStatus'] as String?,
-          latestPilotApprovalRecordId:
-            data['latestPilotApprovalRecordId'] as String?,
-          latestPilotApprovalStatus: data['latestPilotApprovalStatus'] as String?,
-          latestPilotExecutionRecordId:
-            data['latestPilotExecutionRecordId'] as String?,
-          latestPilotExecutionStatus:
-            data['latestPilotExecutionStatus'] as String?,
-          latestRuntimeDeliveryRecordId:
-            data['latestRuntimeDeliveryRecordId'] as String?,
-          latestRuntimeDeliveryStatus:
-            data['latestRuntimeDeliveryStatus'] as String?,
+      latestPilotEvidenceStatus: data['latestPilotEvidenceStatus'] as String?,
+      latestPilotApprovalRecordId:
+          data['latestPilotApprovalRecordId'] as String?,
+      latestPilotApprovalStatus: data['latestPilotApprovalStatus'] as String?,
+      latestPilotExecutionRecordId:
+          data['latestPilotExecutionRecordId'] as String?,
+      latestPilotExecutionStatus: data['latestPilotExecutionStatus'] as String?,
+      latestRuntimeDeliveryRecordId:
+          data['latestRuntimeDeliveryRecordId'] as String?,
+      latestRuntimeDeliveryStatus:
+          data['latestRuntimeDeliveryStatus'] as String?,
       modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
@@ -3611,7 +3613,8 @@ class FederatedLearningPilotApprovalRecordModel {
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
-      experimentReviewRecordId: data['experimentReviewRecordId'] as String? ?? '',
+      experimentReviewRecordId:
+          data['experimentReviewRecordId'] as String? ?? '',
       pilotEvidenceRecordId: data['pilotEvidenceRecordId'] as String? ?? '',
       candidatePromotionRecordId:
           data['candidatePromotionRecordId'] as String? ?? '',
@@ -4194,7 +4197,8 @@ class FederatedLearningRuntimeRolloutAuditEventModel {
   Timestamp? get openedAt => _timestampOrNull(details['openedAt']);
   Timestamp? get dueAt => _timestampOrNull(details['dueAt']);
   Timestamp? get reviewByAt => _timestampOrNull(details['reviewByAt']);
-  List<String> get targetSiteIds => _stringListOrEmpty(details['targetSiteIds']);
+  List<String> get targetSiteIds =>
+      _stringListOrEmpty(details['targetSiteIds']);
 
   factory FederatedLearningRuntimeRolloutAuditEventModel.fromMap(
     String id,

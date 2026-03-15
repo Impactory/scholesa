@@ -76,7 +76,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _runtimeRolloutEscalationRecords = List<Map<String, dynamic>>.from(
           runtimeRolloutEscalationRecords ?? <Map<String, dynamic>>[],
         ),
-        _runtimeRolloutEscalationHistoryRecords = List<Map<String, dynamic>>.from(
+        _runtimeRolloutEscalationHistoryRecords =
+            List<Map<String, dynamic>>.from(
           runtimeRolloutEscalationHistoryRecords ?? <Map<String, dynamic>>[],
         ),
         _runtimeRolloutControlRecords = List<Map<String, dynamic>>.from(
@@ -100,7 +101,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _mergeArtifacts;
   final List<Map<String, dynamic>> _candidatePackages;
   final List<Map<String, dynamic>> _experimentReviewRecords;
-    final List<Map<String, dynamic>> _pilotEvidenceRecords;
+  final List<Map<String, dynamic>> _pilotEvidenceRecords;
   final List<Map<String, dynamic>> _pilotApprovalRecords;
   final List<Map<String, dynamic>> _pilotExecutionRecords;
   final List<Map<String, dynamic>> _runtimeDeliveryRecords;
@@ -115,22 +116,22 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> recordedUpdates = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedExperimentReviewSaves =
       <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> recordedPilotEvidenceSaves =
+  final List<Map<String, dynamic>> recordedPilotEvidenceSaves =
       <Map<String, dynamic>>[];
-      final List<Map<String, dynamic>> recordedPilotApprovalSaves =
-        <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedPilotApprovalSaves =
+      <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPilotExecutionSaves =
       <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> recordedRuntimeDeliverySaves =
+  final List<Map<String, dynamic>> recordedRuntimeDeliverySaves =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedRuntimeActivationSaves =
       <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> recordedRuntimeRolloutAlertSaves =
+  final List<Map<String, dynamic>> recordedRuntimeRolloutAlertSaves =
       <Map<String, dynamic>>[];
-      final List<Map<String, dynamic>> recordedRuntimeRolloutEscalationSaves =
-        <Map<String, dynamic>>[];
-      final List<Map<String, dynamic>> recordedRuntimeRolloutControlSaves =
-        <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedRuntimeRolloutEscalationSaves =
+      <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedRuntimeRolloutControlSaves =
+      <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionRevocations =
@@ -167,7 +168,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningExperimentReviewRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningExperimentReviewRecords({
     String? experimentId,
     int limit = 120,
   }) async {
@@ -175,7 +177,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         (experimentId == null || experimentId.isEmpty)
             ? _experimentReviewRecords
             : _experimentReviewRecords.where(
-                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+                (Map<String, dynamic> row) =>
+                    row['experimentId'] == experimentId,
               );
     return scoped
         .take(limit)
@@ -257,7 +260,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         (experimentId == null || experimentId.isEmpty)
             ? _aggregationRuns
             : _aggregationRuns.where(
-                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+                (Map<String, dynamic> row) =>
+                    row['experimentId'] == experimentId,
               );
     return scoped
         .take(limit)
@@ -274,7 +278,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         (experimentId == null || experimentId.isEmpty)
             ? _mergeArtifacts
             : _mergeArtifacts.where(
-                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+                (Map<String, dynamic> row) =>
+                    row['experimentId'] == experimentId,
               );
     return scoped
         .take(limit)
@@ -283,7 +288,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningCandidateModelPackages({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidateModelPackages({
     String? experimentId,
     int limit = 60,
   }) async {
@@ -291,7 +297,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         (experimentId == null || experimentId.isEmpty)
             ? _candidatePackages
             : _candidatePackages.where(
-                (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+                (Map<String, dynamic> row) =>
+                    row['experimentId'] == experimentId,
               );
     return scoped
         .take(limit)
@@ -300,7 +307,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningCandidatePromotionRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningCandidatePromotionRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -397,7 +405,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningPilotExecutionRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningPilotExecutionRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -421,7 +430,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeDeliveryRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeDeliveryRecords({
     String? experimentId,
     String? candidateModelPackageId,
     int limit = 60,
@@ -445,7 +455,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeDeliveryRecords({
     String? siteId,
     int limit = 40,
   }) async {
@@ -466,7 +477,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeActivationRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeActivationRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? siteId,
@@ -496,7 +508,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAlertRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutAlertRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -517,7 +530,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
       scoped = scoped.where(
-        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRecordId,
       );
     }
     if (status != null && status.isNotEmpty) {
@@ -532,7 +546,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutEscalationRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutEscalationRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -553,7 +568,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
       scoped = scoped.where(
-        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRecordId,
       );
     }
     if (status != null && status.isNotEmpty) {
@@ -576,7 +592,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? status,
     int limit = 80,
   }) async {
-    Iterable<Map<String, dynamic>> scoped = _runtimeRolloutEscalationHistoryRecords;
+    Iterable<Map<String, dynamic>> scoped =
+        _runtimeRolloutEscalationHistoryRecords;
     if (experimentId != null && experimentId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) => row['experimentId'] == experimentId,
@@ -590,7 +607,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
       scoped = scoped.where(
-        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRecordId,
       );
     }
     if (status != null && status.isNotEmpty) {
@@ -605,7 +623,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutControlRecords({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutControlRecords({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -626,7 +645,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
       scoped = scoped.where(
-        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRecordId,
       );
     }
     if (mode != null && mode.isNotEmpty) {
@@ -641,7 +661,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAuditEvents({
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutAuditEvents({
     String? experimentId,
     String? candidateModelPackageId,
     String? deliveryRecordId,
@@ -652,25 +673,33 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (experimentId != null && experimentId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) =>
-            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['experimentId'] == experimentId,
+            (row['details'] as Map<String, dynamic>? ??
+                <String, dynamic>{})['experimentId'] ==
+            experimentId,
       );
     }
     if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) =>
-            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['candidateModelPackageId'] == candidateModelPackageId,
+            (row['details'] as Map<String, dynamic>? ??
+                <String, dynamic>{})['candidateModelPackageId'] ==
+            candidateModelPackageId,
       );
     }
     if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) =>
-            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['deliveryRecordId'] == deliveryRecordId,
+            (row['details'] as Map<String, dynamic>? ??
+                <String, dynamic>{})['deliveryRecordId'] ==
+            deliveryRecordId,
       );
     }
     if (siteId != null && siteId.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) =>
-            (row['details'] as Map<String, dynamic>? ?? <String, dynamic>{})['siteId'] == siteId,
+            (row['details'] as Map<String, dynamic>? ??
+                <String, dynamic>{})['siteId'] ==
+            siteId,
       );
     }
     return scoped
@@ -680,12 +709,14 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeActivationRecords({
     String? siteId,
     int limit = 40,
   }) async {
     final String resolvedSiteId = (siteId ?? '').trim();
-    final Iterable<Map<String, dynamic>> scoped = _runtimeActivationRecords.where(
+    final Iterable<Map<String, dynamic>> scoped =
+        _runtimeActivationRecords.where(
       (Map<String, dynamic> row) => row['siteId'] == resolvedSiteId,
     );
     return scoped
@@ -702,31 +733,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? deliveryRecordId,
   }) async {
     final String resolvedSiteId = (siteId ?? '').trim();
-    final Map<String, dynamic> deliveryRow = deliveryRecordId != null &&
-            deliveryRecordId.isNotEmpty
-        ? _runtimeDeliveryRecords.firstWhere(
-            (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
-            orElse: () => <String, dynamic>{},
-          )
-        : _runtimeDeliveryRecords.firstWhere(
-            (Map<String, dynamic> row) {
-              final List<dynamic> targetSiteIds =
-                  row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
-              final String status = (row['status'] as String? ?? '').trim();
-              final bool matchesExperiment =
-                  (experimentId ?? '').trim().isEmpty ||
-                      row['experimentId'] == experimentId;
-              final bool matchesRuntime =
-                  (runtimeTarget ?? '').trim().isEmpty ||
-                      row['runtimeTarget'] == runtimeTarget;
-              return targetSiteIds.contains(resolvedSiteId) &&
-                  (status == 'assigned' || status == 'active' ||
-                      status == 'revoked') &&
-                  matchesExperiment &&
-                  matchesRuntime;
-            },
-            orElse: () => <String, dynamic>{},
-          );
+    final Map<String, dynamic> deliveryRow =
+        deliveryRecordId != null && deliveryRecordId.isNotEmpty
+            ? _runtimeDeliveryRecords.firstWhere(
+                (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+                orElse: () => <String, dynamic>{},
+              )
+            : _runtimeDeliveryRecords.firstWhere(
+                (Map<String, dynamic> row) {
+                  final List<dynamic> targetSiteIds =
+                      row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+                  final String status = (row['status'] as String? ?? '').trim();
+                  final bool matchesExperiment =
+                      (experimentId ?? '').trim().isEmpty ||
+                          row['experimentId'] == experimentId;
+                  final bool matchesRuntime =
+                      (runtimeTarget ?? '').trim().isEmpty ||
+                          row['runtimeTarget'] == runtimeTarget;
+                  return targetSiteIds.contains(resolvedSiteId) &&
+                      (status == 'assigned' ||
+                          status == 'active' ||
+                          status == 'revoked') &&
+                      matchesExperiment &&
+                      matchesRuntime;
+                },
+                orElse: () => <String, dynamic>{},
+              );
     if (deliveryRow.isEmpty) {
       return null;
     }
@@ -762,7 +794,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
           ? (packageRow['runtimeVectorLength'] ?? 0)
           : 0,
       'runtimeVector': resolutionStatus == 'resolved'
-          ? List<double>.from(packageRow['runtimeVector'] as List<dynamic>? ?? const <double>[])
+          ? List<double>.from(
+              packageRow['runtimeVector'] as List<dynamic>? ?? const <double>[])
           : const <double>[],
       'runtimeVectorDigest': packageRow['runtimeVectorDigest'] ?? '',
       'rolloutStatus': packageRow['rolloutStatus'] ?? 'not_distributed',
@@ -781,15 +814,15 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final String packageId =
         (data['candidateModelPackageId'] as String? ?? '').trim();
     final String status = (data['status'] as String? ?? '').trim();
-    final String rawTarget = (data['target'] as String? ?? 'sandbox_eval').trim();
+    final String rawTarget =
+        (data['target'] as String? ?? 'sandbox_eval').trim();
     final String target = rawTarget.isEmpty ? 'sandbox_eval' : rawTarget;
     final String rationale = (data['rationale'] as String? ?? '').trim();
     final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
       (Map<String, dynamic> row) => row['id'] == packageId,
       orElse: () => <String, dynamic>{},
     );
-    final String promotionId =
-        'fl_prom_${packageId.replaceAll('fl_pkg_', '')}';
+    final String promotionId = 'fl_prom_${packageId.replaceAll('fl_pkg_', '')}';
     final Map<String, dynamic> record = <String, dynamic>{
       'id': promotionId,
       'experimentId': packageRow['experimentId'] ?? '',
@@ -881,8 +914,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       (Map<String, dynamic> row) => row['id'] == packageId,
       orElse: () => <String, dynamic>{},
     );
-    final String evidenceId =
-        'fl_pilot_${packageId.replaceAll('fl_pkg_', '')}';
+    final String evidenceId = 'fl_pilot_${packageId.replaceAll('fl_pkg_', '')}';
     final Map<String, dynamic> record = <String, dynamic>{
       'id': evidenceId,
       'experimentId': packageRow['experimentId'] ?? '',
@@ -929,16 +961,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     );
     final String approvalId =
         'fl_pilot_approval_${packageId.replaceAll('fl_pkg_', '')}';
-    final String experimentId = (packageRow['experimentId'] as String? ?? '').trim();
+    final String experimentId =
+        (packageRow['experimentId'] as String? ?? '').trim();
     final Map<String, dynamic> record = <String, dynamic>{
       'id': approvalId,
       'experimentId': experimentId,
       'candidateModelPackageId': packageId,
       'aggregationRunId': packageRow['aggregationRunId'] ?? '',
       'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
-      'experimentReviewRecordId': 'fl_review_${experimentId.replaceAll('fl_exp_', '')}',
-      'pilotEvidenceRecordId': 'fl_pilot_${packageId.replaceAll('fl_pkg_', '')}',
-      'candidatePromotionRecordId': 'fl_prom_${packageId.replaceAll('fl_pkg_', '')}',
+      'experimentReviewRecordId':
+          'fl_review_${experimentId.replaceAll('fl_exp_', '')}',
+      'pilotEvidenceRecordId':
+          'fl_pilot_${packageId.replaceAll('fl_pkg_', '')}',
+      'candidatePromotionRecordId':
+          'fl_prom_${packageId.replaceAll('fl_pkg_', '')}',
       'promotionTarget': 'sandbox_eval',
       'status': (data['status'] as String? ?? 'pending').trim(),
       'notes': (data['notes'] as String? ?? '').trim(),
@@ -983,7 +1019,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'candidateModelPackageId': packageId,
       'aggregationRunId': packageRow['aggregationRunId'] ?? '',
       'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
-      'pilotApprovalRecordId': 'fl_pilot_approval_${packageId.replaceAll('fl_pkg_', '')}',
+      'pilotApprovalRecordId':
+          'fl_pilot_approval_${packageId.replaceAll('fl_pkg_', '')}',
       'status': (data['status'] as String? ?? 'planned').trim(),
       'launchedSiteIds': List<String>.from(
         data['launchedSiteIds'] as List<dynamic>? ?? <dynamic>[],
@@ -1040,20 +1077,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       ),
       'status': (data['status'] as String? ?? 'prepared').trim(),
       'packageDigest': packageRow['packageDigest'] ?? '',
-      'manifestDigest': 'sha256:delivery-${packageId.replaceAll('fl_pkg_', '')}',
-        'expiresAt': data['expiresAt'] == null
+      'manifestDigest':
+          'sha256:delivery-${packageId.replaceAll('fl_pkg_', '')}',
+      'expiresAt': data['expiresAt'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(
-            data['expiresAt'] as int,
-            isUtc: true,
-          ),
-        'revokedAt': (data['status'] as String? ?? '').trim() == 'revoked'
+              data['expiresAt'] as int,
+              isUtc: true,
+            ),
+      'revokedAt': (data['status'] as String? ?? '').trim() == 'revoked'
           ? DateTime(2026, 3, 14, 20, 45)
           : null,
-        'revokedBy': (data['status'] as String? ?? '').trim() == 'revoked'
-          ? 'hq-1'
-          : null,
-        'revocationReason': (data['revocationReason'] as String? ?? '').trim(),
+      'revokedBy':
+          (data['status'] as String? ?? '').trim() == 'revoked' ? 'hq-1' : null,
+      'revocationReason': (data['revocationReason'] as String? ?? '').trim(),
       'notes': (data['notes'] as String? ?? '').trim(),
       'assignedBy': 'hq-1',
       'assignedAt': DateTime(2026, 3, 14, 19),
@@ -1131,9 +1168,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     int pendingCount = 0;
     for (final dynamic siteEntry in targetSiteIds) {
       final String siteId = '$siteEntry';
-      final Map<String, dynamic> activationRow = _runtimeActivationRecords.firstWhere(
+      final Map<String, dynamic> activationRow =
+          _runtimeActivationRecords.firstWhere(
         (Map<String, dynamic> row) =>
-            row['deliveryRecordId'] == deliveryRecordId && row['siteId'] == siteId,
+            row['deliveryRecordId'] == deliveryRecordId &&
+            row['siteId'] == siteId,
         orElse: () => <String, dynamic>{},
       );
       final String activationStatus =
@@ -1187,9 +1226,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     int pendingCount = 0;
     for (final dynamic siteEntry in targetSiteIds) {
       final String siteId = '$siteEntry';
-      final Map<String, dynamic> activationRow = _runtimeActivationRecords.firstWhere(
+      final Map<String, dynamic> activationRow =
+          _runtimeActivationRecords.firstWhere(
         (Map<String, dynamic> row) =>
-            row['deliveryRecordId'] == deliveryRecordId && row['siteId'] == siteId,
+            row['deliveryRecordId'] == deliveryRecordId &&
+            row['siteId'] == siteId,
         orElse: () => <String, dynamic>{},
       );
       final String activationStatus =
@@ -1210,7 +1251,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         ? null
         : (fallbackCount > 0
             ? openedAt.add(Duration(hours: status == 'investigating' ? 8 : 4))
-            : openedAt.add(Duration(hours: status == 'investigating' ? 48 : 24)));
+            : openedAt
+                .add(Duration(hours: status == 'investigating' ? 48 : 24)));
     final Map<String, dynamic> record = <String, dynamic>{
       'id': escalationId,
       'experimentId': deliveryRow['experimentId'] ?? '',
@@ -1314,11 +1356,11 @@ Map<String, dynamic> _aggregationRunRow({
     'mergeArtifactId': mergeArtifactId,
     'mergeArtifactStatus': 'generated',
     'candidateModelPackageId': mergeArtifactId.isEmpty
-      ? ''
-      : mergeArtifactId.replaceFirst('fl_merge_', 'fl_pkg_'),
+        ? ''
+        : mergeArtifactId.replaceFirst('fl_merge_', 'fl_pkg_'),
     'candidateModelPackageStatus': mergeArtifactId.isEmpty ? '' : 'staged',
     'candidateModelPackageFormat':
-      mergeArtifactId.isEmpty ? '' : 'runtime_vector_v1',
+        mergeArtifactId.isEmpty ? '' : 'runtime_vector_v1',
     'payloadFormat': 'runtime_vector_v1',
     'modelVersion': 'fl_runtime_model_v1',
     'runtimeVectorLength': 8,
@@ -1374,7 +1416,8 @@ Map<String, dynamic> _candidatePackageRow({
     'boundedDigest': boundedDigest,
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
-    'runtimeVectorDigest': 'sha256:runtime-digest-${id.replaceAll('fl_pkg_', '')}',
+    'runtimeVectorDigest':
+        'sha256:runtime-digest-${id.replaceAll('fl_pkg_', '')}',
     'sampleCount': sampleCount,
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
@@ -1401,9 +1444,12 @@ Map<String, dynamic> _pilotApprovalRecordRow({
     'candidateModelPackageId': candidateModelPackageId,
     'aggregationRunId': aggregationRunId,
     'mergeArtifactId': mergeArtifactId,
-    'experimentReviewRecordId': 'fl_review_${experimentId.replaceAll('fl_exp_', '')}',
-    'pilotEvidenceRecordId': 'fl_pilot_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
-    'candidatePromotionRecordId': 'fl_prom_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'experimentReviewRecordId':
+        'fl_review_${experimentId.replaceAll('fl_exp_', '')}',
+    'pilotEvidenceRecordId':
+        'fl_pilot_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'candidatePromotionRecordId':
+        'fl_prom_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'promotionTarget': 'sandbox_eval',
     'status': status,
     'notes': notes,
@@ -1424,7 +1470,8 @@ Map<String, dynamic> _pilotExecutionRecordRow({
   List<String> launchedSiteIds = const <String>['site1'],
   int sessionCount = 0,
   int learnerCount = 0,
-  String notes = 'Bounded pilot execution planning captured for the approved package.',
+  String notes =
+      'Bounded pilot execution planning captured for the approved package.',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1432,7 +1479,8 @@ Map<String, dynamic> _pilotExecutionRecordRow({
     'candidateModelPackageId': candidateModelPackageId,
     'aggregationRunId': aggregationRunId,
     'mergeArtifactId': mergeArtifactId,
-    'pilotApprovalRecordId': 'fl_pilot_approval_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'pilotApprovalRecordId':
+        'fl_pilot_approval_${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'status': status,
     'launchedSiteIds': launchedSiteIds,
     'sessionCount': sessionCount,
@@ -1457,7 +1505,8 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   DateTime? revokedAt,
   String? revokedBy,
   String? revocationReason,
-  String notes = 'Bounded runtime-delivery manifest assigned to the approved pilot site.',
+  String notes =
+      'Bounded runtime-delivery manifest assigned to the approved pilot site.',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1661,14 +1710,15 @@ Map<String, dynamic> _runtimeRolloutAuditEventRow({
     'documentId': documentId,
     'timestamp': timestamp,
     'userId': userId,
-    'details': details ?? <String, dynamic>{
-      'experimentId': 'fl_exp_literacy_pilot',
-      'candidateModelPackageId': 'fl_pkg_1',
-      'deliveryRecordId': 'fl_delivery_1',
-      'status': 'acknowledged',
-      'fallbackCount': 1,
-      'pendingCount': 0,
-    },
+    'details': details ??
+        <String, dynamic>{
+          'experimentId': 'fl_exp_literacy_pilot',
+          'candidateModelPackageId': 'fl_pkg_1',
+          'deliveryRecordId': 'fl_delivery_1',
+          'status': 'acknowledged',
+          'fallbackCount': 1,
+          'pendingCount': 0,
+        },
   };
 }
 
@@ -1744,7 +1794,8 @@ Map<String, dynamic> _mergeArtifactRow({
     'modelVersion': 'fl_runtime_model_v1',
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
-    'runtimeVectorDigest': 'sha256:runtime-digest-${id.replaceAll('fl_merge_', '')}',
+    'runtimeVectorDigest':
+        'sha256:runtime-digest-${id.replaceAll('fl_merge_', '')}',
     'sampleCount': 24,
     'summaryCount': 2,
     'distinctSiteCount': 2,
@@ -1837,9 +1888,9 @@ void main() {
       'updatedAt': DateTime.now(),
     });
     await firestore
-      .collection('federatedLearningAggregationRuns')
-      .doc('fl_agg_1')
-      .set(<String, dynamic>{
+        .collection('federatedLearningAggregationRuns')
+        .doc('fl_agg_1')
+        .set(<String, dynamic>{
       'experimentId': 'fl_exp_literacy_pilot',
       'status': 'materialized',
       'threshold': 20,
@@ -1868,9 +1919,9 @@ void main() {
       'createdAt': DateTime.now(),
     });
     await firestore
-      .collection('federatedLearningMergeArtifacts')
-      .doc('fl_merge_1')
-      .set(<String, dynamic>{
+        .collection('federatedLearningMergeArtifacts')
+        .doc('fl_merge_1')
+        .set(<String, dynamic>{
       'experimentId': 'fl_exp_literacy_pilot',
       'aggregationRunId': 'fl_agg_1',
       'status': 'generated',
@@ -1892,9 +1943,9 @@ void main() {
       'createdAt': DateTime.now(),
     });
     await firestore
-      .collection('federatedLearningCandidateModelPackages')
-      .doc('fl_pkg_1')
-      .set(<String, dynamic>{
+        .collection('federatedLearningCandidateModelPackages')
+        .doc('fl_pkg_1')
+        .set(<String, dynamic>{
       'experimentId': 'fl_exp_literacy_pilot',
       'aggregationRunId': 'fl_agg_1',
       'mergeArtifactId': 'fl_merge_1',
@@ -1918,9 +1969,9 @@ void main() {
       'createdAt': DateTime.now(),
     });
     await firestore
-      .collection('federatedLearningCandidatePromotionRecords')
-      .doc('fl_prom_1')
-      .set(<String, dynamic>{
+        .collection('federatedLearningCandidatePromotionRecords')
+        .doc('fl_prom_1')
+        .set(<String, dynamic>{
       'experimentId': 'fl_exp_literacy_pilot',
       'candidateModelPackageId': 'fl_pkg_1',
       'aggregationRunId': 'fl_agg_1',
@@ -1933,21 +1984,23 @@ void main() {
     });
 
     final FederatedLearningAggregationRunRepository aggregationRepository =
-      FederatedLearningAggregationRunRepository(firestore: firestore);
+        FederatedLearningAggregationRunRepository(firestore: firestore);
     final FederatedLearningMergeArtifactRepository artifactRepository =
-      FederatedLearningMergeArtifactRepository(firestore: firestore);
+        FederatedLearningMergeArtifactRepository(firestore: firestore);
     final FederatedLearningCandidateModelPackageRepository packageRepository =
-      FederatedLearningCandidateModelPackageRepository(firestore: firestore);
-    final FederatedLearningCandidatePromotionRecordRepository promotionRepository =
-      FederatedLearningCandidatePromotionRecordRepository(firestore: firestore);
+        FederatedLearningCandidateModelPackageRepository(firestore: firestore);
+    final FederatedLearningCandidatePromotionRecordRepository
+        promotionRepository =
+        FederatedLearningCandidatePromotionRecordRepository(
+            firestore: firestore);
     final List<FederatedLearningAggregationRunModel> aggregationRuns =
-      await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
+        await aggregationRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningMergeArtifactModel> mergeArtifacts =
-      await artifactRepository.listByExperiment('fl_exp_literacy_pilot');
+        await artifactRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningCandidateModelPackageModel> candidatePackages =
-      await packageRepository.listByExperiment('fl_exp_literacy_pilot');
+        await packageRepository.listByExperiment('fl_exp_literacy_pilot');
     final List<FederatedLearningCandidatePromotionRecordModel> promotions =
-      await promotionRepository.listByExperiment('fl_exp_literacy_pilot');
+        await promotionRepository.listByExperiment('fl_exp_literacy_pilot');
 
     expect(aggregationRuns, hasLength(1));
     expect(aggregationRuns.single.totalSampleCount, 14);
@@ -2030,14 +2083,16 @@ void main() {
     expect(bridge.recordedUpdates.single['vectorSketch'], hasLength(8));
   });
 
-  test('runtime package resolver resolves delivered payload and records activation',
+  test(
+      'runtime package resolver resolves delivered payload and records activation',
       () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       candidatePackages: <Map<String, dynamic>>[
         _candidatePackageRow(),
       ],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
-        _runtimeDeliveryRecordRow(status: 'active', targetSiteIds: <String>['site-1']),
+        _runtimeDeliveryRecordRow(
+            status: 'active', targetSiteIds: <String>['site-1']),
       ],
     );
     final FederatedLearningRuntimePackageResolver resolver =
@@ -2114,7 +2169,8 @@ void main() {
           targetSiteIds: <String>['site-1'],
           expiresAt: DateTime(2024, 3, 14, 19),
         ),
-        _runtimeDeliveryRecordRow(status: 'active', targetSiteIds: <String>['site-1']),
+        _runtimeDeliveryRecordRow(
+            status: 'active', targetSiteIds: <String>['site-1']),
       ],
     );
     final FederatedLearningRuntimeDeliveryResolver resolver =
@@ -2163,7 +2219,8 @@ void main() {
 
     final List<FederatedLearningRuntimeActivationRecordModel> existing =
         await reporter.listReports();
-    final String? activationId = await reporter.reportLatestAssignmentActivation(
+    final String? activationId =
+        await reporter.reportLatestAssignmentActivation(
       runtimeTarget: 'flutter_mobile',
       status: 'staged',
       traceId: 'trace-99',
@@ -2315,7 +2372,8 @@ void main() {
     );
     expect(find.text('Recent aggregation runs'), findsOneWidget);
     expect(find.textContaining('Runtime activation: resolved'), findsOneWidget);
-    expect(find.textContaining('Runtime lifecycle: live until'), findsOneWidget);
+    expect(
+        find.textContaining('Runtime lifecycle: live until'), findsOneWidget);
     expect(
       find.text('Site rollout: 1 resolved · 0 staged · 0 fallback · 0 pending'),
       findsOneWidget,
@@ -2340,9 +2398,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Pilot approval: pending (sandbox_eval)'), findsOneWidget);
-    expect(find.text('Pilot execution: planned · 1 sites · 0 sessions · 0 learners'), findsOneWidget);
-    expect(find.text('Runtime delivery: assigned · 1 sites · flutter_mobile'), findsOneWidget);
-    expect(find.text('Runtime activation: resolved · 1 site reports · flutter_mobile'), findsOneWidget);
+    expect(
+        find.text(
+            'Pilot execution: planned · 1 sites · 0 sessions · 0 learners'),
+        findsOneWidget);
+    expect(find.text('Runtime delivery: assigned · 1 sites · flutter_mobile'),
+        findsOneWidget);
+    expect(
+        find.text(
+            'Runtime activation: resolved · 1 site reports · flutter_mobile'),
+        findsOneWidget);
 
     final Finder activationHistoryButton = find.widgetWithText(
       TextButton,
@@ -2388,8 +2453,7 @@ void main() {
     await tester.tap(find.text('approved').last);
     await tester.pumpAndSettle();
 
-    final CheckboxListTile privacyReviewTile =
-        tester.widget<CheckboxListTile>(
+    final CheckboxListTile privacyReviewTile = tester.widget<CheckboxListTile>(
       find.widgetWithText(CheckboxListTile, 'Privacy review complete'),
     );
     privacyReviewTile.onChanged?.call(true);
@@ -2402,8 +2466,7 @@ void main() {
     signoffChecklistTile.onChanged?.call(true);
     await tester.pumpAndSettle();
 
-    final CheckboxListTile rolloutRiskTile =
-        tester.widget<CheckboxListTile>(
+    final CheckboxListTile rolloutRiskTile = tester.widget<CheckboxListTile>(
       find.widgetWithText(CheckboxListTile, 'Rollout risk acknowledged'),
     );
     rolloutRiskTile.onChanged?.call(true);
@@ -2467,7 +2530,8 @@ void main() {
     sandboxEvalTile.onChanged?.call(true);
     await tester.pumpAndSettle();
 
-    final CheckboxListTile metricsSnapshotTile = tester.widget<CheckboxListTile>(
+    final CheckboxListTile metricsSnapshotTile =
+        tester.widget<CheckboxListTile>(
       find.widgetWithText(CheckboxListTile, 'Metrics snapshot reviewed'),
     );
     metricsSnapshotTile.onChanged?.call(true);
@@ -2553,7 +2617,8 @@ void main() {
       bridge.recordedPilotApprovalSaves.single['status'],
       'approved',
     );
-    expect(find.text('Pilot approval: approved (sandbox_eval)'), findsOneWidget);
+    expect(
+        find.text('Pilot approval: approved (sandbox_eval)'), findsOneWidget);
 
     final Finder pilotExecutionButton = find.widgetWithText(
       TextButton,
@@ -2616,7 +2681,8 @@ void main() {
       <String>['site1', 'site2'],
     );
     expect(
-      find.text('Pilot execution: observed · 2 sites · 6 sessions · 42 learners'),
+      find.text(
+          'Pilot execution: observed · 2 sites · 6 sessions · 42 learners'),
       findsOneWidget,
     );
 
@@ -2841,7 +2907,8 @@ void main() {
     expect(find.text('Awaiting promotion: 1'), findsOneWidget);
     expect(find.text('On hold: 0'), findsOneWidget);
     expect(find.text('Samples: 44'), findsOneWidget);
-    expect(find.text('Promotion: approved_for_eval (sandbox_eval)'), findsOneWidget);
+    expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
+        findsOneWidget);
     expect(
       find.text('Rationale: Ready for bounded sandbox evaluation.'),
       findsOneWidget,
@@ -3046,11 +3113,13 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Revocation: fl_prom_revoke_1 · revoked approved_for_eval · 2026-03-14T14:00:00.000'),
+      find.text(
+          'Revocation: fl_prom_revoke_1 · revoked approved_for_eval · 2026-03-14T14:00:00.000'),
       findsOneWidget,
     );
     expect(
-      find.text('Rollback rationale: Sandbox regression exceeded the bounded threshold.'),
+      find.text(
+          'Rollback rationale: Sandbox regression exceeded the bounded threshold.'),
       findsOneWidget,
     );
 
@@ -3102,7 +3171,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.widgetWithText(TextField, 'Filter by run ID, artifact ID, or digest'),
+      find.widgetWithText(
+          TextField, 'Filter by run ID, artifact ID, or digest'),
       'digest-2',
     );
     await tester.pumpAndSettle();
@@ -3478,7 +3548,8 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsOneWidget);
+    expect(
+        find.widgetWithText(TextButton, 'Acknowledge alert'), findsOneWidget);
     expect(
       find.text('HQ notes: Previously reviewed pending site.'),
       findsNothing,
@@ -3940,7 +4011,8 @@ void main() {
       'hq-ops-9',
     );
     expect(
-      find.textContaining('Control: paused · owner hq-ops-9 · Paused pending bounded verification.'),
+      find.textContaining(
+          'Control: paused · owner hq-ops-9 · Paused pending bounded verification.'),
       findsOneWidget,
     );
   });
