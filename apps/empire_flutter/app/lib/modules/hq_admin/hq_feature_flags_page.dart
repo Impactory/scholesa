@@ -191,6 +191,148 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  String _formatContributionDetailPreview(
+    List<FederatedLearningContributionDetailModel> details,
+  ) {
+    if (details.isEmpty) {
+      return '';
+    }
+    return details
+        .map(
+          (FederatedLearningContributionDetailModel detail) =>
+              '${detail.summaryId}/${detail.siteId} raw ${_formatMergeMetric(detail.rawWeight)} -> scaled ${_formatMergeMetric(detail.effectiveWeight)}',
+        )
+        .join(' | ');
+  }
+
+  Future<void> _showContributionDetailsDialog({
+    required FederatedLearningExperimentModel experiment,
+    required List<FederatedLearningContributionDetailModel> details,
+    String title = 'Contribution details',
+  }) async {
+    if (details.isEmpty) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(dialogContext, '$title: ${experiment.name}'),
+          ),
+          content: SizedBox(
+            width: 720,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'Contribution rows: ${details.length}',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...details.map(
+                    (FederatedLearningContributionDetailModel detail) =>
+                        Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Summary ${detail.summaryId} · site ${detail.siteId} · ${detail.sampleCount} samples',
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Raw weight: ${_formatMergeMetric(detail.rawWeight)} · Norm scale: ${_formatMergeMetric(detail.normScale)} · Effective weight: ${_formatMergeMetric(detail.effectiveWeight)}',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Norm: ${_formatMergeMetric(detail.updateNorm)} · Payload: ${detail.payloadBytes} bytes · Vector length: ${detail.vectorLength}',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                          if ((detail.traceId ?? '').trim().isNotEmpty ||
+                              (detail.payloadDigest ?? '').trim().isNotEmpty)
+                            ...<Widget>[
+                              const SizedBox(height: 4),
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  'Trace: ${detail.traceId ?? ''} · Digest: ${detail.payloadDigest ?? ''}',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          if ((detail.runtimeTarget ?? '').trim().isNotEmpty ||
+                              detail.schemaVersion.trim().isNotEmpty)
+                            ...<Widget>[
+                              const SizedBox(height: 4),
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  'Runtime: ${detail.runtimeTarget ?? ''} · Schema: ${detail.schemaVersion}',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildAcceptedSummaryEntry(
     FederatedLearningUpdateSummaryModel summary,
   ) {
@@ -2168,6 +2310,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final List<String> contributingSiteIds = artifact?.contributingSiteIds ??
         candidatePackage?.contributingSiteIds ??
         run.contributingSiteIds;
+    final List<FederatedLearningContributionDetailModel> contributionDetails =
+      artifact?.contributionDetails ??
+        candidatePackage?.contributionDetails ??
+        run.contributionDetails;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -2321,6 +2467,30 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (contributionDetails.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Contribution detail: ${_formatContributionDetailPreview(contributionDetails)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showContributionDetailsDialog(
+                experiment: experiment,
+                details: contributionDetails,
+              ),
+              icon: const Icon(Icons.insights_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open contribution details'),
               ),
             ),
           ],
@@ -2581,6 +2751,30 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.contributionDetails.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Contribution detail: ${_formatContributionDetailPreview(package.contributionDetails)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showContributionDetailsDialog(
+                experiment: experiment,
+                details: package.contributionDetails,
+              ),
+              icon: const Icon(Icons.insights_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open contribution details'),
               ),
             ),
           ],
@@ -3523,6 +3717,30 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (package.contributionDetails.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Contribution detail: ${_formatContributionDetailPreview(package.contributionDetails)}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => _showContributionDetailsDialog(
+                  experiment: experiment,
+                  details: package.contributionDetails,
+                ),
+                icon: const Icon(Icons.insights_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open contribution details'),
                 ),
               ),
             ],
