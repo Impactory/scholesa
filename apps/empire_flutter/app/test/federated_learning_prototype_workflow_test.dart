@@ -1755,6 +1755,9 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   DateTime? revokedAt,
   String? revokedBy,
   String? revocationReason,
+  DateTime? assignedAt,
+  DateTime? createdAt,
+  DateTime? updatedAt,
   String notes =
       'Bounded runtime-delivery manifest assigned to the approved pilot site.',
 }) {
@@ -1787,9 +1790,9 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'revocationReason': revocationReason,
     'notes': notes,
     'assignedBy': 'hq-1',
-    'assignedAt': DateTime(2026, 3, 14, 19),
-    'createdAt': DateTime(2026, 3, 14, 19),
-    'updatedAt': DateTime(2026, 3, 14, 19),
+    'assignedAt': assignedAt ?? DateTime(2026, 3, 14, 19),
+    'createdAt': createdAt ?? DateTime(2026, 3, 14, 19),
+    'updatedAt': updatedAt ?? DateTime(2026, 3, 14, 19),
   };
 }
 
@@ -3190,6 +3193,24 @@ void main() {
       ],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(status: 'assigned'),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          status: 'revoked',
+          boundedDigest: 'sha256:digest-2',
+          triggerSummaryId: 'update-4',
+          summaryIds: const <String>['update-3', 'update-4'],
+          targetSiteIds: const <String>['site-3'],
+          revokedAt: DateTime(2026, 3, 13, 20),
+          revokedBy: 'hq-2',
+          revocationReason: 'Pilot cohort closed.',
+          assignedAt: DateTime(2026, 3, 13, 19),
+          createdAt: DateTime(2026, 3, 13, 19),
+          updatedAt: DateTime(2026, 3, 13, 20),
+          notes: 'Legacy package retained for audit only.',
+        ),
       ],
       runtimeActivationRecords: <Map<String, dynamic>>[
         _runtimeActivationRecordRow(status: 'resolved'),
@@ -3732,6 +3753,26 @@ void main() {
       find.text('Runtime delivery history: Literacy Pilot'),
       findsOneWidget,
     );
+    expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, summary ID, digest, site ID, optimizer, or warm start',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Showing 2 of 2'), findsOneWidget);
+    expect(find.textContaining('fl_delivery_2 · revoked'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, summary ID, digest, site ID, optimizer, or warm start',
+      ),
+      'bounded_runtime_vector_local_finetune_v1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
+    expect(find.textContaining('fl_delivery_1 · assigned'), findsOneWidget);
+    expect(find.textContaining('fl_delivery_2 · revoked'), findsNothing);
     expect(find.textContaining('Lifecycle: live until'), findsOneWidget);
     expect(
       find.textContaining('Aggregation run: fl_agg_1'),
@@ -3767,6 +3808,27 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Open contribution details'),
       findsOneWidget,
     );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, summary ID, digest, site ID, optimizer, or warm start',
+      ),
+      'fl_pkg_2',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
+    expect(find.textContaining('fl_delivery_2 · revoked'), findsOneWidget);
+    expect(find.textContaining('fl_delivery_1 · assigned'), findsNothing);
+    expect(find.text('Revocation reason: Pilot cohort closed.'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, summary ID, digest, site ID, optimizer, or warm start',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 2 of 2'), findsOneWidget);
     final Finder deliveryTraceButton = find.widgetWithText(
       OutlinedButton,
       'Open aggregation run',
