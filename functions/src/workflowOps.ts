@@ -2301,9 +2301,13 @@ export const listSiteFederatedLearningRuntimeDeliveryRecords = onCall(async (req
       ...(snapDoc.data() as Record<string, unknown>),
     }))
     .filter((row) => {
-      const targetSiteIds = toStringArray((row as Record<string, unknown>).targetSiteIds);
-      const status = asTrimmedString((row as Record<string, unknown>).status);
-      return targetSiteIds.includes(targetSiteId) && ['assigned', 'active'].includes(status);
+      const rowData = row as Record<string, unknown>;
+      const targetSiteIds = toStringArray(rowData.targetSiteIds);
+      const status = asTrimmedString(rowData.status);
+      const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(rowData);
+      return targetSiteIds.includes(targetSiteId)
+        && ['assigned', 'active'].includes(status)
+        && terminalLifecycleStatus == null;
     })
     .sort((a, b) => {
       const aUpdatedAt = typeof (a as Record<string, unknown>).updatedAt === 'number'

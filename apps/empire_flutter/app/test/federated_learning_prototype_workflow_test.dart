@@ -466,8 +466,18 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         final List<dynamic> targetSiteIds =
             row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
         final String status = (row['status'] as String? ?? '').trim();
+        final DateTime now = DateTime(2026, 3, 15, 10, 0);
+        final DateTime? expiresAt = row['expiresAt'] as DateTime?;
+        final DateTime? revokedAt = row['revokedAt'] as DateTime?;
+        final DateTime? supersededAt = row['supersededAt'] as DateTime?;
+        final bool terminalLifecycle = status == 'revoked' ||
+            status == 'superseded' ||
+            revokedAt != null ||
+            supersededAt != null ||
+            (expiresAt != null && !expiresAt.isAfter(now));
         return targetSiteIds.contains(resolvedSiteId) &&
-            (status == 'assigned' || status == 'active');
+            (status == 'assigned' || status == 'active') &&
+            !terminalLifecycle;
       },
     );
     return scoped
@@ -2557,6 +2567,13 @@ void main() {
           expiresAt: DateTime(2024, 3, 14, 19),
         ),
         _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_revoked_marker',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+          revokedAt: DateTime(2026, 3, 14, 20, 45),
+          revokedBy: 'hq-1',
+        ),
+        _runtimeDeliveryRecordRow(
             status: 'active', targetSiteIds: <String>['site-1']),
       ],
     );
@@ -2578,6 +2595,46 @@ void main() {
     expect(assignments.single.targetSiteIds, <String>['site-1']);
     expect(latest, isNotNull);
     expect(latest!.candidateModelPackageId, 'fl_pkg_1');
+  });
+
+  test('site runtime delivery listing omits terminal manifests', () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_expired',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+          expiresAt: DateTime(2024, 3, 14, 19),
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_revoked',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+          revokedAt: DateTime(2026, 3, 14, 20, 45),
+          revokedBy: 'hq-1',
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_superseded',
+          status: 'superseded',
+          targetSiteIds: <String>['site-1'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_current',
+          status: 'assigned',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+    );
+
+    final List<Map<String, dynamic>> assignments =
+        await bridge.listSiteFederatedLearningRuntimeDeliveryRecords(
+      siteId: 'site-1',
+    );
+
+    expect(assignments, hasLength(1));
+    expect(assignments.single['id'], 'fl_delivery_current');
   });
 
   test('runtime delivery save supersedes overlapping active delivery',
