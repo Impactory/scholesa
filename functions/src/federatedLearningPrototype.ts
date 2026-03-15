@@ -64,6 +64,9 @@ export interface FederatedLearningAggregationCandidate {
   updateNorm: number;
   schemaVersion: string;
   runtimeTarget?: string | null;
+  optimizerStrategy?: string | null;
+  warmStartPackageId?: string | null;
+  warmStartModelVersion?: string | null;
   traceId?: string | null;
   payloadDigest?: string | null;
 }
@@ -206,9 +209,6 @@ export function normalizeFederatedLearningRuntimeTarget(
   const normalized = asTrimmedString(value).toLowerCase();
   if (['flutter_mobile', 'flutter-mobile', 'flutter'].includes(normalized)) {
     return 'flutter_mobile';
-      optimizerStrategy?: string | null;
-      warmStartPackageId?: string | null;
-      warmStartModelVersion?: string | null;
   }
   if (['web_pwa', 'web-pwa', 'web'].includes(normalized)) {
     return 'web_pwa';
