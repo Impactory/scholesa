@@ -2550,6 +2550,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String triggerSummaryId = run.triggerSummaryId.trim();
     final String acceptedSummaryIds = run.summaryIds.join(', ');
     final String localTrainingRollup = _formatLocalTrainingRollup(run.summaryIds);
+    final String runtimePayloadSummary =
+      _formatRuntimePayloadSummary(candidatePackage);
 
     return Container(
       width: double.infinity,
@@ -2705,6 +2707,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(context, 'Package format: $packageFormat'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (runtimePayloadSummary.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, runtimePayloadSummary),
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
