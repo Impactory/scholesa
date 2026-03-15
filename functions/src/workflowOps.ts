@@ -3311,7 +3311,7 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
           admin.firestore().collection('federatedLearningCandidateModelPackages').doc(rowPackageId),
           {
             latestRuntimeDeliveryStatus: 'superseded',
-            rolloutStatus: 'distributed',
+            rolloutStatus: 'retired',
             updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true },
@@ -3349,7 +3349,11 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
     transaction.set(packageRef, {
       latestRuntimeDeliveryRecordId: deliveryId,
       latestRuntimeDeliveryStatus: status,
-      rolloutStatus: ['assigned', 'active'].includes(status) ? 'distributed' : 'not_distributed',
+      rolloutStatus: ['assigned', 'active'].includes(status)
+        ? 'distributed'
+        : ['superseded', 'revoked'].includes(status)
+          ? 'retired'
+          : 'not_distributed',
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });

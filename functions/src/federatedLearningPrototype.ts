@@ -7,6 +7,8 @@ export type FederatedLearningNetworkType = 'wifi' | 'cellular' | 'offline' | 'un
 export type FederatedLearningAggregationRunStatus = 'materialized';
 export type FederatedLearningMergeArtifactStatus = 'generated';
 export type FederatedLearningCandidateModelPackageStatus = 'staged';
+export type FederatedLearningCandidateModelPackageRolloutStatus =
+  'not_distributed' | 'distributed' | 'retired';
 export type FederatedLearningCandidatePromotionStatus = 'approved_for_eval' | 'hold';
 export type FederatedLearningCandidatePromotionTarget = 'sandbox_eval';
 export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
@@ -85,7 +87,7 @@ export interface FederatedLearningMergeArtifactSummary {
 
 export interface FederatedLearningCandidateModelPackageSummary {
   packageFormat: 'runtime_vector_v1';
-  rolloutStatus: 'not_distributed';
+  rolloutStatus: FederatedLearningCandidateModelPackageRolloutStatus;
   modelVersion: string;
   packageDigest: string;
   boundedDigest: string;

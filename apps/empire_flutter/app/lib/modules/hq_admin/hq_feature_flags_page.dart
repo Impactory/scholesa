@@ -700,6 +700,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   color: ScholesaColors.textSecondary,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest package rollout: ${latestPackage.rolloutStatus}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
             ],
             const SizedBox(height: 4),
             Text(

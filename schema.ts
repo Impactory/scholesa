@@ -336,7 +336,7 @@ export interface FederatedLearningCandidateModelPackage {
   mergeArtifactId: string;
   status: 'staged';
   packageFormat: 'runtime_vector_v1';
-  rolloutStatus: 'not_distributed' | 'distributed';
+  rolloutStatus: 'not_distributed' | 'distributed' | 'retired';
   modelVersion: string;
   latestPromotionRecordId?: string;
   latestPromotionStatus?: 'approved_for_eval' | 'hold' | 'revoked';

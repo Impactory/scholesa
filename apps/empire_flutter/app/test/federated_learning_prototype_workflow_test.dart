@@ -1176,6 +1176,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
             ..._candidatePackages[supersededPackageIndex],
             'latestRuntimeDeliveryRecordId': existing['id'],
             'latestRuntimeDeliveryStatus': 'superseded',
+            'rolloutStatus': 'retired',
           };
         }
       }
@@ -1192,6 +1193,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         ..._candidatePackages[packageIndex],
         'latestRuntimeDeliveryRecordId': deliveryId,
         'latestRuntimeDeliveryStatus': record['status'],
+        'rolloutStatus': nextStatus == 'assigned' || nextStatus == 'active'
+            ? 'distributed'
+            : (nextStatus == 'superseded' || nextStatus == 'revoked')
+                ? 'retired'
+                : 'not_distributed',
       };
     }
     recordedRuntimeDeliverySaves.add(<String, dynamic>{...record});
@@ -2468,6 +2474,12 @@ void main() {
       superseded['supersessionReason'],
       'Superseded by fl_delivery_2 for overlapping site cohort.',
     );
+    final Map<String, dynamic> supersededPackage = bridge._candidatePackages
+        .firstWhere((Map<String, dynamic> row) => row['id'] == 'fl_pkg_1');
+    final Map<String, dynamic> latestPackage = bridge._candidatePackages
+        .firstWhere((Map<String, dynamic> row) => row['id'] == 'fl_pkg_2');
+    expect(supersededPackage['rolloutStatus'], 'retired');
+    expect(latestPackage['rolloutStatus'], 'distributed');
 
     final List<Map<String, dynamic>> siteAssignments =
         await bridge.listSiteFederatedLearningRuntimeDeliveryRecords(
@@ -2475,6 +2487,29 @@ void main() {
     );
     expect(siteAssignments, hasLength(1));
     expect(siteAssignments.single['id'], 'fl_delivery_2');
+  });
+
+  test('runtime delivery revocation retires the candidate package', () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeDeliveryRecord(
+      <String, dynamic>{
+        'candidateModelPackageId': 'fl_pkg_1',
+        'status': 'revoked',
+        'targetSiteIds': <String>['site-1'],
+        'revocationReason': 'Rollback after bounded pilot regression.',
+      },
+    );
+
+    final Map<String, dynamic> package = bridge._candidatePackages.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == 'fl_pkg_1',
+    );
+    expect(package['latestRuntimeDeliveryStatus'], 'revoked');
+    expect(package['rolloutStatus'], 'retired');
   });
 
   test('runtime activation reporter records bounded site evidence', () async {
@@ -2670,6 +2705,7 @@ void main() {
       find.text('Latest candidate package: fl_pkg_1 (runtime_vector_v1)'),
       findsOneWidget,
     );
+    expect(find.text('Latest package rollout: not_distributed'), findsOneWidget);
     expect(
       find.text('Latest package promotion: approved_for_eval (sandbox_eval)'),
       findsOneWidget,
@@ -3570,6 +3606,7 @@ void main() {
       find.text('Runtime delivery history: Literacy Pilot'),
       findsOneWidget,
     );
+    expect(find.text('Latest package rollout: distributed'), findsOneWidget);
     expect(
       find.textContaining('Lifecycle: superseded 2026-03-14T20:15:00.000'),
       findsOneWidget,
