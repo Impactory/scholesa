@@ -3336,7 +3336,19 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest package damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
       ),
       findsOneWidget,
     );

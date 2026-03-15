@@ -5055,35 +5055,128 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             final int bMillis = b.updatedAt?.millisecondsSinceEpoch ?? 0;
             return bMillis.compareTo(aMillis);
           });
+    String filterQuery = '';
     if (!mounted) return;
 
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(
-            _tHqFeatureFlags(
-              dialogContext,
-              'Runtime delivery history: ${experiment.name}',
-            ),
-          ),
-          content: SizedBox(
-            width: 640,
-            child: records.isEmpty
-                ? Text(
-                    _tHqFeatureFlags(
-                      dialogContext,
-                      'No runtime deliveries recorded for this experiment yet.',
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: records
-                          .map(
-                            (FederatedLearningRuntimeDeliveryRecordModel
-                              record) {
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            final String normalizedQuery = filterQuery.trim().toLowerCase();
+            final List<FederatedLearningRuntimeDeliveryRecordModel>
+                filteredRecords = records.where(
+              (FederatedLearningRuntimeDeliveryRecordModel record) {
+                if (normalizedQuery.isEmpty) {
+                  return true;
+                }
+                final FederatedLearningCandidateModelPackageModel? package =
+                    packagesById[record.candidateModelPackageId];
+                final String aggregationRunId =
+                    record.aggregationRunId.trim().isNotEmpty
+                        ? record.aggregationRunId
+                        : package?.aggregationRunId ?? '';
+                final String mergeArtifactId =
+                    record.mergeArtifactId.trim().isNotEmpty
+                        ? record.mergeArtifactId
+                        : package?.mergeArtifactId ?? '';
+                final String packageDigest =
+                    record.packageDigest.trim().isNotEmpty
+                        ? record.packageDigest
+                        : package?.packageDigest ?? '';
+                final String boundedDigest =
+                    record.boundedDigest.trim().isNotEmpty
+                        ? record.boundedDigest
+                        : package?.boundedDigest ?? '';
+                final String triggerSummaryId =
+                    record.triggerSummaryId.trim().isNotEmpty
+                        ? record.triggerSummaryId
+                        : package?.triggerSummaryId ?? '';
+                final List<String> summaryIds = record.summaryIds.isNotEmpty
+                    ? record.summaryIds
+                    : package?.summaryIds ?? const <String>[];
+                final String haystack = <String>[
+                  record.id,
+                  record.status,
+                  record.runtimeTarget,
+                  record.candidateModelPackageId,
+                  aggregationRunId,
+                  mergeArtifactId,
+                  packageDigest,
+                  boundedDigest,
+                  triggerSummaryId,
+                  summaryIds.join(' '),
+                  _summarySearchTokens(summaryIds),
+                  _summarySearchTokens(<String>[triggerSummaryId]),
+                  record.targetSiteIds.join(' '),
+                  record.notes ?? '',
+                  record.revocationReason ?? '',
+                  package?.rolloutStatus ?? '',
+                  package?.packageFormat ?? '',
+                  package?.contributingSiteIds.join(' ') ?? '',
+                ].join(' ').toLowerCase();
+                return haystack.contains(normalizedQuery);
+              },
+            ).toList(growable: false);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  dialogContext,
+                  'Runtime delivery history: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 640,
+                child: records.isEmpty
+                    ? Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
+                          'No runtime deliveries recorded for this experiment yet.',
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            TextFormField(
+                              initialValue: filterQuery,
+                              onChanged: (String value) {
+                                setDialogState(() {
+                                  filterQuery = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: _tHqFeatureFlags(
+                                  dialogContext,
+                                  'Filter by delivery ID, package ID, summary ID, digest, site ID, optimizer, or warm start',
+                                ),
+                                prefixIcon: const Icon(Icons.search_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _tHqFeatureFlags(
+                                dialogContext,
+                                'Showing ${filteredRecords.length} of ${records.length}',
+                              ),
+                              style: const TextStyle(
+                                color: ScholesaColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (filteredRecords.isEmpty)
+                              Text(
+                                _tHqFeatureFlags(
+                                  dialogContext,
+                                  'No runtime deliveries match current filter.',
+                                ),
+                              )
+                            else
+                              ...filteredRecords.map(
+                                (FederatedLearningRuntimeDeliveryRecordModel
+                                    record) {
                             final FederatedLearningCandidateModelPackageModel?
                               package =
                               packagesById[record.candidateModelPackageId];
@@ -5117,12 +5210,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               contributionDetails =
                               package?.contributionDetails ??
                                   const <FederatedLearningContributionDetailModel>[];
-                            return
-                                Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
                                   Text(
                                     _tHqFeatureFlags(
                                       dialogContext,
@@ -5333,21 +5426,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       ],
                                     ),
                                   ],
-                                ],
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                            },
-                          )
-                          .toList(growable: false),
-                    ),
-                  ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
-            ),
-          ],
+                          ],
+                        ),
+                      ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+                ),
+              ],
+            );
+          },
         );
       },
     );
