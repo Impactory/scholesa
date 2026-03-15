@@ -13,7 +13,7 @@ export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | '
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
-export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
+export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'superseded' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
 
@@ -369,6 +369,7 @@ export function normalizeFederatedLearningRuntimeDeliveryStatus(
   if (normalized === 'prepared') return 'prepared';
   if (normalized === 'assigned') return 'assigned';
   if (normalized === 'active') return 'active';
+  if (normalized === 'superseded' || normalized === 'supersede') return 'superseded';
   if (normalized === 'revoked') return 'revoked';
   return null;
 }

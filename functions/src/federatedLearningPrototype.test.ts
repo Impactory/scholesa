@@ -66,6 +66,7 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningPilotExecutionStatus('completed')).toBe('completed');
     expect(normalizeFederatedLearningPilotExecutionStatus('archived')).toBeNull();
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('assigned')).toBe('assigned');
+    expect(normalizeFederatedLearningRuntimeDeliveryStatus('supersede')).toBe('superseded');
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('revoked')).toBe('revoked');
     expect(normalizeFederatedLearningRuntimeDeliveryStatus('archived')).toBeNull();
     expect(normalizeFederatedLearningRuntimeActivationStatus('resolved')).toBe('resolved');

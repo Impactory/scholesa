@@ -3747,6 +3747,11 @@ class FederatedLearningRuntimeDeliveryRecordModel {
     required this.packageDigest,
     required this.manifestDigest,
     this.expiresAt,
+    this.supersededAt,
+    this.supersededBy,
+    this.supersededByDeliveryRecordId,
+    this.supersededByCandidateModelPackageId,
+    this.supersessionReason,
     this.revokedAt,
     this.revokedBy,
     this.revocationReason,
@@ -3769,6 +3774,11 @@ class FederatedLearningRuntimeDeliveryRecordModel {
   final String packageDigest;
   final String manifestDigest;
   final Timestamp? expiresAt;
+  final Timestamp? supersededAt;
+  final String? supersededBy;
+  final String? supersededByDeliveryRecordId;
+  final String? supersededByCandidateModelPackageId;
+  final String? supersessionReason;
   final Timestamp? revokedAt;
   final String? revokedBy;
   final String? revocationReason;
@@ -3804,6 +3814,13 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       packageDigest: data['packageDigest'] as String? ?? '',
       manifestDigest: data['manifestDigest'] as String? ?? '',
       expiresAt: _timestampOrNull(data['expiresAt']),
+        supersededAt: _timestampOrNull(data['supersededAt']),
+        supersededBy: data['supersededBy'] as String?,
+        supersededByDeliveryRecordId:
+          data['supersededByDeliveryRecordId'] as String?,
+        supersededByCandidateModelPackageId:
+          data['supersededByCandidateModelPackageId'] as String?,
+        supersessionReason: data['supersessionReason'] as String?,
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
@@ -3827,6 +3844,12 @@ class FederatedLearningRuntimeDeliveryRecordModel {
         'packageDigest': packageDigest,
         'manifestDigest': manifestDigest,
         'expiresAt': expiresAt,
+        'supersededAt': supersededAt,
+        'supersededBy': supersededBy,
+        'supersededByDeliveryRecordId': supersededByDeliveryRecordId,
+        'supersededByCandidateModelPackageId':
+          supersededByCandidateModelPackageId,
+        'supersessionReason': supersessionReason,
         'revokedAt': revokedAt,
         'revokedBy': revokedBy,
         'revocationReason': revocationReason,

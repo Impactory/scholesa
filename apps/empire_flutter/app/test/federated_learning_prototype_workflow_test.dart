@@ -1110,6 +1110,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
               data['expiresAt'] as int,
               isUtc: true,
             ),
+        'supersededAt': null,
+        'supersededBy': null,
+        'supersededByDeliveryRecordId': null,
+        'supersededByCandidateModelPackageId': null,
+        'supersessionReason': null,
       'revokedAt': (data['status'] as String? ?? '').trim() == 'revoked'
           ? DateTime(2026, 3, 14, 20, 45)
           : null,
@@ -1122,6 +1127,59 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'createdAt': DateTime(2026, 3, 14, 19),
       'updatedAt': DateTime(2026, 3, 14, 19),
     };
+    final String nextStatus = (record['status'] as String? ?? '').trim();
+    if (nextStatus == 'assigned' || nextStatus == 'active') {
+      final List<String> nextTargetSiteIds = List<String>.from(
+        record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      );
+      for (int index = 0; index < _runtimeDeliveryRecords.length; index += 1) {
+        final Map<String, dynamic> existing = _runtimeDeliveryRecords[index];
+        if ((existing['id'] as String? ?? '') == deliveryId) {
+          continue;
+        }
+        final String existingStatus = (existing['status'] as String? ?? '').trim();
+        final String existingExperimentId =
+            (existing['experimentId'] as String? ?? '').trim();
+        final String existingRuntimeTarget =
+            (existing['runtimeTarget'] as String? ?? '').trim();
+        final List<String> existingTargetSiteIds = List<String>.from(
+          existing['targetSiteIds'] as List<dynamic>? ?? <dynamic>[],
+        );
+        final bool overlaps =
+            existingTargetSiteIds.any(nextTargetSiteIds.contains);
+        if (!(existingStatus == 'assigned' || existingStatus == 'active') ||
+            existingExperimentId != (packageRow['experimentId'] ?? '') ||
+            existingRuntimeTarget != 'flutter_mobile' ||
+            !overlaps) {
+          continue;
+        }
+        _runtimeDeliveryRecords[index] = <String, dynamic>{
+          ...existing,
+          'status': 'superseded',
+          'supersededAt': DateTime(2026, 3, 14, 20, 15),
+          'supersededBy': 'hq-1',
+          'supersededByDeliveryRecordId': deliveryId,
+          'supersededByCandidateModelPackageId': packageId,
+          'supersessionReason':
+              'Superseded by $deliveryId for overlapping site cohort.',
+          'revokedAt': null,
+          'revokedBy': null,
+          'revocationReason': null,
+          'updatedAt': DateTime(2026, 3, 14, 20, 15),
+        };
+        final int supersededPackageIndex = _candidatePackages.indexWhere(
+          (Map<String, dynamic> row) =>
+              row['id'] == existing['candidateModelPackageId'],
+        );
+        if (supersededPackageIndex >= 0) {
+          _candidatePackages[supersededPackageIndex] = <String, dynamic>{
+            ..._candidatePackages[supersededPackageIndex],
+            'latestRuntimeDeliveryRecordId': existing['id'],
+            'latestRuntimeDeliveryStatus': 'superseded',
+          };
+        }
+      }
+    }
     _runtimeDeliveryRecords.removeWhere(
       (Map<String, dynamic> row) => row['id'] == deliveryId,
     );
@@ -1527,6 +1585,11 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   String status = 'assigned',
   List<String> targetSiteIds = const <String>['site-1'],
   DateTime? expiresAt,
+  DateTime? supersededAt,
+  String? supersededBy,
+  String? supersededByDeliveryRecordId,
+  String? supersededByCandidateModelPackageId,
+  String? supersessionReason,
   DateTime? revokedAt,
   String? revokedBy,
   String? revocationReason,
@@ -1549,6 +1612,11 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'expiresAt': expiresAt ?? DateTime(2026, 3, 21, 19),
+    'supersededAt': supersededAt,
+    'supersededBy': supersededBy,
+    'supersededByDeliveryRecordId': supersededByDeliveryRecordId,
+    'supersededByCandidateModelPackageId': supersededByCandidateModelPackageId,
+    'supersessionReason': supersessionReason,
     'revokedAt': revokedAt,
     'revokedBy': revokedBy,
     'revocationReason': revocationReason,

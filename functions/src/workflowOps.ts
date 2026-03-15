@@ -3262,8 +3262,63 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
     runtimeTarget,
     effectiveExpiresAt ?? undefined,
   );
+  const overlappingDeliveriesQuery = admin.firestore()
+    .collection('federatedLearningRuntimeDeliveryRecords')
+    .where('experimentId', '==', experimentId)
+    .where('runtimeTarget', '==', runtimeTarget)
+    .limit(50);
+  const supersededDeliveries: Array<{
+    id: string;
+    candidateModelPackageId: string;
+    targetSiteIds: string[];
+  }> = [];
 
   await admin.firestore().runTransaction(async (transaction) => {
+    const overlappingDeliveriesSnap = ['assigned', 'active'].includes(status)
+      ? await transaction.get(overlappingDeliveriesQuery)
+      : null;
+    if (overlappingDeliveriesSnap) {
+      overlappingDeliveriesSnap.docs.forEach((snapDoc) => {
+        if (snapDoc.id === deliveryId) {
+          return;
+        }
+        const rowData = snapDoc.data() as Record<string, unknown>;
+        const rowStatus = asTrimmedString(rowData.status);
+        const rowPackageId = asTrimmedString(rowData.candidateModelPackageId);
+        const rowTargetSiteIds = toStringArray(rowData.targetSiteIds);
+        const overlaps = rowTargetSiteIds.some((siteId) => effectiveTargetSiteIds.includes(siteId));
+        if (!['assigned', 'active'].includes(rowStatus) || !rowPackageId || !overlaps) {
+          return;
+        }
+        supersededDeliveries.push({
+          id: snapDoc.id,
+          candidateModelPackageId: rowPackageId,
+          targetSiteIds: rowTargetSiteIds,
+        });
+        transaction.set(snapDoc.ref, {
+          status: 'superseded',
+          supersededAt: FieldValue.serverTimestamp(),
+          supersededBy: actor.uid,
+          supersededByDeliveryRecordId: deliveryId,
+          supersededByCandidateModelPackageId: candidateModelPackageId,
+          supersessionReason: `Superseded by ${deliveryId} for overlapping site cohort.`,
+          revokedAt: FieldValue.delete(),
+          revokedBy: FieldValue.delete(),
+          revocationReason: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        transaction.set(
+          admin.firestore().collection('federatedLearningCandidateModelPackages').doc(rowPackageId),
+          {
+            latestRuntimeDeliveryStatus: 'superseded',
+            rolloutStatus: 'distributed',
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
+    }
+
     transaction.set(deliveryRef, {
       experimentId,
       candidateModelPackageId,
@@ -3276,6 +3331,11 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       packageDigest,
       manifestDigest,
       expiresAt: effectiveExpiresAt ?? FieldValue.delete(),
+      supersededAt: FieldValue.delete(),
+      supersededBy: FieldValue.delete(),
+      supersededByDeliveryRecordId: FieldValue.delete(),
+      supersededByCandidateModelPackageId: FieldValue.delete(),
+      supersessionReason: FieldValue.delete(),
       revokedAt: status === 'revoked' ? FieldValue.serverTimestamp() : FieldValue.delete(),
       revokedBy: status === 'revoked' ? actor.uid : FieldValue.delete(),
       revocationReason: status === 'revoked' ? revocationReason : FieldValue.delete(),
@@ -3293,6 +3353,25 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });
+
+  await Promise.all(supersededDeliveries.map((delivery) =>
+    admin.firestore().collection('auditLogs').add({
+      userId: actor.uid,
+      action: federatedLearningAuditAction('runtime_delivery_record.upsert'),
+      collection: 'federatedLearningRuntimeDeliveryRecords',
+      documentId: delivery.id,
+      timestamp: Date.now(),
+      details: {
+        experimentId,
+        candidateModelPackageId: delivery.candidateModelPackageId,
+        runtimeTarget,
+        targetSiteIds: delivery.targetSiteIds,
+        status: 'superseded',
+        supersededByDeliveryRecordId: deliveryId,
+        supersededByCandidateModelPackageId: candidateModelPackageId,
+      },
+    }),
+  ));
 
   await admin.firestore().collection('auditLogs').add({
     userId: actor.uid,

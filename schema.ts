@@ -209,7 +209,7 @@ export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | '
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
-export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
+export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'superseded' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked' | 'paused' | 'restricted';
 export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
@@ -464,6 +464,11 @@ export interface FederatedLearningRuntimeDeliveryRecord {
   packageDigest: string;
   manifestDigest: string;
   expiresAt?: number;
+  supersededAt?: number;
+  supersededBy?: string;
+  supersededByDeliveryRecordId?: string;
+  supersededByCandidateModelPackageId?: string;
+  supersessionReason?: string;
   revokedAt?: number;
   revokedBy?: string;
   revocationReason?: string;

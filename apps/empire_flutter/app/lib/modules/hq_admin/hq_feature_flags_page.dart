@@ -5233,6 +5233,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   String _runtimeDeliveryLifecycleDetail(
     FederatedLearningRuntimeDeliveryRecordModel record,
   ) {
+    if (record.status == 'superseded' || record.supersededAt != null) {
+      final String byDelivery =
+          (record.supersededByDeliveryRecordId ?? '').trim().isEmpty
+              ? ''
+              : ' by ${record.supersededByDeliveryRecordId!.trim()}';
+      final String reason = (record.supersessionReason ?? '').trim().isEmpty
+          ? ''
+          : ' · ${record.supersessionReason!.trim()}';
+      return 'superseded ${_formatTimestamp(record.supersededAt)}$byDelivery$reason';
+    }
     if (record.status == 'revoked' || record.revokedAt != null) {
       return 'revoked ${_formatTimestamp(record.revokedAt)}';
     }
@@ -5537,6 +5547,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningRuntimeDeliveryRecordModel delivery,
     FederatedLearningRuntimeActivationRecordModel? activation,
   ) {
+    if (delivery.status == 'superseded' || delivery.supersededAt != null) {
+      final String byDelivery =
+          (delivery.supersededByDeliveryRecordId ?? '').trim().isEmpty
+              ? 'newer delivery'
+              : delivery.supersededByDeliveryRecordId!.trim();
+      final String reason = (delivery.supersessionReason ?? '').trim().isNotEmpty
+          ? ' ${(delivery.supersessionReason ?? '').trim()}'
+          : '';
+      return _RuntimeRolloutHealthRow(
+        siteId: siteId,
+        status: 'fallback',
+        statusLabel: 'fallback',
+        detailLabel: 'Delivery superseded by $byDelivery.$reason',
+      );
+    }
     if (delivery.status == 'revoked' || delivery.revokedAt != null) {
       final String reason = (delivery.revocationReason ?? '').trim().isNotEmpty
           ? delivery.revocationReason!.trim()
