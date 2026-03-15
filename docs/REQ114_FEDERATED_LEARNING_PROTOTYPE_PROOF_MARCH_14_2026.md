@@ -91,6 +91,15 @@ Passed on 2026-03-14:
 5. Focused Flutter prototype workflow test
    - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
 
+Additional focused validation passed on 2026-03-15:
+
+1. Functions build
+   - command: `cd functions && npm run build`
+2. Focused helper test
+   - command: `cd functions && npm test -- federatedLearningPrototype.test.ts`
+3. Focused Flutter prototype workflow test
+   - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
+
 ## Evidence summary
 
 - Prototype experiments are now first-class backend records instead of draft-only concepts.
@@ -134,6 +143,8 @@ Passed on 2026-03-14:
 - The HQ aggregation-history surface now also renders trigger-summary and accepted-summary identifiers and supports direct filtering by summary ID, so bounded merge records can be traced back to the exact accepted update-summary windows that formed each aggregation run.
 - Accepted summary IDs now persist through merge artifacts and candidate packages too, and HQ candidate-package plus promotion-history surfaces render and filter those summary IDs so downstream package review stays tied to the same bounded update window.
 - The downstream merge-artifact and candidate-package records now also preserve the original trigger-summary identifier, and HQ candidate-package plus promotion-history surfaces render and filter that trigger ID alongside accepted-summary windows so package review can distinguish the event that materialized an aggregation from the full accepted cohort.
+- HQ candidate-package and promotion-history drill-ins now also include a direct `Open aggregation run` action seeded to the exact `aggregationRunId`, so downstream review can jump back to the precise bounded merge record and accepted-summary cohort without manual history filtering.
+- Candidate-promotion decision and revocation records now also snapshot `packageDigest` and `boundedDigest` at decision time, and HQ package plus promotion-history surfaces render and filter those immutable digests so downstream provenance does not depend on re-resolving current package state.
 - Runtime-delivery upserts now also supersede older overlapping assigned or active deliveries for the same experiment/runtime target, so HQ delivery history reflects bounded package succession instead of leaving multiple live manifests competing by timestamp.
 - Candidate-model-package rollout state now also retires packages whose latest runtime delivery was superseded or revoked, so HQ package history distinguishes still-distributed bounded payloads from terminal ones without claiming a broader promotion or archive system.
 - Site-scoped runtime resolution now also returns explicit superseded terminal package state, including supersession metadata and device-side fallback reporting, so superseded deliveries no longer disappear as null resolution gaps when HQ advances a bounded manifest.

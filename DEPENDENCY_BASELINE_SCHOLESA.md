@@ -1,6 +1,6 @@
 # Dependency Baseline Scholesa
 
-Last reviewed: 2026-03-14
+Last reviewed: 2026-03-15
 Authority: repo root manifests and Flutter pubspecs
 
 ## Purpose
@@ -48,8 +48,8 @@ Source: [functions/package.json](/Users/simonluke/dev/scholesa/functions/package
 | @types/node | ^25.5.0 | 25.x only | Keep Node type definitions aligned with the functions toolchain. |
 | ts-jest | ^29.1.2 | 29.x only | Must match the Jest major. |
 | ts-node | ^10.9.2 | 10.x only | Used by spec scripts and local tooling. |
-| firebase-admin | ^13.7.0 | 13.x only | Match root baseline. |
-| firebase-functions | ^7.1.1 | 7.x only | Match root baseline. |
+| firebase-admin | ^13.7.0 | 13.x only | Functions runtime is intentionally on a newer admin major than the root app/server bundle; keep that split isolated until an explicit consolidation audit lands. |
+| firebase-functions | ^7.1.1 | 7.x only | Functions runtime is intentionally on a newer functions major than the root app/server helpers; revalidate callable and server integration before any consolidation. |
 | stripe | ^20.4.1 | 20.x only | Validate webhook and checkout flows before major upgrades. |
 
 ## Flutter App Baseline
@@ -102,15 +102,17 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 
 ## Drift Snapshot
 
-Command run on 2026-03-14: `npm outdated`, `npm outdated --prefix functions`, and the previously verified Flutter drift snapshot from 2026-03-12
+Command run on 2026-03-15: `npm outdated`, `npm outdated --prefix functions`, `npm run qa:dependency-drift`, and the previously verified Flutter drift snapshot from 2026-03-12
 
 Key findings:
 
-- Root manifests were refreshed to the currently resolved approved-major versions for Firebase client, framer-motion, Tailwind 3, Zod 3, and React 18 type packages.
-- Functions drift had one clean in-range patch update: `@types/node` advanced from 25.4.0 to 25.5.0.
-- Root `next-pwa` was advanced from 2.0.2 to 2.6.3 and revalidated with a passing `npm run build`; the plugin still emits legacy webpack and Rollup warnings, so the debt remains package-internal rather than app-config related.
-- Flutter direct dependency floors were refreshed to the currently resolved approved-major lines for provider, audioplayers, record, shared_preferences, equatable, build_runner, and fake_cloud_firestore.
-- Next.js 17+, React 19, Tailwind 4, Firebase 12/13, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
+- Root drift is currently major-version only for `@eslint/js` 10, `@firebase/rules-unit-testing` 5, `@jest/globals` 30, `@types/jest` 30, `@types/node` 25, React 19 types/runtime, Firebase 12/13, framer-motion 12, Tailwind 4, Jest 30, and Zod 4; no clean in-range root updates were pending in the fresh snapshot.
+- Functions drift is currently major-version only for `@types/jest` 30, `eslint` 10, and `jest` 30; no clean in-range functions updates were pending in the fresh snapshot.
+- The repo drift gate passed on 2026-03-15 with `audit-pack/reports/dependency-drift.json`, reporting 20 root npm outdated packages with 0 wanted patch/minor candidates, 3 functions npm outdated packages with 0 wanted patch/minor candidates, and Flutter drift of 0 resolvable patch/minor candidates plus 2 discontinued transitives and 9 latest-major candidates after refreshing the transitive `google_sign_in_web` lock from 1.1.2 to 1.1.3.
+- Root `next-pwa` remains on the approved 2.6.3 baseline after prior revalidation with a passing `npm run build`; the latest 5.x line is a separate migration and the plugin still emits legacy webpack and Rollup warnings that remain package-internal debt rather than unsupported Scholesa config.
+- Root `firebase-admin` 10.x and `firebase-functions` 4.x remain intentionally separate from the functions workspace `firebase-admin` 13.x and `firebase-functions` 7.x because the root web/server helpers and deployed Cloud Functions ship on different surfaces; any consolidation requires an explicit server-import and callable-compatibility audit.
+- Flutter direct dependency floors remain aligned to the previously verified approved-major lines for provider, audioplayers, record, shared_preferences, equatable, build_runner, and fake_cloud_firestore.
+- Next.js 17+, React 19, Tailwind 4, Firebase 12/13 in the root app, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
 - March 12, 2026 cleanup verified that Next 16-specific app warnings were removed by migrating the route interceptor to `proxy.ts` and sanitizing the exported Next config. Remaining production-build warnings come from the approved `next-pwa` 2.x plugin internals, not from unsupported Scholesa config keys.
 - `build_resolvers` and `build_runner_core` remain reported as discontinued Flutter transitives; clearing that debt requires an explicit build-runner toolchain migration rather than another patch bump.
 - Flutter web deployment stays on `flutter build web --release --no-tree-shake-icons --no-wasm-dry-run` for now. The previous `--wasm` deploy path is intentionally retired because `flutter_tts` 4.2.5 still emits wasm dry-run interop violations outside Scholesa source.
@@ -118,7 +120,7 @@ Key findings:
 ## Upgrade Rules
 
 1. Keep React and React DOM on the same major and within the supported range above.
-2. Keep Firebase client, admin, and functions SDKs on approved majors; do not resolve peer conflicts with force flags.
+2. Keep Firebase client, root app/server helpers, and functions workspace SDKs on their approved per-surface majors; do not resolve peer conflicts with force flags.
 3. Upgrade Jest and ts-jest together.
 4. Upgrade FlutterFire packages as a compatible set, not one at a time across majors.
 5. Update this document and rerun the relevant build/test gates whenever any baseline entry changes.
