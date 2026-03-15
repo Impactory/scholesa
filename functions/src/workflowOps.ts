@@ -3951,6 +3951,8 @@ export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (req
   const experimentId = asTrimmedString(packageData.experimentId);
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
+  const packageDigest = asTrimmedString(packageData.packageDigest);
+  const boundedDigest = asTrimmedString(packageData.boundedDigest);
 
   await admin.firestore().runTransaction(async (transaction) => {
     transaction.set(promotionRef, {

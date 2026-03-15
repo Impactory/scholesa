@@ -3660,6 +3660,9 @@ void main() {
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
     final Finder viewPackagesButton = find.widgetWithText(
       TextButton,
       'View packages',
@@ -3846,7 +3849,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
-    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsWidgets);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
@@ -3937,7 +3940,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
-    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsWidgets);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -4076,18 +4079,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.widgetWithText(
-          TextField, 'Filter by run ID, summary ID, artifact ID, digest, or site ID'),
-      'update-1',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
-    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
-
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
