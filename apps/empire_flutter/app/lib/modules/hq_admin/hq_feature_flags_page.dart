@@ -2182,6 +2182,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 color: ScholesaColors.textSecondary,
               ),
             ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showAcceptedSummaryDialog(
+                experiment: experiment,
+                summaryIds: <String>[triggerSummaryId],
+                title: 'Trigger summary',
+              ),
+              icon: const Icon(Icons.playlist_add_check_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open trigger summary'),
+              ),
+            ),
           ],
           if (acceptedSummaryIds.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
@@ -2554,6 +2566,33 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showAcceptedSummaryDialog(
+                experiment: _experiments.firstWhere(
+                  (FederatedLearningExperimentModel experiment) =>
+                      experiment.id == package.experimentId,
+                  orElse: () => FederatedLearningExperimentModel(
+                    id: package.experimentId,
+                    name: package.experimentId,
+                    description: '',
+                    runtimeTarget: '',
+                    status: '',
+                    aggregateThreshold: 0,
+                    maxRawUpdateBytes: 0,
+                    uploadEnabled: false,
+                    allowedSiteIds: const <String>[],
+                    createdBy: '',
+                  ),
+                ),
+                summaryIds: <String>[package.triggerSummaryId],
+                title: 'Trigger summary',
+              ),
+              icon: const Icon(Icons.playlist_add_check_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open trigger summary'),
               ),
             ),
           ],
@@ -3469,6 +3508,33 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => _showAcceptedSummaryDialog(
+                  experiment: _experiments.firstWhere(
+                    (FederatedLearningExperimentModel experiment) =>
+                        experiment.id == package.experimentId,
+                    orElse: () => FederatedLearningExperimentModel(
+                      id: package.experimentId,
+                      name: package.experimentId,
+                      description: '',
+                      runtimeTarget: '',
+                      status: '',
+                      aggregateThreshold: 0,
+                      maxRawUpdateBytes: 0,
+                      uploadEnabled: false,
+                      allowedSiteIds: const <String>[],
+                      createdBy: '',
+                    ),
+                  ),
+                  summaryIds: <String>[package.triggerSummaryId],
+                  title: 'Trigger summary',
+                ),
+                icon: const Icon(Icons.playlist_add_check_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open trigger summary'),
                 ),
               ),
             ],
