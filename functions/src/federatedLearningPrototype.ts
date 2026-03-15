@@ -107,12 +107,20 @@ export interface FederatedLearningAggregationSelection {
 export interface FederatedLearningMergeWeightSummary {
   normCap: number;
   effectiveTotalWeight: number;
+  rawTotalWeight: number;
+  dampedSummaryCount: number;
+  minUpdateNorm: number;
+  maxUpdateNorm: number;
 }
 
 export interface FederatedLearningMergeArtifactSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  rawTotalWeight: number;
+  dampedSummaryCount: number;
+  minUpdateNorm: number;
+  maxUpdateNorm: number;
   triggerSummaryId: string;
   summaryIds: string[];
   payloadFormat: 'runtime_vector_v1';
@@ -141,6 +149,10 @@ export interface FederatedLearningCandidateModelPackageSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  rawTotalWeight: number;
+  dampedSummaryCount: number;
+  minUpdateNorm: number;
+  maxUpdateNorm: number;
   triggerSummaryId: string;
   summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
@@ -771,16 +783,33 @@ export function buildFederatedLearningMergeWeightSummary(
         positiveNorms.length,
     );
   const normCap = Math.max(1, Number((normReference * 2).toFixed(6)));
-  const effectiveTotalWeight = Number(candidates.reduce((sum, candidate) => {
-    const baseWeight = Math.max(0, candidate.sampleCount);
-    const normScale = candidate.updateNorm > 0
-      ? Math.min(1, normCap / candidate.updateNorm)
-      : 1;
-    return sum + (baseWeight * normScale);
-  }, 0).toFixed(6));
+    const finiteNorms = candidates
+      .map((candidate) => candidate.updateNorm)
+      .filter((value): value is number => Number.isFinite(value) && value >= 0);
+    let rawTotalWeight = 0;
+    let effectiveWeightAccumulator = 0;
+    let dampedSummaryCount = 0;
+
+    for (const candidate of candidates) {
+      const baseWeight = Math.max(0, candidate.sampleCount);
+      const normScale = candidate.updateNorm > 0
+        ? Math.min(1, normCap / candidate.updateNorm)
+        : 1;
+      rawTotalWeight += baseWeight;
+      effectiveWeightAccumulator += baseWeight * normScale;
+      if (baseWeight > 0 && normScale < 0.999999) {
+        dampedSummaryCount += 1;
+      }
+    }
+
+    const effectiveTotalWeight = Number(effectiveWeightAccumulator.toFixed(6));
   return {
     normCap,
     effectiveTotalWeight,
+      rawTotalWeight: Number(rawTotalWeight.toFixed(6)),
+      dampedSummaryCount,
+      minUpdateNorm: finiteNorms.length > 0 ? Number(Math.min(...finiteNorms).toFixed(6)) : 0,
+      maxUpdateNorm: finiteNorms.length > 0 ? Number(Math.max(...finiteNorms).toFixed(6)) : 0,
   };
 }
 
@@ -851,6 +880,10 @@ export function buildFederatedLearningMergeArtifactSummary(
       mergeStrategy,
       normCap: mergeWeights.normCap,
       effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
+      rawTotalWeight: mergeWeights.rawTotalWeight,
+      dampedSummaryCount: mergeWeights.dampedSummaryCount,
+      minUpdateNorm: mergeWeights.minUpdateNorm,
+      maxUpdateNorm: mergeWeights.maxUpdateNorm,
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
@@ -876,6 +909,10 @@ export function buildFederatedLearningMergeArtifactSummary(
     mergeStrategy,
     normCap: mergeWeights.normCap,
     effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
+    rawTotalWeight: mergeWeights.rawTotalWeight,
+    dampedSummaryCount: mergeWeights.dampedSummaryCount,
+    minUpdateNorm: mergeWeights.minUpdateNorm,
+    maxUpdateNorm: mergeWeights.maxUpdateNorm,
     triggerSummaryId,
     summaryIds: selection.summaryIds,
     payloadFormat,
@@ -915,6 +952,10 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       mergeStrategy: artifactSummary.mergeStrategy,
       normCap: artifactSummary.normCap,
       effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+      rawTotalWeight: artifactSummary.rawTotalWeight,
+      dampedSummaryCount: artifactSummary.dampedSummaryCount,
+      minUpdateNorm: artifactSummary.minUpdateNorm,
+      maxUpdateNorm: artifactSummary.maxUpdateNorm,
       triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       packageFormat,
@@ -945,6 +986,10 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     mergeStrategy: artifactSummary.mergeStrategy,
     normCap: artifactSummary.normCap,
     effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+    rawTotalWeight: artifactSummary.rawTotalWeight,
+    dampedSummaryCount: artifactSummary.dampedSummaryCount,
+    minUpdateNorm: artifactSummary.minUpdateNorm,
+    maxUpdateNorm: artifactSummary.maxUpdateNorm,
     triggerSummaryId: artifactSummary.triggerSummaryId,
     summaryIds: artifactSummary.summaryIds,
     packageFormat,
