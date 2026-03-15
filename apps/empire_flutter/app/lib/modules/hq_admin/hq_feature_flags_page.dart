@@ -92,6 +92,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
       _promotionRevocationRecordsByPackageId =
       <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
+    Map<String, FederatedLearningUpdateSummaryModel> _updateSummariesById =
+      <String, FederatedLearningUpdateSummaryModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
@@ -273,6 +275,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         ],
       ),
     );
+  }
+
+  String _summarySearchTokens(List<String> summaryIds) {
+    if (summaryIds.isEmpty) {
+      return '';
+    }
+    return summaryIds
+        .map((String summaryId) => _updateSummariesById[summaryId.trim()])
+        .whereType<FederatedLearningUpdateSummaryModel>()
+        .map((FederatedLearningUpdateSummaryModel summary) => <String>[
+              summary.id,
+              summary.siteId,
+              summary.traceId,
+              summary.payloadDigest,
+              summary.networkType,
+              summary.batteryState,
+              summary.runtimeTarget ?? '',
+            ].join(' '))
+        .join(' ');
   }
 
   @override
