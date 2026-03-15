@@ -2787,6 +2787,19 @@ List<double> _doubleListOrEmpty(dynamic value) {
       .toList(growable: false);
 }
 
+List<FederatedLearningContributionDetailModel> _contributionDetailListOrEmpty(
+  dynamic value,
+) {
+  if (value is! List) {
+    return const <FederatedLearningContributionDetailModel>[];
+  }
+  return value
+      .map((dynamic entry) => _mapOrNull(entry))
+      .whereType<Map<String, dynamic>>()
+      .map(FederatedLearningContributionDetailModel.fromMap)
+      .toList(growable: false);
+}
+
 Map<String, dynamic>? _mapOrNull(dynamic value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) {
@@ -2795,6 +2808,75 @@ Map<String, dynamic>? _mapOrNull(dynamic value) {
     );
   }
   return null;
+}
+
+@immutable
+class FederatedLearningContributionDetailModel {
+  const FederatedLearningContributionDetailModel({
+    required this.summaryId,
+    required this.siteId,
+    required this.sampleCount,
+    required this.payloadBytes,
+    required this.vectorLength,
+    required this.updateNorm,
+    required this.schemaVersion,
+    required this.rawWeight,
+    required this.normScale,
+    required this.effectiveWeight,
+    this.runtimeTarget,
+    this.traceId,
+    this.payloadDigest,
+  });
+
+  final String summaryId;
+  final String siteId;
+  final int sampleCount;
+  final int payloadBytes;
+  final int vectorLength;
+  final double updateNorm;
+  final String schemaVersion;
+  final String? runtimeTarget;
+  final String? traceId;
+  final String? payloadDigest;
+  final double rawWeight;
+  final double normScale;
+  final double effectiveWeight;
+
+  factory FederatedLearningContributionDetailModel.fromMap(
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningContributionDetailModel(
+      summaryId: data['summaryId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
+      payloadBytes: (data['payloadBytes'] as num?)?.toInt() ?? 0,
+      vectorLength: (data['vectorLength'] as num?)?.toInt() ?? 0,
+      updateNorm: (data['updateNorm'] as num?)?.toDouble() ?? 0,
+      schemaVersion: data['schemaVersion'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String?,
+      traceId: data['traceId'] as String?,
+      payloadDigest: data['payloadDigest'] as String?,
+      rawWeight: (data['rawWeight'] as num?)?.toDouble() ?? 0,
+      normScale: (data['normScale'] as num?)?.toDouble() ?? 0,
+      effectiveWeight: (data['effectiveWeight'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'summaryId': summaryId,
+        'siteId': siteId,
+        'sampleCount': sampleCount,
+        'payloadBytes': payloadBytes,
+        'vectorLength': vectorLength,
+        'updateNorm': updateNorm,
+        'schemaVersion': schemaVersion,
+        'runtimeTarget': runtimeTarget,
+        'traceId': traceId,
+        'payloadDigest': payloadDigest,
+        'rawWeight': rawWeight,
+        'normScale': normScale,
+        'effectiveWeight': effectiveWeight,
+      };
 }
 
 @immutable

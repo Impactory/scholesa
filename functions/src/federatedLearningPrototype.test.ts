@@ -14,6 +14,7 @@ import {
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
   FEDERATED_LEARNING_MERGE_STRATEGY,
+  buildFederatedLearningContributionDetails,
   buildFederatedLearningMergeWeightSummary,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
@@ -197,6 +198,8 @@ describe('federated learning prototype helpers', () => {
         updateNorm: 1.5,
         schemaVersion: 'v1',
         runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-1',
+        payloadDigest: 'sha256:update-1',
       },
       {
         id: 'sum-2',
@@ -208,6 +211,8 @@ describe('federated learning prototype helpers', () => {
         updateNorm: 1.2,
         schemaVersion: 'v1',
         runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-2',
+        payloadDigest: 'sha256:update-2',
       },
       {
         id: 'sum-3',
@@ -263,7 +268,67 @@ describe('federated learning prototype helpers', () => {
       effectiveTotalWeight: 18,
     });
 
-    expect(buildFederatedLearningMergeArtifactSummary('sum-2', selection!, mergedRuntimeVector, mergeWeights)).toEqual({
+    const contributionDetails = buildFederatedLearningContributionDetails([
+      {
+        id: 'sum-1',
+        siteId: 'site-1',
+        sampleCount: 10,
+        payloadBytes: 1024,
+        vectorLength: 3,
+        updateNorm: 1.5,
+        schemaVersion: 'v1',
+        runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-1',
+        payloadDigest: 'sha256:update-1',
+      },
+      {
+        id: 'sum-2',
+        siteId: 'site-2',
+        sampleCount: 8,
+        payloadBytes: 768,
+        vectorLength: 3,
+        updateNorm: 1.2,
+        schemaVersion: 'v1',
+        runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-2',
+        payloadDigest: 'sha256:update-2',
+      },
+    ], mergeWeights.normCap);
+
+    expect(contributionDetails).toEqual([
+      {
+        summaryId: 'sum-1',
+        siteId: 'site-1',
+        sampleCount: 10,
+        payloadBytes: 1024,
+        vectorLength: 3,
+        updateNorm: 1.5,
+        schemaVersion: 'v1',
+        runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-1',
+        payloadDigest: 'sha256:update-1',
+        rawWeight: 10,
+        normScale: 1,
+        effectiveWeight: 10,
+      },
+      {
+        summaryId: 'sum-2',
+        siteId: 'site-2',
+        sampleCount: 8,
+        payloadBytes: 768,
+        vectorLength: 3,
+        updateNorm: 1.2,
+        schemaVersion: 'v1',
+        runtimeTarget: 'flutter_mobile',
+        traceId: 'trace-2',
+        payloadDigest: 'sha256:update-2',
+        rawWeight: 8,
+        normScale: 1,
+        effectiveWeight: 8,
+      },
+    ]);
+
+    expect(buildFederatedLearningMergeArtifactSummary('sum-2', selection!, mergedRuntimeVector, mergeWeights, contributionDetails)).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
       effectiveTotalWeight: 18,
@@ -284,12 +349,19 @@ describe('federated learning prototype helpers', () => {
       totalPayloadBytes: 1792,
       averageUpdateNorm: 1.35,
       boundedDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      contributionDetails,
     });
 
     expect(buildFederatedLearningCandidateModelPackageSummary(
       'fl_agg_1cb85e2396ee2ed67818ed78',
       'fl_merge_1cb85e2396ee2ed67818ed78',
-      buildFederatedLearningMergeArtifactSummary('sum-2', selection!, mergedRuntimeVector, mergeWeights),
+      buildFederatedLearningMergeArtifactSummary(
+        'sum-2',
+        selection!,
+        mergedRuntimeVector,
+        mergeWeights,
+        contributionDetails,
+      ),
     )).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
@@ -313,6 +385,7 @@ describe('federated learning prototype helpers', () => {
       maxVectorLength: 3,
       totalPayloadBytes: 1792,
       averageUpdateNorm: 1.35,
+      contributionDetails,
     });
   });
 
