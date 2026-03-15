@@ -1889,6 +1889,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final double? effectiveTotalWeight = artifact?.effectiveTotalWeight ??
       candidatePackage?.effectiveTotalWeight ??
       run.effectiveTotalWeight;
+    final List<String> contributingSiteIds = artifact?.contributingSiteIds ??
+      candidatePackage?.contributingSiteIds ??
+      run.contributingSiteIds;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -1975,6 +1978,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(context, 'Package format: $packageFormat'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (contributingSiteIds.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Contributor sites: ${_formatSiteList(contributingSiteIds)}',
+              ),
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
@@ -2217,6 +2233,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               _tHqFeatureFlags(
                 context,
                 'Norm cap: ${_formatMergeMetric(package.normCap)} · Effective weight: ${_formatMergeMetric(package.effectiveTotalWeight)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.contributingSiteIds.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Contributor sites: ${_formatSiteList(package.contributingSiteIds)}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -3010,6 +3039,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Norm cap: ${_formatMergeMetric(package.normCap)} · Effective weight: ${_formatMergeMetric(package.effectiveTotalWeight)}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (package.contributingSiteIds.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Contributor sites: ${_formatSiteList(package.contributingSiteIds)}',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -5315,6 +5357,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return value.toStringAsFixed(0);
     }
     return value.toStringAsFixed(3);
+  }
+
+  String _formatSiteList(List<String> siteIds) {
+    if (siteIds.isEmpty) return _tHqFeatureFlags(context, 'none');
+    return siteIds.join(', ');
   }
 
   String _summarizeRuntimeDeliveryLifecycle(

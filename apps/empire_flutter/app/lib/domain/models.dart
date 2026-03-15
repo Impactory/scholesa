@@ -3071,6 +3071,7 @@ class FederatedLearningAggregationRunModel {
     required this.summaryIds,
     required this.summaryCount,
     required this.distinctSiteCount,
+    required this.contributingSiteIds,
     required this.totalSampleCount,
     required this.maxVectorLength,
     required this.totalPayloadBytes,
@@ -3104,6 +3105,7 @@ class FederatedLearningAggregationRunModel {
   final List<String> summaryIds;
   final int summaryCount;
   final int distinctSiteCount;
+  final List<String> contributingSiteIds;
   final int totalSampleCount;
   final int maxVectorLength;
   final int totalPayloadBytes;
@@ -3152,6 +3154,7 @@ class FederatedLearningAggregationRunModel {
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
       distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      contributingSiteIds: _stringListOrEmpty(data['contributingSiteIds']),
       totalSampleCount: (data['totalSampleCount'] as num?)?.toInt() ?? 0,
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
@@ -3186,6 +3189,7 @@ class FederatedLearningAggregationRunModel {
         'summaryIds': summaryIds,
         'summaryCount': summaryCount,
         'distinctSiteCount': distinctSiteCount,
+        'contributingSiteIds': contributingSiteIds,
         'totalSampleCount': totalSampleCount,
         'maxVectorLength': maxVectorLength,
         'totalPayloadBytes': totalPayloadBytes,
@@ -3217,6 +3221,7 @@ class FederatedLearningMergeArtifactModel {
     required this.sampleCount,
     required this.summaryCount,
     required this.distinctSiteCount,
+    required this.contributingSiteIds,
     required this.schemaVersions,
     required this.runtimeTargets,
     required this.maxVectorLength,
@@ -3243,6 +3248,7 @@ class FederatedLearningMergeArtifactModel {
   final int sampleCount;
   final int summaryCount;
   final int distinctSiteCount;
+  final List<String> contributingSiteIds;
   final List<String> schemaVersions;
   final List<String> runtimeTargets;
   final int maxVectorLength;
@@ -3283,6 +3289,7 @@ class FederatedLearningMergeArtifactModel {
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
       distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      contributingSiteIds: _stringListOrEmpty(data['contributingSiteIds']),
       schemaVersions: _stringListOrEmpty(data['schemaVersions']),
       runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
@@ -3310,6 +3317,7 @@ class FederatedLearningMergeArtifactModel {
         'sampleCount': sampleCount,
         'summaryCount': summaryCount,
         'distinctSiteCount': distinctSiteCount,
+        'contributingSiteIds': contributingSiteIds,
         'schemaVersions': schemaVersions,
         'runtimeTargets': runtimeTargets,
         'maxVectorLength': maxVectorLength,
@@ -3354,6 +3362,7 @@ class FederatedLearningCandidateModelPackageModel {
     required this.sampleCount,
     required this.summaryCount,
     required this.distinctSiteCount,
+    required this.contributingSiteIds,
     required this.schemaVersions,
     required this.runtimeTargets,
     required this.maxVectorLength,
@@ -3394,6 +3403,7 @@ class FederatedLearningCandidateModelPackageModel {
   final int sampleCount;
   final int summaryCount;
   final int distinctSiteCount;
+  final List<String> contributingSiteIds;
   final List<String> schemaVersions;
   final List<String> runtimeTargets;
   final int maxVectorLength;
@@ -3453,6 +3463,7 @@ class FederatedLearningCandidateModelPackageModel {
       sampleCount: (data['sampleCount'] as num?)?.toInt() ?? 0,
       summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
       distinctSiteCount: (data['distinctSiteCount'] as num?)?.toInt() ?? 0,
+      contributingSiteIds: _stringListOrEmpty(data['contributingSiteIds']),
       schemaVersions: _stringListOrEmpty(data['schemaVersions']),
       runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
@@ -3494,6 +3505,7 @@ class FederatedLearningCandidateModelPackageModel {
         'sampleCount': sampleCount,
         'summaryCount': summaryCount,
         'distinctSiteCount': distinctSiteCount,
+        'contributingSiteIds': contributingSiteIds,
         'schemaVersions': schemaVersions,
         'runtimeTargets': runtimeTargets,
         'maxVectorLength': maxVectorLength,

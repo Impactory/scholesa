@@ -1565,6 +1565,7 @@ Map<String, dynamic> _aggregationRunRow({
   String boundedDigest = 'sha256:digest-1',
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
   DateTime? createdAt,
 }) {
   return <String, dynamic>{
@@ -1593,6 +1594,7 @@ Map<String, dynamic> _aggregationRunRow({
     'summaryIds': <String>['update-1', 'update-2'],
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
+    'contributingSiteIds': contributingSiteIds,
     'totalSampleCount': totalSampleCount,
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
@@ -1616,6 +1618,7 @@ Map<String, dynamic> _candidatePackageRow({
   int distinctSiteCount = 2,
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1649,6 +1652,7 @@ Map<String, dynamic> _candidatePackageRow({
     'sampleCount': sampleCount,
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
+    'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'maxVectorLength': 128,
@@ -2022,6 +2026,7 @@ Map<String, dynamic> _mergeArtifactRow({
   String boundedDigest = 'sha256:digest-1',
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
   return <String, dynamic>{
     'id': id,
@@ -2041,6 +2046,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'sampleCount': 24,
     'summaryCount': 2,
     'distinctSiteCount': 2,
+    'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'maxVectorLength': 128,
@@ -3567,6 +3573,7 @@ void main() {
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
+    expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
     expect(find.text('Package: fl_pkg_1'), findsWidgets);
@@ -3656,6 +3663,7 @@ void main() {
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
+    expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
         findsOneWidget);
     expect(
@@ -3799,6 +3807,7 @@ void main() {
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
+    expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
       findsOneWidget,

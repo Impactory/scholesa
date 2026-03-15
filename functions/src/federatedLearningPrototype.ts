@@ -63,6 +63,7 @@ export interface FederatedLearningAggregationSelection {
   summaryIds: string[];
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   totalSampleCount: number;
   maxVectorLength: number;
   totalPayloadBytes: number;
@@ -85,6 +86,7 @@ export interface FederatedLearningMergeArtifactSummary {
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
   maxVectorLength: number;
@@ -111,6 +113,7 @@ export interface FederatedLearningCandidateModelPackageSummary {
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
   maxVectorLength: number;
@@ -589,6 +592,7 @@ export function selectFederatedLearningAggregationBatch(
     summaryIds: selected.map((candidate) => candidate.id),
     summaryCount: selected.length,
     distinctSiteCount: siteIds.size,
+    contributingSiteIds: Array.from(siteIds).sort(),
     totalSampleCount,
     maxVectorLength,
     totalPayloadBytes,
@@ -683,6 +687,7 @@ export function buildFederatedLearningMergeArtifactSummary(
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
+      contributingSiteIds: selection.contributingSiteIds,
       maxVectorLength: selection.maxVectorLength,
       payloadFormat,
       modelVersion,
@@ -704,6 +709,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     sampleCount: selection.totalSampleCount,
     summaryCount: selection.summaryCount,
     distinctSiteCount: selection.distinctSiteCount,
+    contributingSiteIds: selection.contributingSiteIds,
     schemaVersions: selection.schemaVersions,
     runtimeTargets: selection.runtimeTargets,
     maxVectorLength: selection.maxVectorLength,
@@ -740,6 +746,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       sampleCount: artifactSummary.sampleCount,
       summaryCount: artifactSummary.summaryCount,
       distinctSiteCount: artifactSummary.distinctSiteCount,
+      contributingSiteIds: artifactSummary.contributingSiteIds,
       schemaVersions: artifactSummary.schemaVersions,
       runtimeTargets: artifactSummary.runtimeTargets,
       maxVectorLength: artifactSummary.maxVectorLength,
@@ -763,6 +770,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     sampleCount: artifactSummary.sampleCount,
     summaryCount: artifactSummary.summaryCount,
     distinctSiteCount: artifactSummary.distinctSiteCount,
+    contributingSiteIds: artifactSummary.contributingSiteIds,
     schemaVersions: artifactSummary.schemaVersions,
     runtimeTargets: artifactSummary.runtimeTargets,
     maxVectorLength: artifactSummary.maxVectorLength,

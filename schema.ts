@@ -295,6 +295,7 @@ export interface FederatedLearningAggregationRun {
   summaryIds: string[];
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   totalSampleCount: number;
   maxVectorLength: number;
   totalPayloadBytes: number;
@@ -323,6 +324,7 @@ export interface FederatedLearningMergeArtifact {
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
   maxVectorLength: number;
@@ -364,6 +366,7 @@ export interface FederatedLearningCandidateModelPackage {
   sampleCount: number;
   summaryCount: number;
   distinctSiteCount: number;
+  contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
   maxVectorLength: number;
