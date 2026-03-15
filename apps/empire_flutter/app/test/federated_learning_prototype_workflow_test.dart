@@ -1668,6 +1668,10 @@ Map<String, dynamic> _aggregationRunRow({
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  double rawTotalWeight = 24,
+  int dampedSummaryCount = 1,
+  double minUpdateNorm = 1.1,
+  double maxUpdateNorm = 2.8,
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
   List<String> optimizerStrategies = const <String>[
     'bounded_runtime_vector_local_finetune_v1',
@@ -1697,6 +1701,10 @@ Map<String, dynamic> _aggregationRunRow({
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
+    'rawTotalWeight': rawTotalWeight,
+    'dampedSummaryCount': dampedSummaryCount,
+    'minUpdateNorm': minUpdateNorm,
+    'maxUpdateNorm': maxUpdateNorm,
     'boundedDigest': boundedDigest,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
@@ -1732,6 +1740,10 @@ Map<String, dynamic> _candidatePackageRow({
   int distinctSiteCount = 2,
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  double rawTotalWeight = 24,
+  int dampedSummaryCount = 1,
+  double minUpdateNorm = 1.1,
+  double maxUpdateNorm = 2.8,
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
@@ -1768,6 +1780,10 @@ Map<String, dynamic> _candidatePackageRow({
     'boundedDigest': boundedDigest,
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
+    'rawTotalWeight': rawTotalWeight,
+    'dampedSummaryCount': dampedSummaryCount,
+    'minUpdateNorm': minUpdateNorm,
+    'maxUpdateNorm': maxUpdateNorm,
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'runtimeVectorDigest':
@@ -2237,6 +2253,10 @@ Map<String, dynamic> _mergeArtifactRow({
   String boundedDigest = 'sha256:digest-1',
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  double rawTotalWeight = 24,
+  int dampedSummaryCount = 1,
+  double minUpdateNorm = 1.1,
+  double maxUpdateNorm = 2.8,
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
@@ -2249,6 +2269,10 @@ Map<String, dynamic> _mergeArtifactRow({
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
+    'rawTotalWeight': rawTotalWeight,
+    'dampedSummaryCount': dampedSummaryCount,
+    'minUpdateNorm': minUpdateNorm,
+    'maxUpdateNorm': maxUpdateNorm,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
     'boundedDigest': boundedDigest,
@@ -3600,6 +3624,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation observability: Observability: 1 of 2 damped · raw weight 24 · effective weight 17.600 · norm range 1.100-2.800',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest aggregation training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
       ),
       findsOneWidget,
@@ -3613,6 +3643,12 @@ void main() {
     expect(
       find.text(
         'Latest package damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package observability: Observability: 1 of 2 damped · raw weight 24 · effective weight 17.600 · norm range 1.100-2.800',
       ),
       findsOneWidget,
     );
@@ -4261,6 +4297,12 @@ void main() {
     expect(
       find.text(
         'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.text(
+        'Observability: 1 of 2 damped · raw weight 24 · effective weight 17.600 · norm range 1.100-2.800',
       ),
       findsWidgets,
     );

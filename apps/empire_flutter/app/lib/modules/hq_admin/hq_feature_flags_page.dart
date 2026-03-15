@@ -234,6 +234,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Damping: $dampedSummaryCount of $summaryCount summaries scaled · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveWeight)}';
   }
 
+  String _formatAggregationObservabilityRollup({
+    required int summaryCount,
+    required int? dampedSummaryCount,
+    required double? rawTotalWeight,
+    required double? effectiveTotalWeight,
+    required double? minUpdateNorm,
+    required double? maxUpdateNorm,
+  }) {
+    final int dampedCount = dampedSummaryCount ?? 0;
+    final String normRange =
+        minUpdateNorm == null && maxUpdateNorm == null
+            ? 'n/a'
+            : '${_formatMergeMetric(minUpdateNorm)}-${_formatMergeMetric(maxUpdateNorm)}';
+    return 'Observability: $dampedCount of $summaryCount damped · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveTotalWeight)} · norm range $normRange';
+  }
+
   List<FederatedLearningUpdateSummaryModel> _summaryModelsForIds(
     List<String> summaryIds,
   ) {
@@ -1398,6 +1414,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ),
                 ),
               ],
+              if (latestRun.rawTotalWeight != null ||
+                  latestRun.minUpdateNorm != null ||
+                  latestRun.maxUpdateNorm != null) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation observability: ${_formatAggregationObservabilityRollup(
+                      summaryCount: latestRun.summaryCount,
+                      dampedSummaryCount: latestRun.dampedSummaryCount,
+                      rawTotalWeight: latestRun.rawTotalWeight,
+                      effectiveTotalWeight: latestRun.effectiveTotalWeight,
+                      minUpdateNorm: latestRun.minUpdateNorm,
+                      maxUpdateNorm: latestRun.maxUpdateNorm,
+                    )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
             if (latestPackage != null) ...<Widget>[
               const SizedBox(height: 4),
@@ -1490,6 +1528,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       summaryCount: latestPackage.summaryCount,
                       effectiveTotalWeight: latestPackage.effectiveTotalWeight,
                       fallbackRawTotalWeight: latestPackage.sampleCount,
+                    )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackage.rawTotalWeight != null ||
+                  latestPackage.minUpdateNorm != null ||
+                  latestPackage.maxUpdateNorm != null) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package observability: ${_formatAggregationObservabilityRollup(
+                      summaryCount: latestPackage.summaryCount,
+                      dampedSummaryCount: latestPackage.dampedSummaryCount,
+                      rawTotalWeight: latestPackage.rawTotalWeight,
+                      effectiveTotalWeight: latestPackage.effectiveTotalWeight,
+                      minUpdateNorm: latestPackage.minUpdateNorm,
+                      maxUpdateNorm: latestPackage.maxUpdateNorm,
                     )}',
                   ),
                   style: const TextStyle(
@@ -2747,6 +2807,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         artifact?.contributionDetails ??
             candidatePackage?.contributionDetails ??
             run.contributionDetails;
+    final double? rawTotalWeight = artifact?.rawTotalWeight ??
+      candidatePackage?.rawTotalWeight ??
+      run.rawTotalWeight;
+    final int? dampedSummaryCount = artifact?.dampedSummaryCount ??
+      candidatePackage?.dampedSummaryCount ??
+      run.dampedSummaryCount;
+    final double? minUpdateNorm = artifact?.minUpdateNorm ??
+      candidatePackage?.minUpdateNorm ??
+      run.minUpdateNorm;
+    final double? maxUpdateNorm = artifact?.maxUpdateNorm ??
+      candidatePackage?.maxUpdateNorm ??
+      run.maxUpdateNorm;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -2909,6 +2981,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   summaryCount: run.summaryCount,
                   effectiveTotalWeight: effectiveTotalWeight,
                   fallbackRawTotalWeight: run.totalSampleCount,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (rawTotalWeight != null ||
+              minUpdateNorm != null ||
+              maxUpdateNorm != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatAggregationObservabilityRollup(
+                  summaryCount: run.summaryCount,
+                  dampedSummaryCount: dampedSummaryCount,
+                  rawTotalWeight: rawTotalWeight,
+                  effectiveTotalWeight: effectiveTotalWeight,
+                  minUpdateNorm: minUpdateNorm,
+                  maxUpdateNorm: maxUpdateNorm,
                 ),
               ),
               style: const TextStyle(
@@ -3270,6 +3364,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   summaryCount: package.summaryCount,
                   effectiveTotalWeight: package.effectiveTotalWeight,
                   fallbackRawTotalWeight: package.sampleCount,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.rawTotalWeight != null ||
+              package.minUpdateNorm != null ||
+              package.maxUpdateNorm != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatAggregationObservabilityRollup(
+                  summaryCount: package.summaryCount,
+                  dampedSummaryCount: package.dampedSummaryCount,
+                  rawTotalWeight: package.rawTotalWeight,
+                  effectiveTotalWeight: package.effectiveTotalWeight,
+                  minUpdateNorm: package.minUpdateNorm,
+                  maxUpdateNorm: package.maxUpdateNorm,
                 ),
               ),
               style: const TextStyle(
@@ -4293,6 +4409,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     summaryCount: package.summaryCount,
                     effectiveTotalWeight: package.effectiveTotalWeight,
                     fallbackRawTotalWeight: package.sampleCount,
+                  ),
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (package.rawTotalWeight != null ||
+                package.minUpdateNorm != null ||
+                package.maxUpdateNorm != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  _formatAggregationObservabilityRollup(
+                    summaryCount: package.summaryCount,
+                    dampedSummaryCount: package.dampedSummaryCount,
+                    rawTotalWeight: package.rawTotalWeight,
+                    effectiveTotalWeight: package.effectiveTotalWeight,
+                    minUpdateNorm: package.minUpdateNorm,
+                    maxUpdateNorm: package.maxUpdateNorm,
                   ),
                 ),
                 style: const TextStyle(

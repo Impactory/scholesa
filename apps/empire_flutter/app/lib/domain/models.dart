@@ -3172,6 +3172,10 @@ class FederatedLearningAggregationRunModel {
     this.mergeStrategy,
     this.normCap,
     this.effectiveTotalWeight,
+    this.rawTotalWeight,
+    this.dampedSummaryCount,
+    this.minUpdateNorm,
+    this.maxUpdateNorm,
     this.boundedDigest,
     this.payloadFormat,
     this.modelVersion,
@@ -3211,6 +3215,10 @@ class FederatedLearningAggregationRunModel {
   final String? mergeStrategy;
   final double? normCap;
   final double? effectiveTotalWeight;
+  final double? rawTotalWeight;
+  final int? dampedSummaryCount;
+  final double? minUpdateNorm;
+  final double? maxUpdateNorm;
   final String? boundedDigest;
   final String? payloadFormat;
   final String? modelVersion;
@@ -3265,6 +3273,10 @@ class FederatedLearningAggregationRunModel {
       mergeStrategy: data['mergeStrategy'] as String?,
       normCap: (data['normCap'] as num?)?.toDouble(),
       effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
+      rawTotalWeight: (data['rawTotalWeight'] as num?)?.toDouble(),
+      dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
+      minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
+      maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3306,6 +3318,10 @@ class FederatedLearningAggregationRunModel {
         'mergeStrategy': mergeStrategy,
         'normCap': normCap,
         'effectiveTotalWeight': effectiveTotalWeight,
+        'rawTotalWeight': rawTotalWeight,
+        'dampedSummaryCount': dampedSummaryCount,
+        'minUpdateNorm': minUpdateNorm,
+        'maxUpdateNorm': maxUpdateNorm,
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3346,6 +3362,10 @@ class FederatedLearningMergeArtifactModel {
     required this.mergeStrategy,
     required this.normCap,
     required this.effectiveTotalWeight,
+    required this.rawTotalWeight,
+    required this.dampedSummaryCount,
+    required this.minUpdateNorm,
+    required this.maxUpdateNorm,
     required this.triggerSummaryId,
     required this.summaryIds,
     required this.boundedDigest,
@@ -3380,6 +3400,10 @@ class FederatedLearningMergeArtifactModel {
   final String mergeStrategy;
   final double normCap;
   final double effectiveTotalWeight;
+  final double rawTotalWeight;
+  final int dampedSummaryCount;
+  final double minUpdateNorm;
+  final double maxUpdateNorm;
   final String triggerSummaryId;
   final List<String> summaryIds;
   final String boundedDigest;
@@ -3428,6 +3452,10 @@ class FederatedLearningMergeArtifactModel {
       normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
       effectiveTotalWeight:
           (data['effectiveTotalWeight'] as num?)?.toDouble() ?? 0,
+        rawTotalWeight: (data['rawTotalWeight'] as num?)?.toDouble() ?? 0,
+        dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt() ?? 0,
+        minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble() ?? 0,
+        maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble() ?? 0,
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
@@ -3464,6 +3492,10 @@ class FederatedLearningMergeArtifactModel {
         'mergeStrategy': mergeStrategy,
         'normCap': normCap,
         'effectiveTotalWeight': effectiveTotalWeight,
+        'rawTotalWeight': rawTotalWeight,
+        'dampedSummaryCount': dampedSummaryCount,
+        'minUpdateNorm': minUpdateNorm,
+        'maxUpdateNorm': maxUpdateNorm,
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'boundedDigest': boundedDigest,
@@ -3524,6 +3556,10 @@ class FederatedLearningCandidateModelPackageModel {
     required this.boundedDigest,
     this.normCap,
     this.effectiveTotalWeight,
+    this.rawTotalWeight,
+    this.dampedSummaryCount,
+    this.minUpdateNorm,
+    this.maxUpdateNorm,
     required this.runtimeVectorLength,
     required this.runtimeVector,
     required this.runtimeVectorDigest,
@@ -3572,6 +3608,10 @@ class FederatedLearningCandidateModelPackageModel {
   final String boundedDigest;
   final double? normCap;
   final double? effectiveTotalWeight;
+  final double? rawTotalWeight;
+  final int? dampedSummaryCount;
+  final double? minUpdateNorm;
+  final double? maxUpdateNorm;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
   final String runtimeVectorDigest;
@@ -3639,6 +3679,10 @@ class FederatedLearningCandidateModelPackageModel {
       boundedDigest: data['boundedDigest'] as String? ?? '',
       normCap: (data['normCap'] as num?)?.toDouble(),
       effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
+      rawTotalWeight: (data['rawTotalWeight'] as num?)?.toDouble(),
+      dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
+      minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
+      maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
@@ -3689,6 +3733,10 @@ class FederatedLearningCandidateModelPackageModel {
         'boundedDigest': boundedDigest,
         'normCap': normCap,
         'effectiveTotalWeight': effectiveTotalWeight,
+        'rawTotalWeight': rawTotalWeight,
+        'dampedSummaryCount': dampedSummaryCount,
+        'minUpdateNorm': minUpdateNorm,
+        'maxUpdateNorm': maxUpdateNorm,
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,
