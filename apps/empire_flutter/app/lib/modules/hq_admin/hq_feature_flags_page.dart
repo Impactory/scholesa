@@ -293,6 +293,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Local training rollup: $optimizerLabel · ${summaries.length} summaries · epochs $totalEpochs · steps $totalSteps · window ${totalWindowSeconds}s · warm start $warmStartLabel';
   }
 
+  String _formatRuntimePayloadSummary(
+    FederatedLearningCandidateModelPackageModel? package,
+  ) {
+    if (package == null) {
+      return '';
+    }
+    return 'Runtime payload: model ${package.modelVersion} · vector ${package.runtimeVectorLength}/${package.maxVectorLength} · payload ${package.totalPayloadBytes} bytes · avg norm ${_formatMergeMetric(package.averageUpdateNorm)} · digest ${package.runtimeVectorDigest}';
+  }
+
   Future<void> _showContributionDetailsDialog({
     required String experimentLabel,
     required List<FederatedLearningContributionDetailModel> details,
@@ -882,6 +891,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String latestPackageTrainingRollup = latestPackage == null
       ? ''
       : _formatLocalTrainingRollup(latestPackage.summaryIds);
+    final String latestPackagePayloadSummary =
+        _formatRuntimePayloadSummary(latestPackage);
     final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
         ? ''
         : _summarizeRuntimeDeliveryLifecycle(latestRuntimeDelivery);
@@ -1254,6 +1265,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _tHqFeatureFlags(
                     context,
                     'Latest package merge: ${latestPackage.mergeStrategy} · norm cap ${_formatMergeMetric(latestPackage.normCap)} · effective weight ${_formatMergeMetric(latestPackage.effectiveTotalWeight)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackagePayloadSummary.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package payload: $latestPackagePayloadSummary',
                   ),
                   style: const TextStyle(
                     fontSize: 12,
