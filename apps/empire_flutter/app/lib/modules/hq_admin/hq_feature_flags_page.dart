@@ -2933,6 +2933,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String mergeStrategy = (package.mergeStrategy ?? '').trim();
     final String localTrainingRollup =
       _formatLocalTrainingRollup(package.summaryIds);
+    final String runtimePayloadSummary =
+      _formatRuntimePayloadSummary(package);
     final bool isApproved = effectiveStatus == 'approved_for_eval';
     final bool isHold = effectiveStatus == 'hold';
 
@@ -2974,6 +2976,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (runtimePayloadSummary.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, runtimePayloadSummary),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           if (mergeStrategy.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -3889,6 +3901,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _effectivePromotionTarget(record, revocation);
     final String localTrainingRollup =
       _formatLocalTrainingRollup(package?.summaryIds ?? const <String>[]);
+    final String runtimePayloadSummary =
+      _formatRuntimePayloadSummary(package);
     final bool isRevoked = revocation != null;
 
     return Container(
@@ -4155,6 +4169,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   context,
                   'Revocation digests: package ${revocation.packageDigest} · bounded ${revocation.boundedDigest}',
                 ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (runtimePayloadSummary.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(context, runtimePayloadSummary),
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
@@ -5230,6 +5254,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 : package?.summaryIds ?? const <String>[];
                             final String localTrainingRollup =
                               _formatLocalTrainingRollup(summaryIds);
+                            final String runtimePayloadSummary =
+                              _formatRuntimePayloadSummary(package);
                             final List<FederatedLearningContributionDetailModel>
                               contributionDetails =
                               package?.contributionDetails ??
@@ -5279,6 +5305,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       _tHqFeatureFlags(
                                         dialogContext,
                                         'Delivery digests: package $packageDigest · bounded $boundedDigest',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (runtimePayloadSummary.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        runtimePayloadSummary,
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,

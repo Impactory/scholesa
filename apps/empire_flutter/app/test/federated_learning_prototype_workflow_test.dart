@@ -3351,6 +3351,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest package payload: Runtime payload: model fl_runtime_model_v1 · vector 8/128 · payload 1792 bytes · avg norm 1.350 · digest sha256:runtime-digest-1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest aggregation damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
       ),
       findsOneWidget,
@@ -3783,6 +3789,12 @@ void main() {
     );
     expect(
       find.text(
+        'Runtime payload: model fl_runtime_model_v1 · vector 8/128 · payload 1792 bytes · avg norm 1.350 · digest sha256:runtime-digest-1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
       ),
       findsOneWidget,
@@ -3988,6 +4000,12 @@ void main() {
     expect(
       find.text('Package format: runtime_vector_v1'),
       findsWidgets,
+    );
+    expect(
+      find.text(
+        'Runtime payload: model fl_runtime_model_v1 · vector 8/128 · payload 1792 bytes · avg norm 1.350 · digest sha256:runtime-digest-1',
+      ),
+      findsOneWidget,
     );
     expect(find.text('Showing 1-2 of 3'), findsOneWidget);
 
@@ -4294,6 +4312,12 @@ void main() {
     expect(
       find.text(
           'Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Runtime payload: model fl_runtime_model_v1 · vector 8/128 · payload 1792 bytes · avg norm 1.350 · digest sha256:runtime-digest-1',
+      ),
       findsOneWidget,
     );
     expect(
