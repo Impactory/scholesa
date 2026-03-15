@@ -343,6 +343,40 @@ function getRuntimeDeliveryTerminalLifecycleStatus(
   return null;
 }
 
+type RuntimeDeliveryLineageSnapshot = {
+  runtimeTarget: string;
+  targetSiteIds: string[];
+  packageDigest: string;
+  boundedDigest: string;
+  triggerSummaryId: string;
+  summaryIds: string[];
+  schemaVersions: string[];
+  optimizerStrategies: string[];
+  compatibilityKey: string;
+  warmStartPackageId: string;
+  warmStartModelVersion: string;
+  manifestDigest: string;
+};
+
+function buildRuntimeDeliveryLineageSnapshot(
+  deliveryData: Record<string, unknown>,
+): RuntimeDeliveryLineageSnapshot {
+  return {
+    runtimeTarget: normalizeFederatedLearningRuntimeTarget(deliveryData.runtimeTarget) || 'flutter_mobile',
+    targetSiteIds: toStringArray(deliveryData.targetSiteIds),
+    packageDigest: asTrimmedString(deliveryData.packageDigest),
+    boundedDigest: asTrimmedString(deliveryData.boundedDigest),
+    triggerSummaryId: asTrimmedString(deliveryData.triggerSummaryId),
+    summaryIds: toStringArray(deliveryData.summaryIds),
+    schemaVersions: toStringArray(deliveryData.schemaVersions),
+    optimizerStrategies: toStringArray(deliveryData.optimizerStrategies),
+    compatibilityKey: asTrimmedString(deliveryData.compatibilityKey),
+    warmStartPackageId: asTrimmedString(deliveryData.warmStartPackageId),
+    warmStartModelVersion: asTrimmedString(deliveryData.warmStartModelVersion),
+    manifestDigest: asTrimmedString(deliveryData.manifestDigest),
+  };
+}
+
 function normalizeInvoiceStatus(value: unknown): 'paid' | 'pending' | 'overdue' {
   const normalized = asTrimmedString(value).toLowerCase();
   if (normalized === 'approved' || normalized === 'paid' || normalized === 'completed') return 'paid';
@@ -3280,10 +3314,15 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
   const experimentId = asTrimmedString(packageData.experimentId);
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
+  const schemaVersions = toStringArray(packageData.schemaVersions);
   const packageDigest = asTrimmedString(packageData.packageDigest);
   const boundedDigest = asTrimmedString(packageData.boundedDigest);
   const triggerSummaryId = asTrimmedString(packageData.triggerSummaryId);
   const summaryIds = toStringArray(packageData.summaryIds);
+  const optimizerStrategies = toStringArray(packageData.optimizerStrategies);
+  const compatibilityKey = asTrimmedString(packageData.compatibilityKey);
+  const warmStartPackageId = asTrimmedString(packageData.warmStartPackageId);
+  const warmStartModelVersion = asTrimmedString(packageData.warmStartModelVersion);
   const executionId = buildFederatedLearningPilotExecutionRecordDocId(candidateModelPackageId);
   const deliveryId = buildFederatedLearningRuntimeDeliveryRecordDocId(candidateModelPackageId);
   const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryId);
@@ -3423,6 +3462,11 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       boundedDigest,
       triggerSummaryId,
       summaryIds,
+      schemaVersions,
+      optimizerStrategies,
+      compatibilityKey,
+      warmStartPackageId,
+      warmStartModelVersion,
       manifestDigest,
       expiresAt: effectiveExpiresAt ?? FieldValue.delete(),
       supersededAt: FieldValue.delete(),
@@ -3487,6 +3531,11 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       targetSiteIds,
       status,
       manifestDigest,
+      schemaVersions,
+      optimizerStrategies,
+      compatibilityKey,
+      warmStartPackageId,
+      warmStartModelVersion,
     },
   });
 
@@ -3558,6 +3607,15 @@ export const upsertFederatedLearningRuntimeActivationRecord = onCall(async (requ
   const experimentId = asTrimmedString(deliveryData.experimentId);
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
   const runtimeTarget = normalizeFederatedLearningRuntimeTarget(deliveryData.runtimeTarget) || 'flutter_mobile';
+  const packageDigest = asTrimmedString(deliveryData.packageDigest);
+  const boundedDigest = asTrimmedString(deliveryData.boundedDigest);
+  const triggerSummaryId = asTrimmedString(deliveryData.triggerSummaryId);
+  const summaryIds = toStringArray(deliveryData.summaryIds);
+  const schemaVersions = toStringArray(deliveryData.schemaVersions);
+  const optimizerStrategies = toStringArray(deliveryData.optimizerStrategies);
+  const compatibilityKey = asTrimmedString(deliveryData.compatibilityKey);
+  const warmStartPackageId = asTrimmedString(deliveryData.warmStartPackageId);
+  const warmStartModelVersion = asTrimmedString(deliveryData.warmStartModelVersion);
   const manifestDigest = asTrimmedString(deliveryData.manifestDigest);
 
   await activationRef.set({
@@ -3566,6 +3624,15 @@ export const upsertFederatedLearningRuntimeActivationRecord = onCall(async (requ
     candidateModelPackageId,
     siteId: targetSiteId,
     runtimeTarget,
+    packageDigest,
+    boundedDigest,
+    triggerSummaryId,
+    summaryIds,
+    schemaVersions,
+    optimizerStrategies,
+    compatibilityKey,
+    warmStartPackageId,
+    warmStartModelVersion,
     manifestDigest,
     status,
     traceId,
@@ -3588,6 +3655,15 @@ export const upsertFederatedLearningRuntimeActivationRecord = onCall(async (requ
       candidateModelPackageId,
       siteId: targetSiteId,
       runtimeTarget,
+      packageDigest,
+      boundedDigest,
+      triggerSummaryId,
+      summaryIds,
+      schemaVersions,
+      optimizerStrategies,
+      compatibilityKey,
+      warmStartPackageId,
+      warmStartModelVersion,
       status,
       manifestDigest,
     },
@@ -3627,7 +3703,8 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
   const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
   const experimentId = asTrimmedString(deliveryData.experimentId);
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
-  const targetSiteIds = toStringArray(deliveryData.targetSiteIds);
+  const lineage = buildRuntimeDeliveryLineageSnapshot(deliveryData);
+  const targetSiteIds = lineage.targetSiteIds;
   const alertId = buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryRecordId);
   const alertRef = admin.firestore().collection('federatedLearningRuntimeRolloutAlertRecords').doc(alertId);
 
@@ -3669,6 +3746,7 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
     experimentId,
     candidateModelPackageId,
     deliveryRecordId,
+    ...lineage,
     status,
     fallbackCount,
     pendingCount,
@@ -3689,6 +3767,7 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
       deliveryRecordId,
       experimentId,
       candidateModelPackageId,
+      ...lineage,
       status,
       requestedStatus,
       fallbackCount,
@@ -3738,7 +3817,8 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
   const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
   const experimentId = asTrimmedString(deliveryData.experimentId);
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
-  const targetSiteIds = toStringArray(deliveryData.targetSiteIds);
+  const lineage = buildRuntimeDeliveryLineageSnapshot(deliveryData);
+  const targetSiteIds = lineage.targetSiteIds;
   const escalationId = buildFederatedLearningRuntimeRolloutEscalationRecordDocId(deliveryRecordId);
   const escalationRef = admin.firestore().collection('federatedLearningRuntimeRolloutEscalationRecords').doc(escalationId);
   const escalationSnap = await escalationRef.get();
@@ -3799,6 +3879,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     experimentId,
     candidateModelPackageId,
     deliveryRecordId,
+    ...lineage,
     status,
     fallbackCount,
     pendingCount,
@@ -3817,6 +3898,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     experimentId,
     candidateModelPackageId,
     deliveryRecordId,
+    ...lineage,
     status,
     fallbackCount,
     pendingCount,
@@ -3840,6 +3922,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
       experimentId,
       candidateModelPackageId,
       deliveryRecordId,
+      ...lineage,
       status,
       requestedStatus,
       ownerUserId,
@@ -3898,6 +3981,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
   const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
   const experimentId = asTrimmedString(deliveryData.experimentId);
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
+  const lineage = buildRuntimeDeliveryLineageSnapshot(deliveryData);
   const controlId = buildFederatedLearningRuntimeRolloutControlRecordDocId(deliveryRecordId);
   const controlRef = admin.firestore().collection('federatedLearningRuntimeRolloutControlRecords').doc(controlId);
   const controlSnap = await controlRef.get();
@@ -3912,6 +3996,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
     experimentId,
     candidateModelPackageId,
     deliveryRecordId,
+    ...lineage,
     mode,
     ownerUserId: terminalLifecycleStatus
       ? FieldValue.delete()
@@ -3934,6 +4019,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
       experimentId,
       candidateModelPackageId,
       deliveryRecordId,
+      ...lineage,
       mode,
       requestedMode,
       ownerUserId,

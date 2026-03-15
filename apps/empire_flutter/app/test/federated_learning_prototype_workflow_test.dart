@@ -1170,6 +1170,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       ),
       'status': (data['status'] as String? ?? 'prepared').trim(),
       'packageDigest': packageRow['packageDigest'] ?? '',
+      'boundedDigest': packageRow['boundedDigest'] ?? '',
+      'triggerSummaryId': packageRow['triggerSummaryId'] ?? '',
+      'summaryIds': List<String>.from(
+        packageRow['summaryIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'schemaVersions': List<String>.from(
+        packageRow['schemaVersions'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'optimizerStrategies': List<String>.from(
+        packageRow['optimizerStrategies'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'compatibilityKey': packageRow['compatibilityKey'] ?? '',
+      'warmStartPackageId': packageRow['warmStartPackageId'] ?? '',
+      'warmStartModelVersion': packageRow['warmStartModelVersion'] ?? '',
       'manifestDigest':
           'sha256:delivery-${packageId.replaceAll('fl_pkg_', '')}',
       'expiresAt': data['expiresAt'] == null
@@ -1293,6 +1307,21 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
       'siteId': siteId,
       'runtimeTarget': deliveryRow['runtimeTarget'] ?? 'flutter_mobile',
+      'packageDigest': deliveryRow['packageDigest'] ?? '',
+      'boundedDigest': deliveryRow['boundedDigest'] ?? '',
+      'triggerSummaryId': deliveryRow['triggerSummaryId'] ?? '',
+      'summaryIds': List<String>.from(
+        deliveryRow['summaryIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'schemaVersions': List<String>.from(
+        deliveryRow['schemaVersions'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'optimizerStrategies': List<String>.from(
+        deliveryRow['optimizerStrategies'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'compatibilityKey': deliveryRow['compatibilityKey'] ?? '',
+      'warmStartPackageId': deliveryRow['warmStartPackageId'] ?? '',
+      'warmStartModelVersion': deliveryRow['warmStartModelVersion'] ?? '',
       'manifestDigest': deliveryRow['manifestDigest'] ?? '',
       'status': (data['status'] as String? ?? 'resolved').trim(),
       'traceId': (data['traceId'] as String? ?? '').trim(),
@@ -1361,11 +1390,34 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
             (fallbackCount == 0 && pendingCount == 0)
         ? 'acknowledged'
         : requestedStatus;
+    final Map<String, dynamic> lineage = _runtimeRolloutLineageFields(
+      runtimeTarget: deliveryRow['runtimeTarget'] as String? ?? '',
+      targetSiteIds: List<String>.from(
+        deliveryRow['targetSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      packageDigest: deliveryRow['packageDigest'] as String? ?? '',
+      boundedDigest: deliveryRow['boundedDigest'] as String? ?? '',
+      triggerSummaryId: deliveryRow['triggerSummaryId'] as String? ?? '',
+      summaryIds: List<String>.from(
+        deliveryRow['summaryIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      schemaVersions: List<String>.from(
+        deliveryRow['schemaVersions'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      optimizerStrategies: List<String>.from(
+        deliveryRow['optimizerStrategies'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      warmStartPackageId: deliveryRow['warmStartPackageId'] as String? ?? '',
+      warmStartModelVersion:
+          deliveryRow['warmStartModelVersion'] as String? ?? '',
+      manifestDigest: deliveryRow['manifestDigest'] as String? ?? '',
+    );
     final Map<String, dynamic> record = <String, dynamic>{
       'id': alertId,
       'experimentId': deliveryRow['experimentId'] ?? '',
       'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
       'deliveryRecordId': deliveryRecordId,
+      ...lineage,
       'status': status,
       'fallbackCount': fallbackCount,
       'pendingCount': pendingCount,
@@ -1454,11 +1506,34 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
             ? openedAt.add(Duration(hours: status == 'investigating' ? 8 : 4))
             : openedAt
                 .add(Duration(hours: status == 'investigating' ? 48 : 24)));
+    final Map<String, dynamic> lineage = _runtimeRolloutLineageFields(
+      runtimeTarget: deliveryRow['runtimeTarget'] as String? ?? '',
+      targetSiteIds: List<String>.from(
+        deliveryRow['targetSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      packageDigest: deliveryRow['packageDigest'] as String? ?? '',
+      boundedDigest: deliveryRow['boundedDigest'] as String? ?? '',
+      triggerSummaryId: deliveryRow['triggerSummaryId'] as String? ?? '',
+      summaryIds: List<String>.from(
+        deliveryRow['summaryIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      schemaVersions: List<String>.from(
+        deliveryRow['schemaVersions'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      optimizerStrategies: List<String>.from(
+        deliveryRow['optimizerStrategies'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      warmStartPackageId: deliveryRow['warmStartPackageId'] as String? ?? '',
+      warmStartModelVersion:
+          deliveryRow['warmStartModelVersion'] as String? ?? '',
+      manifestDigest: deliveryRow['manifestDigest'] as String? ?? '',
+    );
     final Map<String, dynamic> record = <String, dynamic>{
       'id': escalationId,
       'experimentId': deliveryRow['experimentId'] ?? '',
       'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
       'deliveryRecordId': deliveryRecordId,
+      ...lineage,
       'status': status,
       'fallbackCount': fallbackCount,
       'pendingCount': pendingCount,
@@ -1481,6 +1556,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'experimentId': record['experimentId'],
       'candidateModelPackageId': record['candidateModelPackageId'],
       'deliveryRecordId': deliveryRecordId,
+      ...lineage,
       'status': status,
       'fallbackCount': fallbackCount,
       'pendingCount': pendingCount,
@@ -1523,11 +1599,34 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final String requestedMode = (data['mode'] as String? ?? 'monitor').trim();
     final String mode =
         terminalLifecycleStatus.isNotEmpty ? 'monitor' : requestedMode;
+    final Map<String, dynamic> lineage = _runtimeRolloutLineageFields(
+      runtimeTarget: deliveryRow['runtimeTarget'] as String? ?? '',
+      targetSiteIds: List<String>.from(
+        deliveryRow['targetSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      packageDigest: deliveryRow['packageDigest'] as String? ?? '',
+      boundedDigest: deliveryRow['boundedDigest'] as String? ?? '',
+      triggerSummaryId: deliveryRow['triggerSummaryId'] as String? ?? '',
+      summaryIds: List<String>.from(
+        deliveryRow['summaryIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      schemaVersions: List<String>.from(
+        deliveryRow['schemaVersions'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      optimizerStrategies: List<String>.from(
+        deliveryRow['optimizerStrategies'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      warmStartPackageId: deliveryRow['warmStartPackageId'] as String? ?? '',
+      warmStartModelVersion:
+          deliveryRow['warmStartModelVersion'] as String? ?? '',
+      manifestDigest: deliveryRow['manifestDigest'] as String? ?? '',
+    );
     final Map<String, dynamic> record = <String, dynamic>{
       'id': controlId,
       'experimentId': deliveryRow['experimentId'] ?? '',
       'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
       'deliveryRecordId': deliveryRecordId,
+      ...lineage,
       'mode': mode,
       'ownerUserId': terminalLifecycleStatus.isNotEmpty
           ? null
@@ -1570,6 +1669,11 @@ Map<String, dynamic> _aggregationRunRow({
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
+  List<String> optimizerStrategies = const <String>[
+    'bounded_runtime_vector_local_finetune_v1',
+  ],
+  String warmStartPackageId = 'fl_pkg_1',
+  String warmStartModelVersion = 'fl_runtime_model_v1',
   DateTime? createdAt,
 }) {
   return <String, dynamic>{
@@ -1607,13 +1711,11 @@ Map<String, dynamic> _aggregationRunRow({
     'contributionDetails': _contributionDetailRows(),
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
-    'optimizerStrategies': <String>[
-      'bounded_runtime_vector_local_finetune_v1',
-    ],
+    'optimizerStrategies': optimizerStrategies,
     'compatibilityKey':
-        'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
-    'warmStartPackageId': 'fl_pkg_1',
-    'warmStartModelVersion': 'fl_runtime_model_v1',
+        'v1|flutter_mobile|${optimizerStrategies.join('+')}|$warmStartPackageId|$warmStartModelVersion|8',
+    'warmStartPackageId': warmStartPackageId,
+    'warmStartModelVersion': warmStartModelVersion,
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
   };
 }
@@ -1633,6 +1735,11 @@ Map<String, dynamic> _candidatePackageRow({
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
+  List<String> optimizerStrategies = const <String>[
+    'bounded_runtime_vector_local_finetune_v1',
+  ],
+  String warmStartPackageId = 'fl_pkg_1',
+  String warmStartModelVersion = 'fl_runtime_model_v1',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1672,13 +1779,11 @@ Map<String, dynamic> _candidatePackageRow({
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
-    'optimizerStrategies': <String>[
-      'bounded_runtime_vector_local_finetune_v1',
-    ],
+    'optimizerStrategies': optimizerStrategies,
     'compatibilityKey':
-        'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
-    'warmStartPackageId': 'fl_pkg_1',
-    'warmStartModelVersion': 'fl_runtime_model_v1',
+        'v1|flutter_mobile|${optimizerStrategies.join('+')}|$warmStartPackageId|$warmStartModelVersion|8',
+    'warmStartPackageId': warmStartPackageId,
+    'warmStartModelVersion': warmStartModelVersion,
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
@@ -1759,6 +1864,12 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   String boundedDigest = 'sha256:digest-1',
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
+  List<String> schemaVersions = const <String>['v1'],
+  List<String> optimizerStrategies = const <String>[
+    'bounded_runtime_vector_local_finetune_v1',
+  ],
+  String warmStartPackageId = 'fl_pkg_1',
+  String warmStartModelVersion = 'fl_runtime_model_v1',
   List<String> targetSiteIds = const <String>['site-1'],
   DateTime? expiresAt,
   DateTime? supersededAt,
@@ -1791,6 +1902,12 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'boundedDigest': boundedDigest,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
+    'schemaVersions': schemaVersions,
+    'optimizerStrategies': optimizerStrategies,
+    'compatibilityKey':
+        '${schemaVersions.join('+')}|flutter_mobile|${optimizerStrategies.join('+')}|$warmStartPackageId|$warmStartModelVersion|8',
+    'warmStartPackageId': warmStartPackageId,
+    'warmStartModelVersion': warmStartModelVersion,
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'expiresAt': expiresAt ?? DateTime(2026, 3, 21, 19),
@@ -1819,6 +1936,16 @@ Map<String, dynamic> _runtimeActivationRecordRow({
   String status = 'resolved',
   String traceId = 'activation-trace-1',
   String notes = 'Site runtime resolved the bounded manifest assignment.',
+  String packageDigest = 'sha256:pkg-1',
+  String boundedDigest = 'sha256:digest-1',
+  String triggerSummaryId = 'update-2',
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
+  List<String> schemaVersions = const <String>['v1'],
+  List<String> optimizerStrategies = const <String>[
+    'bounded_runtime_vector_local_finetune_v1',
+  ],
+  String warmStartPackageId = 'fl_pkg_1',
+  String warmStartModelVersion = 'fl_runtime_model_v1',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1827,6 +1954,16 @@ Map<String, dynamic> _runtimeActivationRecordRow({
     'candidateModelPackageId': candidateModelPackageId,
     'siteId': siteId,
     'runtimeTarget': 'flutter_mobile',
+    'packageDigest': packageDigest,
+    'boundedDigest': boundedDigest,
+    'triggerSummaryId': triggerSummaryId,
+    'summaryIds': summaryIds,
+    'schemaVersions': schemaVersions,
+    'optimizerStrategies': optimizerStrategies,
+    'compatibilityKey':
+        '${schemaVersions.join('+')}|flutter_mobile|${optimizerStrategies.join('+')}|$warmStartPackageId|$warmStartModelVersion|8',
+    'warmStartPackageId': warmStartPackageId,
+    'warmStartModelVersion': warmStartModelVersion,
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'status': status,
@@ -1836,6 +1973,38 @@ Map<String, dynamic> _runtimeActivationRecordRow({
     'reportedAt': DateTime(2026, 3, 14, 20),
     'createdAt': DateTime(2026, 3, 14, 20),
     'updatedAt': DateTime(2026, 3, 14, 20),
+  };
+}
+
+Map<String, dynamic> _runtimeRolloutLineageFields({
+  String runtimeTarget = 'flutter_mobile',
+  List<String> targetSiteIds = const <String>['site-1'],
+  String packageDigest = 'sha256:pkg-1',
+  String boundedDigest = 'sha256:digest-1',
+  String triggerSummaryId = 'update-2',
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
+  List<String> schemaVersions = const <String>['v1'],
+  List<String> optimizerStrategies = const <String>[
+    'bounded_runtime_vector_local_finetune_v1',
+  ],
+  String warmStartPackageId = 'fl_pkg_1',
+  String warmStartModelVersion = 'fl_runtime_model_v1',
+  String manifestDigest = 'sha256:delivery-1',
+}) {
+  return <String, dynamic>{
+    'runtimeTarget': runtimeTarget,
+    'targetSiteIds': targetSiteIds,
+    'packageDigest': packageDigest,
+    'boundedDigest': boundedDigest,
+    'triggerSummaryId': triggerSummaryId,
+    'summaryIds': summaryIds,
+    'schemaVersions': schemaVersions,
+    'optimizerStrategies': optimizerStrategies,
+    'compatibilityKey':
+        '${schemaVersions.join('+')}|$runtimeTarget|${optimizerStrategies.join('+')}|$warmStartPackageId|$warmStartModelVersion|8',
+    'warmStartPackageId': warmStartPackageId,
+    'warmStartModelVersion': warmStartModelVersion,
+    'manifestDigest': manifestDigest,
   };
 }
 
@@ -1858,6 +2027,7 @@ Map<String, dynamic> _runtimeRolloutAlertRecordRow({
     'experimentId': experimentId,
     'candidateModelPackageId': candidateModelPackageId,
     'deliveryRecordId': deliveryRecordId,
+    ..._runtimeRolloutLineageFields(),
     'status': status,
     'fallbackCount': fallbackCount,
     'pendingCount': pendingCount,
@@ -1891,6 +2061,7 @@ Map<String, dynamic> _runtimeRolloutEscalationRecordRow({
     'experimentId': experimentId,
     'candidateModelPackageId': candidateModelPackageId,
     'deliveryRecordId': deliveryRecordId,
+    ..._runtimeRolloutLineageFields(),
     'status': status,
     'fallbackCount': fallbackCount,
     'pendingCount': pendingCount,
@@ -1927,6 +2098,7 @@ Map<String, dynamic> _runtimeRolloutEscalationHistoryRecordRow({
     'experimentId': experimentId,
     'candidateModelPackageId': candidateModelPackageId,
     'deliveryRecordId': deliveryRecordId,
+    ..._runtimeRolloutLineageFields(),
     'status': status,
     'fallbackCount': fallbackCount,
     'pendingCount': pendingCount,
@@ -1958,6 +2130,7 @@ Map<String, dynamic> _runtimeRolloutControlRecordRow({
     'experimentId': experimentId,
     'candidateModelPackageId': candidateModelPackageId,
     'deliveryRecordId': deliveryRecordId,
+    ..._runtimeRolloutLineageFields(),
     'mode': mode,
     'ownerUserId': ownerUserId,
     'reason': reason,
@@ -1990,6 +2163,7 @@ Map<String, dynamic> _runtimeRolloutAuditEventRow({
           'experimentId': 'fl_exp_literacy_pilot',
           'candidateModelPackageId': 'fl_pkg_1',
           'deliveryRecordId': 'fl_delivery_1',
+          ..._runtimeRolloutLineageFields(),
           'status': 'acknowledged',
           'fallbackCount': 1,
           'pendingCount': 0,
@@ -2878,8 +3052,14 @@ void main() {
     expect(escalation['openedAt'], isNull);
     expect(escalation['dueAt'], isNull);
     expect(escalation['resolvedBy'], 'hq-1');
+    expect(escalation['boundedDigest'], 'sha256:digest-1');
+    expect(escalation['compatibilityKey'], contains('flutter_mobile'));
     expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'],
         'resolved');
+    expect(
+      bridge._runtimeRolloutEscalationHistoryRecords.first['boundedDigest'],
+      'sha256:digest-1',
+    );
   });
 
   test('runtime rollout escalation cannot remain resolved while issue is live',
@@ -2958,6 +3138,7 @@ void main() {
     expect(control['reason'], isNull);
     expect(control['releasedBy'], 'hq-1');
     expect(control['releasedAt'], isNotNull);
+    expect(control['boundedDigest'], 'sha256:digest-1');
   });
 
   test('runtime rollout alert auto-acknowledges when issue clears', () async {
@@ -2989,6 +3170,7 @@ void main() {
     expect(alert['pendingCount'], 0);
     expect(alert['acknowledgedBy'], 'hq-1');
     expect(alert['acknowledgedAt'], isNotNull);
+    expect(alert['boundedDigest'], 'sha256:digest-1');
   });
 
   test('runtime rollout alert auto-acknowledges for terminal delivery',
@@ -3022,6 +3204,7 @@ void main() {
     expect(alert['fallbackCount'], 0);
     expect(alert['pendingCount'], 1);
     expect(alert['acknowledgedBy'], 'hq-1');
+    expect(alert['compatibilityKey'], contains('flutter_mobile'));
   });
 
   test('runtime activation reporter records bounded site evidence', () async {
@@ -3068,6 +3251,20 @@ void main() {
     );
     expect(bridge.recordedRuntimeActivationSaves.single['status'], 'staged');
     expect(bridge.recordedRuntimeActivationSaves.single['siteId'], 'site-1');
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['compatibilityKey'],
+      'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+    );
+    final FederatedLearningRuntimeActivationRecordModel savedActivation =
+        FederatedLearningRuntimeActivationRecordModel.fromMap(
+      'saved',
+      Map<String, dynamic>.from(bridge.recordedRuntimeActivationSaves.single),
+    );
+    expect(savedActivation.packageDigest, 'sha256:pkg-1');
+    expect(savedActivation.boundedDigest, 'sha256:digest-1');
+    expect(savedActivation.triggerSummaryId, 'update-2');
+    expect(savedActivation.summaryIds, <String>['update-1', 'update-2']);
+    expect(savedActivation.warmStartModelVersion, 'fl_runtime_model_v1');
   });
 
   test('runtime adapter uploads bounded BOS summaries on real triggers',
@@ -3120,7 +3317,16 @@ void main() {
         bridge.recordedUpdates.single['schemaVersion'], 'fl-prototype-bos-v1');
     expect(
       bridge.recordedUpdates.single['vectorSketch'],
-      <double>[0.652188, 0.446375, 0.660875, 0.10725, 0.053625, 0.553625, 0.39275, 0.200719],
+      <double>[
+        0.652188,
+        0.446375,
+        0.660875,
+        0.10725,
+        0.053625,
+        0.553625,
+        0.39275,
+        0.200719
+      ],
     );
     expect(
       bridge.recordedUpdates.single['optimizerStrategy'],
@@ -3163,6 +3369,9 @@ void main() {
           triggerSummaryId: 'update-4',
           summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
+          optimizerStrategies: const <String>['bounded_runtime_vector_adam_v2'],
+          warmStartPackageId: 'fl_pkg_seed_2',
+          warmStartModelVersion: 'fl_runtime_model_v2',
           createdAt: DateTime(2026, 3, 13, 12),
         ),
         _aggregationRunRow(
@@ -3174,6 +3383,9 @@ void main() {
           boundedDigest: 'sha256:digest-3',
           triggerSummaryId: 'update-5',
           summaryIds: <String>['update-5'],
+          optimizerStrategies: const <String>['bounded_runtime_vector_sgd_v3'],
+          warmStartPackageId: 'fl_pkg_seed_3',
+          warmStartModelVersion: 'fl_runtime_model_v3',
           createdAt: DateTime(2026, 3, 12, 12),
         ),
       ],
@@ -3199,6 +3411,9 @@ void main() {
           triggerSummaryId: 'update-4',
           summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
+          optimizerStrategies: const <String>['bounded_runtime_vector_adam_v2'],
+          warmStartPackageId: 'fl_pkg_seed_2',
+          warmStartModelVersion: 'fl_runtime_model_v2',
         ),
       ],
       pilotEvidenceRecords: <Map<String, dynamic>>[
@@ -3221,6 +3436,9 @@ void main() {
           boundedDigest: 'sha256:digest-2',
           triggerSummaryId: 'update-4',
           summaryIds: const <String>['update-3', 'update-4'],
+          optimizerStrategies: const <String>['bounded_runtime_vector_adam_v2'],
+          warmStartPackageId: 'fl_pkg_seed_2',
+          warmStartModelVersion: 'fl_runtime_model_v2',
           targetSiteIds: const <String>['site-3'],
           revokedAt: DateTime(2026, 3, 13, 20),
           revokedBy: 'hq-2',
@@ -3455,6 +3673,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('site-1 · resolved · flutter_mobile'), findsOneWidget);
+    expect(
+      find.text('Digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1 · warm start fl_pkg_1 · model fl_runtime_model_v1',
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 
@@ -3765,6 +3993,25 @@ void main() {
       <String>['site-1', 'site-2'],
     );
     expect(
+      bridge.recordedRuntimeDeliverySaves.single['compatibilityKey'],
+      'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+    );
+    expect(
+      bridge.recordedRuntimeDeliverySaves.single['warmStartModelVersion'],
+      'fl_runtime_model_v1',
+    );
+    final FederatedLearningRuntimeDeliveryRecordModel savedDeliverySnapshot =
+        FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+      'saved',
+      Map<String, dynamic>.from(bridge.recordedRuntimeDeliverySaves.single),
+    );
+    expect(savedDeliverySnapshot.schemaVersions, <String>['v1']);
+    expect(savedDeliverySnapshot.optimizerStrategies, <String>[
+      'bounded_runtime_vector_local_finetune_v1',
+    ]);
+    expect(savedDeliverySnapshot.warmStartPackageId, 'fl_pkg_1');
+    expect(savedDeliverySnapshot.warmStartModelVersion, 'fl_runtime_model_v1');
+    expect(
       find.text('Runtime delivery: active · 2 sites · flutter_mobile'),
       findsOneWidget,
     );
@@ -3815,7 +4062,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Delivery digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      find.text(
+          'Delivery digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
     expect(
@@ -3866,7 +4114,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Showing 1 of 2'), findsOneWidget);
     expect(find.textContaining('fl_delivery_2 · revoked'), findsOneWidget);
-    expect(find.text('Revocation reason: Pilot cohort closed.'), findsOneWidget);
+    expect(
+        find.text('Revocation reason: Pilot cohort closed.'), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(
         TextField,
@@ -3895,7 +4144,8 @@ void main() {
     await tester.ensureVisible(deliverySummaryButton.first);
     await tester.tap(deliverySummaryButton.first);
     await tester.pumpAndSettle();
-    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(
+        find.text('Requested summaries: update-1, update-2'), findsOneWidget);
     expect(find.text('Summary update-1 · site site-1 · 13 samples'),
         findsOneWidget);
     expect(
@@ -4099,6 +4349,16 @@ void main() {
         TextField,
         'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
       ),
+      'fl_runtime_model_v1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
+      ),
       '',
     );
     await tester.pumpAndSettle();
@@ -4137,7 +4397,8 @@ void main() {
     expect(find.text('Summary update-1 · site site-1 · 13 samples'),
         findsOneWidget);
     expect(
-      find.textContaining('Raw weight: 13 · Norm scale: 1 · Effective weight: 13'),
+      find.textContaining(
+          'Raw weight: 13 · Norm scale: 1 · Effective weight: 13'),
       findsOneWidget,
     );
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
@@ -5203,6 +5464,7 @@ void main() {
             'experimentId': 'fl_exp_literacy_pilot',
             'candidateModelPackageId': 'fl_pkg_1',
             'deliveryRecordId': 'fl_delivery_1',
+            ..._runtimeRolloutLineageFields(),
             'status': 'acknowledged',
             'fallbackCount': 1,
             'pendingCount': 0,
@@ -5216,6 +5478,7 @@ void main() {
             'experimentId': 'fl_exp_literacy_pilot',
             'candidateModelPackageId': 'fl_pkg_1',
             'deliveryRecordId': 'fl_delivery_1',
+            ..._runtimeRolloutLineageFields(),
             'status': 'active',
             'fallbackCount': 1,
             'pendingCount': 0,
@@ -5270,6 +5533,18 @@ void main() {
     expect(
       find.textContaining('investigating by hq-1 · owner hq-ops-1'),
       findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Digests: package sha256:pkg-1 · bounded sha256:digest-1 · manifest sha256:delivery-1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1',
+      ),
+      findsWidgets,
     );
     expect(
       find.textContaining('Control: paused · owner hq-ops-3'),
@@ -5459,6 +5734,16 @@ void main() {
             'deliveryRecordId': 'fl_delivery_1',
             'siteId': 'site-2',
             'runtimeTarget': 'flutter_mobile',
+            'packageDigest': 'sha256:pkg-1',
+            'boundedDigest': 'sha256:digest-1',
+            'schemaVersions': <String>['v1'],
+            'optimizerStrategies': <String>[
+              'bounded_runtime_vector_local_finetune_v1',
+            ],
+            'compatibilityKey':
+                'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+            'warmStartPackageId': 'fl_pkg_1',
+            'warmStartModelVersion': 'fl_runtime_model_v1',
             'status': 'fallback',
             'manifestDigest': 'sha256:delivery-1',
           },
@@ -5501,6 +5786,10 @@ void main() {
     expect(
       find.textContaining('Delivery fl_delivery_1 · 1 fallback · 0 pending'),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('bounded sha256:digest-1'),
+      findsWidgets,
     );
   });
 
@@ -5554,6 +5843,7 @@ void main() {
             'experimentId': 'fl_exp_literacy_pilot',
             'candidateModelPackageId': 'fl_pkg_1',
             'deliveryRecordId': 'fl_delivery_1',
+            ..._runtimeRolloutLineageFields(targetSiteIds: <String>['site-1']),
             'status': 'acknowledged',
             'fallbackCount': 1,
             'pendingCount': 0,
@@ -5572,6 +5862,16 @@ void main() {
             'deliveryRecordId': 'fl_delivery_2',
             'siteId': 'site-2',
             'runtimeTarget': 'flutter_mobile',
+            'packageDigest': 'sha256:pkg-2',
+            'boundedDigest': 'sha256:digest-1',
+            'schemaVersions': <String>['v1'],
+            'optimizerStrategies': <String>[
+              'bounded_runtime_vector_local_finetune_v1',
+            ],
+            'compatibilityKey':
+                'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+            'warmStartPackageId': 'fl_pkg_1',
+            'warmStartModelVersion': 'fl_runtime_model_v1',
             'status': 'fallback',
             'manifestDigest': 'sha256:delivery-2',
             'targetSiteIds': <String>['site-2'],
@@ -5845,8 +6145,7 @@ void main() {
       'hq-ops-9',
     );
     expect(
-      find.textContaining(
-          'Control: paused · owner hq-ops-9 · Paused pending bounded verification.'),
+      find.textContaining('Control: paused · owner hq-ops-9'),
       findsOneWidget,
     );
   });

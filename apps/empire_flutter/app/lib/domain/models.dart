@@ -3327,9 +3327,9 @@ class FederatedLearningAggregationRunModel {
         'warmStartPackageId': warmStartPackageId,
         'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
-          .map((FederatedLearningContributionDetailModel detail) =>
-            detail.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningContributionDetailModel detail) =>
+                detail.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3486,9 +3486,9 @@ class FederatedLearningMergeArtifactModel {
         'warmStartPackageId': warmStartPackageId,
         'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
-          .map((FederatedLearningContributionDetailModel detail) =>
-            detail.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningContributionDetailModel detail) =>
+                detail.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3651,11 +3651,11 @@ class FederatedLearningCandidateModelPackageModel {
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
-        optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
-        compatibilityKey: data['compatibilityKey'] as String?,
-        warmStartPackageId: data['warmStartPackageId'] as String?,
-        warmStartModelVersion: data['warmStartModelVersion'] as String?,
-        contributionDetails:
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String?,
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
@@ -3706,9 +3706,9 @@ class FederatedLearningCandidateModelPackageModel {
         'warmStartPackageId': warmStartPackageId,
         'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
-          .map((FederatedLearningContributionDetailModel detail) =>
-            detail.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningContributionDetailModel detail) =>
+                detail.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3987,7 +3987,12 @@ class FederatedLearningRuntimeDeliveryRecordModel {
     required this.boundedDigest,
     required this.triggerSummaryId,
     required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
     required this.manifestDigest,
+    this.compatibilityKey,
+    this.warmStartPackageId,
+    this.warmStartModelVersion,
     this.expiresAt,
     this.supersededAt,
     this.supersededBy,
@@ -4017,7 +4022,12 @@ class FederatedLearningRuntimeDeliveryRecordModel {
   final String boundedDigest;
   final String triggerSummaryId;
   final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
   final String manifestDigest;
+  final String? compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
   final Timestamp? expiresAt;
   final Timestamp? supersededAt;
   final String? supersededBy;
@@ -4060,7 +4070,12 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       boundedDigest: data['boundedDigest'] as String? ?? '',
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
       manifestDigest: data['manifestDigest'] as String? ?? '',
+      compatibilityKey: data['compatibilityKey'] as String?,
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
       expiresAt: _timestampOrNull(data['expiresAt']),
       supersededAt: _timestampOrNull(data['supersededAt']),
       supersededBy: data['supersededBy'] as String?,
@@ -4093,7 +4108,12 @@ class FederatedLearningRuntimeDeliveryRecordModel {
         'boundedDigest': boundedDigest,
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
+        'schemaVersions': schemaVersions,
+        'optimizerStrategies': optimizerStrategies,
         'manifestDigest': manifestDigest,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
         'expiresAt': expiresAt,
         'supersededAt': supersededAt,
         'supersededBy': supersededBy,
@@ -4121,8 +4141,17 @@ class FederatedLearningRuntimeActivationRecordModel {
     required this.candidateModelPackageId,
     required this.siteId,
     required this.runtimeTarget,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
     required this.manifestDigest,
     required this.status,
+    this.compatibilityKey,
+    this.warmStartPackageId,
+    this.warmStartModelVersion,
     this.traceId,
     this.notes,
     this.reportedBy,
@@ -4137,8 +4166,17 @@ class FederatedLearningRuntimeActivationRecordModel {
   final String candidateModelPackageId;
   final String siteId;
   final String runtimeTarget;
+  final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
   final String manifestDigest;
   final String status;
+  final String? compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
   final String? traceId;
   final String? notes;
   final String? reportedBy;
@@ -4166,8 +4204,17 @@ class FederatedLearningRuntimeActivationRecordModel {
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       siteId: data['siteId'] as String? ?? '',
       runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
       manifestDigest: data['manifestDigest'] as String? ?? '',
       status: data['status'] as String? ?? 'resolved',
+      compatibilityKey: data['compatibilityKey'] as String?,
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
       traceId: data['traceId'] as String?,
       notes: data['notes'] as String?,
       reportedBy: data['reportedBy'] as String?,
@@ -4183,8 +4230,17 @@ class FederatedLearningRuntimeActivationRecordModel {
         'candidateModelPackageId': candidateModelPackageId,
         'siteId': siteId,
         'runtimeTarget': runtimeTarget,
+        'packageDigest': packageDigest,
+        'boundedDigest': boundedDigest,
+        'triggerSummaryId': triggerSummaryId,
+        'summaryIds': summaryIds,
+        'schemaVersions': schemaVersions,
+        'optimizerStrategies': optimizerStrategies,
         'manifestDigest': manifestDigest,
         'status': status,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
         'traceId': traceId,
         'notes': notes,
         'reportedBy': reportedBy,
@@ -4201,6 +4257,18 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
     required this.experimentId,
     required this.candidateModelPackageId,
     required this.deliveryRecordId,
+    required this.runtimeTarget,
+    required this.targetSiteIds,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
+    required this.compatibilityKey,
+    required this.warmStartPackageId,
+    required this.warmStartModelVersion,
+    required this.manifestDigest,
     required this.status,
     required this.fallbackCount,
     required this.pendingCount,
@@ -4215,6 +4283,18 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
   final String experimentId;
   final String candidateModelPackageId;
   final String deliveryRecordId;
+  final String runtimeTarget;
+  final List<String> targetSiteIds;
+  final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
+  final String compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
+  final String manifestDigest;
   final String status;
   final int fallbackCount;
   final int pendingCount;
@@ -4233,6 +4313,18 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
       experimentId: data['experimentId'] as String? ?? '',
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      targetSiteIds: _stringListOrEmpty(data['targetSiteIds']),
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String? ?? '',
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      manifestDigest: data['manifestDigest'] as String? ?? '',
       status: data['status'] as String? ?? 'active',
       fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
       pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
@@ -4248,6 +4340,18 @@ class FederatedLearningRuntimeRolloutAlertRecordModel {
         'experimentId': experimentId,
         'candidateModelPackageId': candidateModelPackageId,
         'deliveryRecordId': deliveryRecordId,
+        'runtimeTarget': runtimeTarget,
+        'targetSiteIds': targetSiteIds,
+        'packageDigest': packageDigest,
+        'boundedDigest': boundedDigest,
+        'triggerSummaryId': triggerSummaryId,
+        'summaryIds': summaryIds,
+        'schemaVersions': schemaVersions,
+        'optimizerStrategies': optimizerStrategies,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
+        'manifestDigest': manifestDigest,
         'status': status,
         'fallbackCount': fallbackCount,
         'pendingCount': pendingCount,
@@ -4266,6 +4370,18 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
     required this.experimentId,
     required this.candidateModelPackageId,
     required this.deliveryRecordId,
+    required this.runtimeTarget,
+    required this.targetSiteIds,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
+    required this.compatibilityKey,
+    required this.warmStartPackageId,
+    required this.warmStartModelVersion,
+    required this.manifestDigest,
     required this.status,
     required this.fallbackCount,
     required this.pendingCount,
@@ -4283,6 +4399,18 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
   final String experimentId;
   final String candidateModelPackageId;
   final String deliveryRecordId;
+  final String runtimeTarget;
+  final List<String> targetSiteIds;
+  final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
+  final String compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
+  final String manifestDigest;
   final String status;
   final int fallbackCount;
   final int pendingCount;
@@ -4304,6 +4432,18 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
       experimentId: data['experimentId'] as String? ?? '',
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      targetSiteIds: _stringListOrEmpty(data['targetSiteIds']),
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String? ?? '',
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      manifestDigest: data['manifestDigest'] as String? ?? '',
       status: data['status'] as String? ?? 'open',
       fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
       pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
@@ -4327,6 +4467,18 @@ class FederatedLearningRuntimeRolloutEscalationHistoryRecordModel {
     required this.experimentId,
     required this.candidateModelPackageId,
     required this.deliveryRecordId,
+    required this.runtimeTarget,
+    required this.targetSiteIds,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
+    required this.compatibilityKey,
+    required this.warmStartPackageId,
+    required this.warmStartModelVersion,
+    required this.manifestDigest,
     required this.status,
     required this.fallbackCount,
     required this.pendingCount,
@@ -4345,6 +4497,18 @@ class FederatedLearningRuntimeRolloutEscalationHistoryRecordModel {
   final String experimentId;
   final String candidateModelPackageId;
   final String deliveryRecordId;
+  final String runtimeTarget;
+  final List<String> targetSiteIds;
+  final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
+  final String compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
+  final String manifestDigest;
   final String status;
   final int fallbackCount;
   final int pendingCount;
@@ -4367,6 +4531,18 @@ class FederatedLearningRuntimeRolloutEscalationHistoryRecordModel {
       experimentId: data['experimentId'] as String? ?? '',
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      targetSiteIds: _stringListOrEmpty(data['targetSiteIds']),
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String? ?? '',
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      manifestDigest: data['manifestDigest'] as String? ?? '',
       status: data['status'] as String? ?? 'open',
       fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
       pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
@@ -4389,6 +4565,18 @@ class FederatedLearningRuntimeRolloutControlRecordModel {
     required this.experimentId,
     required this.candidateModelPackageId,
     required this.deliveryRecordId,
+    required this.runtimeTarget,
+    required this.targetSiteIds,
+    required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
+    required this.schemaVersions,
+    required this.optimizerStrategies,
+    required this.compatibilityKey,
+    required this.warmStartPackageId,
+    required this.warmStartModelVersion,
+    required this.manifestDigest,
     required this.mode,
     this.ownerUserId,
     this.reason,
@@ -4403,6 +4591,18 @@ class FederatedLearningRuntimeRolloutControlRecordModel {
   final String experimentId;
   final String candidateModelPackageId;
   final String deliveryRecordId;
+  final String runtimeTarget;
+  final List<String> targetSiteIds;
+  final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
+  final List<String> schemaVersions;
+  final List<String> optimizerStrategies;
+  final String compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
+  final String manifestDigest;
   final String mode;
   final String? ownerUserId;
   final String? reason;
@@ -4421,6 +4621,18 @@ class FederatedLearningRuntimeRolloutControlRecordModel {
       experimentId: data['experimentId'] as String? ?? '',
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      runtimeTarget: data['runtimeTarget'] as String? ?? '',
+      targetSiteIds: _stringListOrEmpty(data['targetSiteIds']),
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
+      schemaVersions: _stringListOrEmpty(data['schemaVersions']),
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String? ?? '',
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      manifestDigest: data['manifestDigest'] as String? ?? '',
       mode: data['mode'] as String? ?? 'monitor',
       ownerUserId: data['ownerUserId'] as String?,
       reason: data['reason'] as String?,
@@ -4460,6 +4672,19 @@ class FederatedLearningRuntimeRolloutAuditEventModel {
   String get siteId => details['siteId'] as String? ?? '';
   String get status => details['status'] as String? ?? '';
   String get runtimeTarget => details['runtimeTarget'] as String? ?? '';
+  String get packageDigest => details['packageDigest'] as String? ?? '';
+  String get boundedDigest => details['boundedDigest'] as String? ?? '';
+  String get triggerSummaryId => details['triggerSummaryId'] as String? ?? '';
+  List<String> get summaryIds => _stringListOrEmpty(details['summaryIds']);
+  List<String> get schemaVersions =>
+      _stringListOrEmpty(details['schemaVersions']);
+  List<String> get optimizerStrategies =>
+      _stringListOrEmpty(details['optimizerStrategies']);
+  String get compatibilityKey => details['compatibilityKey'] as String? ?? '';
+  String get warmStartPackageId =>
+      details['warmStartPackageId'] as String? ?? '';
+  String get warmStartModelVersion =>
+      details['warmStartModelVersion'] as String? ?? '';
   String get manifestDigest => details['manifestDigest'] as String? ?? '';
   String get notes => details['notes'] as String? ?? '';
   String get ownerUserId => details['ownerUserId'] as String? ?? '';

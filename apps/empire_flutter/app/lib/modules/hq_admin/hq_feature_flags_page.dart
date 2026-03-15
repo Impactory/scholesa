@@ -225,10 +225,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             (double sum, FederatedLearningContributionDetailModel detail) =>
                 sum + detail.effectiveWeight,
           );
-    final int dampedSummaryCount = details.where(
-      (FederatedLearningContributionDetailModel detail) =>
-          detail.normScale < 0.999999,
-    ).length;
+    final int dampedSummaryCount = details
+        .where(
+          (FederatedLearningContributionDetailModel detail) =>
+              detail.normScale < 0.999999,
+        )
+        .length;
     return 'Damping: $dampedSummaryCount of $summaryCount summaries scaled · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveWeight)}';
   }
 
@@ -335,6 +337,117 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Compatibility batch: runtime $runtimeTargetLabel · schema $schemaLabel · optimizer $optimizerLabel · warm start $warmStartPackageLabel · model $warmStartModelLabel';
   }
 
+  String _formatRuntimeDeliveryCompatibilityRollup(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+    FederatedLearningCandidateModelPackageModel? package,
+  ) {
+    final List<String> schemaVersions = record.schemaVersions.isNotEmpty
+        ? record.schemaVersions
+        : (package?.schemaVersions ?? const <String>[]);
+    final String recordRuntimeTarget = record.runtimeTarget.trim();
+    final List<String> runtimeTargets = recordRuntimeTarget.isNotEmpty
+        ? <String>[recordRuntimeTarget]
+        : (package?.runtimeTargets ?? const <String>[]);
+    final List<String> optimizerStrategies =
+        record.optimizerStrategies.isNotEmpty
+            ? record.optimizerStrategies
+            : (package?.optimizerStrategies ?? const <String>[]);
+    final String warmStartPackageId =
+        (record.warmStartPackageId ?? '').trim().isNotEmpty
+            ? record.warmStartPackageId!.trim()
+            : (package?.warmStartPackageId ?? '');
+    final String warmStartModelVersion =
+        (record.warmStartModelVersion ?? '').trim().isNotEmpty
+            ? record.warmStartModelVersion!.trim()
+            : (package?.warmStartModelVersion ?? '');
+    if (schemaVersions.isEmpty &&
+        optimizerStrategies.isEmpty &&
+        warmStartPackageId.isEmpty &&
+        warmStartModelVersion.isEmpty) {
+      return '';
+    }
+    return _formatCompatibilityRollup(
+      schemaVersions: schemaVersions,
+      runtimeTargets: runtimeTargets,
+      optimizerStrategies: optimizerStrategies,
+      warmStartPackageId: warmStartPackageId,
+      warmStartModelVersion: warmStartModelVersion,
+    );
+  }
+
+  String _formatRuntimeActivationCompatibilityRollup(
+    FederatedLearningRuntimeActivationRecordModel record,
+  ) {
+    final List<String> runtimeTargets = record.runtimeTarget.trim().isNotEmpty
+        ? <String>[record.runtimeTarget.trim()]
+        : const <String>[];
+    if (record.schemaVersions.isEmpty &&
+        record.optimizerStrategies.isEmpty &&
+        (record.warmStartPackageId ?? '').trim().isEmpty &&
+        (record.warmStartModelVersion ?? '').trim().isEmpty) {
+      return '';
+    }
+    return _formatCompatibilityRollup(
+      schemaVersions: record.schemaVersions,
+      runtimeTargets: runtimeTargets,
+      optimizerStrategies: record.optimizerStrategies,
+      warmStartPackageId: record.warmStartPackageId,
+      warmStartModelVersion: record.warmStartModelVersion,
+    );
+  }
+
+  String _formatRuntimeRolloutCompatibilityRollup({
+    required String runtimeTarget,
+    required List<String> schemaVersions,
+    required List<String> optimizerStrategies,
+    String? warmStartPackageId,
+    String? warmStartModelVersion,
+  }) {
+    final List<String> runtimeTargets = runtimeTarget.trim().isNotEmpty
+        ? <String>[runtimeTarget.trim()]
+        : const <String>[];
+    if (schemaVersions.isEmpty &&
+        optimizerStrategies.isEmpty &&
+        (warmStartPackageId ?? '').trim().isEmpty &&
+        (warmStartModelVersion ?? '').trim().isEmpty) {
+      return '';
+    }
+    return _formatCompatibilityRollup(
+      schemaVersions: schemaVersions,
+      runtimeTargets: runtimeTargets,
+      optimizerStrategies: optimizerStrategies,
+      warmStartPackageId: warmStartPackageId,
+      warmStartModelVersion: warmStartModelVersion,
+    );
+  }
+
+  String _formatRuntimeRolloutDigestRollup({
+    required String packageDigest,
+    required String boundedDigest,
+    required String manifestDigest,
+  }) {
+    if (packageDigest.trim().isEmpty &&
+        boundedDigest.trim().isEmpty &&
+        manifestDigest.trim().isEmpty) {
+      return '';
+    }
+    final String packageLabel =
+        packageDigest.trim().isEmpty ? 'n/a' : packageDigest.trim();
+    final String boundedLabel =
+        boundedDigest.trim().isEmpty ? 'n/a' : boundedDigest.trim();
+    final String manifestLabel =
+        manifestDigest.trim().isEmpty ? 'n/a' : manifestDigest.trim();
+    return 'Digests: package $packageLabel · bounded $boundedLabel · manifest $manifestLabel';
+  }
+
+  String _buildRuntimeRolloutBoundedDigestSuffix(String boundedDigest) {
+    final String normalized = boundedDigest.trim();
+    if (normalized.isEmpty) {
+      return '';
+    }
+    return ' · bounded $normalized';
+  }
+
   Future<void> _showContributionDetailsDialog({
     required String experimentLabel,
     required List<FederatedLearningContributionDetailModel> details,
@@ -415,35 +528,37 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             ),
                           ),
                           if ((detail.traceId ?? '').trim().isNotEmpty ||
-                              (detail.payloadDigest ?? '').trim().isNotEmpty)
-                            ...<Widget>[
-                              const SizedBox(height: 4),
-                              Text(
-                                _tHqFeatureFlags(
-                                  dialogContext,
-                                  'Trace: ${detail.traceId ?? ''} · Digest: ${detail.payloadDigest ?? ''}',
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: ScholesaColors.textSecondary,
-                                ),
+                              (detail.payloadDigest ?? '')
+                                  .trim()
+                                  .isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 4),
+                            Text(
+                              _tHqFeatureFlags(
+                                dialogContext,
+                                'Trace: ${detail.traceId ?? ''} · Digest: ${detail.payloadDigest ?? ''}',
                               ),
-                            ],
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: ScholesaColors.textSecondary,
+                              ),
+                            ),
+                          ],
                           if ((detail.runtimeTarget ?? '').trim().isNotEmpty ||
-                              detail.schemaVersion.trim().isNotEmpty)
-                            ...<Widget>[
-                              const SizedBox(height: 4),
-                              Text(
-                                _tHqFeatureFlags(
-                                  dialogContext,
-                                  'Runtime: ${detail.runtimeTarget ?? ''} · Schema: ${detail.schemaVersion}',
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: ScholesaColors.textSecondary,
-                                ),
+                              detail.schemaVersion
+                                  .trim()
+                                  .isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 4),
+                            Text(
+                              _tHqFeatureFlags(
+                                dialogContext,
+                                'Runtime: ${detail.runtimeTarget ?? ''} · Schema: ${detail.schemaVersion}',
                               ),
-                            ],
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: ScholesaColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -473,9 +588,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String optimizerStrategy = (summary.optimizerStrategy ?? '').trim();
     final String warmStartPackageId = (summary.warmStartPackageId ?? '').trim();
     final String warmStartDeliveryRecordId =
-      (summary.warmStartDeliveryRecordId ?? '').trim();
+        (summary.warmStartDeliveryRecordId ?? '').trim();
     final String warmStartModelVersion =
-      (summary.warmStartModelVersion ?? '').trim();
+        (summary.warmStartModelVersion ?? '').trim();
 
     return Container(
       width: double.infinity,
@@ -600,13 +715,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               summary.siteId,
               summary.traceId,
               summary.payloadDigest,
-            summary.optimizerStrategy ?? '',
-            summary.warmStartPackageId ?? '',
-            summary.warmStartDeliveryRecordId ?? '',
-            summary.warmStartModelVersion ?? '',
-            summary.localEpochCount?.toString() ?? '',
-            summary.localStepCount?.toString() ?? '',
-            summary.trainingWindowSeconds?.toString() ?? '',
+              summary.optimizerStrategy ?? '',
+              summary.warmStartPackageId ?? '',
+              summary.warmStartDeliveryRecordId ?? '',
+              summary.warmStartModelVersion ?? '',
+              summary.localEpochCount?.toString() ?? '',
+              summary.localStepCount?.toString() ?? '',
+              summary.trainingWindowSeconds?.toString() ?? '',
               summary.networkType,
               summary.batteryState,
               summary.runtimeTarget ?? '',
@@ -919,11 +1034,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final FederatedLearningAggregationRunModel? latestRun =
         runs.isNotEmpty ? runs.first : null;
     final String latestAggregationTrainingRollup = latestRun == null
-      ? ''
-      : _formatLocalTrainingRollup(latestRun.summaryIds);
+        ? ''
+        : _formatLocalTrainingRollup(latestRun.summaryIds);
     final String latestPackageTrainingRollup = latestPackage == null
-      ? ''
-      : _formatLocalTrainingRollup(latestPackage.summaryIds);
+        ? ''
+        : _formatLocalTrainingRollup(latestPackage.summaryIds);
     final String latestPackagePayloadSummary =
         _formatRuntimePayloadSummary(latestPackage);
     final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
@@ -1853,6 +1968,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 run.mergeStrategy ?? '',
                 run.boundedDigest ?? '',
                 run.contributingSiteIds.join(' '),
+                run.schemaVersions.join(' '),
+                run.runtimeTargets.join(' '),
+                run.optimizerStrategies.join(' '),
+                run.compatibilityKey ?? '',
+                run.warmStartPackageId ?? '',
+                run.warmStartModelVersion ?? '',
+                _formatCompatibilityRollup(
+                  schemaVersions: run.schemaVersions,
+                  runtimeTargets: run.runtimeTargets,
+                  optimizerStrategies: run.optimizerStrategies,
+                  warmStartPackageId: run.warmStartPackageId,
+                  warmStartModelVersion: run.warmStartModelVersion,
+                ),
                 artifact?.id ?? '',
                 artifact?.mergeStrategy ?? '',
                 artifact?.boundedDigest ?? '',
@@ -2215,6 +2343,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 package.packageFormat,
                 package.rolloutStatus,
                 package.contributingSiteIds.join(' '),
+                package.schemaVersions.join(' '),
+                package.runtimeTargets.join(' '),
+                package.optimizerStrategies.join(' '),
+                package.compatibilityKey ?? '',
+                package.warmStartPackageId ?? '',
+                package.warmStartModelVersion ?? '',
+                _formatCompatibilityRollup(
+                  schemaVersions: package.schemaVersions,
+                  runtimeTargets: package.runtimeTargets,
+                  optimizerStrategies: package.optimizerStrategies,
+                  warmStartPackageId: package.warmStartPackageId,
+                  warmStartModelVersion: package.warmStartModelVersion,
+                ),
                 promotion?.id ?? '',
                 promotion?.status ?? '',
                 promotion?.target ?? '',
@@ -2603,9 +2744,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         candidatePackage?.contributingSiteIds ??
         run.contributingSiteIds;
     final List<FederatedLearningContributionDetailModel> contributionDetails =
-      artifact?.contributionDetails ??
-        candidatePackage?.contributionDetails ??
-        run.contributionDetails;
+        artifact?.contributionDetails ??
+            candidatePackage?.contributionDetails ??
+            run.contributionDetails;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -2616,9 +2757,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         .trim();
     final String triggerSummaryId = run.triggerSummaryId.trim();
     final String acceptedSummaryIds = run.summaryIds.join(', ');
-    final String localTrainingRollup = _formatLocalTrainingRollup(run.summaryIds);
+    final String localTrainingRollup =
+        _formatLocalTrainingRollup(run.summaryIds);
     final String runtimePayloadSummary =
-      _formatRuntimePayloadSummary(candidatePackage);
+        _formatRuntimePayloadSummary(candidatePackage);
     final String compatibilityRollup = _formatCompatibilityRollup(
       schemaVersions: run.schemaVersions,
       runtimeTargets: run.runtimeTargets,
@@ -3026,9 +3168,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _effectivePromotionTarget(promotion, revocation);
     final String mergeStrategy = (package.mergeStrategy ?? '').trim();
     final String localTrainingRollup =
-      _formatLocalTrainingRollup(package.summaryIds);
-    final String runtimePayloadSummary =
-      _formatRuntimePayloadSummary(package);
+        _formatLocalTrainingRollup(package.summaryIds);
+    final String runtimePayloadSummary = _formatRuntimePayloadSummary(package);
     final String compatibilityRollup = _formatCompatibilityRollup(
       schemaVersions: package.schemaVersions,
       runtimeTargets: package.runtimeTargets,
@@ -3631,6 +3772,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 package?.packageDigest ?? '',
                 package?.boundedDigest ?? '',
                 package?.contributingSiteIds.join(' ') ?? '',
+                package?.schemaVersions.join(' ') ?? '',
+                package?.runtimeTargets.join(' ') ?? '',
+                package?.optimizerStrategies.join(' ') ?? '',
+                package?.compatibilityKey ?? '',
+                package?.warmStartPackageId ?? '',
+                package?.warmStartModelVersion ?? '',
+                package == null
+                    ? ''
+                    : _formatCompatibilityRollup(
+                        schemaVersions: package.schemaVersions,
+                        runtimeTargets: package.runtimeTargets,
+                        optimizerStrategies: package.optimizerStrategies,
+                        warmStartPackageId: package.warmStartPackageId,
+                        warmStartModelVersion: package.warmStartModelVersion,
+                      ),
                 revocation?.id ?? '',
                 revocation?.packageDigest ?? '',
                 revocation?.boundedDigest ?? '',
@@ -4009,9 +4165,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String effectiveTarget =
         _effectivePromotionTarget(record, revocation);
     final String localTrainingRollup =
-      _formatLocalTrainingRollup(package?.summaryIds ?? const <String>[]);
-    final String runtimePayloadSummary =
-      _formatRuntimePayloadSummary(package);
+        _formatLocalTrainingRollup(package?.summaryIds ?? const <String>[]);
+    final String runtimePayloadSummary = _formatRuntimePayloadSummary(package);
     final String compatibilityRollup = package == null
         ? ''
         : _formatCompatibilityRollup(
@@ -5208,8 +5363,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Future<void> _showRuntimeDeliveryHistoryDialog(
     FederatedLearningExperimentModel experiment,
   ) async {
-    final Map<String, FederatedLearningCandidateModelPackageModel> packagesById =
-        {
+    final Map<String, FederatedLearningCandidateModelPackageModel>
+        packagesById = {
       for (final FederatedLearningCandidateModelPackageModel package
           in _candidatePackagesByExperiment[experiment.id] ??
               const <FederatedLearningCandidateModelPackageModel>[])
@@ -5290,6 +5445,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   package?.rolloutStatus ?? '',
                   package?.packageFormat ?? '',
                   package?.contributingSiteIds.join(' ') ?? '',
+                  record.schemaVersions.join(' '),
+                  record.optimizerStrategies.join(' '),
+                  record.compatibilityKey ?? '',
+                  record.warmStartPackageId ?? '',
+                  record.warmStartModelVersion ?? '',
+                  package?.schemaVersions.join(' ') ?? '',
+                  package?.runtimeTargets.join(' ') ?? '',
+                  package?.optimizerStrategies.join(' ') ?? '',
+                  package?.compatibilityKey ?? '',
+                  package?.warmStartPackageId ?? '',
+                  package?.warmStartModelVersion ?? '',
+                  _formatRuntimeDeliveryCompatibilityRollup(record, package),
                 ].join(' ').toLowerCase();
                 return haystack.contains(normalizedQuery);
               },
@@ -5353,293 +5520,321 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               ...filteredRecords.map(
                                 (FederatedLearningRuntimeDeliveryRecordModel
                                     record) {
-                            final FederatedLearningCandidateModelPackageModel?
-                              package =
-                              packagesById[record.candidateModelPackageId];
-                            final String aggregationRunId =
-                              record.aggregationRunId.trim().isNotEmpty
-                                ? record.aggregationRunId
-                                : package?.aggregationRunId ?? '';
-                            final String mergeArtifactId =
-                              record.mergeArtifactId.trim().isNotEmpty
-                                ? record.mergeArtifactId
-                                : package?.mergeArtifactId ?? '';
-                            final String packageDigest =
-                              record.packageDigest.trim().isNotEmpty
-                                ? record.packageDigest
-                                : package?.packageDigest ?? '';
-                            final String boundedDigest =
-                              record.boundedDigest.trim().isNotEmpty
-                                ? record.boundedDigest
-                                : package?.boundedDigest ?? '';
-                            final String triggerSummaryId =
-                              record.triggerSummaryId.trim().isNotEmpty
-                                ? record.triggerSummaryId
-                                : package?.triggerSummaryId ?? '';
-                            final List<String> summaryIds =
-                              record.summaryIds.isNotEmpty
-                                ? record.summaryIds
-                                : package?.summaryIds ?? const <String>[];
-                            final String localTrainingRollup =
-                              _formatLocalTrainingRollup(summaryIds);
-                            final String runtimePayloadSummary =
-                              _formatRuntimePayloadSummary(package);
-                            final String compatibilityRollup = package == null
-                                ? ''
-                                : _formatCompatibilityRollup(
-                                    schemaVersions: package.schemaVersions,
-                                    runtimeTargets: package.runtimeTargets,
-                                    optimizerStrategies:
-                                        package.optimizerStrategies,
-                                    warmStartPackageId:
-                                        package.warmStartPackageId,
-                                    warmStartModelVersion:
-                                        package.warmStartModelVersion,
+                                  final FederatedLearningCandidateModelPackageModel?
+                                      package = packagesById[
+                                          record.candidateModelPackageId];
+                                  final String aggregationRunId =
+                                      record.aggregationRunId.trim().isNotEmpty
+                                          ? record.aggregationRunId
+                                          : package?.aggregationRunId ?? '';
+                                  final String mergeArtifactId =
+                                      record.mergeArtifactId.trim().isNotEmpty
+                                          ? record.mergeArtifactId
+                                          : package?.mergeArtifactId ?? '';
+                                  final String packageDigest =
+                                      record.packageDigest.trim().isNotEmpty
+                                          ? record.packageDigest
+                                          : package?.packageDigest ?? '';
+                                  final String boundedDigest =
+                                      record.boundedDigest.trim().isNotEmpty
+                                          ? record.boundedDigest
+                                          : package?.boundedDigest ?? '';
+                                  final String triggerSummaryId =
+                                      record.triggerSummaryId.trim().isNotEmpty
+                                          ? record.triggerSummaryId
+                                          : package?.triggerSummaryId ?? '';
+                                  final List<String> summaryIds = record
+                                          .summaryIds.isNotEmpty
+                                      ? record.summaryIds
+                                      : package?.summaryIds ?? const <String>[];
+                                  final String localTrainingRollup =
+                                      _formatLocalTrainingRollup(summaryIds);
+                                  final String runtimePayloadSummary =
+                                      _formatRuntimePayloadSummary(package);
+                                  final String compatibilityRollup =
+                                      _formatRuntimeDeliveryCompatibilityRollup(
+                                    record,
+                                    package,
                                   );
-                            final List<FederatedLearningContributionDetailModel>
-                              contributionDetails =
-                              package?.contributionDetails ??
-                                  const <FederatedLearningContributionDetailModel>[];
+                                  final List<
+                                          FederatedLearningContributionDetailModel>
+                                      contributionDetails =
+                                      package?.contributionDetails ??
+                                          const <FederatedLearningContributionDetailModel>[];
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: <Widget>[
-                                  Text(
-                                    _tHqFeatureFlags(
-                                      dialogContext,
-                                      '${record.id} · ${record.status} · ${record.targetSiteIds.length} sites · ${record.runtimeTarget}',
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _tHqFeatureFlags(
-                                      dialogContext,
-                                      'Lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}',
-                                    ),
-                                    style: const TextStyle(
-                                      color: ScholesaColors.textSecondary,
-                                    ),
-                                  ),
-                                  if (aggregationRunId.trim().isNotEmpty ||
-                                      mergeArtifactId.trim().isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Aggregation run: $aggregationRunId · Artifact: $mergeArtifactId',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (packageDigest.trim().isNotEmpty ||
-                                      boundedDigest.trim().isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Delivery digests: package $packageDigest · bounded $boundedDigest',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (runtimePayloadSummary.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        runtimePayloadSummary,
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (compatibilityRollup.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        compatibilityRollup,
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (contributionDetails.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        _formatContributionRollup(
-                                          contributionDetails,
-                                          summaryCount: summaryIds.length,
-                                          effectiveTotalWeight:
-                                              package?.effectiveTotalWeight,
-                                          fallbackRawTotalWeight:
-                                              package?.sampleCount ?? 0,
+                                        Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            '${record.id} · ${record.status} · ${record.targetSiteIds.length} sites · ${record.runtimeTarget}',
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (triggerSummaryId.trim().isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Trigger summary: $triggerSummaryId',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (summaryIds.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Accepted summaries: ${summaryIds.join(', ')}',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (localTrainingRollup.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        localTrainingRollup,
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (contributionDetails.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Contribution detail: ${_formatContributionDetailPreview(contributionDetails)}',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if ((record.revocationReason ?? '')
-                                      .trim()
-                                      .isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _tHqFeatureFlags(
-                                        dialogContext,
-                                        'Revocation reason: ${record.revocationReason}',
-                                      ),
-                                      style: const TextStyle(
-                                        color: ScholesaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                  if (aggregationRunId.trim().isNotEmpty ||
-                                      summaryIds.isNotEmpty ||
-                                      triggerSummaryId.trim().isNotEmpty ||
-                                      contributionDetails.isNotEmpty) ...<Widget>[
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: <Widget>[
-                                        if (aggregationRunId.trim().isNotEmpty)
-                                          OutlinedButton.icon(
-                                            onPressed: () =>
-                                                _showAggregationHistoryDialog(
-                                              experiment,
-                                              initialQuery: aggregationRunId,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _tHqFeatureFlags(
+                                            dialogContext,
+                                            'Lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}',
+                                          ),
+                                          style: const TextStyle(
+                                            color: ScholesaColors.textSecondary,
+                                          ),
+                                        ),
+                                        if (aggregationRunId
+                                                .trim()
+                                                .isNotEmpty ||
+                                            mergeArtifactId
+                                                .trim()
+                                                .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Aggregation run: $aggregationRunId · Artifact: $mergeArtifactId',
                                             ),
-                                            icon: const Icon(
-                                              Icons.timeline_rounded,
-                                            ),
-                                            label: Text(
-                                              _tHqFeatureFlags(
-                                                dialogContext,
-                                                'Open aggregation run',
-                                              ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
                                             ),
                                           ),
-                                        if (summaryIds.isNotEmpty)
-                                          OutlinedButton.icon(
-                                            onPressed: () =>
-                                                _showAcceptedSummaryDialog(
-                                              experiment: experiment,
-                                              summaryIds: summaryIds,
-                                              title: 'Accepted summaries',
+                                        ],
+                                        if (packageDigest.trim().isNotEmpty ||
+                                            boundedDigest
+                                                .trim()
+                                                .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Delivery digests: package $packageDigest · bounded $boundedDigest',
                                             ),
-                                            icon: const Icon(
-                                              Icons.description_rounded,
-                                            ),
-                                            label: Text(
-                                              _tHqFeatureFlags(
-                                                dialogContext,
-                                                'Open accepted summaries',
-                                              ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
                                             ),
                                           ),
-                                        if (triggerSummaryId.trim().isNotEmpty)
-                                          OutlinedButton.icon(
-                                            onPressed: () =>
-                                                _showAcceptedSummaryDialog(
-                                              experiment: experiment,
-                                              summaryIds: <String>[
-                                                triggerSummaryId,
-                                              ],
-                                              title: 'Trigger summary',
+                                        ],
+                                        if (runtimePayloadSummary
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              runtimePayloadSummary,
                                             ),
-                                            icon: const Icon(
-                                              Icons.bolt_rounded,
-                                            ),
-                                            label: Text(
-                                              _tHqFeatureFlags(
-                                                dialogContext,
-                                                'Open trigger summary',
-                                              ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
                                             ),
                                           ),
-                                        if (contributionDetails.isNotEmpty)
-                                          OutlinedButton.icon(
-                                            onPressed: () =>
-                                                _showContributionDetailsDialog(
-                                              experimentLabel: experiment.name,
-                                              details: contributionDetails,
+                                        ],
+                                        if (compatibilityRollup
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              compatibilityRollup,
                                             ),
-                                            icon: const Icon(
-                                              Icons.insights_rounded,
-                                            ),
-                                            label: Text(
-                                              _tHqFeatureFlags(
-                                                dialogContext,
-                                                'Open contribution details',
-                                              ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
                                             ),
                                           ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                        if (contributionDetails
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              _formatContributionRollup(
+                                                contributionDetails,
+                                                summaryCount: summaryIds.length,
+                                                effectiveTotalWeight: package
+                                                    ?.effectiveTotalWeight,
+                                                fallbackRawTotalWeight:
+                                                    package?.sampleCount ?? 0,
+                                              ),
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (triggerSummaryId
+                                            .trim()
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Trigger summary: $triggerSummaryId',
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (summaryIds.isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Accepted summaries: ${summaryIds.join(', ')}',
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (localTrainingRollup
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              localTrainingRollup,
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (contributionDetails
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Contribution detail: ${_formatContributionDetailPreview(contributionDetails)}',
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if ((record.revocationReason ?? '')
+                                            .trim()
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Revocation reason: ${record.revocationReason}',
+                                            ),
+                                            style: const TextStyle(
+                                              color:
+                                                  ScholesaColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (aggregationRunId.trim().isNotEmpty ||
+                                            summaryIds.isNotEmpty ||
+                                            triggerSummaryId
+                                                .trim()
+                                                .isNotEmpty ||
+                                            contributionDetails
+                                                .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 10),
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: <Widget>[
+                                              if (aggregationRunId
+                                                  .trim()
+                                                  .isNotEmpty)
+                                                OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      _showAggregationHistoryDialog(
+                                                    experiment,
+                                                    initialQuery:
+                                                        aggregationRunId,
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.timeline_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      'Open aggregation run',
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (summaryIds.isNotEmpty)
+                                                OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      _showAcceptedSummaryDialog(
+                                                    experiment: experiment,
+                                                    summaryIds: summaryIds,
+                                                    title: 'Accepted summaries',
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.description_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      'Open accepted summaries',
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (triggerSummaryId
+                                                  .trim()
+                                                  .isNotEmpty)
+                                                OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      _showAcceptedSummaryDialog(
+                                                    experiment: experiment,
+                                                    summaryIds: <String>[
+                                                      triggerSummaryId,
+                                                    ],
+                                                    title: 'Trigger summary',
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.bolt_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      'Open trigger summary',
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (contributionDetails
+                                                  .isNotEmpty)
+                                                OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      _showContributionDetailsDialog(
+                                                    experimentLabel:
+                                                        experiment.name,
+                                                    details:
+                                                        contributionDetails,
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.insights_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      'Open contribution details',
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   );
@@ -6040,6 +6235,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             triageEvents =
                             triageEventsByDeliveryId[record.deliveryRecordId] ??
                                 const <FederatedLearningRuntimeRolloutAuditEventModel>[];
+                        final String digestRollup =
+                            _formatRuntimeRolloutDigestRollup(
+                          packageDigest: record.packageDigest,
+                          boundedDigest: record.boundedDigest,
+                          manifestDigest: record.manifestDigest,
+                        );
+                        final String compatibilityRollup =
+                            _formatRuntimeRolloutCompatibilityRollup(
+                          runtimeTarget: record.runtimeTarget,
+                          schemaVersions: record.schemaVersions,
+                          optimizerStrategies: record.optimizerStrategies,
+                          warmStartPackageId: record.warmStartPackageId,
+                          warmStartModelVersion: record.warmStartModelVersion,
+                        );
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: Column(
@@ -6060,6 +6269,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     dialogContext,
                                     'Delivery: ${delivery.status} · ${delivery.targetSiteIds.length} sites · ${delivery.runtimeTarget}',
                                   ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (digestRollup.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(dialogContext, digestRollup),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (compatibilityRollup.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                      dialogContext, compatibilityRollup),
                                   style: const TextStyle(
                                     color: ScholesaColors.textSecondary,
                                   ),
@@ -6760,45 +6988,78 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         const SizedBox(height: 12),
                         ...records.map(
                           (FederatedLearningRuntimeActivationRecordModel
-                                  record) =>
-                              Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    '${record.siteId} · ${record.status} · ${record.runtimeTarget}',
+                              record) {
+                            final String compatibilityRollup =
+                                _formatRuntimeActivationCompatibilityRollup(
+                              record,
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    _tHqFeatureFlags(
+                                      dialogContext,
+                                      '${record.siteId} · ${record.status} · ${record.runtimeTarget}',
+                                    ),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700),
                                   ),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Reported ${_formatTimestamp(record.updatedAt)} · manifest ${record.manifestDigest}',
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                                if ((record.notes ?? '')
-                                    .trim()
-                                    .isNotEmpty) ...<Widget>[
                                   const SizedBox(height: 2),
                                   Text(
                                     _tHqFeatureFlags(
-                                        dialogContext, record.notes!),
+                                      dialogContext,
+                                      'Reported ${_formatTimestamp(record.updatedAt)} · manifest ${record.manifestDigest}',
+                                    ),
                                     style: const TextStyle(
                                       color: ScholesaColors.textSecondary,
                                     ),
                                   ),
+                                  if (record.packageDigest.trim().isNotEmpty ||
+                                      record.boundedDigest
+                                          .trim()
+                                          .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Digests: package ${record.packageDigest} · bounded ${record.boundedDigest}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (compatibilityRollup
+                                      .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        compatibilityRollup,
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if ((record.notes ?? '')
+                                      .trim()
+                                      .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                          dialogContext, record.notes!),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -7064,28 +7325,43 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   String _runtimeRolloutAuditDetail(
     FederatedLearningRuntimeRolloutAuditEventModel event,
   ) {
+    final String digestRollup = _formatRuntimeRolloutDigestRollup(
+      packageDigest: event.packageDigest,
+      boundedDigest: event.boundedDigest,
+      manifestDigest: event.manifestDigest,
+    );
+    final String compatibilityRollup = _formatRuntimeRolloutCompatibilityRollup(
+      runtimeTarget: event.runtimeTarget,
+      schemaVersions: event.schemaVersions,
+      optimizerStrategies: event.optimizerStrategies,
+      warmStartPackageId: event.warmStartPackageId,
+      warmStartModelVersion: event.warmStartModelVersion,
+    );
+    final String digestSuffix = digestRollup.isEmpty ? '' : ' · $digestRollup';
+    final String compatibilitySuffix =
+        compatibilityRollup.isEmpty ? '' : ' · $compatibilityRollup';
     if (event.action.endsWith('runtime_delivery_record.upsert')) {
       final String sites = event.targetSiteIds.isEmpty
           ? 'no target sites'
           : event.targetSiteIds.join(', ');
-      return 'Sites: $sites · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
+      return 'Sites: $sites · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}$digestSuffix$compatibilitySuffix';
     }
     if (event.action.endsWith('runtime_activation_record.upsert')) {
-      return 'Delivery ${event.deliveryRecordId} · site ${event.siteId} · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}';
+      return 'Delivery ${event.deliveryRecordId} · site ${event.siteId} · runtime ${event.runtimeTarget} · manifest ${event.manifestDigest}$digestSuffix$compatibilitySuffix';
     }
     if (event.action.endsWith('runtime_rollout_escalation_record.upsert')) {
       final String owner =
           event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
-      return 'Delivery ${event.deliveryRecordId} · owner $owner · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
+      return 'Delivery ${event.deliveryRecordId} · owner $owner · ${event.fallbackCount} fallback · ${event.pendingCount} pending$digestSuffix$compatibilitySuffix';
     }
     if (event.action.endsWith('runtime_rollout_control_record.upsert')) {
       final String owner =
           event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
       final String reason =
           event.reason.trim().isEmpty ? '' : ' · ${event.reason.trim()}';
-      return 'Delivery ${event.deliveryRecordId} · mode ${event.mode} · owner $owner$reason';
+      return 'Delivery ${event.deliveryRecordId} · mode ${event.mode} · owner $owner$reason$digestSuffix$compatibilitySuffix';
     }
-    return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
+    return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending$digestSuffix$compatibilitySuffix';
   }
 
   String _runtimeRolloutTriageHistoryLine(
@@ -7111,7 +7387,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String resolved = record.status == 'resolved'
         ? ' · resolved ${_formatTimestamp(record.resolvedAt)}'
         : '';
-    return 'Escalation: ${record.status} · owner $owner$due$resolved$notes';
+    final String digest =
+        _buildRuntimeRolloutBoundedDigestSuffix(record.boundedDigest);
+    return 'Escalation: ${record.status} · owner $owner$due$resolved$digest$notes';
   }
 
   String _buildRuntimeRolloutEscalationHistoryLine(
@@ -7127,7 +7405,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String actor = (record.recordedBy ?? '').trim().isEmpty
         ? 'hq'
         : record.recordedBy!.trim();
-    return '${_formatTimestamp(record.recordedAt)} · ${record.status} by $actor · owner $owner$due$notes';
+    final String digest =
+        _buildRuntimeRolloutBoundedDigestSuffix(record.boundedDigest);
+    return '${_formatTimestamp(record.recordedAt)} · ${record.status} by $actor · owner $owner$due$digest$notes';
   }
 
   String _buildRuntimeRolloutControlSummary(
@@ -7146,7 +7426,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         record.mode == 'monitor' && record.releasedAt != null
             ? ' · released ${_formatTimestamp(record.releasedAt)}'
             : '';
-    return 'Control: ${record.mode} · owner $owner$reviewBy$released$reason';
+    final String digest =
+        _buildRuntimeRolloutBoundedDigestSuffix(record.boundedDigest);
+    return 'Control: ${record.mode} · owner $owner$reviewBy$released$digest$reason';
   }
 
   String _buildRuntimeRolloutEscalationDueSegment(
