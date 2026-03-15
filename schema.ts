@@ -387,6 +387,8 @@ export interface FederatedLearningCandidatePromotionRecord {
   candidateModelPackageId: string;
   aggregationRunId: string;
   mergeArtifactId: string;
+  packageDigest: string;
+  boundedDigest: string;
   status: 'approved_for_eval' | 'hold';
   target: 'sandbox_eval';
   rationale?: string;
@@ -403,6 +405,8 @@ export interface FederatedLearningCandidatePromotionRevocationRecord {
   candidatePromotionRecordId: string;
   aggregationRunId: string;
   mergeArtifactId: string;
+  packageDigest: string;
+  boundedDigest: string;
   revokedStatus: 'approved_for_eval' | 'hold';
   target: 'sandbox_eval';
   rationale?: string;

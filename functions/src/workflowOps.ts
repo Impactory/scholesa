@@ -2934,6 +2934,8 @@ export const upsertFederatedLearningPilotEvidenceRecord = onCall(async (request:
   const experimentId = asTrimmedString(packageData.experimentId);
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
+  const packageDigest = asTrimmedString(packageData.packageDigest);
+  const boundedDigest = asTrimmedString(packageData.boundedDigest);
   const evidenceId = buildFederatedLearningPilotEvidenceRecordDocId(candidateModelPackageId);
   const evidenceRef = admin.firestore().collection('federatedLearningPilotEvidenceRecords').doc(evidenceId);
 
@@ -3956,6 +3958,8 @@ export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (req
       candidateModelPackageId,
       aggregationRunId,
       mergeArtifactId,
+      packageDigest,
+      boundedDigest,
       status,
       target,
       rationale,
@@ -3984,6 +3988,8 @@ export const upsertFederatedLearningCandidatePromotionRecord = onCall(async (req
       candidateModelPackageId,
       aggregationRunId,
       mergeArtifactId,
+      packageDigest,
+      boundedDigest,
       status,
       target,
     },
@@ -4030,6 +4036,8 @@ export const revokeFederatedLearningCandidatePromotionRecord = onCall(async (req
   const experimentId = asTrimmedString(packageData.experimentId);
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId || promotionData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId || promotionData.mergeArtifactId);
+  const packageDigest = asTrimmedString(packageData.packageDigest || promotionData.packageDigest);
+  const boundedDigest = asTrimmedString(packageData.boundedDigest || promotionData.boundedDigest);
   const revokedStatus = asTrimmedString(promotionData.status);
   const target = asTrimmedString(promotionData.target) || 'sandbox_eval';
 
@@ -4040,6 +4048,8 @@ export const revokeFederatedLearningCandidatePromotionRecord = onCall(async (req
       candidatePromotionRecordId: promotionId,
       aggregationRunId,
       mergeArtifactId,
+      packageDigest,
+      boundedDigest,
       revokedStatus,
       target,
       rationale,
@@ -4068,6 +4078,8 @@ export const revokeFederatedLearningCandidatePromotionRecord = onCall(async (req
       candidatePromotionRecordId: promotionId,
       aggregationRunId,
       mergeArtifactId,
+      packageDigest,
+      boundedDigest,
       revokedStatus,
       target,
     },

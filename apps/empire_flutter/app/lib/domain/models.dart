@@ -4442,6 +4442,8 @@ class FederatedLearningCandidatePromotionRecordModel {
     required this.candidateModelPackageId,
     required this.aggregationRunId,
     required this.mergeArtifactId,
+    required this.packageDigest,
+    required this.boundedDigest,
     required this.status,
     required this.target,
     this.rationale,
@@ -4456,6 +4458,8 @@ class FederatedLearningCandidatePromotionRecordModel {
   final String candidateModelPackageId;
   final String aggregationRunId;
   final String mergeArtifactId;
+  final String packageDigest;
+  final String boundedDigest;
   final String status;
   final String target;
   final String? rationale;
@@ -4483,6 +4487,8 @@ class FederatedLearningCandidatePromotionRecordModel {
       candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
       status: data['status'] as String? ?? '',
       target: data['target'] as String? ?? '',
       rationale: data['rationale'] as String?,
@@ -4498,6 +4504,8 @@ class FederatedLearningCandidatePromotionRecordModel {
         'candidateModelPackageId': candidateModelPackageId,
         'aggregationRunId': aggregationRunId,
         'mergeArtifactId': mergeArtifactId,
+        'packageDigest': packageDigest,
+        'boundedDigest': boundedDigest,
         'status': status,
         'target': target,
         'rationale': rationale,
@@ -4517,6 +4525,8 @@ class FederatedLearningCandidatePromotionRevocationRecordModel {
     required this.candidatePromotionRecordId,
     required this.aggregationRunId,
     required this.mergeArtifactId,
+    required this.packageDigest,
+    required this.boundedDigest,
     required this.revokedStatus,
     required this.target,
     this.rationale,
@@ -4532,6 +4542,8 @@ class FederatedLearningCandidatePromotionRevocationRecordModel {
   final String candidatePromotionRecordId;
   final String aggregationRunId;
   final String mergeArtifactId;
+  final String packageDigest;
+  final String boundedDigest;
   final String revokedStatus;
   final String target;
   final String? rationale;
@@ -4561,6 +4573,8 @@ class FederatedLearningCandidatePromotionRevocationRecordModel {
           data['candidatePromotionRecordId'] as String? ?? '',
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
+        packageDigest: data['packageDigest'] as String? ?? '',
+        boundedDigest: data['boundedDigest'] as String? ?? '',
       revokedStatus: data['revokedStatus'] as String? ?? '',
       target: data['target'] as String? ?? '',
       rationale: data['rationale'] as String?,
@@ -4577,6 +4591,8 @@ class FederatedLearningCandidatePromotionRevocationRecordModel {
         'candidatePromotionRecordId': candidatePromotionRecordId,
         'aggregationRunId': aggregationRunId,
         'mergeArtifactId': mergeArtifactId,
+        'packageDigest': packageDigest,
+        'boundedDigest': boundedDigest,
         'revokedStatus': revokedStatus,
         'target': target,
         'rationale': rationale,
