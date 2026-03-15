@@ -23,6 +23,8 @@ class FederatedLearningRuntimeAdapter {
   };
   static const Duration _assignmentCacheTtl = Duration(minutes: 5);
   static const int _maxBufferedSamples = 8;
+  static const String _optimizerStrategy =
+      'bounded_runtime_vector_local_finetune_v1';
 
   AppState? _appState;
   WorkflowBridgeService? _workflowBridge;
@@ -229,6 +231,16 @@ class FederatedLearningRuntimeAdapter {
             runtimePackage.runtimeVector.length;
     final double updateNorm =
       double.parse((baseNorm + runtimeBias).toStringAsFixed(6));
+    final DateTime earliest = samples
+        .map((sample) => sample.capturedAt)
+        .reduce((DateTime a, DateTime b) => a.isBefore(b) ? a : b);
+    final DateTime latest = samples
+        .map((sample) => sample.capturedAt)
+        .reduce((DateTime a, DateTime b) => a.isAfter(b) ? a : b);
+    final int trainingWindowSeconds = latest
+        .difference(earliest)
+        .inSeconds
+        .clamp(0, 86400);
 
     try {
       await _uploader!.uploadSummary(
@@ -247,6 +259,13 @@ class FederatedLearningRuntimeAdapter {
           vectorSketch: vectorSketch,
           runtimeVectorDigest: runtimePackage?.runtimeVectorDigest,
         ),
+        optimizerStrategy: _optimizerStrategy,
+        localEpochCount: 1,
+        localStepCount: samples.length,
+        trainingWindowSeconds: trainingWindowSeconds,
+        warmStartPackageId: runtimePackage?.candidateModelPackageId,
+        warmStartDeliveryRecordId: runtimePackage?.deliveryRecordId,
+        warmStartModelVersion: runtimePackage?.modelVersion,
         batteryState: 'unknown',
         networkType: 'unknown',
       );

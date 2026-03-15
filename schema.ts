@@ -249,6 +249,13 @@ export interface FederatedLearningUpdateSummary {
   payloadBytes: number;
   updateNorm: number;
   payloadDigest: string;
+  optimizerStrategy?: string;
+  localEpochCount?: number;
+  localStepCount?: number;
+  trainingWindowSeconds?: number;
+  warmStartPackageId?: string;
+  warmStartDeliveryRecordId?: string;
+  warmStartModelVersion?: string;
   batteryState?: 'low' | 'ok' | 'charging' | 'unknown';
   networkType?: 'wifi' | 'cellular' | 'offline' | 'unknown';
   aggregationStatus?: 'pending' | 'materialized';

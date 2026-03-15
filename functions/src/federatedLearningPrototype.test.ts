@@ -166,11 +166,23 @@ describe('federated learning prototype helpers', () => {
       payloadBytes: 2048,
       updateNorm: 14.5,
       payloadDigest: 'sha256:abc123',
+      optimizerStrategy: 'bounded_runtime_vector_local_finetune_v1',
+      localEpochCount: 1,
+      localStepCount: 8,
+      trainingWindowSeconds: 45,
+      warmStartPackageId: 'fl_pkg_1',
+      warmStartDeliveryRecordId: 'fl_delivery_1',
+      warmStartModelVersion: 'fl_runtime_model_v1',
       batteryState: 'charging',
       networkType: 'wifi',
     }, 4096);
     expect(summary.payloadBytes).toBe(2048);
     expect(summary.networkType).toBe('wifi');
+    expect(summary.optimizerStrategy).toBe(
+      'bounded_runtime_vector_local_finetune_v1',
+    );
+    expect(summary.localStepCount).toBe(8);
+    expect(summary.warmStartPackageId).toBe('fl_pkg_1');
 
     expect(() => sanitizeFederatedLearningUpdateSummary({
       siteId: 'site-1',

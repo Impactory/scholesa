@@ -1604,6 +1604,7 @@ Map<String, dynamic> _aggregationRunRow({
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
+    'contributionDetails': _contributionDetailRows(),
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
@@ -1660,6 +1661,7 @@ Map<String, dynamic> _candidatePackageRow({
     'sampleCount': sampleCount,
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
+    'contributionDetails': _contributionDetailRows(),
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
@@ -2068,6 +2070,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'sampleCount': 24,
     'summaryCount': 2,
     'distinctSiteCount': 2,
+    'contributionDetails': _contributionDetailRows(),
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
@@ -2075,6 +2078,41 @@ Map<String, dynamic> _mergeArtifactRow({
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
   };
+}
+
+List<Map<String, dynamic>> _contributionDetailRows() {
+  return <Map<String, dynamic>>[
+    <String, dynamic>{
+      'summaryId': 'update-1',
+      'siteId': 'site-1',
+      'sampleCount': 13,
+      'payloadBytes': 896,
+      'vectorLength': 8,
+      'updateNorm': 1.1,
+      'schemaVersion': 'v1',
+      'runtimeTarget': 'flutter_mobile',
+      'traceId': 'trace-1',
+      'payloadDigest': 'sha256:update-1',
+      'rawWeight': 13.0,
+      'normScale': 1.0,
+      'effectiveWeight': 13.0,
+    },
+    <String, dynamic>{
+      'summaryId': 'update-2',
+      'siteId': 'site-2',
+      'sampleCount': 11,
+      'payloadBytes': 896,
+      'vectorLength': 8,
+      'updateNorm': 2.8,
+      'schemaVersion': 'v1',
+      'runtimeTarget': 'flutter_mobile',
+      'traceId': 'trace-2',
+      'payloadDigest': 'sha256:update-2',
+      'rawWeight': 11.0,
+      'normScale': 0.857143,
+      'effectiveWeight': 9.428573,
+    },
+  ];
 }
 
 AppState _buildSiteState() {
@@ -2341,6 +2379,13 @@ void main() {
       payloadBytes: 768,
       updateNorm: 1.7,
       payloadDigest: 'digest-42',
+      optimizerStrategy: 'bounded_runtime_vector_local_finetune_v1',
+      localEpochCount: 1,
+      localStepCount: 12,
+      trainingWindowSeconds: 45,
+      warmStartPackageId: 'fl_pkg_1',
+      warmStartDeliveryRecordId: 'fl_delivery_1',
+      warmStartModelVersion: 'fl_runtime_model_v1',
       batteryState: 'charging',
       networkType: 'wifi',
     );
@@ -2351,6 +2396,10 @@ void main() {
     expect(
         bridge.recordedUpdates.single['experimentId'], 'fl_exp_literacy_pilot');
     expect(bridge.recordedUpdates.single['vectorSketch'], hasLength(8));
+    expect(
+      bridge.recordedUpdates.single['optimizerStrategy'],
+      'bounded_runtime_vector_local_finetune_v1',
+    );
   });
 
   test(
@@ -3008,6 +3057,13 @@ void main() {
       () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       experiments: <Map<String, dynamic>>[_experimentRow(status: 'active')],
+      candidatePackages: <Map<String, dynamic>>[_candidatePackageRow()],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
     );
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final AppState appState = _buildSiteState();
@@ -3045,6 +3101,16 @@ void main() {
     expect(bridge.recordedUpdates.single['sampleCount'], 2);
     expect(
         bridge.recordedUpdates.single['schemaVersion'], 'fl-prototype-bos-v1');
+    expect(
+      bridge.recordedUpdates.single['optimizerStrategy'],
+      'bounded_runtime_vector_local_finetune_v1',
+    );
+    expect(bridge.recordedUpdates.single['localEpochCount'], 1);
+    expect(bridge.recordedUpdates.single['localStepCount'], 2);
+    expect(
+      bridge.recordedUpdates.single['warmStartPackageId'],
+      'fl_pkg_1',
+    );
   });
 
   testWidgets('HQ page renders experiment section and saves a new cohort',
@@ -3148,6 +3214,13 @@ void main() {
       'payloadBytes': 920,
       'updateNorm': 2.1,
       'payloadDigest': 'sha256:update-1',
+      'optimizerStrategy': 'bounded_runtime_vector_local_finetune_v1',
+      'localEpochCount': 1,
+      'localStepCount': 13,
+      'trainingWindowSeconds': 75,
+      'warmStartPackageId': 'fl_pkg_1',
+      'warmStartDeliveryRecordId': 'fl_delivery_1',
+      'warmStartModelVersion': 'fl_runtime_model_v1',
       'batteryState': 'charging',
       'networkType': 'wifi',
       'createdAt': DateTime(2026, 3, 14, 10),
@@ -3165,6 +3238,13 @@ void main() {
       'payloadBytes': 940,
       'updateNorm': 2.3,
       'payloadDigest': 'sha256:update-2',
+      'optimizerStrategy': 'bounded_runtime_vector_local_finetune_v1',
+      'localEpochCount': 1,
+      'localStepCount': 11,
+      'trainingWindowSeconds': 60,
+      'warmStartPackageId': 'fl_pkg_1',
+      'warmStartDeliveryRecordId': 'fl_delivery_1',
+      'warmStartModelVersion': 'fl_runtime_model_v1',
       'batteryState': 'battery',
       'networkType': 'cellular',
       'createdAt': DateTime(2026, 3, 14, 11),
@@ -3245,6 +3325,18 @@ void main() {
     expect(
       find.text(
         'Latest package merge: norm_capped_weighted_runtime_vector_average_v2 · norm cap 2.400 · effective weight 17.600',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest aggregation damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
       ),
       findsOneWidget,
     );
@@ -3637,6 +3729,12 @@ void main() {
       find.text('Delivery digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Trigger summary: update-2'), findsOneWidget);
     expect(find.text('Accepted summaries: update-1, update-2'), findsOneWidget);
     expect(
@@ -3645,6 +3743,10 @@ void main() {
     );
     expect(
       find.widgetWithText(OutlinedButton, 'Open trigger summary'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open contribution details'),
       findsOneWidget,
     );
     final Finder deliveryTraceButton = find.widgetWithText(
@@ -3669,6 +3771,18 @@ void main() {
     expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
     expect(find.text('Summary update-1 · site site-1 · 13 samples'),
         findsOneWidget);
+    expect(
+      find.text(
+        'Local training: bounded_runtime_vector_local_finetune_v1 · epochs 1 · steps 13 · window 75s',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Warm start: package fl_pkg_1 · delivery fl_delivery_1 · model fl_runtime_model_v1',
+      ),
+      findsWidgets,
+    );
     expect(find.text('Summary update-2 · site site-2 · 11 samples'),
         findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
@@ -3683,6 +3797,23 @@ void main() {
     expect(find.text('Requested summaries: update-2'), findsOneWidget);
     expect(find.text('Summary update-2 · site site-2 · 11 samples'),
         findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+    final Finder deliveryContributionButton = find.widgetWithText(
+      OutlinedButton,
+      'Open contribution details',
+    );
+    await tester.ensureVisible(deliveryContributionButton.first);
+    await tester.tap(deliveryContributionButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Contribution details: Literacy Pilot'), findsOneWidget);
+    expect(find.text('Contribution rows: 2'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
+    expect(
+      find.text('Trace: trace-2 · Digest: sha256:update-2'),
+      findsOneWidget,
+    );
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
@@ -3750,6 +3881,12 @@ void main() {
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
+    expect(
+      find.text(
+        'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
+      findsWidgets,
+    );
     expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
@@ -3758,6 +3895,10 @@ void main() {
     expect(find.text('Package: fl_pkg_1'), findsWidgets);
     expect(
       find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
+      findsWidgets,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open contribution details'),
       findsWidgets,
     );
     expect(
@@ -3820,6 +3961,23 @@ void main() {
         find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
+    final Finder aggregationContributionButton = find.widgetWithText(
+      OutlinedButton,
+      'Open contribution details',
+    );
+    await tester.ensureVisible(aggregationContributionButton.first);
+    await tester.tap(aggregationContributionButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Contribution details: Literacy Pilot'), findsOneWidget);
+    expect(find.text('Contribution rows: 2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'),
+        findsOneWidget);
+    expect(
+      find.textContaining('Raw weight: 13 · Norm scale: 1 · Effective weight: 13'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(aggregationSummaryButton.first);
     await tester.tap(aggregationSummaryButton.first);
     await tester.pumpAndSettle();
@@ -3827,6 +3985,12 @@ void main() {
         find.text('Requested summaries: update-1, update-2'), findsOneWidget);
     expect(find.text('Summary update-1 · site site-1 · 13 samples'),
         findsOneWidget);
+    expect(
+      find.text(
+        'Local training: bounded_runtime_vector_local_finetune_v1 · epochs 1 · steps 13 · window 75s',
+      ),
+      findsOneWidget,
+    );
     expect(
         find.text('Trace: trace-1 · Digest: sha256:update-1'), findsOneWidget);
     expect(find.text('Summary update-2 · site site-2 · 11 samples'),
@@ -3885,6 +4049,12 @@ void main() {
     );
     expect(
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
+      findsWidgets,
+    );
+    expect(
+      find.text(
+        'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
@@ -4098,6 +4268,12 @@ void main() {
     );
     expect(
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
+      findsWidgets,
+    );
+    expect(
+      find.text(
+        'Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
+      ),
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);

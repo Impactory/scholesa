@@ -43,6 +43,13 @@ export interface FederatedLearningUpdateSummary {
   payloadBytes: number;
   updateNorm: number;
   payloadDigest: string;
+  optimizerStrategy?: string;
+  localEpochCount?: number;
+  localStepCount?: number;
+  trainingWindowSeconds?: number;
+  warmStartPackageId?: string;
+  warmStartDeliveryRecordId?: string;
+  warmStartModelVersion?: string;
   batteryState: FederatedLearningBatteryState;
   networkType: FederatedLearningNetworkType;
 }
@@ -553,6 +560,19 @@ export function sanitizeFederatedLearningUpdateSummary(
   if (updateNorm === null || updateNorm < 0 || updateNorm > 1000000) {
     throw new Error('updateNorm must be a finite number between 0 and 1000000.');
   }
+  const optimizerStrategy = asTrimmedString(input.optimizerStrategy);
+  const localEpochCount = input.localEpochCount == null
+    ? undefined
+    : asIntegerInRange(input.localEpochCount, 'localEpochCount', 0, 1000, 0);
+  const localStepCount = input.localStepCount == null
+    ? undefined
+    : asIntegerInRange(input.localStepCount, 'localStepCount', 0, 100000, 0);
+  const trainingWindowSeconds = input.trainingWindowSeconds == null
+    ? undefined
+    : asIntegerInRange(input.trainingWindowSeconds, 'trainingWindowSeconds', 0, 86400, 0);
+  const warmStartPackageId = asTrimmedString(input.warmStartPackageId);
+  const warmStartDeliveryRecordId = asTrimmedString(input.warmStartDeliveryRecordId);
+  const warmStartModelVersion = asTrimmedString(input.warmStartModelVersion);
 
   return {
     siteId,
@@ -564,6 +584,17 @@ export function sanitizeFederatedLearningUpdateSummary(
     payloadBytes,
     updateNorm,
     payloadDigest,
+    optimizerStrategy: optimizerStrategy.length == 0 ? undefined : optimizerStrategy,
+    localEpochCount,
+    localStepCount,
+    trainingWindowSeconds,
+    warmStartPackageId:
+      warmStartPackageId.length == 0 ? undefined : warmStartPackageId,
+    warmStartDeliveryRecordId: warmStartDeliveryRecordId.length == 0
+      ? undefined
+      : warmStartDeliveryRecordId,
+    warmStartModelVersion:
+      warmStartModelVersion.length == 0 ? undefined : warmStartModelVersion,
     batteryState: normalizeFederatedLearningBatteryState(input.batteryState),
     networkType: normalizeFederatedLearningNetworkType(input.networkType),
   };

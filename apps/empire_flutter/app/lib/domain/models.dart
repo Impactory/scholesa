@@ -2977,6 +2977,13 @@ class FederatedLearningUpdateSummaryModel {
     required this.payloadDigest,
     required this.batteryState,
     required this.networkType,
+    this.optimizerStrategy,
+    this.localEpochCount,
+    this.localStepCount,
+    this.trainingWindowSeconds,
+    this.warmStartPackageId,
+    this.warmStartDeliveryRecordId,
+    this.warmStartModelVersion,
     this.runtimeTarget,
     this.requestedBy,
     this.status,
@@ -2996,6 +3003,13 @@ class FederatedLearningUpdateSummaryModel {
   final String payloadDigest;
   final String batteryState;
   final String networkType;
+  final String? optimizerStrategy;
+  final int? localEpochCount;
+  final int? localStepCount;
+  final int? trainingWindowSeconds;
+  final String? warmStartPackageId;
+  final String? warmStartDeliveryRecordId;
+  final String? warmStartModelVersion;
   final String? runtimeTarget;
   final String? requestedBy;
   final String? status;
@@ -3028,6 +3042,13 @@ class FederatedLearningUpdateSummaryModel {
       payloadDigest: data['payloadDigest'] as String? ?? '',
       batteryState: data['batteryState'] as String? ?? 'unknown',
       networkType: data['networkType'] as String? ?? 'unknown',
+      optimizerStrategy: data['optimizerStrategy'] as String?,
+      localEpochCount: (data['localEpochCount'] as num?)?.toInt(),
+      localStepCount: (data['localStepCount'] as num?)?.toInt(),
+      trainingWindowSeconds: (data['trainingWindowSeconds'] as num?)?.toInt(),
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartDeliveryRecordId: data['warmStartDeliveryRecordId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
       runtimeTarget: data['runtimeTarget'] as String?,
       requestedBy: data['requestedBy'] as String?,
       status: data['status'] as String?,
@@ -3048,6 +3069,13 @@ class FederatedLearningUpdateSummaryModel {
         'payloadDigest': payloadDigest,
         'batteryState': batteryState,
         'networkType': networkType,
+        'optimizerStrategy': optimizerStrategy,
+        'localEpochCount': localEpochCount,
+        'localStepCount': localStepCount,
+        'trainingWindowSeconds': trainingWindowSeconds,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartDeliveryRecordId': warmStartDeliveryRecordId,
+        'warmStartModelVersion': warmStartModelVersion,
         'runtimeTarget': runtimeTarget,
         'requestedBy': requestedBy,
         'status': status,
