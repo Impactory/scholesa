@@ -1413,6 +1413,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 run.id,
                 run.triggerSummaryId,
                 run.summaryIds.join(' '),
+                _summarySearchTokens(run.summaryIds),
+                _summarySearchTokens(<String>[run.triggerSummaryId]),
                 run.mergeArtifactId ?? '',
                 run.mergeStrategy ?? '',
                 run.boundedDigest ?? '',
@@ -1770,6 +1772,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 package.mergeArtifactId,
                 package.triggerSummaryId,
                 package.summaryIds.join(' '),
+                _summarySearchTokens(package.summaryIds),
+                _summarySearchTokens(<String>[package.triggerSummaryId]),
                 package.packageDigest,
                 package.boundedDigest,
                 package.packageFormat,
@@ -3017,6 +3021,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 record.decidedBy ?? '',
                 package?.triggerSummaryId ?? '',
                 package?.summaryIds.join(' ') ?? '',
+                _summarySearchTokens(package?.summaryIds ?? <String>[]),
+                _summarySearchTokens(<String>[package?.triggerSummaryId ?? '']),
                 package?.packageDigest ?? '',
                 package?.boundedDigest ?? '',
                 package?.contributingSiteIds.join(' ') ?? '',
@@ -6676,6 +6682,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         revocationsByPackageId[record.candidateModelPackageId] = record;
       }
+      final Set<String> summaryIds = <String>{
+        for (final FederatedLearningAggregationRunModel run in runs)
+          ...run.summaryIds.where((String id) => id.trim().isNotEmpty),
+        for (final FederatedLearningAggregationRunModel run in runs)
+          if (run.triggerSummaryId.trim().isNotEmpty) run.triggerSummaryId,
+        for (final FederatedLearningCandidateModelPackageModel package
+            in packages)
+          ...package.summaryIds.where((String id) => id.trim().isNotEmpty),
+        for (final FederatedLearningCandidateModelPackageModel package
+            in packages)
+          if (package.triggerSummaryId.trim().isNotEmpty)
+            package.triggerSummaryId,
+      };
+      final Map<String, FederatedLearningUpdateSummaryModel> summariesById =
+          <String, FederatedLearningUpdateSummaryModel>{
+        for (final FederatedLearningUpdateSummaryModel summary
+            in await _updateSummaryRepository.listByIds(
+          summaryIds.toList()..sort(),
+        ))
+          summary.id: summary,
+      };
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
@@ -6695,6 +6722,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
+        _updateSummariesById = summariesById;
       });
     } catch (_) {
       if (!mounted) return;
@@ -6728,6 +6756,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             <String, FederatedLearningCandidatePromotionRecordModel>{};
         _promotionRevocationRecordsByPackageId = <String,
             FederatedLearningCandidatePromotionRevocationRecordModel>{};
+        _updateSummariesById = <String, FederatedLearningUpdateSummaryModel>{};
       });
     } finally {
       if (mounted) {
