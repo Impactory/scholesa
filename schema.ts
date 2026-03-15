@@ -309,6 +309,10 @@ export interface FederatedLearningAggregationRun {
   mergeStrategy?: string;
   normCap?: number;
   effectiveTotalWeight?: number;
+  rawTotalWeight?: number;
+  dampedSummaryCount?: number;
+  minUpdateNorm?: number;
+  maxUpdateNorm?: number;
   boundedDigest?: string;
   payloadFormat?: 'runtime_vector_v1';
   modelVersion?: string;
@@ -339,6 +343,10 @@ export interface FederatedLearningMergeArtifact {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  rawTotalWeight: number;
+  dampedSummaryCount: number;
+  minUpdateNorm: number;
+  maxUpdateNorm: number;
   triggerSummaryId: string;
   summaryIds: string[];
   boundedDigest: string;
@@ -389,6 +397,10 @@ export interface FederatedLearningCandidateModelPackage {
   boundedDigest: string;
   normCap?: number;
   effectiveTotalWeight?: number;
+  rawTotalWeight?: number;
+  dampedSummaryCount?: number;
+  minUpdateNorm?: number;
+  maxUpdateNorm?: number;
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;

@@ -288,6 +288,10 @@ describe('federated learning prototype helpers', () => {
     expect(mergeWeights).toEqual({
       normCap: 2.683282,
       effectiveTotalWeight: 18,
+      rawTotalWeight: 18,
+      dampedSummaryCount: 0,
+      minUpdateNorm: 1.2,
+      maxUpdateNorm: 1.5,
     });
 
     const contributionDetails = buildFederatedLearningContributionDetails([
@@ -354,6 +358,10 @@ describe('federated learning prototype helpers', () => {
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
       effectiveTotalWeight: 18,
+      rawTotalWeight: 18,
+      dampedSummaryCount: 0,
+      minUpdateNorm: 1.2,
+      maxUpdateNorm: 1.5,
       triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       payloadFormat: 'runtime_vector_v1',
@@ -392,6 +400,10 @@ describe('federated learning prototype helpers', () => {
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
       effectiveTotalWeight: 18,
+      rawTotalWeight: 18,
+      dampedSummaryCount: 0,
+      minUpdateNorm: 1.2,
+      maxUpdateNorm: 1.5,
       triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       packageFormat: 'runtime_vector_v1',
