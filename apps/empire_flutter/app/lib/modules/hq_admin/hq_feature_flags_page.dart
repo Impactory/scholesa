@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models.dart';
+import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
@@ -13,10 +14,15 @@ String _tHqFeatureFlags(BuildContext context, String input) {
 /// HQ Feature Flags page for managing feature toggles
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
 class HqFeatureFlagsPage extends StatefulWidget {
-  const HqFeatureFlagsPage({super.key, WorkflowBridgeService? workflowBridge})
-      : _workflowBridge = workflowBridge;
+  const HqFeatureFlagsPage({
+    super.key,
+    WorkflowBridgeService? workflowBridge,
+    FederatedLearningUpdateSummaryRepository? updateSummaryRepository,
+  })  : _workflowBridge = workflowBridge,
+        _updateSummaryRepository = updateSummaryRepository;
 
   final WorkflowBridgeService? _workflowBridge;
+  final FederatedLearningUpdateSummaryRepository? _updateSummaryRepository;
 
   @override
   State<HqFeatureFlagsPage> createState() => _HqFeatureFlagsPageState();
@@ -91,6 +97,183 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
 
   WorkflowBridgeService get _workflowBridge =>
       widget._workflowBridge ?? WorkflowBridgeService.instance;
+    FederatedLearningUpdateSummaryRepository get _updateSummaryRepository =>
+      widget._updateSummaryRepository ??
+      FederatedLearningUpdateSummaryRepository();
+
+  Future<void> _showAcceptedSummaryDialog({
+    required FederatedLearningExperimentModel experiment,
+    required List<String> summaryIds,
+    String title = 'Accepted summaries',
+  }) async {
+    final List<String> normalizedSummaryIds = summaryIds
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+    if (normalizedSummaryIds.isEmpty) {
+      return;
+    }
+
+    final List<FederatedLearningUpdateSummaryModel> summaries =
+        await _updateSummaryRepository.listByIds(normalizedSummaryIds);
+    final Map<String, FederatedLearningUpdateSummaryModel> summariesById =
+        <String, FederatedLearningUpdateSummaryModel>{
+      for (final FederatedLearningUpdateSummaryModel summary in summaries)
+        summary.id: summary,
+    };
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(context, '$title: ${experiment.name}'),
+          ),
+          content: SizedBox(
+            width: 640,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tHqFeatureFlags(
+                      context,
+                      'Requested summaries: ${normalizedSummaryIds.join(', ')}',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...normalizedSummaryIds.map((String summaryId) {
+                    final FederatedLearningUpdateSummaryModel? summary =
+                        summariesById[summaryId];
+                    if (summary == null) {
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'Summary $summaryId was referenced by provenance but is not available in the current bounded summary store.',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: ScholesaColors.textSecondary,
+                          ),
+                        ),
+                      );
+                    }
+                    return _buildAcceptedSummaryEntry(summary);
+                  }),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(_tHqFeatureFlags(context, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAcceptedSummaryEntry(
+    FederatedLearningUpdateSummaryModel summary,
+  ) {
+    final String createdLabel = _formatTimestamp(summary.createdAt);
+    final String requestedBy = (summary.requestedBy ?? '').trim();
+    final String status = (summary.status ?? '').trim();
+    final String runtimeTarget = (summary.runtimeTarget ?? '').trim();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Summary ${summary.id} · site ${summary.siteId} · ${summary.sampleCount} samples',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tHqFeatureFlags(context, 'Created: $createdLabel'),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Trace: ${summary.traceId} · Digest: ${summary.payloadDigest}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Vector length: ${summary.vectorLength} · Payload bytes: ${summary.payloadBytes} · Update norm: ${_formatMergeMetric(summary.updateNorm)}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              'Battery: ${summary.batteryState} · Network: ${summary.networkType}',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          if (runtimeTarget.isNotEmpty || requestedBy.isNotEmpty || status.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Runtime target: ${runtimeTarget.isNotEmpty ? runtimeTarget : 'n/a'} · Requested by: ${requestedBy.isNotEmpty ? requestedBy : 'n/a'} · Status: ${status.isNotEmpty ? status : 'accepted'}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -1430,6 +1613,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   run,
                                   artifactsByRunId[run.id],
                                   candidatePackagesByRunId[run.id],
+                                  experiment,
                                 ),
                               )
                               .toList(),
@@ -1835,6 +2019,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     experiment,
                                     initialQuery: package.aggregationRunId,
                                   ),
+                                  onTraceAcceptedSummaries:
+                                      package.summaryIds.isEmpty
+                                          ? null
+                                          : () => _showAcceptedSummaryDialog(
+                                                experiment: experiment,
+                                                summaryIds: package.summaryIds,
+                                              ),
                                   onApprove: () =>
                                       _showCandidatePromotionDecisionDialog(
                                     experiment: experiment,
@@ -1924,6 +2115,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningAggregationRunModel run,
     FederatedLearningMergeArtifactModel? artifact,
     FederatedLearningCandidateModelPackageModel? candidatePackage,
+    FederatedLearningExperimentModel experiment,
   ) {
     final String createdLabel = _formatTimestamp(run.createdAt);
     final String digest =
@@ -2001,6 +2193,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showAcceptedSummaryDialog(
+                experiment: experiment,
+                summaryIds: run.summaryIds,
+              ),
+              icon: const Icon(Icons.description_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open accepted summaries'),
               ),
             ),
           ],
@@ -2241,6 +2444,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     VoidCallback? onApprove,
     VoidCallback? onHold,
     VoidCallback? onTraceAggregation,
+    VoidCallback? onTraceAcceptedSummaries,
   }) {
     final String createdLabel = _formatTimestamp(package.createdAt);
     final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
@@ -2527,6 +2731,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 icon: const Icon(Icons.timeline_rounded),
                 label: Text(
                   _tHqFeatureFlags(context, 'Open aggregation run'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onTraceAcceptedSummaries,
+                icon: const Icon(Icons.description_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open accepted summaries'),
                 ),
               ),
             ],
@@ -2990,6 +3201,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     experiment,
                                     initialQuery: record.aggregationRunId,
                                   ),
+                                  onTraceAcceptedSummaries:
+                                    packagesById[record
+                                          .candidateModelPackageId]
+                                        ?.summaryIds
+                                        .isEmpty ==
+                                      false
+                                      ? () => _showAcceptedSummaryDialog(
+                                        experiment: experiment,
+                                        summaryIds: packagesById[record
+                                            .candidateModelPackageId]!
+                                          .summaryIds,
+                                        )
+                                      : null,
                                   onRevoke: () =>
                                       _showCandidatePromotionRevocationDialog(
                                     record: record,
@@ -3094,6 +3318,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningCandidatePromotionRevocationRecordModel? revocation, {
     VoidCallback? onRevoke,
     VoidCallback? onTraceAggregation,
+    VoidCallback? onTraceAcceptedSummaries,
   }) {
     final String decidedLabel = _formatTimestamp(record.decidedAt);
     final String updatedLabel = _formatTimestamp(record.updatedAt);
@@ -3334,6 +3559,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 icon: const Icon(Icons.timeline_rounded),
                 label: Text(
                   _tHqFeatureFlags(context, 'Open aggregation run'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onTraceAcceptedSummaries,
+                icon: const Icon(Icons.description_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open accepted summaries'),
                 ),
               ),
             ],

@@ -3130,9 +3130,85 @@ void main() {
         _promotionRecordRow(),
       ],
     );
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FederatedLearningUpdateSummaryRepository summaryRepository =
+        FederatedLearningUpdateSummaryRepository(firestore: firestore);
+    await firestore
+        .collection('federatedLearningUpdateSummaries')
+        .doc('update-1')
+        .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'siteId': 'site-1',
+      'traceId': 'trace-1',
+      'schemaVersion': 'v1',
+      'sampleCount': 13,
+      'vectorLength': 128,
+      'payloadBytes': 920,
+      'updateNorm': 2.1,
+      'payloadDigest': 'sha256:update-1',
+      'batteryState': 'charging',
+      'networkType': 'wifi',
+      'createdAt': DateTime(2026, 3, 14, 10),
+    });
+    await firestore
+        .collection('federatedLearningUpdateSummaries')
+        .doc('update-2')
+        .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'siteId': 'site-2',
+      'traceId': 'trace-2',
+      'schemaVersion': 'v1',
+      'sampleCount': 11,
+      'vectorLength': 128,
+      'payloadBytes': 940,
+      'updateNorm': 2.3,
+      'payloadDigest': 'sha256:update-2',
+      'batteryState': 'battery',
+      'networkType': 'cellular',
+      'createdAt': DateTime(2026, 3, 14, 11),
+    });
+    await firestore
+        .collection('federatedLearningUpdateSummaries')
+        .doc('update-3')
+        .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'siteId': 'site-3',
+      'traceId': 'trace-3',
+      'schemaVersion': 'v1',
+      'sampleCount': 9,
+      'vectorLength': 128,
+      'payloadBytes': 880,
+      'updateNorm': 2.2,
+      'payloadDigest': 'sha256:update-3',
+      'batteryState': 'charging',
+      'networkType': 'wifi',
+      'createdAt': DateTime(2026, 3, 13, 10),
+    });
+    await firestore
+        .collection('federatedLearningUpdateSummaries')
+        .doc('update-4')
+        .set(<String, dynamic>{
+      'experimentId': 'fl_exp_literacy_pilot',
+      'siteId': 'site-4',
+      'traceId': 'trace-4',
+      'schemaVersion': 'v1',
+      'sampleCount': 11,
+      'vectorLength': 128,
+      'payloadBytes': 910,
+      'updateNorm': 2.5,
+      'payloadDigest': 'sha256:update-4',
+      'batteryState': 'charging',
+      'networkType': 'wifi',
+      'createdAt': DateTime(2026, 3, 13, 11),
+    });
 
     await tester.pumpWidget(
-      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+      _wrapWithMaterial(
+        HqFeatureFlagsPage(
+          workflowBridge: bridge,
+          updateSummaryRepository: summaryRepository,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -3623,6 +3699,10 @@ void main() {
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
     expect(find.text('Package: fl_pkg_1'), findsWidgets);
     expect(
+      find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
+      findsWidgets,
+    );
+    expect(
       find.text('Package format: runtime_vector_v1'),
       findsWidgets,
     );
@@ -3658,6 +3738,21 @@ void main() {
 
     await tester.ensureVisible(find.text('Artifact missing'));
     await tester.tap(find.text('Artifact missing'));
+    await tester.pumpAndSettle();
+
+    final Finder aggregationSummaryButton = find.widgetWithText(
+      OutlinedButton,
+      'Open accepted summaries',
+    );
+    await tester.ensureVisible(aggregationSummaryButton.first);
+    await tester.tap(aggregationSummaryButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
+    expect(find.text('Trace: trace-1 · Digest: sha256:update-1'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
+    expect(find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
@@ -3840,6 +3935,10 @@ void main() {
       find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
+      findsWidgets,
+    );
     final Finder packageTraceButton = find.widgetWithText(
       OutlinedButton,
       'Open aggregation run',
@@ -3852,6 +3951,20 @@ void main() {
     expect(find.text('Showing 1-1 of 1'), findsWidgets);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
+
+    final Finder packageSummaryButton = find.widgetWithText(
+      OutlinedButton,
+      'Open accepted summaries',
+    );
+    await tester.ensureVisible(packageSummaryButton.first);
+    await tester.tap(packageSummaryButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -3913,6 +4026,10 @@ void main() {
       find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
+      findsWidgets,
+    );
 
     await tester.enterText(
       find.widgetWithText(
@@ -3941,6 +4058,19 @@ void main() {
     expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
     expect(find.text('Showing 1-1 of 1'), findsWidgets);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
+    final Finder promotionSummaryButton = find.widgetWithText(
+      OutlinedButton,
+      'Open accepted summaries',
+    );
+    await tester.ensureVisible(promotionSummaryButton.first);
+    await tester.tap(promotionSummaryButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 

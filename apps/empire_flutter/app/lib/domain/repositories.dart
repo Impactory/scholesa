@@ -1165,6 +1165,42 @@ class FederatedLearningUpdateSummaryRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       _firestore.collection('federatedLearningUpdateSummaries');
 
+  Future<List<FederatedLearningUpdateSummaryModel>> listByIds(
+    List<String> ids,
+  ) async {
+    final List<String> normalizedIds = ids
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (normalizedIds.isEmpty) {
+      return const <FederatedLearningUpdateSummaryModel>[];
+    }
+
+    final List<FederatedLearningUpdateSummaryModel> rows =
+        <FederatedLearningUpdateSummaryModel>[];
+    for (int start = 0; start < normalizedIds.length; start += 10) {
+      final int end =
+          (start + 10 > normalizedIds.length) ? normalizedIds.length : start + 10;
+      final List<String> batch = normalizedIds.sublist(start, end);
+      final QuerySnapshot<Map<String, dynamic>> snap = await _col
+          .where(FieldPath.documentId, whereIn: batch)
+          .get();
+      rows.addAll(
+        snap.docs.map(FederatedLearningUpdateSummaryModel.fromDoc),
+      );
+    }
+
+    final Map<String, FederatedLearningUpdateSummaryModel> rowsById =
+        <String, FederatedLearningUpdateSummaryModel>{
+      for (final FederatedLearningUpdateSummaryModel row in rows) row.id: row,
+    };
+    return normalizedIds
+        .where(rowsById.containsKey)
+        .map((String id) => rowsById[id]!)
+        .toList(growable: false);
+  }
+
   Future<List<FederatedLearningUpdateSummaryModel>> listByExperiment(
     String experimentId, {
     String? siteId,
