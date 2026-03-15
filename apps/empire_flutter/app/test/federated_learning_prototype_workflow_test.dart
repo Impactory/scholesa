@@ -1325,7 +1325,22 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
     final String alertId =
         'fl_rollout_alert_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
-    final String status = (data['status'] as String? ?? 'active').trim();
+      final DateTime now = DateTime(2026, 3, 15, 10, 0);
+      final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+      final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
+      final String terminalLifecycleStatus = deliveryStatus == 'revoked'
+        ? 'revoked'
+        : deliveryStatus == 'superseded'
+          ? 'superseded'
+          : (expiresAt != null && !expiresAt.isAfter(now))
+            ? 'expired'
+            : '';
+      final String requestedStatus =
+        (data['status'] as String? ?? 'active').trim();
+      final String status = terminalLifecycleStatus.isNotEmpty ||
+          (fallbackCount == 0 && pendingCount == 0)
+        ? 'acknowledged'
+        : requestedStatus;
     final Map<String, dynamic> record = <String, dynamic>{
       'id': alertId,
       'experimentId': deliveryRow['experimentId'] ?? '',
@@ -1336,10 +1351,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'pendingCount': pendingCount,
       'notes': (data['notes'] as String? ?? '').trim(),
       'acknowledgedBy': status == 'acknowledged' ? 'hq-1' : null,
-      'acknowledgedAt':
-          status == 'acknowledged' ? DateTime(2026, 3, 14, 21) : null,
+      'acknowledgedAt': status == 'acknowledged' ? now : null,
       'createdAt': DateTime(2026, 3, 14, 21),
-      'updatedAt': DateTime(2026, 3, 14, 21),
+      'updatedAt': now,
     };
     _runtimeRolloutAlertRecords.removeWhere(
       (Map<String, dynamic> row) => row['id'] == alertId,
@@ -1383,8 +1397,22 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
     final String escalationId =
         'fl_rollout_escalation_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
-    final String status = (data['status'] as String? ?? 'open').trim();
     final DateTime now = DateTime(2026, 3, 15, 10, 0);
+    final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+    final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
+    final String terminalLifecycleStatus = deliveryStatus == 'revoked'
+      ? 'revoked'
+      : deliveryStatus == 'superseded'
+        ? 'superseded'
+        : (expiresAt != null && !expiresAt.isAfter(now))
+          ? 'expired'
+          : '';
+    final String requestedStatus =
+      (data['status'] as String? ?? 'open').trim();
+    final bool currentIssueActive = fallbackCount > 0 || pendingCount > 0;
+    final String status = terminalLifecycleStatus.isNotEmpty || !currentIssueActive
+      ? 'resolved'
+      : requestedStatus;
     final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
     final DateTime? dueAt = status == 'resolved'
         ? null
@@ -1447,14 +1475,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     );
     final String controlId =
         'fl_rollout_control_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
+    final DateTime now = DateTime(2026, 3, 15, 10, 0);
+    final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+    final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
+    final String terminalLifecycleStatus = deliveryStatus == 'revoked'
+      ? 'revoked'
+      : deliveryStatus == 'superseded'
+        ? 'superseded'
+        : (expiresAt != null && !expiresAt.isAfter(now))
+          ? 'expired'
+          : '';
+    final String requestedMode =
+      (data['mode'] as String? ?? 'monitor').trim();
+    final String mode =
+      terminalLifecycleStatus.isNotEmpty ? 'monitor' : requestedMode;
     final Map<String, dynamic> record = <String, dynamic>{
       'id': controlId,
       'experimentId': deliveryRow['experimentId'] ?? '',
       'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
       'deliveryRecordId': deliveryRecordId,
-      'mode': (data['mode'] as String? ?? 'monitor').trim(),
-      'ownerUserId': (data['ownerUserId'] as String? ?? '').trim(),
-      'reason': (data['reason'] as String? ?? '').trim(),
+      'mode': mode,
+      'ownerUserId': terminalLifecycleStatus.isNotEmpty
+        ? null
+        : (data['ownerUserId'] as String? ?? '').trim(),
+      'reason': mode == 'monitor' ? null : (data['reason'] as String? ?? '').trim(),
+      'releasedBy': mode == 'monitor' ? 'hq-1' : null,
+      'releasedAt': mode == 'monitor' ? now : null,
       'createdAt': DateTime(2026, 3, 15, 10, 0),
       'updatedAt': DateTime(2026, 3, 15, 10, 0),
     };
@@ -2606,6 +2652,142 @@ void main() {
     );
     expect(package['latestRuntimeDeliveryStatus'], 'revoked');
     expect(package['rolloutStatus'], 'retired');
+  });
+
+  test('runtime rollout escalation auto-resolves for terminal delivery',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'superseded',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+          supersededByCandidateModelPackageId: 'fl_pkg_2',
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeRolloutEscalationRecord(
+      <String, dynamic>{
+        'deliveryRecordId': 'fl_delivery_1',
+        'status': 'investigating',
+        'ownerUserId': 'hq-ops-9',
+        'notes': 'Investigating stale rollout drift.',
+      },
+    );
+
+    expect(bridge.recordedRuntimeRolloutEscalationSaves, isNotEmpty);
+    final Map<String, dynamic> escalation =
+        bridge.recordedRuntimeRolloutEscalationSaves.last;
+    expect(escalation['status'], 'resolved');
+    expect(escalation['fallbackCount'], 0);
+    expect(escalation['pendingCount'], 1);
+    expect(escalation['openedAt'], isNull);
+    expect(escalation['dueAt'], isNull);
+    expect(escalation['resolvedBy'], 'hq-1');
+    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'], 'resolved');
+  });
+
+  test('runtime rollout control auto-releases for terminal delivery',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'revoked',
+          targetSiteIds: <String>['site-1'],
+          revokedAt: DateTime(2026, 3, 14, 20, 45),
+          revokedBy: 'hq-1',
+          revocationReason: 'Rollback after bounded pilot regression.',
+        ),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeRolloutControlRecord(
+      <String, dynamic>{
+        'deliveryRecordId': 'fl_delivery_1',
+        'mode': 'paused',
+        'ownerUserId': 'hq-ops-3',
+        'reason': 'Pause while delivery is rolled back.',
+      },
+    );
+
+    expect(bridge.recordedRuntimeRolloutControlSaves, isNotEmpty);
+    final Map<String, dynamic> control =
+        bridge.recordedRuntimeRolloutControlSaves.last;
+    expect(control['mode'], 'monitor');
+    expect(control['ownerUserId'], isNull);
+    expect(control['reason'], isNull);
+    expect(control['releasedBy'], 'hq-1');
+    expect(control['releasedAt'], isNotNull);
+  });
+
+  test('runtime rollout alert auto-acknowledges when issue clears',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeRolloutAlertRecord(
+      <String, dynamic>{
+        'deliveryRecordId': 'fl_delivery_1',
+        'status': 'active',
+        'notes': 'Healthy rollout snapshot.',
+      },
+    );
+
+    expect(bridge.recordedRuntimeRolloutAlertSaves, isNotEmpty);
+    final Map<String, dynamic> alert =
+        bridge.recordedRuntimeRolloutAlertSaves.last;
+    expect(alert['status'], 'acknowledged');
+    expect(alert['fallbackCount'], 0);
+    expect(alert['pendingCount'], 0);
+    expect(alert['acknowledgedBy'], 'hq-1');
+    expect(alert['acknowledgedAt'], isNotNull);
+  });
+
+  test('runtime rollout alert auto-acknowledges for terminal delivery',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'superseded',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeRolloutAlertRecord(
+      <String, dynamic>{
+        'deliveryRecordId': 'fl_delivery_1',
+        'status': 'active',
+        'notes': 'Stale alert should settle after supersession.',
+      },
+    );
+
+    expect(bridge.recordedRuntimeRolloutAlertSaves, isNotEmpty);
+    final Map<String, dynamic> alert =
+        bridge.recordedRuntimeRolloutAlertSaves.last;
+    expect(alert['status'], 'acknowledged');
+    expect(alert['fallbackCount'], 0);
+    expect(alert['pendingCount'], 1);
+    expect(alert['acknowledgedBy'], 'hq-1');
   });
 
   test('runtime activation reporter records bounded site evidence', () async {

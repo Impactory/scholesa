@@ -322,6 +322,24 @@ function buildRuntimeRolloutEscalationDueAt(
   return openedAt + (baseHours * 60 * 60 * 1000);
 }
 
+function getRuntimeDeliveryTerminalLifecycleStatus(
+  deliveryData: Record<string, unknown>,
+  now = Date.now(),
+): 'expired' | 'revoked' | 'superseded' | null {
+  const deliveryStatus = normalizeFederatedLearningRuntimeDeliveryStatus(deliveryData.status);
+  if (deliveryStatus === 'revoked') {
+    return 'revoked';
+  }
+  if (deliveryStatus === 'superseded') {
+    return 'superseded';
+  }
+  const expiresAt = asTimestampMillis(deliveryData.expiresAt);
+  if (expiresAt != null && expiresAt <= now) {
+    return 'expired';
+  }
+  return null;
+}
+
 function normalizeInvoiceStatus(value: unknown): 'paid' | 'pending' | 'overdue' {
   const normalized = asTrimmedString(value).toLowerCase();
   if (normalized === 'approved' || normalized === 'paid' || normalized === 'completed') return 'paid';
@@ -3532,8 +3550,8 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
     throw new HttpsError('invalid-argument', 'deliveryRecordId is required.');
   }
 
-  const status = normalizeFederatedLearningRuntimeRolloutAlertStatus(request.data?.status);
-  if (!status) {
+  const requestedStatus = normalizeFederatedLearningRuntimeRolloutAlertStatus(request.data?.status);
+  if (!requestedStatus) {
     throw new HttpsError('invalid-argument', 'status must be active or acknowledged.');
   }
 
@@ -3580,6 +3598,11 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
     }
   });
 
+  const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(deliveryData);
+  const status = terminalLifecycleStatus || (fallbackCount === 0 && pendingCount === 0)
+    ? 'acknowledged'
+    : requestedStatus;
+
   await alertRef.set({
     experimentId,
     candidateModelPackageId,
@@ -3605,10 +3628,12 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
       experimentId,
       candidateModelPackageId,
       status,
+      requestedStatus,
       fallbackCount,
       pendingCount,
       targetSiteIds,
       notes,
+      terminalLifecycleStatus: terminalLifecycleStatus || '',
       acknowledgedBy: status === 'acknowledged' ? actor.uid : '',
     },
   });
@@ -3618,6 +3643,7 @@ export const upsertFederatedLearningRuntimeRolloutAlertRecord = onCall(async (re
     id: alertId,
     deliveryRecordId,
     status,
+    requestedStatus,
     fallbackCount,
     pendingCount,
   };
@@ -3634,8 +3660,8 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     throw new HttpsError('invalid-argument', 'deliveryRecordId is required.');
   }
 
-  const status = normalizeFederatedLearningRuntimeRolloutEscalationStatus(request.data?.status);
-  if (!status) {
+  const requestedStatus = normalizeFederatedLearningRuntimeRolloutEscalationStatus(request.data?.status);
+  if (!requestedStatus) {
     throw new HttpsError('invalid-argument', 'status must be open, investigating, or resolved.');
   }
 
@@ -3686,6 +3712,10 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
   });
 
   const currentIssueActive = fallbackCount > 0 || pendingCount > 0;
+  const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(deliveryData);
+  const status = terminalLifecycleStatus || !currentIssueActive
+    ? 'resolved'
+    : requestedStatus;
   const existingOpenedAt = asTimestampMillis(escalationData.openedAt);
   const openedAt = status === 'resolved' || !currentIssueActive
     ? null
@@ -3743,6 +3773,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
       candidateModelPackageId,
       deliveryRecordId,
       status,
+      requestedStatus,
       ownerUserId,
       fallbackCount,
       pendingCount,
@@ -3750,6 +3781,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
       dueAt,
       targetSiteIds,
       notes,
+      terminalLifecycleStatus: terminalLifecycleStatus || '',
       resolvedBy: status === 'resolved' ? actor.uid : '',
     },
   });
@@ -3759,6 +3791,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     id: escalationId,
     deliveryRecordId,
     status,
+    requestedStatus,
     fallbackCount,
     pendingCount,
   };
@@ -3775,8 +3808,8 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
     throw new HttpsError('invalid-argument', 'deliveryRecordId is required.');
   }
 
-  const mode = normalizeFederatedLearningRuntimeRolloutControlMode(request.data?.mode);
-  if (!mode) {
+  const requestedMode = normalizeFederatedLearningRuntimeRolloutControlMode(request.data?.mode);
+  if (!requestedMode) {
     throw new HttpsError('invalid-argument', 'mode must be monitor, restricted, or paused.');
   }
 
@@ -3784,7 +3817,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
   const reason = asTrimmedString(request.data?.reason).slice(0, 500);
   const reviewByAtValue = asNumber(request.data?.reviewByAt);
   const reviewByAt = reviewByAtValue == null ? null : Math.max(0, Math.trunc(reviewByAtValue));
-  if (mode !== 'monitor' && !reason) {
+  if (requestedMode !== 'monitor' && !reason) {
     throw new HttpsError('failed-precondition', 'Restricted or paused rollout control requires a reason.');
   }
 
@@ -3801,6 +3834,8 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
   const controlRef = admin.firestore().collection('federatedLearningRuntimeRolloutControlRecords').doc(controlId);
   const controlSnap = await controlRef.get();
   const controlData = (controlSnap.data() || {}) as Record<string, unknown>;
+  const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(deliveryData);
+  const mode = terminalLifecycleStatus ? 'monitor' : requestedMode;
   const createdAt = controlSnap.exists
     ? (controlData.createdAt ?? FieldValue.serverTimestamp())
     : FieldValue.serverTimestamp();
@@ -3810,8 +3845,10 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
     candidateModelPackageId,
     deliveryRecordId,
     mode,
-    ownerUserId: ownerUserId || FieldValue.delete(),
-    reason: reason || FieldValue.delete(),
+    ownerUserId: terminalLifecycleStatus
+      ? FieldValue.delete()
+      : (ownerUserId || FieldValue.delete()),
+    reason: mode === 'monitor' ? FieldValue.delete() : (reason || FieldValue.delete()),
     reviewByAt: mode === 'monitor' ? FieldValue.delete() : (reviewByAt ?? FieldValue.delete()),
     releasedBy: mode === 'monitor' ? actor.uid : FieldValue.delete(),
     releasedAt: mode === 'monitor' ? FieldValue.serverTimestamp() : FieldValue.delete(),
@@ -3830,9 +3867,11 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
       candidateModelPackageId,
       deliveryRecordId,
       mode,
+      requestedMode,
       ownerUserId,
       reason,
       reviewByAt,
+      terminalLifecycleStatus: terminalLifecycleStatus || '',
     },
   });
 
@@ -3841,6 +3880,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
     id: controlId,
     deliveryRecordId,
     mode,
+    requestedMode,
   };
 });
 
