@@ -34,7 +34,7 @@ Implemented prototype scope:
 - bounded pilot-execution records for HQ launch, observation, and completion evidence on approved staged candidate packages within the allowed-site cohort
 - bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
 - bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
-- bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and real merged runtime vectors staged inside aggregation artifacts and candidate packages
+- bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and norm-capped merged runtime vectors staged inside aggregation artifacts and candidate packages
 - bounded runtime-delivery lifecycle control, including expiry windows, explicit revocation reasons, fallback reporting, and device-side invalidation of stale runtime payloads
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
@@ -128,6 +128,7 @@ Passed on 2026-03-14:
 - HQ can now inspect immutable escalation-history snapshots per runtime delivery, including due-versus-overdue cues for unresolved fallback or pending rollout issues, instead of only the latest escalation state.
 - HQ can now also persist a bounded rollout-control record per runtime delivery with monitor-versus-restricted-versus-paused operator mode, owner, and reason, so delivery handling can be constrained without mutating the underlying runtime-delivery manifest record.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
+- Aggregation materialization now also applies a bounded norm-capped weighted runtime-vector merge strategy, so high-norm prototype updates are dampened instead of contributing with raw sample-count weight alone.
 - Runtime-delivery upserts now also supersede older overlapping assigned or active deliveries for the same experiment/runtime target, so HQ delivery history reflects bounded package succession instead of leaving multiple live manifests competing by timestamp.
 - Candidate-model-package rollout state now also retires packages whose latest runtime delivery was superseded or revoked, so HQ package history distinguishes still-distributed bounded payloads from terminal ones without claiming a broader promotion or archive system.
 - Site-scoped runtime resolution now also returns explicit superseded terminal package state, including supersession metadata and device-side fallback reporting, so superseded deliveries no longer disappear as null resolution gaps when HQ advances a bounded manifest.
@@ -147,5 +148,5 @@ Passed on 2026-03-14:
 REQ-114 remains partial until all of the following exist and are approved:
 
 - true on-device training beyond the bounded runtime-vector sketch path
-- richer merge semantics than the current weighted runtime-vector averaging path
+- production-grade merge semantics beyond the current bounded norm-capped weighted runtime-vector averaging path
 - production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path

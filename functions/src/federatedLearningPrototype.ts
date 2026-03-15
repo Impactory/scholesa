@@ -19,6 +19,9 @@ export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | '
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
 
+export const FEDERATED_LEARNING_MERGE_STRATEGY =
+  'norm_capped_weighted_runtime_vector_average_v2';
+
 export interface FederatedLearningExperimentConfig {
   name: string;
   description: string;
@@ -69,6 +72,7 @@ export interface FederatedLearningAggregationSelection {
 }
 
 export interface FederatedLearningMergeArtifactSummary {
+  mergeStrategy: string;
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
   sampleCount: number;
@@ -86,6 +90,7 @@ export interface FederatedLearningMergeArtifactSummary {
 }
 
 export interface FederatedLearningCandidateModelPackageSummary {
+  mergeStrategy: string;
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: FederatedLearningCandidateModelPackageRolloutStatus;
   modelVersion: string;
@@ -585,15 +590,34 @@ export function selectFederatedLearningAggregationBatch(
 }
 
 export function buildFederatedLearningMergedRuntimeVector(
-  candidates: Array<Pick<FederatedLearningAggregationCandidate, 'sampleCount' | 'vectorSketch'>>,
+  candidates: Array<
+    Pick<
+      FederatedLearningAggregationCandidate,
+      'sampleCount' | 'vectorSketch' | 'updateNorm'
+    >
+  >,
   vectorLength: number,
 ): number[] {
   const boundedLength = asIntegerInRange(vectorLength, 'vectorLength', 1, 100000, 1);
   const merged = Array.from({ length: boundedLength }, () => 0);
   let totalWeight = 0;
+  const positiveNorms = candidates
+    .map((candidate) => candidate.updateNorm)
+    .filter((value): value is number => Number.isFinite(value) && value > 0);
+  const normReference = positiveNorms.length === 0
+    ? 1
+    : Math.exp(
+      positiveNorms.reduce((sum, value) => sum + Math.log(value), 0) /
+        positiveNorms.length,
+    );
+  const normCap = Math.max(1, Number((normReference * 2).toFixed(6)));
 
   for (const candidate of candidates) {
-    const weight = Math.max(0, candidate.sampleCount);
+    const baseWeight = Math.max(0, candidate.sampleCount);
+    const normScale = candidate.updateNorm > 0
+      ? Math.min(1, normCap / candidate.updateNorm)
+      : 1;
+    const weight = Number((baseWeight * normScale).toFixed(6));
     if (weight <= 0) continue;
     totalWeight += weight;
     for (let index = 0; index < boundedLength; index += 1) {
@@ -612,6 +636,7 @@ export function buildFederatedLearningMergeArtifactSummary(
   selection: FederatedLearningAggregationSelection,
   runtimeVector: number[],
 ): FederatedLearningMergeArtifactSummary {
+  const mergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY;
   const payloadFormat = 'runtime_vector_v1';
   const modelVersion = 'fl_runtime_model_v1';
   const normalizedRuntimeVector = runtimeVector.map((value) => Number(value.toFixed(6)));
@@ -625,6 +650,7 @@ export function buildFederatedLearningMergeArtifactSummary(
   const boundedDigest = createHash('sha256')
     .update(JSON.stringify({
       summaryIds: selection.summaryIds,
+      mergeStrategy,
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
@@ -641,6 +667,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     .digest('hex');
 
   return {
+    mergeStrategy,
     payloadFormat,
     modelVersion,
     sampleCount: selection.totalSampleCount,
@@ -669,6 +696,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     .update(JSON.stringify({
       runId,
       artifactId,
+      mergeStrategy: artifactSummary.mergeStrategy,
       packageFormat,
       rolloutStatus,
       modelVersion: artifactSummary.modelVersion,
@@ -688,6 +716,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     .digest('hex');
 
   return {
+    mergeStrategy: artifactSummary.mergeStrategy,
     packageFormat,
     rolloutStatus,
     modelVersion: artifactSummary.modelVersion,

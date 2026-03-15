@@ -13,6 +13,7 @@ import {
   buildFederatedLearningRuntimeRolloutAlertRecordDocId,
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
+  FEDERATED_LEARNING_MERGE_STRATEGY,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
@@ -236,14 +237,17 @@ describe('federated learning prototype helpers', () => {
       {
         sampleCount: 10,
         vectorSketch: [1, 0.5, 0],
+        updateNorm: 1.5,
       },
       {
         sampleCount: 8,
         vectorSketch: [0.5, 1, 0.5],
+        updateNorm: 1.2,
       },
     ], 3);
 
     expect(buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector)).toEqual({
+      mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       payloadFormat: 'runtime_vector_v1',
       modelVersion: 'fl_runtime_model_v1',
       sampleCount: 18,
@@ -265,6 +269,7 @@ describe('federated learning prototype helpers', () => {
       'fl_merge_1cb85e2396ee2ed67818ed78',
       buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector),
     )).toEqual({
+      mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       packageFormat: 'runtime_vector_v1',
       rolloutStatus: 'not_distributed',
       modelVersion: 'fl_runtime_model_v1',
@@ -282,6 +287,23 @@ describe('federated learning prototype helpers', () => {
       totalPayloadBytes: 1792,
       averageUpdateNorm: 1.35,
     });
+  });
+
+  it('dampens high-norm update outliers during runtime-vector merge generation', () => {
+    const mergedRuntimeVector = buildFederatedLearningMergedRuntimeVector([
+      {
+        sampleCount: 10,
+        vectorSketch: [1, 1],
+        updateNorm: 1,
+      },
+      {
+        sampleCount: 10,
+        vectorSketch: [10, 10],
+        updateNorm: 100,
+      },
+    ], 2);
+
+    expect(mergedRuntimeVector).toEqual([2.5, 2.5]);
   });
 
   it('returns null when accepted summaries do not yet satisfy the threshold', () => {

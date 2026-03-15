@@ -1583,7 +1583,7 @@ Map<String, dynamic> _aggregationRunRow({
     'modelVersion': 'fl_runtime_model_v1',
     'runtimeVectorLength': 8,
     'runtimeVectorDigest': 'sha256:runtime-digest-1',
-    'mergeStrategy': 'weighted_runtime_vector_average_v1',
+    'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'boundedDigest': boundedDigest,
     'triggerSummaryId': 'update-2',
     'summaryIds': <String>['update-1', 'update-2'],
@@ -2017,7 +2017,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'experimentId': experimentId,
     'aggregationRunId': aggregationRunId,
     'status': 'generated',
-    'mergeStrategy': 'weighted_runtime_vector_average_v1',
+    'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'boundedDigest': boundedDigest,
     'payloadFormat': 'runtime_vector_v1',
     'modelVersion': 'fl_runtime_model_v1',
@@ -2133,7 +2133,7 @@ void main() {
       'modelVersion': 'fl_runtime_model_v1',
       'runtimeVectorLength': 8,
       'runtimeVectorDigest': 'sha256:runtime-digest-1',
-      'mergeStrategy': 'weighted_runtime_vector_average_v1',
+      'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
       'boundedDigest': 'sha256:digest-1',
       'triggerSummaryId': 'update-1',
       'summaryIds': <String>['update-1'],
@@ -2154,7 +2154,7 @@ void main() {
       'experimentId': 'fl_exp_literacy_pilot',
       'aggregationRunId': 'fl_agg_1',
       'status': 'generated',
-      'mergeStrategy': 'weighted_runtime_vector_average_v1',
+      'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
       'boundedDigest': 'sha256:digest-1',
       'payloadFormat': 'runtime_vector_v1',
       'modelVersion': 'fl_runtime_model_v1',
@@ -3547,7 +3547,7 @@ void main() {
     expect(find.text('Packages staged: 2'), findsOneWidget);
     expect(find.text('Samples: 62'), findsOneWidget);
     expect(
-      find.text('Strategy: weighted_runtime_vector_average_v1'),
+      find.text('Strategy: norm_capped_weighted_runtime_vector_average_v2'),
       findsWidgets,
     );
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
