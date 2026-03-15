@@ -3160,6 +3160,7 @@ class FederatedLearningAggregationRunModel {
     required this.averageUpdateNorm,
     required this.schemaVersions,
     required this.runtimeTargets,
+    required this.contributionDetails,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3194,6 +3195,7 @@ class FederatedLearningAggregationRunModel {
   final double averageUpdateNorm;
   final List<String> schemaVersions;
   final List<String> runtimeTargets;
+  final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3243,6 +3245,8 @@ class FederatedLearningAggregationRunModel {
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
       schemaVersions: _stringListOrEmpty(data['schemaVersions']),
       runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
+        contributionDetails:
+          _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3278,6 +3282,10 @@ class FederatedLearningAggregationRunModel {
         'averageUpdateNorm': averageUpdateNorm,
         'schemaVersions': schemaVersions,
         'runtimeTargets': runtimeTargets,
+        'contributionDetails': contributionDetails
+          .map((FederatedLearningContributionDetailModel detail) =>
+            detail.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3311,6 +3319,7 @@ class FederatedLearningMergeArtifactModel {
     required this.maxVectorLength,
     required this.totalPayloadBytes,
     required this.averageUpdateNorm,
+    required this.contributionDetails,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3340,6 +3349,7 @@ class FederatedLearningMergeArtifactModel {
   final int maxVectorLength;
   final int totalPayloadBytes;
   final double averageUpdateNorm;
+  final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3383,6 +3393,8 @@ class FederatedLearningMergeArtifactModel {
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+        contributionDetails:
+          _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3413,6 +3425,10 @@ class FederatedLearningMergeArtifactModel {
         'maxVectorLength': maxVectorLength,
         'totalPayloadBytes': totalPayloadBytes,
         'averageUpdateNorm': averageUpdateNorm,
+        'contributionDetails': contributionDetails
+          .map((FederatedLearningContributionDetailModel detail) =>
+            detail.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3460,6 +3476,7 @@ class FederatedLearningCandidateModelPackageModel {
     required this.maxVectorLength,
     required this.totalPayloadBytes,
     required this.averageUpdateNorm,
+    required this.contributionDetails,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3503,6 +3520,7 @@ class FederatedLearningCandidateModelPackageModel {
   final int maxVectorLength;
   final int totalPayloadBytes;
   final double averageUpdateNorm;
+  final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3565,6 +3583,8 @@ class FederatedLearningCandidateModelPackageModel {
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+        contributionDetails:
+          _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3609,6 +3629,10 @@ class FederatedLearningCandidateModelPackageModel {
         'maxVectorLength': maxVectorLength,
         'totalPayloadBytes': totalPayloadBytes,
         'averageUpdateNorm': averageUpdateNorm,
+        'contributionDetails': contributionDetails
+          .map((FederatedLearningContributionDetailModel detail) =>
+            detail.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
