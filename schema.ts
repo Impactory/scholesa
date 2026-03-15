@@ -214,11 +214,13 @@ export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | '
 export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked';
 export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
 export type FederatedLearningRuntimeRolloutEscalationStatus = 'open' | 'investigating' | 'resolved';
+export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
 export type FederatedLearningRuntimeRolloutAuditAction =
   | 'runtime_delivery_record.upsert'
   | 'runtime_activation_record.upsert'
   | 'runtime_rollout_alert_record.upsert'
-  | 'runtime_rollout_escalation_record.upsert';
+  | 'runtime_rollout_escalation_record.upsert'
+  | 'runtime_rollout_control_record.upsert';
 
 export interface FederatedLearningExperiment {
   id: string;
@@ -512,10 +514,46 @@ export interface FederatedLearningRuntimeRolloutEscalationRecord {
   status: FederatedLearningRuntimeRolloutEscalationStatus;
   fallbackCount: number;
   pendingCount: number;
+  openedAt?: number;
+  dueAt?: number;
   ownerUserId?: string;
   notes?: string;
   resolvedBy?: string;
   resolvedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FederatedLearningRuntimeRolloutEscalationHistoryRecord {
+  id: string;
+  escalationRecordId: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  deliveryRecordId: string;
+  status: FederatedLearningRuntimeRolloutEscalationStatus;
+  fallbackCount: number;
+  pendingCount: number;
+  openedAt?: number;
+  dueAt?: number;
+  ownerUserId?: string;
+  notes?: string;
+  resolvedBy?: string;
+  resolvedAt?: number;
+  recordedBy?: string;
+  recordedAt: number;
+}
+
+export interface FederatedLearningRuntimeRolloutControlRecord {
+  id: string;
+  experimentId: string;
+  candidateModelPackageId: string;
+  deliveryRecordId: string;
+  mode: FederatedLearningRuntimeRolloutControlMode;
+  ownerUserId?: string;
+  reason?: string;
+  reviewByAt?: number;
+  releasedBy?: string;
+  releasedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

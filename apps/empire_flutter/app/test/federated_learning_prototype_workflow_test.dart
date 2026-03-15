@@ -31,6 +31,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? runtimeActivationRecords,
     List<Map<String, dynamic>>? runtimeRolloutAlertRecords,
     List<Map<String, dynamic>>? runtimeRolloutEscalationRecords,
+    List<Map<String, dynamic>>? runtimeRolloutEscalationHistoryRecords,
+    List<Map<String, dynamic>>? runtimeRolloutControlRecords,
     List<Map<String, dynamic>>? runtimeRolloutAuditEvents,
     List<Map<String, dynamic>>? promotionRecords,
     List<Map<String, dynamic>>? promotionRevocationRecords,
@@ -74,6 +76,12 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         _runtimeRolloutEscalationRecords = List<Map<String, dynamic>>.from(
           runtimeRolloutEscalationRecords ?? <Map<String, dynamic>>[],
         ),
+        _runtimeRolloutEscalationHistoryRecords = List<Map<String, dynamic>>.from(
+          runtimeRolloutEscalationHistoryRecords ?? <Map<String, dynamic>>[],
+        ),
+        _runtimeRolloutControlRecords = List<Map<String, dynamic>>.from(
+          runtimeRolloutControlRecords ?? <Map<String, dynamic>>[],
+        ),
         _runtimeRolloutAuditEvents = List<Map<String, dynamic>>.from(
           runtimeRolloutAuditEvents ?? <Map<String, dynamic>>[],
         ),
@@ -99,6 +107,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _runtimeActivationRecords;
   final List<Map<String, dynamic>> _runtimeRolloutAlertRecords;
   final List<Map<String, dynamic>> _runtimeRolloutEscalationRecords;
+  final List<Map<String, dynamic>> _runtimeRolloutEscalationHistoryRecords;
+  final List<Map<String, dynamic>> _runtimeRolloutControlRecords;
   final List<Map<String, dynamic>> _runtimeRolloutAuditEvents;
   final List<Map<String, dynamic>> _promotionRecords;
   final List<Map<String, dynamic>> _promotionRevocationRecords;
@@ -118,6 +128,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final List<Map<String, dynamic>> recordedRuntimeRolloutAlertSaves =
       <Map<String, dynamic>>[];
       final List<Map<String, dynamic>> recordedRuntimeRolloutEscalationSaves =
+        <Map<String, dynamic>>[];
+      final List<Map<String, dynamic>> recordedRuntimeRolloutControlSaves =
         <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedPromotionDecisions =
       <Map<String, dynamic>>[];
@@ -547,6 +559,79 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (status != null && status.isNotEmpty) {
       scoped = scoped.where(
         (Map<String, dynamic> row) => row['status'] == status,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutEscalationHistoryRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? status,
+    int limit = 80,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _runtimeRolloutEscalationHistoryRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (status != null && status.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['status'] == status,
+      );
+    }
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutControlRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? mode,
+    int limit = 60,
+  }) async {
+    Iterable<Map<String, dynamic>> scoped = _runtimeRolloutControlRecords;
+    if (experimentId != null && experimentId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null && candidateModelPackageId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null && deliveryRecordId.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (mode != null && mode.isNotEmpty) {
+      scoped = scoped.where(
+        (Map<String, dynamic> row) => row['mode'] == mode,
       );
     }
     return scoped
@@ -1119,6 +1204,13 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final String escalationId =
         'fl_rollout_escalation_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
     final String status = (data['status'] as String? ?? 'open').trim();
+    final DateTime now = DateTime(2026, 3, 15, 10, 0);
+    final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
+    final DateTime? dueAt = status == 'resolved'
+        ? null
+        : (fallbackCount > 0
+            ? openedAt.add(Duration(hours: status == 'investigating' ? 8 : 4))
+            : openedAt.add(Duration(hours: status == 'investigating' ? 48 : 24)));
     final Map<String, dynamic> record = <String, dynamic>{
       'id': escalationId,
       'experimentId': deliveryRow['experimentId'] ?? '',
@@ -1127,19 +1219,70 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'status': status,
       'fallbackCount': fallbackCount,
       'pendingCount': pendingCount,
+      'openedAt': status == 'resolved' ? null : openedAt,
+      'dueAt': dueAt,
       'ownerUserId': (data['ownerUserId'] as String? ?? '').trim(),
       'notes': (data['notes'] as String? ?? '').trim(),
       'resolvedBy': status == 'resolved' ? 'hq-1' : null,
-      'resolvedAt': status == 'resolved' ? DateTime(2026, 3, 14, 21, 30) : null,
+      'resolvedAt': status == 'resolved' ? now : null,
       'createdAt': DateTime(2026, 3, 14, 21, 30),
-      'updatedAt': DateTime(2026, 3, 14, 21, 30),
+      'updatedAt': now,
     };
     _runtimeRolloutEscalationRecords.removeWhere(
       (Map<String, dynamic> row) => row['id'] == escalationId,
     );
     _runtimeRolloutEscalationRecords.insert(0, record);
+    _runtimeRolloutEscalationHistoryRecords.insert(0, <String, dynamic>{
+      'id': 'history-${_runtimeRolloutEscalationHistoryRecords.length + 1}',
+      'escalationRecordId': escalationId,
+      'experimentId': record['experimentId'],
+      'candidateModelPackageId': record['candidateModelPackageId'],
+      'deliveryRecordId': deliveryRecordId,
+      'status': status,
+      'fallbackCount': fallbackCount,
+      'pendingCount': pendingCount,
+      'openedAt': record['openedAt'],
+      'dueAt': dueAt,
+      'ownerUserId': record['ownerUserId'],
+      'notes': record['notes'],
+      'resolvedBy': record['resolvedBy'],
+      'resolvedAt': record['resolvedAt'],
+      'recordedBy': 'hq-1',
+      'recordedAt': now,
+    });
     recordedRuntimeRolloutEscalationSaves.add(<String, dynamic>{...record});
     return escalationId;
+  }
+
+  @override
+  Future<String?> upsertFederatedLearningRuntimeRolloutControlRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final String deliveryRecordId =
+        (data['deliveryRecordId'] as String? ?? '').trim();
+    final Map<String, dynamic> deliveryRow = _runtimeDeliveryRecords.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String controlId =
+        'fl_rollout_control_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
+    final Map<String, dynamic> record = <String, dynamic>{
+      'id': controlId,
+      'experimentId': deliveryRow['experimentId'] ?? '',
+      'candidateModelPackageId': deliveryRow['candidateModelPackageId'] ?? '',
+      'deliveryRecordId': deliveryRecordId,
+      'mode': (data['mode'] as String? ?? 'monitor').trim(),
+      'ownerUserId': (data['ownerUserId'] as String? ?? '').trim(),
+      'reason': (data['reason'] as String? ?? '').trim(),
+      'createdAt': DateTime(2026, 3, 15, 10, 0),
+      'updatedAt': DateTime(2026, 3, 15, 10, 0),
+    };
+    _runtimeRolloutControlRecords.removeWhere(
+      (Map<String, dynamic> row) => row['id'] == controlId,
+    );
+    _runtimeRolloutControlRecords.insert(0, record);
+    recordedRuntimeRolloutControlSaves.add(<String, dynamic>{...record});
+    return controlId;
   }
 
   @override
@@ -1412,6 +1555,8 @@ Map<String, dynamic> _runtimeRolloutEscalationRecordRow({
   int pendingCount = 0,
   String ownerUserId = 'hq-ops-1',
   String notes = '',
+  DateTime? openedAt,
+  DateTime? dueAt,
   String? resolvedBy,
   DateTime? resolvedAt,
   DateTime? createdAt,
@@ -1425,12 +1570,78 @@ Map<String, dynamic> _runtimeRolloutEscalationRecordRow({
     'status': status,
     'fallbackCount': fallbackCount,
     'pendingCount': pendingCount,
+    'openedAt': openedAt,
+    'dueAt': dueAt,
     'ownerUserId': ownerUserId,
     'notes': notes,
     'resolvedBy': resolvedBy,
     'resolvedAt': resolvedAt,
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 21, 30),
     'updatedAt': updatedAt ?? DateTime(2026, 3, 14, 21, 30),
+  };
+}
+
+Map<String, dynamic> _runtimeRolloutEscalationHistoryRecordRow({
+  String id = 'fl_rollout_escalation_history_1',
+  String escalationRecordId = 'fl_rollout_escalation_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String deliveryRecordId = 'fl_delivery_1',
+  String status = 'open',
+  int fallbackCount = 1,
+  int pendingCount = 0,
+  String ownerUserId = 'hq-ops-1',
+  String notes = '',
+  DateTime? openedAt,
+  DateTime? dueAt,
+  String recordedBy = 'hq-1',
+  DateTime? recordedAt,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'escalationRecordId': escalationRecordId,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'deliveryRecordId': deliveryRecordId,
+    'status': status,
+    'fallbackCount': fallbackCount,
+    'pendingCount': pendingCount,
+    'openedAt': openedAt,
+    'dueAt': dueAt,
+    'ownerUserId': ownerUserId,
+    'notes': notes,
+    'recordedBy': recordedBy,
+    'recordedAt': recordedAt ?? DateTime(2026, 3, 15, 10),
+  };
+}
+
+Map<String, dynamic> _runtimeRolloutControlRecordRow({
+  String id = 'fl_rollout_control_1',
+  String experimentId = 'fl_exp_literacy_pilot',
+  String candidateModelPackageId = 'fl_pkg_1',
+  String deliveryRecordId = 'fl_delivery_1',
+  String mode = 'paused',
+  String ownerUserId = 'hq-ops-3',
+  String reason = 'Paused pending bounded verification.',
+  DateTime? reviewByAt,
+  String? releasedBy,
+  DateTime? releasedAt,
+  DateTime? createdAt,
+  DateTime? updatedAt,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'experimentId': experimentId,
+    'candidateModelPackageId': candidateModelPackageId,
+    'deliveryRecordId': deliveryRecordId,
+    'mode': mode,
+    'ownerUserId': ownerUserId,
+    'reason': reason,
+    'reviewByAt': reviewByAt,
+    'releasedBy': releasedBy,
+    'releasedAt': releasedAt,
+    'createdAt': createdAt ?? DateTime(2026, 3, 15, 10),
+    'updatedAt': updatedAt ?? DateTime(2026, 3, 15, 10),
   };
 }
 
@@ -3105,7 +3316,30 @@ void main() {
           status: 'investigating',
           ownerUserId: 'hq-ops-1',
           notes: 'Investigating bounded runtime mismatch.',
+          openedAt: DateTime(2020, 3, 15, 2),
+          dueAt: DateTime(2020, 3, 15, 9),
         ),
+      ],
+      runtimeRolloutEscalationHistoryRecords: <Map<String, dynamic>>[
+        _runtimeRolloutEscalationHistoryRecordRow(
+          status: 'investigating',
+          ownerUserId: 'hq-ops-1',
+          notes: 'Investigating bounded runtime mismatch.',
+          openedAt: DateTime(2020, 3, 15, 2),
+          dueAt: DateTime(2020, 3, 15, 9),
+        ),
+        _runtimeRolloutEscalationHistoryRecordRow(
+          id: 'fl_rollout_escalation_history_2',
+          status: 'open',
+          ownerUserId: 'hq-ops-1',
+          notes: 'Fallback first detected.',
+          openedAt: DateTime(2020, 3, 15, 1),
+          dueAt: DateTime(2020, 3, 15, 5),
+          recordedAt: DateTime(2020, 3, 15, 1, 15),
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(),
       ],
       runtimeRolloutAuditEvents: <Map<String, dynamic>>[
         _runtimeRolloutAuditEventRow(
@@ -3171,8 +3405,21 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('Escalation: investigating · owner hq-ops-1 · Investigating bounded runtime mismatch.'),
+      find.textContaining('Escalation: investigating · owner hq-ops-1'),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('overdue 2020-03-15T09:00:00.000'),
+      findsWidgets,
+    );
+    expect(find.text('Escalation history'), findsOneWidget);
+    expect(
+      find.textContaining('investigating by hq-1 · owner hq-ops-1'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Control: paused · owner hq-ops-3'),
+      findsWidgets,
     );
     expect(find.widgetWithText(TextButton, 'View audit feed'), findsWidgets);
   });
@@ -3610,7 +3857,90 @@ void main() {
       1,
     );
     expect(
-      find.textContaining('Escalation: investigating · owner hq-ops-2 · Investigating site runtime mismatch.'),
+      find.textContaining('Escalation: investigating · owner hq-ops-2'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Investigating site runtime mismatch.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('HQ page saves rollout control state',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder controlButton = find.widgetWithText(
+      TextButton,
+      'Rollout control',
+    );
+    await tester.ensureVisible(controlButton.first);
+    tester.widget<TextButton>(controlButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    final Finder controlModeDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Control mode',
+    );
+    await tester.tap(controlModeDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('paused').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-ops-9',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Control reason'),
+      'Paused pending bounded verification.',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(bridge.recordedRuntimeRolloutControlSaves, isNotEmpty);
+    expect(
+      bridge.recordedRuntimeRolloutControlSaves.last['mode'],
+      'paused',
+    );
+    expect(
+      bridge.recordedRuntimeRolloutControlSaves.last['ownerUserId'],
+      'hq-ops-9',
+    );
+    expect(
+      find.textContaining('Control: paused · owner hq-ops-9 · Paused pending bounded verification.'),
       findsOneWidget,
     );
   });

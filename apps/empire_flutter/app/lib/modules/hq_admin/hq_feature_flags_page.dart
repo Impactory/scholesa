@@ -77,6 +77,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningRuntimeRolloutEscalationRecordModel>
     _runtimeRolloutEscalationsByDeliveryId =
     <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
+  Map<String, FederatedLearningRuntimeRolloutControlRecordModel>
+    _runtimeRolloutControlsByDeliveryId =
+    <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
   Map<String, FederatedLearningCandidatePromotionRecordModel>
     _promotionRecordsByPackageId =
     <String, FederatedLearningCandidatePromotionRecordModel>{};
@@ -409,6 +412,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestRuntimeRolloutEscalation = latestRuntimeDelivery == null
         ? null
         : _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
+    final FederatedLearningRuntimeRolloutControlRecordModel?
+      latestRuntimeRolloutControl = latestRuntimeDelivery == null
+        ? null
+        : _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
     final String runtimeRolloutAlert = runtimeRolloutHealth == null
       ? ''
       : _buildRuntimeRolloutAlert(
@@ -436,6 +443,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       );
     final String rolloutEscalationSummary = rolloutEscalationCurrent
       ? _buildRuntimeRolloutEscalationSummary(latestRuntimeRolloutEscalation!)
+      : '';
+    final bool rolloutControlActive = latestRuntimeRolloutControl != null &&
+      latestRuntimeRolloutControl.mode != 'monitor';
+    final String rolloutControlSummary = rolloutControlActive
+      ? _buildRuntimeRolloutControlSummary(latestRuntimeRolloutControl)
       : '';
     final String latestPromotionStatus = _effectivePromotionStatus(
       latestPromotion,
@@ -892,6 +904,24 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               ),
                             ),
                           ),
+                          TextButton.icon(
+                            onPressed: latestRuntimeDelivery == null
+                                ? null
+                                : () => _showRuntimeRolloutControlDialog(
+                                      experiment,
+                                      latestRuntimeDelivery,
+                                      latestRuntimeRolloutControl,
+                                    ),
+                            icon: const Icon(Icons.pause_circle_outline_rounded),
+                            label: Text(
+                              _tHqFeatureFlags(
+                                context,
+                                rolloutControlActive
+                                    ? 'Update control'
+                                    : 'Rollout control',
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -899,6 +929,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       const SizedBox(height: 6),
                       Text(
                         _tHqFeatureFlags(context, rolloutEscalationSummary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    if (rolloutControlSummary.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 6),
+                      Text(
+                        _tHqFeatureFlags(context, rolloutControlSummary),
                         style: const TextStyle(
                           fontSize: 12,
                           color: ScholesaColors.textSecondary,
@@ -4056,6 +4096,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         experimentId: experiment.id,
         limit: 120,
       ),
+      _workflowBridge.listFederatedLearningRuntimeRolloutEscalationHistoryRecords(
+        experimentId: experiment.id,
+        limit: 160,
+      ),
+      _workflowBridge.listFederatedLearningRuntimeRolloutControlRecords(
+        experimentId: experiment.id,
+        limit: 120,
+      ),
     ]);
 
     final List<FederatedLearningRuntimeRolloutAlertRecordModel> records =
@@ -4113,6 +4161,42 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   )))
         record.deliveryRecordId: record,
     };
+    final Map<String, List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>
+        escalationHistoryByDeliveryId =
+        <String, List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>>{};
+    for (final FederatedLearningRuntimeRolloutEscalationHistoryRecordModel record
+        in (payloads[4] as List<Map<String, dynamic>>)
+            .map((Map<String, dynamic> row) =>
+                FederatedLearningRuntimeRolloutEscalationHistoryRecordModel.fromMap(
+                  (row['id'] as String?) ?? 'runtime_rollout_escalation_history_record',
+                  row,
+                ))) {
+      escalationHistoryByDeliveryId
+          .putIfAbsent(
+            record.deliveryRecordId,
+            () => <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[],
+          )
+          .add(record);
+    }
+    for (final List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel> records
+        in escalationHistoryByDeliveryId.values) {
+      records.sort((a, b) {
+        final int aMillis = a.recordedAt?.millisecondsSinceEpoch ?? 0;
+        final int bMillis = b.recordedAt?.millisecondsSinceEpoch ?? 0;
+        return bMillis.compareTo(aMillis);
+      });
+    }
+    final Map<String, FederatedLearningRuntimeRolloutControlRecordModel>
+        rolloutControlsByDeliveryId = {
+      for (final FederatedLearningRuntimeRolloutControlRecordModel record
+          in (payloads[5] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeRolloutControlRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_rollout_control_record',
+                    row,
+                  )))
+        record.deliveryRecordId: record,
+    };
     if (!mounted) return;
 
     await showDialog<void>(
@@ -4144,6 +4228,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             delivery = deliveriesById[record.deliveryRecordId];
                         final FederatedLearningRuntimeRolloutEscalationRecordModel?
                           escalation = escalationByDeliveryId[record.deliveryRecordId];
+                        final FederatedLearningRuntimeRolloutControlRecordModel?
+                          rolloutControl = rolloutControlsByDeliveryId[record.deliveryRecordId];
+                        final List<FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
+                          escalationHistory = escalationHistoryByDeliveryId[record.deliveryRecordId] ??
+                            const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
                         final List<FederatedLearningRuntimeRolloutAuditEventModel>
                           triageEvents = triageEventsByDeliveryId[record.deliveryRecordId] ??
                             const <FederatedLearningRuntimeRolloutAuditEventModel>[];
@@ -4204,6 +4293,43 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   ),
                                   style: const TextStyle(
                                     color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (rolloutControl != null && rolloutControl.mode != 'monitor') ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    _buildRuntimeRolloutControlSummary(rolloutControl),
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (escalationHistory.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 8),
+                                Text(
+                                  _tHqFeatureFlags(
+                                    dialogContext,
+                                    'Escalation history',
+                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                ...escalationHistory.take(4).map(
+                                  (FederatedLearningRuntimeRolloutEscalationHistoryRecordModel historyRecord) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        _buildRuntimeRolloutEscalationHistoryLine(historyRecord),
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -4599,6 +4725,141 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
   }
 
+  Future<void> _showRuntimeRolloutControlDialog(
+    FederatedLearningExperimentModel experiment,
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+    FederatedLearningRuntimeRolloutControlRecordModel? existingControl,
+  ) async {
+    String mode = existingControl?.mode ?? 'monitor';
+    final TextEditingController ownerController = TextEditingController(
+      text: existingControl?.ownerUserId ?? '',
+    );
+    final TextEditingController reasonController = TextEditingController(
+      text: existingControl?.reason ?? '',
+    );
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  dialogContext,
+                  'Rollout control: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
+                          'Delivery ${delivery.id} stays immutable; this control is an HQ operator override for rollout handling only.',
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: mode,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Control mode'),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(value: 'monitor', child: Text('monitor')),
+                          DropdownMenuItem(value: 'restricted', child: Text('restricted')),
+                          DropdownMenuItem(value: 'paused', child: Text('paused')),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            mode = value ?? 'monitor';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: ownerController,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Owner user ID'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: reasonController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(dialogContext, 'Control reason'),
+                          helperText: _tHqFeatureFlags(
+                            dialogContext,
+                            'Restricted or paused control should state the bounded operator reason.',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Save')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    try {
+      await _workflowBridge.upsertFederatedLearningRuntimeRolloutControlRecord(
+        <String, dynamic>{
+          'deliveryRecordId': delivery.id,
+          'mode': mode,
+          'ownerUserId': ownerController.text.trim(),
+          'reason': reasonController.text.trim(),
+        },
+      );
+      if (!mounted) return;
+      await _loadExperiments();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Rollout control saved'),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqFeatureFlags(context, 'Rollout control failed'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _showRuntimeActivationHistoryDialog(
     FederatedLearningExperimentModel experiment,
     FederatedLearningCandidateModelPackageModel candidatePackage,
@@ -4890,6 +5151,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (event.action.endsWith('runtime_rollout_escalation_record.upsert')) {
       return '$timestamp · Escalation ${event.deliveryRecordId} · ${event.status}';
     }
+    if (event.action.endsWith('runtime_rollout_control_record.upsert')) {
+      return '$timestamp · Control ${event.deliveryRecordId} · ${event.mode}';
+    }
     return '$timestamp · Alert triage ${event.deliveryRecordId} · ${event.status}';
   }
 
@@ -4909,6 +5173,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       final String owner = event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
       return 'Delivery ${event.deliveryRecordId} · owner $owner · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
     }
+    if (event.action.endsWith('runtime_rollout_control_record.upsert')) {
+      final String owner = event.ownerUserId.trim().isEmpty ? 'unassigned' : event.ownerUserId;
+      final String reason = event.reason.trim().isEmpty ? '' : ' · ${event.reason.trim()}';
+      return 'Delivery ${event.deliveryRecordId} · mode ${event.mode} · owner $owner$reason';
+    }
     return 'Delivery ${event.deliveryRecordId} · ${event.fallbackCount} fallback · ${event.pendingCount} pending';
   }
 
@@ -4926,13 +5195,83 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String owner = (record.ownerUserId ?? '').trim().isEmpty
         ? 'unassigned'
         : record.ownerUserId!.trim();
+    final String due = _buildRuntimeRolloutEscalationDueSegment(record);
     final String notes = (record.notes ?? '').trim().isEmpty
         ? ''
         : ' · ${(record.notes ?? '').trim()}';
     final String resolved = record.status == 'resolved'
         ? ' · resolved ${_formatTimestamp(record.resolvedAt)}'
         : '';
-    return 'Escalation: ${record.status} · owner $owner$resolved$notes';
+    return 'Escalation: ${record.status} · owner $owner$due$resolved$notes';
+  }
+
+  String _buildRuntimeRolloutEscalationHistoryLine(
+    FederatedLearningRuntimeRolloutEscalationHistoryRecordModel record,
+  ) {
+    final String owner = (record.ownerUserId ?? '').trim().isEmpty
+        ? 'unassigned'
+        : record.ownerUserId!.trim();
+    final String due = _buildRuntimeRolloutEscalationHistoryDueSegment(record);
+    final String notes = (record.notes ?? '').trim().isEmpty
+        ? ''
+        : ' · ${(record.notes ?? '').trim()}';
+    final String actor = (record.recordedBy ?? '').trim().isEmpty
+        ? 'hq'
+        : record.recordedBy!.trim();
+    return '${_formatTimestamp(record.recordedAt)} · ${record.status} by $actor · owner $owner$due$notes';
+  }
+
+  String _buildRuntimeRolloutControlSummary(
+    FederatedLearningRuntimeRolloutControlRecordModel record,
+  ) {
+    final String owner = (record.ownerUserId ?? '').trim().isEmpty
+        ? 'unassigned'
+        : record.ownerUserId!.trim();
+    final String reason = (record.reason ?? '').trim().isEmpty
+        ? ''
+        : ' · ${(record.reason ?? '').trim()}';
+    final String reviewBy = record.reviewByAt == null
+        ? ''
+        : ' · review by ${_formatTimestamp(record.reviewByAt)}';
+    final String released =
+        record.mode == 'monitor' && record.releasedAt != null
+            ? ' · released ${_formatTimestamp(record.releasedAt)}'
+            : '';
+    return 'Control: ${record.mode} · owner $owner$reviewBy$released$reason';
+  }
+
+  String _buildRuntimeRolloutEscalationDueSegment(
+    FederatedLearningRuntimeRolloutEscalationRecordModel record,
+  ) {
+    if (record.status == 'resolved' || record.dueAt == null) {
+      return '';
+    }
+    final DateTime dueAt = record.dueAt!.toDate().toUtc();
+    final DateTime now = DateTime.now().toUtc();
+    if (!dueAt.isAfter(now)) {
+      return ' · overdue ${_formatTimestamp(record.dueAt)}';
+    }
+    if (dueAt.difference(now).inHours <= 6) {
+      return ' · due ${_formatTimestamp(record.dueAt)}';
+    }
+    return '';
+  }
+
+  String _buildRuntimeRolloutEscalationHistoryDueSegment(
+    FederatedLearningRuntimeRolloutEscalationHistoryRecordModel record,
+  ) {
+    if (record.status == 'resolved' || record.dueAt == null) {
+      return '';
+    }
+    final DateTime dueAt = record.dueAt!.toDate().toUtc();
+    final DateTime now = DateTime.now().toUtc();
+    if (!dueAt.isAfter(now)) {
+      return ' · overdue ${_formatTimestamp(record.dueAt)}';
+    }
+    if (dueAt.difference(now).inHours <= 6) {
+      return ' · due ${_formatTimestamp(record.dueAt)}';
+    }
+    return '';
   }
 
   int _compareExperimentPriority(
@@ -5197,6 +5536,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _workflowBridge.listFederatedLearningRuntimeActivationRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeRolloutAlertRecords(limit: 120),
         _workflowBridge.listFederatedLearningRuntimeRolloutEscalationRecords(limit: 120),
+        _workflowBridge.listFederatedLearningRuntimeRolloutControlRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRecords(limit: 120),
         _workflowBridge.listFederatedLearningCandidatePromotionRevocationRecords(limit: 120),
       ]);
@@ -5376,6 +5716,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ))) {
         runtimeRolloutEscalationsByDeliveryId[record.deliveryRecordId] = record;
       }
+      final Map<String, FederatedLearningRuntimeRolloutControlRecordModel>
+          runtimeRolloutControlsByDeliveryId =
+          <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
+      for (final FederatedLearningRuntimeRolloutControlRecordModel record
+          in (payloads[12] as List<Map<String, dynamic>>)
+              .map((Map<String, dynamic> row) =>
+                  FederatedLearningRuntimeRolloutControlRecordModel.fromMap(
+                    (row['id'] as String?) ?? 'runtime_rollout_control_record',
+                    row,
+                  ))) {
+        runtimeRolloutControlsByDeliveryId[record.deliveryRecordId] = record;
+      }
         final Map<String, FederatedLearningExperimentReviewRecordModel>
           reviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
@@ -5392,7 +5744,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           promotionsByPackageId =
           <String, FederatedLearningCandidatePromotionRecordModel>{};
       for (final FederatedLearningCandidatePromotionRecordModel record
-          in (payloads[12] as List<Map<String, dynamic>>)
+          in (payloads[13] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_record',
@@ -5404,7 +5756,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           revocationsByPackageId =
           <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
       for (final FederatedLearningCandidatePromotionRevocationRecordModel record
-          in (payloads[13] as List<Map<String, dynamic>>)
+          in (payloads[14] as List<Map<String, dynamic>>)
               .map((Map<String, dynamic> row) =>
                   FederatedLearningCandidatePromotionRevocationRecordModel.fromMap(
                     (row['id'] as String?) ?? 'promotion_revocation_record',
@@ -5425,6 +5777,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _runtimeActivationRecordsByPackageId = runtimeActivationByPackageId;
         _runtimeRolloutAlertsByDeliveryId = runtimeRolloutAlertsByDeliveryId;
         _runtimeRolloutEscalationsByDeliveryId = runtimeRolloutEscalationsByDeliveryId;
+        _runtimeRolloutControlsByDeliveryId = runtimeRolloutControlsByDeliveryId;
         _experimentReviewRecordsByExperimentId = reviewRecordsByExperimentId;
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
@@ -5453,6 +5806,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
         _runtimeRolloutEscalationsByDeliveryId =
           <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
+        _runtimeRolloutControlsByDeliveryId =
+          <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
         _experimentReviewRecordsByExperimentId =
           <String, FederatedLearningExperimentReviewRecordModel>{};
         _promotionRecordsByPackageId =

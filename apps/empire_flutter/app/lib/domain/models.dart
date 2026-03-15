@@ -3992,6 +3992,8 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
     required this.status,
     required this.fallbackCount,
     required this.pendingCount,
+    this.openedAt,
+    this.dueAt,
     this.ownerUserId,
     this.notes,
     this.resolvedBy,
@@ -4007,6 +4009,8 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
   final String status;
   final int fallbackCount;
   final int pendingCount;
+  final Timestamp? openedAt;
+  final Timestamp? dueAt;
   final String? ownerUserId;
   final String? notes;
   final String? resolvedBy;
@@ -4026,10 +4030,126 @@ class FederatedLearningRuntimeRolloutEscalationRecordModel {
       status: data['status'] as String? ?? 'open',
       fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
       pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
+      openedAt: _timestampOrNull(data['openedAt']),
+      dueAt: _timestampOrNull(data['dueAt']),
       ownerUserId: data['ownerUserId'] as String?,
       notes: data['notes'] as String?,
       resolvedBy: data['resolvedBy'] as String?,
       resolvedAt: _timestampOrNull(data['resolvedAt']),
+      createdAt: _timestampOrNull(data['createdAt']),
+      updatedAt: _timestampOrNull(data['updatedAt']),
+    );
+  }
+}
+
+@immutable
+class FederatedLearningRuntimeRolloutEscalationHistoryRecordModel {
+  const FederatedLearningRuntimeRolloutEscalationHistoryRecordModel({
+    required this.id,
+    required this.escalationRecordId,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.deliveryRecordId,
+    required this.status,
+    required this.fallbackCount,
+    required this.pendingCount,
+    this.openedAt,
+    this.dueAt,
+    this.ownerUserId,
+    this.notes,
+    this.resolvedBy,
+    this.resolvedAt,
+    this.recordedBy,
+    this.recordedAt,
+  });
+
+  final String id;
+  final String escalationRecordId;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String deliveryRecordId;
+  final String status;
+  final int fallbackCount;
+  final int pendingCount;
+  final Timestamp? openedAt;
+  final Timestamp? dueAt;
+  final String? ownerUserId;
+  final String? notes;
+  final String? resolvedBy;
+  final Timestamp? resolvedAt;
+  final String? recordedBy;
+  final Timestamp? recordedAt;
+
+  factory FederatedLearningRuntimeRolloutEscalationHistoryRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeRolloutEscalationHistoryRecordModel(
+      id: id,
+      escalationRecordId: data['escalationRecordId'] as String? ?? '',
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      status: data['status'] as String? ?? 'open',
+      fallbackCount: (data['fallbackCount'] as num?)?.toInt() ?? 0,
+      pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
+      openedAt: _timestampOrNull(data['openedAt']),
+      dueAt: _timestampOrNull(data['dueAt']),
+      ownerUserId: data['ownerUserId'] as String?,
+      notes: data['notes'] as String?,
+      resolvedBy: data['resolvedBy'] as String?,
+      resolvedAt: _timestampOrNull(data['resolvedAt']),
+      recordedBy: data['recordedBy'] as String?,
+      recordedAt: _timestampOrNull(data['recordedAt']),
+    );
+  }
+}
+
+@immutable
+class FederatedLearningRuntimeRolloutControlRecordModel {
+  const FederatedLearningRuntimeRolloutControlRecordModel({
+    required this.id,
+    required this.experimentId,
+    required this.candidateModelPackageId,
+    required this.deliveryRecordId,
+    required this.mode,
+    this.ownerUserId,
+    this.reason,
+    this.reviewByAt,
+    this.releasedBy,
+    this.releasedAt,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String experimentId;
+  final String candidateModelPackageId;
+  final String deliveryRecordId;
+  final String mode;
+  final String? ownerUserId;
+  final String? reason;
+  final Timestamp? reviewByAt;
+  final String? releasedBy;
+  final Timestamp? releasedAt;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory FederatedLearningRuntimeRolloutControlRecordModel.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningRuntimeRolloutControlRecordModel(
+      id: id,
+      experimentId: data['experimentId'] as String? ?? '',
+      candidateModelPackageId: data['candidateModelPackageId'] as String? ?? '',
+      deliveryRecordId: data['deliveryRecordId'] as String? ?? '',
+      mode: data['mode'] as String? ?? 'monitor',
+      ownerUserId: data['ownerUserId'] as String?,
+      reason: data['reason'] as String?,
+      reviewByAt: _timestampOrNull(data['reviewByAt']),
+      releasedBy: data['releasedBy'] as String?,
+      releasedAt: _timestampOrNull(data['releasedAt']),
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
     );
@@ -4067,8 +4187,13 @@ class FederatedLearningRuntimeRolloutAuditEventModel {
   String get notes => details['notes'] as String? ?? '';
   String get ownerUserId => details['ownerUserId'] as String? ?? '';
   String get acknowledgedBy => details['acknowledgedBy'] as String? ?? '';
+  String get mode => details['mode'] as String? ?? '';
+  String get reason => details['reason'] as String? ?? '';
   int get fallbackCount => (details['fallbackCount'] as num?)?.toInt() ?? 0;
   int get pendingCount => (details['pendingCount'] as num?)?.toInt() ?? 0;
+  Timestamp? get openedAt => _timestampOrNull(details['openedAt']);
+  Timestamp? get dueAt => _timestampOrNull(details['dueAt']);
+  Timestamp? get reviewByAt => _timestampOrNull(details['reviewByAt']);
   List<String> get targetSiteIds => _stringListOrEmpty(details['targetSiteIds']);
 
   factory FederatedLearningRuntimeRolloutAuditEventModel.fromMap(

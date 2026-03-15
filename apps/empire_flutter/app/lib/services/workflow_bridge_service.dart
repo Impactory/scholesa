@@ -416,6 +416,52 @@ class WorkflowBridgeService {
     return _asMapList(payload['records']);
   }
 
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutEscalationHistoryRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? status,
+    int limit = 80,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningRuntimeRolloutEscalationHistoryRecords',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((candidateModelPackageId ?? '').trim().isNotEmpty)
+          'candidateModelPackageId': candidateModelPackageId!.trim(),
+        if ((deliveryRecordId ?? '').trim().isNotEmpty)
+          'deliveryRecordId': deliveryRecordId!.trim(),
+        if ((status ?? '').trim().isNotEmpty) 'status': status!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutControlRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? mode,
+    int limit = 60,
+  }) async {
+    final Map<String, dynamic> payload = await _call(
+      'listFederatedLearningRuntimeRolloutControlRecords',
+      <String, dynamic>{
+        if ((experimentId ?? '').trim().isNotEmpty)
+          'experimentId': experimentId!.trim(),
+        if ((candidateModelPackageId ?? '').trim().isNotEmpty)
+          'candidateModelPackageId': candidateModelPackageId!.trim(),
+        if ((deliveryRecordId ?? '').trim().isNotEmpty)
+          'deliveryRecordId': deliveryRecordId!.trim(),
+        if ((mode ?? '').trim().isNotEmpty) 'mode': mode!.trim(),
+        'limit': limit,
+      },
+    );
+    return _asMapList(payload['records']);
+  }
+
   Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAuditEvents({
     String? experimentId,
     String? candidateModelPackageId,
@@ -553,6 +599,16 @@ class WorkflowBridgeService {
   ) async {
     final Map<String, dynamic> payload = await _call(
       'upsertFederatedLearningRuntimeRolloutEscalationRecord',
+      data,
+    );
+    return _asTrimmedString(payload['id']);
+  }
+
+  Future<String?> upsertFederatedLearningRuntimeRolloutControlRecord(
+    Map<String, dynamic> data,
+  ) async {
+    final Map<String, dynamic> payload = await _call(
+      'upsertFederatedLearningRuntimeRolloutControlRecord',
       data,
     );
     return _asTrimmedString(payload['id']);

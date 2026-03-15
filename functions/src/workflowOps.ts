@@ -30,6 +30,7 @@ import {
   buildFederatedLearningRuntimeActivationRecordDocId,
   buildFederatedLearningRuntimeRolloutAlertRecordDocId,
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
+  buildFederatedLearningRuntimeRolloutControlRecordDocId,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
@@ -48,6 +49,7 @@ import {
   normalizeFederatedLearningRuntimeActivationStatus,
   normalizeFederatedLearningRuntimeRolloutAlertStatus,
   normalizeFederatedLearningRuntimeRolloutEscalationStatus,
+  normalizeFederatedLearningRuntimeRolloutControlMode,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
   sanitizeFederatedLearningExperimentConfig,
@@ -285,6 +287,39 @@ function normalizeSubscriptionStatus(value: unknown): 'active' | 'paused' | 'can
   const normalized = asTrimmedString(value).toLowerCase();
   if (normalized === 'paused' || normalized === 'cancelled') return normalized;
   return 'active';
+}
+
+function asTimestampMillis(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  if (value instanceof Timestamp) {
+    return value.toMillis();
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  return null;
+}
+
+function buildRuntimeRolloutEscalationDueAt(
+  status: 'open' | 'investigating' | 'resolved',
+  fallbackCount: number,
+  pendingCount: number,
+  openedAt: number,
+): number | null {
+  if (status === 'resolved') {
+    return null;
+  }
+  const hasFallback = fallbackCount > 0;
+  const hasPendingOnly = !hasFallback && pendingCount > 0;
+  if (!hasFallback && !hasPendingOnly) {
+    return null;
+  }
+  const baseHours = hasFallback
+    ? (status === 'investigating' ? 8 : 4)
+    : (status === 'investigating' ? 48 : 24);
+  return openedAt + (baseHours * 60 * 60 * 1000);
 }
 
 function normalizeInvoiceStatus(value: unknown): 'paid' | 'pending' | 'overdue' {
@@ -2519,6 +2554,84 @@ export const listFederatedLearningRuntimeRolloutEscalationRecords = onCall(async
   return { records };
 });
 
+export const listFederatedLearningRuntimeRolloutEscalationHistoryRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 200
+    ? request.data.limit
+    : 80;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  const status = normalizeFederatedLearningRuntimeRolloutEscalationStatus(request.data?.status);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningRuntimeRolloutEscalationHistoryRecords')
+    .orderBy('recordedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+  if (candidateModelPackageId) {
+    query = query.where('candidateModelPackageId', '==', candidateModelPackageId);
+  }
+  if (deliveryRecordId) {
+    query = query.where('deliveryRecordId', '==', deliveryRecordId);
+  }
+  if (status) {
+    query = query.where('status', '==', status);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
+export const listFederatedLearningRuntimeRolloutControlRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+    ? request.data.limit
+    : 60;
+  const experimentId = asTrimmedString(request.data?.experimentId);
+  const candidateModelPackageId = asTrimmedString(request.data?.candidateModelPackageId);
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  const mode = normalizeFederatedLearningRuntimeRolloutControlMode(request.data?.mode);
+
+  let query: FirebaseFirestore.Query = admin.firestore()
+    .collection('federatedLearningRuntimeRolloutControlRecords')
+    .orderBy('updatedAt', 'desc')
+    .limit(limitValue);
+  if (experimentId) {
+    query = query.where('experimentId', '==', experimentId);
+  }
+  if (candidateModelPackageId) {
+    query = query.where('candidateModelPackageId', '==', candidateModelPackageId);
+  }
+  if (deliveryRecordId) {
+    query = query.where('deliveryRecordId', '==', deliveryRecordId);
+  }
+  if (mode) {
+    query = query.where('mode', '==', mode);
+  }
+
+  const snap = await query.get();
+  const records = snap.docs.map((snapDoc) => ({
+    id: snapDoc.id,
+    ...(snapDoc.data() as Record<string, unknown>),
+  }));
+  return { records };
+});
+
 export const listFederatedLearningRuntimeRolloutAuditEvents = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (actor.role !== 'hq') {
@@ -2537,6 +2650,7 @@ export const listFederatedLearningRuntimeRolloutAuditEvents = onCall(async (requ
     federatedLearningAuditAction('runtime_activation_record.upsert'),
     federatedLearningAuditAction('runtime_rollout_alert_record.upsert'),
     federatedLearningAuditAction('runtime_rollout_escalation_record.upsert'),
+    federatedLearningAuditAction('runtime_rollout_control_record.upsert'),
   ]);
 
   const snap = await admin.firestore()
@@ -3415,6 +3529,8 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
   const targetSiteIds = toStringArray(deliveryData.targetSiteIds);
   const escalationId = buildFederatedLearningRuntimeRolloutEscalationRecordDocId(deliveryRecordId);
   const escalationRef = admin.firestore().collection('federatedLearningRuntimeRolloutEscalationRecords').doc(escalationId);
+  const escalationSnap = await escalationRef.get();
+  const escalationData = (escalationSnap.data() || {}) as Record<string, unknown>;
 
   const activationSnap = await admin.firestore()
     .collection('federatedLearningRuntimeActivationRecords')
@@ -3445,6 +3561,18 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     }
   });
 
+  const currentIssueActive = fallbackCount > 0 || pendingCount > 0;
+  const existingOpenedAt = asTimestampMillis(escalationData.openedAt);
+  const openedAt = status === 'resolved' || !currentIssueActive
+    ? null
+    : (existingOpenedAt ?? Date.now());
+  const dueAt = openedAt == null
+    ? null
+    : buildRuntimeRolloutEscalationDueAt(status, fallbackCount, pendingCount, openedAt);
+  const createdAt = escalationSnap.exists
+    ? (escalationData.createdAt ?? FieldValue.serverTimestamp())
+    : FieldValue.serverTimestamp();
+
   await escalationRef.set({
     experimentId,
     candidateModelPackageId,
@@ -3452,13 +3580,33 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     status,
     fallbackCount,
     pendingCount,
+    openedAt: openedAt ?? FieldValue.delete(),
+    dueAt: dueAt ?? FieldValue.delete(),
     ownerUserId: ownerUserId || FieldValue.delete(),
     notes,
     resolvedBy: status === 'resolved' ? actor.uid : FieldValue.delete(),
     resolvedAt: status === 'resolved' ? FieldValue.serverTimestamp() : FieldValue.delete(),
-    createdAt: FieldValue.serverTimestamp(),
+    createdAt,
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
+
+  await admin.firestore().collection('federatedLearningRuntimeRolloutEscalationHistoryRecords').add({
+    escalationRecordId: escalationId,
+    experimentId,
+    candidateModelPackageId,
+    deliveryRecordId,
+    status,
+    fallbackCount,
+    pendingCount,
+    openedAt: openedAt ?? FieldValue.delete(),
+    dueAt: dueAt ?? FieldValue.delete(),
+    ownerUserId: ownerUserId || FieldValue.delete(),
+    notes,
+    resolvedBy: status === 'resolved' ? actor.uid : FieldValue.delete(),
+    resolvedAt: status === 'resolved' ? FieldValue.serverTimestamp() : FieldValue.delete(),
+    recordedBy: actor.uid,
+    recordedAt: Date.now(),
+  });
 
   await admin.firestore().collection('auditLogs').add({
     userId: actor.uid,
@@ -3474,6 +3622,8 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
       ownerUserId,
       fallbackCount,
       pendingCount,
+      openedAt,
+      dueAt,
       targetSiteIds,
       notes,
       resolvedBy: status === 'resolved' ? actor.uid : '',
@@ -3487,6 +3637,86 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     status,
     fallbackCount,
     pendingCount,
+  };
+});
+
+export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const deliveryRecordId = asTrimmedString(request.data?.deliveryRecordId);
+  if (!deliveryRecordId) {
+    throw new HttpsError('invalid-argument', 'deliveryRecordId is required.');
+  }
+
+  const mode = normalizeFederatedLearningRuntimeRolloutControlMode(request.data?.mode);
+  if (!mode) {
+    throw new HttpsError('invalid-argument', 'mode must be monitor, restricted, or paused.');
+  }
+
+  const ownerUserId = asTrimmedString(request.data?.ownerUserId).slice(0, 200);
+  const reason = asTrimmedString(request.data?.reason).slice(0, 500);
+  const reviewByAtValue = asNumber(request.data?.reviewByAt);
+  const reviewByAt = reviewByAtValue == null ? null : Math.max(0, Math.trunc(reviewByAtValue));
+  if (mode !== 'monitor' && !reason) {
+    throw new HttpsError('failed-precondition', 'Restricted or paused rollout control requires a reason.');
+  }
+
+  const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryRecordId);
+  const deliverySnap = await deliveryRef.get();
+  if (!deliverySnap.exists) {
+    throw new HttpsError('not-found', 'Runtime delivery record not found.');
+  }
+
+  const deliveryData = (deliverySnap.data() || {}) as Record<string, unknown>;
+  const experimentId = asTrimmedString(deliveryData.experimentId);
+  const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
+  const controlId = buildFederatedLearningRuntimeRolloutControlRecordDocId(deliveryRecordId);
+  const controlRef = admin.firestore().collection('federatedLearningRuntimeRolloutControlRecords').doc(controlId);
+  const controlSnap = await controlRef.get();
+  const controlData = (controlSnap.data() || {}) as Record<string, unknown>;
+  const createdAt = controlSnap.exists
+    ? (controlData.createdAt ?? FieldValue.serverTimestamp())
+    : FieldValue.serverTimestamp();
+
+  await controlRef.set({
+    experimentId,
+    candidateModelPackageId,
+    deliveryRecordId,
+    mode,
+    ownerUserId: ownerUserId || FieldValue.delete(),
+    reason: reason || FieldValue.delete(),
+    reviewByAt: mode === 'monitor' ? FieldValue.delete() : (reviewByAt ?? FieldValue.delete()),
+    releasedBy: mode === 'monitor' ? actor.uid : FieldValue.delete(),
+    releasedAt: mode === 'monitor' ? FieldValue.serverTimestamp() : FieldValue.delete(),
+    createdAt,
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await admin.firestore().collection('auditLogs').add({
+    userId: actor.uid,
+    action: federatedLearningAuditAction('runtime_rollout_control_record.upsert'),
+    collection: 'federatedLearningRuntimeRolloutControlRecords',
+    documentId: controlId,
+    timestamp: Date.now(),
+    details: {
+      experimentId,
+      candidateModelPackageId,
+      deliveryRecordId,
+      mode,
+      ownerUserId,
+      reason,
+      reviewByAt,
+    },
+  });
+
+  return {
+    success: true,
+    id: controlId,
+    deliveryRecordId,
+    mode,
   };
 });
 

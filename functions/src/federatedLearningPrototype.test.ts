@@ -12,6 +12,7 @@ import {
   buildFederatedLearningRuntimeActivationRecordDocId,
   buildFederatedLearningRuntimeRolloutAlertRecordDocId,
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
+  buildFederatedLearningRuntimeRolloutControlRecordDocId,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
@@ -30,6 +31,7 @@ import {
   normalizeFederatedLearningRuntimeActivationStatus,
   normalizeFederatedLearningRuntimeRolloutAlertStatus,
   normalizeFederatedLearningRuntimeRolloutEscalationStatus,
+  normalizeFederatedLearningRuntimeRolloutControlMode,
   normalizeFederatedLearningExperimentStatus,
   normalizeFederatedLearningRuntimeTarget,
   selectFederatedLearningAggregationBatch,
@@ -76,6 +78,10 @@ describe('federated learning prototype helpers', () => {
     expect(normalizeFederatedLearningRuntimeRolloutEscalationStatus('in_progress')).toBe('investigating');
     expect(normalizeFederatedLearningRuntimeRolloutEscalationStatus('closed')).toBe('resolved');
     expect(normalizeFederatedLearningRuntimeRolloutEscalationStatus('archived')).toBeNull();
+    expect(normalizeFederatedLearningRuntimeRolloutControlMode('monitor')).toBe('monitor');
+    expect(normalizeFederatedLearningRuntimeRolloutControlMode('restrict')).toBe('restricted');
+    expect(normalizeFederatedLearningRuntimeRolloutControlMode('pause')).toBe('paused');
+    expect(normalizeFederatedLearningRuntimeRolloutControlMode('archived')).toBeNull();
   });
 
   it('builds stable ids, feature-flag payloads, and audit actions', () => {
@@ -111,6 +117,9 @@ describe('federated learning prototype helpers', () => {
     expect(buildFederatedLearningRuntimeRolloutEscalationRecordDocId(
       'fl_delivery_1cb85e2396ee2ed67818ed78',
     )).toBe('fl_rollout_escalation_1cb85e2396ee2ed67818ed78');
+    expect(buildFederatedLearningRuntimeRolloutControlRecordDocId(
+      'fl_delivery_1cb85e2396ee2ed67818ed78',
+    )).toBe('fl_rollout_control_1cb85e2396ee2ed67818ed78');
     expect(buildFederatedLearningRuntimeDeliveryManifestDigest(
       'sha256:pkg-1',
       ['site-1', 'site-2'],

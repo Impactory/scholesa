@@ -15,6 +15,7 @@ export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blo
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
+export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
@@ -276,6 +277,10 @@ export function buildFederatedLearningRuntimeRolloutEscalationRecordDocId(delive
   return `fl_rollout_escalation_${deliveryId.replace(/^fl_delivery_/, '')}`;
 }
 
+export function buildFederatedLearningRuntimeRolloutControlRecordDocId(deliveryId: string): string {
+  return `fl_rollout_control_${deliveryId.replace(/^fl_delivery_/, '')}`;
+}
+
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -399,6 +404,20 @@ export function normalizeFederatedLearningRuntimeRolloutEscalationStatus(
   }
   if (normalized === 'resolved' || normalized === 'closed') {
     return 'resolved';
+  }
+  return null;
+}
+
+export function normalizeFederatedLearningRuntimeRolloutControlMode(
+  value: unknown,
+): FederatedLearningRuntimeRolloutControlMode | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (normalized === 'monitor') return 'monitor';
+  if (normalized === 'restricted' || normalized === 'restrict') {
+    return 'restricted';
+  }
+  if (normalized === 'paused' || normalized === 'pause') {
+    return 'paused';
   }
   return null;
 }
