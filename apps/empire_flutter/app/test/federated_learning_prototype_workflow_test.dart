@@ -4019,6 +4019,114 @@ void main() {
     expect(find.textContaining('by fl_delivery_2'), findsOneWidget);
   });
 
+  testWidgets('HQ delivery history shows expired lifecycle detail',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          expiresAt: DateTime(2024, 3, 14, 20, 15),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Runtime lifecycle: expired 2024-03-14T20:15:00.000'),
+      findsOneWidget,
+    );
+    expect(find.text('Runtime activation: pending'), findsNothing);
+    expect(
+      find.textContaining(
+          'Runtime activation: none recorded · expired 2024-03-14T20:15:00.000'),
+      findsOneWidget,
+    );
+
+    final Finder deliveryHistoryButton = find.widgetWithText(
+      TextButton,
+      'Delivery history',
+    );
+    await tester.ensureVisible(deliveryHistoryButton.first);
+    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Lifecycle: expired 2024-03-14T20:15:00.000'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('HQ delivery history shows revoked lifecycle detail',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'revoked',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          revokedAt: DateTime(2026, 3, 14, 20, 45),
+          revokedBy: 'hq-1',
+          revocationReason: 'Rollback after bounded pilot regression.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Runtime lifecycle: revoked 2026-03-14T20:45:00.000'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('by hq-1'), findsWidgets);
+    expect(
+      find.textContaining('Rollback after bounded pilot regression.'),
+      findsWidgets,
+    );
+
+    final Finder deliveryHistoryButton = find.widgetWithText(
+      TextButton,
+      'Delivery history',
+    );
+    await tester.ensureVisible(deliveryHistoryButton.first);
+    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Lifecycle: revoked 2026-03-14T20:45:00.000'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('by hq-1'), findsWidgets);
+    expect(
+      find.textContaining('Rollback after bounded pilot regression.'),
+      findsWidgets,
+    );
+  });
+
   testWidgets('HQ page highlights runtime rollout fallback alerts',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(

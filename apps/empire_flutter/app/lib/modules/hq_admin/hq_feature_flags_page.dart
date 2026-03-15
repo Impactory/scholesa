@@ -5262,7 +5262,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'superseded ${_formatTimestamp(record.supersededAt)}$byDelivery$reason';
     }
     if (record.status == 'revoked' || record.revokedAt != null) {
-      return 'revoked ${_formatTimestamp(record.revokedAt)}';
+      final String revokedBy = (record.revokedBy ?? '').trim().isEmpty
+          ? ''
+          : ' by ${record.revokedBy!.trim()}';
+      final String reason = (record.revocationReason ?? '').trim().isEmpty
+          ? ''
+          : ' · ${record.revocationReason!.trim()}';
+      return 'revoked ${_formatTimestamp(record.revokedAt)}$revokedBy$reason';
+    }
+    final DateTime? expiresAt = record.expiresAt?.toDate().toUtc();
+    if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
+      return 'expired ${_formatTimestamp(record.expiresAt)}';
     }
     if (record.expiresAt != null) {
       return 'live until ${_formatTimestamp(record.expiresAt)}';
