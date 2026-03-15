@@ -3048,6 +3048,7 @@ void main() {
           distinctSiteCount: 1,
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
+          contributingSiteIds: <String>['site-3'],
           createdAt: DateTime(2026, 3, 13, 12),
         ),
         _aggregationRunRow(
@@ -3066,6 +3067,7 @@ void main() {
           id: 'fl_merge_2',
           aggregationRunId: 'fl_agg_2',
           boundedDigest: 'sha256:digest-2',
+          contributingSiteIds: <String>['site-3'],
         ),
       ],
       candidatePackages: <Map<String, dynamic>>[
@@ -3076,6 +3078,7 @@ void main() {
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
           sampleCount: 20,
+          contributingSiteIds: <String>['site-3'],
         ),
       ],
       pilotEvidenceRecords: <Map<String, dynamic>>[
@@ -3758,9 +3761,9 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, or digest',
+        'Filter by package ID, artifact ID, digest, or site ID',
       ),
-      'pkg_2',
+      'site-3',
     );
     await tester.pumpAndSettle();
     expect(
@@ -3826,7 +3829,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, or rationale',
+        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
       ),
       '',
     );
@@ -3934,7 +3937,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, or rationale',
+        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
       ),
       'fl_prom_2',
     );
@@ -3948,8 +3951,8 @@ void main() {
 
     await tester.enterText(
       find.widgetWithText(
-          TextField, 'Filter by run ID, artifact ID, or digest'),
-      'digest-2',
+          TextField, 'Filter by run ID, artifact ID, digest, or site ID'),
+      'site-3',
     );
     await tester.pumpAndSettle();
     expect(find.text('Artifact: fl_merge_2'), findsOneWidget);
