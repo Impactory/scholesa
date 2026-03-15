@@ -3633,6 +3633,20 @@ void main() {
       find.textContaining('Aggregation run: fl_agg_1'),
       findsOneWidget,
     );
+    expect(
+      find.text('Delivery digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      findsOneWidget,
+    );
+    expect(find.text('Trigger summary: update-2'), findsOneWidget);
+    expect(find.text('Accepted summaries: update-1, update-2'), findsOneWidget);
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open trigger summary'),
+      findsOneWidget,
+    );
     final Finder deliveryTraceButton = find.widgetWithText(
       OutlinedButton,
       'Open aggregation run',
@@ -3643,6 +3657,32 @@ void main() {
     expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
     expect(find.text('Showing 1-1 of 1'), findsWidgets);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+    final Finder deliverySummaryButton = find.widgetWithText(
+      OutlinedButton,
+      'Open accepted summaries',
+    );
+    await tester.ensureVisible(deliverySummaryButton.first);
+    await tester.tap(deliverySummaryButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'),
+        findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+    final Finder deliveryTriggerButton = find.widgetWithText(
+      OutlinedButton,
+      'Open trigger summary',
+    );
+    await tester.ensureVisible(deliveryTriggerButton.first);
+    await tester.tap(deliveryTriggerButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-2'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
