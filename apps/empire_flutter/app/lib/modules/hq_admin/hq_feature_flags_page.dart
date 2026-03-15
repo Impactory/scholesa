@@ -92,14 +92,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Map<String, FederatedLearningCandidatePromotionRevocationRecordModel>
       _promotionRevocationRecordsByPackageId =
       <String, FederatedLearningCandidatePromotionRevocationRecordModel>{};
-    Map<String, FederatedLearningUpdateSummaryModel> _updateSummariesById =
+  Map<String, FederatedLearningUpdateSummaryModel> _updateSummariesById =
       <String, FederatedLearningUpdateSummaryModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
 
   WorkflowBridgeService get _workflowBridge =>
       widget._workflowBridge ?? WorkflowBridgeService.instance;
-    FederatedLearningUpdateSummaryRepository get _updateSummaryRepository =>
+  FederatedLearningUpdateSummaryRepository get _updateSummaryRepository =>
       widget._updateSummaryRepository ??
       FederatedLearningUpdateSummaryRepository();
 
@@ -259,7 +259,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
-          if (runtimeTarget.isNotEmpty || requestedBy.isNotEmpty || status.isNotEmpty) ...<Widget>[
+          if (runtimeTarget.isNotEmpty ||
+              requestedBy.isNotEmpty ||
+              status.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(
@@ -933,7 +935,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   color: ScholesaColors.textSecondary,
                 ),
               ),
-              if ((latestPackage.mergeStrategy ?? '').trim().isNotEmpty) ...<Widget>[
+              if ((latestPackage.mergeStrategy ?? '')
+                  .trim()
+                  .isNotEmpty) ...<Widget>[
                 const SizedBox(height: 4),
                 Text(
                   _tHqFeatureFlags(
@@ -1423,7 +1427,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 artifact?.mergeStrategy ?? '',
                 artifact?.boundedDigest ?? '',
                 artifact?.contributingSiteIds.join(' ') ?? '',
-                candidatePackagesByRunId[run.id]?.contributingSiteIds.join(' ') ?? '',
+                candidatePackagesByRunId[run.id]
+                        ?.contributingSiteIds
+                        .join(' ') ??
+                    '',
               ].join(' ').toLowerCase();
               return haystack.contains(normalizedQuery);
             }).toList(growable: false);
@@ -2157,13 +2164,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         (artifact?.boundedDigest ?? run.boundedDigest ?? '').trim();
     final String strategy =
         (artifact?.mergeStrategy ?? run.mergeStrategy ?? '').trim();
-    final double? normCap = artifact?.normCap ?? candidatePackage?.normCap ?? run.normCap;
+    final double? normCap =
+        artifact?.normCap ?? candidatePackage?.normCap ?? run.normCap;
     final double? effectiveTotalWeight = artifact?.effectiveTotalWeight ??
-      candidatePackage?.effectiveTotalWeight ??
-      run.effectiveTotalWeight;
+        candidatePackage?.effectiveTotalWeight ??
+        run.effectiveTotalWeight;
     final List<String> contributingSiteIds = artifact?.contributingSiteIds ??
-      candidatePackage?.contributingSiteIds ??
-      run.contributingSiteIds;
+        candidatePackage?.contributingSiteIds ??
+        run.contributingSiteIds;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -2553,7 +2561,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
-          if (package.normCap != null || package.effectiveTotalWeight != null) ...<Widget>[
+          if (package.normCap != null ||
+              package.effectiveTotalWeight != null) ...<Widget>[
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(
@@ -3259,36 +3268,34 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                     experiment,
                                     initialQuery: record.aggregationRunId,
                                   ),
-                                  onTraceAcceptedSummaries:
-                                    packagesById[record
-                                          .candidateModelPackageId]
-                                        ?.summaryIds
-                                        .isEmpty ==
-                                      false
+                                  onTraceAcceptedSummaries: packagesById[record
+                                                  .candidateModelPackageId]
+                                              ?.summaryIds
+                                              .isEmpty ==
+                                          false
                                       ? () => _showAcceptedSummaryDialog(
-                                        experiment: experiment,
-                                        summaryIds: packagesById[record
-                                            .candidateModelPackageId]!
-                                          .summaryIds,
-                                        )
-                                      : null,
-                                    onTraceTriggerSummary:
-                                      packagesById[record
-                                            .candidateModelPackageId]
-                                          ?.triggerSummaryId
-                                          .trim()
-                                          .isNotEmpty ==
-                                        true
-                                        ? () => _showAcceptedSummaryDialog(
-                                          experiment: experiment,
-                                          summaryIds: <String>[
-                                            packagesById[record
-                                                .candidateModelPackageId]!
-                                              .triggerSummaryId,
-                                          ],
-                                          title: 'Trigger summary',
+                                            experiment: experiment,
+                                            summaryIds: packagesById[record
+                                                    .candidateModelPackageId]!
+                                                .summaryIds,
                                           )
-                                        : null,
+                                      : null,
+                                  onTraceTriggerSummary: packagesById[record
+                                                  .candidateModelPackageId]
+                                              ?.triggerSummaryId
+                                              .trim()
+                                              .isNotEmpty ==
+                                          true
+                                      ? () => _showAcceptedSummaryDialog(
+                                            experiment: experiment,
+                                            summaryIds: <String>[
+                                              packagesById[record
+                                                      .candidateModelPackageId]!
+                                                  .triggerSummaryId,
+                                            ],
+                                            title: 'Trigger summary',
+                                          )
+                                      : null,
                                   onRevoke: () =>
                                       _showCandidatePromotionRevocationDialog(
                                     record: record,
@@ -3496,7 +3503,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
-            if (package.normCap != null || package.effectiveTotalWeight != null) ...<Widget>[
+            if (package.normCap != null ||
+                package.effectiveTotalWeight != null) ...<Widget>[
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(

@@ -975,8 +975,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'candidatePromotionRecordId': promotionRow['id'] ?? '',
       'aggregationRunId': promotionRow['aggregationRunId'] ?? '',
       'mergeArtifactId': promotionRow['mergeArtifactId'] ?? '',
-      'packageDigest': promotionRow['packageDigest'] ?? packageRow['packageDigest'] ?? '',
-      'boundedDigest': promotionRow['boundedDigest'] ?? packageRow['boundedDigest'] ?? '',
+      'packageDigest':
+          promotionRow['packageDigest'] ?? packageRow['packageDigest'] ?? '',
+      'boundedDigest':
+          promotionRow['boundedDigest'] ?? packageRow['boundedDigest'] ?? '',
       'revokedStatus': promotionRow['status'] ?? '',
       'target': promotionRow['target'] ?? 'sandbox_eval',
       'rationale': (data['rationale'] as String? ?? '').trim(),
@@ -3740,6 +3742,35 @@ void main() {
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
+      ),
+      'trace-2',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Digest: sha256:digest-1'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
+      ),
+      'sha256:update-2',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Digest: sha256:digest-1'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+
     final Finder aggregationSummaryButton = find.widgetWithText(
       OutlinedButton,
       'Open accepted summaries',
@@ -3756,18 +3787,25 @@ void main() {
     await tester.tap(aggregationTriggerButton.first);
     await tester.pumpAndSettle();
     expect(find.text('Requested summaries: update-2'), findsOneWidget);
-    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
-    expect(find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
+    expect(
+        find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
     await tester.ensureVisible(aggregationSummaryButton.first);
     await tester.tap(aggregationSummaryButton.first);
     await tester.pumpAndSettle();
-    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
-    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
-    expect(find.text('Trace: trace-1 · Digest: sha256:update-1'), findsOneWidget);
-    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
-    expect(find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
+    expect(
+        find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'),
+        findsOneWidget);
+    expect(
+        find.text('Trace: trace-1 · Digest: sha256:update-1'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
+    expect(
+        find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -3939,6 +3977,30 @@ void main() {
         TextField,
         'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
+      'trace-2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+      ),
+      'sha256:update-2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+      ),
       'update-2',
     );
     await tester.pumpAndSettle();
@@ -3948,7 +4010,8 @@ void main() {
     );
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     expect(
-      find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      find.text(
+          'Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
     expect(
@@ -3975,9 +4038,12 @@ void main() {
     await tester.ensureVisible(packageSummaryButton.first);
     await tester.tap(packageSummaryButton.first);
     await tester.pumpAndSettle();
-    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
-    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
-    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
+    expect(
+        find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'),
+        findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -4039,7 +4105,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      find.text(
+          'Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
     expect(
@@ -4084,9 +4151,12 @@ void main() {
     await tester.ensureVisible(promotionSummaryButton.first);
     await tester.tap(promotionSummaryButton.first);
     await tester.pumpAndSettle();
-    expect(find.text('Requested summaries: update-1, update-2'), findsOneWidget);
-    expect(find.text('Summary update-1 · site site-1 · 13 samples'), findsOneWidget);
-    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
+    expect(
+        find.text('Requested summaries: update-1, update-2'), findsOneWidget);
+    expect(find.text('Summary update-1 · site site-1 · 13 samples'),
+        findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'),
+        findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -4156,7 +4226,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Revocation digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      find.text(
+          'Revocation digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
 
@@ -4212,6 +4283,30 @@ void main() {
       '',
     );
     await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+      ),
+      'trace-2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+      ),
+      'sha256:update-2',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
+      findsOneWidget,
+    );
     await tester.enterText(
       find.widgetWithText(
         TextField,
