@@ -1846,7 +1846,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by run ID, summary ID, artifact ID, digest, or site ID',
+                              'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -2214,7 +2214,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+                              'Filter by package ID, artifact ID, trigger or summary ID, digest, site ID, optimizer, or warm start',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -3571,7 +3571,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+                              'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),

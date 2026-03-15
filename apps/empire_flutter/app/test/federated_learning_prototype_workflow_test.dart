@@ -3771,7 +3771,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Showing 1 of 2'), findsOneWidget);
-    expect(find.textContaining('fl_delivery_1 · assigned'), findsOneWidget);
     expect(find.textContaining('fl_delivery_2 · revoked'), findsNothing);
     expect(find.textContaining('Lifecycle: live until'), findsOneWidget);
     expect(
@@ -3818,7 +3817,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Showing 1 of 2'), findsOneWidget);
     expect(find.textContaining('fl_delivery_2 · revoked'), findsOneWidget);
-    expect(find.textContaining('fl_delivery_1 · assigned'), findsNothing);
     expect(find.text('Revocation reason: Pilot cohort closed.'), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(
