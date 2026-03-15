@@ -2419,6 +2419,64 @@ void main() {
     expect(latest!.candidateModelPackageId, 'fl_pkg_1');
   });
 
+  test('runtime delivery save supersedes overlapping active delivery',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+        ),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_1',
+          candidateModelPackageId: 'fl_pkg_1',
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+    );
+
+    final String? deliveryId =
+        await bridge.upsertFederatedLearningRuntimeDeliveryRecord(
+      <String, dynamic>{
+        'candidateModelPackageId': 'fl_pkg_2',
+        'status': 'active',
+        'targetSiteIds': <String>['site-2', 'site-3'],
+        'notes': 'Advance the bounded rollout to the next pilot cohort.',
+      },
+    );
+
+    expect(deliveryId, 'fl_delivery_2');
+    final List<Map<String, dynamic>> records =
+        await bridge.listFederatedLearningRuntimeDeliveryRecords(
+      experimentId: 'fl_exp_literacy_pilot',
+    );
+    final Map<String, dynamic> latest = records.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == 'fl_delivery_2',
+    );
+    final Map<String, dynamic> superseded = records.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == 'fl_delivery_1',
+    );
+    expect(latest['status'], 'active');
+    expect(superseded['status'], 'superseded');
+    expect(superseded['supersededByDeliveryRecordId'], 'fl_delivery_2');
+    expect(
+      superseded['supersessionReason'],
+      'Superseded by fl_delivery_2 for overlapping site cohort.',
+    );
+
+    final List<Map<String, dynamic>> siteAssignments =
+        await bridge.listSiteFederatedLearningRuntimeDeliveryRecords(
+      siteId: 'site-2',
+    );
+    expect(siteAssignments, hasLength(1));
+    expect(siteAssignments.single['id'], 'fl_delivery_2');
+  });
+
   test('runtime activation reporter records bounded site evidence', () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       runtimeDeliveryRecords: <Map<String, dynamic>>[
@@ -3449,6 +3507,74 @@ void main() {
           .any((Map<String, dynamic> row) => row['name'] == 'Math Pilot'),
       isTrue,
     );
+  });
+
+  testWidgets('HQ delivery history shows superseded lifecycle detail',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(
+          id: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          createdAt: DateTime(2026, 3, 14, 13),
+        ),
+        _aggregationRunRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+        ),
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          status: 'active',
+          targetSiteIds: <String>['site-2', 'site-3'],
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_1',
+          status: 'superseded',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+          supersededByCandidateModelPackageId: 'fl_pkg_2',
+          supersessionReason:
+              'Superseded by fl_delivery_2 for overlapping site cohort.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder deliveryHistoryButton = find.widgetWithText(
+      TextButton,
+      'Delivery history',
+    );
+    await tester.ensureVisible(deliveryHistoryButton.first);
+    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime delivery history: Literacy Pilot'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Lifecycle: superseded 2026-03-14T20:15:00.000'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('by fl_delivery_2'), findsOneWidget);
   });
 
   testWidgets('HQ page highlights runtime rollout fallback alerts',

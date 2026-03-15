@@ -1,6 +1,6 @@
 # Dependency Baseline Scholesa
 
-Last reviewed: 2026-03-12
+Last reviewed: 2026-03-14
 Authority: repo root manifests and Flutter pubspecs
 
 ## Purpose
@@ -45,7 +45,7 @@ Source: [functions/package.json](/Users/simonluke/dev/scholesa/functions/package
 | typescript | ^5.4.5 | 5.x only | Keep compatible with ts-jest and ts-node. |
 | jest | ^29.7.0 | 29.x only | Do not move to 30.x until tests/config are upgraded together. |
 | @types/jest | ^29.5.14 | 29.x only | Keep aligned with the Jest 29 line. |
-| @types/node | ^25.4.0 | 25.x only | Keep Node type definitions aligned with the functions toolchain. |
+| @types/node | ^25.5.0 | 25.x only | Keep Node type definitions aligned with the functions toolchain. |
 | ts-jest | ^29.1.2 | 29.x only | Must match the Jest major. |
 | ts-node | ^10.9.2 | 10.x only | Used by spec scripts and local tooling. |
 | firebase-admin | ^13.7.0 | 13.x only | Match root baseline. |
@@ -102,12 +102,13 @@ Source: [apps/empire_flutter/app/pubspec.yaml](/Users/simonluke/dev/scholesa/app
 
 ## Drift Snapshot
 
-Command run on 2026-03-12: `npm outdated`, `npm outdated --prefix functions`, and `flutter pub outdated --json`
+Command run on 2026-03-14: `npm outdated`, `npm outdated --prefix functions`, and the previously verified Flutter drift snapshot from 2026-03-12
 
 Key findings:
 
 - Root manifests were refreshed to the currently resolved approved-major versions for Firebase client, framer-motion, Tailwind 3, Zod 3, and React 18 type packages.
-- Functions drift had one clean in-range patch candidate: `@types/node` advanced from 25.3.5 to 25.4.0.
+- Functions drift had one clean in-range patch update: `@types/node` advanced from 25.4.0 to 25.5.0.
+- Root drift still includes an in-range `next-pwa` update from 2.0.2 to 2.6.3, but Scholesa keeps that upgrade deferred until an explicit PWA revalidation pass because this legacy plugin already carries approved build-time debt on Next 16.
 - Flutter direct dependency floors were refreshed to the currently resolved approved-major lines for provider, audioplayers, record, shared_preferences, equatable, build_runner, and fake_cloud_firestore.
 - Next.js 17+, React 19, Tailwind 4, Firebase 12/13, Jest 30, and Zod 4 remain intentionally deferred pending explicit migration plans.
 - March 12, 2026 cleanup verified that Next 16-specific app warnings were removed by migrating the route interceptor to `proxy.ts` and sanitizing the exported Next config. Remaining production-build warnings come from the approved `next-pwa` 2.x plugin internals, not from unsupported Scholesa config keys.
