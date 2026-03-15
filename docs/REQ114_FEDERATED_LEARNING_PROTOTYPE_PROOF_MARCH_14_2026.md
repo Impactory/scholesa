@@ -129,6 +129,7 @@ Passed on 2026-03-14:
 - HQ can now also persist a bounded rollout-control record per runtime delivery with monitor-versus-restricted-versus-paused operator mode, owner, and reason, so delivery handling can be constrained without mutating the underlying runtime-delivery manifest record.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
 - Runtime-delivery upserts now also supersede older overlapping assigned or active deliveries for the same experiment/runtime target, so HQ delivery history reflects bounded package succession instead of leaving multiple live manifests competing by timestamp.
+- Candidate-model-package rollout state now also retires packages whose latest runtime delivery was superseded or revoked, so HQ package history distinguishes still-distributed bounded payloads from terminal ones without claiming a broader promotion or archive system.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 
@@ -138,4 +139,4 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - true on-device training beyond the bounded runtime-vector sketch path
 - richer merge semantics than the current weighted runtime-vector averaging path
-- production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, revocation, paused/restricted control, and fallback path
+- production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path

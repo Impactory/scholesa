@@ -1476,6 +1476,7 @@ Map<String, dynamic> _candidatePackageRow({
   String experimentId = 'fl_exp_literacy_pilot',
   String aggregationRunId = 'fl_agg_1',
   String mergeArtifactId = 'fl_merge_1',
+  String rolloutStatus = 'not_distributed',
   String boundedDigest = 'sha256:digest-1',
   int sampleCount = 24,
   int summaryCount = 2,
@@ -1488,7 +1489,7 @@ Map<String, dynamic> _candidatePackageRow({
     'mergeArtifactId': mergeArtifactId,
     'status': 'staged',
     'packageFormat': 'runtime_vector_v1',
-    'rolloutStatus': 'not_distributed',
+    'rolloutStatus': rolloutStatus,
     'modelVersion': 'fl_runtime_model_v1',
     'latestPromotionRecordId': '',
     'latestPromotionStatus': '',
@@ -3564,8 +3565,9 @@ void main() {
           id: 'fl_pkg_2',
           aggregationRunId: 'fl_agg_2',
           mergeArtifactId: 'fl_merge_2',
+          rolloutStatus: 'distributed',
         ),
-        _candidatePackageRow(),
+        _candidatePackageRow(rolloutStatus: 'retired'),
       ],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(
