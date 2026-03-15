@@ -986,9 +986,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             Text(
               _tHqFeatureFlags(
                 context,
-                latestRuntimeActivation == null
-                    ? 'Runtime activation: pending'
-                    : 'Runtime activation: ${latestRuntimeActivation.status} · ${runtimeActivationRecords.length} site reports · ${latestRuntimeActivation.runtimeTarget}',
+                _buildRuntimeActivationSummary(
+                  latestRuntimeDelivery,
+                  latestRuntimeActivation,
+                  runtimeActivationRecords,
+                ),
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -5266,6 +5268,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'live until ${_formatTimestamp(record.expiresAt)}';
     }
     return 'no expiry recorded';
+  }
+
+  String _buildRuntimeActivationSummary(
+    FederatedLearningRuntimeDeliveryRecordModel? latestRuntimeDelivery,
+    FederatedLearningRuntimeActivationRecordModel? latestRuntimeActivation,
+    List<FederatedLearningRuntimeActivationRecordModel>
+        runtimeActivationRecords,
+  ) {
+    if (latestRuntimeActivation != null) {
+      return 'Runtime activation: ${latestRuntimeActivation.status} · ${runtimeActivationRecords.length} site reports · ${latestRuntimeActivation.runtimeTarget}';
+    }
+    if (latestRuntimeDelivery != null &&
+        _isRuntimeDeliveryTerminalLifecycle(latestRuntimeDelivery)) {
+      return 'Runtime activation: none recorded · ${_runtimeDeliveryLifecycleDetail(latestRuntimeDelivery)}';
+    }
+    return 'Runtime activation: pending';
   }
 
   bool _isRuntimeRolloutAlertAcknowledged(

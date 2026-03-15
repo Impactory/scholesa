@@ -4158,6 +4158,50 @@ void main() {
     );
   });
 
+  testWidgets(
+      'HQ page does not show pending activation for superseded delivery without site reports',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'superseded',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+          supersessionReason:
+              'Superseded by fl_delivery_2 for overlapping site cohort.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Runtime activation: pending'), findsNothing);
+    expect(
+      find.textContaining('Runtime activation: none recorded · superseded'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Site rollout: 0 resolved · 0 staged · 2 fallback · 0 pending'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('HQ page shows acknowledged rollout alert triage',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
