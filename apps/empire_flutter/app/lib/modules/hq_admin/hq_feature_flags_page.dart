@@ -1203,6 +1203,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               }
               final String haystack = <String>[
                 run.id,
+                run.triggerSummaryId,
+                run.summaryIds.join(' '),
                 run.mergeArtifactId ?? '',
                 run.mergeStrategy ?? '',
                 run.boundedDigest ?? '',
@@ -1287,7 +1289,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by run ID, artifact ID, digest, or site ID',
+                              'Filter by run ID, summary ID, artifact ID, digest, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -1555,6 +1557,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               final String haystack = <String>[
                 package.id,
                 package.mergeArtifactId,
+                package.summaryIds.join(' '),
                 package.packageDigest,
                 package.boundedDigest,
                 package.packageFormat,
@@ -1650,7 +1653,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, digest, or site ID',
+                              'Filter by package ID, artifact ID, summary ID, digest, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -1930,6 +1933,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             run.candidateModelPackageFormat ??
             '')
         .trim();
+    final String triggerSummaryId = run.triggerSummaryId.trim();
+    final String acceptedSummaryIds = run.summaryIds.join(', ');
 
     return Container(
       width: double.infinity,
@@ -1961,6 +1966,32 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (triggerSummaryId.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Trigger summary: $triggerSummaryId',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (acceptedSummaryIds.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Accepted summaries: $acceptedSummaryIds',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           if (artifactId.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -2276,6 +2307,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               _tHqFeatureFlags(
                 context,
                 'Contributor sites: ${_formatSiteList(package.contributingSiteIds)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.summaryIds.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Accepted summaries: ${package.summaryIds.join(', ')}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -2645,6 +2689,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 record.target,
                 record.rationale ?? '',
                 record.decidedBy ?? '',
+                package?.summaryIds.join(' ') ?? '',
                 package?.packageDigest ?? '',
                 package?.boundedDigest ?? '',
                 package?.contributingSiteIds.join(' ') ?? '',
@@ -2731,7 +2776,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
+                              'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -3083,6 +3128,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Contributor sites: ${_formatSiteList(package.contributingSiteIds)}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (package.summaryIds.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Accepted summaries: ${package.summaryIds.join(', ')}',
                 ),
                 style: const TextStyle(
                   fontSize: 12,

@@ -3212,6 +3212,7 @@ class FederatedLearningMergeArtifactModel {
     required this.mergeStrategy,
     required this.normCap,
     required this.effectiveTotalWeight,
+    required this.summaryIds,
     required this.boundedDigest,
     required this.payloadFormat,
     required this.modelVersion,
@@ -3239,6 +3240,7 @@ class FederatedLearningMergeArtifactModel {
   final String mergeStrategy;
   final double normCap;
   final double effectiveTotalWeight;
+  final List<String> summaryIds;
   final String boundedDigest;
   final String payloadFormat;
   final String modelVersion;
@@ -3277,9 +3279,10 @@ class FederatedLearningMergeArtifactModel {
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       status: data['status'] as String? ?? 'generated',
       mergeStrategy: data['mergeStrategy'] as String? ?? '',
-        normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
-        effectiveTotalWeight:
+      normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
+      effectiveTotalWeight:
           (data['effectiveTotalWeight'] as num?)?.toDouble() ?? 0,
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
       payloadFormat: data['payloadFormat'] as String? ?? 'runtime_vector_v1',
       modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
@@ -3308,6 +3311,7 @@ class FederatedLearningMergeArtifactModel {
         'mergeStrategy': mergeStrategy,
         'normCap': normCap,
         'effectiveTotalWeight': effectiveTotalWeight,
+        'summaryIds': summaryIds,
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3338,6 +3342,7 @@ class FederatedLearningCandidateModelPackageModel {
     required this.mergeArtifactId,
     required this.status,
     this.mergeStrategy,
+    required this.summaryIds,
     required this.packageFormat,
     required this.rolloutStatus,
     this.latestPromotionRecordId,
@@ -3379,6 +3384,7 @@ class FederatedLearningCandidateModelPackageModel {
   final String mergeArtifactId;
   final String status;
   final String? mergeStrategy;
+  final List<String> summaryIds;
   final String packageFormat;
   final String rolloutStatus;
   final String? latestPromotionRecordId;
@@ -3433,6 +3439,7 @@ class FederatedLearningCandidateModelPackageModel {
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
       status: data['status'] as String? ?? 'staged',
       mergeStrategy: data['mergeStrategy'] as String?,
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
       packageFormat: data['packageFormat'] as String? ?? '',
       rolloutStatus: data['rolloutStatus'] as String? ?? '',
       latestPromotionRecordId: data['latestPromotionRecordId'] as String?,
@@ -3481,6 +3488,7 @@ class FederatedLearningCandidateModelPackageModel {
         'mergeArtifactId': mergeArtifactId,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'summaryIds': summaryIds,
         'packageFormat': packageFormat,
         'rolloutStatus': rolloutStatus,
         'latestPromotionRecordId': latestPromotionRecordId,

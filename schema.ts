@@ -315,6 +315,7 @@ export interface FederatedLearningMergeArtifact {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  summaryIds: string[];
   boundedDigest: string;
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
@@ -342,6 +343,7 @@ export interface FederatedLearningCandidateModelPackage {
   mergeArtifactId: string;
   status: 'staged';
   mergeStrategy?: string;
+  summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: 'not_distributed' | 'distributed' | 'retired';
   modelVersion: string;

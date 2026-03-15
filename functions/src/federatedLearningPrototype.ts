@@ -81,6 +81,7 @@ export interface FederatedLearningMergeArtifactSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  summaryIds: string[];
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
   sampleCount: number;
@@ -102,6 +103,7 @@ export interface FederatedLearningCandidateModelPackageSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: FederatedLearningCandidateModelPackageRolloutStatus;
   modelVersion: string;
@@ -704,6 +706,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     mergeStrategy,
     normCap: mergeWeights.normCap,
     effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
+    summaryIds: selection.summaryIds,
     payloadFormat,
     modelVersion,
     sampleCount: selection.totalSampleCount,
@@ -736,6 +739,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       mergeStrategy: artifactSummary.mergeStrategy,
       normCap: artifactSummary.normCap,
       effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+      summaryIds: artifactSummary.summaryIds,
       packageFormat,
       rolloutStatus,
       modelVersion: artifactSummary.modelVersion,
@@ -759,6 +763,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     mergeStrategy: artifactSummary.mergeStrategy,
     normCap: artifactSummary.normCap,
     effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+    summaryIds: artifactSummary.summaryIds,
     packageFormat,
     rolloutStatus,
     modelVersion: artifactSummary.modelVersion,

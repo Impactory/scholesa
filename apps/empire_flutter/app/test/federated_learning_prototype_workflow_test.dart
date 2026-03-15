@@ -1563,6 +1563,8 @@ Map<String, dynamic> _aggregationRunRow({
   int distinctSiteCount = 2,
   String mergeArtifactId = 'fl_merge_1',
   String boundedDigest = 'sha256:digest-1',
+  String triggerSummaryId = 'update-2',
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
@@ -1590,8 +1592,8 @@ Map<String, dynamic> _aggregationRunRow({
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
     'boundedDigest': boundedDigest,
-    'triggerSummaryId': 'update-2',
-    'summaryIds': <String>['update-1', 'update-2'],
+    'triggerSummaryId': triggerSummaryId,
+    'summaryIds': summaryIds,
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
     'contributingSiteIds': contributingSiteIds,
@@ -1618,6 +1620,7 @@ Map<String, dynamic> _candidatePackageRow({
   int distinctSiteCount = 2,
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
   return <String, dynamic>{
@@ -1627,6 +1630,7 @@ Map<String, dynamic> _candidatePackageRow({
     'mergeArtifactId': mergeArtifactId,
     'status': 'staged',
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
+    'summaryIds': summaryIds,
     'packageFormat': 'runtime_vector_v1',
     'rolloutStatus': rolloutStatus,
     'modelVersion': 'fl_runtime_model_v1',
@@ -2026,6 +2030,7 @@ Map<String, dynamic> _mergeArtifactRow({
   String boundedDigest = 'sha256:digest-1',
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
   return <String, dynamic>{
@@ -2036,6 +2041,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
+    'summaryIds': summaryIds,
     'boundedDigest': boundedDigest,
     'payloadFormat': 'runtime_vector_v1',
     'modelVersion': 'fl_runtime_model_v1',
@@ -3048,6 +3054,8 @@ void main() {
           distinctSiteCount: 1,
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
+          triggerSummaryId: 'update-4',
+          summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
           createdAt: DateTime(2026, 3, 13, 12),
         ),
@@ -3058,6 +3066,8 @@ void main() {
           distinctSiteCount: 1,
           mergeArtifactId: '',
           boundedDigest: 'sha256:digest-3',
+          triggerSummaryId: 'update-5',
+          summaryIds: <String>['update-5'],
           createdAt: DateTime(2026, 3, 12, 12),
         ),
       ],
@@ -3067,6 +3077,7 @@ void main() {
           id: 'fl_merge_2',
           aggregationRunId: 'fl_agg_2',
           boundedDigest: 'sha256:digest-2',
+          summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
         ),
       ],
@@ -3078,6 +3089,7 @@ void main() {
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
           sampleCount: 20,
+          summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
         ),
       ],
@@ -3566,7 +3578,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by run ID, artifact ID, digest, or site ID',
+        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
       ),
       findsOneWidget,
     );
@@ -3586,6 +3598,8 @@ void main() {
       find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
+    expect(find.text('Trigger summary: update-2'), findsWidgets);
+    expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
@@ -3643,7 +3657,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, digest, or site ID',
+        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
       ),
       findsOneWidget,
     );
@@ -3677,6 +3691,7 @@ void main() {
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
+    expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
         findsOneWidget);
     expect(
@@ -3761,7 +3776,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, digest, or site ID',
+        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
       ),
       'site-3',
     );
@@ -3770,6 +3785,27 @@ void main() {
       find.text('Package fl_pkg_2 · 20 samples · 2 summaries · 2 sites'),
       findsOneWidget,
     );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+      ),
+      'update-1',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
+      findsOneWidget,
+    );
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -3788,7 +3824,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
       ),
       findsOneWidget,
     );
@@ -3821,6 +3857,7 @@ void main() {
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
+    expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
       findsOneWidget,
@@ -3829,7 +3866,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
       ),
       '',
     );
@@ -3937,25 +3974,46 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
       ),
-      'fl_prom_2',
+      'site-3',
     );
     await tester.pumpAndSettle();
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
       findsOneWidget,
     );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+      ),
+      'update-1',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
+      findsOneWidget,
+    );
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(
       find.widgetWithText(
-          TextField, 'Filter by run ID, artifact ID, digest, or site ID'),
-      'site-3',
+          TextField, 'Filter by run ID, summary ID, artifact ID, digest, or site ID'),
+      'update-1',
     );
     await tester.pumpAndSettle();
-    expect(find.text('Artifact: fl_merge_2'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
@@ -5174,12 +5232,14 @@ void main() {
           experimentId: 'fl_exp_literacy_pilot',
           aggregationRunId: 'fl_agg_1',
           boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
         ),
         _mergeArtifactRow(
           id: 'fl_merge_2',
           experimentId: 'fl_exp_numeracy_pilot',
           aggregationRunId: 'fl_agg_2',
           boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
         ),
       ],
       candidatePackages: <Map<String, dynamic>>[
@@ -5189,6 +5249,7 @@ void main() {
           aggregationRunId: 'fl_agg_1',
           mergeArtifactId: 'fl_merge_1',
           boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
         ),
         _candidatePackageRow(
           id: 'fl_pkg_2',
@@ -5196,6 +5257,7 @@ void main() {
           aggregationRunId: 'fl_agg_2',
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
         ),
       ],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
