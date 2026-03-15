@@ -2159,6 +2159,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _effectivePromotionStatus(promotion, revocation);
     final String effectiveTarget =
         _effectivePromotionTarget(promotion, revocation);
+    final String mergeStrategy = (package.mergeStrategy ?? '').trim();
     final bool isApproved = effectiveStatus == 'approved_for_eval';
     final bool isHold = effectiveStatus == 'hold';
 
@@ -2200,6 +2201,29 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (mergeStrategy.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, 'Strategy: $mergeStrategy'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.normCap != null || package.effectiveTotalWeight != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Norm cap: ${_formatMergeMetric(package.normCap)} · Effective weight: ${_formatMergeMetric(package.effectiveTotalWeight)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
             _tHqFeatureFlags(
@@ -2967,6 +2991,32 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 color: ScholesaColors.textSecondary,
               ),
             ),
+            if ((package.mergeStrategy ?? '').trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Strategy: ${package.mergeStrategy}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (package.normCap != null || package.effectiveTotalWeight != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Norm cap: ${_formatMergeMetric(package.normCap)} · Effective weight: ${_formatMergeMetric(package.effectiveTotalWeight)}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
           ],
           if ((record.rationale ?? '').trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),

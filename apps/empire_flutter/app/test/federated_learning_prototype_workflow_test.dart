@@ -3648,6 +3648,14 @@ void main() {
     expect(find.text('Awaiting promotion: 1'), findsOneWidget);
     expect(find.text('On hold: 0'), findsOneWidget);
     expect(find.text('Samples: 44'), findsOneWidget);
+    expect(
+      find.text('Strategy: norm_capped_weighted_runtime_vector_average_v2'),
+      findsWidgets,
+    );
+    expect(
+      find.text('Norm cap: 2.400 · Effective weight: 17.600'),
+      findsWidgets,
+    );
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
         findsOneWidget);
     expect(
@@ -3782,6 +3790,14 @@ void main() {
     expect(
       find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
       findsOneWidget,
+    );
+    expect(
+      find.text('Strategy: norm_capped_weighted_runtime_vector_average_v2'),
+      findsWidgets,
+    );
+    expect(
+      find.text('Norm cap: 2.400 · Effective weight: 17.600'),
+      findsWidgets,
     );
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
