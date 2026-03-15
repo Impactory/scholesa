@@ -95,6 +95,11 @@ class FederatedLearningRuntimePackageResolver {
               ? package.revocationReason!.trim()
               : 'delivery revoked by HQ';
           break;
+        case 'superseded':
+          reason = (package.supersessionReason ?? '').trim().isNotEmpty
+              ? package.supersessionReason!.trim()
+              : 'delivery superseded by a newer bounded manifest';
+          break;
         case 'paused':
           reason = (package.rolloutControlReason ?? '').trim().isNotEmpty
               ? package.rolloutControlReason!.trim()

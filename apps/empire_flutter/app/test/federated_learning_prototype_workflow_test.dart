@@ -733,14 +733,21 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? deliveryRecordId,
   }) async {
     final String resolvedSiteId = (siteId ?? '').trim();
+    const Map<String, int> deliveryPriority = <String, int>{
+      'active': 4,
+      'assigned': 3,
+      'revoked': 2,
+      'superseded': 1,
+    };
     final Map<String, dynamic> deliveryRow =
         deliveryRecordId != null && deliveryRecordId.isNotEmpty
             ? _runtimeDeliveryRecords.firstWhere(
                 (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
                 orElse: () => <String, dynamic>{},
               )
-            : _runtimeDeliveryRecords.firstWhere(
-                (Map<String, dynamic> row) {
+            : (() {
+                final List<Map<String, dynamic>> matches = _runtimeDeliveryRecords
+                    .where((Map<String, dynamic> row) {
                   final List<dynamic> targetSiteIds =
                       row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
                   final String status = (row['status'] as String? ?? '').trim();
@@ -751,14 +758,33 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
                       (runtimeTarget ?? '').trim().isEmpty ||
                           row['runtimeTarget'] == runtimeTarget;
                   return targetSiteIds.contains(resolvedSiteId) &&
-                      (status == 'assigned' ||
-                          status == 'active' ||
-                          status == 'revoked') &&
+                      deliveryPriority.containsKey(status) &&
                       matchesExperiment &&
                       matchesRuntime;
-                },
-                orElse: () => <String, dynamic>{},
-              );
+                }).toList()
+                  ..sort((Map<String, dynamic> left, Map<String, dynamic> right) {
+                    final int leftPriority =
+                        deliveryPriority[(left['status'] as String? ?? '').trim()] ?? 0;
+                    final int rightPriority =
+                        deliveryPriority[(right['status'] as String? ?? '').trim()] ?? 0;
+                    if (leftPriority != rightPriority) {
+                      return rightPriority.compareTo(leftPriority);
+                    }
+                    final DateTime? leftUpdatedAt = left['updatedAt'] as DateTime?;
+                    final DateTime? rightUpdatedAt = right['updatedAt'] as DateTime?;
+                    if (leftUpdatedAt == null && rightUpdatedAt == null) {
+                      return 0;
+                    }
+                    if (leftUpdatedAt == null) {
+                      return 1;
+                    }
+                    if (rightUpdatedAt == null) {
+                      return -1;
+                    }
+                    return rightUpdatedAt.compareTo(leftUpdatedAt);
+                  });
+                return matches.isEmpty ? <String, dynamic>{} : matches.first;
+              })();
     if (deliveryRow.isEmpty) {
       return null;
     }
@@ -772,6 +798,16 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     final DateTime now = DateTime(2026, 3, 14, 20, 30);
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+    final DateTime? supersededAt = deliveryRow['supersededAt'] as DateTime?;
+    final String supersededBy =
+      (deliveryRow['supersededBy'] as String? ?? '').trim();
+    final String supersededByDeliveryRecordId =
+      (deliveryRow['supersededByDeliveryRecordId'] as String? ?? '').trim();
+    final String supersededByCandidateModelPackageId =
+      (deliveryRow['supersededByCandidateModelPackageId'] as String? ?? '')
+        .trim();
+    final String supersessionReason =
+      (deliveryRow['supersessionReason'] as String? ?? '').trim();
     final DateTime? revokedAt = deliveryRow['revokedAt'] as DateTime?;
     final String status = (deliveryRow['status'] as String? ?? '').trim();
     final Map<String, dynamic> controlRow = _runtimeRolloutControlRecords.firstWhere(
@@ -780,6 +816,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     );
     String resolutionStatus = status == 'revoked' || revokedAt != null
         ? 'revoked'
+      : (status == 'superseded' || supersededAt != null)
+        ? 'superseded'
         : (expiresAt != null && !expiresAt.isAfter(now))
             ? 'expired'
             : 'resolved';
@@ -822,6 +860,18 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'runtimeVectorDigest': packageRow['runtimeVectorDigest'] ?? '',
       'rolloutStatus': packageRow['rolloutStatus'] ?? 'not_distributed',
       'expiresAt': deliveryRow['expiresAt'],
+        'supersededAt': supersededAt,
+        'supersededBy': supersededBy.isEmpty ? null : supersededBy,
+        'supersededByDeliveryRecordId':
+          supersededByDeliveryRecordId.isEmpty
+            ? null
+            : supersededByDeliveryRecordId,
+        'supersededByCandidateModelPackageId':
+          supersededByCandidateModelPackageId.isEmpty
+            ? null
+            : supersededByCandidateModelPackageId,
+        'supersessionReason':
+          supersessionReason.isEmpty ? null : supersessionReason,
       'revokedAt': deliveryRow['revokedAt'],
       'revokedBy': deliveryRow['revokedBy'],
       'revocationReason': deliveryRow['revocationReason'],
@@ -2256,6 +2306,51 @@ void main() {
     expect(
       bridge.recordedRuntimeActivationSaves.single['deliveryRecordId'],
       'fl_delivery_1',
+    );
+  });
+
+  test('runtime package resolver falls back when delivery is superseded',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'superseded',
+          targetSiteIds: <String>['site-1'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededBy: 'hq-1',
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+          supersededByCandidateModelPackageId: 'fl_pkg_2',
+          supersessionReason:
+              'Superseded by fl_delivery_2 for overlapping site cohort.',
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(rolloutStatus: 'retired'),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNull);
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'fallback');
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['notes'],
+      contains(
+        'is superseded: Superseded by fl_delivery_2 for overlapping site cohort.',
+      ),
     );
   });
 

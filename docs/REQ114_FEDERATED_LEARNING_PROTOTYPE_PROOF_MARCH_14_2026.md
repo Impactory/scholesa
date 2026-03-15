@@ -130,6 +130,7 @@ Passed on 2026-03-14:
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
 - Runtime-delivery upserts now also supersede older overlapping assigned or active deliveries for the same experiment/runtime target, so HQ delivery history reflects bounded package succession instead of leaving multiple live manifests competing by timestamp.
 - Candidate-model-package rollout state now also retires packages whose latest runtime delivery was superseded or revoked, so HQ package history distinguishes still-distributed bounded payloads from terminal ones without claiming a broader promotion or archive system.
+- Site-scoped runtime resolution now also returns explicit superseded terminal package state, including supersession metadata and device-side fallback reporting, so superseded deliveries no longer disappear as null resolution gaps when HQ advances a bounded manifest.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

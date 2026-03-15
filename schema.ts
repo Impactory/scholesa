@@ -211,7 +211,7 @@ export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blo
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'superseded' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
-export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked' | 'paused' | 'restricted';
+export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked' | 'superseded' | 'paused' | 'restricted';
 export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
 export type FederatedLearningRuntimeRolloutEscalationStatus = 'open' | 'investigating' | 'resolved';
 export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
@@ -596,8 +596,13 @@ export interface FederatedLearningResolvedRuntimePackage {
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;
-  rolloutStatus: 'not_distributed' | 'distributed';
+  rolloutStatus: 'not_distributed' | 'distributed' | 'retired';
   expiresAt?: number;
+  supersededAt?: number;
+  supersededBy?: string;
+  supersededByDeliveryRecordId?: string;
+  supersededByCandidateModelPackageId?: string;
+  supersessionReason?: string;
   revokedAt?: number;
   revokedBy?: string;
   revocationReason?: string;

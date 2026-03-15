@@ -2353,12 +2353,14 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
         const rowExperimentId = asTrimmedString(rowData.experimentId);
         const rowRuntimeTarget = normalizeFederatedLearningRuntimeTarget(rowData.runtimeTarget);
         return allowedSites.includes(targetSiteId)
-          && ['assigned', 'active', 'revoked'].includes(status)
+          && ['assigned', 'active', 'revoked', 'superseded'].includes(status)
           && (!experimentId || rowExperimentId === experimentId)
           && (!runtimeTarget || rowRuntimeTarget === runtimeTarget);
       })
       .sort((a, b) => {
-        const statusRank = (value: string) => (value === 'active' ? 3 : value === 'assigned' ? 2 : value === 'revoked' ? 1 : 0);
+        const statusRank = (value: string) => (
+          value === 'active' ? 4 : value === 'assigned' ? 3 : value === 'revoked' ? 2 : value === 'superseded' ? 1 : 0
+        );
         const aData = a as Record<string, unknown>;
         const bData = b as Record<string, unknown>;
         const statusDelta = statusRank(asTrimmedString(bData.status)) - statusRank(asTrimmedString(aData.status));
@@ -2381,6 +2383,11 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
   }
 
   const expiresAt = typeof deliveryData.expiresAt === 'number' ? Math.trunc(deliveryData.expiresAt) : 0;
+  const supersededAt = typeof deliveryData.supersededAt === 'number' ? Math.trunc(deliveryData.supersededAt) : 0;
+  const supersededBy = asTrimmedString(deliveryData.supersededBy);
+  const supersededByDeliveryRecordId = asTrimmedString(deliveryData.supersededByDeliveryRecordId);
+  const supersededByCandidateModelPackageId = asTrimmedString(deliveryData.supersededByCandidateModelPackageId);
+  const supersessionReason = asTrimmedString(deliveryData.supersessionReason);
   const revokedAt = typeof deliveryData.revokedAt === 'number' ? Math.trunc(deliveryData.revokedAt) : 0;
   const revokedBy = asTrimmedString(deliveryData.revokedBy);
   const revocationReason = asTrimmedString(deliveryData.revocationReason);
@@ -2400,6 +2407,8 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
 
   let resolutionStatus = deliveryStatus === 'revoked' || revokedAt > 0
     ? 'revoked'
+    : deliveryStatus === 'superseded' || supersededAt > 0
+      ? 'superseded'
     : (expiresAt > 0 && expiresAt <= now)
       ? 'expired'
       : ['assigned', 'active'].includes(deliveryStatus)
@@ -2457,6 +2466,11 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
       runtimeVectorDigest: asTrimmedString(packageData.runtimeVectorDigest),
       rolloutStatus: asTrimmedString(packageData.rolloutStatus) || 'not_distributed',
       expiresAt: expiresAt > 0 ? expiresAt : null,
+      supersededAt: supersededAt > 0 ? supersededAt : null,
+      supersededBy: supersededBy || null,
+      supersededByDeliveryRecordId: supersededByDeliveryRecordId || null,
+      supersededByCandidateModelPackageId: supersededByCandidateModelPackageId || null,
+      supersessionReason: supersessionReason || null,
       revokedAt: revokedAt > 0 ? revokedAt : null,
       revokedBy: revokedBy || null,
       revocationReason: revocationReason || null,
