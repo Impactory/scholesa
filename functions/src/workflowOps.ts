@@ -1763,6 +1763,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       refreshedRows,
     );
     const artifactSummary = buildFederatedLearningMergeArtifactSummary(
+      triggerSummaryId,
       refreshedSelection,
       mergedRuntimeVector,
       mergeWeights,
@@ -1814,6 +1815,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: artifactSummary.normCap,
       effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+      triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       boundedDigest: artifactSummary.boundedDigest,
       payloadFormat: artifactSummary.payloadFormat,
@@ -1845,6 +1847,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       rolloutStatus: packageSummary.rolloutStatus,
       normCap: packageSummary.normCap,
       effectiveTotalWeight: packageSummary.effectiveTotalWeight,
+      triggerSummaryId: packageSummary.triggerSummaryId,
       summaryIds: packageSummary.summaryIds,
       modelVersion: packageSummary.modelVersion,
       packageDigest: packageSummary.packageDigest,

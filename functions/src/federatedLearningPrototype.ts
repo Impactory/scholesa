@@ -81,6 +81,7 @@ export interface FederatedLearningMergeArtifactSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  triggerSummaryId: string;
   summaryIds: string[];
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
@@ -103,6 +104,7 @@ export interface FederatedLearningCandidateModelPackageSummary {
   mergeStrategy: string;
   normCap: number;
   effectiveTotalWeight: number;
+  triggerSummaryId: string;
   summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: FederatedLearningCandidateModelPackageRolloutStatus;
@@ -665,6 +667,7 @@ export function buildFederatedLearningMergeWeightSummary(
 }
 
 export function buildFederatedLearningMergeArtifactSummary(
+  triggerSummaryId: string,
   selection: FederatedLearningAggregationSelection,
   runtimeVector: number[],
   mergeWeights: FederatedLearningMergeWeightSummary,
@@ -682,6 +685,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     .digest('hex');
   const boundedDigest = createHash('sha256')
     .update(JSON.stringify({
+      triggerSummaryId,
       summaryIds: selection.summaryIds,
       mergeStrategy,
       normCap: mergeWeights.normCap,
@@ -706,6 +710,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     mergeStrategy,
     normCap: mergeWeights.normCap,
     effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
+    triggerSummaryId,
     summaryIds: selection.summaryIds,
     payloadFormat,
     modelVersion,
@@ -739,6 +744,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       mergeStrategy: artifactSummary.mergeStrategy,
       normCap: artifactSummary.normCap,
       effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+      triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       packageFormat,
       rolloutStatus,
@@ -763,6 +769,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     mergeStrategy: artifactSummary.mergeStrategy,
     normCap: artifactSummary.normCap,
     effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
+    triggerSummaryId: artifactSummary.triggerSummaryId,
     summaryIds: artifactSummary.summaryIds,
     packageFormat,
     rolloutStatus,

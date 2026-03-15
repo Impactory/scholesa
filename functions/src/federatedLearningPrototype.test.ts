@@ -263,10 +263,11 @@ describe('federated learning prototype helpers', () => {
       effectiveTotalWeight: 18,
     });
 
-    expect(buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector, mergeWeights)).toEqual({
+    expect(buildFederatedLearningMergeArtifactSummary('sum-2', selection!, mergedRuntimeVector, mergeWeights)).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
       effectiveTotalWeight: 18,
+      triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       payloadFormat: 'runtime_vector_v1',
       modelVersion: 'fl_runtime_model_v1',
@@ -288,11 +289,12 @@ describe('federated learning prototype helpers', () => {
     expect(buildFederatedLearningCandidateModelPackageSummary(
       'fl_agg_1cb85e2396ee2ed67818ed78',
       'fl_merge_1cb85e2396ee2ed67818ed78',
-      buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector, mergeWeights),
+      buildFederatedLearningMergeArtifactSummary('sum-2', selection!, mergedRuntimeVector, mergeWeights),
     )).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
       normCap: 2.683282,
       effectiveTotalWeight: 18,
+      triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       packageFormat: 'runtime_vector_v1',
       rolloutStatus: 'not_distributed',
