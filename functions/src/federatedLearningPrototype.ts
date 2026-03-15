@@ -98,6 +98,10 @@ export interface FederatedLearningAggregationSelection {
   averageUpdateNorm: number;
   schemaVersions: string[];
   runtimeTargets: string[];
+  optimizerStrategies: string[];
+  compatibilityKey: string;
+  warmStartPackageId?: string;
+  warmStartModelVersion?: string;
 }
 
 export interface FederatedLearningMergeWeightSummary {
@@ -119,6 +123,10 @@ export interface FederatedLearningMergeArtifactSummary {
   contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
+  optimizerStrategies: string[];
+  compatibilityKey: string;
+  warmStartPackageId?: string;
+  warmStartModelVersion?: string;
   maxVectorLength: number;
   runtimeVectorLength: number;
   runtimeVector: number[];
@@ -149,6 +157,10 @@ export interface FederatedLearningCandidateModelPackageSummary {
   contributingSiteIds: string[];
   schemaVersions: string[];
   runtimeTargets: string[];
+  optimizerStrategies: string[];
+  compatibilityKey: string;
+  warmStartPackageId?: string;
+  warmStartModelVersion?: string;
   maxVectorLength: number;
   totalPayloadBytes: number;
   averageUpdateNorm: number;
@@ -223,10 +235,6 @@ export function normalizeFederatedLearningExperimentStatus(
   value: unknown,
 ): FederatedLearningExperimentStatus | null {
   const normalized = asTrimmedString(value).toLowerCase();
-      optimizerStrategies: string[];
-      compatibilityKey: string;
-      warmStartPackageId?: string;
-      warmStartModelVersion?: string;
   if (['draft', 'pilot_ready', 'pilot-ready', 'active', 'paused', 'disabled'].includes(normalized)) {
     if (normalized === 'pilot-ready') return 'pilot_ready';
     return normalized as FederatedLearningExperimentStatus;
@@ -242,10 +250,6 @@ export function normalizeFederatedLearningBatteryState(
     return normalized;
   }
   return 'unknown';
-      optimizerStrategies: string[];
-      compatibilityKey: string;
-      warmStartPackageId?: string;
-      warmStartModelVersion?: string;
 }
 
 export function normalizeFederatedLearningNetworkType(
@@ -275,10 +279,6 @@ export function buildFederatedLearningFeatureFlagId(experimentId: string): strin
   return `feature_${experimentId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
-      optimizerStrategies: string[];
-      compatibilityKey: string;
-      warmStartPackageId?: string;
-      warmStartModelVersion?: string;
 export function buildFederatedLearningExperimentReviewRecordDocId(experimentId: string): string {
   return `fl_review_${experimentId.replace(/^fl_exp_/, '')}`;
 }
