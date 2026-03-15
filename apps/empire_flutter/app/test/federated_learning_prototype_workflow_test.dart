@@ -3939,7 +3939,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
+        'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
       ),
       findsOneWidget,
     );
@@ -4023,6 +4023,25 @@ void main() {
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
+      ),
+      'bounded_runtime_vector_local_finetune_v1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by run ID, summary ID, artifact ID, digest, site ID, optimizer, or warm start',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+
     final Finder aggregationSummaryButton = find.widgetWithText(
       OutlinedButton,
       'Open accepted summaries',
@@ -4102,7 +4121,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, site ID, optimizer, or warm start',
       ),
       findsOneWidget,
     );
@@ -4242,7 +4261,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, site ID, optimizer, or warm start',
       ),
       'site-3',
     );
@@ -4254,7 +4273,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, site ID, optimizer, or warm start',
       ),
       '',
     );
@@ -4262,9 +4281,9 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, site ID, optimizer, or warm start',
       ),
-      'sha256:update-2',
+      'bounded_runtime_vector_local_finetune_v1',
     );
     await tester.pumpAndSettle();
     expect(
@@ -4328,7 +4347,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
       ),
       findsOneWidget,
     );
@@ -4392,7 +4411,20 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
+      ),
+      'bounded_runtime_vector_local_finetune_v1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Decisions: 1'), findsOneWidget);
+    expect(
+      find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
       ),
       '',
     );
@@ -4541,7 +4573,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
       ),
       'site-3',
     );
@@ -4553,7 +4585,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
       ),
       '',
     );
@@ -4561,7 +4593,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, site ID, optimizer, or warm start',
       ),
       'trace-2',
     );
