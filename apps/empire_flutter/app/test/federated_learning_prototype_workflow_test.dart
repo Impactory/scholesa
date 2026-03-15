@@ -1620,6 +1620,7 @@ Map<String, dynamic> _candidatePackageRow({
   int distinctSiteCount = 2,
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
@@ -1630,6 +1631,7 @@ Map<String, dynamic> _candidatePackageRow({
     'mergeArtifactId': mergeArtifactId,
     'status': 'staged',
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
+    'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
     'packageFormat': 'runtime_vector_v1',
     'rolloutStatus': rolloutStatus,
@@ -2030,6 +2032,7 @@ Map<String, dynamic> _mergeArtifactRow({
   String boundedDigest = 'sha256:digest-1',
   double normCap = 2.4,
   double effectiveTotalWeight = 17.6,
+  String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
 }) {
@@ -2041,6 +2044,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'normCap': normCap,
     'effectiveTotalWeight': effectiveTotalWeight,
+    'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
     'boundedDigest': boundedDigest,
     'payloadFormat': 'runtime_vector_v1',
@@ -3077,6 +3081,7 @@ void main() {
           id: 'fl_merge_2',
           aggregationRunId: 'fl_agg_2',
           boundedDigest: 'sha256:digest-2',
+          triggerSummaryId: 'update-4',
           summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
         ),
@@ -3089,6 +3094,7 @@ void main() {
           mergeArtifactId: 'fl_merge_2',
           boundedDigest: 'sha256:digest-2',
           sampleCount: 20,
+          triggerSummaryId: 'update-4',
           summaryIds: <String>['update-3', 'update-4'],
           contributingSiteIds: <String>['site-3'],
         ),
@@ -3657,7 +3663,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
       findsOneWidget,
     );
@@ -3691,6 +3697,7 @@ void main() {
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
+    expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
         findsOneWidget);
@@ -3776,7 +3783,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
       'site-3',
     );
@@ -3788,7 +3795,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
       '',
     );
@@ -3796,9 +3803,9 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, summary ID, digest, or site ID',
+        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
-      'update-1',
+      'update-2',
     );
     await tester.pumpAndSettle();
     expect(
@@ -3824,7 +3831,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
       findsOneWidget,
     );
@@ -3857,6 +3864,7 @@ void main() {
       findsWidgets,
     );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
+    expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
@@ -3866,7 +3874,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
       '',
     );
@@ -3974,7 +3982,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
       'site-3',
     );
@@ -3986,7 +3994,7 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
       '',
     );
@@ -3994,9 +4002,9 @@ void main() {
     await tester.enterText(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, summary ID, rationale, or site ID',
+        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
-      'update-1',
+      'update-2',
     );
     await tester.pumpAndSettle();
     expect(
