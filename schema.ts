@@ -211,7 +211,7 @@ export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blo
 export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'observed' | 'completed';
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
-export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked';
+export type FederatedLearningRuntimeResolutionStatus = 'resolved' | 'expired' | 'revoked' | 'paused' | 'restricted';
 export type FederatedLearningRuntimeRolloutAlertStatus = 'active' | 'acknowledged';
 export type FederatedLearningRuntimeRolloutEscalationStatus = 'open' | 'investigating' | 'resolved';
 export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
@@ -596,6 +596,9 @@ export interface FederatedLearningResolvedRuntimePackage {
   revokedAt?: number;
   revokedBy?: string;
   revocationReason?: string;
+  rolloutControlMode?: FederatedLearningRuntimeRolloutControlMode;
+  rolloutControlReason?: string;
+  rolloutControlReviewByAt?: number;
   resolvedAt: number;
 }
 

@@ -88,11 +88,26 @@ class FederatedLearningRuntimePackageResolver {
             'Resolved runtime package ${package.packageId} (${package.modelVersion}) for bounded device inference.',
       );
     } else {
-      final String reason = package.resolutionStatus == 'revoked'
-          ? ((package.revocationReason ?? '').trim().isNotEmpty
+      final String reason;
+      switch (package.resolutionStatus) {
+        case 'revoked':
+          reason = (package.revocationReason ?? '').trim().isNotEmpty
               ? package.revocationReason!.trim()
-              : 'delivery revoked by HQ')
-          : 'delivery expired for this site';
+              : 'delivery revoked by HQ';
+          break;
+        case 'paused':
+          reason = (package.rolloutControlReason ?? '').trim().isNotEmpty
+              ? package.rolloutControlReason!.trim()
+              : 'rollout paused by HQ';
+          break;
+        case 'restricted':
+          reason = (package.rolloutControlReason ?? '').trim().isNotEmpty
+              ? package.rolloutControlReason!.trim()
+              : 'site not yet permitted under restricted rollout control';
+          break;
+        default:
+          reason = 'delivery expired for this site';
+      }
       await _activationReporter.reportDeliveryActivation(
         deliveryRecordId: package.deliveryRecordId,
         siteId: package.siteId,

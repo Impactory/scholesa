@@ -774,11 +774,33 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
     final DateTime? revokedAt = deliveryRow['revokedAt'] as DateTime?;
     final String status = (deliveryRow['status'] as String? ?? '').trim();
-    final String resolutionStatus = status == 'revoked' || revokedAt != null
+    final Map<String, dynamic> controlRow = _runtimeRolloutControlRecords.firstWhere(
+      (Map<String, dynamic> row) => row['deliveryRecordId'] == (deliveryRow['id'] ?? ''),
+      orElse: () => <String, dynamic>{},
+    );
+    String resolutionStatus = status == 'revoked' || revokedAt != null
         ? 'revoked'
         : (expiresAt != null && !expiresAt.isAfter(now))
             ? 'expired'
             : 'resolved';
+    final String controlMode = (controlRow['mode'] as String? ?? '').trim();
+    final String controlReason = (controlRow['reason'] as String? ?? '').trim();
+    final DateTime? controlReviewByAt = controlRow['reviewByAt'] as DateTime?;
+    if (resolutionStatus == 'resolved' && controlMode == 'paused') {
+      resolutionStatus = 'paused';
+    }
+    if (resolutionStatus == 'resolved' && controlMode == 'restricted') {
+      final Map<String, dynamic> activationRow = _runtimeActivationRecords.firstWhere(
+        (Map<String, dynamic> row) =>
+            row['deliveryRecordId'] == deliveryRow['id'] && row['siteId'] == resolvedSiteId,
+        orElse: () => <String, dynamic>{},
+      );
+      final String activationStatus =
+          (activationRow['status'] as String? ?? '').trim();
+      if (activationStatus != 'resolved') {
+        resolutionStatus = 'restricted';
+      }
+    }
     return <String, dynamic>{
       'packageId': packageRow['id'] ?? '',
       'deliveryRecordId': deliveryRow['id'] ?? '',
@@ -803,6 +825,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'revokedAt': deliveryRow['revokedAt'],
       'revokedBy': deliveryRow['revokedBy'],
       'revocationReason': deliveryRow['revocationReason'],
+      'rolloutControlMode': controlMode.isEmpty ? null : controlMode,
+      'rolloutControlReason': controlReason.isEmpty ? null : controlReason,
+      'rolloutControlReviewByAt': controlReviewByAt,
       'resolvedAt': DateTime(2026, 3, 14, 20),
     };
   }
@@ -2157,6 +2182,139 @@ void main() {
       bridge.recordedRuntimeActivationSaves.single['deliveryRecordId'],
       'fl_delivery_1',
     );
+  });
+
+  test('runtime package resolver falls back when rollout control is paused',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(
+          mode: 'paused',
+          reason: 'Paused pending bounded verification.',
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNull);
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'fallback');
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['notes'],
+      contains('is paused: Paused pending bounded verification.'),
+    );
+  });
+
+  test(
+      'runtime package resolver falls back for unresolved site under restricted rollout control',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(
+          mode: 'restricted',
+          reason: 'Restricted to previously activated pilot sites.',
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNull);
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'fallback');
+    expect(
+      bridge.recordedRuntimeActivationSaves.single['notes'],
+      contains(
+          'is restricted: Restricted to previously activated pilot sites.'),
+    );
+  });
+
+  test(
+      'runtime package resolver still resolves for previously activated site under restricted rollout control',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(
+          mode: 'restricted',
+          reason: 'Restricted to previously activated pilot sites.',
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+    );
+    final FederatedLearningRuntimePackageResolver resolver =
+        FederatedLearningRuntimePackageResolver(
+      appState: _buildSiteState(),
+      workflowBridge: bridge,
+      activationReporter: FederatedLearningRuntimeActivationReporter(
+        appState: _buildSiteState(),
+        workflowBridge: bridge,
+      ),
+    );
+
+    final FederatedLearningResolvedRuntimePackageModel? package =
+        await resolver.resolveActivePackage(
+      runtimeTarget: 'flutter_mobile',
+    );
+
+    expect(package, isNotNull);
+    expect(package!.resolutionStatus, 'resolved');
+    expect(package.rolloutControlMode, 'restricted');
+    expect(bridge.recordedRuntimeActivationSaves, hasLength(1));
+    expect(bridge.recordedRuntimeActivationSaves.single['status'], 'resolved');
   });
 
   test('runtime delivery resolver lists site-scoped bounded manifests',

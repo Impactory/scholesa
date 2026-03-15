@@ -4239,6 +4239,9 @@ class FederatedLearningResolvedRuntimePackageModel {
     this.revokedAt,
     this.revokedBy,
     this.revocationReason,
+    this.rolloutControlMode,
+    this.rolloutControlReason,
+    this.rolloutControlReviewByAt,
     this.resolvedAt,
   });
 
@@ -4260,6 +4263,9 @@ class FederatedLearningResolvedRuntimePackageModel {
   final Timestamp? revokedAt;
   final String? revokedBy;
   final String? revocationReason;
+  final String? rolloutControlMode;
+  final String? rolloutControlReason;
+  final Timestamp? rolloutControlReviewByAt;
   final Timestamp? resolvedAt;
 
   bool get isUsable {
@@ -4292,6 +4298,9 @@ class FederatedLearningResolvedRuntimePackageModel {
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
+      rolloutControlMode: data['rolloutControlMode'] as String?,
+      rolloutControlReason: data['rolloutControlReason'] as String?,
+      rolloutControlReviewByAt: _timestampOrNull(data['rolloutControlReviewByAt']),
       resolvedAt: _timestampOrNull(data['resolvedAt']),
     );
   }
@@ -4315,6 +4324,9 @@ class FederatedLearningResolvedRuntimePackageModel {
         'revokedAt': revokedAt,
         'revokedBy': revokedBy,
         'revocationReason': revocationReason,
+        'rolloutControlMode': rolloutControlMode,
+        'rolloutControlReason': rolloutControlReason,
+        'rolloutControlReviewByAt': rolloutControlReviewByAt,
         'resolvedAt': resolvedAt ?? Timestamp.now(),
       };
 }

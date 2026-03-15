@@ -2385,7 +2385,20 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
   const revokedBy = asTrimmedString(deliveryData.revokedBy);
   const revocationReason = asTrimmedString(deliveryData.revocationReason);
   const now = Date.now();
-  const resolutionStatus = deliveryStatus === 'revoked' || revokedAt > 0
+  const controlId = buildFederatedLearningRuntimeRolloutControlRecordDocId(resolvedDeliveryId);
+  const [controlSnap, packageSnap] = await Promise.all([
+    admin.firestore().collection('federatedLearningRuntimeRolloutControlRecords').doc(controlId).get(),
+    admin.firestore()
+      .collection('federatedLearningCandidateModelPackages')
+      .doc(asTrimmedString(deliveryData.candidateModelPackageId))
+      .get(),
+  ]);
+  const controlData = (controlSnap.data() || {}) as Record<string, unknown>;
+  const controlMode = normalizeFederatedLearningRuntimeRolloutControlMode(controlData.mode);
+  const controlReason = asTrimmedString(controlData.reason);
+  const controlReviewByAt = asTimestampMillis(controlData.reviewByAt);
+
+  let resolutionStatus = deliveryStatus === 'revoked' || revokedAt > 0
     ? 'revoked'
     : (expiresAt > 0 && expiresAt <= now)
       ? 'expired'
@@ -2397,12 +2410,23 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
   }
 
   const candidateModelPackageId = asTrimmedString(deliveryData.candidateModelPackageId);
-  const packageSnap = await admin.firestore()
-    .collection('federatedLearningCandidateModelPackages')
-    .doc(candidateModelPackageId)
-    .get();
   if (!packageSnap.exists) {
     throw new HttpsError('not-found', 'Candidate model package not found.');
+  }
+
+  if (resolutionStatus === 'resolved' && controlMode === 'paused') {
+    resolutionStatus = 'paused';
+  }
+  if (resolutionStatus === 'resolved' && controlMode === 'restricted') {
+    const activationSnap = await admin.firestore()
+      .collection('federatedLearningRuntimeActivationRecords')
+      .doc(buildFederatedLearningRuntimeActivationRecordDocId(resolvedDeliveryId, targetSiteId))
+      .get();
+    const activationData = (activationSnap.data() || {}) as Record<string, unknown>;
+    const activationStatus = normalizeFederatedLearningRuntimeActivationStatus(activationData.status);
+    if (activationStatus !== 'resolved') {
+      resolutionStatus = 'restricted';
+    }
   }
 
   const packageData = (packageSnap.data() || {}) as Record<string, unknown>;
@@ -2436,6 +2460,9 @@ export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request:
       revokedAt: revokedAt > 0 ? revokedAt : null,
       revokedBy: revokedBy || null,
       revocationReason: revocationReason || null,
+      rolloutControlMode: controlMode || null,
+      rolloutControlReason: controlReason || null,
+      rolloutControlReviewByAt: controlReviewByAt ?? null,
       resolvedAt: Date.now(),
     },
   };
