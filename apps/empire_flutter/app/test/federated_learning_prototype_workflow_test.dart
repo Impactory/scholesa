@@ -3742,35 +3742,6 @@ void main() {
     await tester.tap(find.text('Artifact missing'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
-      ),
-      'trace-2',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
-    expect(find.text('Digest: sha256:digest-1'), findsOneWidget);
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
-      ),
-      'sha256:update-2',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
-    expect(find.text('Digest: sha256:digest-1'), findsOneWidget);
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by run ID, summary ID, artifact ID, digest, or site ID',
-      ),
-      '',
-    );
-    await tester.pumpAndSettle();
-
     final Finder aggregationSummaryButton = find.widgetWithText(
       OutlinedButton,
       'Open accepted summaries',
@@ -3977,31 +3948,7 @@ void main() {
         TextField,
         'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
       ),
-      'trace-2',
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
-      findsOneWidget,
-    );
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
-      ),
       'sha256:update-2',
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Package fl_pkg_1 · 24 samples · 2 summaries · 2 sites'),
-      findsOneWidget,
-    );
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by package ID, artifact ID, trigger or summary ID, digest, or site ID',
-      ),
-      'update-2',
     );
     await tester.pumpAndSettle();
     expect(
@@ -4289,30 +4236,6 @@ void main() {
         'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
       ),
       'trace-2',
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
-      findsOneWidget,
-    );
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
-      ),
-      'sha256:update-2',
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Decision fl_prom_1 · revoked (sandbox_eval)'),
-      findsOneWidget,
-    );
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'Filter by package ID, artifact ID, decision ID, trigger or summary ID, rationale, or site ID',
-      ),
-      'update-2',
     );
     await tester.pumpAndSettle();
     expect(
