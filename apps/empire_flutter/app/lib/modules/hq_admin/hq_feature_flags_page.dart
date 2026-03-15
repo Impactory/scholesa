@@ -4521,6 +4521,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   Future<void> _showRuntimeDeliveryHistoryDialog(
     FederatedLearningExperimentModel experiment,
   ) async {
+    final Map<String, FederatedLearningCandidateModelPackageModel> packagesById =
+        {
+      for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+              const <FederatedLearningCandidateModelPackageModel>[])
+        package.id: package,
+    };
     final List<FederatedLearningRuntimeDeliveryRecordModel> records =
         (await _workflowBridge.listFederatedLearningRuntimeDeliveryRecords(
       experimentId: experiment.id,
@@ -4565,7 +4572,35 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       children: records
                           .map(
                             (FederatedLearningRuntimeDeliveryRecordModel
-                                    record) =>
+                              record) {
+                            final FederatedLearningCandidateModelPackageModel?
+                              package =
+                              packagesById[record.candidateModelPackageId];
+                            final String aggregationRunId =
+                              record.aggregationRunId.trim().isNotEmpty
+                                ? record.aggregationRunId
+                                : package?.aggregationRunId ?? '';
+                            final String mergeArtifactId =
+                              record.mergeArtifactId.trim().isNotEmpty
+                                ? record.mergeArtifactId
+                                : package?.mergeArtifactId ?? '';
+                            final String packageDigest =
+                              record.packageDigest.trim().isNotEmpty
+                                ? record.packageDigest
+                                : package?.packageDigest ?? '';
+                            final String boundedDigest =
+                              record.boundedDigest.trim().isNotEmpty
+                                ? record.boundedDigest
+                                : package?.boundedDigest ?? '';
+                            final String triggerSummaryId =
+                              record.triggerSummaryId.trim().isNotEmpty
+                                ? record.triggerSummaryId
+                                : package?.triggerSummaryId ?? '';
+                            final List<String> summaryIds =
+                              record.summaryIds.isNotEmpty
+                                ? record.summaryIds
+                                : package?.summaryIds ?? const <String>[];
+                            return
                                 Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Column(
@@ -4590,58 +4625,50 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       color: ScholesaColors.textSecondary,
                                     ),
                                   ),
-                                  if (record.aggregationRunId
-                                          .trim()
-                                          .isNotEmpty ||
-                                      record.mergeArtifactId
-                                          .trim()
-                                          .isNotEmpty) ...<Widget>[
+                                  if (aggregationRunId.trim().isNotEmpty ||
+                                      mergeArtifactId.trim().isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 4),
                                     Text(
                                       _tHqFeatureFlags(
                                         dialogContext,
-                                        'Aggregation run: ${record.aggregationRunId} · Artifact: ${record.mergeArtifactId}',
+                                        'Aggregation run: $aggregationRunId · Artifact: $mergeArtifactId',
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,
                                       ),
                                     ),
                                   ],
-                                  if (record.packageDigest.trim().isNotEmpty ||
-                                      record.boundedDigest
-                                          .trim()
-                                          .isNotEmpty) ...<Widget>[
+                                  if (packageDigest.trim().isNotEmpty ||
+                                      boundedDigest.trim().isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 4),
                                     Text(
                                       _tHqFeatureFlags(
                                         dialogContext,
-                                        'Delivery digests: package ${record.packageDigest} · bounded ${record.boundedDigest}',
+                                        'Delivery digests: package $packageDigest · bounded $boundedDigest',
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,
                                       ),
                                     ),
                                   ],
-                                  if (record.triggerSummaryId
-                                      .trim()
-                                      .isNotEmpty) ...<Widget>[
+                                  if (triggerSummaryId.trim().isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 4),
                                     Text(
                                       _tHqFeatureFlags(
                                         dialogContext,
-                                        'Trigger summary: ${record.triggerSummaryId}',
+                                        'Trigger summary: $triggerSummaryId',
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,
                                       ),
                                     ),
                                   ],
-                                  if (record.summaryIds.isNotEmpty) ...<Widget>[
+                                  if (summaryIds.isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 4),
                                     Text(
                                       _tHqFeatureFlags(
                                         dialogContext,
-                                        'Accepted summaries: ${record.summaryIds.join(', ')}',
+                                        'Accepted summaries: ${summaryIds.join(', ')}',
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,
@@ -4662,27 +4689,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       ),
                                     ),
                                   ],
-                                  if (record.aggregationRunId
-                                          .trim()
-                                          .isNotEmpty ||
-                                      record.summaryIds.isNotEmpty ||
-                                      record.triggerSummaryId
-                                          .trim()
-                                          .isNotEmpty) ...<Widget>[
+                                  if (aggregationRunId.trim().isNotEmpty ||
+                                      summaryIds.isNotEmpty ||
+                                      triggerSummaryId.trim().isNotEmpty) ...<Widget>[
                                     const SizedBox(height: 10),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: <Widget>[
-                                        if (record.aggregationRunId
-                                            .trim()
-                                            .isNotEmpty)
+                                        if (aggregationRunId.trim().isNotEmpty)
                                           OutlinedButton.icon(
                                             onPressed: () =>
                                                 _showAggregationHistoryDialog(
                                               experiment,
-                                              initialQuery:
-                                                  record.aggregationRunId,
+                                              initialQuery: aggregationRunId,
                                             ),
                                             icon: const Icon(
                                               Icons.timeline_rounded,
@@ -4694,12 +4714,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                               ),
                                             ),
                                           ),
-                                        if (record.summaryIds.isNotEmpty)
+                                        if (summaryIds.isNotEmpty)
                                           OutlinedButton.icon(
                                             onPressed: () =>
                                                 _showAcceptedSummaryDialog(
                                               experiment: experiment,
-                                              summaryIds: record.summaryIds,
+                                              summaryIds: summaryIds,
                                               title: 'Accepted summaries',
                                             ),
                                             icon: const Icon(
@@ -4712,15 +4732,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                               ),
                                             ),
                                           ),
-                                        if (record.triggerSummaryId
-                                            .trim()
-                                            .isNotEmpty)
+                                        if (triggerSummaryId.trim().isNotEmpty)
                                           OutlinedButton.icon(
                                             onPressed: () =>
                                                 _showAcceptedSummaryDialog(
                                               experiment: experiment,
                                               summaryIds: <String>[
-                                                record.triggerSummaryId,
+                                                triggerSummaryId,
                                               ],
                                               title: 'Trigger summary',
                                             ),
@@ -4739,7 +4757,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   ],
                                 ],
                               ),
-                            ),
+                            );
+                            },
                           )
                           .toList(growable: false),
                     ),

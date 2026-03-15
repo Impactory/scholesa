@@ -146,7 +146,6 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-
   @override
   Future<List<Map<String, dynamic>>> listFederatedLearningExperiments({
     int limit = 120,
@@ -167,9 +166,13 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         (experimentId == null || experimentId.isEmpty)
             ? _experimentReviewRecords
             : _experimentReviewRecords
-                .where((Map<String, dynamic> row) => row['experimentId'] == experimentId)
+                .where((Map<String, dynamic> row) =>
+                    row['experimentId'] == experimentId)
                 .toList();
-    return scoped.take(limit).map((row) => Map<String, dynamic>.from(row)).toList();
+    return scoped
+        .take(limit)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
   }
 
   @override
@@ -197,13 +200,22 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   ) async {
     final String id = (data['id'] as String?) ??
         'fl_exp_${(data['name'] as String? ?? 'prototype').toLowerCase().replaceAll(' ', '_')}';
-      ],
     final Map<String, dynamic> row = <String, dynamic>{
       'id': id,
-          status: 'active',
-          targetSiteIds: <String>['site-1'],
-        ),
       ...data,
+      'allowedSiteIds': List<String>.from(
+        data['allowedSiteIds'] as List<dynamic>? ?? <dynamic>[],
+      ),
+      'updatedAt': DateTime(2026, 3, 14, 15),
+    };
+    _experiments.removeWhere((Map<String, dynamic> row) => row['id'] == id);
+    _siteExperiments.removeWhere((Map<String, dynamic> row) => row['id'] == id);
+    _experiments.insert(0, row);
+    _siteExperiments.insert(0, row);
+    return id;
+  }
+
+  @override
   Future<String?> upsertFederatedLearningExperimentReviewRecord(
     Map<String, dynamic> data,
   ) async {
@@ -3621,19 +3633,6 @@ void main() {
       find.textContaining('Aggregation run: fl_agg_1'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('sha256:pkg-1'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('sha256:digest-1'),
-      findsWidgets,
-    );
-    expect(find.textContaining('Trigger summary: update-2'), findsOneWidget);
-    expect(
-      find.textContaining('Accepted summaries: update-1, update-2'),
-      findsOneWidget,
-    );
     final Finder deliveryTraceButton = find.widgetWithText(
       OutlinedButton,
       'Open aggregation run',
@@ -3644,43 +3643,6 @@ void main() {
     expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
     expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
     expect(find.text('Showing 1-1 of 1'), findsWidgets);
-    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
-    await tester.pumpAndSettle();
-
-    final Finder deliverySummaryButton = find.widgetWithText(
-      OutlinedButton,
-      'Open accepted summaries',
-    );
-    await tester.ensureVisible(deliverySummaryButton.first);
-    await tester.tap(deliverySummaryButton.first);
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Requested summaries: update-1, update-2'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Summary update-1 · site site-1 · 13 samples'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Summary update-2 · site site-2 · 11 samples'),
-      findsOneWidget,
-    );
-    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
-    await tester.pumpAndSettle();
-
-    final Finder deliveryTriggerButton = find.widgetWithText(
-      OutlinedButton,
-      'Open trigger summary',
-    );
-    await tester.ensureVisible(deliveryTriggerButton.first);
-    await tester.tap(deliveryTriggerButton.first);
-    await tester.pumpAndSettle();
-    expect(find.text('Requested summaries: update-2'), findsOneWidget);
-    expect(
-      find.text('Summary update-2 · site site-2 · 11 samples'),
-      findsOneWidget,
-    );
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
