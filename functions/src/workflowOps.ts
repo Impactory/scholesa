@@ -1649,6 +1649,9 @@ interface FederatedPendingSummaryRow {
   updateNorm: number;
   schemaVersion: string;
   runtimeTarget?: string | null;
+  optimizerStrategy?: string | null;
+  warmStartPackageId?: string | null;
+  warmStartModelVersion?: string | null;
   traceId: string;
   payloadDigest: string;
   aggregationStatus: string;
@@ -1681,6 +1684,9 @@ function mapPendingFederatedSummary(
     updateNorm: asNumber(data.updateNorm) ?? 0,
     schemaVersion: asTrimmedString(data.schemaVersion) || 'v1',
     runtimeTarget: asTrimmedString(data.runtimeTarget) || null,
+    optimizerStrategy: asTrimmedString(data.optimizerStrategy) || null,
+    warmStartPackageId: asTrimmedString(data.warmStartPackageId) || null,
+    warmStartModelVersion: asTrimmedString(data.warmStartModelVersion) || null,
     traceId: asTrimmedString(data.traceId),
     payloadDigest: asTrimmedString(data.payloadDigest),
     aggregationStatus: asTrimmedString(data.aggregationStatus) || 'pending',
@@ -1810,6 +1816,10 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       averageUpdateNorm: refreshedSelection.averageUpdateNorm,
       schemaVersions: refreshedSelection.schemaVersions,
       runtimeTargets: refreshedSelection.runtimeTargets,
+      optimizerStrategies: refreshedSelection.optimizerStrategies,
+      compatibilityKey: refreshedSelection.compatibilityKey,
+      warmStartPackageId: refreshedSelection.warmStartPackageId ?? null,
+      warmStartModelVersion: refreshedSelection.warmStartModelVersion ?? null,
       boundedDigest: artifactSummary.boundedDigest,
       contributionDetails: artifactSummary.contributionDetails,
       createdBy: actorId,
@@ -1838,6 +1848,10 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       contributingSiteIds: artifactSummary.contributingSiteIds,
       schemaVersions: artifactSummary.schemaVersions,
       runtimeTargets: artifactSummary.runtimeTargets,
+      optimizerStrategies: artifactSummary.optimizerStrategies,
+      compatibilityKey: artifactSummary.compatibilityKey,
+      warmStartPackageId: artifactSummary.warmStartPackageId ?? null,
+      warmStartModelVersion: artifactSummary.warmStartModelVersion ?? null,
       maxVectorLength: artifactSummary.maxVectorLength,
       totalPayloadBytes: artifactSummary.totalPayloadBytes,
       averageUpdateNorm: artifactSummary.averageUpdateNorm,
@@ -1871,6 +1885,10 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       contributingSiteIds: packageSummary.contributingSiteIds,
       schemaVersions: packageSummary.schemaVersions,
       runtimeTargets: packageSummary.runtimeTargets,
+      optimizerStrategies: packageSummary.optimizerStrategies,
+      compatibilityKey: packageSummary.compatibilityKey,
+      warmStartPackageId: packageSummary.warmStartPackageId ?? null,
+      warmStartModelVersion: packageSummary.warmStartModelVersion ?? null,
       maxVectorLength: packageSummary.maxVectorLength,
       totalPayloadBytes: packageSummary.totalPayloadBytes,
       averageUpdateNorm: packageSummary.averageUpdateNorm,

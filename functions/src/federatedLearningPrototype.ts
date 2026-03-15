@@ -206,6 +206,9 @@ export function normalizeFederatedLearningRuntimeTarget(
   const normalized = asTrimmedString(value).toLowerCase();
   if (['flutter_mobile', 'flutter-mobile', 'flutter'].includes(normalized)) {
     return 'flutter_mobile';
+      optimizerStrategy?: string | null;
+      warmStartPackageId?: string | null;
+      warmStartModelVersion?: string | null;
   }
   if (['web_pwa', 'web-pwa', 'web'].includes(normalized)) {
     return 'web_pwa';
@@ -220,6 +223,10 @@ export function normalizeFederatedLearningExperimentStatus(
   value: unknown,
 ): FederatedLearningExperimentStatus | null {
   const normalized = asTrimmedString(value).toLowerCase();
+      optimizerStrategies: string[];
+      compatibilityKey: string;
+      warmStartPackageId?: string;
+      warmStartModelVersion?: string;
   if (['draft', 'pilot_ready', 'pilot-ready', 'active', 'paused', 'disabled'].includes(normalized)) {
     if (normalized === 'pilot-ready') return 'pilot_ready';
     return normalized as FederatedLearningExperimentStatus;
@@ -235,6 +242,10 @@ export function normalizeFederatedLearningBatteryState(
     return normalized;
   }
   return 'unknown';
+      optimizerStrategies: string[];
+      compatibilityKey: string;
+      warmStartPackageId?: string;
+      warmStartModelVersion?: string;
 }
 
 export function normalizeFederatedLearningNetworkType(
@@ -264,6 +275,10 @@ export function buildFederatedLearningFeatureFlagId(experimentId: string): strin
   return `feature_${experimentId.trim().replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 }
 
+      optimizerStrategies: string[];
+      compatibilityKey: string;
+      warmStartPackageId?: string;
+      warmStartModelVersion?: string;
 export function buildFederatedLearningExperimentReviewRecordDocId(experimentId: string): string {
   return `fl_review_${experimentId.replace(/^fl_exp_/, '')}`;
 }
@@ -310,8 +325,16 @@ export function buildFederatedLearningPilotExecutionRecordDocId(packageId: strin
 export function buildFederatedLearningRuntimeDeliveryRecordDocId(packageId: string): string {
   return `fl_delivery_${packageId.replace(/^fl_pkg_/, '')}`;
 }
+      let compatibilityKey = '';
 
 export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: string, siteId: string): string {
+        const candidateCompatibilityKey = buildFederatedLearningAggregationCompatibilityKey(candidate);
+        if (!compatibilityKey) {
+          compatibilityKey = candidateCompatibilityKey;
+        }
+        if (candidateCompatibilityKey !== compatibilityKey) {
+          continue;
+        }
   const digest = createHash('sha256')
     .update(`${deliveryId}|${siteId.trim()}`)
     .digest('hex')
@@ -321,6 +344,7 @@ export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: s
 
 export function buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryId: string): string {
   return `fl_rollout_alert_${deliveryId.replace(/^fl_delivery_/, '')}`;
+      const optimizerStrategies = new Set<string>();
 }
 
 export function buildFederatedLearningRuntimeRolloutEscalationRecordDocId(deliveryId: string): string {
@@ -331,6 +355,9 @@ export function buildFederatedLearningRuntimeRolloutControlRecordDocId(deliveryI
   return `fl_rollout_control_${deliveryId.replace(/^fl_delivery_/, '')}`;
 }
 
+        if (typeof candidate.optimizerStrategy === 'string' && candidate.optimizerStrategy.trim().length > 0) {
+          optimizerStrategies.add(candidate.optimizerStrategy.trim());
+        }
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -357,6 +384,10 @@ export function normalizeFederatedLearningExperimentReviewStatus(
 }
 
 export function normalizeFederatedLearningCandidatePromotionStatus(
+        optimizerStrategies: Array.from(optimizerStrategies).sort(),
+        compatibilityKey,
+        warmStartPackageId,
+        warmStartModelVersion,
   value: unknown,
 ): FederatedLearningCandidatePromotionStatus | null {
   const normalized = asTrimmedString(value).toLowerCase();
@@ -791,6 +822,10 @@ export function buildFederatedLearningMergeArtifactSummary(
       maxVectorLength: selection.maxVectorLength,
       payloadFormat,
       modelVersion,
+      compatibilityKey: selection.compatibilityKey,
+      optimizerStrategies: selection.optimizerStrategies,
+      warmStartPackageId: selection.warmStartPackageId,
+      warmStartModelVersion: selection.warmStartModelVersion,
       runtimeVector: normalizedRuntimeVector,
       runtimeVectorDigest: `sha256:${runtimeVectorDigest}`,
       totalPayloadBytes: selection.totalPayloadBytes,
@@ -815,6 +850,10 @@ export function buildFederatedLearningMergeArtifactSummary(
     contributingSiteIds: selection.contributingSiteIds,
     schemaVersions: selection.schemaVersions,
     runtimeTargets: selection.runtimeTargets,
+    optimizerStrategies: selection.optimizerStrategies,
+    compatibilityKey: selection.compatibilityKey,
+    warmStartPackageId: selection.warmStartPackageId,
+    warmStartModelVersion: selection.warmStartModelVersion,
     maxVectorLength: selection.maxVectorLength,
     runtimeVectorLength: normalizedRuntimeVector.length,
     runtimeVector: normalizedRuntimeVector,
@@ -855,6 +894,10 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       contributingSiteIds: artifactSummary.contributingSiteIds,
       schemaVersions: artifactSummary.schemaVersions,
       runtimeTargets: artifactSummary.runtimeTargets,
+      optimizerStrategies: artifactSummary.optimizerStrategies,
+      compatibilityKey: artifactSummary.compatibilityKey,
+      warmStartPackageId: artifactSummary.warmStartPackageId,
+      warmStartModelVersion: artifactSummary.warmStartModelVersion,
       maxVectorLength: artifactSummary.maxVectorLength,
       totalPayloadBytes: artifactSummary.totalPayloadBytes,
       averageUpdateNorm: artifactSummary.averageUpdateNorm,
@@ -882,6 +925,10 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     contributingSiteIds: artifactSummary.contributingSiteIds,
     schemaVersions: artifactSummary.schemaVersions,
     runtimeTargets: artifactSummary.runtimeTargets,
+    optimizerStrategies: artifactSummary.optimizerStrategies,
+    compatibilityKey: artifactSummary.compatibilityKey,
+    warmStartPackageId: artifactSummary.warmStartPackageId,
+    warmStartModelVersion: artifactSummary.warmStartModelVersion,
     maxVectorLength: artifactSummary.maxVectorLength,
     totalPayloadBytes: artifactSummary.totalPayloadBytes,
     averageUpdateNorm: artifactSummary.averageUpdateNorm,

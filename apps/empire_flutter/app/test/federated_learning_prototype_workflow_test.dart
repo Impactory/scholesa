@@ -3105,11 +3105,16 @@ void main() {
     expect(
         bridge.recordedUpdates.single['schemaVersion'], 'fl-prototype-bos-v1');
     expect(
+      bridge.recordedUpdates.single['vectorSketch'],
+      <double>[0.652188, 0.446375, 0.660875, 0.10725, 0.053625, 0.553625, 0.39275, 0.200719],
+    );
+    expect(
       bridge.recordedUpdates.single['optimizerStrategy'],
       'bounded_runtime_vector_local_finetune_v1',
     );
-    expect(bridge.recordedUpdates.single['localEpochCount'], 1);
-    expect(bridge.recordedUpdates.single['localStepCount'], 2);
+    expect(bridge.recordedUpdates.single['localEpochCount'], 2);
+    expect(bridge.recordedUpdates.single['localStepCount'], 4);
+    expect(bridge.recordedUpdates.single['updateNorm'], 0.432091);
     expect(
       bridge.recordedUpdates.single['warmStartPackageId'],
       'fl_pkg_1',

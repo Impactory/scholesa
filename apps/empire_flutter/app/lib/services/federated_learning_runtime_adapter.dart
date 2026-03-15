@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import '../auth/app_state.dart';
 import '../domain/models.dart';
@@ -185,14 +186,6 @@ class FederatedLearningRuntimeAdapter {
         List<_RuntimeSample>.from(window.samples);
     _windows.remove(windowKey);
 
-    final List<String> eventTypes =
-        samples.map((sample) => sample.eventType).toList(growable: false);
-    final Set<String> vectorDimensions = <String>{
-      ...eventTypes,
-      ...samples
-          .expand((sample) => sample.payload.keys)
-          .map((String key) => 'payload:$key'),
-    };
     final int estimatedBytes = utf8
         .encode(jsonEncode(samples.map((sample) => sample.signature).toList()))
         .length;
@@ -217,20 +210,19 @@ class FederatedLearningRuntimeAdapter {
                 experimentId: experiment.id,
                 runtimeTarget: experiment.runtimeTarget,
               );
-    final List<double> vectorSketch = _buildVectorSketch(
+    final int localEpochCount = _deriveLocalEpochCount(
+      sampleCount: samples.length,
+      hasWarmStart: runtimePackage != null && runtimePackage.runtimeVector.isNotEmpty,
+    );
+    final List<double> vectorSketch = _buildLocallyFineTunedVector(
       samples,
       runtimePackage: runtimePackage,
+      localEpochCount: localEpochCount,
     );
-    final double baseNorm = samples.length + (vectorDimensions.length / 100.0);
-    final double runtimeBias = runtimePackage == null ||
-            runtimePackage.runtimeVector.isEmpty
-        ? 0
-        : runtimePackage.runtimeVector
-                .take(vectorSketch.length)
-                .fold<double>(0, (sum, value) => sum + value.abs()) /
-            runtimePackage.runtimeVector.length;
-    final double updateNorm =
-      double.parse((baseNorm + runtimeBias).toStringAsFixed(6));
+    final double updateNorm = _calculateLocalUpdateNorm(
+      vectorSketch,
+      runtimePackage: runtimePackage,
+    );
     final DateTime earliest = samples
         .map((sample) => sample.capturedAt)
         .reduce((DateTime a, DateTime b) => a.isBefore(b) ? a : b);
@@ -260,8 +252,8 @@ class FederatedLearningRuntimeAdapter {
           runtimeVectorDigest: runtimePackage?.runtimeVectorDigest,
         ),
         optimizerStrategy: _optimizerStrategy,
-        localEpochCount: 1,
-        localStepCount: samples.length,
+        localEpochCount: localEpochCount,
+        localStepCount: samples.length * localEpochCount,
         trainingWindowSeconds: trainingWindowSeconds,
         warmStartPackageId: runtimePackage?.candidateModelPackageId,
         warmStartDeliveryRecordId: runtimePackage?.deliveryRecordId,
@@ -289,7 +281,54 @@ class FederatedLearningRuntimeAdapter {
     return '$experimentId::$siteId::$learnerId::${(sessionOccurrenceId ?? '').trim()}';
   }
 
-  List<double> _buildVectorSketch(
+  int _deriveLocalEpochCount({
+    required int sampleCount,
+    required bool hasWarmStart,
+  }) {
+    if (sampleCount <= 0) {
+      return 1;
+    }
+    if (!hasWarmStart) {
+      return 1;
+    }
+    if (sampleCount >= 6) {
+      return 3;
+    }
+    if (sampleCount >= 2) {
+      return 2;
+    }
+    return 1;
+  }
+
+  List<double> _buildLocallyFineTunedVector(
+    List<_RuntimeSample> samples, {
+    FederatedLearningResolvedRuntimePackageModel? runtimePackage,
+    required int localEpochCount,
+  }) {
+    final List<double> trainingTargets = _buildTrainingTargets(
+      samples,
+      runtimePackage: runtimePackage,
+    );
+    final List<double> warmStartVector =
+        runtimePackage?.runtimeVector ?? const <double>[];
+    final List<double> current = List<double>.generate(
+      trainingTargets.length,
+      (int index) => index < warmStartVector.length ? warmStartVector[index] : 0,
+    );
+    final double baseLearningRate = warmStartVector.isNotEmpty ? 0.35 : 0.5;
+    for (int epoch = 0; epoch < localEpochCount; epoch += 1) {
+      final double epochRate = baseLearningRate / (epoch + 1);
+      for (int index = 0; index < current.length; index += 1) {
+        final double gradient = trainingTargets[index] - current[index];
+        current[index] = _clampUnitValue(current[index] + (gradient * epochRate));
+      }
+    }
+    return current
+        .map((double value) => double.parse(value.toStringAsFixed(6)))
+        .toList(growable: false);
+  }
+
+  List<double> _buildTrainingTargets(
     List<_RuntimeSample> samples, {
     FederatedLearningResolvedRuntimePackageModel? runtimePackage,
   }) {
@@ -309,29 +348,60 @@ class FederatedLearningRuntimeAdapter {
       payloadKeyCount += sample.payload.length;
     }
 
+    final int sampleCount = samples.isEmpty ? 1 : samples.length;
     final List<double> baseVector = <double>[
-      samples.length.toDouble(),
-      (eventCounts['mission_started'] ?? 0).toDouble(),
-      (eventCounts['checkpoint_submitted'] ?? 0).toDouble(),
-      (eventCounts['mission_completed'] ?? 0).toDouble(),
-      (eventCounts['session_left'] ?? 0).toDouble(),
-      missionIds.length.toDouble(),
-      checkpointIds.length.toDouble(),
-      payloadKeyCount.toDouble(),
+      samples.length / _maxBufferedSamples,
+      (eventCounts['mission_started'] ?? 0) / sampleCount,
+      (eventCounts['checkpoint_submitted'] ?? 0) / sampleCount,
+      (eventCounts['mission_completed'] ?? 0) / sampleCount,
+      (eventCounts['session_left'] ?? 0) / sampleCount,
+      missionIds.length / sampleCount,
+      checkpointIds.length / sampleCount,
+      payloadKeyCount / (sampleCount * 4),
     ];
 
     final List<double> runtimeVector = runtimePackage?.runtimeVector ?? const <double>[];
     final int targetLength = runtimeVector.isNotEmpty
         ? runtimeVector.length
         : baseVector.length;
-    final List<double> sketch = List<double>.generate(targetLength, (int index) {
+    return List<double>.generate(targetLength, (int index) {
       final double baseValue = index < baseVector.length ? baseVector[index] : 0;
-      final double runtimeWeight = index < runtimeVector.length ? runtimeVector[index] : 0;
-      return double.parse(
-        (baseValue * (1 + runtimeWeight)).toStringAsFixed(6),
-      );
-    });
-    return sketch;
+      return _clampUnitValue(baseValue);
+    }, growable: false);
+  }
+
+  double _calculateLocalUpdateNorm(
+    List<double> tunedVector, {
+    FederatedLearningResolvedRuntimePackageModel? runtimePackage,
+  }) {
+    final List<double> warmStartVector =
+        runtimePackage?.runtimeVector ?? const <double>[];
+    final Iterable<double> squaredTerms = tunedVector.asMap().entries.map(
+      (MapEntry<int, double> entry) {
+        final double warmStart =
+            entry.key < warmStartVector.length ? warmStartVector[entry.key] : 0;
+        final double delta = entry.value - warmStart;
+        return delta * delta;
+      },
+    );
+    final double sumSquares = squaredTerms.fold<double>(
+      0,
+      (double total, double value) => total + value,
+    );
+    return double.parse(math.sqrt(sumSquares).toStringAsFixed(6));
+  }
+
+  double _clampUnitValue(double value) {
+    if (value.isNaN) {
+      return 0;
+    }
+    if (value < 0) {
+      return 0;
+    }
+    if (value > 1) {
+      return 1;
+    }
+    return value;
   }
 
   String _buildPayloadDigest({
