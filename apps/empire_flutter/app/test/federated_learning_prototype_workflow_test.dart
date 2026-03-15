@@ -3111,6 +3111,10 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.text('Latest aggregation contributors: site-1, site-2'),
+      findsOneWidget,
+    );
     expect(find.text('Recent aggregation runs'), findsOneWidget);
     expect(find.textContaining('Runtime activation: resolved'), findsOneWidget);
     expect(
@@ -3125,6 +3129,12 @@ void main() {
     );
     expect(
       find.text('Latest candidate package: fl_pkg_1 (runtime_vector_v1)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package merge: norm_capped_weighted_runtime_vector_average_v2 · norm cap 2.400 · effective weight 17.600',
+      ),
       findsOneWidget,
     );
     expect(
@@ -3553,7 +3563,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by run ID, artifact ID, or digest',
+        'Filter by run ID, artifact ID, digest, or site ID',
       ),
       findsOneWidget,
     );
@@ -3630,7 +3640,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, or digest',
+        'Filter by package ID, artifact ID, digest, or site ID',
       ),
       findsOneWidget,
     );
@@ -3775,7 +3785,7 @@ void main() {
     expect(
       find.widgetWithText(
         TextField,
-        'Filter by package ID, artifact ID, decision ID, or rationale',
+        'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
       ),
       findsOneWidget,
     );

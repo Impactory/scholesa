@@ -692,6 +692,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   color: ScholesaColors.textSecondary,
                 ),
               ),
+              if (latestRun.contributingSiteIds.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation contributors: ${_formatSiteList(latestRun.contributingSiteIds)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
             if (latestPackage != null) ...<Widget>[
               const SizedBox(height: 4),
@@ -716,6 +729,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   color: ScholesaColors.textSecondary,
                 ),
               ),
+              if ((latestPackage.mergeStrategy ?? '').trim().isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package merge: ${latestPackage.mergeStrategy} · norm cap ${_formatMergeMetric(latestPackage.normCap)} · effective weight ${_formatMergeMetric(latestPackage.effectiveTotalWeight)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 4),
             Text(
@@ -1180,9 +1206,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 run.mergeArtifactId ?? '',
                 run.mergeStrategy ?? '',
                 run.boundedDigest ?? '',
+                run.contributingSiteIds.join(' '),
                 artifact?.id ?? '',
                 artifact?.mergeStrategy ?? '',
                 artifact?.boundedDigest ?? '',
+                artifact?.contributingSiteIds.join(' ') ?? '',
+                candidatePackagesByRunId[run.id]?.contributingSiteIds.join(' ') ?? '',
               ].join(' ').toLowerCase();
               return haystack.contains(normalizedQuery);
             }).toList(growable: false);
@@ -1258,7 +1287,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by run ID, artifact ID, or digest',
+                              'Filter by run ID, artifact ID, digest, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -1530,6 +1559,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 package.boundedDigest,
                 package.packageFormat,
                 package.rolloutStatus,
+                package.contributingSiteIds.join(' '),
                 promotion?.id ?? '',
                 promotion?.status ?? '',
                 promotion?.target ?? '',
@@ -1620,7 +1650,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, or digest',
+                              'Filter by package ID, artifact ID, digest, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
@@ -2617,6 +2647,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 record.decidedBy ?? '',
                 package?.packageDigest ?? '',
                 package?.boundedDigest ?? '',
+                package?.contributingSiteIds.join(' ') ?? '',
                 revocation?.id ?? '',
                 revocation?.revokedStatus ?? '',
                 revocation?.rationale ?? '',
@@ -2700,7 +2731,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           decoration: InputDecoration(
                             labelText: _tHqFeatureFlags(
                               context,
-                              'Filter by package ID, artifact ID, decision ID, or rationale',
+                              'Filter by package ID, artifact ID, decision ID, rationale, or site ID',
                             ),
                             prefixIcon: const Icon(Icons.search_rounded),
                           ),
